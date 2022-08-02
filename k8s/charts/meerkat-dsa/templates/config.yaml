@@ -87,7 +87,9 @@ data:
   scvp_cached_response: {{ .Values.scvp_cached_response | ternary 1 0 | quote }}
   scvp_disclose_ae_title: {{ .Values.scvp_disclose_ae_title | ternary 1 0 | quote }}
   scvp_full_request_in_response: {{ .Values.scvp_full_request_in_response | ternary 1 0 | quote }}
-  # scvp_hash_algorithm: "2.5.4.3"
+  {{- if .Values.scvp_hash_algorithm }}
+  scvp_hash_algorithm: {{ .Values.scvp_hash_algorithm | quote }}
+  {{- end }}
   scvp_inhibit_any_policy: {{ .Values.scvp_inhibit_any_policy | ternary 1 0 | quote }}
   scvp_inhibit_policy_mapping: {{ .Values.scvp_inhibit_policy_mapping | ternary 1 0 | quote }}
   {{- if .Values.scvp_public_key_cert_checks }}
@@ -100,7 +102,9 @@ data:
   # See: https://stackoverflow.com/questions/47668793/helm-generate-comma-separated-list
   scvp_public_key_cert_want_backs: {{ join ", " .Values.scvp_public_key_cert_want_backs }}
   {{- end }}
+  {{- if .Values.scvp_requestor_text }}
   scvp_requestor_text: {{ .Values.scvp_requestor_text | quote }}
+  {{- end }}
   scvp_require_explicit_policy: {{ .Values.scvp_require_explicit_policy | ternary 1 0 | quote }}
   scvp_response_validation_policy_by_ref: {{ .Values.scvp_response_validation_policy_by_ref | ternary 1 0 | quote }}
   {{- if .Values.scvp_signature_algorithm }}
