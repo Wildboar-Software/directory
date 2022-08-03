@@ -22,6 +22,7 @@ import { generateSIGNED } from "../pki/generateSIGNED";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import { addSeconds } from "date-fns";
 
 /**
  * @summary Creates strong credentials to be used for strong authentication
@@ -72,7 +73,7 @@ function createStrongCredentials (
         ),
         intendedRecipient,
         {
-            generalizedTime: new Date(),
+            generalizedTime: addSeconds(new Date(), 60), // TODO: Make this time configurable.
         },
         unpackBits(randomBytes(4)),
         undefined,
