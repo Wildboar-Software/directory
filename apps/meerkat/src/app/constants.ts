@@ -29,6 +29,7 @@ export const DEFAULT_IDM_BUFFER_SIZE: number = 1_000_000;
 export const DEFAULT_LDAP_BUFFER_SIZE: number = 1_000_000;
 export const MAX_SORT_KEYS: number = 3;
 export const DEFAULT_REMOTE_CRL_CACHE_TTL: number = 300; // Five minutes.
+export const DEFAULT_REMOTE_CRL_SIZE_LIMIT: number = 1_000_000; // 1MB, which is a pretty large CRL.
 
 // IP Blacklist Reasons
 export const IP_BL_REASON_SLOW_LORIS: string = "SLOW_LORIS";

@@ -50,7 +50,7 @@ import {
 import {
     TypeAndContextAssertion,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
-import { NOW_CONTEXT_ASSERTION } from "../constants";
+import { NOW_CONTEXT_ASSERTION, DEFAULT_REMOTE_CRL_SIZE_LIMIT } from "../constants";
 import { differenceInSeconds } from "date-fns";
 import type { MeerkatContext } from "../ctx";
 import {
@@ -111,7 +111,7 @@ async function crlCurlDAP (
     dn: DistinguishedName,
     readDispatcher: ReadDispatcherFunction,
     timeoutInMilliseconds: number = 5000,
-    sizeLimit: number = 1_000_000,
+    sizeLimit: number = DEFAULT_REMOTE_CRL_SIZE_LIMIT,
 ): Promise<CertificateList[] | null> {
     const arg: ReadArgument = {
         unsigned: new ReadArgumentData(
@@ -218,7 +218,7 @@ async function crlCurl (
             name,
             readDispatcher,
             (options.remoteCRLTimeout * 1000),
-            options.remoteCRLFetchSizeLimit,
+            options.remoteCRLFetchSizeLimit ?? DEFAULT_REMOTE_CRL_SIZE_LIMIT,
         );
     }
     assert("fullName" in dpn);
@@ -233,7 +233,7 @@ async function crlCurl (
                 generalName.directoryName.rdnSequence,
                 readDispatcher,
                 (options.remoteCRLTimeout * 1000),
-                options.remoteCRLFetchSizeLimit,
+                options.remoteCRLFetchSizeLimit ?? DEFAULT_REMOTE_CRL_SIZE_LIMIT,
             );
         } else if ("uniformResourceIdentifier" in generalName) {
             /**
@@ -269,7 +269,7 @@ async function crlCurl (
                             url,
                             ctx.config.tls,
                             (options.remoteCRLTimeout * 1000),
-                            options.remoteCRLFetchSizeLimit,
+                            options.remoteCRLFetchSizeLimit ?? DEFAULT_REMOTE_CRL_SIZE_LIMIT,
                         );
                         if (!res) {
                             return res;
@@ -290,7 +290,7 @@ async function crlCurl (
                             url,
                             ctx.config.tls,
                             (options.remoteCRLTimeout * 1000),
-                            options.remoteCRLFetchSizeLimit,
+                            options.remoteCRLFetchSizeLimit ?? DEFAULT_REMOTE_CRL_SIZE_LIMIT,
                         );
                         if (!res) {
                             return res;
@@ -310,7 +310,7 @@ async function crlCurl (
                             url,
                             ctx.config.tls,
                             (options.remoteCRLTimeout * 1000),
-                            options.remoteCRLFetchSizeLimit,
+                            options.remoteCRLFetchSizeLimit ?? DEFAULT_REMOTE_CRL_SIZE_LIMIT,
                             ctx.log.debug,
                         );
                         if (!res) {
@@ -332,7 +332,7 @@ async function crlCurl (
                             [ "certificateRevocationList;binary" ],
                             ctx.config.tls,
                             (options.remoteCRLTimeout * 1000),
-                            options.remoteCRLFetchSizeLimit,
+                            options.remoteCRLFetchSizeLimit ?? DEFAULT_REMOTE_CRL_SIZE_LIMIT,
                         );
                         if (!res) {
                             return res;
