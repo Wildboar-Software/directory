@@ -215,10 +215,10 @@ jobs:
       - name: Compile the X.500 CLI
         run: npx nx run x500-cli:build:production --skip-nx-cache
       - name: Publish NPM Package
-        run: npm publish || true
-        working-directory: ./dist/apps/x500-cli
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        uses: JS-DevTools/npm-publish@v1
+        with:
+          package: ./dist/apps/x500-cli/package.json
+          token: ${{ secrets.NPM_TOKEN }}
 
   # HOW DOES THIS EVEN WORK?
   # There is no point in this job where it installs Helm, but yet, somehow, this
