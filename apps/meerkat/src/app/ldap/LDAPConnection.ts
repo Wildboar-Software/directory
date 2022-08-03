@@ -71,6 +71,7 @@ import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
 import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics";
 import isDebugging from "is-debugging";
 import { strict as assert } from "assert";
+import { stringifyDN } from "../x500/stringifyDN";
 
 const UNIVERSAL_SEQUENCE_TAG: number = 0x30;
 
@@ -813,6 +814,9 @@ class LDAPAssociation extends ClientAssociation {
                     }
                 } else if (oid.isEqualTo(whoAmI)) {
                     const successMessage = ctx.i18n.t("main:success");
+                    const dn = this.boundNameAndUID
+                        ? Buffer.from(encodeLDAPDN(ctx, this.boundNameAndUID.dn)).toString("utf-8")
+                        : undefined;
                     const res = new LDAPMessage(
                         message.messageID,
                         {
@@ -822,8 +826,8 @@ class LDAPAssociation extends ClientAssociation {
                                 Buffer.from(successMessage, "utf-8"),
                                 undefined,
                                 undefined,
-                                this.boundNameAndUID
-                                    ? Buffer.from(`dn:${encodeLDAPDN(ctx, this.boundNameAndUID.dn)}`, "utf-8")
+                                dn
+                                    ? Buffer.from(`dn:${dn}`, "utf-8")
                                     : Buffer.alloc(0), // Anonymous.
                             ),
                         },

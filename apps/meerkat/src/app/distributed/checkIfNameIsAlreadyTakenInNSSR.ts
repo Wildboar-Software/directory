@@ -65,7 +65,6 @@ import {
 import {
     abandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
-import encodeLDAPDN from "../ldap/encodeLDAPDN";
 import type {
     InvokeId,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
@@ -73,6 +72,7 @@ import { addMilliseconds } from "date-fns";
 import { randomInt } from "crypto";
 import { printInvokeId } from "../utils/printInvokeId";
 import { signChainedArgument } from "../pki/signChainedArgument";
+import stringifyDN from "../x500/stringifyDN";
 
 /**
  * @summary Check if name is already taken among NSSR.
@@ -271,7 +271,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                 }
             } catch (e) {
                 ctx.log.warn(ctx.i18n.t("log:failed_to_access_master", {
-                    dsa: encodeLDAPDN(ctx, accessPoint.ae_title.rdnSequence),
+                    dsa: stringifyDN(ctx, accessPoint.ae_title.rdnSequence),
                     e: e.message,
                 }), {
                     remoteFamily: assn.socket.remoteFamily,

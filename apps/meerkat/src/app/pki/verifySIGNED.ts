@@ -34,12 +34,12 @@ import {
 import createSecurityParameters from "../x500/createSecurityParameters";
 import { securityError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 import { RDNSequence } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RDNSequence.ta";
-import encodeLDAPDN from "../ldap/encodeLDAPDN";
 import { INTERNAL_ASSOCIATON_ID } from "../constants";
 import {
     KeyUsage_digitalSignature,
 } from "@wildboar/x500/src/lib/modules/CertificateExtensions/KeyUsage.ta";
 import { id_anyExtendedKeyUsage, id_kp_clientAuth } from "../constants";
+import { stringifyDN } from "../x500/stringifyDN";
 
 /**
  * @summary Verify something that is cryptographically signed with X.509 SIGNED{}
@@ -89,7 +89,7 @@ async function verifySIGNED <T> (
         host: remoteHostIdentifier,
         aid: assn?.id ?? INTERNAL_ASSOCIATON_ID,
         iid: printInvokeId(invokeId),
-        ap: encodeLDAPDN(ctx, ae_title_rdnSequence ?? []),
+        ap: stringifyDN(ctx, ae_title_rdnSequence ?? []),
         remoteFamily: assn?.socket.remoteFamily,
         remoteAddress: assn?.socket.remoteAddress,
         remotePort: assn?.socket.remotePort,

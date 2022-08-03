@@ -67,11 +67,11 @@ import {
 import {
     abandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
-import encodeLDAPDN from "../ldap/encodeLDAPDN";
 import { printInvokeId } from "../utils/printInvokeId";
 import { signChainedArgument } from "../pki/signChainedArgument";
 import { strict as assert } from "assert";
 import { verifySIGNED } from "../pki/verifySIGNED";
+import stringifyDN from "../x500/stringifyDN";
 
 /**
  * @summary The Access Point Information Procedure, as defined in ITU Recommendation X.518.
@@ -202,7 +202,7 @@ async function apinfoProcedure (
             });
             if (!connection) {
                 ctx.log.warn(ctx.i18n.t("log:could_not_establish_connection", {
-                    ae: encodeLDAPDN(ctx, ap.ae_title.rdnSequence),
+                    ae: stringifyDN(ctx, ap.ae_title.rdnSequence),
                     iid: "present" in req.invokeId
                         ? req.invokeId.present.toString()
                         : "ABSENT",
@@ -260,7 +260,7 @@ async function apinfoProcedure (
             } else {
                 if (!result.opCode) {
                     ctx.log.warn(ctx.i18n.t("log:dsa_returned_no_opcode", {
-                        ae: encodeLDAPDN(ctx, api.ae_title.rdnSequence),
+                        ae: stringifyDN(ctx, api.ae_title.rdnSequence),
                     }), {
                         remoteFamily: assn?.socket.remoteFamily,
                         remoteAddress: assn?.socket.remoteAddress,
@@ -306,7 +306,7 @@ async function apinfoProcedure (
             if (connected) {
                 ctx.log.warn(ctx.i18n.t("log:could_not_establish_connection", {
                     context: "with_error",
-                    ae: encodeLDAPDN(ctx, ap.ae_title.rdnSequence),
+                    ae: stringifyDN(ctx, ap.ae_title.rdnSequence),
                     iid: "present" in req.invokeId
                         ? req.invokeId.present.toString()
                         : "ABSENT",
@@ -314,7 +314,7 @@ async function apinfoProcedure (
                 }));
             } else {
                 ctx.log.warn(ctx.i18n.t("log:could_not_write_operation_to_dsa", {
-                    ae: encodeLDAPDN(ctx, api.ae_title.rdnSequence),
+                    ae: stringifyDN(ctx, api.ae_title.rdnSequence),
                     e,
                 }), {
                     remoteFamily: assn?.socket.remoteFamily,
