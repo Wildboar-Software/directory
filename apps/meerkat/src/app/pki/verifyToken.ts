@@ -65,7 +65,7 @@ async function verifyToken (
         ctx.config.signing.bindOverrides,
     );
     if (vacpResult.returnCode !== VCP_RETURN_OK) {
-        return VT_RETURN_CODE_UNTRUSTED;
+        return vacpResult.returnCode;
     }
     if (
         vacpResult.endEntityKeyUsage

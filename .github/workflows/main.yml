@@ -669,16 +669,20 @@ jobs:
             -rand_serial \
             -subj "/CN=dsa01.${{ matrix.dmd }}.${{ env.ZONE }}" \
             -infiles ./tmp/${{ matrix.dmd }}.csr
+      - name: Create Meerkat Signing Certificate Chain
+        run: cat ./tmp/${{ matrix.dmd }}.crt ca.crt > signing.chain.pem
+      - name: Create Meerkat TLS Certificate Chain
+        run: cat ./tmp/${{ matrix.dmd }}.crt ca.crt > tls.chain.pem
       - name: Create Meerkat Signing Secret
         run: |
           kubectl create secret tls meerkat-${{ matrix.dmd }}-signing \
-            --cert=./tmp/${{ matrix.dmd }}.crt \
+            --cert=signing.chain.pem \
             --key=./tmp/${{ matrix.dmd }}.key \
             --namespace=${{ env.NAMESPACE }}
       - name: Create Meerkat TLS Secret
         run: |
           kubectl create secret tls meerkat-${{ matrix.dmd }}-tls \
-            --cert=./tmp/${{ matrix.dmd }}.crt \
+            --cert=tls.chain.pem \
             --key=./tmp/${{ matrix.dmd }}.key \
             --namespace=${{ env.NAMESPACE }}
       - name: Add Wildboar Helm Repo

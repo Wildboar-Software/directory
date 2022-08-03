@@ -181,11 +181,15 @@ async function attemptStrongAuth (
         const logMessageContext = ({
             [VT_RETURN_CODE_MALFORMED]: "malformed",
             [VT_RETURN_CODE_INVALID_SIG]: "invalid_sig",
-            [VT_RETURN_CODE_UNTRUSTED]: "untrusted",
+            // [VT_RETURN_CODE_UNTRUSTED]: "untrusted",
         })[tokenResult];
         if (logMessageContext) {
             ctx.log.debug(ctx.i18n.t("log:strong_cred_error", {
                 context: logMessageContext,
+            }));
+        } else if (tokenResult < 0) {
+            ctx.log.debug(ctx.i18n.t("log:strong_cred_error", {
+                context: tokenResult.toString(),
             }));
         }
         switch (tokenResult) {
