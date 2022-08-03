@@ -9,7 +9,20 @@ is used. See [here](./signing.md) for information on configuring signing.
 
 ## TLS Configuration
 
-TLS can be configured via the following environment variables:
+Almost all TLS-related environment variables start with `MEERKAT_TLS_`. Review
+these environment variables [here](./env.md#meerkattlsanswerocsprequests) for
+information on specific configuration options.
+
+Your TLS configuration applies to scenarios where Meerkat DSA operates both as a
+server and a client. The only exceptions to this are:
+
+- [`MEERKAT_TLS_REJECT_UNAUTHORIZED_CLIENTS`](./env.md#meerkattlsrejectunauthorizedclients)
+- [`MEERKAT_TLS_REJECT_UNAUTHORIZED_SERVERS`](./env.md#meerkattlsrejectunauthorizedclients)
+
+Which, as their names imply, operate differently depending on whether Meerkat
+DSA acts as a TLS client or server.
+
+At minimum, TLS can be configured via the following environment variables:
 
 - `MEERKAT_TLS_CERT_FILE`
 - `MEERKAT_TLS_KEY_FILE`
@@ -26,8 +39,6 @@ enabled. Otherwise, TLS will silently fail.
 If either the key file or PFX file are password-protected, these can be
 decrypted by supplying the passphrase in the `MEERKAT_TLS_KEY_PASSPHRASE`
 environment variable.
-
-Almost all TLS-related environment variables start with `MEERKAT_TLS_`.
 
 You can configure your trust anchors (root certificate authorities) through the
 use of the [`MEERKAT_TLS_CA_FILE`](./env#meerkattlscafile) environment variable.
@@ -57,6 +68,21 @@ As long as you have TLS already configured (as described above), all you need to
 do to enable this is set the environment variable
 [`MEERKAT_TLS_REJECT_UNAUTHORIZED_CLIENTS`](./env.md#meerkattlsrejectunauthorizedclients)
 to `1` (enabled).
+
+:::caution
+
+While TLS client certificate authentication is generally very secure, there are
+risks involved. Namely, you are inviting TLS peers to submit X.509 certificates
+to your TLS socket for validation. These inputs are complicated, and in the
+past, there have been security vulnerabilities discovered in TLS implementations
+whereby maliciously-crafted client certificates could be used to, say, bring
+services offline, read memory, or take control of remote hosts.
+
+See [CVE-2022-0778](https://nvd.nist.gov/vuln/detail/CVE-2022-0778) for an
+example of what could go wrong. Still, if extreme privacy and authentication are
+needed, the benefits of this usually outweigh the risks.
+
+:::
 
 ## Disabling Server Authentication
 

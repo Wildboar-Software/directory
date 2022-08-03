@@ -14,3 +14,7 @@
   and which are sensitive, all entries should have this attribute with the
   default value(s) so that information disclosure vulnerabilities that reveal
   the mere presence of attributes cannot be used to determine their values.
+- Ensure that your DSA is configured to chain operations to other DSAs using
+  strong authentication and TLS, so that the authentication level of chained
+  requests is not downgraded as documented
+  [here](./distributed.md#restrictions-that-apply-to-both).

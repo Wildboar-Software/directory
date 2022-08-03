@@ -1,6 +1,28 @@
 # Networking
 
-## Directory Protocols
+## Preface on Directory Protocols
+
+In TCP/IP networking, there is generally a one-to-one correspondence between a
+TCP port and a protocol. You don't usually listen on a given TCP port for, say,
+both HTTP and FTP and SSH traffic. In directory systems, network transport is
+logically separated from the _session_, such that you can reuse the same
+transport connection to relay multiple protocols. Hence, to clarify the use of
+terminology here, a "transport" means the stack of protocols by which two
+hosts are networked and X.500 operations are relayed between them, and an
+"association" is a logical connection established by a bind operation that is
+transported over a "transport." Within the same transport, multiple associations
+may be made serially (but not in parallel), via binding and unbinding.
+
+This means that, when Meerkat DSA listens for IDM transport on a given TCP port,
+DAP, DOP, DISP, and DSP associations may be established using IDM transport on
+that TCP port. This defies the usual "one-port-per-service" model often used by
+TCP/IP services.
+
+Note that the above does _not_ apply to LDAP, since LDAP is ALWAYS transported
+over "raw" TCP without IDM, ITOT, or any other OSI transport mechanism layered
+on top.
+
+## Directory Transport Protocols
 
 Currently, Meerkat DSA only supports the transport of X.500 protocols via IDM
 or IDMS (IDM encapsulated in TLS).
@@ -38,6 +60,8 @@ knowledge attributes rather than altering the database directly.
 
 ## DNS Configuration
 
+### DNS Records
+
 It is not necessary at all, but for the sake of service discovery, it is
 recommended that you configure DNS for your domain to name your directory as
 a service using `SRV` records. If you want to keep your directory a secret, it
@@ -60,6 +84,27 @@ You will also need A and/or AAAA records corresponding to the hostnames on the
 right hand side of the SRV records.
 
 Again, DNS configuration is NOT required for Meerkat DSA to work.
+
+### DNS Client
+
+Meerkat DSA runs on NodeJS, which uses the `c-ares` library under the hood.
+NodeJS does not expose any functionality for tuning DNS resolution. Fortunately,
+you can tune it using the `RES_OPTIONS` environment variable, which is
+documented [here](https://manpages.ubuntu.com/manpages/kinetic/en/man3/ares_init_options.3.html).
+
+You generally should not mess with this unless you're seeing DNS resolution
+issues. I have personally seen this happen when I change networks while still
+connected to a VPN, but I think this is a pretty uncommon issue.
+
+See [this StackOverflow answer](https://stackoverflow.com/a/45403565/6562635)
+for help.
+
+:::info
+
+This is liable to change if [Bun](https://bun.sh/) proves to be a viable NodeJS
+alternative. I do not know what it uses for DNS under the hood.
+
+:::
 
 ## The Future
 

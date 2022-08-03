@@ -163,3 +163,35 @@ should be defined that:
   against the directory (e.g. trying to exploit a bug in access control by
   using aliases or attempting to enumerate entries with timing attacks via the
   `hierarchyParent` attribute validation.)
+
+## Access Control in a Distributed Environment
+
+Meerkat DSA makes access control decisions based upon local information, but, in
+a distributed environment, authentication information may come from other DSAs.
+How this authentication information itself is authenticated is a topic in its
+own right, which is documented
+[here](./distributed.md#authentication-of-distributed-operations).
+
+## Setting the Local Qualifier of a Client
+
+The meaning of the `localQualifier` component of the `AuthenticationLevel` as
+described in [ITU Recommendation X.501 (2019)](https://www.itu.int/rec/T-REC-X.501/en),
+Section 18.4.2.3, is left to DSA implementations. In Meerkat DSA the
+`localQualifier` is given a value depending on the level of transport security
+that is used to protect a connection with a client.
+
+The `localQualifier` is a simple integer, and Meerkat DSA adds "points" to this
+integer, depending on configuration. A different number of points may be granted
+for more or less secure transports. For instance, TLSv1.3 could be (and usually
+should be) granted more `localQualifier` "points" than SSLv3, which is
+completely insecure (but better than nothing).
+
+The environment variables that are used to configure the `localQualifier` are:
+
+- [`MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_SSL3`](./env.md#meerkatlocalqualifierpointsforusingssl3)
+- [`MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_STARTTLS`](./env.md#meerkatlocalqualifierpointsforusingstarttls)
+- [`MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS`](./env.md#meerkatlocalqualifierpointsforusingtls)
+- [`MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_0`](./env.md#meerkatlocalqualifierpointsforusingtls10)
+- [`MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_1`](./env.md#meerkatlocalqualifierpointsforusingtls11)
+- [`MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_2`](./env.md#meerkatlocalqualifierpointsforusingtls12)
+- [`MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_3`](./env.md#meerkatlocalqualifierpointsforusingtls13)

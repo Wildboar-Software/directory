@@ -31,6 +31,19 @@ At minimum, you MUST define a
 Notably, Meerkat DSA determines its Application Entity Title (AE-Title) from the
 signing certificate. (NOT the TLS certificate.)
 
+You will probably also want to define a separate set of trust anchors for
+signing than for TLS. You can do this via the
+[`MEERKAT_SIGNING_CA_FILE`](./env.md#meerkatsigningcafile) and
+[`MEERKAT_TRUST_ANCHORS_FILE`](./env.md#meerkattrustanchorsfile) environment
+variables.
+
+:::caution
+
+If you do not configure signing trust anchors, the same trust anchors used for
+TLS will be used to verify digital signatures on arguments, results, and errors.
+
+:::
+
 By default, Meerkat DSA will check neither remote CRLs (given in an X.509
 certificate's `cRLDistributionPoints` extension) nor OCSP responders for the
 validity of a certificate used in signing unless these are turned on using the

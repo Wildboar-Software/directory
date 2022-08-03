@@ -135,3 +135,52 @@ UUID can be used to correlate the UUID to all of these data.
 
 Also, it makes it easier to redact Personally-Identifiable Information (PII), if
 IP addresses count as such.
+
+## "What is this COULD_BAN I see in the log messages?"
+
+It is inevitable that, if a valuable directory service is created, nefarious
+users will attempt to hack it. Log messages that _could_ indicate malicious
+behavior are prefixed with `COULD_BAN=` followed by the IPv6 and IPv4 addresses
+of the offending client. This easily identifiable and parseable pattern is
+deliberately added so that Meerkat DSA log messages can be parsed by tools like
+[Fail2Ban](https://www.fail2ban.org/wiki/index.php/Main_Page), so that offending
+IP addresses can be blocked.
+
+:::caution
+
+If you are using a reverse proxy, such as Nginx, these IP addresses might be for
+the proxy and not for the actual offending client. If you automatically block IP
+addresses using Fail2Ban and these IP addresses are for the reverse proxy,
+you'll inadvertently block all traffic from your reverse proxy, which will make
+your DSA inaccessible to everybody!
+
+:::
+
+## "Who Caused This Error?"
+
+- In the error, you should see a UUID, which is the association ID.
+- Scroll up in the logs until you find the host name that corresponds to this.
+
+In this case below, the UUID `b64d9434-c760-48ce-a287-1b0ae549138b` belongs to
+a Directory Access Protocol (DAP) association that originated from the IP
+address `127.0.0.1` (the localhost), with the remote port being `42692`.
+
+```
+2022-07-26T02:01:01.104Z [info]:        IPv6:::ffff:127.0.0.1:42692: IDM transport established.
+2022-07-26T02:01:02.115Z [info]:        IPv6://::ffff:127.0.0.1/42692: DAP association b64d9434-c760-48ce-a287-1b0ae549138b bound anonymously.
+2022-07-26T02:01:02.133Z [debug]:       Received DAP request with invoke ID 2140052278 and operation 1 from connection b64d9434-c760-48ce-a287-1b0ae549138b.
+2022-07-26T02:01:02.149Z [warn]:        b64d9434-c760-48ce-a287-1b0ae549138b/2140052278: NameError Target entry not found.
+```
+
+Note that, if you are seeking to prosecute nefarious users that exhibit illegal,
+malicious behavior towards your directory infrastructure, you should retain both
+the IP address and the port number, since the user of
+Network Address Translation (NAT) means that the one or more people or devices
+could be sharing that IP address.
+
+:::caution
+
+If you are using a reverse proxy, such as Nginx, in front of your Meerkat DSA
+instance, make the IP addresses you are preserving are not for the proxy!
+
+:::

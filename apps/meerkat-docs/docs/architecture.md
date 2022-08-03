@@ -80,3 +80,10 @@ The benefit of doing this is the avoidance of bugs resulting from incorrect
 implementation and that most of the code in `apps/meerkat/src/app/distributed/`
 is effectively "already documented" by the steps of the procedures defined in
 ITU Recommendation X.518.
+
+## Why target ES2019?
+
+As of the current version of Nx and/or Webpack I am using, optional chaining
+gets _removed_ from the transpiled output if you use ES2020 or higher as your
+build target. I think this should be fixed with an update to the latest version
+of Nx.

@@ -86,3 +86,14 @@ entire DSA, using the environment variables starting with `MEERKAT_TLS_`.
 The only case in which you should _not_ enable TLS for the web admin console is
 if you are using an HTTPS-enabled reverse proxy, such as Nginx, Caddy, or
 Apache Web Server.
+
+## API
+
+The web admin console uses an HTML forms-based API to implement server-side
+functionality. **DO NOT** automate tasks using this API. There are **NO**
+guarantees of stability. These APIs may be changed in any release, without
+warning, without changelog entries, and without prior deprecation. These APIs
+are for use by the web admin console's user interface only.
+
+If you want to automate things like accepting operational bindings or
+hibernation, contact Wildboar Software.
