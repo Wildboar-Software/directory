@@ -141,6 +141,7 @@ data:
   signing_bind_ocsp_unknown_is_failure: {{ .Values.signing_bind_ocsp_unknown_is_failure | ternary 1 0 | quote }}
   signing_bind_remote_crl_cache_ttl: {{ .Values.signing_bind_remote_crl_cache_ttl | default 3600 | quote }}
   signing_bind_remote_crl_checkiness: {{ .Values.signing_bind_remote_crl_checkiness | default 0 | quote }}
+  signing_bind_remote_crl_size_limit: {{ .Values.signing_bind_remote_crl_size_limit | default "1000000" | quote }}
   {{- if .Values.signing_bind_remote_crl_supported_protocols }}
   # NOTE: The `join` function is not documented currently.
   # See: https://stackoverflow.com/questions/47668793/helm-generate-comma-separated-list
@@ -175,7 +176,6 @@ data:
   {{- end }}
   signing_remote_crl_cache_ttl: {{ .Values.signing_remote_crl_cache_ttl | default 3600 | quote }}
   signing_remote_crl_checkiness: {{ .Values.signing_remote_crl_checkiness | default 0 | quote }}
-  # FIXME: Bind equivalent not defined
   signing_remote_crl_size_limit: {{ .Values.signing_remote_crl_size_limit | default "1000000" | quote }}
   {{- if .Values.signing_remote_crl_supported_protocols }}
   # NOTE: The `join` function is not documented currently.

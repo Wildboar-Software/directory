@@ -576,6 +576,12 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: signing_bind_remote_crl_checkiness
                   optional: true
+            - name: MEERKAT_SIGNING_BIND_REMOTE_CRL_SIZE_LIMIT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_bind_remote_crl_size_limit
+                  optional: true
             - name: MEERKAT_SIGNING_BIND_REMOTE_CRL_SUPPORTED_PROTOCOLS
               valueFrom:
                 configMapKeyRef:

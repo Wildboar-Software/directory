@@ -866,6 +866,15 @@ for the bind operation for all application contexts / protocols.
 In the case of DAP, DSP, DOP, and DISP, this governs the validation of the
 bind token used in strong authentication.
 
+## MEERKAT_SIGNING_BIND_REMOTE_CRL_SIZE_LIMIT
+
+This environment variable overrides the value of
+`MEERKAT_SIGNING_REMOTE_CRL_SIZE_LIMIT`
+for the bind operation for all application contexts / protocols.
+
+In the case of DAP, DSP, DOP, and DISP, this governs the validation of the
+bind token used in strong authentication.
+
 ## MEERKAT_SIGNING_BIND_REMOTE_CRL_SUPPORTED_PROTOCOLS
 
 This environment variable overrides the value of

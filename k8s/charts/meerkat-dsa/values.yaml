@@ -191,6 +191,7 @@ signing_bind_ocsp_timeout: 5
 signing_bind_ocsp_unknown_is_failure: true
 signing_bind_remote_crl_cache_ttl: 3600
 signing_bind_remote_crl_checkiness: 0
+signing_bind_remote_crl_size_limit: "1000000"
 signing_bind_remote_crl_supported_protocols:
   - "http"
   - "https"
@@ -225,7 +226,6 @@ signing_ocsp_unknown_is_failure: true
 #   - "2.5.4.3"
 signing_remote_crl_cache_ttl: 3600
 signing_remote_crl_checkiness: 0
-# FIXME: Bind equivalent not defined
 signing_remote_crl_size_limit: "1000000"
 signing_remote_crl_supported_protocols:
   - "http"
