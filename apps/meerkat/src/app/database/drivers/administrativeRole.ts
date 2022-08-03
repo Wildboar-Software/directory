@@ -77,7 +77,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             select: {
                 DITStructureRule: {
                     where: {
-                        superiorStructureRules: Prisma.DbNull,
+                        superiorStructureRules: null,
                     },
                     select: {
                         ruleIdentifier: true,
