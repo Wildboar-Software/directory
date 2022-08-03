@@ -128,6 +128,7 @@ import type {
 import type {
     OBJECT_CLASS,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
+import stringifyDN from "./stringifyDN";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
@@ -326,7 +327,10 @@ async function validateEntry (
 
     if (isFirstLevel) {
         if (!await mayAddTopLeveDSE(ctx, assn)) {
-            ctx.log.debug(ctx.i18n.t("log:not_authz_to_add_top_level", { context: "hint" }), {
+            ctx.log.debug(ctx.i18n.t("log:not_authz_to_add_top_level", {
+                context: "hint",
+                dn: stringifyDN(ctx, [ rdn ]),
+            }), {
                 remoteFamily: assn.socket.remoteFamily,
                 remoteAddress: assn.socket.remoteAddress,
                 remotePort: assn.socket.remotePort,

@@ -709,6 +709,8 @@ jobs:
             --set tlsSecretName=meerkat-${{ matrix.dmd }}-tls \
             --set tlsCaConfigName=${{ env.DEMO_TRUST_ANCHOR_CONFIG_NAME }} \
             --set web_admin_use_tls=false \
+            --set enable_dop=true \
+            --set enable_dsp=true \
             --atomic \
             --namespace=${{ env.NAMESPACE }}
       - name: Wait 30 Seconds for Public IP to be Allocated

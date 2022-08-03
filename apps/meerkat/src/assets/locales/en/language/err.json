@@ -12,7 +12,7 @@
     "time_limit": "Could not complete operation within requested time limit.",
     "could_not_add_entry_to_remote_dsa": "Could not add entry to remote DSA specified as targetSystem.",
     "not_authz_to_add_entry": "Not authorized to add this entry.",
-    "not_authz_to_add_top_level": "Not authorized to add any entry to the top level.",
+    "not_authz_to_add_top_level": "Not authorized to add this entry to the top level: {{dn}}",
     "not_authz_to_create_attr_type": "Not authorized to create attribute of type {{type}}.",
     "not_authz_to_create_attr_value": "Not authorized to create one of the values of attribute type {{type}}.",
     "unrecognized_attribute_type": "Unrecognized attribute types: {{oids}}.",
