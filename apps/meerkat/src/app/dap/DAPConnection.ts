@@ -60,7 +60,6 @@ import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
 import getContinuationReferenceStatistics from "../telemetry/getContinuationReferenceStatistics";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { EventEmitter } from "events";
-import encodeLDAPDN from "../ldap/encodeLDAPDN";
 import { differenceInMilliseconds } from "date-fns";
 import * as crypto from "crypto";
 import sleep from "../utils/sleep";
@@ -114,6 +113,7 @@ import {
 import {
     _encode_DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as _encode_DBE_Param,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
+import stringifyDN from "../x500/stringifyDN";
 
 /**
  * @summary The handles a request, but not errors
@@ -597,7 +597,7 @@ class DAPAssociation extends ClientAssociation {
                 protocol: "DAP",
                 aid: this.id,
                 dn: this.boundNameAndUID?.dn
-                    ? encodeLDAPDN(ctx, this.boundNameAndUID.dn)
+                    ? stringifyDN(ctx, this.boundNameAndUID.dn)
                     : "",
             }), extraLogData);
         }
