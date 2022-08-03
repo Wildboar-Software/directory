@@ -45,6 +45,7 @@ import {
     id_ar_subschemaAdminSpecificArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-subschemaAdminSpecificArea.va";
 import {
+    commonName,
     subentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa";
 import {
@@ -820,9 +821,17 @@ function addPasswordAdminSubentryArgument (
     };
 }
 
+// TODO: Move these to ./constants.ts.
 const GB_ACCESS_POINT = new AccessPoint(
     {
-        rdnSequence: [],
+        rdnSequence: [
+            [
+                new AttributeTypeAndValue(
+                    commonName["&id"],
+                    _encodeUTF8String("dsa01.gb.mkdemo.wildboar.software", DER),
+                ),
+            ],
+        ],
     },
     new PresentationAddress(
         undefined,
@@ -844,7 +853,14 @@ const GB_ACCESS_POINT = new AccessPoint(
 
 const RU_ACCESS_POINT = new AccessPoint(
     {
-        rdnSequence: [],
+        rdnSequence: [
+            [
+                new AttributeTypeAndValue(
+                    commonName["&id"],
+                    _encodeUTF8String("dsa01.ru.mkdemo.wildboar.software", DER),
+                ),
+            ],
+        ],
     },
     new PresentationAddress(
         undefined,
