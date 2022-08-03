@@ -124,10 +124,10 @@ async function connect (
         },
         events: new EventEmitter(),
     };
-    idm.events.on("error_", (e) => {
-        console.error(e);
-        ret.events.emit("error", undefined);
-    });
+    // idm.events.on("error_", (e) => {
+    //     console.error(e);
+    //     ret.events.emit("error", undefined);
+    // });
     idm.events.on("reject", () => {
         ret.events.emit("error", undefined);
         // console.log("REJECTED.");
