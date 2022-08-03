@@ -150,10 +150,10 @@ jobs:
         # same between pipeline runs, so most attempted publishing will fail due
         # to duplicate version numbers.
       - name: Publish NPM Package
-        run: npm publish || true
-        working-directory: ./dist/libs/${{ matrix.library }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        uses: JS-DevTools/npm-publish@v1
+        with:
+          package: ./dist/libs/${{ matrix.library }}/package.json
+          token: ${{ secrets.NPM_TOKEN }}
 
   build_meerkat_dsa:
     name: Build Meerkat DSA
@@ -706,6 +706,7 @@ jobs:
             --set dangerouslyExposeWebAdmin=true \
             --set databaseSecretName=meerkat-${{ matrix.dmd }}-db \
             --set signingSecretName=meerkat-${{ matrix.dmd }}-signing \
+            --set signingCaConfigName=${{ env.DEMO_TRUST_ANCHOR_CONFIG_NAME }} \
             --set tlsSecretName=meerkat-${{ matrix.dmd }}-tls \
             --set tlsCaConfigName=${{ env.DEMO_TRUST_ANCHOR_CONFIG_NAME }} \
             --set web_admin_use_tls=false \
