@@ -58,7 +58,7 @@
     "checking_if_name_taken_in_nssr": "Checking if name is taken in NSSR via DSP operation {{opid}}.",
     "continuing_name_resolution": "Continuing name resolution via DSP operation {{opid}}.",
     "received_chained_operation": "Received chained operation with identifier {{opid}} from association {{cid}}.",
-    "not_authz_to_add_top_level@hint": "To be able to add an entry to the top level in Meerkat DSA, the environment variable MEERKAT_OPEN_TOP_LEVEL must be set to '1', or there must be entries in this DSA with passwords, or you must be authenticated non-anonymously as an entry that has the boolean may_add_top_level_dse set. The first entry created in this DSA with a password will have this flag set automatically.",
+    "not_authz_to_add_top_level@hint": "To be able to add an entry to the top level in Meerkat DSA, the environment variable MEERKAT_OPEN_TOP_LEVEL must be set to '1', or there must be entries in this DSA with passwords, or you must be authenticated non-anonymously as an entry that has the boolean may_add_top_level_dse set. The first entry created in this DSA with a password will have this flag set automatically. This was the DN: {{dn}}",
     "operation_progress_not_understood": "OperationProgress value {{value}} not understood from association {{cid}}.",
     "timed_out_connecting_to_naddr": "Timed out binding to network address {{uri}}.",
     "trying_naddr": "Trying to bind to network address {{uri}}.",

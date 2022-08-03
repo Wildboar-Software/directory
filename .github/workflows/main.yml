@@ -335,7 +335,7 @@ jobs:
         run: kubectl delete secret meerkat-${{ matrix.dmd }}-tls -n ${{ env.NAMESPACE }}
         continue-on-error: true
       - name: Delete MySQL Database Data
-        run: kubectl delete pvc data-meerkat-db-${{ matrix.dmd }}-mysql-0 -n ${{ env.NAMESPACE }}
+        run: kubectl delete pvc data-meerkat-db-mysql-0 -n ${{ env.NAMESPACE }}
         continue-on-error: true
       - name: Delete DSA DNS Record
         run: |
