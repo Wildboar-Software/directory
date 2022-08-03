@@ -119,3 +119,15 @@ specified in the X.500 specifications, so other DSA implementations may not
 conform to the behavior described above.
 
 :::
+
+## Authentication to Other DSAs
+
+If signing is configured, Meerkat DSA will use its signing certificate and key
+to attempt strong authentication to every single DSA to which it chains. If this
+fails, Meerkat DSA will attempt credentials that are stored in the
+`AccessPointCredentials` table in the DBMS, if the targeted access point has
+configured credentials stored there. Otherwise, one last attempt will be made
+with an anonymous bind.
+
+Populating the `AccessPointCredentials` table has to be done manually. There is
+no way to do this using Meerkat DSA (including the web admin console), currently.

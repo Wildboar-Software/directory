@@ -69,6 +69,8 @@ set to `1` (enabled), Meerkat DSA will staple OCSP requests in the TLS
 handshake. This option does not affect how Meerkat DSA validates other TLS or
 signing peers.
 
+Meerkat DSA only responds to OCSP requests over implicit TLS (not StartTLS).
+
 ## Server-Based Certificate Validation Protocol (SCVP)
 
 Meerkat DSA does not currently support

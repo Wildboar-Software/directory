@@ -103,3 +103,15 @@ TLS; anybody can impersonate the server. If you disable server authentication
 
 Enabling TLS is also critical for securing your web admin console (if enabled).
 See more information [here](./webadmin.md#tls).
+
+## Setting the Local Qualifier
+
+The meaning of the `localQualifier` component of the `AuthenticationLevel` as
+described in [ITU Recommendation X.501 (2019)](https://www.itu.int/rec/T-REC-X.501/en),
+Section 18.4.2.3, is left to DSA implementations. In Meerkat DSA the
+`localQualifier` is given a value depending on the level of transport security
+that is used to protect a connection with a client.
+
+See [here](./authorization.md#setting-the-local-qualifier-of-a-client) for
+documentation on how to configure how your DSA sets the `localQualifier` for a
+given client.

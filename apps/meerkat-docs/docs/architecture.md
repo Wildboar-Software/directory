@@ -67,6 +67,20 @@ calls.
 
 Examples of this pattern can be seen in OpenSSL and Postfix.
 
+Another advantage of this pattern is that, configuration information is
+sometimes not available in an immediately useful format. Take X.509 certificates
+for example. They are not stored in a format that can be copied-and-pasted
+directly into memory: they have to be decoded / deserialized. To add to this,
+they are often PEM-encoded too. If every function directly read configuration
+from a configuration file, every usage of a given X.509 certificate would
+require removing the PEM encoding, then parsing the resulting DER encoding.
+
+Instead, this "context object" pattern abstracts away the configuration from the
+medium in which it is stored. Configuration in the context object is always
+kept in its most readily useful form. On start up, this context object is
+populated once from the configuration source, whether it is a file, environment
+variables, or something else.
+
 ## X.518 Procedures
 
 Almost all of the procedures in ITU Recommendation X.518 are represented as a

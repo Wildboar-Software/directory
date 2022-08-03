@@ -602,15 +602,15 @@ spec:
                   optional: true
             {{- if .Values.signingCaConfigName }}
             - name: MEERKAT_SIGNING_CA_FILE
-              value: "/data/pki/signing/ca"
+              value: "/data/pki/signing/ca/ca.pem"
             {{- end }}
             {{- if .Values.signingTrustAnchorListConfigName }}
             - name: MEERKAT_TRUST_ANCHORS_FILE
-              value: "/data/pki/signing/tal"
+              value: "/data/pki/signing/tal/tal.cmsc"
             {{- end }}
             {{- if .Values.signingCrlConfigName }}
             - name: MEERKAT_SIGNING_CRL_FILE
-              value: "/data/pki/signing/crl"
+              value: "/data/pki/signing/crl/crl.pem"
             {{- end }}
             - name: MEERKAT_SIGNING_CRL_DP_ATTEMPTS_PER_CERT
               valueFrom:

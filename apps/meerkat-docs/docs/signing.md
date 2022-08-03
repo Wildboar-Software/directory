@@ -207,3 +207,11 @@ invalidate the digital signatures to provide the chained and paginated results,
 and will simply return an error when these conflicting options are chosen.
 
 :::
+
+## Signing of Bind Results
+
+According to
+[ITU Recommendation X.511 (2019)](https://www.itu.int/rec/T-REC-X.511/en),
+Section 9.1.4, Bind errors can be signed if strong authentication or SPKM
+authentication are used. Otherwise, Meerkat DSA will not sign bind errors or
+results.
