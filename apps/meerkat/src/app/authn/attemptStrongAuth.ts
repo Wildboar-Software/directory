@@ -122,11 +122,26 @@ async function attemptStrongAuth (
     }
 
     if (!compareAlgorithmIdentifier(bind_token.algorithmIdentifier, bind_token.toBeSigned.algorithm)) {
-        throw new BindErrorClass(
-            ctx.i18n.t("err:strong_creds_algorithm_mismatch", { host: source }),
-            invalidCredentialsData,
-            signErrors,
-        );
+        if (bind_token.algorithmIdentifier.algorithm.isEqualTo(bind_token.toBeSigned.algorithm.algorithm)) {
+            throw new BindErrorClass(
+                ctx.i18n.t("err:strong_creds_algorithm_parameters_mismatch", {
+                    host: source,
+                    oid: bind_token.algorithmIdentifier.algorithm.toString(),
+                }),
+                invalidCredentialsData,
+                signErrors,
+            );
+        } else {
+            throw new BindErrorClass(
+                ctx.i18n.t("err:strong_creds_algorithm_mismatch", {
+                    host: source,
+                    a: bind_token.algorithmIdentifier.algorithm.toString(),
+                    b: bind_token.toBeSigned.algorithm.algorithm.toString(),
+                }),
+                invalidCredentialsData,
+                signErrors,
+            );
+        }
     }
 
     const namingMatcherGetter = getNamingMatcherGetter(ctx);

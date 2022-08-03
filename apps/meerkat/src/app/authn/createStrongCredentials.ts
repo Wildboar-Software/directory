@@ -7,16 +7,13 @@ import {
     _encode_TokenContent,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TokenContent.ta";
 import {
-    AlgorithmIdentifier,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
-import {
     CertificationPath,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
 import {
     CertificatePair,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificatePair.ta";
 import { keyTypeToAlgOID } from "../pki/keyTypeToAlgOID";
-import { unpackBits } from "asn1-ts";
+import { DERElement, unpackBits } from "asn1-ts";
 import { randomBytes } from "crypto";
 import { generateSIGNED } from "../pki/generateSIGNED";
 import type {
@@ -67,10 +64,17 @@ function createStrongCredentials (
                 undefined,
             )),
     );
+    /**
+     * This is a meaningless call to generateSIGNED() just to get the exact
+     * algorithm identifier that will be used for digital signature.
+     */
+    const pseudoSig = generateSIGNED(ctx, null, () => new DERElement());
+    if (!("signed" in pseudoSig)) {
+        return null;
+    }
+    const algID = pseudoSig.signed.algorithmIdentifier;
     const tokenContent = new TokenContent(
-        new AlgorithmIdentifier(
-            algOID,
-        ),
+        algID,
         intendedRecipient,
         {
             generalizedTime: addSeconds(new Date(), 60), // TODO: Make this time configurable.
