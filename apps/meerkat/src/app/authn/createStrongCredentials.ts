@@ -57,7 +57,7 @@ function createStrongCredentials (
     }
     const certPath: CertificationPath = new CertificationPath(
         endEntityCert,
-        [ ...pkiPath ]
+        [ ...pkiPath.slice(0, -1) ]
             .reverse()
             .map((cert) => new CertificatePair(
                 cert,
