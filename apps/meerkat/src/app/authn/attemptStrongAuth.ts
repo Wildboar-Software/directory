@@ -185,12 +185,14 @@ async function attemptStrongAuth (
         })[tokenResult];
         if (logMessageContext) {
             ctx.log.debug(ctx.i18n.t("log:strong_cred_error", {
+                ...logInfo,
                 context: logMessageContext,
-            }));
+            }), logInfo);
         } else if (tokenResult < 0) {
             ctx.log.debug(ctx.i18n.t("log:strong_cred_error", {
+                ...logInfo,
                 context: tokenResult.toString(),
-            }));
+            }), logInfo);
         }
         switch (tokenResult) {
             case (VT_RETURN_CODE_OK): {
