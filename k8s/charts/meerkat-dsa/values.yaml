@@ -178,10 +178,10 @@ scvp_response_validation_policy_by_ref: false
 # scvp_validation_algorithm_id: "2.5.4.3"
 # scvp_validation_policy_ref_id: "2.5.4.3"
 sentinel_domain: sentinel.meerkat.wildboar.software
-signing_acceptable_cert_policies:
-  - "2.5.4.3"
-signing_bind_acceptable_cert_policies:
-  - "2.5.4.3"
+# signing_acceptable_cert_policies:
+#   - "2.5.4.3"
+# signing_bind_acceptable_cert_policies:
+#   - "2.5.4.3"
 signing_bind_crl_dp_attempts_per_cert: 3
 signing_bind_max_endpoints_per_crl_dp: 3
 signing_bind_ocsp_checkiness: -1
