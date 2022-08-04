@@ -145,7 +145,6 @@ type Guide struct {
 }
 
 /* END_OF_SYMBOL_DEFINITION Guide */ /* START_OF_SYMBOL_DEFINITION Criteria */
-// TODO: CHECK_RECURSIVE_DEFINITION
 // ### ASN.1 Definition:
 //
 // ```asn1
@@ -427,7 +426,6 @@ type UiiFormat struct {
 }
 
 /* END_OF_SYMBOL_DEFINITION UiiFormat */ /* START_OF_SYMBOL_DEFINITION UiiFilter */
-// TODO: CHECK_RECURSIVE_DEFINITION
 // ### ASN.1 Definition:
 //
 // ```asn1

@@ -1296,7 +1296,7 @@ function pickRandom <T> (arr: T[]): T {
 }
 
 function randomPhoneNumber (): string {
-    const d = Array(10).map(() => randomInt(0, 9));
+    const d = Array(10).fill(0).map(() => randomInt(0, 9));
     const type = randomInt(0, 2);
     switch (type) {
         case (0): {
@@ -1390,10 +1390,6 @@ function createMockPersonAttributes (
         new Attribute(
             postOfficeBox["&id"],
             [postOfficeBox.encoderFor["&Type"]!({ uTF8String: cn }, DER)],
-        ),
-        new Attribute(
-            streetAddress["&id"],
-            [streetAddress.encoderFor["&Type"]!({ uTF8String: cn }, DER)],
         ),
         new Attribute(
             facsimileTelephoneNumber["&id"],

@@ -682,7 +682,7 @@ async function checkOCSP (
             break;
         }
         requestBudget--;
-        const { res } = await getOCSPResponse(
+        const ocspResponse = await getOCSPResponse(
             url,
             cert,
             undefined,
@@ -690,6 +690,10 @@ async function checkOCSP (
             signFunction,
             options.ocspResponseSizeLimit,
         );
+        if (!ocspResponse) {
+            return VCP_RETURN_OCSP_OTHER;
+        }
+        const { res } = ocspResponse;
         const verifyResult = await verifyOCSPResponse(ctx, res);
         if (verifyResult === VOR_RETURN_OK) {
             return VCP_RETURN_OK;

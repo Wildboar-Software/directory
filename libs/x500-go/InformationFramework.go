@@ -223,7 +223,6 @@ type ChopSpecification struct {
 type BaseDistance = int64
 
 /* END_OF_SYMBOL_DEFINITION BaseDistance */ /* START_OF_SYMBOL_DEFINITION Refinement */
-// TODO: CHECK_RECURSIVE_DEFINITION
 // ### ASN.1 Definition:
 //
 // ```asn1

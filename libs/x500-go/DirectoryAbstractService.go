@@ -402,7 +402,6 @@ type FamilyEntry struct {
 }
 
 /* END_OF_SYMBOL_DEFINITION FamilyEntry */ /* START_OF_SYMBOL_DEFINITION Filter */
-// TODO: CHECK_RECURSIVE_DEFINITION
 // ### ASN.1 Definition:
 //
 // ```asn1

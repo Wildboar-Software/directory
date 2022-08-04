@@ -147,7 +147,6 @@ type ContextProfile struct {
 }
 
 /* END_OF_SYMBOL_DEFINITION ContextProfile */ /* START_OF_SYMBOL_DEFINITION ContextCombination */
-// TODO: CHECK_RECURSIVE_DEFINITION
 // ### ASN.1 Definition:
 //
 // ```asn1
@@ -178,7 +177,6 @@ type MatchingUse struct {
 }
 
 /* END_OF_SYMBOL_DEFINITION MatchingUse */ /* START_OF_SYMBOL_DEFINITION AttributeCombination */
-// TODO: CHECK_RECURSIVE_DEFINITION
 // ### ASN.1 Definition:
 //
 // ```asn1

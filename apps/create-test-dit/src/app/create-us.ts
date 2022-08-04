@@ -272,7 +272,7 @@ async function seedUS (
             otherObjectClasses.push(seloc.pkiUser["&id"]);
             otherObjectClasses.push(seloc.strongAuthenticationUser["&id"]);
         }
-        const [ rdn, attributes, cn ] = createMockPersonAttributes();
+        const [ rdn, attributes, cn ] = createMockPersonAttributes(otherObjectClasses);
         const dn: DistinguishedName = [
             ...deepDN,
             rdn,

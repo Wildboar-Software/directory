@@ -177,7 +177,6 @@ class DirectoryBindError extends BindError {
 
 }
 
-// FIXME: I don't think this is necessary. This is the same as `DirectoryBindError`.
 export
 class DSABindError extends BindError {
 

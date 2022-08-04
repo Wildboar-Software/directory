@@ -966,7 +966,7 @@ async function main (): Promise<void> {
         app.use(applyXSRFCookie);
         await app.listen(ctx.config.webAdmin.port, () => {
             ctx.log.info(ctx.i18n.t("log:listening", {
-                protocol: "HTTP", // TODO: "HTTPS" if TLS enabled.
+                protocol: ctx.config.webAdmin.useTLS ? "HTTPS" : "HTTP",
                 port: ctx.config.webAdmin.port,
             }));
         });

@@ -149,12 +149,6 @@ async function crlCurlDAP (
     try {
         const readResult = await readDispatcher(arg);
         const data = getOptionallyProtectedValue(readResult);
-        // TODO: Check signature, being mindful of recursion perils.
-        // NOTE: The signature on the read results still should be checked.
-        // Actually, I don't think the signature needs to be checked because the
-        // CRL itself is digitally signed. If somebody wanted to spoof the
-        // signature, they could just return an unsigned result instead.
-        // Also, this _should not_ be signed, since we do not request it.
         return data.entry.information
             ?.flatMap((info) => ("attribute" in info) && (getAttributeSize(info.attribute) <= sizeLimit)
                 ? [

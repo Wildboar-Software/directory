@@ -118,7 +118,7 @@ function getOnOCSPRequestCallback (
             }
             requestBudget--;
             try {
-                const { res } = await getOCSPResponse(
+                const ocspResponse = await getOCSPResponse(
                     url,
                     serverCert,
                     undefined,
@@ -126,6 +126,10 @@ function getOnOCSPRequestCallback (
                     signFunction,
                     options.ocspResponseSizeLimit,
                 );
+                if (!ocspResponse) {
+                    continue;
+                }
+                const { res } = ocspResponse;
                 if (res.responseStatus !== OCSPResponseStatus_successful) {
                     continue;
                 }

@@ -490,7 +490,6 @@ type SDSEContent struct {
 // ```
 type SDSEType = DSEType // DefinedType
 /* END_OF_SYMBOL_DEFINITION SDSEType */ /* START_OF_SYMBOL_DEFINITION Subtree */
-// TODO: CHECK_RECURSIVE_DEFINITION
 // ### ASN.1 Definition:
 //
 // ```asn1

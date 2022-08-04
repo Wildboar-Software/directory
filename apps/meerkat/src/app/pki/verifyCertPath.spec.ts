@@ -46,7 +46,6 @@ const ctx: MeerkatContext = {
             // trustAnchorList: [],
         },
     },
-    // TODO:
 } as MeerkatContext;
 
 const trustAnchorPEM: string = `-----BEGIN CERTIFICATE-----

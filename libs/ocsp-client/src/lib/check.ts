@@ -293,9 +293,9 @@ async function getOCSPResponse (
     timeoutInMilliseconds: number = 5000,
     sign?: SignFunction,
     sizeLimit: number = 10_000,
-): Promise<CheckResponse> {
+): Promise<CheckResponse | null> {
     if (!["http:", "https:"].includes(url.protocol.toLowerCase())) {
-        throw new Error("PROTOCOL_UNSUPPORTED"); // TODO: Create a different error type.
+        return null;
     }
     const ocspReq = (req instanceof OCSPRequest)
         ? req
