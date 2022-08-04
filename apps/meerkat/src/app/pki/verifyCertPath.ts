@@ -211,6 +211,7 @@ import {
     VOR_RETURN_UNKNOWN_INTOLERABLE,
 } from "./verifyOCSPResponse";
 import _ from "lodash";
+import stringifyDN from "../x500/stringifyDN";
 
 export type VCPReturnCode = number;
 export const VCP_RETURN_OK: VCPReturnCode = 0;
@@ -968,6 +969,8 @@ async function verifyBasicPublicKeyCertificateChecks (
         namingMatcher,
     );
     if (!namesMatch) {
+        ctx.log.debug(`Issuer: ${stringifyDN(ctx, issuerCert.toBeSigned.subject.rdnSequence)}`);
+        ctx.log.debug(`Subject: ${stringifyDN(ctx, subjectCert.toBeSigned.issuer.rdnSequence)}`);
         return VCP_RETURN_ISSUER_SUBJECT_MISMATCH;
     }
     const signatureIsValid: boolean | undefined = verifyAltSignature(subjectCert, issuerCert)
