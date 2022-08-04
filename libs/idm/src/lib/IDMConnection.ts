@@ -506,7 +506,7 @@ class IDMConnection {
                 return ret;
             }
             default: {
-                throw new Error();
+                throw new Error("da8f02a7-e69e-446e-8bb9-01680dd6f400");
             }
             }
         })();

@@ -318,14 +318,14 @@ async function handleRequestAndErrors (
             const tbsElement = signedArgElements[0];
             const securityParametersTagNumber: number | undefined = securityParametersTagByOpCode.get(opcode);
             if (securityParametersTagNumber === undefined) {
-                throw new MistypedArgumentError();
+                throw new MistypedArgumentError("d9375ea1-43b1-498e-9a3f-ff8b2da033c2");
             }
             const spElement = tbsElement.sequence.find((el) => (
                 (el.tagClass === ASN1TagClass.context)
                 && (el.tagNumber === securityParametersTagNumber)
             ));
             if (!spElement) {
-                throw new MistypedArgumentError();
+                throw new MistypedArgumentError("0bac794f-6962-4115-8f49-0345591a4a98");
             }
             const securityParameters = _decode_SecurityParameters(spElement);
             const sigAlgElement = signedArgElements[1];
@@ -336,7 +336,7 @@ async function handleRequestAndErrors (
                 || !sigValueElement
                 || !securityParameters.certification_path
             ) {
-                throw new MistypedArgumentError();
+                throw new MistypedArgumentError("0d5a1692-0c8a-4b7e-bd8d-9590e056b907");
             }
             const certPath = securityParameters.certification_path;
             const sigAlg = _decode_AlgorithmIdentifier(sigAlgElement);

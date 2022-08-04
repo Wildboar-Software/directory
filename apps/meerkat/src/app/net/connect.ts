@@ -230,7 +230,7 @@ function getIDMOperationWriter (
                 new Promise<never>((_, reject) => setTimeout(
                     () => {
                         const err = new errors.ServiceError(
-                            `DSA-initiated invocation ${invokeID.toString()} timed out.`,
+                            `DSA-initiated invocation ${invokeID.toString()} timed out.`, // FIXME: i18n
                             new ServiceErrorData(
                                 ServiceProblem_timeLimitExceeded,
                                 [],
@@ -1148,7 +1148,7 @@ async function connectToIdmNaddr (
                         protocolID,
                         _encode_DSABindArgument(new DSABindArgument(
                             cred,
-                            versions, // v1
+                            versions,
                         ), DER),
                         {
                             directoryName: ctx.dsa.accessPoint.ae_title,
@@ -1276,7 +1276,7 @@ async function connectToIdmNaddr (
                         protocolID,
                         _encode_DSABindArgument(new DSABindArgument(
                             cred,
-                            versions, // v1
+                            versions,
                         ), DER),
                         {
                             directoryName: ctx.dsa.accessPoint.ae_title,

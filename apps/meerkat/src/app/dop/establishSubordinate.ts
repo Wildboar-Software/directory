@@ -382,7 +382,7 @@ async function establishSubordinate (
     } catch (e) {
         throw new ServiceError(
             ctx.i18n.t("err:failed_to_establish_hob", {
-                etype: e?.prototype?.name,
+                etype: e?.name,
                 e,
             }),
             new ServiceErrorData(
