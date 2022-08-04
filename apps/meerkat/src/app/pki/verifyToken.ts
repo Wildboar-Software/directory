@@ -61,7 +61,7 @@ async function verifyToken (
     const vacpResult = await verifyAnyCertPath(
         ctx,
         certPath,
-        ctx.config.signing.bindOverrides?.acceptableCertificatePolicies,
+        ctx.config.signing.bindOverrides?.acceptableCertificatePolicies ?? ctx.config.signing.acceptableCertificatePolicies,
         ctx.config.signing.bindOverrides,
     );
     if (vacpResult.returnCode !== VCP_RETURN_OK) {

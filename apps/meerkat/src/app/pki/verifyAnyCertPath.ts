@@ -50,7 +50,7 @@ function verifyAnyCertPath (
         ],
         initial_permitted_subtrees_set: [],
         initial_excluded_subtrees_set: [],
-        initial_explicit_policy: !!acceptableCertificatePolicies,
+        initial_explicit_policy: !!acceptableCertificatePolicies?.length,
         initial_inhibit_any_policy: false,
         initial_policy_mapping_inhibit: false,
         initial_policy_set: acceptableCertificatePolicies ?? [ anyPolicy ],
