@@ -386,6 +386,20 @@
                 }
             },
             "tags": []
+        },
+        "x500-go": {
+            "root": "libs/x500-go",
+            "projectType": "library",
+            "sourceRoot": "libs/x500-go",
+            "targets": {
+                "test": {
+                    "executor": "@nx-go/nx-go:test"
+                },
+                "lint": {
+                    "executor": "@nx-go/nx-go:lint"
+                }
+            },
+            "tags": []
         }
     },
     "$schema": "./node_modules/nx/schemas/workspace-schema.json"

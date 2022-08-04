@@ -28,9 +28,9 @@
   },
   "private": true,
   "dependencies": {
-    "@docusaurus/core": "2.0.0-beta.13",
-    "@docusaurus/plugin-pwa": "2.0.0-beta.13",
-    "@docusaurus/preset-classic": "2.0.0-beta.13",
+    "@docusaurus/core": "2.0.1",
+    "@docusaurus/plugin-pwa": "2.0.1",
+    "@docusaurus/preset-classic": "2.0.1",
     "@mdx-js/react": "^1.6.21",
     "@nestjs/common": "^8.4.1",
     "@nestjs/config": "^2.0.0",
@@ -88,7 +88,7 @@
     "yargs": "^17.3.1"
   },
   "devDependencies": {
-    "@docusaurus/module-type-aliases": "2.0.0-beta.13",
+    "@docusaurus/module-type-aliases": "2.0.1",
     "@nrwl/cli": "14.5.2",
     "@nrwl/eslint-plugin-nx": "14.5.2",
     "@nrwl/jest": "14.5.2",
@@ -97,7 +97,8 @@
     "@nrwl/node": "14.5.2",
     "@nrwl/nx-cloud": "14.3.0",
     "@nrwl/workspace": "14.5.2",
-    "@nx-plus/docusaurus": "^13.0.0",
+    "@nx-go/nx-go": "^2.6.0",
+    "@nx-plus/docusaurus": "^14.1.0",
     "@types/cookie-parser": "^1.4.3",
     "@types/csurf": "^1.11.2",
     "@types/escape-html": "^1.0.1",
@@ -120,6 +121,7 @@
     "eslint-config-prettier": "8.3.0",
     "jest": "27.5.1",
     "json-schema-to-typescript": "^10.1.5",
+    "nx": "14.5.2",
     "prettier": "2.7.1",
     "prisma": "^4.1.1",
     "sloc": "^0.2.1",
@@ -127,8 +129,7 @@
     "ts-node": "10.8.2",
     "tslib": "^2.3.1",
     "typescript": "4.7.4",
-    "webpack-merge": "^5.8.0",
-    "nx": "14.5.2"
+    "webpack-merge": "^5.8.0"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} apps/meerkat/src/prisma/seed.ts"
