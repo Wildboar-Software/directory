@@ -1,5 +1,6 @@
-module.exports = {
-    displayName: 'x500-functional-tests',
+/* eslint-disable */
+export default {
+    displayName: 'ldap-socket',
     preset: '../../jest.preset.js',
     globals: {
         'ts-jest': {
@@ -11,5 +12,5 @@ module.exports = {
         '^.+\\.[tj]sx?$': 'ts-jest',
     },
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
-    coverageDirectory: '../../coverage/libs/x500-functional-tests',
+    coverageDirectory: '../../coverage/libs/ldap-socket',
 };

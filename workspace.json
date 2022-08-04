@@ -2,12 +2,13 @@
     "version": 2,
     "projects": {
         "create-test-dit": {
+            "$schema": "../../node_modules/nx/schemas/project-schema.json",
             "root": "apps/create-test-dit",
             "sourceRoot": "apps/create-test-dit/src",
             "projectType": "application",
             "targets": {
                 "build": {
-                    "executor": "@nrwl/node:build",
+                    "executor": "@nrwl/node:webpack",
                     "outputs": ["{options.outputPath}"],
                     "options": {
                         "outputPath": "dist/apps/create-test-dit",
@@ -24,7 +25,7 @@
                     }
                 },
                 "serve": {
-                    "executor": "@nrwl/node:execute",
+                    "executor": "@nrwl/node:node",
                     "options": {
                         "buildTarget": "create-test-dit:build"
                     }
@@ -40,7 +41,7 @@
                     "executor": "@nrwl/jest:jest",
                     "outputs": ["coverage/apps/create-test-dit"],
                     "options": {
-                        "jestConfig": "apps/create-test-dit/jest.config.js",
+                        "jestConfig": "apps/create-test-dit/jest.config.ts",
                         "passWithNoTests": true
                     }
                 }
@@ -48,12 +49,13 @@
             "tags": []
         },
         "idm": {
+            "$schema": "../../node_modules/nx/schemas/project-schema.json",
             "root": "libs/idm",
             "sourceRoot": "libs/idm/src",
             "projectType": "library",
             "targets": {
                 "build": {
-                    "executor": "@nrwl/node:package",
+                    "executor": "@nrwl/js:tsc",
                     "outputs": ["{options.outputPath}"],
                     "options": {
                         "outputPath": "dist/libs/idm",
@@ -74,7 +76,7 @@
                     "executor": "@nrwl/jest:jest",
                     "outputs": ["coverage/libs/idm"],
                     "options": {
-                        "jestConfig": "libs/idm/jest.config.js",
+                        "jestConfig": "libs/idm/jest.config.ts",
                         "passWithNoTests": true
                     }
                 }
@@ -82,12 +84,13 @@
             "tags": []
         },
         "ldap-socket": {
+            "$schema": "../../node_modules/nx/schemas/project-schema.json",
             "root": "libs/ldap-socket",
             "sourceRoot": "libs/ldap-socket/src",
             "projectType": "library",
             "targets": {
                 "build": {
-                    "executor": "@nrwl/node:package",
+                    "executor": "@nrwl/js:tsc",
                     "outputs": ["{options.outputPath}"],
                     "options": {
                         "outputPath": "dist/libs/ldap-socket",
@@ -108,7 +111,7 @@
                     "executor": "@nrwl/jest:jest",
                     "outputs": ["coverage/libs/ldap-socket"],
                     "options": {
-                        "jestConfig": "libs/ldap-socket/jest.config.js",
+                        "jestConfig": "libs/ldap-socket/jest.config.ts",
                         "passWithNoTests": true
                     }
                 }
@@ -116,12 +119,13 @@
             "tags": []
         },
         "meerkat": {
+            "$schema": "../../node_modules/nx/schemas/project-schema.json",
             "root": "apps/meerkat",
             "sourceRoot": "apps/meerkat/src",
             "projectType": "application",
             "targets": {
                 "build": {
-                    "executor": "@nrwl/node:build",
+                    "executor": "@nrwl/node:webpack",
                     "outputs": ["{options.outputPath}"],
                     "options": {
                         "outputPath": "dist/apps/meerkat",
@@ -151,7 +155,7 @@
                     }
                 },
                 "serve": {
-                    "executor": "@nrwl/node:execute",
+                    "executor": "@nrwl/node:node",
                     "options": {
                         "buildTarget": "meerkat:build",
                         "inspect": "inspect",
@@ -169,7 +173,7 @@
                     "executor": "@nrwl/jest:jest",
                     "outputs": ["coverage/apps/meerkat"],
                     "options": {
-                        "jestConfig": "apps/meerkat/jest.config.js",
+                        "jestConfig": "apps/meerkat/jest.config.ts",
                         "passWithNoTests": true
                     }
                 }
@@ -177,6 +181,7 @@
             "tags": []
         },
         "meerkat-docs": {
+            "$schema": "../../node_modules/nx/schemas/project-schema.json",
             "root": "apps/meerkat-docs",
             "projectType": "application",
             "sourceRoot": "apps/meerkat-docs/src",
@@ -197,12 +202,13 @@
             "tags": []
         },
         "meerkat-types": {
+            "$schema": "../../node_modules/nx/schemas/project-schema.json",
             "root": "libs/meerkat-types",
             "sourceRoot": "libs/meerkat-types/src",
             "projectType": "library",
             "targets": {
                 "build": {
-                    "executor": "@nrwl/node:package",
+                    "executor": "@nrwl/js:tsc",
                     "outputs": ["{options.outputPath}"],
                     "options": {
                         "outputPath": "dist/libs/meerkat-types",
@@ -223,7 +229,7 @@
                     "executor": "@nrwl/jest:jest",
                     "outputs": ["coverage/libs/meerkat-types"],
                     "options": {
-                        "jestConfig": "libs/meerkat-types/jest.config.js",
+                        "jestConfig": "libs/meerkat-types/jest.config.ts",
                         "passWithNoTests": true
                     }
                 }
@@ -231,12 +237,13 @@
             "tags": []
         },
         "ocsp-client": {
+            "$schema": "../../node_modules/nx/schemas/project-schema.json",
             "root": "libs/ocsp-client",
             "sourceRoot": "libs/ocsp-client/src",
             "projectType": "library",
             "targets": {
                 "build": {
-                    "executor": "@nrwl/node:package",
+                    "executor": "@nrwl/js:tsc",
                     "outputs": ["{options.outputPath}"],
                     "options": {
                         "outputPath": "dist/libs/ocsp-client",
@@ -257,7 +264,7 @@
                     "executor": "@nrwl/jest:jest",
                     "outputs": ["coverage/libs/ocsp-client"],
                     "options": {
-                        "jestConfig": "libs/ocsp-client/jest.config.js",
+                        "jestConfig": "libs/ocsp-client/jest.config.ts",
                         "passWithNoTests": true
                     }
                 }
@@ -265,12 +272,13 @@
             "tags": []
         },
         "x500-cli": {
+            "$schema": "../../node_modules/nx/schemas/project-schema.json",
             "root": "apps/x500-cli",
             "sourceRoot": "apps/x500-cli/src",
             "projectType": "application",
             "targets": {
                 "build": {
-                    "executor": "@nrwl/node:build",
+                    "executor": "@nrwl/node:webpack",
                     "outputs": ["{options.outputPath}"],
                     "options": {
                         "outputPath": "dist/apps/x500-cli",
@@ -295,7 +303,7 @@
                     }
                 },
                 "serve": {
-                    "executor": "@nrwl/node:execute",
+                    "executor": "@nrwl/node:node",
                     "options": {
                         "buildTarget": "x500-cli:build"
                     }
@@ -311,7 +319,7 @@
                     "executor": "@nrwl/jest:jest",
                     "outputs": ["coverage/apps/x500-cli"],
                     "options": {
-                        "jestConfig": "apps/x500-cli/jest.config.js",
+                        "jestConfig": "apps/x500-cli/jest.config.ts",
                         "passWithNoTests": true
                     }
                 }
@@ -319,12 +327,13 @@
             "tags": []
         },
         "x500-cli-config": {
+            "$schema": "../../node_modules/nx/schemas/project-schema.json",
             "root": "libs/x500-cli-config",
             "sourceRoot": "libs/x500-cli-config/src",
             "projectType": "library",
             "targets": {
                 "build": {
-                    "executor": "@nrwl/node:package",
+                    "executor": "@nrwl/js:tsc",
                     "outputs": ["{options.outputPath}"],
                     "options": {
                         "outputPath": "dist/libs/x500-cli-config",
@@ -345,7 +354,7 @@
                     "executor": "@nrwl/jest:jest",
                     "outputs": ["coverage/libs/x500-cli-config"],
                     "options": {
-                        "jestConfig": "libs/x500-cli-config/jest.config.js",
+                        "jestConfig": "libs/x500-cli-config/jest.config.ts",
                         "passWithNoTests": true
                     }
                 }
@@ -353,6 +362,7 @@
             "tags": []
         },
         "x500-functional-tests": {
+            "$schema": "../../node_modules/nx/schemas/project-schema.json",
             "root": "libs/x500-functional-tests",
             "sourceRoot": "libs/x500-functional-tests/src",
             "projectType": "library",
@@ -370,12 +380,13 @@
                     "executor": "@nrwl/jest:jest",
                     "outputs": ["coverage/libs/x500-functional-tests"],
                     "options": {
-                        "jestConfig": "libs/x500-functional-tests/jest.config.js",
+                        "jestConfig": "libs/x500-functional-tests/jest.config.ts",
                         "passWithNoTests": true
                     }
                 }
             },
             "tags": []
         }
-    }
+    },
+    "$schema": "./node_modules/nx/schemas/workspace-schema.json"
 }

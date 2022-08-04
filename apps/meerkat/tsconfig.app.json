@@ -1,12 +1,18 @@
 {
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "outDir": "../../dist/out-tsc",
-    "module": "esnext",
-    "types": ["node"],
-    "esModuleInterop": true,
-    "resolveJsonModule": true
-  },
-  "exclude": ["**/*.spec.ts","src/prisma/seed.ts","**/seed.ts", "seed.ts"],
-  "include": ["**/*.ts"]
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "outDir": "../../dist/out-tsc",
+        "module": "esnext",
+        "types": ["node"],
+        "esModuleInterop": true,
+        "resolveJsonModule": true
+    },
+    "exclude": [
+        "**/*.spec.ts",
+        "src/prisma/seed.ts",
+        "**/seed.ts",
+        "seed.ts",
+        "jest.config.ts"
+    ],
+    "include": ["**/*.ts"]
 }

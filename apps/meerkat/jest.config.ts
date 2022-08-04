@@ -1,15 +1,15 @@
-module.exports = {
-    displayName: 'create-test-dit',
+/* eslint-disable */
+export default {
+    displayName: 'meerkat',
     preset: '../../jest.preset.js',
     globals: {
         'ts-jest': {
             tsconfig: '<rootDir>/tsconfig.spec.json',
         },
     },
-    testEnvironment: 'node',
     transform: {
         '^.+\\.[tj]s$': 'ts-jest',
     },
     moduleFileExtensions: ['ts', 'js', 'html'],
-    coverageDirectory: '../../coverage/apps/create-test-dit',
+    coverageDirectory: '../../coverage/apps/meerkat',
 };
