@@ -39,10 +39,10 @@ async function idempotentAddEntry (
                 }
             }
             ctx.log.error(print(outcome.errcode));
-            process.exit(1);
+            process.exit(12);
         } else {
             ctx.log.error("Uncoded error.");
-            process.exit(1);
+            process.exit(23);
         }
     }
     ctx.log.info(`Added entry ${dnStr}.`);

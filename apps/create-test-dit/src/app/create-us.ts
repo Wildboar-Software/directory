@@ -367,6 +367,12 @@ async function seedUS (
         ];
         const attributes: Attribute[] = [
             new Attribute(
+                selat.objectClass["&id"],
+                [
+                    _encodeObjectIdentifier(seloc.groupOfNames["&id"], DER),
+                ],
+            ),
+            new Attribute(
                 selat.commonName["&id"],
                 [_encodeUTF8String(name, DER)],
             ),
