@@ -327,7 +327,7 @@ async function handleRequestAndErrors (
             if (!spElement) {
                 throw new MistypedArgumentError("0bac794f-6962-4115-8f49-0345591a4a98");
             }
-            const securityParameters = _decode_SecurityParameters(spElement);
+            const securityParameters = _decode_SecurityParameters(spElement.inner);
             const sigAlgElement = signedArgElements[1];
             const sigValueElement = signedArgElements[2];
             if (
