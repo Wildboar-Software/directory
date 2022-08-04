@@ -262,7 +262,7 @@ async function handleRequestAndErrors (
                 idmFramesReceived: assn.idm.getFramesReceived(),
             },
         });
-        ctx.log.info(`${assn.id}#${request.invokeID}: ${e.constructor?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
+        ctx.log.info(`${assn.id}#${request.invokeID}: ${e?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
         if (isDebugging) {
             console.error(e);
         }

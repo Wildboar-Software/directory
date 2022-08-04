@@ -6,10 +6,11 @@ import {
     MistypedPDUError,
     DSABindError,
     BindReturn,
+    MistypedArgumentError,
 } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
-import { ASN1Element } from "asn1-ts";
+import { ASN1Element, ASN1TagClass, TRUE_BIT } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
     IDMConnection,
@@ -37,6 +38,15 @@ import {
 import {
     _encode_OpBindingErrorParam,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam.ta";
+import {
+    _decode_SecurityParameters,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
+import {
+    _decode_AlgorithmIdentifier,
+} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
+import {
+    SIGNED,
+} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
 import {
     IdmReject_reason_duplicateInvokeIDRequest,
     IdmReject_reason_unsupportedOperationRequest,
@@ -91,7 +101,6 @@ import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
-import encodeLDAPDN from "../ldap/encodeLDAPDN";
 import getServerStatistics from "../telemetry/getServerStatistics";
 import getConnectionStatistics from "../telemetry/getConnectionStatistics";
 import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
@@ -111,6 +120,18 @@ import {
     _encode_DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as _encode_DBE_Param,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
 import stringifyDN from "../x500/stringifyDN";
+import { AuthenticationLevel_basicLevels } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
+import { isArgumentSigned } from "../x500/isArgumentSigned";
+import { verifySIGNED } from "../pki/verifySIGNED";
+import {
+    Versions_v2,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";
+
+const securityParametersTagByOpCode: Map<number, number> = new Map([
+    [100, 8], // establishOperationalBinding
+    [102, 9], // modifyOperationalBinding
+    [101, 6], // terminateOperationalBinding
+]);
 
 /**
  * @summary The handles a request, but not errors
@@ -195,6 +216,11 @@ async function handleRequestAndErrors (
     assn: DOPAssociation, // eslint-disable-line
     request: Request,
 ): Promise<void> {
+    if (!("local" in request.opcode)) {
+        assn.idm.writeReject(request.invokeID, IdmReject_reason_mistypedPDU);
+        return;
+    }
+    const opcode = Number(request.opcode.local);
     const logInfo = {
         remoteFamily: assn.socket.remoteFamily,
         remoteAddress: assn.socket.remoteAddress,
@@ -254,7 +280,11 @@ async function handleRequestAndErrors (
             !("basicLevels" in assn.authLevel)
             || compareAuthenticationLevel( // Returns true if a > b.
                 ctx.config.ob.minAuthRequired,
-                assn.authLevel.basicLevels,
+                new AuthenticationLevel_basicLevels(
+                    assn.authLevel.basicLevels.level,
+                    assn.authLevel.basicLevels.localQualifier,
+                    isArgumentSigned(request.opcode, request.argument),
+                ),
             )
         ) {
             throw new SecurityError(
@@ -281,6 +311,52 @@ async function handleRequestAndErrors (
                  * based on the arguments.
                  */
                 false,
+            );
+        }
+        if (isArgumentSigned(request.opcode, request.argument)) {
+            const signedArgElements = request.argument.sequence;
+            const tbsElement = signedArgElements[0];
+            const securityParametersTagNumber: number | undefined = securityParametersTagByOpCode.get(opcode);
+            if (securityParametersTagNumber === undefined) {
+                throw new MistypedArgumentError();
+            }
+            const spElement = tbsElement.sequence.find((el) => (
+                (el.tagClass === ASN1TagClass.context)
+                && (el.tagNumber === securityParametersTagNumber)
+            ));
+            if (!spElement) {
+                throw new MistypedArgumentError();
+            }
+            const securityParameters = _decode_SecurityParameters(spElement);
+            const sigAlgElement = signedArgElements[1];
+            const sigValueElement = signedArgElements[2];
+            if (
+                !tbsElement
+                || !sigAlgElement
+                || !sigValueElement
+                || !securityParameters.certification_path
+            ) {
+                throw new MistypedArgumentError();
+            }
+            const certPath = securityParameters.certification_path;
+            const sigAlg = _decode_AlgorithmIdentifier(sigAlgElement);
+            await verifySIGNED(
+                ctx,
+                assn,
+                certPath,
+                {
+                    present: Number(request.invokeID),
+                },
+                false,
+                new SIGNED(
+                    tbsElement,
+                    sigAlg,
+                    sigValueElement.bitString,
+                    undefined,
+                    undefined,
+                ),
+                () => tbsElement,
+                (assn.bind?.versions?.[Versions_v2] === TRUE_BIT),
             );
         }
         await handleRequest(ctx, assn, request);
@@ -321,7 +397,7 @@ async function handleRequestAndErrors (
                 idmFramesReceived: assn.idm.getFramesReceived(),
             },
         });
-        ctx.log.info(`${assn.id}#${request.invokeID}: ${e.constructor?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
+        ctx.log.info(`${assn.id}#${request.invokeID}: ${e?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
         if (isDebugging) {
             console.error(e);
         }

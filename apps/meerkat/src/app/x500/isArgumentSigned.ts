@@ -20,6 +20,9 @@ const signedAltTagNumberByOpCode: Map<number, number> = new Map([
     [11, 0], // administerPassword
     [12, 0], // ldapTransport
     [13, 0], // linkedLDAP
+    [100, 0], // establishOperationalBinding
+    [102, 0], // modifyOperationalBinding
+    [101, 0], // terminateOperationalBinding
 ]);
 
 /**

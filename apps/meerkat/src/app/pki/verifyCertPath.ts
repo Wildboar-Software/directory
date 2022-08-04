@@ -969,8 +969,6 @@ async function verifyBasicPublicKeyCertificateChecks (
         namingMatcher,
     );
     if (!namesMatch) {
-        ctx.log.debug(`Issuer: ${stringifyDN(ctx, issuerCert.toBeSigned.subject.rdnSequence)}`);
-        ctx.log.debug(`Subject: ${stringifyDN(ctx, subjectCert.toBeSigned.issuer.rdnSequence)}`);
         return VCP_RETURN_ISSUER_SUBJECT_MISMATCH;
     }
     const signatureIsValid: boolean | undefined = verifyAltSignature(subjectCert, issuerCert)

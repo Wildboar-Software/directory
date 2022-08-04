@@ -15,6 +15,7 @@ import type { Request, Response } from "express";
 import { BIT_STRING, DERElement, packBits } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import { stringifyDN } from "../x500/stringifyDN";
+import { stringifyGN } from "../x500/stringifyGN";
 import { getDateFromTime } from "@wildboar/x500";
 import {
     Certificate,
@@ -88,7 +89,6 @@ import {
 import {
     subjectInfoAccess,
 } from "@wildboar/x500/src/lib/modules/PkiPmiExternalDataTypes/subjectInfoAccess.oa";
-import generalNameToString from "@wildboar/x500/src/lib/stringifiers/generalNameToString";
 import type {
     GeneralSubtree,
 } from "@wildboar/x500/src/lib/modules/CertificateExtensions/GeneralSubtree.ta";
@@ -261,8 +261,8 @@ function printBitString (bits: BIT_STRING) {
     return str;
 }
 
-function printSubtree (subtree: GeneralSubtree) {
-    return `From ${subtree.minimum ?? 0} to ${subtree.maximum ?? Infinity}: ${generalNameToString(subtree.base)}`;
+function printSubtree (ctx: Context, subtree: GeneralSubtree) {
+    return `From ${subtree.minimum ?? 0} to ${subtree.maximum ?? Infinity}: ${stringifyGN(ctx, subtree.base)}`;
 }
 
 function breakIntoLines (str: string, lineLength: number): string[] {
@@ -396,7 +396,7 @@ function renderTBSCert (ctx: Context, tbs: TBSCertificate): KeyValueTable {
         for (const gn of decoded) {
             values.push({
                 key: "Subject Alternative Name",
-                value: generalNameToString(gn), // TODO: Write a generalNameToString that uses the context object.
+                value: stringifyGN(ctx, gn),
             });
         }
     }
@@ -406,7 +406,7 @@ function renderTBSCert (ctx: Context, tbs: TBSCertificate): KeyValueTable {
         for (const gn of decoded) {
             values.push({
                 key: "Issuer Alternative Name",
-                value: generalNameToString(gn), // TODO: Write a generalNameToString that uses the context object.
+                value: stringifyGN(ctx, gn),
             });
         }
     }
@@ -430,13 +430,13 @@ function renderTBSCert (ctx: Context, tbs: TBSCertificate): KeyValueTable {
         for (const subtree of decoded.permittedSubtrees ?? []) {
             values.push({
                 key: "Name Constraint: Permitted Subtree",
-                value: printSubtree(subtree),
+                value: printSubtree(ctx, subtree),
             });
         }
         for (const subtree of decoded.excludedSubtrees ?? []) {
             values.push({
                 key: "Name Constraint: Excluded Subtree",
-                value: printSubtree(subtree),
+                value: printSubtree(ctx, subtree),
             });
         }
     }
@@ -454,7 +454,7 @@ function renderTBSCert (ctx: Context, tbs: TBSCertificate): KeyValueTable {
             if (crldp.distributionPoint) {
                 if ("fullName" in crldp.distributionPoint) {
                     for (const fullName of crldp.distributionPoint.fullName) {
-                        lines.push(`Full Name: ${generalNameToString(fullName)}`);
+                        lines.push(`Full Name: ${stringifyGN(ctx, fullName)}`);
                     }
                 } else if ("nameRelativeToCRLIssuer" in crldp.distributionPoint) {
                     const relativeName = crldp.distributionPoint.nameRelativeToCRLIssuer;
@@ -498,7 +498,7 @@ function renderTBSCert (ctx: Context, tbs: TBSCertificate): KeyValueTable {
         for (const authorityName of decoded.authorityCertIssuer ?? []) {
             values.push({
                 key: "Authority Certificate Issuer Name",
-                value: generalNameToString(authorityName),
+                value: stringifyGN(ctx, authorityName),
             });
         }
         if (decoded.authorityCertSerialNumber) {
@@ -594,7 +594,7 @@ function renderTBSCert (ctx: Context, tbs: TBSCertificate): KeyValueTable {
         for (const aia of decoded) {
             values.push({
                 key: "Authority Info Access",
-                value: `Access method ${aia.accessMethod.toString()}: ${generalNameToString(aia.accessLocation)}`,
+                value: `Access method ${aia.accessMethod.toString()}: ${stringifyGN(ctx, aia.accessLocation)}`,
             });
         }
     }
@@ -604,7 +604,7 @@ function renderTBSCert (ctx: Context, tbs: TBSCertificate): KeyValueTable {
         for (const sia of decoded) {
             values.push({
                 key: "Subject Info Access",
-                value: `Access method ${sia.accessMethod.toString()}: ${generalNameToString(sia.accessLocation)}`,
+                value: `Access method ${sia.accessMethod.toString()}: ${stringifyGN(ctx, sia.accessLocation)}`,
             });
         }
     }
@@ -760,13 +760,13 @@ function renderCRL (ctx: Context, crl: CertificateList): KeyValueTable {
             const ref = sr.cRLReferral;
             const lines: string[] = [];
             if (ref.issuer) {
-                lines.push(`Issuer: ${generalNameToString(ref.issuer)}`);
+                lines.push(`Issuer: ${stringifyGN(ctx, ref.issuer)}`);
             }
             if (ref.location) {
-                lines.push(`Location: ${generalNameToString(ref.location)}`);
+                lines.push(`Location: ${stringifyGN(ctx, ref.location)}`);
             }
             if (ref.deltaRefInfo) {
-                const dri = generalNameToString(ref.deltaRefInfo.deltaLocation);
+                const dri = stringifyGN(ctx, ref.deltaRefInfo.deltaLocation);
                 const line = `Delta Ref Info: ${dri}`;
                 if (ref.deltaRefInfo.lastDelta) {
                     lines.push(line + ` (last delta ${ref.deltaRefInfo.lastDelta.toISOString()})`);
@@ -810,7 +810,7 @@ function renderCRL (ctx: Context, crl: CertificateList): KeyValueTable {
     const deltaInfoExt = extsGroupedByOID[deltaInfo["&id"]!.toString()]?.[0];
     if (deltaInfoExt) {
         const decoded = deltaInfo.decoderFor["&ExtnType"]!(deltaInfoExt.valueElement());
-        const dl = generalNameToString(decoded.deltaLocation);
+        const dl = stringifyGN(ctx, decoded.deltaLocation);
         if (decoded.nextDelta) {
             values.push({
                 key: "Delta Info",
@@ -829,7 +829,7 @@ function renderCRL (ctx: Context, crl: CertificateList): KeyValueTable {
         for (const tbr of decoded) {
             const lines: string[] = [];
             if (tbr.certificateIssuer) {
-                lines.push(`Issuer: ${generalNameToString(tbr.certificateIssuer)}`);
+                lines.push(`Issuer: ${stringifyGN(ctx, tbr.certificateIssuer)}`);
             }
             if (tbr.reasonInfo) {
                 lines.push(`Reason Code: ${tbr.reasonInfo.reasonCode}`);
@@ -848,7 +848,7 @@ function renderCRL (ctx: Context, crl: CertificateList): KeyValueTable {
                 lines.push(`Serial Number Range: ${start.toString(16)} - ${end.toString(16)}`);
             } else if ("nameSubtree" in tbr.certificateGroup) {
                 const gn = tbr.certificateGroup.nameSubtree;
-                lines.push(`Name Subtree: ${generalNameToString(gn)}`);
+                lines.push(`Name Subtree: ${stringifyGN(ctx, gn)}`);
             } else {
                 lines.push("<Unrecognized certificate group alternative>");
             }
@@ -864,7 +864,7 @@ function renderCRL (ctx: Context, crl: CertificateList): KeyValueTable {
         for (const rg of decoded) {
             const lines: string[] = [];
             if (rg.certificateIssuer) {
-                lines.push(`Issuer: ${generalNameToString(rg.certificateIssuer)}`);
+                lines.push(`Issuer: ${stringifyGN(ctx, rg.certificateIssuer)}`);
             }
             if (rg.reasonInfo) {
                 lines.push(`Reason Code: ${rg.reasonInfo.reasonCode}`);
@@ -890,7 +890,7 @@ function renderCRL (ctx: Context, crl: CertificateList): KeyValueTable {
                 }
             } else if ("nameSubtree" in rg.revokedcertificateGroup) {
                 const gn = rg.revokedcertificateGroup.nameSubtree;
-                lines.push(`Name Subtree: ${generalNameToString(gn)}`);
+                lines.push(`Name Subtree: ${stringifyGN(ctx, gn)}`);
             } else {
                 lines.push("<Unrecognized certificate group alternative>");
             }
@@ -1043,13 +1043,13 @@ function renderTrustAnchorInfo (ctx: Context, tai: TrustAnchorInfo): KeyValueTab
             for (const subtree of nc.permittedSubtrees ?? []) {
                 values.push({
                     key: "Name Constraint: Permitted Subtree",
-                    value: printSubtree(subtree),
+                    value: printSubtree(ctx, subtree),
                 });
             }
             for (const subtree of nc.excludedSubtrees ?? []) {
                 values.push({
                     key: "Name Constraint: Excluded Subtree",
-                    value: printSubtree(subtree),
+                    value: printSubtree(ctx, subtree),
                 });
             }
         }
@@ -1121,7 +1121,7 @@ function renderAttributeCert (
         for (const issuerName of tbs.holder.baseCertificateID.issuer) {
             values.push({
                 key: "Holder's Issuer's Name",
-                value: generalNameToString(issuerName),
+                value: stringifyGN(ctx, issuerName),
             });
         }
         values.push({
@@ -1139,7 +1139,7 @@ function renderAttributeCert (
         for (const holderName of tbs.holder.entityName) {
             values.push({
                 key: "Holder's Name",
-                value: generalNameToString(holderName),
+                value: stringifyGN(ctx, holderName),
             });
         }
     }
@@ -1174,7 +1174,7 @@ function renderAttributeCert (
         for (const issuerName of tbs.issuer.issuerName) {
             values.push({
                 key: "Issuer's Name",
-                value: generalNameToString(issuerName),
+                value: stringifyGN(ctx, issuerName),
             });
         }
     }
@@ -1182,7 +1182,7 @@ function renderAttributeCert (
         for (const issuerName of tbs.issuer.baseCertificateID.issuer) {
             values.push({
                 key: "Issuer's Issuer Name",
-                value: generalNameToString(issuerName),
+                value: stringifyGN(ctx, issuerName),
             });
         }
         values.push({

@@ -250,7 +250,6 @@ async function attemptStrongAuth (
                 signErrors,
             );
         }
-        // TODO: Check that this is not too slow where it could be used in a timing oracle.
         const values = await readValuesOfType(ctx, attemptedVertex, pkiPath["&id"]);
         for (const value of values) {
             const path = pkiPath.decoderFor["&Type"]!(value.value);
