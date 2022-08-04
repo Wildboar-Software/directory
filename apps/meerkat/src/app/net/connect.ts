@@ -1165,6 +1165,9 @@ async function connectToIdmNaddr (
             }), {
                 dest: uri,
             });
+            // You have to break here so you don't keep re-binding with
+            // increasingly less desirable credentials.
+            break;
         } catch (e) {
             ctx.log.warn(ctx.i18n.t("log:error_naddr", {
                 uri,
@@ -1290,6 +1293,9 @@ async function connectToIdmNaddr (
             }), {
                 dest: uri,
             });
+            // You have to break here so you don't keep re-binding with
+            // increasingly less desirable credentials.
+            break;
         } catch (e) {
             ctx.log.warn(ctx.i18n.t("log:error_naddr", {
                 uri,
