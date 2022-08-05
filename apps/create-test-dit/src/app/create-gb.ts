@@ -1152,6 +1152,20 @@ async function seedGB (
                 [_encodeUTF8String(loc, DER)],
                 undefined,
             ),
+            new Attribute(
+                selat.subtreeSpecification["&id"],
+                [
+                    _encode_SubtreeSpecification(new SubtreeSpecification(
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        [],
+                    ), DER),
+                ],
+                undefined,
+            ),
         ]);
         await idempotentAddEntry(ctx, conn, "C=GB,L=Yorkshire and the Humber,CN=Collective Attributes Subentry", arg);
     }
