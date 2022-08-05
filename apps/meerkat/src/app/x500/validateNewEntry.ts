@@ -129,6 +129,7 @@ import type {
     OBJECT_CLASS,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
 import stringifyDN from "./stringifyDN";
+import groupByOID from "../utils/groupByOID";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
@@ -746,9 +747,17 @@ async function validateEntry (
                 }
             });
 
-        const attributeTypes: Set<IndexableOID> = new Set(entry.map((attr) => attr.type_.toString()));
-        for (const at of attributeTypes.values()) {
-            missingMandatoryAttributes.delete(at);
+        const attributesByType: Record<IndexableOID, Attribute[]> = groupByOID(entry, (attr) => attr.type_);
+        for (const [ at, attrs ] of Object.entries(attributesByType)) {
+            // You not only have to check that the attribute exists, but also that there is at least one value.
+            const atLeastOneAttributeHasAValue: boolean = attrs
+                .some((attr) => (
+                    (attr.values.length > 0)
+                    || ((attr.valuesWithContext ?? 0) > 0)
+                ));
+            if (atLeastOneAttributeHasAValue) {
+                missingMandatoryAttributes.delete(at);
+            }
             if (!isExtensible && !optionalAttributes.has(at)) {
                 throw new errors.UpdateError(
                     ctx.i18n.t("err:attribute_type_not_permitted_by_oc", {

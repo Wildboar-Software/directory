@@ -18,7 +18,7 @@
     "unrecognized_attribute_type": "Unrecognized attribute types: {{oids}}.",
     "unrecognized_object_class": "Unrecognized object class {{oid}}.",
     "unrecognized_context_type": "Unrecognized context type: {{oid}}.",
-    "missing_mandatory_attributes": "Missing mandatory attribute(s): {{oids}}",
+    "missing_mandatory_attributes": "Missing mandatory attribute(s) or values of the following types: {{oids}}",
     "rdn_types_duplicated": "Attributes of the following types in the RDN of the entry were duplicated: {{oids}}.",
     "rdn_types_unrecognized": "Attributes of the following types in the RDN of the entry were unrecognized by the performing DSA: {{oids}}.",
     "rdn_types_prohibited_in_naming": "Attributes of the following types are not permitted for naming purposes: {{oids}}.",
