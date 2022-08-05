@@ -110,7 +110,7 @@ async function main () {
             if (options["tolerateUnknownProfile"]) {
                 process.exit(0);
             } else {
-                process.exit(1);
+                process.exit(2);
             }
         }
     }

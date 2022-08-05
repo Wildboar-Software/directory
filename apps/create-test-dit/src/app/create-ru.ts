@@ -948,10 +948,10 @@ async function seedRU (
                     }
                 }
                 ctx.log.error(print(outcome.errcode));
-                process.exit(1);
+                process.exit(873);
             } else {
                 ctx.log.error("Uncoded error.");
-                process.exit(1);
+                process.exit(4352);
             }
         }
         ctx.log.info(`Created ${subentryType} subentry for country RU.`);
@@ -1004,7 +1004,7 @@ async function seedRU (
             if (outcome.errcode) {
                 if (!compareCode(outcome.errcode, updateError["&errorCode"]!)) {
                     ctx.log.error(print(outcome.errcode));
-                    process.exit(1);
+                    process.exit(281);
                 }
                 const param = updateError.decoderFor["&ParameterType"]!(outcome.error);
                 const data = getOptionallyProtectedValue(param);
@@ -1012,11 +1012,11 @@ async function seedRU (
                     ctx.log.warn(`cn=RU,l=Moscow already exists.`);
                 } else {
                     ctx.log.error(print(outcome.errcode));
-                    process.exit(1);
+                    process.exit(283);
                 }
             } else {
                 ctx.log.error("Uncoded error.");
-                process.exit(1);
+                process.exit(285);
             }
         } else {
             ctx.log.info(`Created country cn=RU,l=Moscow.`);

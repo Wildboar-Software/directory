@@ -903,7 +903,7 @@ async function seedCountries (
                 if (outcome.errcode) {
                     if (!compareCode(outcome.errcode, updateError["&errorCode"]!)) {
                         ctx.log.error(print(outcome.errcode));
-                        process.exit(1);
+                        process.exit(6848);
                     }
                     const param = updateError.decoderFor["&ParameterType"]!(outcome.error);
                     const data = getOptionallyProtectedValue(param);
@@ -911,11 +911,11 @@ async function seedCountries (
                         ctx.log.warn(`Country ${country} already exists.`);
                     } else {
                         ctx.log.error(print(outcome.errcode));
-                        process.exit(1);
+                        process.exit(484);
                     }
                 } else {
                     ctx.log.error("Uncoded error.");
-                    process.exit(1);
+                    process.exit(7875);
                 }
             } else {
                 ctx.log.info(`Created country ${country}.`);
@@ -948,10 +948,10 @@ async function seedCountries (
                         }
                     }
                     ctx.log.error(print(outcome.errcode));
-                    process.exit(1);
+                    process.exit(87841);
                 } else {
                     ctx.log.error("Uncoded error.");
-                    process.exit(1);
+                    process.exit(843);
                 }
             }
             ctx.log.info(`Created ${subentryType} subentry for country ${country}.`);

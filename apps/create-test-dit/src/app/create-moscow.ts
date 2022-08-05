@@ -790,10 +790,10 @@ async function idempotentAddEntry (
                 }
             }
             ctx.log.error(print(outcome.errcode));
-            process.exit(1);
+            process.exit(800);
         } else {
             ctx.log.error("Uncoded error.");
-            process.exit(1);
+            process.exit(6004);
         }
     }
     ctx.log.info(`Added entry ${dnStr}.`);
@@ -842,10 +842,10 @@ async function seedMoscow (
                     }
                 }
                 ctx.log.error(print(outcome.errcode));
-                process.exit(1);
+                process.exit(843);
             } else {
                 ctx.log.error("Uncoded error.");
-                process.exit(1);
+                process.exit(483);
             }
         }
         ctx.log.info(`Created ${subentryType} subentry for Moscow.`);

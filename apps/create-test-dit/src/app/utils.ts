@@ -38,7 +38,7 @@ async function idempotentAddEntry (
                     return;
                 }
             }
-            ctx.log.error(print(outcome.errcode));
+            ctx.log.error("Error code: " + print(outcome.errcode));
             process.exit(12);
         } else {
             ctx.log.error("Uncoded error.");

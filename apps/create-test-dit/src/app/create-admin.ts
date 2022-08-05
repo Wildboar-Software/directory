@@ -206,7 +206,7 @@ async function createAdmin (
             }
             if (!compareCode(outcome.errcode, updateError["&errorCode"]!)) {
                 ctx.log.error(printCode(outcome.errcode));
-                process.exit(1);
+                process.exit(6642);
             }
             const param = updateError.decoderFor["&ParameterType"]!(outcome.error);
             const data = getOptionallyProtectedValue(param);
@@ -216,10 +216,10 @@ async function createAdmin (
                 };
             }
             ctx.log.error(printCode(outcome.errcode));
-            process.exit(1);
+            process.exit(747);
         } else {
             ctx.log.error("Uncoded error.");
-            process.exit(1);
+            process.exit(787);
         }
     }
     // FIXME: You MUST add access controls to prevent others from modifying this entry.

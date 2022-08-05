@@ -840,10 +840,10 @@ async function seedGB (
                     }
                 }
                 ctx.log.error(print(outcome.errcode));
-                process.exit(1);
+                process.exit(8482);
             } else {
                 ctx.log.error("Uncoded error.");
-                process.exit(1);
+                process.exit(1235);
             }
         }
         ctx.log.info(`Created ${subentryType} subentry for country GB.`);
@@ -870,7 +870,7 @@ async function seedGB (
             if (outcome.errcode) {
                 if (!compareCode(outcome.errcode, updateError["&errorCode"]!)) {
                     ctx.log.error(print(outcome.errcode));
-                    process.exit(1);
+                    process.exit(4538);
                 }
                 const param = updateError.decoderFor["&ParameterType"]!(outcome.error);
                 const data = getOptionallyProtectedValue(param);
@@ -878,11 +878,11 @@ async function seedGB (
                     ctx.log.warn(`cn=GB,l=${region} already exists.`);
                 } else {
                     ctx.log.error(print(outcome.errcode));
-                    process.exit(1);
+                    process.exit(7373);
                 }
             } else {
                 ctx.log.error("Uncoded error.");
-                process.exit(1);
+                process.exit(83);
             }
         } else {
             ctx.log.info(`Created country cn=GB,l=${region}.`);
