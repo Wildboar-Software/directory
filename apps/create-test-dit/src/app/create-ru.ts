@@ -1033,14 +1033,14 @@ async function seedRU (
         }
     }
 
+    const sputnikDMDName: string = "Sputnik DMD";
     { // Create C=RU,dmdName=Sputnik DMD
-        const name: string = "Sputnik DMD";
         const dn: DistinguishedName = [
             ...baseObject,
             [
                 new AttributeTypeAndValue(
                     selat.dmdName["&id"]!,
-                    _encodeUTF8String(name, DER),
+                    _encodeUTF8String(sputnikDMDName, DER),
                 ),
             ],
         ];
@@ -1081,7 +1081,7 @@ async function seedRU (
             [
                 new AttributeTypeAndValue(
                     selat.dmdName["&id"]!,
-                    _encodeUTF8String(name, DER),
+                    _encodeUTF8String(sputnikDMDName, DER),
                 ),
             ],
             [
