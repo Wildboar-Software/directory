@@ -51,7 +51,7 @@
     "@wildboar/x500": "^1.0.48",
     "applicationinsights": "^2.2.2",
     "applicationinsights-native-metrics": "^0.0.7",
-    "asn1-ts": "^7.0.8",
+    "asn1-ts": "^7.0.9",
     "basic-ftp": "^4.6.6",
     "chalk": "^4.1.2",
     "class-transformer": "^0.5.1",

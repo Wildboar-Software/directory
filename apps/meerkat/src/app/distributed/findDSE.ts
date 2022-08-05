@@ -126,6 +126,8 @@ import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
 import {
     CommonArguments,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArguments.ta";
+import { differenceInSeconds } from "date-fns";
+import isPrefix from "../x500/isPrefix";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -752,12 +754,43 @@ async function findDSE (
         }
     };
 
+    /**
+     * This is where we use the cached most recent vertex, if it is a prefix of
+     * the target object. This is not part of the ITU specifications: just an
+     * optimization used by Meerkat DSA.
+     */
+    if (assn?.mostRecentVertex) {
+        // TODO: Make the expiration configurable.
+        if (Math.abs(differenceInSeconds(assn.mostRecentVertex.since, new Date())) < 300) {
+            const mostRecentDN = getDistinguishedName(assn.mostRecentVertex.vertex);
+            if (isPrefix(ctx, mostRecentDN, needleDN)) {
+                dse_i = assn.mostRecentVertex.vertex;
+                dse_lastEntryFound = dse_i.dse.subentry
+                    ? dse_i.immediateSuperior!
+                    : dse_i;
+                i = mostRecentDN.length;
+                lastEntryFound = dse_i.dse.subentry
+                    ? (i - 1)
+                    : i;
+                state.rdnsResolved = i;
+                if (i === m) {
+                    state.entrySuitable = true;
+                    state.foundDSE = dse_i;
+                    return;
+                }
+            }
+        } else {
+            assn.mostRecentVertex = undefined;
+        }
+    }
+
     let accessControlScheme: OBJECT_IDENTIFIER | undefined;
     let iterations: number = 0;
     while (iterations < MAX_DEPTH) {
         iterations++;
         if (i === m) {
-            const nameResolutionPhase = state.chainingArguments.operationProgress?.nameResolutionPhase;
+            const nameResolutionPhase = state.chainingArguments.operationProgress?.nameResolutionPhase
+                ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
             // I pretty much don't understand this entire section.
             if (nameResolutionPhase !== OperationProgress_nameResolutionPhase_completed) {
                 await targetNotFoundSubprocedure();

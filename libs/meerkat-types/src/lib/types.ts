@@ -3026,6 +3026,55 @@ abstract class ClientAssociation {
      * @function
      */
     public abstract attemptBind (arg: ASN1Element): Promise<void>;
+
+    /**
+     * @summary The last vertex that was the target of an operation by this association.
+     * @description
+     *
+     * It can be computationally expensive to search the DIT for a particular
+     * entry, and evaluate whether this entry can be accessed according to
+     * established access controls. However, users of the directory may have a
+     * desire to repeatedly query the same entry multiple times, or to insert
+     * entries under the same parent multiple times.
+     *
+     * For instance, when initially seeding, say `C=US,ST=FL,L=Tampa`, with
+     * data, there will be potentially millions of `addEntry` operations that
+     * all insert new entries under `C=US,ST=FL,L=Tampa`. This means that
+     * querying the database to find `C=US`, then `ST=FL`, and `L=Tampa` over
+     * and over again is a massive waste of resources.
+     *
+     * This also goes for `list` and `search` operations. In many DUAs, such as
+     * Apache Directory Studio, directories are browsed like folders, so having
+     * performed a previous `list` on an object is a strong indicator of a
+     * pending subsequent operation targeting an entry underneath the target
+     * object. Continuing with our previous example, if a user opened up the
+     * `C=US,ST=FL` entry in Apache Directory Studio, it is more likely that
+     * they will open `C=US,ST=FL,L=Tampa` than it is that they divert to, say,
+     * `C=DE,L=Berlin`. Therefore, if we cached `C=US,ST=FL` with the
+     * association, the read operation on `C=US,ST=FL,L=Tampa` is bound to be
+     * much faster.
+     *
+     * Instead, we can cache the most recently used vertex, and, if an
+     * operation's target matches this vertex, we can simply use this cached
+     * vertex to get the ID, UUID, and other important operational attributes
+     * from this entry, rather than going to the database again.
+     *
+     * There is one important drawback to this approach: the entry could change
+     * in the database while it is cached, or access controls could change such
+     * that the entry should no longer be visible to that user. One mitigation
+     * for this problem is to simply define a lifespan for this cached vertex.
+     * If the lifetime has expired, the cache is to be considered "stale" and
+     * the vertex cannot be used to speed things up.
+     *
+     * There are a few rules that MUST be observed when using this:
+     *
+     * 1. The most recent vertex must not be used for modification operations,
+     *    but its immediate superior MAY be used for modification operations.
+     */
+    public mostRecentVertex?: {
+        since: Date;
+        vertex: Vertex;
+    };
 }
 
 /**
