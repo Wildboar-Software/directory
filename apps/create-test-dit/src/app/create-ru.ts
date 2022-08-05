@@ -1054,6 +1054,12 @@ async function seedRU (
         );
         const attributes: Attribute[] = [
             new Attribute(
+                selat.objectClass["&id"],
+                [
+                    _encodeObjectIdentifier(seloc.dMD["&id"], DER),
+                ],
+            ),
+            new Attribute(
                 selat.dmdName["&id"],
                 [_encodeUTF8String(name, DER)],
             ),
@@ -1107,6 +1113,13 @@ async function seedRU (
             undefined,
         );
         const attributes: Attribute[] = [
+            new Attribute(
+                selat.objectClass["&id"],
+                [
+                    _encodeObjectIdentifier(seloc.applicationEntity["&id"], DER),
+                    _encodeObjectIdentifier(seloc.dSA["&id"], DER),
+                ],
+            ),
             new Attribute(
                 selat.commonName["&id"],
                 [_encodeUTF8String(name, DER)],
