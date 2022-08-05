@@ -69,6 +69,20 @@ const sidebars = {
             ],
         },
         {
+            type: 'category',
+            label: 'Change Logs',
+            items: [
+                'changelog-meerkat',
+            ],
+        },
+        {
+            type: 'category',
+            label: 'For Developers',
+            items: [
+                'versioning',
+            ],
+        },
+        {
             type: 'doc',
             id: 'support',
             label: 'Support / Help',
