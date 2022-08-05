@@ -1366,7 +1366,7 @@ function createCSR (
     const csrInfo = new CertificationRequestInfo(
         CertificationRequestInfo_version_v1,
         cert.toBeSigned.subject,
-        subjectPublicKeyInfo as any, // FIXME: update asn1-ts.
+        subjectPublicKeyInfo,
         [],
     );
     const opCSR = generateSIGNED(ctx, csrInfo, _encode_CertificationRequestInfo, key);
@@ -1376,7 +1376,7 @@ function createCSR (
     const signedCSRInfo = opCSR.signed;
     const csr = new CertificationRequest(
         csrInfo,
-        signedCSRInfo.algorithmIdentifier as any, // FIXME: update asn1-ts.
+        signedCSRInfo.algorithmIdentifier,
         signedCSRInfo.signature,
     );
     return _encode_CertificationRequest(csr, DER).toBytes();

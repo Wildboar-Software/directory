@@ -135,29 +135,29 @@ function createCMSSignedData (
             new AlgorithmIdentifier(
                 digestOID,
                 undefined,
-            ) as any, // FIXME: Dedupe asn1-ts versions.
+            ),
         ],
         ecinfo,
-        certPath.map((certificate: any) => ({ certificate })),
-        crls?.map((crl) => ({ crl })) as any, // FIXME: Dedupe asn1-ts versions.
+        certPath.map((certificate) => ({ certificate })),
+        crls?.map((crl) => ({ crl })),
         [
             new SignerInfo(
                 CMSVersion_v1, // Must be 1 because we used `issuerAndSerialNumber`.
                 {
                     issuerAndSerialNumber: new IssuerAndSerialNumber(
-                        eeCert.toBeSigned.issuer as any, // FIXME: Dedupe asn1-ts versions.
+                        eeCert.toBeSigned.issuer,
                         eeCert.toBeSigned.serialNumber,
                     ),
                 },
                 new AlgorithmIdentifier(
                     sigOID,
                     undefined,
-                ) as any, // FIXME: Dedupe asn1-ts versions.
-                signedAttrs as any, // FIXME: Dedupe asn1-ts versions.
+                ),
+                signedAttrs,
                 new AlgorithmIdentifier(
                     digestOID,
                     undefined,
-                ) as any, // FIXME: Dedupe asn1-ts versions.
+                ),
                 signer.sign(key),
                 undefined,
             ),
