@@ -88,7 +88,7 @@ jobs:
         with:
           node-version: '17'
       - name: Install NPM Packages
-        run: npm ci --force
+        run: npm ci
       - name: Generate Prisma Client
         run: npx -q prisma generate --schema=apps/meerkat/src/prisma/schema.prisma
       - name: Run Linter
@@ -114,7 +114,7 @@ jobs:
   #       with:
   #         node-version: '17'
   #     - name: Install NPM Packages
-  #       run: npm ci --force
+  #       run: npm ci
   #     - name: Generate Prisma Client
   #       run: npx -q prisma generate --schema=apps/meerkat/src/prisma/schema.prisma
   #     - name: Run Unit Tests
@@ -141,7 +141,7 @@ jobs:
         with:
           node-version: '17'
       - name: Install NPM Packages
-        run: npm ci --force
+        run: npm ci
       - name: Generate Prisma Client
         run: npx -q prisma generate --schema=apps/meerkat/src/prisma/schema.prisma
       - name: Compile ${{ matrix.library }} Library
@@ -174,7 +174,7 @@ jobs:
         with:
           node-version: '17'
       - name: Install NPM Packages
-        run: npm ci --force
+        run: npm ci
       - name: Generate Prisma Client
         run: npx -q prisma generate --schema=apps/meerkat/src/prisma/schema.prisma
       - name: Compile Meerkat DSA
@@ -211,7 +211,7 @@ jobs:
         with:
           node-version: '17'
       - name: Install NPM Packages
-        run: npm ci --force
+        run: npm ci
       - name: Compile the X.500 CLI
         run: npx nx run x500-cli:build:production --skip-nx-cache
       - name: Publish NPM Package
@@ -759,7 +759,7 @@ jobs:
         with:
           node-version: '17'
       - name: Install NPM Packages
-        run: npm ci --force
+        run: npm ci
       - name: Compile the Test DIT Creator
         run: npx nx run create-test-dit:build:production --skip-nx-cache
       - name: Seed the Root DSA
@@ -805,7 +805,7 @@ jobs:
         with:
           node-version: '17'
       - name: Install NPM Packages
-        run: npm ci --force
+        run: npm ci
       - name: Run the functional tests
         run: npx nx run x500-functional-tests:test --skip-nx-cache
         timeout-minutes: 10
@@ -820,9 +820,9 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '16'
+          node-version: '17'
       - name: Install NPM Packages
-        run: npm ci --force
+        run: npm ci
       - name: Compile Documentation
         run: npx nx run meerkat-docs:build --skip-nx-cache
 
