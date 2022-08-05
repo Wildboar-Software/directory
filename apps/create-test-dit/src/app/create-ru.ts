@@ -1061,7 +1061,7 @@ async function seedRU (
             ),
             new Attribute(
                 selat.dmdName["&id"],
-                [_encodeUTF8String(name, DER)],
+                [_encodeUTF8String(sputnikDMDName, DER)],
             ),
             new Attribute(
                 selat.searchGuide["&id"],
