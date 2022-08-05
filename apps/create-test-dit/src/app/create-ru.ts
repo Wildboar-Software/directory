@@ -1080,6 +1080,12 @@ async function seedRU (
             ...baseObject,
             [
                 new AttributeTypeAndValue(
+                    selat.dmdName["&id"]!,
+                    _encodeUTF8String(name, DER),
+                ),
+            ],
+            [
+                new AttributeTypeAndValue(
                     selat.commonName["&id"]!,
                     _encodeUTF8String(name, DER),
                 ),
