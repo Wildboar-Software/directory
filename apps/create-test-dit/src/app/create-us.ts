@@ -481,7 +481,7 @@ async function seedUS (
                 [_encodeUTF8String(name, DER)],
             ),
             new Attribute(
-                selat.member["&id"],
+                selat.roleOccupant["&id"],
                 peepantsGang.map((gangMember) => selat.roleOccupant.encoderFor["&Type"]!(gangMember, DER)),
             ),
         ];
@@ -514,7 +514,7 @@ async function seedUS (
                 [_encodeObjectIdentifier(seloc.cRLDistributionPoint["&id"], DER)],
             ),
             new Attribute(
-                selat.organizationName["&id"],
+                selat.commonName["&id"],
                 [_encodeUTF8String(name, DER)],
             ),
         ];
