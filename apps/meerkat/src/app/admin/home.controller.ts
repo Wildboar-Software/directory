@@ -18,6 +18,7 @@ import { flatten } from "flat";
 import { getServerStatistics } from "../telemetry/getServerStatistics";
 import sleep from "../utils/sleep";
 import stringifyDN from "../x500/stringifyDN";
+import { rdnFromJson } from "../x500/rdnFromJson";
 
 const conformancePath = path.join(__dirname, "assets", "static", "conformance.md");
 const ROBOTS: string = `User-agent: *\r\nDisallow: /\r\n`;
@@ -26,6 +27,15 @@ const SECURITY_TXT: string = [
     "Expires: 2023-12-19T18:28:00.000Z",
     "Preferred-Languages: en",
 ].join("\r\n");
+
+// TODO: Dedupe
+function breakIntoLines (str: string, lineLength: number): string[] {
+    const lines: string[] = [];
+    for (let i = 0; i < str.length; i = i + lineLength) {
+        lines.push(str.slice(i, i + lineLength));
+    }
+    return lines;
+}
 
 @Controller()
 export class HomeController {
@@ -139,10 +149,26 @@ export class HomeController {
             where: {
                 uuid: id,
             },
+            include: {
+                previous: {
+                    select: {
+                        uuid: true,
+                    },
+                },
+            },
         });
         if (!ob) {
             throw new NotFoundException();
         }
+        const cp_rdn = ((typeof ob.new_context_prefix_rdn === "object") && ob.new_context_prefix_rdn)
+            ? rdnFromJson(ob.new_context_prefix_rdn as Record<string, string>)
+            : undefined;
+        const cp_superior_dn = Array.isArray(ob.immediate_superior)
+            ? ob.immediate_superior.map(rdnFromJson)
+            : undefined;
+        const cpdn = (cp_superior_dn && cp_rdn)
+            ? [ ...cp_superior_dn, cp_rdn ]
+            : undefined;
         const status: string = (ob.accepted === null)
             ? "WAITING DECISION"
             : (ob.accepted ? "ACCEPTED" : "REJECTED");
@@ -154,6 +180,16 @@ export class HomeController {
             validity_start: ob.validity_start.toISOString(),
             validity_end: ob.validity_end?.toISOString(),
             actionable: (ob.accepted === null),
+            cp: cpdn
+                ? stringifyDN(this.ctx, cpdn)
+                : undefined,
+            agreement_bytes: ob.agreement_ber
+                ? breakIntoLines(ob.agreement_ber.toString("hex"), 60)
+                : undefined,
+            init_param_bytes: ob.initiator_ber
+                ? breakIntoLines(ob.initiator_ber.toString("hex"), 60)
+                : undefined,
+            previous_uuid: ob.previous?.uuid,
         };
         return templateVariables;
     }
