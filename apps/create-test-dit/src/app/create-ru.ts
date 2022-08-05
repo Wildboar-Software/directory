@@ -185,10 +185,20 @@ import {
     TimeSpecification_time_absolute,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/TimeSpecification-time-absolute.ta";
 import { addDays } from "date-fns";
+import {
+    commonName,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
 
 const MOSCOW_ACCESS_POINT = new AccessPoint(
     {
-        rdnSequence: [],
+        rdnSequence: [
+            [
+                new AttributeTypeAndValue(
+                    commonName["&id"],
+                    _encodeUTF8String("dsa01.moscow.mkdemo.wildboar.software", DER),
+                ),
+            ],
+        ],
     },
     new PresentationAddress(
         undefined,

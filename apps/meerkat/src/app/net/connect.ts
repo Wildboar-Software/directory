@@ -1,4 +1,4 @@
-import type { Context, OperationStatistics } from "@wildboar/meerkat-types";
+import { Context, OperationStatistics, ChainedError } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
 import type {
@@ -1138,11 +1138,11 @@ async function connectToIdmNaddr (
                     idm.events.once("socketError", (e) => {
                         reject(e);
                     });
-                    idm.events.once("abort", reject);
-                    idm.events.once("error", reject);
-                    idm.events.once("bindError", (err) => {
-                        reject(err.error);
-                    });
+                    idm.events.once("abort", (a) => reject(new Error(`Abort: ${a}`))); // FIXME: i18n
+                    idm.events.once("error_", (e) => reject(
+                        new ChainedError("1addacef-836e-4dde-b1ac-3f22bb1e2055", e.error, e.errcode, false)));
+                    idm.events.once("bindError", (err) => reject(
+                        new ChainedError("ac2d3b23-aad3-43c7-8fdd-26e3ca80e75e", err.error, undefined, false)));
                     idm.events.once("bindResult", resolve);
                     idm.writeBind(
                         protocolID,
@@ -1266,11 +1266,11 @@ async function connectToIdmNaddr (
                     idm.events.once("socketError", (e) => {
                         reject(e);
                     });
-                    idm.events.once("abort", reject);
-                    idm.events.once("error", reject);
-                    idm.events.once("bindError", (err) => {
-                        reject(err.error);
-                    });
+                    idm.events.once("abort", (a) => reject(new Error(`Abort: ${a}`))); // FIXME: i18n
+                    idm.events.once("error_", (e) => reject(
+                        new ChainedError("b4b5f034-9a81-4aa3-bd1e-31fdeefe12bf", e.error, e.errcode, false)));
+                    idm.events.once("bindError", (err) => reject(
+                        new ChainedError("b4b5f034-9a81-4aa3-bd1e-31fdeefe12bf", err.error, undefined, false)));
                     idm.events.once("bindResult", resolve);
                     idm.writeBind(
                         protocolID,
