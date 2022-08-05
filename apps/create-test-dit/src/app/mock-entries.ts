@@ -7,7 +7,7 @@ import {
     ASN1Construction,
     ASN1UniversalType,
 } from "asn1-ts";
-import { DER, _encodeUTF8String } from "asn1-ts/dist/node/functional";
+import { DER, _encodeInteger, _encodeUTF8String } from "asn1-ts/dist/node/functional";
 import type {
     RelativeDistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
@@ -1433,7 +1433,11 @@ function createMockCertificate (
         ASN1Construction.primitive,
         ASN1UniversalType.integer,
     );
-    mod.value = randomBytes(256); // Not a valid modulus, by the way.
+    /**
+     * You cannot directly set .value here, because there will sometimes be
+     * padding bytes, which will cause an invalid encoding.
+     */
+    mod.integer = BigInt("0x" + Buffer.from(randomBytes(256)).toString("hex")); // Not a valid modulus, by the way.
     const sigValue = randomBytes(256); // Not a valid signature, either.
     const issuerDN_: DistinguishedName = issuerDN ?? [
         [
@@ -1459,7 +1463,7 @@ function createMockCertificate (
     ];
     const tbs = new TBSCertificate(
         Version_v3,
-        randomBytes(4),
+        _encodeInteger(randomInt(1, 1000000), DER).value,
         sigAlg,
         {
             rdnSequence: issuerDN_,
@@ -1526,7 +1530,11 @@ function createMockCRL (
         ASN1Construction.primitive,
         ASN1UniversalType.integer,
     );
-    mod.value = randomBytes(256); // Not a valid modulus, by the way.
+    /**
+     * You cannot directly set .value here, because there will sometimes be
+     * padding bytes, which will cause an invalid encoding.
+     */
+    mod.integer = BigInt("0x" + Buffer.from(randomBytes(256)).toString("hex")); // Not a valid modulus, by the way.
     const sigValue = randomBytes(256); // Not a valid signature, either.
     const issuerDN_: DistinguishedName = issuerDN ?? [
         [
@@ -1550,7 +1558,7 @@ function createMockCRL (
         },
         [
             new RevokedCert(
-                randomBytes(4),
+                _encodeInteger(randomInt(1, 1000000), DER).value,
                 {
                     generalizedTime: addDays(new Date(), -10)
                 },
