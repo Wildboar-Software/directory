@@ -734,12 +734,6 @@ class OperationDispatcher {
                 result: nrcrResult,
             };
         }
-        if (state.entrySuitable && (targetObject.length > 0)) {
-            assn.mostRecentVertex = {
-                since: new Date(),
-                vertex: state.foundDSE,
-            };
-        }
         return OperationDispatcher.operationEvaluation(
             ctx,
             state,

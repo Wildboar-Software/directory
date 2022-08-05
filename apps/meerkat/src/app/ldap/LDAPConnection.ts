@@ -273,7 +273,7 @@ async function handleRequestAndErrors (
             association_id: assn.id,
             messageID: message.messageID.toString(),
         };
-        ctx.log.info(`${assn.id}#${message.messageID}: ${e?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
+        ctx.log.info(`${assn.id}#${message.messageID}: ${e.constructor?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
         if (isDebugging) {
             console.error(e);
         }
