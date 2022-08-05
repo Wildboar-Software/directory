@@ -68,7 +68,6 @@ import { EventEmitter } from "events";
 import { differenceInMilliseconds } from "date-fns";
 import * as crypto from "crypto";
 import sleep from "../utils/sleep";
-import encodeLDAPDN from "../ldap/encodeLDAPDN";
 import isDebugging from "is-debugging";
 import { strict as assert } from "assert";
 import { flatten } from "flat";
@@ -723,6 +722,12 @@ class DSPAssociation extends ClientAssociation {
                 },
             }).then().catch();
         });
+        const logInfo = {
+            remoteFamily: this.socket.remoteFamily,
+            remoteAddress: this.socket.remoteAddress,
+            remotePort: this.socket.remotePort,
+            association_id: this.id,
+        };
         idm.events.on("unbind", this.handleUnbind.bind(this));
         idm.events.removeAllListeners("request");
         idm.events.on("request", (request: Request) => {
@@ -730,12 +735,7 @@ class DSPAssociation extends ClientAssociation {
                 ctx.log.warn(ctx.i18n.t("log:too_many_prebind_requests", {
                     host: this.socket.remoteAddress,
                     cid: this.id,
-                }), {
-                    remoteFamily: this.socket.remoteFamily,
-                    remoteAddress: this.socket.remoteAddress,
-                    remotePort: this.socket.remotePort,
-                    association_id: this.id,
-                });
+                }), logInfo);
                 idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
                 return;
             }

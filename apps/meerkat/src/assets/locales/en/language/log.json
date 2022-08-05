@@ -161,5 +161,8 @@
     "strong_cred_error@-20": "COULD_BAN={{host}}; Strong credentials invalid: Name explicitly excluded by name constraints",
     "strong_cred_error@-21": "COULD_BAN={{host}}; Strong credentials invalid: Prohibited signature algorithm",
     "strong_cred_error@-22": "COULD_BAN={{host}}; Strong credentials invalid: Certification policy not acceptable to this DSA",
-    "strong_cred_error@-23": "COULD_BAN={{host}}; Strong credentials invalid: No certification policies valid for the whole certification path"
+    "strong_cred_error@-23": "COULD_BAN={{host}}; Strong credentials invalid: No certification policies valid for the whole certification path",
+    "idm_error": "Error with code {{code}} received from {{source}}. First few bytes of the error parameter are: {{bytes}}",
+    "idm_reject": "Reject with reason {{code}} received from {{source}}.",
+    "idm_abort": "Abort with reason {{code}} received from {{source}}."
 }

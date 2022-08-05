@@ -756,6 +756,12 @@ class DOPAssociation extends ClientAssociation {
         super();
         this.socket = idm.s;
         assert(ctx.config.dop.enabled, "User somehow bound via DOP when it was disabled.");
+        const logInfo = {
+            remoteFamily: this.socket.remoteFamily,
+            remoteAddress: this.socket.remoteAddress,
+            remotePort: this.socket.remotePort,
+            association_id: this.id,
+        };
         idm.events.on("unbind", this.handleUnbind.bind(this));
         idm.events.removeAllListeners("request");
         idm.events.on("request", (request: Request) => {
@@ -763,12 +769,7 @@ class DOPAssociation extends ClientAssociation {
                 ctx.log.warn(ctx.i18n.t("log:too_many_prebind_requests", {
                     host: this.socket.remoteAddress,
                     cid: this.id,
-                }), {
-                    remoteFamily: this.socket.remoteFamily,
-                    remoteAddress: this.socket.remoteAddress,
-                    remotePort: this.socket.remotePort,
-                    association_id: this.id,
-                });
+                }), logInfo);
                 idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
                 return;
             }

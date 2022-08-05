@@ -54,6 +54,7 @@ import csurf from "csurf";
 import cookieParser from "cookie-parser";
 import { parseFormData } from "./admin/parseFormData";
 import { applyXSRFCookie } from "./admin/applyXSRFCookie";
+import printCode from "./utils/printCode";
 
 /**
  * @summary Check for Meerkat DSA updates
@@ -255,6 +256,12 @@ function attachUnboundEventListenersToIDMConnection (
     idm: IDMConnection,
     startTimes: Map<net.Socket, Date>,
 ) {
+    const properties = {
+        remoteFamily: idm.s.remoteFamily,
+        remoteAddress: idm.s.remoteAddress,
+        remotePort: idm.s.remotePort,
+        administratorEmail: ctx.config.administratorEmail,
+    };
     idm.events.on("startTLS", () => {
         ctx.log.debug(ctx.i18n.t("log:starttls_established", {
             source,
@@ -332,13 +339,7 @@ function attachUnboundEventListenersToIDMConnection (
                 duration: Date.now() - startTime,
                 resultCode: 200,
                 success: true,
-                properties: {
-                    remoteFamily: idm.s.remoteFamily,
-                    remoteAddress: idm.s.remoteAddress,
-                    remotePort: idm.s.remotePort,
-                    protocol: idmBind.protocolID.toString(),
-                    administratorEmail: ctx.config.administratorEmail,
-                },
+                properties,
                 measurements: {
                     bytesRead: idm.socket.bytesRead,
                     bytesWritten: idm.socket.bytesWritten,
@@ -361,13 +362,7 @@ function attachUnboundEventListenersToIDMConnection (
             ctx.associations.delete(idm.s);
             ctx.telemetry.trackException({
                 exception: e,
-                properties: {
-                    remoteFamily: idm.s.remoteFamily,
-                    remoteAddress: idm.s.remoteAddress,
-                    remotePort: idm.s.remotePort,
-                    protocol: idmBind.protocolID.toString(),
-                    administratorEmail: ctx.config.administratorEmail,
-                },
+                properties,
                 measurements: {
                     bytesRead: idm.s.bytesRead,
                     bytesWritten: idm.s.bytesWritten,
@@ -383,13 +378,26 @@ function attachUnboundEventListenersToIDMConnection (
         // Recursive, but not really.
         attachUnboundEventListenersToIDMConnection(ctx, originalSocket, source, idm, startTimes);
     });
+    idm.events.on("error_", (e) => {
+        ctx.log.debug(ctx.i18n.t("log:idm_error", {
+            code: printCode(e.errcode),
+            source,
+            bytes: Buffer.from(e.error.toBytes().slice(0, 16)).toString("hex"),
+        }), properties);
+    });
+    idm.events.on("reject", (r) => {
+        ctx.log.debug(ctx.i18n.t("log:idm_reject", {
+            code: r.reason,
+            source,
+        }), properties);
+    });
+    idm.events.on("abort", (a) => {
+        ctx.log.debug(ctx.i18n.t("log:idm_abort", {
+            code: a,
+            source,
+        }), properties);
+    });
     idm.events.on("warning", (warningCode) => {
-        const properties = {
-            remoteFamily: idm.s.remoteFamily,
-            remoteAddress: idm.s.remoteAddress,
-            remotePort: idm.s.remotePort,
-            administratorEmail: ctx.config.administratorEmail,
-        };
         const measurements = {
             bytesRead: idm.s.bytesRead,
             bytesWritten: idm.s.bytesWritten,
