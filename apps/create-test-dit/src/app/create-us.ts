@@ -378,7 +378,11 @@ async function seedUS (
             ),
             new Attribute(
                 selat.member["&id"],
-                gucciGang.map((gangMember) => selat.member.encoderFor["&Type"]!(gangMember, DER)),
+                /**
+                 * NOTE: `member` does not have an `encoderFor["&Type"]`
+                 * function because it is a subtype of `distinguishedName`.
+                 */
+                gucciGang.map((gangMember) => selat.distinguishedName.encoderFor["&Type"]!(gangMember, DER)),
             ),
         ];
         const arg = createAddEntryArgument(dn, attributes);
@@ -482,7 +486,11 @@ async function seedUS (
             ),
             new Attribute(
                 selat.roleOccupant["&id"],
-                peepantsGang.map((gangMember) => selat.roleOccupant.encoderFor["&Type"]!(gangMember, DER)),
+                /**
+                 * NOTE: `roleOccupant` does not have an `encoderFor["&Type"]`
+                 * function because it is a subtype of `distinguishedName`.
+                 */
+                peepantsGang.map((gangMember) => selat.distinguishedName.encoderFor["&Type"]!(gangMember, DER)),
             ),
         ];
         const arg = createAddEntryArgument(dn, attributes);
