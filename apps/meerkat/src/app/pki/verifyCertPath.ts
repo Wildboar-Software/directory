@@ -238,6 +238,7 @@ export const VCP_RETURN_NAME_EXCLUDED: VCPReturnCode = -20;
 export const VCP_RETURN_PROHIBITED_SIG_ALG: VCPReturnCode = -21;
 export const VCP_RETURN_POLICY_NOT_ACCEPTABLE: VCPReturnCode = -22;
 export const VCP_RETURN_NO_AUTHORIZED_POLICIES: VCPReturnCode = -23;
+export const VCP_RETURN_NO_BASIC_CONSTRAINTS_CA: VCPReturnCode = -24;
 
 export
 const supportedExtensions: Set<IndexableOID> = new Set([
@@ -1044,7 +1045,16 @@ async function verifyBasicPublicKeyCertificateChecks (
 
     // Step 12.5.1.b
     const intermediate: boolean = ((subjectIndex > 0) && (subjectIndex < (state.certPath.length - 1)));
-    if (intermediate && basicConstraintsExt) {
+    if (intermediate) {
+        /**
+         * [ITU Recommendation X.509 (2019)](https://www.itu.int/rec/T-REC-X.509/en),
+         * Section 7.4, states that all CAs are _required_ to have the
+         * `basicConstraints` extension. (Yes, this does necessitate all CA
+         * certs to be version 3, and the specification acknowledges that.)
+         */
+        if (!basicConstraintsExt) {
+            return VCP_RETURN_NO_BASIC_CONSTRAINTS_CA;
+        }
         if (!basicConstraintsExt.critical) {
             // BasicConstraints must always be critical for a CA.
             return VCP_RETURN_INVALID_EXT_CRIT;
@@ -1054,7 +1064,22 @@ async function verifyBasicPublicKeyCertificateChecks (
             return VCP_RETURN_BASIC_CONSTRAINTS_CA; // Not permitted to be a CA.
         }
         if (bc.pathLenConstraint !== undefined) {
-            const pathLenUsed = subjectIndex - 1;
+            let pathLenUsed = subjectIndex - 1;
+            const certPath = state.certPath;
+            /**
+             * Self-signed certificates are ignored for path length constraints.
+             */
+            for (let i = 0; i < subjectIndex; i++) {
+                const subjectCert2 = certPath[i];
+                const selfIssued = compareDistinguishedName(
+                    subjectCert2.toBeSigned.issuer.rdnSequence,
+                    subjectCert2.toBeSigned.subject.rdnSequence,
+                    namingMatcher,
+                );
+                if (selfIssued) {
+                    pathLenUsed--;
+                }
+            }
             if (pathLenUsed > bc.pathLenConstraint) {
                 return VCP_RETURN_BASIC_CONSTRAINTS_PATH_LEN; // Exceeded PLC.
             }
@@ -1210,7 +1235,13 @@ async function verifyBasicPublicKeyCertificateChecks (
         state.valid_policy_tree = null;
     }
 
-    if (keyUsageExt && keyUsageExt.critical) {
+    /**
+     * According to [ITU Recommendation X.509 (2019)](https://www.itu.int/rec/T-REC-X.509/en),
+     * Section 9.2.2.3, even if this extension is marked as non-critical, the
+     * relying party shall still validate key usage if it understands the
+     * extension.
+     */
+    if (keyUsageExt /* && keyUsageExt.critical */) {
         const ku = keyUsage.decoderFor["&ExtnType"]!(keyUsageExt.valueElement());
         /**
          * NOTE: The end-entity key usage is not checked in this function, but
@@ -1225,19 +1256,7 @@ async function verifyBasicPublicKeyCertificateChecks (
         }
     }
 
-    /**
-     * From [IETF RFC 5280, Section 4.2.1.12](https://datatracker.ietf.org/doc/html/rfc5280.html#section-4.2.1.12):
-     *
-     * > If a certificate contains both a key usage extension and an extended
-     * > key usage extension, then both extensions MUST be processed
-     * > independently and the certificate MUST only be used for a purpose
-     * > consistent with both extensions. If there is no purpose consistent with
-     * > both extensions, then the certificate MUST NOT be used for any purpose.
-     *
-     * However, there is no defined EKU OID that corresponds to general-purpose
-     * data signatures, so this section is commented out.
-     */
-    if (extKeyUsageExt && extKeyUsageExt.critical) {
+    if (extKeyUsageExt) {
         const eku = extKeyUsage
             .decoderFor["&ExtnType"]!(extKeyUsageExt.valueElement());
         if (!intermediate) {
