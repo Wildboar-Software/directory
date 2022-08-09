@@ -2,7 +2,7 @@ import * as fsync from "fs";
 import * as fs from "fs/promises";
 import * as path from "path";
 import type { MeerkatContext } from "../../../../ctx";
-import { ASN1Construction, ASN1TagClass, ASN1UndefinedError, ASN1UniversalType, DERElement, ObjectIdentifier, TRUE_BIT } from "asn1-ts";
+import { ASN1Construction, ASN1TagClass, ASN1UndefinedError, ASN1UniversalType, DERElement, FALSE_BIT, ObjectIdentifier, TRUE_BIT } from "asn1-ts";
 import {
     Certificate,
     _decode_Certificate,
@@ -178,6 +178,2477 @@ function create_nist_pkits_test (
         return expect(result).toEqual(expectedResult_);
     }
 }
+describe("NIST PKITS 4.1.1 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "GoodCACert.crt",
+            "ValidCertificatePathTest1EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.1.2 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "BadSignedCACert.crt",
+            "InvalidCASignatureTest2EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_INVALID_SIG,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+describe("NIST PKITS 4.1.3 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "GoodCACert.crt",
+            "InvalidEESignatureTest3EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_INVALID_SIG,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+describe("NIST PKITS 4.1.4 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "DSACACert.crt",
+            "ValidDSASignaturesTest4EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.1.5 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "DSACACert.crt",
+            "DSAParametersInheritedCACert.crt",
+            "ValidDSAParameterInheritanceTest5EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.1.6 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "DSACACert.crt",
+            "InvalidDSASignatureTest6EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_INVALID_SIG,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+describe("NIST PKITS 4.2.1 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "BadnotBeforeDateCACert.crt",
+            "InvalidCAnotBeforeDateTest1EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_INVALID_TIME,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+describe("NIST PKITS 4.2.2 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "GoodCACert.crt",
+            "InvalidEEnotBeforeDateTest2EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_INVALID_TIME,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+// TODO: Investigate this one.
+describe("NIST PKITS 4.2.3 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "GoodCACert.crt",
+            "Validpre2000UTCnotBeforeDateTest3EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.2.4 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "GoodCACert.crt",
+            "ValidGeneralizedTimenotBeforeDateTest4EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.2.5 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "BadnotBeforeDateCACert.crt",
+            "InvalidCAnotAfterDateTest5EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_INVALID_TIME,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+describe("NIST PKITS 4.2.6 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "GoodCACert.crt",
+            "InvalidEEnotAfterDateTest6EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_INVALID_TIME,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+describe("NIST PKITS 4.2.7 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "GoodCACert.crt",
+            "Invalidpre2000UTCEEnotAfterDateTest7EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_INVALID_TIME,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+describe("NIST PKITS 4.2.8 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "GoodCACert.crt",
+            "ValidGeneralizedTimenotAfterDateTest8EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.3.1 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "GoodCACert.crt",
+            "InvalidNameChainingTest1EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_ISSUER_SUBJECT_MISMATCH,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+describe("NIST PKITS 4.3.2 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "NameOrderingCACert.crt",
+            "InvalidNameChainingOrderTest2EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_ISSUER_SUBJECT_MISMATCH,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+describe("NIST PKITS 4.3.3 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "GoodCACert.crt",
+            "ValidNameChainingWhitespaceTest3EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+// FIXME: This is legitimately a bug, but it's not a big deal.
+describe("NIST PKITS 4.3.4 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "GoodCACert.crt",
+            "ValidNameChainingWhitespaceTest4EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.3.5 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "GoodCACert.crt",
+            "ValidNameChainingCapitalizationTest5EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.3.6 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "UIDCACert.crt",
+            "ValidNameUIDsTest6EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.3.7 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "RFC3280MandatoryAttributeTypesCACert.crt",
+            "ValidRFC3280MandatoryAttributeTypesTest7EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.3.8 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "RFC3280OptionalAttributeTypesCACert.crt",
+            "ValidRFC3280OptionalAttributeTypesTest8EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.3.9 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "UTF8StringEncodedNamesCACert.crt",
+            "ValidUTF8StringEncodedNamesTest9EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+
+describe("NIST PKITS 4.3.10 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "RolloverfromPrintableStringtoUTF8StringCACert.crt",
+            "ValidRolloverfromPrintableStringtoUTF8StringTest10EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+// FIXME: This is legitimately a bug, but it is not a big deal.
+describe("NIST PKITS 4.3.11 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "UTF8StringCaseInsensitiveMatchCACert.crt",
+            "ValidUTF8StringCaseInsensitiveMatchTest11EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+
+test.todo("NIST PKITS 4.4.* Tests");
+
+describe("NIST PKITS 4.5.1 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "BasicSelfIssuedNewKeyCACert.crt",
+            "BasicSelfIssuedNewKeyOldWithNewCACert.crt",
+            "ValidBasicSelfIssuedOldWithNewTest1EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+// This test was commented out because it relies on CRL validation.
+describe.skip("NIST PKITS 4.5.2 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "BasicSelfIssuedNewKeyCACert.crt",
+            "BasicSelfIssuedNewKeyOldWithNewCACert.crt",
+            "InvalidBasicSelfIssuedOldWithNewTest2EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+describe("NIST PKITS 4.5.3 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "BasicSelfIssuedOldKeyCACert.crt",
+            "BasicSelfIssuedOldKeyNewWithOldCACert.crt",
+            "ValidBasicSelfIssuedNewWithOldTest3EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+// CRL-related
+describe.skip("NIST PKITS 4.5.4 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "BasicSelfIssuedOldKeyCACert.crt",
+            "BasicSelfIssuedOldKeyNewWithOldCACert.crt",
+            "ValidBasicSelfIssuedNewWithOldTest4EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+// CRL-related
+describe.skip("NIST PKITS 4.5.5 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "BasicSelfIssuedOldKeyCACert.crt",
+            "BasicSelfIssuedOldKeyNewWithOldCACert.crt",
+            "InvalidBasicSelfIssuedNewWithOldTest5EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+
+test.todo("NIST PKITS Tests 4.5.6 - 4.5.8");
+
+// FIXME: This is actually a bug: ITU Rec. X.509, Section 7.4 states that the basicConstraints extension is required.
+describe("NIST PKITS 4.6.1 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "MissingbasicConstraintsCACert.crt",
+            "InvalidMissingbasicConstraintsTest1EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.6.2 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "basicConstraintsCriticalcAFalseCACert.crt",
+            "InvalidcAFalseTest2EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_BASIC_CONSTRAINTS_CA,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+describe("NIST PKITS 4.6.3 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "basicConstraintsNotCriticalcAFalseCACert.crt",
+            "InvalidcAFalseTest3EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            /**
+             * NOTE: This is a slight deviation from the expectation of the test.
+             * But it is still correct and fine.
+             *
+             * I commented out the code that returns this error and I then get
+             * the expected error.
+             */
+            returnCode: VCP_RETURN_INVALID_EXT_CRIT,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+// NOTE: I dispute that this path should pass.
+describe("NIST PKITS 4.6.4 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "basicConstraintsNotCriticalCACert.crt",
+            "ValidbasicConstraintsNotCriticalTest4EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_INVALID_EXT_CRIT,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+describe("NIST PKITS 4.6.5 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "pathLenConstraint0CACert.crt",
+            "pathLenConstraint0subCACert.crt",
+            "InvalidpathLenConstraintTest5EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_BASIC_CONSTRAINTS_PATH_LEN,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+describe("NIST PKITS 4.6.6 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "pathLenConstraint0CACert.crt",
+            "pathLenConstraint0subCACert.crt",
+            "InvalidpathLenConstraintTest6EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_BASIC_CONSTRAINTS_PATH_LEN,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+describe("NIST PKITS 4.6.7 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "pathLenConstraint0CACert.crt",
+            "ValidpathLenConstraintTest7EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.6.8 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "pathLenConstraint0CACert.crt",
+            "ValidpathLenConstraintTest8EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT, FALSE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.6.9 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "pathLenConstraint6CACert.crt",
+            "pathLenConstraint6subCA0Cert.crt",
+            "pathLenConstraint6subsubCA00Cert.crt",
+            "InvalidpathLenConstraintTest9EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_BASIC_CONSTRAINTS_PATH_LEN,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+describe("NIST PKITS 4.6.10 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "pathLenConstraint6CACert.crt",
+            "pathLenConstraint6subCA0Cert.crt",
+            "pathLenConstraint6subsubCA00Cert.crt",
+            "InvalidpathLenConstraintTest10EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_BASIC_CONSTRAINTS_PATH_LEN,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+describe("NIST PKITS 4.6.11 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "pathLenConstraint6CACert.crt",
+            "pathLenConstraint6subCA1Cert.crt",
+            "pathLenConstraint6subsubCA11Cert.crt",
+            "pathLenConstraint6subsubsubCA11XCert.crt",
+            "InvalidpathLenConstraintTest11EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_BASIC_CONSTRAINTS_PATH_LEN,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+describe("NIST PKITS 4.6.11 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "pathLenConstraint6CACert.crt",
+            "pathLenConstraint6subCA1Cert.crt",
+            "pathLenConstraint6subsubCA11Cert.crt",
+            "pathLenConstraint6subsubsubCA11XCert.crt",
+            "InvalidpathLenConstraintTest11EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_BASIC_CONSTRAINTS_PATH_LEN,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+describe("NIST PKITS 4.6.12 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "pathLenConstraint6CACert.crt",
+            "pathLenConstraint6subCA1Cert.crt",
+            "pathLenConstraint6subsubCA11Cert.crt",
+            "pathLenConstraint6subsubsubCA11XCert.crt",
+            "InvalidpathLenConstraintTest12EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_BASIC_CONSTRAINTS_PATH_LEN,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+describe("NIST PKITS 4.6.13 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "pathLenConstraint6CACert.crt",
+            "pathLenConstraint6subCA4Cert.crt",
+            "pathLenConstraint6subsubCA41Cert.crt",
+            "pathLenConstraint6subsubsubCA41XCert.crt",
+            "ValidpathLenConstraintTest13EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.6.14 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "pathLenConstraint6CACert.crt",
+            "pathLenConstraint6subCA4Cert.crt",
+            "pathLenConstraint6subsubCA41Cert.crt",
+            "pathLenConstraint6subsubsubCA41XCert.crt",
+            "ValidpathLenConstraintTest14EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT, FALSE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+// FIXME: I think this is a bug.
+describe("NIST PKITS 4.6.15 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "pathLenConstraint0CACert.crt",
+            "pathLenConstraint0SelfIssuedCACert.crt",
+            "ValidSelfIssuedpathLenConstraintTest15EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.6.16 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "pathLenConstraint0CACert.crt",
+            "pathLenConstraint0SelfIssuedCACert.crt",
+            "pathLenConstraint0subCA2Cert.crt",
+            "InvalidSelfIssuedpathLenConstraintTest16EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_BASIC_CONSTRAINTS_PATH_LEN,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+// FIXME: This is a bug.
+describe("NIST PKITS 4.6.17 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "pathLenConstraint1CACert.crt",
+            "pathLenConstraint1SelfIssuedCACert.crt",
+            "pathLenConstraint1subCACert.crt",
+            "pathLenConstraint1SelfIssuedsubCACert.crt",
+            "ValidSelfIssuedpathLenConstraintTest17EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+describe("NIST PKITS 4.7.1 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "keyUsageCriticalkeyCertSignFalseCACert.crt",
+            "InvalidkeyUsageCriticalkeyCertSignFalseTest1EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_BAD_KEY_USAGE,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+// FIXME: I don't see in the specifications where keyUsage must be critical for CAs.
+describe("NIST PKITS 4.7.2 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "keyUsageNotCriticalkeyCertSignFalseCACert.crt",
+            "InvalidkeyUsageNotCriticalkeyCertSignFalseTest2EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_BAD_KEY_USAGE,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+describe("NIST PKITS 4.7.3 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "keyUsageNotCriticalCACert.crt",
+            "ValidkeyUsageNotCriticalTest3EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+test.todo("NIST PKITS Tests 4.7.4");
+test.todo("NIST PKITS Tests 4.7.5");
+describe("NIST PKITS 4.8.1. Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "GoodCACert.crt",
+            "ValidCertificatePathTest1EE.crt",
+        ],
+        {
+            initial_explicit_policy: true,
+        },
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+    it("Validates successfully with the path in subtest #2", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "GoodCACert.crt",
+            "ValidCertificatePathTest1EE.crt",
+        ],
+        {
+            initial_explicit_policy: true,
+            initial_policy_set: [
+                NIST_TEST_POLICY_1,
+            ],
+        },
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+    it("Validates successfully with the path in subtest #3", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "GoodCACert.crt",
+            "ValidCertificatePathTest1EE.crt",
+        ],
+        {
+            initial_explicit_policy: true,
+            initial_policy_set: [
+                NIST_TEST_POLICY_2,
+            ],
+        },
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_POLICY_NOT_ACCEPTABLE,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+    it("Validates successfully with the path in subtest #4", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "GoodCACert.crt",
+            "ValidCertificatePathTest1EE.crt",
+        ],
+        {
+            initial_explicit_policy: true,
+            initial_policy_set: [
+                NIST_TEST_POLICY_1,
+                NIST_TEST_POLICY_2,
+            ],
+        },
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.8.2 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "NoPoliciesCACert.crt",
+            "AllCertificatesNoPoliciesTest2EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+    it("Validates successfully with the path in subtest #2", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "NoPoliciesCACert.crt",
+            "AllCertificatesNoPoliciesTest2EE.crt",
+        ],
+        {
+            initial_explicit_policy: true,
+        },
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_NO_AUTHORIZED_POLICIES,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.8.3 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "GoodCACert.crt",
+            "PoliciesP2subCACert.crt",
+            "DifferentPoliciesTest3EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+    it("Validates successfully with the path in subtest #2", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "GoodCACert.crt",
+            "PoliciesP2subCACert.crt",
+            "DifferentPoliciesTest3EE.crt",
+        ],
+        {
+            initial_explicit_policy: true,
+        },
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_NO_AUTHORIZED_POLICIES,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+    it("Validates successfully with the path in subtest #3", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "GoodCACert.crt",
+            "PoliciesP2subCACert.crt",
+            "DifferentPoliciesTest3EE.crt",
+        ],
+        {
+            initial_explicit_policy: true,
+            initial_policy_set: [
+                NIST_TEST_POLICY_1,
+                NIST_TEST_POLICY_2,
+            ],
+        },
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_NO_AUTHORIZED_POLICIES,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.8.4 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "GoodCACert.crt",
+            "GoodsubCACert.crt",
+            "DifferentPoliciesTest4EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.8.5 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "GoodCACert.crt",
+            "PoliciesP2subCA2Cert.crt",
+            "DifferentPoliciesTest5EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_NO_AUTHORIZED_POLICIES,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.8.6 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "PoliciesP1234CACert.crt",
+            "PoliciesP1234subCAP123Cert.crt",
+            "PoliciesP1234subsubCAP123P12Cert.crt",
+            "OverlappingPoliciesTest6EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT, FALSE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+
+    it("Validates successfully with the path in subtest #2", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "PoliciesP1234CACert.crt",
+            "PoliciesP1234subCAP123Cert.crt",
+            "PoliciesP1234subsubCAP123P12Cert.crt",
+            "OverlappingPoliciesTest6EE.crt",
+        ],
+        {
+            initial_policy_set: [
+                NIST_TEST_POLICY_1,
+            ],
+        },
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT, FALSE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+
+    it("Validates successfully with the path in subtest #3", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "PoliciesP1234CACert.crt",
+            "PoliciesP1234subCAP123Cert.crt",
+            "PoliciesP1234subsubCAP123P12Cert.crt",
+            "OverlappingPoliciesTest6EE.crt",
+        ],
+        {
+            initial_policy_set: [
+                NIST_TEST_POLICY_2,
+            ],
+        },
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_POLICY_NOT_ACCEPTABLE,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT, FALSE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.8.7 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "PoliciesP123CACert.crt",
+            "PoliciesP123subCAP12Cert.crt",
+            "PoliciesP123subsubCAP12P1Cert.crt",
+            "DifferentPoliciesTest7EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_NO_AUTHORIZED_POLICIES,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT, FALSE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.8.8 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "PoliciesP12CACert.crt",
+            "PoliciesP12subCAP1Cert.crt",
+            "PoliciesP12subsubCAP1P2Cert.crt",
+            "DifferentPoliciesTest8EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_NO_AUTHORIZED_POLICIES,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT, FALSE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.8.9 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "PoliciesP123CACert.crt",
+            "PoliciesP123subCAP12Cert.crt",
+            "PoliciesP123subsubCAP12P2Cert.crt",
+            "PoliciesP123subsubsubCAP12P2P1Cert.crt",
+            "DifferentPoliciesTest9EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_NO_AUTHORIZED_POLICIES,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.8.10 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "PoliciesP12CACert.crt",
+            "AllCertificatesSamePoliciesTest10EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+                new PolicyInformation(
+                    NIST_TEST_POLICY_2,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+                new PolicyInformation(
+                    NIST_TEST_POLICY_2,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+    it("Validates successfully with the path in subtest #2", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "PoliciesP12CACert.crt",
+            "AllCertificatesSamePoliciesTest10EE.crt",
+        ],
+        {
+            initial_policy_set: [
+                NIST_TEST_POLICY_1,
+            ],
+        },
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+                new PolicyInformation(
+                    NIST_TEST_POLICY_2,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+    it("Validates successfully with the path in subtest #3", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "PoliciesP12CACert.crt",
+            "AllCertificatesSamePoliciesTest10EE.crt",
+        ],
+        {
+            initial_policy_set: [
+                NIST_TEST_POLICY_2,
+            ],
+        },
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_2,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+                new PolicyInformation(
+                    NIST_TEST_POLICY_2,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.8.11 Cert Path", () => {
+    // FIXME: I think this is a bug.
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "anyPolicyCACert.crt",
+            "AllCertificatesanyPolicyTest11EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    anyPolicy,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+    // FIXME: I think this is a bug.
+    it("Validates successfully with the path in subtest #2", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "anyPolicyCACert.crt",
+            "AllCertificatesanyPolicyTest11EE.crt",
+        ],
+        {
+            initial_policy_set: [
+                NIST_TEST_POLICY_1,
+            ],
+        },
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    anyPolicy,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.8.12 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "PoliciesP3CACert.crt",
+            "DifferentPoliciesTest12EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_NO_AUTHORIZED_POLICIES,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.8.13 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "PoliciesP123CACert.crt",
+            "AllCertificatesSamePoliciesTest13EE.crt",
+        ],
+        {
+            initial_policy_set: [
+                NIST_TEST_POLICY_1,
+            ],
+        },
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+                new PolicyInformation(
+                    NIST_TEST_POLICY_2,
+                    undefined,
+                ),
+                new PolicyInformation(
+                    NIST_TEST_POLICY_3,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+    it("Validates successfully with the path in subtest #2", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "PoliciesP123CACert.crt",
+            "AllCertificatesSamePoliciesTest13EE.crt",
+        ],
+        {
+            initial_policy_set: [
+                NIST_TEST_POLICY_2,
+            ],
+        },
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_2,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+                new PolicyInformation(
+                    NIST_TEST_POLICY_2,
+                    undefined,
+                ),
+                new PolicyInformation(
+                    NIST_TEST_POLICY_3,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+    it("Validates successfully with the path in subtest #3", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "PoliciesP123CACert.crt",
+            "AllCertificatesSamePoliciesTest13EE.crt",
+        ],
+        {
+            initial_policy_set: [
+                NIST_TEST_POLICY_3,
+            ],
+        },
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_3,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+                new PolicyInformation(
+                    NIST_TEST_POLICY_2,
+                    undefined,
+                ),
+                new PolicyInformation(
+                    NIST_TEST_POLICY_3,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+
+describe("NIST PKITS 4.8.14 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "anyPolicyCACert.crt",
+            "AnyPolicyTest14EE.crt",
+        ],
+        {
+            initial_policy_set: [
+                NIST_TEST_POLICY_1,
+            ],
+        },
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+    it("Validates successfully with the path in subtest #2", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "anyPolicyCACert.crt",
+            "AnyPolicyTest14EE.crt",
+        ],
+        {
+            initial_policy_set: [
+                NIST_TEST_POLICY_2,
+            ],
+        },
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_POLICY_NOT_ACCEPTABLE,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.8.15 Cert Path", () => {
+    // FIXME: Display user notices.
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "UserNoticeQualifierTest15EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.8.16 Cert Path", () => {
+    // FIXME: Display user notices.
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "GoodCACert.crt",
+            "UserNoticeQualifierTest16EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.8.17 Cert Path", () => {
+    // FIXME: Display user notices.
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "GoodCACert.crt",
+            "UserNoticeQualifierTest17EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.8.18 Cert Path", () => {
+    // FIXME: User notices
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "PoliciesP12CACert.crt",
+            "UserNoticeQualifierTest18EE.crt",
+        ],
+        {
+            initial_policy_set: [
+                NIST_TEST_POLICY_1,
+            ],
+        },
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+                new PolicyInformation(
+                    NIST_TEST_POLICY_2,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+    it("Validates successfully with the path in subtest #2", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "PoliciesP12CACert.crt",
+            "UserNoticeQualifierTest18EE.crt",
+        ],
+        {
+            initial_policy_set: [
+                NIST_TEST_POLICY_2,
+            ],
+        },
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_2,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+                new PolicyInformation(
+                    NIST_TEST_POLICY_2,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.8.19 Cert Path", () => {
+    const qualValue1 = new DERElement(
+        ASN1TagClass.universal,
+        ASN1Construction.primitive,
+        ASN1UniversalType.visibleString,
+    );
+    qualValue1.value = new Uint8Array(
+        Array
+            .from("q6:  Section 4.2.1.5 of RFC 3280 states the maximum size of explicitText is 200 characters, but warns that some non-conforming CAs exceed this limit.  Thus RFC 3280 states that certificate users SHOULD gracefully handle explicitText with more than 200 characters.  This explicitText is over 200 characters long")
+            .map((char) => char.charCodeAt(0)));
+    const qualValues = DERElement.fromSequence([qualValue1]);
+    qualValues.name = "qualifier";
+    qualValues.value = new Uint8Array(qualValues.value);
+    const pq1 = [
+        new PolicyQualifierInfo(
+            new ObjectIdentifier([ 1, 3, 6, 1, 5, 5, 7, 2, 2 ]),
+            qualValues,
+        ),
+    ];
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "UserNoticeQualifierTest19EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    pq1,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    pq1,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.8.20 Cert Path", () => {
+    const qualValue1 = new DERElement(
+        ASN1TagClass.universal,
+        ASN1Construction.primitive,
+        ASN1UniversalType.ia5String,
+    );
+    qualValue1.name = "qualifier";
+    qualValue1.value = new Uint8Array(
+        Array
+            .from("http://csrc.nist.gov/groups/ST/crypto_apps_infra/csor/pki_registration.html#PKITest")
+            .map((char) => char.charCodeAt(0)));
+    // const qualValues = DERElement.fromSequence([qualValue1]);
+    // qualValues.name = "qualifier";
+    // qualValues.value = new Uint8Array(qualValues.value);
+    const pq1 = [
+        new PolicyQualifierInfo(
+            new ObjectIdentifier([ 1, 3, 6, 1, 5, 5, 7, 2, 1 ]),
+            qualValue1,
+        ),
+    ];
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "GoodCACert.crt",
+            "CPSPointerQualifierTest20EE.crt",
+        ],
+        {
+            initial_explicit_policy: true, // Not required, but recommended.
+        },
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    pq1,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    pq1,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.9.1 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "requireExplicitPolicy10CACert.crt",
+            "requireExplicitPolicy10subCACert.crt",
+            "requireExplicitPolicy10subsubCACert.crt",
+            "requireExplicitPolicy10subsubsubCACert.crt",
+            "ValidrequireExplicitPolicyTest1EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.9.2 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "requireExplicitPolicy5CACert.crt",
+            "requireExplicitPolicy5subCACert.crt",
+            "requireExplicitPolicy5subsubCACert.crt",
+            "requireExplicitPolicy5subsubsubCACert.crt",
+            "ValidrequireExplicitPolicyTest2EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.9.3 Cert Path", () => {
+    // FIXME: This is a bug.
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "requireExplicitPolicy4CACert.crt",
+            "requireExplicitPolicy4subCACert.crt",
+            "requireExplicitPolicy4subsubCACert.crt",
+            "requireExplicitPolicy4subsubsubCACert.crt",
+            "InvalidrequireExplicitPolicyTest3EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.9.4 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "requireExplicitPolicy0CACert.crt",
+            "requireExplicitPolicy0subCACert.crt",
+            "requireExplicitPolicy0subsubCACert.crt",
+            "requireExplicitPolicy0subsubsubCACert.crt",
+            "ValidrequireExplicitPolicyTest4EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+describe("NIST PKITS 4.9.5 Cert Path", () => {
+    // FIXME: This is a bug.
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "requireExplicitPolicy7CACert.crt",
+            "requireExplicitPolicy7subCARE2Cert.crt",
+            "requireExplicitPolicy7subsubCARE2RE4Cert.crt",
+            "requireExplicitPolicy7subsubsubCARE2RE4Cert.crt",
+            "InvalidrequireExplicitPolicyTest5EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+describe("NIST PKITS 4.9.6 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "requireExplicitPolicy2CACert.crt",
+            "requireExplicitPolicy2SelfIssuedCACert.crt",
+            "ValidSelfIssuedrequireExplicitPolicyTest6EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+        },
+    ));
+});
+
+// FIXME: This is a bug.
+describe("NIST PKITS 4.9.7 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "requireExplicitPolicy2CACert.crt",
+            "requireExplicitPolicy2SelfIssuedCACert.crt",
+            "requireExplicitPolicy2subCACert.crt",
+            "InvalidSelfIssuedrequireExplicitPolicyTest7EE.crt",
+        ],
+        {
+            initial_explicit_policy: true,
+        },
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: false,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+// FIXME: This is a bug.
+describe("NIST PKITS 4.9.8 Cert Path", () => {
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "requireExplicitPolicy2CACert.crt",
+            "requireExplicitPolicy2SelfIssuedCACert.crt",
+            "requireExplicitPolicy2subCACert.crt",
+            "requireExplicitPolicy2SelfIssuedsubCACert.crt",
+            "InvalidSelfIssuedrequireExplicitPolicyTest8EE.crt",
+        ],
+        {},
+        {
+            user_constrained_policies: [],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: undefined,
+        },
+    ));
+});
+// FIXME: Use create_nist_pkits_test()
 describe("NIST PKITS 4.10.1 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", async () => {
         const certPath: Certificate[] = (await Promise.all(

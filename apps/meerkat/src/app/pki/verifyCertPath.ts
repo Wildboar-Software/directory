@@ -995,7 +995,7 @@ async function verifyBasicPublicKeyCertificateChecks (
         const criticalityMandate = extensionMandatoryCriticality.get(extId);
         if (
             (criticalityMandate !== undefined)
-            && (criticalityMandate !== ext.critical)
+            && (criticalityMandate !== (ext.critical ?? false))
         ) {
             return VCP_RETURN_INVALID_EXT_CRIT;
         }

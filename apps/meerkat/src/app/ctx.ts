@@ -6,7 +6,6 @@ import {
     RemoteCRLCheckiness,
     Configuration,
 } from "@wildboar/meerkat-types";
-import { v4 as uuid } from "uuid";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
     AccessPoint,
@@ -96,7 +95,7 @@ import {
 import {
     ACPathData,
 } from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/ACPathData.ta";
-import { KeyObject, createPrivateKey } from "crypto";
+import { KeyObject, createPrivateKey, randomUUID } from "crypto";
 import {
     AuthenticationLevel_basicLevels,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
@@ -287,7 +286,7 @@ const myNSAPs: Uint8Array[] = process.env.MEERKAT_MY_ACCESS_POINT_NSAPS
         .map((url) => uriToNSAP(url, (url.startsWith("itot://"))))
     : [];
 
-const rootID = uuid();
+const rootID = randomUUID();
 const root: Vertex = {
     subordinates: [],
     dse: {
