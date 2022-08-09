@@ -1615,6 +1615,7 @@ function processExplicitPolicyIndicator (
     );
     const intermediate: boolean = ((subjectIndex > 0) && (subjectIndex < (state.certPath.length - 1)));
     const selfIssuedIntermediate: boolean = (selfIssued && intermediate);
+    const previousSkipCertsValue = state.pending_constraints.explicit_policy.skipCertificates;
     // Section 12.5.3.1
     if (
         state.pending_constraints.explicit_policy.pending
@@ -1638,14 +1639,11 @@ function processExplicitPolicyIndicator (
     if (pc?.requireExplicitPolicy !== undefined) {
         // Bullet #2
         if (pc.requireExplicitPolicy > 0) {
-            if (state.pending_constraints.explicit_policy.pending) {
-                state.pending_constraints.explicit_policy.skipCertificates = Math.min(
-                    Number(pc.requireExplicitPolicy),
-                    state.pending_constraints.explicit_policy.skipCertificates,
-                );
-            } else {
-                state.pending_constraints.explicit_policy.skipCertificates = Number(pc.requireExplicitPolicy);
-            }
+            state.pending_constraints.explicit_policy.pending = true;
+            state.pending_constraints.explicit_policy.skipCertificates = Math.min(
+                Number(pc.requireExplicitPolicy),
+                previousSkipCertsValue,
+            );
         } else if (pc.requireExplicitPolicy === 0) {
             state.explicit_policy_indicator = true;
         } else {

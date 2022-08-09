@@ -2569,7 +2569,6 @@ describe("NIST PKITS 4.9.2 Cert Path", () => {
     ));
 });
 describe("NIST PKITS 4.9.3 Cert Path", () => {
-    // FIXME: This is a bug.
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2582,7 +2581,7 @@ describe("NIST PKITS 4.9.3 Cert Path", () => {
         {},
         {
             user_constrained_policies: [],
-            returnCode: VCP_RETURN_OK,
+            returnCode: VCP_RETURN_NO_AUTHORIZED_POLICIES,
             explicit_policy_indicator: true,
             authorities_constrained_policies: [],
             endEntityExtKeyUsage: undefined,
@@ -2622,7 +2621,6 @@ describe("NIST PKITS 4.9.4 Cert Path", () => {
     ));
 });
 describe("NIST PKITS 4.9.5 Cert Path", () => {
-    // FIXME: This is a bug.
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2635,14 +2633,15 @@ describe("NIST PKITS 4.9.5 Cert Path", () => {
         {},
         {
             user_constrained_policies: [],
-            returnCode: VCP_RETURN_OK,
+            returnCode: VCP_RETURN_NO_AUTHORIZED_POLICIES,
             explicit_policy_indicator: true,
             authorities_constrained_policies: [],
             endEntityExtKeyUsage: undefined,
-            endEntityKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
         },
     ));
 });
+// TODO: Investigate.
 describe("NIST PKITS 4.9.6 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
@@ -2663,7 +2662,6 @@ describe("NIST PKITS 4.9.6 Cert Path", () => {
     ));
 });
 
-// FIXME: This is a bug.
 describe("NIST PKITS 4.9.7 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
@@ -2678,15 +2676,14 @@ describe("NIST PKITS 4.9.7 Cert Path", () => {
         },
         {
             user_constrained_policies: [],
-            returnCode: VCP_RETURN_OK,
-            explicit_policy_indicator: false,
+            returnCode: VCP_RETURN_NO_AUTHORIZED_POLICIES,
+            explicit_policy_indicator: true,
             authorities_constrained_policies: [],
             endEntityExtKeyUsage: undefined,
-            endEntityKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
         },
     ));
 });
-// FIXME: This is a bug.
 describe("NIST PKITS 4.9.8 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
@@ -2700,96 +2697,45 @@ describe("NIST PKITS 4.9.8 Cert Path", () => {
         {},
         {
             user_constrained_policies: [],
-            returnCode: VCP_RETURN_OK,
+            returnCode: VCP_RETURN_NO_AUTHORIZED_POLICIES,
             explicit_policy_indicator: true,
             authorities_constrained_policies: [],
             endEntityExtKeyUsage: undefined,
-            endEntityKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
         },
     ));
 });
-// FIXME: Use create_nist_pkits_test()
 describe("NIST PKITS 4.10.1 Cert Path", () => {
-    it("Validates successfully with the path in subtest #1", async () => {
-        const certPath: Certificate[] = (await Promise.all(
-            [
-                "TrustAnchorRootCertificate.crt",
-                "Mapping1to2CACert.crt",
-                "ValidPolicyMappingTest1EE.crt",
-            ].map(loadCert),
-        )).reverse();
-        const args: VerifyCertPathArgs = {
-            ...DEFAULT_SETTINGS,
-            certPath,
+    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "Mapping1to2CACert.crt",
+            "ValidPolicyMappingTest1EE.crt",
+        ],
+        {
             initial_policy_set: [
                 NIST_TEST_POLICY_1,
             ],
-        };
-        const result = await verifyCertPath(ctx, args);
-        const expectedResult: VerifyCertPathResult = {
-            returnCode: VCP_RETURN_OK,
-            authorities_constrained_policies: [
-                new PolicyInformation(
-                    NIST_TEST_POLICY_1,
-                    undefined,
-                ),
-            ],
-            explicit_policy_indicator: true,
-            policy_mappings_that_occurred: [],
+        },
+        {
             user_constrained_policies: [
                 new PolicyInformation(
                     NIST_TEST_POLICY_1,
                     undefined,
                 ),
             ],
-            warnings: [],
-            endEntityExtKeyUsage: undefined,
-            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
-            userNotices: [],
-        };
-        return expect(result).toEqual(expectedResult);
-    });
-});
-describe("NIST PKITS 4.10.1 Cert Path", () => {
-    it("Validates successfully with the path in subtest #1", async () => {
-        const certPath: Certificate[] = (await Promise.all(
-            [
-                "TrustAnchorRootCertificate.crt",
-                "Mapping1to2CACert.crt",
-                "ValidPolicyMappingTest1EE.crt",
-            ].map(loadCert),
-        )).reverse();
-        const args: VerifyCertPathArgs = {
-            ...DEFAULT_SETTINGS,
-            certPath,
-            initial_policy_set: [
-                NIST_TEST_POLICY_1,
-            ],
-        };
-        const result = await verifyCertPath(ctx, args);
-        const expectedResult: VerifyCertPathResult = {
             returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: true,
             authorities_constrained_policies: [
                 new PolicyInformation(
                     NIST_TEST_POLICY_1,
                     undefined,
                 ),
             ],
-            explicit_policy_indicator: true,
-            policy_mappings_that_occurred: [],
-            user_constrained_policies: [
-                new PolicyInformation(
-                    NIST_TEST_POLICY_1,
-                    undefined,
-                ),
-            ],
-            warnings: [],
             endEntityExtKeyUsage: undefined,
             endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
-            userNotices: [],
-        };
-        return expect(result).toEqual(expectedResult);
-    });
+        },
+    ));
     it("Validates successfully with the path in subtest #2", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
