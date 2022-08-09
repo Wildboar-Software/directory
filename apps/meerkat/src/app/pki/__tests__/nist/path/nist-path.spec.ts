@@ -97,6 +97,7 @@ function getDefaultResult (result: Partial<VerifyCertPathResult>): VerifyCertPat
         endEntityKeyUsage: undefined,
         endEntityPrivateKeyNotAfter: undefined,
         endEntityPrivateKeyNotBefore: undefined,
+        userNotices: [],
         ...result,
     };
 }
@@ -112,6 +113,7 @@ function getErrorResult (): VerifyCertPathResult {
         endEntityKeyUsage: undefined,
         endEntityPrivateKeyNotAfter: undefined,
         endEntityPrivateKeyNotBefore: undefined,
+        userNotices: [],
     };
 }
 async function loadCert (certName: string): Promise<Certificate> {
@@ -2217,7 +2219,24 @@ describe("NIST PKITS 4.8.14 Cert Path", () => {
     ));
 });
 describe("NIST PKITS 4.8.15 Cert Path", () => {
-    // FIXME: Display user notices.
+    const qualValue1 = new DERElement(
+        ASN1TagClass.universal,
+        ASN1Construction.primitive,
+        ASN1UniversalType.visibleString,
+    );
+    qualValue1.value = new Uint8Array(
+        Array
+            .from("q1:  This is the user notice from qualifier 1.  This certificate is for test purposes only")
+            .map((char) => char.charCodeAt(0)));
+    const qualValues = DERElement.fromSequence([qualValue1]);
+    qualValues.name = "qualifier";
+    qualValues.value = new Uint8Array(qualValues.value);
+    const pq1 = [
+        new PolicyQualifierInfo(
+            new ObjectIdentifier([ 1, 3, 6, 1, 5, 5, 7, 2, 2 ]),
+            qualValues,
+        ),
+    ];
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2228,7 +2247,7 @@ describe("NIST PKITS 4.8.15 Cert Path", () => {
             user_constrained_policies: [
                 new PolicyInformation(
                     NIST_TEST_POLICY_1,
-                    undefined,
+                    pq1,
                 ),
             ],
             returnCode: VCP_RETURN_OK,
@@ -2236,16 +2255,36 @@ describe("NIST PKITS 4.8.15 Cert Path", () => {
             authorities_constrained_policies: [
                 new PolicyInformation(
                     NIST_TEST_POLICY_1,
-                    undefined,
+                    pq1,
                 ),
             ],
             endEntityExtKeyUsage: undefined,
             endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+            userNotices: [
+                "q1:  This is the user notice from qualifier 1.  This certificate is for test purposes only",
+            ],
         },
     ));
 });
 describe("NIST PKITS 4.8.16 Cert Path", () => {
-    // FIXME: Display user notices.
+    const qualValue1 = new DERElement(
+        ASN1TagClass.universal,
+        ASN1Construction.primitive,
+        ASN1UniversalType.visibleString,
+    );
+    qualValue1.value = new Uint8Array(
+        Array
+            .from("q1:  This is the user notice from qualifier 1.  This certificate is for test purposes only")
+            .map((char) => char.charCodeAt(0)));
+    const qualValues = DERElement.fromSequence([qualValue1]);
+    qualValues.name = "qualifier";
+    qualValues.value = new Uint8Array(qualValues.value);
+    const pq1 = [
+        new PolicyQualifierInfo(
+            new ObjectIdentifier([ 1, 3, 6, 1, 5, 5, 7, 2, 2 ]),
+            qualValues,
+        ),
+    ];
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2257,7 +2296,7 @@ describe("NIST PKITS 4.8.16 Cert Path", () => {
             user_constrained_policies: [
                 new PolicyInformation(
                     NIST_TEST_POLICY_1,
-                    undefined,
+                    pq1,
                 ),
             ],
             returnCode: VCP_RETURN_OK,
@@ -2265,16 +2304,36 @@ describe("NIST PKITS 4.8.16 Cert Path", () => {
             authorities_constrained_policies: [
                 new PolicyInformation(
                     NIST_TEST_POLICY_1,
-                    undefined,
+                    pq1,
                 ),
             ],
             endEntityExtKeyUsage: undefined,
             endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+            userNotices: [
+                "q1:  This is the user notice from qualifier 1.  This certificate is for test purposes only",
+            ],
         },
     ));
 });
 describe("NIST PKITS 4.8.17 Cert Path", () => {
-    // FIXME: Display user notices.
+    const qualValue1 = new DERElement(
+        ASN1TagClass.universal,
+        ASN1Construction.primitive,
+        ASN1UniversalType.visibleString,
+    );
+    qualValue1.value = new Uint8Array(
+        Array
+            .from("q3:  This is the user notice from qualifier 3.  This certificate is for test purposes only")
+            .map((char) => char.charCodeAt(0)));
+    const qualValues = DERElement.fromSequence([qualValue1]);
+    qualValues.name = "qualifier";
+    qualValues.value = new Uint8Array(qualValues.value);
+    const pq1 = [
+        new PolicyQualifierInfo(
+            new ObjectIdentifier([ 1, 3, 6, 1, 5, 5, 7, 2, 2 ]),
+            qualValues,
+        ),
+    ];
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2286,7 +2345,7 @@ describe("NIST PKITS 4.8.17 Cert Path", () => {
             user_constrained_policies: [
                 new PolicyInformation(
                     NIST_TEST_POLICY_1,
-                    undefined,
+                    pq1,
                 ),
             ],
             returnCode: VCP_RETURN_OK,
@@ -2294,16 +2353,19 @@ describe("NIST PKITS 4.8.17 Cert Path", () => {
             authorities_constrained_policies: [
                 new PolicyInformation(
                     NIST_TEST_POLICY_1,
-                    undefined,
+                    pq1,
                 ),
             ],
             endEntityExtKeyUsage: undefined,
             endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+            userNotices: [
+                "q3:  This is the user notice from qualifier 3.  This certificate is for test purposes only",
+            ],
         },
     ));
 });
+// FIXME: Bug, but not a particularly important one.
 describe("NIST PKITS 4.8.18 Cert Path", () => {
-    // FIXME: User notices
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2429,9 +2491,6 @@ describe("NIST PKITS 4.8.20 Cert Path", () => {
         Array
             .from("http://csrc.nist.gov/groups/ST/crypto_apps_infra/csor/pki_registration.html#PKITest")
             .map((char) => char.charCodeAt(0)));
-    // const qualValues = DERElement.fromSequence([qualValue1]);
-    // qualValues.name = "qualifier";
-    // qualValues.value = new Uint8Array(qualValues.value);
     const pq1 = [
         new PolicyQualifierInfo(
             new ObjectIdentifier([ 1, 3, 6, 1, 5, 5, 7, 2, 1 ]),
@@ -2686,6 +2745,7 @@ describe("NIST PKITS 4.10.1 Cert Path", () => {
             warnings: [],
             endEntityExtKeyUsage: undefined,
             endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+            userNotices: [],
         };
         return expect(result).toEqual(expectedResult);
     });
@@ -2726,6 +2786,7 @@ describe("NIST PKITS 4.10.1 Cert Path", () => {
             warnings: [],
             endEntityExtKeyUsage: undefined,
             endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+            userNotices: [],
         };
         return expect(result).toEqual(expectedResult);
     });

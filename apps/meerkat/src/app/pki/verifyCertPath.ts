@@ -21,6 +21,9 @@ import {
     TRUE_BIT,
     GeneralizedTime,
     BOOLEAN,
+    ASN1Element,
+    ASN1TagClass,
+    ASN1UniversalType,
 } from "asn1-ts";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
@@ -212,7 +215,6 @@ import {
 } from "./verifyOCSPResponse";
 import _ from "lodash";
 import stringifyDN from "../x500/stringifyDN";
-
 export type VCPReturnCode = number;
 export const VCP_RETURN_OK: VCPReturnCode = 0;
 export const VCP_RETURN_INVALID_SIG: VCPReturnCode = -1;
@@ -275,6 +277,29 @@ const extensionMandatoryCriticality: Map<IndexableOID, BOOLEAN> = new Map([
     [ authorityInfoAccess["&id"]!.toString(), false ], // Always non-critical.
     [ subjectInfoAccess["&id"]!.toString(), false ], // Always non-critical.
 ]);
+
+const ietfUserNoticeOID: OBJECT_IDENTIFIER = new ObjectIdentifier([ 1, 3, 6, 1, 5, 5, 7, 2, 2 ]);
+
+function displayTextToString (dt: ASN1Element): string | null {
+    if (dt.tagClass !== ASN1TagClass.universal) {
+        return null;
+    }
+    switch (dt.tagNumber) {
+        case (ASN1UniversalType.ia5String): {
+            return dt.ia5String;
+        }
+        case (ASN1UniversalType.utf8String): {
+            return dt.utf8String;
+        }
+        case (ASN1UniversalType.bmpString): {
+            return dt.bmpString;
+        }
+        case (ASN1UniversalType.visibleString): {
+            return dt.visibleString;
+        }
+        default: return null;
+    }
+}
 
 interface ValidPolicyData {
     // flags
@@ -457,6 +482,7 @@ function verifyCertPathFail (returnCode: number): VerifyCertPathResult {
         endEntityKeyUsage: undefined,
         endEntityPrivateKeyNotAfter: undefined,
         endEntityPrivateKeyNotBefore: undefined,
+        userNotices: [],
     };
 }
 
@@ -522,6 +548,11 @@ interface VerifyCertPathResult {
      * @readonly
      */
     readonly endEntityPrivateKeyNotAfter?: GeneralizedTime;
+
+    /**
+     * @readonly
+     */
+    readonly userNotices: string[];
 }
 
 export
@@ -1928,6 +1959,28 @@ function finalProcessing (
                     : undefined,
             ));
 
+    const userNotices: string[] = [];
+    for (const ucp of user_constrained_policies) {
+        for (const pq of ucp.policyQualifiers ?? []) {
+            if (!pq.policyQualifierId.isEqualTo(ietfUserNoticeOID)) {
+                continue;
+            }
+            if (!pq.qualifier) {
+                continue;
+            }
+            const displayTextElement = pq.qualifier.sequence
+                .find((el) => el.tagNumber !== ASN1UniversalType.sequence);
+            if (!displayTextElement) {
+                continue;
+            }
+            const unoticeText = displayTextToString(displayTextElement);
+            if (!unoticeText) {
+                continue;
+            }
+            userNotices.push(unoticeText);
+        }
+    }
+
     const ret: VerifyCertPathResult = {
         returnCode: state.returnCode ?? 0,
         authorities_constrained_policies: Array
@@ -1946,6 +1999,7 @@ function finalProcessing (
         endEntityExtKeyUsage: state.endEntityExtKeyUsage,
         endEntityPrivateKeyNotBefore: state.endEntityPrivateKeyNotBefore,
         endEntityPrivateKeyNotAfter: state.endEntityPrivateKeyNotAfter,
+        userNotices,
     };
 
     if (state.explicit_policy_indicator) {
@@ -2003,6 +2057,7 @@ async function verifyCertPath (
                     endEntityKeyUsage: undefined,
                     endEntityPrivateKeyNotAfter: undefined,
                     endEntityPrivateKeyNotBefore: undefined,
+                    userNotices: [],
                 };
             }
         }
@@ -2102,6 +2157,7 @@ async function verifyCertPath (
             endEntityExtKeyUsage: [],
             endEntityPrivateKeyNotBefore: state.endEntityPrivateKeyNotBefore,
             endEntityPrivateKeyNotAfter: state.endEntityPrivateKeyNotAfter,
+            userNotices: [],
         };
     }
     const endEntityResult = await verifyEndEntityCertificate(
