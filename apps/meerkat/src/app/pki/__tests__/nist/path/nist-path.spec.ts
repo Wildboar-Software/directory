@@ -24,26 +24,14 @@ import {
     VerifyCertPathResult,
     VCP_RETURN_OK,
     VCP_RETURN_INVALID_SIG,
-    VCP_RETURN_OCSP_REVOKED,
-    VCP_RETURN_OCSP_OTHER,
-    VCP_RETURN_CRL_REVOKED,
-    VCP_RETURN_CRL_UNREACHABLE,
     VCP_RETURN_MALFORMED,
     VCP_RETURN_BAD_KEY_USAGE,
-    VCP_RETURN_BAD_EXT_KEY_USAGE,
     VCP_RETURN_UNKNOWN_CRIT_EXT,
-    VCP_RETURN_DUPLICATE_EXT,
-    VCP_RETURN_AKI_SKI_MISMATCH,
-    VCP_RETURN_PKU_PERIOD,
     VCP_RETURN_BASIC_CONSTRAINTS_CA,
     VCP_RETURN_BASIC_CONSTRAINTS_PATH_LEN,
     VCP_RETURN_INVALID_EXT_CRIT,
-    VCP_RETURN_UNTRUSTED_ANCHOR,
     VCP_RETURN_INVALID_TIME,
     VCP_RETURN_ISSUER_SUBJECT_MISMATCH,
-    VCP_RETURN_NAME_NOT_PERMITTED,
-    VCP_RETURN_NAME_EXCLUDED,
-    VCP_RETURN_PROHIBITED_SIG_ALG,
     VCP_RETURN_POLICY_NOT_ACCEPTABLE,
     VCP_RETURN_NO_AUTHORIZED_POLICIES,
     VCP_RETURN_NO_BASIC_CONSTRAINTS_CA,
@@ -63,9 +51,9 @@ const VALIDITY_TIME: Date = new Date();
 const NIST_TEST_POLICY_1 = ObjectIdentifier.fromString("2.16.840.1.101.3.2.1.48.1");
 const NIST_TEST_POLICY_2 = ObjectIdentifier.fromString("2.16.840.1.101.3.2.1.48.2");
 const NIST_TEST_POLICY_3 = ObjectIdentifier.fromString("2.16.840.1.101.3.2.1.48.3");
-const NIST_TEST_POLICY_4 = ObjectIdentifier.fromString("2.16.840.1.101.3.2.1.48.4");
-const NIST_TEST_POLICY_5 = ObjectIdentifier.fromString("2.16.840.1.101.3.2.1.48.5");
-const NIST_TEST_POLICY_6 = ObjectIdentifier.fromString("2.16.840.1.101.3.2.1.48.6");
+// const NIST_TEST_POLICY_4 = ObjectIdentifier.fromString("2.16.840.1.101.3.2.1.48.4");
+// const NIST_TEST_POLICY_5 = ObjectIdentifier.fromString("2.16.840.1.101.3.2.1.48.5");
+// const NIST_TEST_POLICY_6 = ObjectIdentifier.fromString("2.16.840.1.101.3.2.1.48.6");
 // From Section 3 of https://csrc.nist.gov/CSRC/media/Projects/PKI-Testing/documents/PKITS.pdf
 const TRUST_ANCHOR_NAME: string = "TrustAnchorRootCertificate.crt";
 const DEFAULT_TRUST_ANCHORS: TrustAnchorList = (() => {

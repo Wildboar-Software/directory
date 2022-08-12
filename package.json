@@ -48,7 +48,7 @@
     "@wildboar/scrypt-0": "^1.0.4",
     "@wildboar/scvp": "^1.0.4",
     "@wildboar/tal": "^1.0.6",
-    "@wildboar/x500": "^1.0.49",
+    "@wildboar/x500": "^1.0.51",
     "applicationinsights": "^2.3.4",
     "applicationinsights-native-metrics": "^0.0.7",
     "asn1-ts": "^7.0.9",

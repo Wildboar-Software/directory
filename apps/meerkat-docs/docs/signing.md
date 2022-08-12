@@ -215,3 +215,14 @@ According to
 Section 9.1.4, Bind errors can be signed if strong authentication or SPKM
 authentication are used. Otherwise, Meerkat DSA will not sign bind errors or
 results.
+
+## Implementation
+
+Meerkat DSA has its own implementation of certificate path validation that is
+independent of OpenSSL (out of necessity). This implementation has been tested
+against the
+[NIST PKITS](https://csrc.nist.gov/csrc/media/projects/pki-testing/documents/pkits.pdf),
+excluding tests that relate to CRLs (both local and remote) and OCSP.
+
+CRLs (both local and remote) and OCSP are believed to work, but have not been
+tested thoroughly.

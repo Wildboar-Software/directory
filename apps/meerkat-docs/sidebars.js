@@ -33,6 +33,7 @@ const sidebars = {
                 'signing',
                 'opbinding',
                 'administration',
+                'troubleshooting',
                 'advice',
                 'usage',
                 'telemetry',
