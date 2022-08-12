@@ -2,7 +2,15 @@ import * as fsync from "fs";
 import * as fs from "fs/promises";
 import * as path from "path";
 import type { MeerkatContext } from "../../../../ctx";
-import { ASN1Construction, ASN1TagClass, ASN1UndefinedError, ASN1UniversalType, DERElement, FALSE_BIT, ObjectIdentifier, TRUE_BIT } from "asn1-ts";
+import {
+    ASN1Construction,
+    ASN1TagClass,
+    ASN1UniversalType,
+    DERElement,
+    FALSE_BIT,
+    ObjectIdentifier,
+    TRUE_BIT,
+} from "asn1-ts";
 import {
     Certificate,
     _decode_Certificate,
@@ -96,12 +104,7 @@ function getDefaultResult (result: Partial<VerifyCertPathResult>): VerifyCertPat
         ],
         explicit_policy_indicator: false,
         policy_mappings_that_occurred: [],
-        user_constrained_policies: [
-            // new PolicyInformation(
-            //     anyPolicy,
-            //     undefined,
-            // ),
-        ],
+        user_constrained_policies: [],
         warnings: [],
         endEntityExtKeyUsage: undefined,
         endEntityKeyUsage: undefined,
@@ -111,20 +114,23 @@ function getDefaultResult (result: Partial<VerifyCertPathResult>): VerifyCertPat
         ...result,
     };
 }
-function getErrorResult (): VerifyCertPathResult {
-    return {
-        returnCode: VCP_RETURN_OK,
-        authorities_constrained_policies: [],
-        explicit_policy_indicator: false,
-        policy_mappings_that_occurred: [],
-        user_constrained_policies: [],
-        warnings: [],
-        endEntityExtKeyUsage: undefined,
-        endEntityKeyUsage: undefined,
-        endEntityPrivateKeyNotAfter: undefined,
-        endEntityPrivateKeyNotBefore: undefined,
-        userNotices: [],
-    };
+function createUserNoticeQualifier (notice: string) {
+    const qualValue1 = new DERElement(
+        ASN1TagClass.universal,
+        ASN1Construction.primitive,
+        ASN1UniversalType.visibleString,
+    );
+    qualValue1.value = new Uint8Array(
+        Array
+            .from(notice)
+            .map((char) => char.charCodeAt(0)));
+    const qualValues = DERElement.fromSequence([qualValue1]);
+    qualValues.name = "qualifier";
+    qualValues.value = new Uint8Array(qualValues.value);
+    return new PolicyQualifierInfo(
+        new ObjectIdentifier([ 1, 3, 6, 1, 5, 5, 7, 2, 2 ]),
+        qualValues,
+    );
 }
 async function loadCert (certName: string): Promise<Certificate> {
     const withExtension = certName.endsWith(".crt")
@@ -2155,24 +2161,7 @@ describe("NIST PKITS 4.8.14 Cert Path", () => {
     ));
 });
 describe("NIST PKITS 4.8.15 Cert Path", () => {
-    const qualValue1 = new DERElement(
-        ASN1TagClass.universal,
-        ASN1Construction.primitive,
-        ASN1UniversalType.visibleString,
-    );
-    qualValue1.value = new Uint8Array(
-        Array
-            .from("q1:  This is the user notice from qualifier 1.  This certificate is for test purposes only")
-            .map((char) => char.charCodeAt(0)));
-    const qualValues = DERElement.fromSequence([qualValue1]);
-    qualValues.name = "qualifier";
-    qualValues.value = new Uint8Array(qualValues.value);
-    const pq1 = [
-        new PolicyQualifierInfo(
-            new ObjectIdentifier([ 1, 3, 6, 1, 5, 5, 7, 2, 2 ]),
-            qualValues,
-        ),
-    ];
+    const noticeText: string = "q1:  This is the user notice from qualifier 1.  This certificate is for test purposes only";
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2183,7 +2172,7 @@ describe("NIST PKITS 4.8.15 Cert Path", () => {
             user_constrained_policies: [
                 new PolicyInformation(
                     NIST_TEST_POLICY_1,
-                    pq1,
+                    [createUserNoticeQualifier(noticeText)],
                 ),
             ],
             returnCode: VCP_RETURN_OK,
@@ -2191,7 +2180,7 @@ describe("NIST PKITS 4.8.15 Cert Path", () => {
             authorities_constrained_policies: [
                 new PolicyInformation(
                     NIST_TEST_POLICY_1,
-                    pq1,
+                    [createUserNoticeQualifier(noticeText)],
                 ),
             ],
             endEntityExtKeyUsage: undefined,
@@ -2203,24 +2192,7 @@ describe("NIST PKITS 4.8.15 Cert Path", () => {
     ));
 });
 describe("NIST PKITS 4.8.16 Cert Path", () => {
-    const qualValue1 = new DERElement(
-        ASN1TagClass.universal,
-        ASN1Construction.primitive,
-        ASN1UniversalType.visibleString,
-    );
-    qualValue1.value = new Uint8Array(
-        Array
-            .from("q1:  This is the user notice from qualifier 1.  This certificate is for test purposes only")
-            .map((char) => char.charCodeAt(0)));
-    const qualValues = DERElement.fromSequence([qualValue1]);
-    qualValues.name = "qualifier";
-    qualValues.value = new Uint8Array(qualValues.value);
-    const pq1 = [
-        new PolicyQualifierInfo(
-            new ObjectIdentifier([ 1, 3, 6, 1, 5, 5, 7, 2, 2 ]),
-            qualValues,
-        ),
-    ];
+    const noticeText: string = "q1:  This is the user notice from qualifier 1.  This certificate is for test purposes only";
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2232,7 +2204,7 @@ describe("NIST PKITS 4.8.16 Cert Path", () => {
             user_constrained_policies: [
                 new PolicyInformation(
                     NIST_TEST_POLICY_1,
-                    pq1,
+                    [createUserNoticeQualifier(noticeText)],
                 ),
             ],
             returnCode: VCP_RETURN_OK,
@@ -2240,7 +2212,7 @@ describe("NIST PKITS 4.8.16 Cert Path", () => {
             authorities_constrained_policies: [
                 new PolicyInformation(
                     NIST_TEST_POLICY_1,
-                    pq1,
+                    [createUserNoticeQualifier(noticeText)],
                 ),
             ],
             endEntityExtKeyUsage: undefined,
@@ -2252,24 +2224,7 @@ describe("NIST PKITS 4.8.16 Cert Path", () => {
     ));
 });
 describe("NIST PKITS 4.8.17 Cert Path", () => {
-    const qualValue1 = new DERElement(
-        ASN1TagClass.universal,
-        ASN1Construction.primitive,
-        ASN1UniversalType.visibleString,
-    );
-    qualValue1.value = new Uint8Array(
-        Array
-            .from("q3:  This is the user notice from qualifier 3.  This certificate is for test purposes only")
-            .map((char) => char.charCodeAt(0)));
-    const qualValues = DERElement.fromSequence([qualValue1]);
-    qualValues.name = "qualifier";
-    qualValues.value = new Uint8Array(qualValues.value);
-    const pq1 = [
-        new PolicyQualifierInfo(
-            new ObjectIdentifier([ 1, 3, 6, 1, 5, 5, 7, 2, 2 ]),
-            qualValues,
-        ),
-    ];
+    const noticeText: string = "q3:  This is the user notice from qualifier 3.  This certificate is for test purposes only";
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2281,7 +2236,7 @@ describe("NIST PKITS 4.8.17 Cert Path", () => {
             user_constrained_policies: [
                 new PolicyInformation(
                     NIST_TEST_POLICY_1,
-                    pq1,
+                    [createUserNoticeQualifier(noticeText)],
                 ),
             ],
             returnCode: VCP_RETURN_OK,
@@ -2289,7 +2244,7 @@ describe("NIST PKITS 4.8.17 Cert Path", () => {
             authorities_constrained_policies: [
                 new PolicyInformation(
                     NIST_TEST_POLICY_1,
-                    pq1,
+                    [createUserNoticeQualifier(noticeText)],
                 ),
             ],
             endEntityExtKeyUsage: undefined,
@@ -2300,8 +2255,10 @@ describe("NIST PKITS 4.8.17 Cert Path", () => {
         },
     ));
 });
-// FIXME: Bug, but not a particularly important one.
 describe("NIST PKITS 4.8.18 Cert Path", () => {
+    const noticeText1: string = "q4:  This is the user notice from qualifier 4 associated with NIST-test-policy-1.  This certificate is for test purposes only";
+    const noticeText2: string = "q5:  This is the user notice from qualifier 5 associated with anyPolicy.  This user notice should be associated with NIST-test-policy-2";
+
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2317,7 +2274,7 @@ describe("NIST PKITS 4.8.18 Cert Path", () => {
             user_constrained_policies: [
                 new PolicyInformation(
                     NIST_TEST_POLICY_1,
-                    undefined,
+                    [createUserNoticeQualifier(noticeText1)],
                 ),
             ],
             returnCode: VCP_RETURN_OK,
@@ -2325,15 +2282,18 @@ describe("NIST PKITS 4.8.18 Cert Path", () => {
             authorities_constrained_policies: [
                 new PolicyInformation(
                     NIST_TEST_POLICY_1,
-                    undefined,
+                    [createUserNoticeQualifier(noticeText1)],
                 ),
                 new PolicyInformation(
                     NIST_TEST_POLICY_2,
-                    undefined,
+                    [createUserNoticeQualifier(noticeText2)],
                 ),
             ],
             endEntityExtKeyUsage: undefined,
             endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+            userNotices: [
+                noticeText1,
+            ],
         },
     ));
     it("Validates successfully with the path in subtest #2", create_nist_pkits_test(
@@ -2351,7 +2311,7 @@ describe("NIST PKITS 4.8.18 Cert Path", () => {
             user_constrained_policies: [
                 new PolicyInformation(
                     NIST_TEST_POLICY_2,
-                    undefined,
+                    [createUserNoticeQualifier(noticeText2)],
                 ),
             ],
             returnCode: VCP_RETURN_OK,
@@ -2359,38 +2319,23 @@ describe("NIST PKITS 4.8.18 Cert Path", () => {
             authorities_constrained_policies: [
                 new PolicyInformation(
                     NIST_TEST_POLICY_1,
-                    undefined,
+                    [createUserNoticeQualifier(noticeText1)],
                 ),
                 new PolicyInformation(
                     NIST_TEST_POLICY_2,
-                    undefined,
+                    [createUserNoticeQualifier(noticeText2)],
                 ),
             ],
             endEntityExtKeyUsage: undefined,
             endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+            userNotices: [
+                noticeText2,
+            ],
         },
     ));
 });
 describe("NIST PKITS 4.8.19 Cert Path", () => {
-    const unotice: string = "q6:  Section 4.2.1.5 of RFC 3280 states the maximum size of explicitText is 200 characters, but warns that some non-conforming CAs exceed this limit.  Thus RFC 3280 states that certificate users SHOULD gracefully handle explicitText with more than 200 characters.  This explicitText is over 200 characters long";
-    const qualValue1 = new DERElement(
-        ASN1TagClass.universal,
-        ASN1Construction.primitive,
-        ASN1UniversalType.visibleString,
-    );
-    qualValue1.value = new Uint8Array(
-        Array
-            .from(unotice)
-            .map((char) => char.charCodeAt(0)));
-    const qualValues = DERElement.fromSequence([qualValue1]);
-    qualValues.name = "qualifier";
-    qualValues.value = new Uint8Array(qualValues.value);
-    const pq1 = [
-        new PolicyQualifierInfo(
-            new ObjectIdentifier([ 1, 3, 6, 1, 5, 5, 7, 2, 2 ]),
-            qualValues,
-        ),
-    ];
+    const noticeText: string = "q6:  Section 4.2.1.5 of RFC 3280 states the maximum size of explicitText is 200 characters, but warns that some non-conforming CAs exceed this limit.  Thus RFC 3280 states that certificate users SHOULD gracefully handle explicitText with more than 200 characters.  This explicitText is over 200 characters long";
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2401,7 +2346,7 @@ describe("NIST PKITS 4.8.19 Cert Path", () => {
             user_constrained_policies: [
                 new PolicyInformation(
                     NIST_TEST_POLICY_1,
-                    pq1,
+                    [createUserNoticeQualifier(noticeText)],
                 ),
             ],
             returnCode: VCP_RETURN_OK,
@@ -2409,13 +2354,13 @@ describe("NIST PKITS 4.8.19 Cert Path", () => {
             authorities_constrained_policies: [
                 new PolicyInformation(
                     NIST_TEST_POLICY_1,
-                    pq1,
+                    [createUserNoticeQualifier(noticeText)],
                 ),
             ],
             endEntityExtKeyUsage: undefined,
             endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
             userNotices: [
-                unotice,
+                noticeText,
             ],
         },
     ));
@@ -2855,6 +2800,7 @@ describe("NIST PKITS 4.10.11 Cert Path", () => {
     ));
 });
 describe("NIST PKITS 4.10.12 Cert Path", () => {
+    const noticeText: string = "q8:  This is the user notice from qualifier 8 associated with anyPolicy.  This user notice should be displayed when NIST-test-policy-2 is in the user-constrained-policy-set";
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2882,7 +2828,7 @@ describe("NIST PKITS 4.10.12 Cert Path", () => {
                 ),
                 new PolicyInformation(
                     NIST_TEST_POLICY_2,
-                    undefined,
+                    [createUserNoticeQualifier(noticeText)],
                 ),
             ],
             endEntityExtKeyUsage: undefined,
@@ -2891,27 +2837,49 @@ describe("NIST PKITS 4.10.12 Cert Path", () => {
             endEntityPrivateKeyNotBefore: undefined,
         },
     ));
+
+    it("Validates successfully with the path in subtest #2", create_nist_pkits_test(
+        [
+            "TrustAnchorRootCertificate.crt",
+            "P12Mapping1to3CACert.crt",
+            "ValidPolicyMappingTest12EE.crt",
+        ],
+        {
+            initial_policy_set: [
+                NIST_TEST_POLICY_2,
+            ],
+        },
+        {
+            user_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_2,
+                    [createUserNoticeQualifier(noticeText)],
+                ),
+            ],
+            returnCode: VCP_RETURN_OK,
+            explicit_policy_indicator: true,
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    NIST_TEST_POLICY_1,
+                    undefined,
+                ),
+                new PolicyInformation(
+                    NIST_TEST_POLICY_2,
+                    [createUserNoticeQualifier(noticeText)],
+                ),
+            ],
+            endEntityExtKeyUsage: undefined,
+            endEntityKeyUsage: new Uint8ClampedArray([TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT]),
+            endEntityPrivateKeyNotAfter: undefined,
+            endEntityPrivateKeyNotBefore: undefined,
+            userNotices: [
+                noticeText,
+            ],
+        },
+    ));
 });
 describe("NIST PKITS 4.10.13 Cert Path", () => {
-    const unotice: string = "q9:  This is the user notice from qualifier 9 associated with NIST-test-policy-1.  This user notice should be displayed for Valid Policy Mapping Test13";
-    const qualValue1 = new DERElement(
-        ASN1TagClass.universal,
-        ASN1Construction.primitive,
-        ASN1UniversalType.visibleString,
-    );
-    qualValue1.value = new Uint8Array(
-        Array
-            .from(unotice)
-            .map((char) => char.charCodeAt(0)));
-    const qualValues = DERElement.fromSequence([qualValue1]);
-    qualValues.name = "qualifier";
-    qualValues.value = new Uint8Array(qualValues.value);
-    const pq1 = [
-        new PolicyQualifierInfo(
-            new ObjectIdentifier([ 1, 3, 6, 1, 5, 5, 7, 2, 2 ]),
-            qualValues,
-        ),
-    ];
+    const noticeText: string = "q9:  This is the user notice from qualifier 9 associated with NIST-test-policy-1.  This user notice should be displayed for Valid Policy Mapping Test13";
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2927,7 +2895,7 @@ describe("NIST PKITS 4.10.13 Cert Path", () => {
             user_constrained_policies: [
                 new PolicyInformation(
                     NIST_TEST_POLICY_1,
-                    pq1,
+                    [createUserNoticeQualifier(noticeText)],
                 ),
             ],
             returnCode: VCP_RETURN_OK,
@@ -2935,13 +2903,13 @@ describe("NIST PKITS 4.10.13 Cert Path", () => {
             authorities_constrained_policies: [
                 new PolicyInformation(
                     NIST_TEST_POLICY_1,
-                    pq1,
+                    [createUserNoticeQualifier(noticeText)],
                 ),
             ],
             endEntityExtKeyUsage: undefined,
             endEntityKeyUsage: new Uint8ClampedArray([TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT]),
             userNotices: [
-                unotice,
+                noticeText,
             ],
         },
     ));

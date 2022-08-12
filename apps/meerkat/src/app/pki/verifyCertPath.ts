@@ -1998,8 +1998,19 @@ function tree_calculate_authority_set (
                 const key = node.valid_policy.toString();
                 const addedNode = returnedPolicies.get(key);
                 if (!addedNode) {
-                    addnodes.push(node);
-                    returnedPolicies.set(key, node);
+                    /**
+                     * We set the qualifier set to empty, because we will
+                     * re-populate it later.
+                     *
+                     * Search for this UUID to see where these qualifiers will
+                     * be re-introduced: e16de9e1-b64b-48ad-9048-0c9bc21f8f50
+                     */
+                    const returnedNode: ValidPolicyNode = {
+                        ...node,
+                        qualifier_set: [],
+                    };
+                    addnodes.push(returnedNode);
+                    returnedPolicies.set(key, returnedNode);
                 }
             }
         }
@@ -2029,6 +2040,10 @@ function tree_calculate_authority_set (
      * Theoretically, this loop could be done more efficiently by combining it
      * with the above loops, but I believe that would muck up the code, making
      * its relationship to the original OpenSSL code less clear.
+     *
+     * e16de9e1-b64b-48ad-9048-0c9bc21f8f50: The qualifiers are reintroduced in
+     * this loop. Search for the above UUID to see where the qualifiers are
+     * removed from the policy node before returning them.
      */
     for (const level of tree.levels) {
         for (const node of level.nodes) {
