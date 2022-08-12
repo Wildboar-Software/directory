@@ -143,7 +143,7 @@ async function do_list (
             undefined,
             ProtectionRequest_signed,
         ), // TODO: Options
-        bindDN,
+        undefined,
     );
     const arg: ListArgument = {
         unsigned: reqData,

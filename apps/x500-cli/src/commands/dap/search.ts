@@ -310,7 +310,7 @@ async function search_new (
             undefined,
             undefined,
         ), // FIXME: security parameters
-        bindDN,
+        undefined,
         undefined,
         undefined, // FIXME: Fill in criticalExtensions
         undefined,
