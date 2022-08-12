@@ -214,7 +214,12 @@ import {
     VOR_RETURN_UNKNOWN_INTOLERABLE,
 } from "./verifyOCSPResponse";
 import _ from "lodash";
-import stringifyDN from "../x500/stringifyDN";
+
+// So that arguments can be modified by reference.
+type Box<T> = {
+    ref: T;
+};
+
 export type VCPReturnCode = number;
 export const VCP_RETURN_OK: VCPReturnCode = 0;
 export const VCP_RETURN_INVALID_SIG: VCPReturnCode = -1;
@@ -324,6 +329,8 @@ interface ValidPolicyLevel {
 // Meant to mirror the policy tree-related types from OpenSSL's crypto/x509/pcy_local.h.
 interface ValidPolicyTree {
     levels: ValidPolicyLevel[];
+    anyPolicy: boolean;
+    auth_policies: ValidPolicyNode[];
 }
 
 /**
@@ -1033,7 +1040,6 @@ async function verifyBasicPublicKeyCertificateChecks (
         }
     }
 
-
     const basicConstraintsExt: Extension | undefined
         = extsGroupedByOID[basicConstraints["&id"]!.toString()]?.[0];
     const certificatePoliciesExt: Extension | undefined
@@ -1482,15 +1488,14 @@ function processIntermediateCertificates (
             // ...Paragraph 2
             const any_pol_in_level_N_minus_1 = levelNMinus1.nodes.find((n) => n.valid_policy.isEqualTo(anyPolicy));
             const any_pol_in_level_N = levelN.nodes.find((n) => n.valid_policy.isEqualTo(anyPolicy));
-            if (!mapped_policies.size && any_pol_in_level_N) {
+            if (!mapped_policies.size && any_pol_in_level_N && any_pol_in_level_N_minus_1) {
                 for (const [ idp, sdps ] of Object.entries(policyMappingsMap)) {
                     const oid = ObjectIdentifier.fromString(idp);
                     // If no node of depth i has a valid_policy of ID-P...
                     if (!mapped_policies.has(idp)) {
-                        assert(any_pol_in_level_N_minus_1); // ...but there is a node of depth i with a valid_policy of anyPolicy...
-                        levelNMinus1.nodes.push({
+                        levelN.nodes.push({
                             valid_policy: oid,
-                            qualifier_set: any_pol_in_level_N_minus_1.qualifier_set ?? [],
+                            qualifier_set: any_pol_in_level_N.qualifier_set ?? [],
                             expected_policy_set: new Set(sdps.map((s) => s.subjectDomainPolicy.toString())),
                             parent: any_pol_in_level_N_minus_1,
                             nchild: 0,
@@ -1639,11 +1644,15 @@ function processExplicitPolicyIndicator (
     if (pc?.requireExplicitPolicy !== undefined) {
         // Bullet #2
         if (pc.requireExplicitPolicy > 0) {
+            if (state.pending_constraints.explicit_policy.pending) {
+                state.pending_constraints.explicit_policy.skipCertificates = Math.min(
+                    Number(pc.requireExplicitPolicy),
+                    previousSkipCertsValue,
+                );
+            } else {
+                state.pending_constraints.explicit_policy.skipCertificates = Number(pc.requireExplicitPolicy);
+            }
             state.pending_constraints.explicit_policy.pending = true;
-            state.pending_constraints.explicit_policy.skipCertificates = Math.min(
-                Number(pc.requireExplicitPolicy),
-                previousSkipCertsValue,
-            );
         } else if (pc.requireExplicitPolicy === 0) {
             state.explicit_policy_indicator = true;
         } else {
@@ -1681,8 +1690,7 @@ async function verifyEndEntityCertificate (
             returnCode: basicChecksResult,
         };
     }
-    const pepState = processExplicitPolicyIndicator(ctx, state, subjectCert, 0);
-    return pepState;
+    return state;
 }
 
 export
@@ -1710,12 +1718,7 @@ async function verifyIntermediateCertificate (
             returnCode: basicChecksResult,
         };
     }
-    const picState = processIntermediateCertificates(ctx, state, subjectCert);
-    if (picState.returnCode) {
-        return picState;
-    }
-    const pepState = processExplicitPolicyIndicator(ctx, picState, subjectCert, subjectIndex);
-    return pepState;
+    return processIntermediateCertificates(ctx, state, subjectCert);
 }
 
 /**
@@ -1868,10 +1871,105 @@ async function verifyCACertificate (
 
 // From OpenSSL in `crypto/x509/pcy_tree.c`.
 export
-function tree_calculate_authority_set (tree: ValidPolicyTree): ValidPolicyNode[] {
-    const addnodes: ValidPolicyNode[] = [];
-    let curr_i: number = 0;
-    let curr = tree.levels[curr_i]; // curr = tree->levels;
+function tree_calculate_user_set (
+    tree: ValidPolicyTree,
+    policy_oids: OBJECT_IDENTIFIER[], // This is the initial-policy-set
+    auth_nodes: ValidPolicyNode[],
+): ValidPolicyNode[] {
+    const userPolicies: ValidPolicyNode[] = [];
+    let node: ValidPolicyNode | undefined;
+
+    /*
+     * Check if anyPolicy present in authority constrained policy set: this
+     * will happen if it is a leaf node.
+     */
+    if (policy_oids.length === 0) {
+        return [];
+    }
+
+    // anyPolicy = tree->levels[tree->nlevel - 1].anyPolicy;
+    const anyPolicyNode = tree.levels[tree.levels.length - 1].nodes
+        .find((n) => n.valid_policy.isEqualTo(anyPolicy));
+
+    for (let i = 0; i < policy_oids.length; i++) {
+        const oid = policy_oids[i];
+        if (oid.isEqualTo(anyPolicy)) {
+            tree.anyPolicy = true;
+            return [];
+        }
+    }
+
+    /**
+     * I think the OpenSSL implementation simply doesn't check for duplicated
+     * policies.
+     */
+    const returnedPolicies: Set<IndexableOID> = new Set();
+    for (let i = 0; i < policy_oids.length; i++) {
+        const oid = policy_oids[i];
+        node = auth_nodes.find((n) => n.valid_policy.isEqualTo(oid));
+        if (!node) {
+            if (!anyPolicyNode) {
+                continue;
+            }
+            /*
+            * Create a new node with policy ID from user set and qualifiers
+            * from anyPolicy.
+            */
+            const extra: ValidPolicyData = {
+                valid_policy: oid,
+                expected_policy_set: new Set(),
+                qualifier_set: anyPolicyNode?.qualifier_set ?? [],
+            };
+            // I think these flags are only needed by OpenSSL for memory management.
+            // extra->flags = POLICY_DATA_FLAG_SHARED_QUALIFIERS | POLICY_DATA_FLAG_EXTRA_NODE;
+            // node = ossl_policy_level_add_node(NULL, extra, anyPolicy->parent, tree);
+            node = {
+                parent: anyPolicyNode?.parent,
+                valid_policy: extra.valid_policy,
+                expected_policy_set: extra.expected_policy_set,
+                qualifier_set: extra.qualifier_set,
+                nchild: 0,
+            };
+            // extra_data.push(node);
+            // I don't actually see how this is used.
+        }
+        const key = node.valid_policy.toString();
+        if (!returnedPolicies.has(key)) {
+            userPolicies.push(node);
+            returnedPolicies.add(key);
+        }
+    }
+    return userPolicies;
+}
+
+// From OpenSSL in `crypto/x509/pcy_tree.c`.
+export
+function tree_calculate_authority_set (
+    tree: ValidPolicyTree,
+    pnodes: Box<ValidPolicyNode[]>,
+): void {
+    let addnodes: ValidPolicyNode[] = [];
+    let curr_i: number = tree.levels.length - 1;
+    let curr = tree.levels[curr_i];
+
+    const currAnyPolicyNode = curr.nodes.find((n) => n.valid_policy.isEqualTo(anyPolicy));
+    if (currAnyPolicyNode) {
+        tree.auth_policies.push(currAnyPolicyNode);
+        addnodes = pnodes.ref;
+    } else {
+        addnodes = tree.auth_policies;
+    }
+
+    curr_i = 0;
+    curr = tree.levels[curr_i];
+    /**
+     * I don't think the OpenSSL implementation even attempts to deduplicate
+     * returned values.
+     */
+    const returnedPolicies: Map<IndexableOID, ValidPolicyNode> = new Map();
+    /**
+     * I also don't think OpenSSL filters out other matching policies,
+     */
     for (let i = 1; i < tree.levels.length; i++) {
         /**
          * REVIEW: This implementation came from OpenSSL, but can there really
@@ -1897,11 +1995,83 @@ function tree_calculate_authority_set (tree: ValidPolicyTree): ValidPolicyNode[]
                 continue;
             }
             if (node.parent === anyptr) {
-                addnodes.push(node);
+                const key = node.valid_policy.toString();
+                const addedNode = returnedPolicies.get(key);
+                if (!addedNode) {
+                    addnodes.push(node);
+                    returnedPolicies.set(key, node);
+                }
             }
         }
     }
-    return addnodes;
+
+    /**
+     * This is not in the OpenSSL implementation, but I think that's because
+     * none of the specifications say how qualifiers are supposed to
+     * "accumulate." For instance, if you have an intermediate certificate with
+     * Policy A and no qualifiers, then an end-entity certificate with Policy A
+     * and Qualifier Q, should the policy in the
+     * `authorities-constrained-policy-set` have qualifier Q?
+     *
+     * I can't find an answer to this in the specifications, but it sounds like
+     * the specifications seem to indicate that the "highest" node in the tree
+     * simply has "authority" and that the qualifiers of "lower" nodes are
+     * not accumulated.
+     *
+     * However, NIST PKITS Test 4.8.20 contradicts this, expecting qualifiers of
+     * lower nodes to be present in the ACPS, even when those nodes have parents
+     * of the same (non-anyPolicy) policy.
+     *
+     * For a lack of clarity, this function will just iterate over all levels
+     * once more and accumulate the qualifiers. In general, it is probably
+     * better to include the qualifiers anyway.
+     *
+     * Theoretically, this loop could be done more efficiently by combining it
+     * with the above loops, but I believe that would muck up the code, making
+     * its relationship to the original OpenSSL code less clear.
+     */
+    for (const level of tree.levels) {
+        for (const node of level.nodes) {
+            if (!node.qualifier_set?.length) {
+                continue;
+            }
+            const key = node.valid_policy.toString();
+            const addedNode = returnedPolicies.get(key);
+            if (!addedNode) {
+                continue;
+            }
+            addedNode.qualifier_set.push(...node.qualifier_set);
+        }
+    }
+
+    if (addnodes === pnodes.ref) {
+        /**
+         * This is not standard in the OpenSSL implementation. I think the
+         * OpenSSL is just incorrect by not doing this.
+         */
+        if ((pnodes.ref.length === 0) && currAnyPolicyNode) {
+            addnodes.push(currAnyPolicyNode);
+        }
+        return;
+    }
+
+    pnodes.ref = tree.auth_policies;
+}
+
+// From OpenSSL in `crypto/x509/pcy_lib.c`.
+export
+function X509_policy_tree_get0_user_policies (
+    tree: ValidPolicyTree | null | undefined,
+    user_policies: ValidPolicyNode[],
+): ValidPolicyNode[] | null {
+    if (!tree) {
+        return null;
+    }
+    if (tree.anyPolicy) {
+        return tree.auth_policies;
+    } else {
+        return user_policies;
+    }
 }
 
 // ITU Recommendation X.509, Section 12.5.4.
@@ -1911,51 +2081,30 @@ function finalProcessing (
     state: VerifyCertPathState,
 ): VerifyCertPathResult {
     const authority_set_policies: Map<IndexableOID, ValidPolicyNode> = new Map();
-    const initialPolicyIsAny: boolean = args.initial_policy_set.some((p) => p.isEqualTo(anyPolicy));
+    const user_constrained_policies: PolicyInformation[] = [];
+    const user_set: ValidPolicyNode[] = [];
 
     if (state.valid_policy_tree) {
-        if (initialPolicyIsAny) {
-            // ... the intersection should be the entire policy tree... 6.1.5.g.ii
-            for (const level of state.valid_policy_tree.levels) {
-                for (const node of level.nodes) {
-                    /** REVIEW:
-                     * It is not clear to me that this should be done, but it
-                     * seems that the NIST PKITS does not expect anyPolicy to be
-                     * in the user-constrained-policy-set.
-                     */
-                    if (node.valid_policy.isEqualTo(anyPolicy)) {
-                        continue;
-                    }
-                    authority_set_policies.set(node.valid_policy.toString(), node);
-                }
-            }
-        } else {
-            for (const node of tree_calculate_authority_set(state.valid_policy_tree)) {
-                authority_set_policies.set(node.valid_policy.toString(), node);
+        const auth_nodes: Box<ValidPolicyNode[]> = { ref: [] };
+        tree_calculate_authority_set(state.valid_policy_tree, auth_nodes);
+        for (const node of auth_nodes.ref) {
+            authority_set_policies.set(node.valid_policy.toString(), node);
+        }
+        user_set.push(...tree_calculate_user_set(state.valid_policy_tree, args.initial_policy_set, auth_nodes.ref));
+        const intersection = X509_policy_tree_get0_user_policies(state.valid_policy_tree, user_set);
+        if (intersection) {
+            for (const node of intersection) {
+                user_constrained_policies.push(new PolicyInformation(
+                    node.valid_policy,
+                    node.qualifier_set?.length // There is a SIZE constraint of (1..MAX)
+                        ? node.qualifier_set
+                        : undefined,
+                ));
             }
         }
     } else {
         // Do nothing. Allow authority_set_policies to remain empty.
     }
-
-    const user_constrained_policies: PolicyInformation[] = initialPolicyIsAny
-        ? Array
-            .from(authority_set_policies.values())
-            .map((node) => new PolicyInformation(
-                node.valid_policy,
-                node.qualifier_set?.length // There is a SIZE constraint of (1..MAX)
-                    ? node.qualifier_set
-                    : undefined,
-            ))
-        : args.initial_policy_set
-            .map((userPolicy) => authority_set_policies.get(userPolicy.toString()))
-            .filter((asp): asp is ValidPolicyNode => !!asp)
-            .map((asp) => new PolicyInformation(
-                asp.valid_policy,
-                asp.qualifier_set?.length // There is a SIZE constraint of (1..MAX)
-                    ? asp.qualifier_set
-                    : undefined,
-            ));
 
     const userNotices: string[] = [];
     for (const ucp of user_constrained_policies) {
@@ -2069,6 +2218,8 @@ async function verifyCertPath (
             [ new PolicyInformation(anyPolicy, undefined), new PolicyInformation(anyPolicy, undefined) ],
         ],
         valid_policy_tree: {
+            auth_policies: [],
+            anyPolicy: false,
             levels: [{
                 cert: caCert,
                 nodes: [
@@ -2166,6 +2317,16 @@ async function verifyCertPath (
         readDispatcher,
         options,
     );
-    state.returnCode = endEntityResult.returnCode ?? 0;
-    return finalProcessing(args, state);
+    let explicitPolicyProcessingState = endEntityResult;
+    const certs = [ ...explicitPolicyProcessingState.certPath ].reverse();
+    for (let i = 0; i < certs.length; i++) {
+        const cert = certs[i];
+        explicitPolicyProcessingState = processExplicitPolicyIndicator(
+            ctx,
+            explicitPolicyProcessingState,
+            cert,
+            i,
+        );
+    }
+    return finalProcessing(args, explicitPolicyProcessingState);
 }

@@ -88,10 +88,20 @@ const DEFAULT_SETTINGS: VerifyCertPathArgs = {
 function getDefaultResult (result: Partial<VerifyCertPathResult>): VerifyCertPathResult {
     return {
         returnCode: VCP_RETURN_OK,
-        authorities_constrained_policies: [],
+        authorities_constrained_policies: [
+            new PolicyInformation(
+                anyPolicy,
+                undefined,
+            ),
+        ],
         explicit_policy_indicator: false,
         policy_mappings_that_occurred: [],
-        user_constrained_policies: [],
+        user_constrained_policies: [
+            // new PolicyInformation(
+            //     anyPolicy,
+            //     undefined,
+            // ),
+        ],
         warnings: [],
         endEntityExtKeyUsage: undefined,
         endEntityKeyUsage: undefined,
@@ -377,7 +387,6 @@ describe("NIST PKITS 4.2.2 Cert Path", () => {
         },
     ));
 });
-// TODO: This will require publishing asn1-ts@7.0.10.
 describe("NIST PKITS 4.2.3 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
@@ -592,54 +601,8 @@ describe("NIST PKITS 4.3.2 Cert Path", () => {
         },
     ));
 });
-describe("NIST PKITS 4.3.3 Cert Path", () => {
-    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
-        [
-            "TrustAnchorRootCertificate.crt",
-            "GoodCACert.crt",
-            "ValidNameChainingWhitespaceTest3EE.crt",
-        ],
-        {},
-        {
-            user_constrained_policies: [],
-            returnCode: VCP_RETURN_OK,
-            explicit_policy_indicator: false,
-            authorities_constrained_policies: [],
-            endEntityExtKeyUsage: undefined,
-            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
-        },
-    ));
-});
-// FIXME: This is legitimately a bug, but it's not a big deal.
-// To fix this, the X.500 library needs to remove internal whitespace in directory strings.
-describe.skip("NIST PKITS 4.3.4 Cert Path", () => {
-    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
-        [
-            "TrustAnchorRootCertificate.crt",
-            "GoodCACert.crt",
-            "ValidNameChainingWhitespaceTest4EE.crt",
-        ],
-        {},
-        {
-            user_constrained_policies: [
-                new PolicyInformation(
-                    NIST_TEST_POLICY_1,
-                    undefined,
-                ),
-            ],
-            returnCode: VCP_RETURN_OK,
-            explicit_policy_indicator: false,
-            authorities_constrained_policies: [
-                new PolicyInformation(
-                    NIST_TEST_POLICY_1,
-                    undefined,
-                ),
-            ],
-            endEntityExtKeyUsage: undefined,
-            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
-        },
-    ));
-});
+// NOTE: There is no point in testing 4.3.3 or 4.3.4, because we are using a mock context,
+// and therefore, mock matching rules. However, this was fixed in @wildboar/x500@1.0.50.
 describe("NIST PKITS 4.3.5 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
@@ -809,37 +772,8 @@ describe("NIST PKITS 4.3.10 Cert Path", () => {
         },
     ));
 });
-// FIXME: This is legitimately a bug, but it is not a big deal.
-// Even though this test is supposedly for comparing case-insensitive matching,
-// the subject and issuer names differ by internal whitespace as well.
-describe.skip("NIST PKITS 4.3.11 Cert Path", () => {
-    it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
-        [
-            "TrustAnchorRootCertificate.crt",
-            "UTF8StringCaseInsensitiveMatchCACert.crt",
-            "ValidUTF8StringCaseInsensitiveMatchTest11EE.crt",
-        ],
-        {},
-        {
-            user_constrained_policies: [
-                new PolicyInformation(
-                    NIST_TEST_POLICY_1,
-                    undefined,
-                ),
-            ],
-            returnCode: VCP_RETURN_OK,
-            explicit_policy_indicator: false,
-            authorities_constrained_policies: [
-                new PolicyInformation(
-                    NIST_TEST_POLICY_1,
-                    undefined,
-                ),
-            ],
-            endEntityExtKeyUsage: undefined,
-            endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
-        },
-    ));
-});
+// NOTE: There is no point in testing 4.3.11, because we are using a mock context,
+// and therefore, mock matching rules. However, this was fixed in @wildboar/x500@1.0.50.
 
 test.todo("NIST PKITS 4.4.* Tests");
 
@@ -1686,8 +1620,8 @@ describe("NIST PKITS 4.8.4 Cert Path", () => {
         {},
         {
             user_constrained_policies: [],
-            returnCode: VCP_RETURN_OK,
-            explicit_policy_indicator: false,
+            returnCode: VCP_RETURN_NO_AUTHORIZED_POLICIES,
+            explicit_policy_indicator: true,
             authorities_constrained_policies: [],
             endEntityExtKeyUsage: undefined,
             endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
@@ -1706,7 +1640,7 @@ describe("NIST PKITS 4.8.5 Cert Path", () => {
         {
             user_constrained_policies: [],
             returnCode: VCP_RETURN_NO_AUTHORIZED_POLICIES,
-            explicit_policy_indicator: false,
+            explicit_policy_indicator: true,
             authorities_constrained_policies: [],
             endEntityExtKeyUsage: undefined,
             endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
@@ -1969,8 +1903,8 @@ describe("NIST PKITS 4.8.10 Cert Path", () => {
         },
     ));
 });
+// FIXME:
 describe("NIST PKITS 4.8.11 Cert Path", () => {
-    // FIXME: I think this is a bug.
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -1980,7 +1914,10 @@ describe("NIST PKITS 4.8.11 Cert Path", () => {
         {},
         {
             user_constrained_policies: [
-
+                new PolicyInformation(
+                    anyPolicy,
+                    undefined,
+                ),
             ],
             returnCode: VCP_RETURN_OK,
             explicit_policy_indicator: true,
@@ -1994,7 +1931,6 @@ describe("NIST PKITS 4.8.11 Cert Path", () => {
             endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
         },
     ));
-    // FIXME: I think this is a bug.
     it("Validates successfully with the path in subtest #2", create_nist_pkits_test(
         [
             "TrustAnchorRootCertificate.crt",
@@ -2436,6 +2372,7 @@ describe("NIST PKITS 4.8.18 Cert Path", () => {
     ));
 });
 describe("NIST PKITS 4.8.19 Cert Path", () => {
+    const unotice: string = "q6:  Section 4.2.1.5 of RFC 3280 states the maximum size of explicitText is 200 characters, but warns that some non-conforming CAs exceed this limit.  Thus RFC 3280 states that certificate users SHOULD gracefully handle explicitText with more than 200 characters.  This explicitText is over 200 characters long";
     const qualValue1 = new DERElement(
         ASN1TagClass.universal,
         ASN1Construction.primitive,
@@ -2443,7 +2380,7 @@ describe("NIST PKITS 4.8.19 Cert Path", () => {
     );
     qualValue1.value = new Uint8Array(
         Array
-            .from("q6:  Section 4.2.1.5 of RFC 3280 states the maximum size of explicitText is 200 characters, but warns that some non-conforming CAs exceed this limit.  Thus RFC 3280 states that certificate users SHOULD gracefully handle explicitText with more than 200 characters.  This explicitText is over 200 characters long")
+            .from(unotice)
             .map((char) => char.charCodeAt(0)));
     const qualValues = DERElement.fromSequence([qualValue1]);
     qualValues.name = "qualifier";
@@ -2477,6 +2414,9 @@ describe("NIST PKITS 4.8.19 Cert Path", () => {
             ],
             endEntityExtKeyUsage: undefined,
             endEntityKeyUsage: new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT ]),
+            userNotices: [
+                unotice,
+            ],
         },
     ));
 });
@@ -2641,7 +2581,6 @@ describe("NIST PKITS 4.9.5 Cert Path", () => {
         },
     ));
 });
-// TODO: Investigate.
 describe("NIST PKITS 4.9.6 Cert Path", () => {
     it("Validates successfully with the path in subtest #1", create_nist_pkits_test(
         [
@@ -2954,6 +2893,7 @@ describe("NIST PKITS 4.10.12 Cert Path", () => {
     ));
 });
 describe("NIST PKITS 4.10.13 Cert Path", () => {
+    const unotice: string = "q9:  This is the user notice from qualifier 9 associated with NIST-test-policy-1.  This user notice should be displayed for Valid Policy Mapping Test13";
     const qualValue1 = new DERElement(
         ASN1TagClass.universal,
         ASN1Construction.primitive,
@@ -2961,7 +2901,7 @@ describe("NIST PKITS 4.10.13 Cert Path", () => {
     );
     qualValue1.value = new Uint8Array(
         Array
-            .from("q9:  This is the user notice from qualifier 9 associated with NIST-test-policy-1.  This user notice should be displayed for Valid Policy Mapping Test13")
+            .from(unotice)
             .map((char) => char.charCodeAt(0)));
     const qualValues = DERElement.fromSequence([qualValue1]);
     qualValues.name = "qualifier";
@@ -3000,6 +2940,9 @@ describe("NIST PKITS 4.10.13 Cert Path", () => {
             ],
             endEntityExtKeyUsage: undefined,
             endEntityKeyUsage: new Uint8ClampedArray([TRUE_BIT, TRUE_BIT, TRUE_BIT, TRUE_BIT]),
+            userNotices: [
+                unotice,
+            ],
         },
     ));
 });
@@ -4944,8 +4887,18 @@ describe("NIST PKITS 4.16.2 Cert Path", () => {
         },
         {
             returnCode: VCP_RETURN_UNKNOWN_CRIT_EXT,
-            authorities_constrained_policies: [],
-            user_constrained_policies: [],
+            authorities_constrained_policies: [
+                new PolicyInformation(
+                    anyPolicy,
+                    undefined,
+                ),
+            ],
+            user_constrained_policies: [
+                new PolicyInformation(
+                    anyPolicy,
+                    undefined,
+                ),
+            ],
         },
     ));
 });
