@@ -280,6 +280,143 @@ import {
     _decode_UnboundedDirectoryString,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UnboundedDirectoryString.ta";
 
+// X.400 Matching Rules
+import {
+    addressCapabilitiesMatch,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/addressCapabilitiesMatch.oa";
+import {
+    capabilityMatch,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/capabilityMatch.oa";
+import {
+    oRNameExactMatch,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/oRNameExactMatch.oa";
+import {
+    mSStringMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSStringMatch.oa";
+import {
+    mSStringOrderingMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSStringOrderingMatch.oa";
+import {
+    mSSubstringsMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSSubstringsMatch.oa";
+import {
+    mSSingleSubstringMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSSingleSubstringMatch.oa";
+import {
+    mSStringCaseSensitiveMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSStringCaseSensitiveMatch.oa";
+import {
+    mSStringListMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSStringListMatch.oa";
+import {
+    mSStringListElementsMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSStringListElementsMatch.oa";
+import {
+    mSSingleSubstringListMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSSingleSubstringListMatch.oa";
+import {
+    mSSingleSubstringListElementsMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSSingleSubstringListElementsMatch.oa";
+import {
+    valueCountMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/valueCountMatch.oa";
+import {
+    oRAddressMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRAddressMatch.oa";
+import {
+    oRAddressElementsMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRAddressElementsMatch.oa";
+import {
+    oRAddressSubstringElementsMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRAddressSubstringElementsMatch.oa";
+import {
+    oRNameMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRNameMatch.oa";
+import {
+    oRNameElementsMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRNameElementsMatch.oa";
+import {
+    oRNameSubstringElementsMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRNameSubstringElementsMatch.oa";
+import {
+    oRNameSingleElementMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRNameSingleElementMatch.oa";
+import {
+    redirectionOrDLExpansionMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/redirectionOrDLExpansionMatch.oa";
+import {
+    redirectionOrDLExpansionElementsMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/redirectionOrDLExpansionElementsMatch.oa";
+import {
+    redirectionOrDLExpansionSingleElementMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/redirectionOrDLExpansionSingleElementMatch.oa";
+import {
+    redirectionOrDLExpansionSubstringElementsMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/redirectionOrDLExpansionSubstringElementsMatch.oa";
+import {
+    redirectionReasonMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/redirectionReasonMatch.oa";
+import {
+    mTSIdentifierMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mTSIdentifierMatch.oa";
+import {
+    contentCorrelatorMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/contentCorrelatorMatch.oa";
+import {
+    contentIdentifierMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/contentIdentifierMatch.oa";
+import {
+    iPMIdentifierMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/iPMIdentifierMatch.oa";
+import {
+    iPMLocationMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/iPMLocationMatch.oa";
+import {
+    oRDescriptorMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/oRDescriptorMatch.oa";
+import {
+    oRDescriptorElementsMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/oRDescriptorElementsMatch.oa";
+import {
+    oRDescriptorSubstringElementsMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/oRDescriptorSubstringElementsMatch.oa";
+import {
+    oRDescriptorSingleElementMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/oRDescriptorSingleElementMatch.oa";
+import {
+    recipientSpecifierMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/recipientSpecifierMatch.oa";
+import {
+    recipientSpecifierElementsMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/recipientSpecifierElementsMatch.oa";
+import {
+    recipientSpecifierSubstringElementsMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/recipientSpecifierSubstringElementsMatch.oa";
+import {
+    recipientSpecifierSingleElementMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/recipientSpecifierSingleElementMatch.oa";
+import {
+    circulationMemberMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/circulationMemberMatch.oa";
+import {
+    circulationMemberElementsMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/circulationMemberElementsMatch.oa";
+import {
+    circulationMemberSubstringElementsMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/circulationMemberSubstringElementsMatch.oa";
+import {
+    circulationMemberSingleElementMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/circulationMemberSingleElementMatch.oa";
+import {
+    circulationMemberCheckmarkMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/circulationMemberCheckmarkMatch.oa";
+import {
+    distributionCodeMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/distributionCodeMatch.oa";
+import {
+    informationCategoryMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/informationCategoryMatch.oa";
+
 const caseIgnoreSortKeyGetter: SortKeyGetter = (element: ASN1Element): SortKey | null => {
     const ds = _decode_UnboundedDirectoryString(element);
     const str = directoryStringToString(ds).toUpperCase();

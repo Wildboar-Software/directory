@@ -77,6 +77,191 @@ import userPasswordDriver from "../database/drivers/userPassword";
 import userPwdDriver from "../database/drivers/userPwd";
 import userPwdHistoryDriver from "../database/drivers/userPwdHistory";
 
+// X.400 Attribute Types
+import {
+    mhs_acceptable_eits,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-acceptable-eits.oa";
+import {
+    mhs_deliverable_classes,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-deliverable-classes.oa";
+import {
+    mhs_deliverable_content_types,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-deliverable-content-types.oa";
+import {
+    mhs_dl_archive_service,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-dl-archive-service.oa";
+import {
+    mhs_dl_members,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-dl-members.oa";
+import {
+    mhs_dl_policy,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-dl-policy.oa";
+import {
+    mhs_dl_related_lists,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-dl-related-lists.oa";
+import {
+    mhs_dl_submit_permissions,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-dl-submit-permissions.oa";
+import {
+    mhs_dl_subscription_service,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-dl-subscription-service.oa";
+import {
+    mhs_exclusively_acceptable_eits,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-exclusively-acceptable-eits.oa";
+import {
+    mhs_maximum_content_length,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-maximum-content-length.oa";
+import {
+    mhs_message_store_dn,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-message-store-dn.oa";
+import {
+    mhs_or_addresses,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-or-addresses.oa";
+import {
+    mhs_or_addresses_with_capabilities,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-or-addresses-with-capabilities.oa";
+import {
+    mhs_supported_attributes,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-supported-attributes.oa";
+import {
+    mhs_supported_automatic_actions,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-supported-automatic-actions.oa";
+import {
+    mhs_supported_content_types,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-supported-content-types.oa";
+import {
+    mhs_supported_matching_rules,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-supported-matching-rules.oa";
+import {
+    mhs_unacceptable_eits,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-unacceptable-eits.oa";
+import {
+    routingCollectiveName,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/routingCollectiveName.oa";
+import {
+    connectionGroupName,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/connectionGroupName.oa";
+import {
+    entryConnectionGroupName,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/entryConnectionGroupName.oa";
+import {
+    transitExitConnectionGroupName,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/transitExitConnectionGroupName.oa";
+import {
+    localExitConnectionGroupName,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/localExitConnectionGroupName.oa";
+import {
+    oRAddressSubtrees,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/oRAddressSubtrees.oa";
+import {
+    mHSMessageTransferAgentName,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/mHSMessageTransferAgentName.oa";
+import {
+    enumeratedFlag,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/enumeratedFlag.oa";
+import {
+    connectionType,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/connectionType.oa";
+import {
+    groupMTAPassword,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/groupMTAPassword.oa";
+import {
+    memberMTA,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/memberMTA.oa";
+import {
+    securityContext,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/securityContext.oa";
+import {
+    mTAName,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/mTAName.oa";
+import {
+    globalDomainIdentifier,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/globalDomainIdentifier.oa";
+import {
+    mTAPassword,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/mTAPassword.oa";
+import {
+    specificPasswords,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/specificPasswords.oa";
+import {
+    callingPSAPs,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingDirectoryObjects/callingPSAPs.oa";
+import {
+    routingAdvice,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/routingAdvice.oa";
+import {
+    expressionMatches,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/expressionMatches.oa";
+import {
+    nextLevelComplete,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/nextLevelComplete.oa";
+import {
+    recipientMDAssignedAlternateRecipient,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/recipientMDAssignedAlternateRecipient.oa";
+import {
+    oRAddressElementName,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/oRAddressElementName.oa";
+import {
+    mHSCountryName,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSCountryName.oa";
+import {
+    mHSADMDName,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSADMDName.oa";
+import {
+    mHSPRMDName,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSPRMDName.oa";
+import {
+    mHSOrganizationName,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSOrganizationName.oa";
+import {
+    mHSOrganizationalUnitName,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSOrganizationalUnitName.oa";
+import {
+    mHSCommonNameAttribute,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSCommonNameAttribute.oa";
+import {
+    mHSSurnameAttribute,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSSurnameAttribute.oa";
+import {
+    mHSGivenNameAttribute,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSGivenNameAttribute.oa";
+import {
+    mHSInitialsAttribute,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSInitialsAttribute.oa";
+import {
+    mHSGenerationQualifierAttribute,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSGenerationQualifierAttribute.oa";
+import {
+    mHSNetworkAddressAttribute,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSNetworkAddressAttribute.oa";
+import {
+    mHSExtendedNetworkAddressAttribute,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSExtendedNetworkAddressAttribute.oa";
+import {
+    mHSTerminalIdentifierAttribute,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSTerminalIdentifierAttribute.oa";
+import {
+    mHSTerminalTypeAttribute,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSTerminalTypeAttribute.oa";
+import {
+    mHSNumericUserIdentifierAttribute,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSNumericUserIdentifierAttribute.oa";
+import {
+    mHSPDSNameAttribute,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSPDSNameAttribute.oa";
+import {
+    mHSPostalCodeAttribute,
+} from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSPostalCodeAttribute.oa";
+import {
+    edi_name,
+} from "@wildboar/x400/src/lib/modules/EDIMUseOfDirectory/edi-name.oa";
+import {
+    edi_routing_address,
+} from "@wildboar/x400/src/lib/modules/EDIMUseOfDirectory/edi-routing-address.oa";
+import {
+    edi_capabilities,
+} from "@wildboar/x400/src/lib/modules/EDIMUseOfDirectory/edi-capabilities.oa";
+
 /**
  * @summary Initialize Meerkat DSA's internal index of known attribute types.
  * @description
@@ -94,6 +279,69 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         ...x500at,
         userPwdHistory,
         userPwdRecentlyExpired,
+
+        // X.400 Attribute Types
+        "mhs-acceptable-eits": mhs_acceptable_eits,
+        "mhs-deliverable-classes": mhs_deliverable_classes,
+        "mhs-deliverable-content-types": mhs_deliverable_content_types,
+        "mhs-dl-archive-service": mhs_dl_archive_service,
+        "mhs-dl-members": mhs_dl_members,
+        "mhs-dl-policy": mhs_dl_policy,
+        "mhs-dl-related-lists": mhs_dl_related_lists,
+        "mhs-dl-submit-permissions": mhs_dl_submit_permissions,
+        "mhs-dl-subscription-service": mhs_dl_subscription_service,
+        "mhs-exclusively-acceptable-eits": mhs_exclusively_acceptable_eits,
+        "mhs-maximum-content-length": mhs_maximum_content_length,
+        "mhs-message-store-dn": mhs_message_store_dn,
+        "mhs-or-addresses": mhs_or_addresses,
+        "mhs-or-addresses-with-capabilities": mhs_or_addresses_with_capabilities,
+        "mhs-supported-attributes": mhs_supported_attributes,
+        "mhs-supported-automatic-actions": mhs_supported_automatic_actions,
+        "mhs-supported-content-types": mhs_supported_content_types,
+        "mhs-supported-matching-rules": mhs_supported_matching_rules,
+        "mhs-unacceptable-eits": mhs_unacceptable_eits,
+        routingCollectiveName,
+        connectionGroupName,
+        entryConnectionGroupName,
+        transitExitConnectionGroupName,
+        localExitConnectionGroupName,
+        oRAddressSubtrees,
+        mHSMessageTransferAgentName,
+        enumeratedFlag,
+        connectionType,
+        groupMTAPassword,
+        memberMTA,
+        securityContext,
+        mTAName,
+        globalDomainIdentifier,
+        mTAPassword,
+        specificPasswords,
+        callingPSAPs,
+        routingAdvice,
+        expressionMatches,
+        nextLevelComplete,
+        recipientMDAssignedAlternateRecipient,
+        oRAddressElementName,
+        mHSCountryName,
+        mHSADMDName,
+        mHSPRMDName,
+        mHSOrganizationName,
+        mHSOrganizationalUnitName,
+        mHSCommonNameAttribute,
+        mHSSurnameAttribute,
+        mHSGivenNameAttribute,
+        mHSInitialsAttribute,
+        mHSGenerationQualifierAttribute,
+        mHSNetworkAddressAttribute,
+        mHSExtendedNetworkAddressAttribute,
+        mHSTerminalIdentifierAttribute,
+        mHSTerminalTypeAttribute,
+        mHSNumericUserIdentifierAttribute,
+        mHSPDSNameAttribute,
+        mHSPostalCodeAttribute,
+        "edi-name": edi_name,
+        "edi-routing-address": edi_routing_address,
+        "edi-capabilities": edi_capabilities,
     })
         .map(([ name, spec ]) => attributeFromInformationObject(spec, name))
         .forEach((attr) => {
