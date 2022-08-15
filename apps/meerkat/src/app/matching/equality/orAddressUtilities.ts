@@ -1,11 +1,10 @@
 import type { ASN1Element, INTEGER } from "asn1-ts";
-import { teletexToString, EqualityMatcher } from "@wildboar/x500";
+import { teletexToString } from "@wildboar/x500";
 import {
     PresentationAddress,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PresentationAddress.ta";
 import {
     ORAddress,
-    _decode_ORAddress,
 } from "@wildboar/x400/src/lib/modules/MTSAbstractService/ORAddress.ta";
 import type {
     BuiltInStandardAttributes,
@@ -1254,5 +1253,3 @@ function orAddressesMatch (a: ORAddress, b: ORAddress): boolean {
     }
     return true;
 }
-
-
