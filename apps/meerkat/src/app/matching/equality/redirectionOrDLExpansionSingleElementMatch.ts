@@ -1,4 +1,3 @@
-import type { Context } from "@wildboar/meerkat-types";
 import { ASN1Element, BERElement } from "asn1-ts";
 import type { EqualityMatcher } from "@wildboar/x500";
 import { oRNameSingleElementMatch } from "./oRNameSingleElementMatch";
