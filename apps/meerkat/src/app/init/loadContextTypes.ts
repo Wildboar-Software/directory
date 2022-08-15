@@ -19,6 +19,16 @@ import {
     evaluateTemporalContext,
 } from "@wildboar/x500/src/lib/matching/context/temporalContext";
 import compareElements from "@wildboar/x500/src/lib/comparators/compareElements";
+import {
+    dl_administrator_annotation,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/dl-administrator-annotation.oa";
+import {
+    dl_nested_dl,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/dl-nested-dl.oa";
+import {
+    dl_reset_originator,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/dl-reset-originator.oa";
+import { evaluateDLAdministratorAnnotationContext } from "../matching/context/dl-administrator-annotation";
 
 /**
  * @summary Initialize Meerkat DSA's internal index of known context types.
@@ -37,6 +47,13 @@ async function loadContextTypes (ctx: Context): Promise<void> {
         [ x500c.ldapAttributeOptionContext, evaluateLDAPAttributeOptionContext, "AttributeOptionList" ],
         [ x500c.localeContext, evaluateLocaleContext, "LocaleContextSyntax" ],
         [ x500c.temporalContext, evaluateTemporalContext, "TimeSpecification", "TimeAssertion" ],
+        [
+            dl_administrator_annotation,
+            evaluateDLAdministratorAnnotationContext,
+            "CHOICE {bmpstring BMPString, universalstring UniversalString}",
+        ],
+        [ dl_nested_dl, () => true, "NULL" ],
+        [ dl_reset_originator, () => true, "NULL" ],
     ];
     contextTypes
         .forEach(([ ct, matcher, valueSyntax, assertionSyntax ]) => {
