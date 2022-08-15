@@ -1,6 +1,9 @@
 import type { ASN1Element, INTEGER } from "asn1-ts";
 import { teletexToString } from "@wildboar/x500";
 import {
+    MSString,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/MSString.ta";
+import {
     PresentationAddress,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PresentationAddress.ta";
 import {
@@ -1252,4 +1255,21 @@ function orAddressesMatch (a: ORAddress, b: ORAddress): boolean {
         // TODO: Compare presentation addresses. Depends on implementation in X.500 Library.
     }
     return true;
+}
+
+export
+function msStringToString (ms: MSString): string {
+    if ("printable" in ms) {
+        return ms.printable;
+    } else if ("teletex" in ms) {
+        return teletexToString(ms.teletex);
+    } else if ("general" in ms) {
+        return ms.general;
+    } else if ("universal" in ms) {
+        return ms.universal;
+    } else if ("bmp" in ms) {
+        return ms.bmp;
+    } else {
+        return "?";
+    }
 }
