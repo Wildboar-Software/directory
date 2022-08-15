@@ -4,7 +4,7 @@ import {
     ORAddress,
     _decode_ORAddress,
 } from "@wildboar/x400/src/lib/modules/MTSAbstractService/ORAddress.ta";
-import { ORAddressInfo, orAddressToInfo } from "./orAddressUtilities";
+import { ORAddressInfo, orAddressToInfo, recursivelyNormalize } from "./orAddressUtilities";
 import { PresentationAddress } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PresentationAddress.ta";
 import _ from "lodash";
 
@@ -18,14 +18,14 @@ function orAddressIsSubset (asserted: ORAddress, value: ORAddress): boolean {
     if (!bInfo) {
         return false;
     }
-    const comparableAInfo: ORAddressInfo = {
+    const comparableAInfo: ORAddressInfo = recursivelyNormalize({
         ...aInfo,
         extendedNetworkAddress: undefined,
-    };
-    const comparableBInfo: ORAddressInfo = {
+    });
+    const comparableBInfo: ORAddressInfo = recursivelyNormalize({
         ...bInfo,
         extendedNetworkAddress: undefined,
-    };
+    });
     if (!_.isMatch(comparableBInfo, comparableAInfo)) { // Intentionally swapped.
         return false;
     }

@@ -58,10 +58,10 @@ const mTSIdentifierMatch: EqualityMatcher = (
     const vadn = vglob.administration_domain_name;
     const aadnStr = ("numeric" in aadn)
         ? aadn.numeric.trim().replace(/\s+/g, "")
-        : aadn.printable;
+        : aadn.printable.replace(/\s+/g, " ");
     const vadnStr = ("numeric" in vadn)
         ? vadn.numeric.trim().replace(/\s+/g, "")
-        : vadn.printable;
+        : vadn.printable.replace(/\s+/g, " ");;
     if (aadnStr.toUpperCase() !== vadnStr.toUpperCase()) {
         return false;
     }
@@ -72,17 +72,20 @@ const mTSIdentifierMatch: EqualityMatcher = (
         const vpdn = vglob.administration_domain_name;
         const apdnStr = ("numeric" in apdn)
             ? apdn.numeric.trim().replace(/\s+/g, "")
-            : apdn.printable;
+            : apdn.printable.replace(/\s+/g, " ");
         const vpdnStr = ("numeric" in vpdn)
             ? vpdn.numeric.trim().replace(/\s+/g, "")
-            : vpdn.printable;
+            : vpdn.printable.replace(/\s+/g, " ");
         if (apdnStr.toUpperCase() !== vpdnStr.toUpperCase()) {
             return false;
         }
     }
 
     // Local Identifier Comparison
-    if (a.local_identifier.toUpperCase() !== v.local_identifier.toUpperCase()) {
+    if (
+        a.local_identifier.trim().replace(/\s+/g, " ").toUpperCase()
+        !== v.local_identifier.trim().replace(/\s+/g, " ").toUpperCase()
+    ) {
         return false;
     }
 
