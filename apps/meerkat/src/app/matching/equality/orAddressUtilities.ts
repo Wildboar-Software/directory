@@ -1228,14 +1228,14 @@ function orAddressesMatch (a: ORAddress, b: ORAddress): boolean {
     if (!bInfo) {
         return false;
     }
-    const comparableAInfo: ORAddressInfo = {
+    const comparableAInfo: ORAddressInfo = recursivelyNormalize({
         ...aInfo,
         extendedNetworkAddress: undefined,
-    };
-    const comparableBInfo: ORAddressInfo = {
+    });
+    const comparableBInfo: ORAddressInfo = recursivelyNormalize({
         ...bInfo,
         extendedNetworkAddress: undefined,
-    };
+    });
     if (!_.isEqual(comparableAInfo, comparableBInfo)) {
         return false;
     }
@@ -1271,5 +1271,22 @@ function msStringToString (ms: MSString): string {
         return ms.bmp;
     } else {
         return "?";
+    }
+}
+
+export
+function recursivelyNormalize <T> (value: T): T {
+    if (typeof value === "string") {
+        return value.trim().replace(/\s+/g, " ").toUpperCase() as unknown as T;
+    } else if (typeof value === "object") {
+        if (!value) {
+            return value;
+        }
+        for (const key of Object.keys(value)) {
+            value[key] = recursivelyNormalize(value[key]);
+        }
+        return value;
+    } else {
+        return value;
     }
 }

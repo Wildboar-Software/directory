@@ -29,7 +29,10 @@ const oRNameSingleElementMatch: EqualityMatcher = (
     assertion: ASN1Element,
     value: ASN1Element,
 ): boolean => {
-    const a: string = msStringToString(_decode_MSString(assertion));
+    const a: string = msStringToString(_decode_MSString(assertion))
+        .trim()
+        .replace(/\s+/g, " ")
+        .toUpperCase();
     const v = _decode_ORAddress(value); // TODO: Make ORName a subclass of ORAddress.
     const vInfo = orAddressToInfo(v);
     if (!vInfo) {
@@ -37,7 +40,8 @@ const oRNameSingleElementMatch: EqualityMatcher = (
     }
     const stringsInValue = extractStrings(vInfo);
     for (const strInValue of stringsInValue) {
-        if (strInValue === a) {
+        const s = strInValue.trim().replace(/\s+/g, " ").toUpperCase();
+        if (s === a) {
             return true;
         }
     }

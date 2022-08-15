@@ -17,7 +17,9 @@ function isSubstringSubset (value: unknown, assertion: unknown): boolean {
     if (typeofValue === "string") {
         assert(typeof value === "string");
         assert(typeof assertion === "string");
-        if (value.indexOf(assertion) <= -1) {
+        const a = assertion.trim().replace(/\s+/g, " ").toUpperCase();
+        const v = value.trim().replace(/\s+/g, " ").toUpperCase();
+        if (v.indexOf(a) <= -1) {
             return false;
         }
     }
