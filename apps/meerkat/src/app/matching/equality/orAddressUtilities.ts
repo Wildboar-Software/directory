@@ -259,6 +259,7 @@ function process_teletex_personal_name_ext (info: ORAddressInfo, value: ASN1Elem
     return info;
 }
 
+export
 function univOrBmpToString (uorb: UniversalOrBMPString): string {
     if ("two_octets" in uorb.character_encoding) {
         return uorb.character_encoding.two_octets;
