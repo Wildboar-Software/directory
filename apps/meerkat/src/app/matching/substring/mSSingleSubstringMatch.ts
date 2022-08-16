@@ -6,7 +6,7 @@ import { msStringToString } from "../equality/orAddressUtilities";
 import type { ASN1Element } from "asn1-ts";
 
 export
-const mSSubstringsMatch: SubstringsMatcher = (
+const mSSingleSubstringMatch: SubstringsMatcher = (
     assertion: ASN1Element,
     value: ASN1Element,
     selection?: SubstringSelection,
@@ -31,4 +31,4 @@ const mSSubstringsMatch: SubstringsMatcher = (
     return true;
 }
 
-export default mSSubstringsMatch;
+export default mSSingleSubstringMatch;

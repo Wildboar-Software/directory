@@ -317,9 +317,9 @@ import {
 import {
     mSSingleSubstringListElementsMatch,
 } from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSSingleSubstringListElementsMatch.oa";
-import {
-    valueCountMatch,
-} from "@wildboar/x400/src/lib/modules/MSMatchingRules/valueCountMatch.oa";
+// import {
+//     valueCountMatch,
+// } from "@wildboar/x400/src/lib/modules/MSMatchingRules/valueCountMatch.oa";
 import {
     oRAddressMatch,
 } from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRAddressMatch.oa";
@@ -416,6 +416,137 @@ import {
 import {
     informationCategoryMatch,
 } from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/informationCategoryMatch.oa";
+import {
+    addressCapabilitiesMatch as addressCapabilitiesMatchMatcher,
+} from "../matching/equality/addressCapabilitiesMatch";
+import {
+    capabilityMatch as capabilityMatchMatcher,
+} from "../matching/equality/capabilityMatch";
+import {
+    circulationMemberCheckmarkMatch as circulationMemberCheckmarkMatchMatcher,
+} from "../matching/equality/circulationMemberCheckmarkMatch";
+import {
+    getCirculationMemberElementsMatcher,
+} from "../matching/equality/circulationMemberElementsMatch";
+import {
+    getCirculationMemberMatcher,
+} from "../matching/equality/circulationMemberMatch";
+import {
+    circulationMemberSingleElementMatch as circulationMemberSingleElementMatchMatcher,
+} from "../matching/equality/circulationMemberSingleElementMatch";
+import {
+    getCirculationMemberSubstringElementsMatcher,
+} from "../matching/equality/circulationMemberSubstringElementsMatch";
+import {
+    contentCorrelatorMatch as contentCorrelatorMatchMatcher,
+} from "../matching/equality/contentCorrelatorMatch";
+import {
+    contentIdentifierMatch as contentIdentifierMatchMatcher,
+} from "../matching/equality/contentIdentifierMatch";
+import {
+    distributionCodeMatch as distributionCodeMatchMatcher,
+} from "../matching/equality/distributionCodeMatch";
+import {
+    informationCategoryMatch as informationCategoryMatchMatcher,
+} from "../matching/equality/informationCategoryMatch";
+import {
+    getIPMIdentifierMatcher,
+} from "../matching/equality/iPMIdentifierMatch";
+import {
+    iPMLocationMatch as iPMLocationMatchMatcher,
+} from "../matching/equality/iPMLocationMatch";
+import {
+    mSSingleSubstringListElementsMatch as mSSingleSubstringListElementsMatchMatcher,
+} from "../matching/equality/mSSingleSubstringListElementsMatch";
+import {
+    mSSingleSubstringListMatch as mSSingleSubstringListMatchMatcher,
+} from "../matching/equality/mSSingleSubstringListMatch";
+import {
+    mSStringCaseSensitiveMatch as mSStringCaseSensitiveMatchMatcher,
+} from "../matching/equality/msStringCaseSensitiveMatch";
+import {
+    mSStringListElementsMatch as mSStringListElementsMatchMatcher,
+} from "../matching/equality/msStringListElementsMatch";
+import {
+    mSStringListMatch as mSStringListMatchMatcher,
+} from "../matching/equality/mSStringListMatch";
+import {
+    mSStringMatch as mSStringMatchMatcher,
+} from "../matching/equality/mSStringMatch";
+import {
+    mSSubstringsMatch as mSSubstringsMatchMatcher,
+} from "../matching/equality/mSSubstringsMatch";
+import {
+    mTSIdentifierMatch as mTSIdentifierMatchMatcher,
+} from "../matching/equality/mTSIdentifierMatch";
+import { oRAddressElementsMatch as oRAddressElementsMatchMatcher } from "../matching/equality/oRAddressElementsMatch";
+import {
+    oRAddressMatch as oRAddressMatchMatcher,
+} from "../matching/equality/oRAddressMatch";
+import {
+    oRAddressSubstringElementsMatch as oRAddressSubstringElementsMatchMatcher,
+} from "../matching/equality/oRAddressSubstringElementsMatch";
+import {
+    getORDescriptorElementsMatcher,
+} from "../matching/equality/oRDescriptorElementsMatch";
+import {
+    getORDescriptorMatcher,
+} from "../matching/equality/oRDescriptorMatch";
+import {
+    oRDescriptorSingleElementMatch as oRDescriptorSingleElementMatchMatcher,
+} from "../matching/equality/oRDescriptorSingleElementMatch";
+import {
+    getORDescriptorSubstringElementsMatcher,
+} from "../matching/equality/oRDescriptorSubstringElementsMatch";
+import {
+    getORNameElementsMatcher,
+} from "../matching/equality/oRNameElementsMatch";
+import {
+    getORNameExactMatcher,
+} from "../matching/equality/oRNameExactMatch";
+import {
+    getORNameMatcher
+} from "../matching/equality/oRNameMatch";
+import {
+    oRNameSingleElementMatch as oRNameSingleElementMatchMatcher,
+} from "../matching/equality/oRNameSingleElementMatch";
+import {
+    getORNameSubstringElementsMatcher,
+} from "../matching/equality/oRNameSubstringElementsMatch";
+import {
+    getRecipientSpecifierElementsMatcher,
+} from "../matching/equality/recipientSpecifierElementsMatch";
+import {
+    getRecipientSpecifierMatcher,
+} from "../matching/equality/recipientSpecifierMatch";
+import {
+    recipientSpecifierSingleElementMatch as recipientSpecifierSingleElementMatchMatcher,
+} from "../matching/equality/recipientSpecifierSingleElementMatch";
+import {
+    getRecipientSpecifierSubstringElementsMatcher,
+} from "../matching/equality/recipientSpecifierSubstringElementsMatch";
+import {
+    getRedirectionOrDLExpansionElementsMatch
+} from "../matching/equality/redirectionOrDLExpansionElementsMatch";
+import {
+    getRedirectionOrDLExpansionMatch,
+} from "../matching/equality/redirectionOrDLExpansionMatch";
+import {
+    redirectionOrDLExpansionSingleElementMatch as redirectionOrDLExpansionSingleElementMatchMatcher,
+} from "../matching/equality/redirectionOrDLExpansionSingleElementMatch";
+import {
+    getRedirectionOrDLExpansionSubstringElementsMatch,
+} from "../matching/equality/redirectionOrDLExpansionSubstringElementsMatch";
+import {
+    redirectionReasonMatch as redirectionReasonMatchMatcher,
+} from "../matching/equality/redirectionReasonMatch";
+import {
+    mSStringOrderingMatch as mSStringOrderingMatchMatcher,
+} from "../matching/ordering/mSStringOrderingMatch";
+import {
+    mSSingleSubstringMatch as mSSingleSubstringMatchMatcher,
+} from "../matching/substring/mSSingleSubstringMatch";
+
 
 const caseIgnoreSortKeyGetter: SortKeyGetter = (element: ASN1Element): SortKey | null => {
     const ds = _decode_UnboundedDirectoryString(element);
@@ -529,6 +660,48 @@ function loadMatchingRules (ctx: Context): void {
         // [ x500mr.userPwdMatch, userPwdMatch ],
         [ x500mr.wordMatch, wordMatch ],
         // [ x500mr.zonalMatch, zonalMatch ],
+        [ addressCapabilitiesMatch, addressCapabilitiesMatchMatcher ],
+        [ capabilityMatch, capabilityMatchMatcher ],
+        [ oRNameExactMatch, getORNameExactMatcher(ctx) ],
+        [ mSStringMatch, mSStringMatchMatcher ],
+        [ mSSubstringsMatch, mSSubstringsMatchMatcher ],
+        [ mSStringCaseSensitiveMatch, mSStringCaseSensitiveMatchMatcher ],
+        [ mSStringListMatch, mSStringListMatchMatcher ],
+        [ mSStringListElementsMatch, mSStringListElementsMatchMatcher ],
+        [ mSSingleSubstringListMatch, mSSingleSubstringListMatchMatcher ],
+        [ mSSingleSubstringListElementsMatch, mSSingleSubstringListElementsMatchMatcher ],
+        [ oRAddressMatch, oRAddressMatchMatcher ],
+        [ oRAddressElementsMatch, oRAddressElementsMatchMatcher ],
+        [ oRAddressSubstringElementsMatch, oRAddressSubstringElementsMatchMatcher ],
+        [ oRNameMatch, getORNameMatcher(ctx) ],
+        [ oRNameElementsMatch, getORNameElementsMatcher(ctx) ],
+        [ oRNameSubstringElementsMatch, getORNameSubstringElementsMatcher(ctx) ],
+        [ oRNameSingleElementMatch, oRNameSingleElementMatchMatcher ],
+        [ redirectionOrDLExpansionMatch, getRedirectionOrDLExpansionMatch(ctx) ],
+        [ redirectionOrDLExpansionElementsMatch, getRedirectionOrDLExpansionElementsMatch(ctx) ],
+        [ redirectionOrDLExpansionSingleElementMatch, redirectionOrDLExpansionSingleElementMatchMatcher ],
+        [ redirectionOrDLExpansionSubstringElementsMatch, getRedirectionOrDLExpansionSubstringElementsMatch(ctx) ],
+        [ redirectionReasonMatch, redirectionReasonMatchMatcher ],
+        [ mTSIdentifierMatch, mTSIdentifierMatchMatcher ],
+        [ contentCorrelatorMatch, contentCorrelatorMatchMatcher ],
+        [ contentIdentifierMatch, contentIdentifierMatchMatcher ],
+        [ iPMIdentifierMatch, getIPMIdentifierMatcher(ctx) ],
+        [ iPMLocationMatch, iPMLocationMatchMatcher ],
+        [ oRDescriptorMatch, getORDescriptorMatcher(ctx) ],
+        [ oRDescriptorElementsMatch, getORDescriptorElementsMatcher(ctx) ],
+        [ oRDescriptorSubstringElementsMatch, getORDescriptorSubstringElementsMatcher(ctx) ],
+        [ oRDescriptorSingleElementMatch, oRDescriptorSingleElementMatchMatcher ],
+        [ recipientSpecifierMatch, getRecipientSpecifierMatcher(ctx) ],
+        [ recipientSpecifierElementsMatch, getRecipientSpecifierElementsMatcher(ctx) ],
+        [ recipientSpecifierSubstringElementsMatch, getRecipientSpecifierSubstringElementsMatcher(ctx) ],
+        [ recipientSpecifierSingleElementMatch, recipientSpecifierSingleElementMatchMatcher ],
+        [ circulationMemberMatch, getCirculationMemberMatcher(ctx) ],
+        [ circulationMemberElementsMatch, getCirculationMemberElementsMatcher(ctx) ],
+        [ circulationMemberSubstringElementsMatch, getCirculationMemberSubstringElementsMatcher(ctx) ],
+        [ circulationMemberSingleElementMatch, circulationMemberSingleElementMatchMatcher ],
+        [ circulationMemberCheckmarkMatch, circulationMemberCheckmarkMatchMatcher ],
+        [ distributionCodeMatch, distributionCodeMatchMatcher ],
+        [ informationCategoryMatch, informationCategoryMatchMatcher ],
     ];
     const orderingInfo: [ MATCHING_RULE, OrderingMatcher ][] = [
         [ x500mr.caseExactOrderingMatch, caseExactOrderingMatch ],
@@ -538,6 +711,7 @@ function loadMatchingRules (ctx: Context): void {
         [ x500mr.numericStringOrderingMatch, numericStringOrderingMatch ],
         [ x500mr.octetStringOrderingMatch, octetStringOrderingMatch ],
         [ x500mr.uTCTimeOrderingMatch, uTCTimeOrderingMatch ],
+        [ mSStringOrderingMatch, mSStringOrderingMatchMatcher ],
     ];
     const substringsInfo: [ MATCHING_RULE, SubstringsMatcher ][] = [
         [ x500mr.caseExactSubstringsMatch, caseExactSubstringsMatch ],
@@ -547,6 +721,7 @@ function loadMatchingRules (ctx: Context): void {
         [ x500mr.numericStringSubstringsMatch, numericStringSubstringsMatch ],
         [ x500mr.octetStringSubstringsMatch, octetStringSubstringsMatch ],
         [ x500mr.telephoneNumberSubstringsMatch, telephoneNumberSubstringsMatch ],
+        [ mSSingleSubstringMatch, mSSingleSubstringMatchMatcher ],
     ];
 
     equalityInfo

@@ -24,7 +24,7 @@ import { getORNameSubstringElementsMatcher } from "./oRNameSubstringElementsMatc
 
 // TODO: This could be made more efficient by not decoding the assertion every time.
 export
-function getRedirectionOrDLExpansionElementsMatch (ctx: Context): EqualityMatcher {
+function getRedirectionOrDLExpansionSubstringElementsMatch (ctx: Context): EqualityMatcher {
     const orNameMatcher = getORNameSubstringElementsMatcher(ctx);
     return(
         assertion: ASN1Element,
@@ -44,4 +44,4 @@ function getRedirectionOrDLExpansionElementsMatch (ctx: Context): EqualityMatche
     };
 }
 
-export default getRedirectionOrDLExpansionElementsMatch;
+export default getRedirectionOrDLExpansionSubstringElementsMatch;
