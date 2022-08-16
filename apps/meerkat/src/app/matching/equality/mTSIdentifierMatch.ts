@@ -3,9 +3,6 @@ import { EqualityMatcher } from "@wildboar/x500";
 import {
     _decode_MTSIdentifier,
 } from "@wildboar/x400/src/lib/modules/MTSAbstractService/MTSIdentifier.ta";
-import {
-    _decode_RedirectionHistory,
-} from "@wildboar/x400/src/lib/modules/MTSAbstractService/RedirectionHistory.ta";
 
 // MTSIdentifier ::= [APPLICATION 4]  SEQUENCE {
 //     global-domain-identifier  GlobalDomainIdentifier,
