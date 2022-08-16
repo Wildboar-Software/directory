@@ -55,7 +55,7 @@ function orAddressIsSubset (asserted: ORAddress, value: ORAddress): boolean {
 }
 
 export
-const oRAddressMatch: EqualityMatcher = (
+const oRAddressElementsMatch: EqualityMatcher = (
     assertion: ASN1Element,
     value: ASN1Element,
 ): boolean => {
@@ -68,4 +68,4 @@ const oRAddressMatch: EqualityMatcher = (
     return orAddressIsSubset(a, v);
 }
 
-export default oRAddressMatch;
+export default oRAddressElementsMatch;

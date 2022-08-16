@@ -21,7 +21,7 @@ import { getORDescriptorElementsMatcher } from "./oRDescriptorElementsMatch";
 // TelephoneNumber ::= PrintableString(SIZE (0..ub-telephone-number))
 
 export
-function getRecipientSpecifierMatcher (ctx: Context): EqualityMatcher {
+function getRecipientSpecifierElementsMatcher (ctx: Context): EqualityMatcher {
     const orDescriptorMatcher = getORDescriptorElementsMatcher(ctx);
     return (
         assertion: ASN1Element,
@@ -42,4 +42,4 @@ function getRecipientSpecifierMatcher (ctx: Context): EqualityMatcher {
     };
 }
 
-export default getRecipientSpecifierMatcher;
+export default getRecipientSpecifierElementsMatcher;

@@ -2,7 +2,7 @@ import type { ASN1Element } from "asn1-ts";
 import { EqualityMatcher } from "@wildboar/x500";
 
 export
-const contentCorrelatorMatch: EqualityMatcher = (
+const contentIdentifierMatch: EqualityMatcher = (
     assertion: ASN1Element,
     value: ASN1Element,
 ): boolean => {
@@ -12,4 +12,4 @@ const contentCorrelatorMatch: EqualityMatcher = (
     ); // case-sensitive.
 }
 
-export default contentCorrelatorMatch;
+export default contentIdentifierMatch;
