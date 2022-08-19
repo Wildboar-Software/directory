@@ -262,6 +262,125 @@ import {
     edi_capabilities,
 } from "@wildboar/x400/src/lib/modules/EDIMUseOfDirectory/edi-capabilities.oa";
 
+// X.700 Attribute Types
+// import {
+//     actions,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/actions.oa";
+// import {
+//     additionalInformation,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/additionalInformation.oa";
+// import {
+//     andAttributeIds,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/andAttributeIds.oa";
+// import {
+//     asn1ModuleContents,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/asn1ModuleContents.oa";
+// import {
+//     asn1Version,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/asn1Version.oa";
+// import {
+//     attributeGroups,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/attributeGroups.oa";
+// import {
+//     attributes,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/attributes.oa";
+// import {
+//     behaviour,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/behaviour.oa";
+// import {
+//     characterizedBy,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/characterizedBy.oa";
+// import {
+//     conditionalPackages,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/conditionalPackages.oa";
+// import {
+//     context,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/context.oa";
+// import {
+//     create,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/create.oa";
+// import {
+//     definedAs,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/definedAs.oa";
+// import {
+//     delete_,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/delete_.oa";
+// import {
+//     derivedFrom,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/derivedFrom.oa";
+// import {
+//     derivedOrWithSyntaxChoice,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/derivedOrWithSyntaxChoice.oa";
+// import {
+//     description,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/description.oa";
+// import {
+//     documentName,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/documentName.oa";
+// import {
+//     documentObjectIdentifier,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/documentObjectIdentifier.oa";
+// import {
+//     fixed,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/fixed.oa";
+// import {
+//     groupElements,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/groupElements.oa";
+// import {
+//     informationStatus,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/informationStatus.oa";
+// import {
+//     matchesFor,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/matchesFor.oa";
+// import {
+//     modeConfirmed,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/modeConfirmed.oa";
+// import {
+//     moduleReference,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/moduleReference.oa";
+// import {
+//     namedBySuperiorObjectClass,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/namedBySuperiorObjectClass.oa";
+// import {
+//     nameForm,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/nameForm.oa";
+// import {
+//     notifications,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/notifications.oa";
+// import {
+//     optionallyRegisteredAs,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/optionallyRegisteredAs.oa";
+// import {
+//     parameters,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/parameters.oa";
+// import {
+//     registeredAs,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/registeredAs.oa";
+// import {
+//     specification,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/specification.oa";
+// import {
+//     subordinateObjectClass,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/subordinateObjectClass.oa";
+// import {
+//     syntaxOrAttribute,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/syntaxOrAttribute.oa";
+// import {
+//     templateDefinition,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/templateDefinition.oa";
+// import {
+//     templateName,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/templateName.oa";
+// import {
+//     withAttribute,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/withAttribute.oa";
+// import {
+//     withInformationSyntax,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/withInformationSyntax.oa";
+// import {
+//     withReplySyntax,
+// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/withReplySyntax.oa";
+
 /**
  * @summary Initialize Meerkat DSA's internal index of known attribute types.
  * @description
