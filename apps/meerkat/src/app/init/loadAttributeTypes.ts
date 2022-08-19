@@ -263,123 +263,159 @@ import {
 } from "@wildboar/x400/src/lib/modules/EDIMUseOfDirectory/edi-capabilities.oa";
 
 // X.700 Attribute Types
-// import {
-//     actions,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/actions.oa";
-// import {
-//     additionalInformation,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/additionalInformation.oa";
-// import {
-//     andAttributeIds,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/andAttributeIds.oa";
-// import {
-//     asn1ModuleContents,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/asn1ModuleContents.oa";
-// import {
-//     asn1Version,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/asn1Version.oa";
-// import {
-//     attributeGroups,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/attributeGroups.oa";
-// import {
-//     attributes,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/attributes.oa";
-// import {
-//     behaviour,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/behaviour.oa";
-// import {
-//     characterizedBy,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/characterizedBy.oa";
-// import {
-//     conditionalPackages,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/conditionalPackages.oa";
-// import {
-//     context,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/context.oa";
-// import {
-//     create,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/create.oa";
-// import {
-//     definedAs,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/definedAs.oa";
-// import {
-//     delete_,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/delete_.oa";
-// import {
-//     derivedFrom,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/derivedFrom.oa";
-// import {
-//     derivedOrWithSyntaxChoice,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/derivedOrWithSyntaxChoice.oa";
-// import {
-//     description,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/description.oa";
-// import {
-//     documentName,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/documentName.oa";
-// import {
-//     documentObjectIdentifier,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/documentObjectIdentifier.oa";
-// import {
-//     fixed,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/fixed.oa";
-// import {
-//     groupElements,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/groupElements.oa";
-// import {
-//     informationStatus,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/informationStatus.oa";
-// import {
-//     matchesFor,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/matchesFor.oa";
-// import {
-//     modeConfirmed,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/modeConfirmed.oa";
-// import {
-//     moduleReference,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/moduleReference.oa";
-// import {
-//     namedBySuperiorObjectClass,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/namedBySuperiorObjectClass.oa";
-// import {
-//     nameForm,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/nameForm.oa";
-// import {
-//     notifications,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/notifications.oa";
-// import {
-//     optionallyRegisteredAs,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/optionallyRegisteredAs.oa";
-// import {
-//     parameters,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/parameters.oa";
-// import {
-//     registeredAs,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/registeredAs.oa";
-// import {
-//     specification,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/specification.oa";
-// import {
-//     subordinateObjectClass,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/subordinateObjectClass.oa";
-// import {
-//     syntaxOrAttribute,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/syntaxOrAttribute.oa";
-// import {
-//     templateDefinition,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/templateDefinition.oa";
-// import {
-//     templateName,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/templateName.oa";
-// import {
-//     withAttribute,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/withAttribute.oa";
-// import {
-//     withInformationSyntax,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/withInformationSyntax.oa";
-// import {
-//     withReplySyntax,
-// } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/withReplySyntax.oa";
+import {
+    actions,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/actions.oa";
+import {
+    additionalInformation,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/additionalInformation.oa";
+import {
+    andAttributeIds,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/andAttributeIds.oa";
+import {
+    asn1ModuleContents,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/asn1ModuleContents.oa";
+import {
+    asn1Version,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/asn1Version.oa";
+import {
+    attributeGroups,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/attributeGroups.oa";
+import {
+    attributes,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/attributes.oa";
+import {
+    behaviour,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/behaviour.oa";
+import {
+    characterizedBy,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/characterizedBy.oa";
+import {
+    conditionalPackages,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/conditionalPackages.oa";
+import {
+    context,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/context.oa";
+import {
+    create,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/create.oa";
+import {
+    definedAs,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/definedAs.oa";
+import {
+    delete_,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/delete.oa";
+import {
+    derivedFrom,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/derivedFrom.oa";
+import {
+    derivedOrWithSyntaxChoice,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/derivedOrWithSyntaxChoice.oa";
+import {
+    description,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/description.oa";
+import {
+    documentName,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/documentName.oa";
+import {
+    documentObjectIdentifier,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/documentObjectIdentifier.oa";
+import {
+    fixed,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/fixed.oa";
+import {
+    groupElements,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/groupElements.oa";
+import {
+    informationStatus,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/informationStatus.oa";
+import {
+    matchesFor,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/matchesFor.oa";
+import {
+    modeConfirmed,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/modeConfirmed.oa";
+import {
+    moduleReference,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/moduleReference.oa";
+import {
+    namedBySuperiorObjectClass,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/namedBySuperiorObjectClass.oa";
+import {
+    nameForm,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/nameForm.oa";
+import {
+    notifications,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/notifications.oa";
+import {
+    optionallyRegisteredAs,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/optionallyRegisteredAs.oa";
+import {
+    parameters,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/parameters.oa";
+import {
+    registeredAs,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/registeredAs.oa";
+import {
+    specification,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/specification.oa";
+import {
+    subordinateObjectClass,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/subordinateObjectClass.oa";
+import {
+    syntaxOrAttribute,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/syntaxOrAttribute.oa";
+import {
+    templateDefinition,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/templateDefinition.oa";
+import {
+    templateName,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/templateName.oa";
+import {
+    withAttribute,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/withAttribute.oa";
+import {
+    withInformationSyntax,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/withInformationSyntax.oa";
+import {
+    withReplySyntax,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/withReplySyntax.oa";
+import {
+    mappedRelationshipClass,
+} from "@wildboar/x700/src/lib/modules/GrmDefinitionDirectoryASN1Module/mappedRelationshipClass.oa";
+import {
+    operationsMapping,
+} from "@wildboar/x700/src/lib/modules/GrmDefinitionDirectoryASN1Module/operationsMapping.oa";
+import {
+    qualifiedBy,
+} from "@wildboar/x700/src/lib/modules/GrmDefinitionDirectoryASN1Module/qualifiedBy.oa";
+import {
+    relationshipObject,
+} from "@wildboar/x700/src/lib/modules/GrmDefinitionDirectoryASN1Module/relationshipObject.oa";
+import {
+    roleMappingSpecificationSet,
+} from "@wildboar/x700/src/lib/modules/GrmDefinitionDirectoryASN1Module/roleMappingSpecificationSet.oa";
+import {
+    roleSpecifier,
+} from "@wildboar/x700/src/lib/modules/GrmDefinitionDirectoryASN1Module/roleSpecifier.oa";
+import {
+    supports,
+} from "@wildboar/x700/src/lib/modules/GrmDefinitionDirectoryASN1Module/supports.oa";
+import {
+    supportedCmipProfiles,
+} from "@wildboar/x700/src/lib/modules/RepertoireDirectoryASN1Module/supportedCmipProfiles.oa";
+import {
+    supportedCmipVersion,
+} from "@wildboar/x700/src/lib/modules/RepertoireDirectoryASN1Module/supportedCmipVersion.oa";
+import {
+    supportedCmisFunctionalUnits,
+} from "@wildboar/x700/src/lib/modules/RepertoireDirectoryASN1Module/supportedCmisFunctionalUnits.oa";
+import {
+    supportedSmaseFunctionalUnits,
+} from "@wildboar/x700/src/lib/modules/RepertoireDirectoryASN1Module/supportedSmaseFunctionalUnits.oa";
+import {
+    supportsMKMglobalNames,
+} from "@wildboar/x700/src/lib/modules/RepertoireDirectoryASN1Module/supportsMKMglobalNames.oa";
 
 /**
  * @summary Initialize Meerkat DSA's internal index of known attribute types.
@@ -461,6 +497,57 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         "edi-name": edi_name,
         "edi-routing-address": edi_routing_address,
         "edi-capabilities": edi_capabilities,
+        actions,
+        additionalInformation,
+        andAttributeIds,
+        asn1ModuleContents,
+        asn1Version,
+        attributeGroups,
+        attributes,
+        behaviour,
+        characterizedBy,
+        conditionalPackages,
+        context,
+        create,
+        definedAs,
+        "delete": delete_,
+        derivedFrom,
+        derivedOrWithSyntaxChoice,
+        description,
+        documentName,
+        documentObjectIdentifier,
+        fixed,
+        groupElements,
+        informationStatus,
+        matchesFor,
+        modeConfirmed,
+        moduleReference,
+        namedBySuperiorObjectClass,
+        nameForm,
+        notifications,
+        optionallyRegisteredAs,
+        parameters,
+        registeredAs,
+        specification,
+        subordinateObjectClass,
+        syntaxOrAttribute,
+        templateDefinition,
+        templateName,
+        withAttribute,
+        withInformationSyntax,
+        withReplySyntax,
+        mappedRelationshipClass,
+        operationsMapping,
+        qualifiedBy,
+        relationshipObject,
+        roleMappingSpecificationSet,
+        roleSpecifier,
+        supports,
+        supportedCmipProfiles,
+        supportedCmipVersion,
+        supportedCmisFunctionalUnits,
+        supportedSmaseFunctionalUnits,
+        supportsMKMglobalNames,
     })
         .map(([ name, spec ]) => attributeFromInformationObject(spec, name))
         .forEach((attr) => {

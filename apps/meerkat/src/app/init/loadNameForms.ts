@@ -65,6 +65,11 @@ import {
     mHSPostalCodeNameForm,
 } from "@wildboar/x400/src/lib/modules/MHSRoutingORAddressSubtree/mHSPostalCodeNameForm.oa";
 
+// X.700 Name Froms
+import {
+    registeredInformationNameForm,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/registeredInformationNameForm.oa";
+
 /**
  * @summary Initialize Meerkat DSA's internal index of known name forms.
  * @description
@@ -101,6 +106,9 @@ async function loadNameForms (ctx: Context): Promise<void> {
         mHSPDSNameNameForm,
         mHSPhysicalDeliveryCountryNameForm,
         mHSPostalCodeNameForm,
+
+        // X.700 Name Forms
+        registeredInformationNameForm,
     };
     Object.entries(nameFormInfoObjects)
         .map(([ name, io ]) => nameFormFromInformationObject(io, io["&ldapName"] ?? [ name ]))
