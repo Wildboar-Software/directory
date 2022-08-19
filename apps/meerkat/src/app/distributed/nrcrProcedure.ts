@@ -60,9 +60,7 @@ import {
     ReferenceType_nonSpecificSubordinate,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
 import { printInvokeId } from "../utils/printInvokeId";
-import {
-    compareAuthenticationLevel,
-} from "@wildboar/x500/src/lib/comparators/compareAuthenticationLevel";
+import { compareAuthenticationLevel } from "@wildboar/x500";
 
 // TODO: Really, this should have the same return type as the OperationDispatcher.
 // This also returns a value, but also mutates the OD state, which is sketchy.

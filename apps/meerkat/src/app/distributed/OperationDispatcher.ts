@@ -393,10 +393,10 @@ class OperationDispatcher {
                 const postMergeState = await resultsMergingProcedureForList(
                     ctx,
                     assn,
+                    argument,
                     response,
                     local,
-                    state.NRcontinuationList,
-                    state.SRcontinuationList,
+                    state,
                 );
                 const result = await mergeSortAndPageList(ctx, assn, state, data, postMergeState);
                 const opcr: OPCR = {
