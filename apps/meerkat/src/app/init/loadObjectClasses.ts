@@ -183,6 +183,14 @@ import {
     sMASE,
 } from "@wildboar/x700/src/lib/modules/RepertoireDirectoryASN1Module/sMASE.oa";
 
+// PKCS #9 Object Classes
+import {
+    pkcsEntity,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/pkcsEntity.oa";
+import {
+    naturalPerson,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/naturalPerson.oa";
+
 function prismaOCK2OCK (ock: PrismaObjectClassKind): ObjectClassKind {
     switch (ock) {
     case (PrismaObjectClassKind.ABSTRACT): {
@@ -262,6 +270,8 @@ async function loadObjectClasses (ctx: Context): Promise<void> {
         managementRelationshipMapping,
         cMISE,
         sMASE,
+        pkcsEntity,
+        naturalPerson,
     ];
     objectClassInfoObjects
         .map(objectClassFromInformationObject)

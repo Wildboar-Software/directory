@@ -449,6 +449,83 @@ import {
     platformConfigUri,
 } from "@wildboar/pc/src/lib/modules/PlatformCertificateProfile/platformConfigUri.oa";
 
+// PKCS #9 Attribute Types
+import {
+    pKCS7PDU,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/pKCS7PDU.oa";
+import {
+    userPKCS12,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/userPKCS12.oa";
+import {
+    pKCS15Token,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/pKCS15Token.oa";
+import {
+    encryptedPrivateKeyInfo,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/encryptedPrivateKeyInfo.oa";
+import {
+    emailAddress,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/emailAddress.oa";
+import {
+    unstructuredName,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/unstructuredName.oa";
+import {
+    unstructuredAddress,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/unstructuredAddress.oa";
+import {
+    dateOfBirth,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/dateOfBirth.oa";
+import {
+    placeOfBirth,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/placeOfBirth.oa";
+import {
+    gender,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/gender.oa";
+import {
+    countryOfCitizenship,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/countryOfCitizenship.oa";
+import {
+    countryOfResidence,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/countryOfResidence.oa";
+import {
+    pseudonym,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/pseudonym.oa";
+import {
+    contentType,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/contentType.oa";
+import {
+    messageDigest,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/messageDigest.oa";
+import {
+    signingTime,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/signingTime.oa";
+import {
+    randomNonce,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/randomNonce.oa";
+import {
+    counterSignature,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/counterSignature.oa";
+import {
+    challengePassword,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/challengePassword.oa";
+import {
+    extensionRequest,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/extensionRequest.oa";
+import {
+    extendedCertificateAttributes,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/extendedCertificateAttributes.oa";
+import {
+    friendlyName,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/friendlyName.oa";
+import {
+    localKeyId,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/localKeyId.oa";
+import {
+    signingDescription,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/signingDescription.oa";
+import {
+    smimeCapabilities,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/smimeCapabilities.oa";
+
 /**
  * @summary Initialize Meerkat DSA's internal index of known attribute types.
  * @description
@@ -590,6 +667,31 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         tBBSecurityAssertions,
         platformConfiguration,
         platformConfigUri,
+        pKCS7PDU,
+        userPKCS12,
+        pKCS15Token,
+        encryptedPrivateKeyInfo,
+        emailAddress,
+        unstructuredName,
+        unstructuredAddress,
+        dateOfBirth,
+        placeOfBirth,
+        gender,
+        countryOfCitizenship,
+        countryOfResidence,
+        pseudonym,
+        contentType,
+        messageDigest,
+        signingTime,
+        randomNonce,
+        counterSignature,
+        challengePassword,
+        extensionRequest,
+        extendedCertificateAttributes,
+        friendlyName,
+        localKeyId,
+        signingDescription,
+        smimeCapabilities,
     })
         .map(([ name, spec ]) => attributeFromInformationObject(spec, name))
         .forEach((attr) => {

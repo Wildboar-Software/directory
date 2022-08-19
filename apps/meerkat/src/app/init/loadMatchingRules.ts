@@ -547,6 +547,19 @@ import {
     mSSingleSubstringMatch as mSSingleSubstringMatchMatcher,
 } from "../matching/substring/mSSingleSubstringMatch";
 
+// PKCS #9 Matching Rules
+import {
+    pkcs9CaseIgnoreMatch,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/pkcs9CaseIgnoreMatch.oa";
+import {
+    signingTimeMatch,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/signingTimeMatch.oa";
+import {
+    pkcs9CaseIgnoreMatch as pkcs9CaseIgnoreMatchMatcher,
+} from "../matching/equality/pkcs9CaseIgnoreMatch";
+import {
+    signingTimeMatch as signingTimeMatchMatcher,
+} from "../matching/equality/signingTimeMatch";
 
 const caseIgnoreSortKeyGetter: SortKeyGetter = (element: ASN1Element): SortKey | null => {
     const ds = _decode_UnboundedDirectoryString(element);
@@ -702,6 +715,8 @@ function loadMatchingRules (ctx: Context): void {
         [ circulationMemberCheckmarkMatch, circulationMemberCheckmarkMatchMatcher ],
         [ distributionCodeMatch, distributionCodeMatchMatcher ],
         [ informationCategoryMatch, informationCategoryMatchMatcher ],
+        [ pkcs9CaseIgnoreMatch, pkcs9CaseIgnoreMatchMatcher ],
+        [ signingTimeMatch, signingTimeMatchMatcher ],
     ];
     const orderingInfo: [ MATCHING_RULE, OrderingMatcher ][] = [
         [ x500mr.caseExactOrderingMatch, caseExactOrderingMatch ],
