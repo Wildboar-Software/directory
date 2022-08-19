@@ -130,6 +130,59 @@ import {
     edi_message_store,
 } from "@wildboar/x400/src/lib/modules/EDIMUseOfDirectory/edi-message-store.oa";
 
+// X.700 Object Classes
+import {
+    asn1Module,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/asn1Module.oa";
+import {
+    managementAction,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/managementAction.oa";
+import {
+    managementAttributeGroup,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/managementAttributeGroup.oa";
+import {
+    managementAttribute,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/managementAttribute.oa";
+import {
+    managementBehaviour,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/managementBehaviour.oa";
+import {
+    managementDocument,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/managementDocument.oa";
+import {
+    managementNameBinding,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/managementNameBinding.oa";
+import {
+    managementNotification,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/managementNotification.oa";
+import {
+    managementObjectClass,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/managementObjectClass.oa";
+import {
+    managementPackage,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/managementPackage.oa";
+import {
+    managementParameter,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/managementParameter.oa";
+import {
+    managementTemplate,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/managementTemplate.oa";
+import {
+    registeredInformation,
+} from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/registeredInformation.oa";
+import {
+    managementRelationshipClass,
+} from "@wildboar/x700/src/lib/modules/GrmDefinitionDirectoryASN1Module/managementRelationshipClass.oa";
+import {
+    managementRelationshipMapping,
+} from "@wildboar/x700/src/lib/modules/GrmDefinitionDirectoryASN1Module/managementRelationshipMapping.oa";
+import {
+    cMISE,
+} from "@wildboar/x700/src/lib/modules/RepertoireDirectoryASN1Module/cMISE.oa";
+import {
+    sMASE,
+} from "@wildboar/x700/src/lib/modules/RepertoireDirectoryASN1Module/sMASE.oa";
+
 function prismaOCK2OCK (ock: PrismaObjectClassKind): ObjectClassKind {
     switch (ock) {
     case (PrismaObjectClassKind.ABSTRACT): {
@@ -192,6 +245,23 @@ async function loadObjectClasses (ctx: Context): Promise<void> {
         edi_user,
         edi_user_agent,
         edi_message_store,
+        asn1Module,
+        managementAction,
+        managementAttributeGroup,
+        managementAttribute,
+        managementBehaviour,
+        managementDocument,
+        managementNameBinding,
+        managementNotification,
+        managementObjectClass,
+        managementPackage,
+        managementParameter,
+        managementTemplate,
+        registeredInformation,
+        managementRelationshipClass,
+        managementRelationshipMapping,
+        cMISE,
+        sMASE,
     ];
     objectClassInfoObjects
         .map(objectClassFromInformationObject)
