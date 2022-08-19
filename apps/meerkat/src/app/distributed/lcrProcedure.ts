@@ -35,13 +35,19 @@ import {
 import {
     _decode_ListResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData.ta";
+import { Promise as bPromise } from "bluebird";
+import {
+    ServiceControls_priority_high,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls-priority.ta";
+import printCode from "../utils/printCode";
+import stringifyDN from "../x500/stringifyDN";
 
 /**
  * @summary List Continuation Reference Procedure, as defined in ITU Recommendation X.518.
  * @description
  *
  * The List Continuation Reference Procedure, as defined in ITU Recommendation
- * X.518 (2016), Section 20.4.2.
+ * X.518 (2019), Section 20.4.2.
  *
  * @param ctx The context object
  * @param assn The client association
@@ -77,10 +83,20 @@ async function lcrProcedure (
         )
         || !("basicLevels" in assn.authLevel)
     );
+    const logInfo = {
+        remoteFamily: assn.socket.remoteFamily,
+        remoteAddress: assn.socket.remoteAddress,
+        remotePort: assn.socket.remotePort,
+        association_id: assn.id,
+        invokeId: ("present" in state.invokeId) ? Number(state.invokeId.present) : undefined,
+        opCode: printCode(state.operationCode),
+        operationIdentifier: state.chainingArguments.operationIdentifier
+            ? Number(state.chainingArguments.operationIdentifier)
+            : undefined,
+    };
     if (chainingProhibited || insufficientAuthForChaining) {
         return;
     }
-    const parallel: boolean = false; // TODO: Make this configurable.
     const signErrors: boolean = (
         (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
         && (assn.authorizedForSignedErrors)
@@ -92,6 +108,7 @@ async function lcrProcedure (
         && (assn instanceof DSPAssociation)
         && assn.authorizedForSignedResults
     );
+    const highPriority = (data.serviceControls?.priority === ServiceControls_priority_high);
 
     // Part of Step #3
     const processContinuationReference = async (cr: ContinuationReference): Promise<void> => {
@@ -120,6 +137,15 @@ async function lcrProcedure (
         };
         for (const api of cr.accessPoints) {
             const invokeId: number = randomInt(2147483648);
+            const logMsgInfo = {
+                ae: stringifyDN(ctx, api.ae_title.rdnSequence),
+                aid: assn.id,
+                iid: invokeId,
+                original_iid: ("present" in state.invokeId)
+                    ? Number(state.invokeId.present)
+                    : 0,
+            };
+            ctx.log.debug(ctx.i18n.t("log:lcr_attempt", logMsgInfo), logInfo);
             const req: ChainedRequest = {
                 chaining: cloneChainingArgs(state.chainingArguments, {
                     originator: requestor,
@@ -143,37 +169,44 @@ async function lcrProcedure (
             };
             const response = await apinfoProcedure(ctx, api, req, assn, state, signErrors, chainingProhibited);
             if (!response) {
+                ctx.log.debug(ctx.i18n.t("log:lcr_null_response", logMsgInfo), logInfo);
                 unexplore();
                 continue;
             }
             if ("error" in response) {
-                // TODO: Log
+                ctx.log.debug(ctx.i18n.t("log:lcr_error_response", {
+                    ...logMsgInfo,
+                    errcode: response.errcode
+                        ? printCode(response.errcode)
+                        : undefined,
+                    errbytes: Buffer.from(response.error.toBytes().slice(0, 16)).toString("hex"),
+                }), logInfo);
                 unexplore();
                 continue;
             }
             if (!response.result) {
-                // TODO: This is sketchy. Log it.
+                ctx.log.warn(ctx.i18n.t("log:lcr_undefined_result", logMsgInfo), logInfo);
                 unexplore();
                 continue;
             }
             // TODO: Shouldn't things like this be checked in apinfoProcedure?
             if (!("present" in response.invokeId)) {
-                // TODO: This is sketchy. Log it.
+                ctx.log.warn(ctx.i18n.t("log:lcr_invalid_invoke_id_response", logMsgInfo), logInfo);
                 unexplore();
                 continue;
             }
             if (Number(response.invokeId.present) !== Number(invokeId)) {
-                // TODO: This is a bug. Log it.
+                ctx.log.warn(ctx.i18n.t("log:lcr_mismatch_invoke_id", logMsgInfo), logInfo);
                 unexplore();
                 continue;
             }
             if (!response.opCode) {
-                // TODO: This is sketchy. Log it.
+                ctx.log.warn(ctx.i18n.t("log:lcr_missing_opcode", logMsgInfo), logInfo);
                 unexplore();
                 continue;
             }
             if (!compareCode(response.opCode, id_opcode_list)) {
-                // TODO: This is sketchy. Log it.
+                ctx.log.warn(ctx.i18n.t("log:lcr_mismatch_opcode", logMsgInfo), logInfo);
                 unexplore();
                 continue;
             }
@@ -195,8 +228,14 @@ async function lcrProcedure (
 
     // Step #3
     // NOTE: all continuation references should have the same targetObject.
-    if (parallel) {
-        await Promise.all(state.SRcontinuationList.map(processContinuationReference));
+    if (
+        highPriority
+        && Number.isSafeInteger(ctx.config.chaining.lcrParallelism)
+        && (ctx.config.chaining.lcrParallelism > 1)
+    ) {
+        await bPromise.map(state.SRcontinuationList, processContinuationReference, {
+            concurrency: ctx.config.chaining.lcrParallelism,
+        });
     } else {
         for (const cr of state.SRcontinuationList) {
             await processContinuationReference(cr);

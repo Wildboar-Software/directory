@@ -300,6 +300,24 @@ If set, this is the filepath to an init script. At startup, Meerkat DSA will
 load this script and execute the default export or an export named `init`, if
 either one exists.
 
+## MEERKAT_LCR_PARALLELISM
+
+If greater than 1, Meerkat DSA will make parallel requests in the
+List Continuation Reference (LCR) procedure defined in
+ITU Recommendation X.518 (2019), Section 20.4.2. This number
+determines the number of simultaneous chained list operations that
+Meerkat DSA will issue at a given time. If set to 0, 1, or some
+other non-sense number or non-number, Meerkat DSA will simply run
+all chained subrequests in series. More parallelism generally means
+that the distributed list operation completes faster.
+
+If this value is set too high, malicious users could issue requests
+that propagate into so many outbound chained requests that the
+responses act as a Distributed Denial-of-Service (DDoS).
+
+Despite this setting, Meerkat DSA will not use parallel requests
+unless the operation has priority set to `high`.
+
 ## MEERKAT_LDAP_BUFFER_SIZE
 
 The number of bytes in size of the LDAP buffer. This innately limits the size of
@@ -643,6 +661,24 @@ OpenSSL can use to obtain a private key.
 If set to `1`, Meerkat DSA will not chain any requests. If you expect to operate
 your DSA instance in isolation from all other DSAs, it is recommended to enable
 this (meaning that chaining would be disabled).
+
+## MEERKAT_SCR_PARALLELISM
+
+If greater than 1, Meerkat DSA will make parallel requests in the
+Search Continuation Reference (SCR) procedure defined in
+ITU Recommendation X.518 (2019), Section 20.4.3. This number
+determines the number of simultaneous chained search operations that
+Meerkat DSA will issue at a given time. If set to 0, 1, or some
+other non-sense number or non-number, Meerkat DSA will simply run
+all chained subrequests in series. More parallelism generally means
+that the distributed search operation completes faster.
+
+If this value is set too high, malicious users could issue requests
+that propagate into so many outbound chained requests that the
+responses act as a Distributed Denial-of-Service (DDoS).
+
+Despite this setting, Meerkat DSA will not use parallel requests
+unless the operation has priority set to `high`.
 
 ## MEERKAT_SCVP_ATTR_CERT_CHECKS
 

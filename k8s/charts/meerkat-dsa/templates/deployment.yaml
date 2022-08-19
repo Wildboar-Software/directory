@@ -186,6 +186,12 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: idm_buffer_size
                   optional: true
+            - name: MEERKAT_LCR_PARALLELISM
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: lcr_parallelism
+                  optional: true
             - name: MEERKAT_LDAP_BUFFER_SIZE
               valueFrom:
                 configMapKeyRef:
@@ -401,6 +407,12 @@ spec:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: prohibit_chaining
+                  optional: true
+            - name: MEERKAT_SCR_PARALLELISM
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: scr_parallelism
                   optional: true
             - name: MEERKAT_SCVP_ATTR_CERT_CHECKS
               valueFrom:

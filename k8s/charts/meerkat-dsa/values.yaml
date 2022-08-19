@@ -117,6 +117,7 @@ idm_buffer_size: "1000000"
 idm_port: 4632
 idms_port: 44632
 # init_js: use initJsConfigName
+lcr_parallelism: 0
 ldap_buffer_size: "1000000"
 ldap_port: 389
 ldaps_port: 636
@@ -156,6 +157,7 @@ ob_auto_accept: false
 open_top_level: false
 # private_key_engine: pkcs11
 prohibit_chaining: false
+src_parallelism: 0
 # scvp_attr_cert_checks:
 #   - "2.5.4.3"
 # scvp_attr_cert_want_backs:

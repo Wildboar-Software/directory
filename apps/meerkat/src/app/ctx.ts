@@ -877,6 +877,12 @@ const config: Configuration = {
         prohibited: process.env.MEERKAT_PROHIBIT_CHAINING
             ? (process.env.MEERKAT_PROHIBIT_CHAINING === "1")
             : false,
+        lcrParallelism: process.env.MEERKAT_LCR_PARALLELISM
+            ? Number.parseInt(process.env.MEERKAT_LCR_PARALLELISM, 10)
+            : 0,
+        scrParallelism: process.env.MEERKAT_SCR_PARALLELISM
+            ? Number.parseInt(process.env.MEERKAT_SCR_PARALLELISM, 10)
+            : 0,
     },
     ob: {
         minAuthRequired: parseAuthLevel(

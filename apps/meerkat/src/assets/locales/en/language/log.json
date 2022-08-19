@@ -164,5 +164,13 @@
     "strong_cred_error@-23": "COULD_BAN={{host}}; Strong credentials invalid: No certification policies valid for the whole certification path",
     "idm_error": "Error with code {{code}} received from {{source}}. First few bytes of the error parameter are: {{bytes}}",
     "idm_reject": "Reject with reason {{code}} received from {{source}}.",
-    "idm_abort": "Abort with reason {{code}} received from {{source}}."
+    "idm_abort": "Abort with reason {{code}} received from {{source}}.",
+    "lcr_attempt": "Attempting to continue list operation {{original_iid}} for association {{aid}} in DSA {{ae}} via operation {{iid}}.",
+    "lcr_null_response": "No response from remote DSA {{ae}} in chained list continuation for invocation {{iid}}.",
+    "lcr_error_response": "Error from from remote DSA {{ae}} in chained list continuation for invocation {{iid}}. The error code and first few bytes of the encoded error are: {{errcode}} {{errbytes}}.",
+    "lcr_undefined_result": "Undefined result in response from remote DSA {{ae}} in chained list continuation for invocation {{iid}}. This is either a bug or malicious behavior.",
+    "lcr_invalid_invoke_id_response": "Invalid invokeID format in response from remote DSA {{ae}} in chained list continuation for invocation {{iid}}. This is either a bug or malicious behavior.",
+    "lcr_mismatch_invoke_id": "InvokeID in response from remote DSA {{ae}} in chained list continuation for invocation {{iid}} did not match the request. This is a bug. Please report it to https://github.com/Wildboar-Software/directory/issues.",
+    "lcr_missing_opcode": "Missing opCode in response from remote DSA {{ae}} in chained list continuation for invocation {{iid}}. This is either a bug or malicious behavior.",
+    "lcr_mismatch_opcode": "OpCode in response from remote DSA {{ae}} in chained list continuation for invocation {{iid}} was not the opCode for list. This is either a bug or malicious behavior."
 }
