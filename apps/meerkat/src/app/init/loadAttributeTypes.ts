@@ -417,6 +417,38 @@ import {
     supportsMKMglobalNames,
 } from "@wildboar/x700/src/lib/modules/RepertoireDirectoryASN1Module/supportsMKMglobalNames.oa";
 
+// Platform Certificate Attribute Types
+import {
+    tCGPlatformSpecification,
+} from "@wildboar/pc/src/lib/modules/PlatformCertificateProfile/tCGPlatformSpecification.oa";
+import {
+    tCGCredentialType,
+} from "@wildboar/pc/src/lib/modules/PlatformCertificateProfile/tCGCredentialType.oa";
+import {
+    platformManufacturerStr,
+} from "@wildboar/pc/src/lib/modules/PlatformCertificateProfile/platformManufacturerStr.oa";
+import {
+    platformModel,
+} from "@wildboar/pc/src/lib/modules/PlatformCertificateProfile/platformModel.oa";
+import {
+    platformVersion,
+} from "@wildboar/pc/src/lib/modules/PlatformCertificateProfile/platformVersion.oa";
+import {
+    platformSerial,
+} from "@wildboar/pc/src/lib/modules/PlatformCertificateProfile/platformSerial.oa";
+import {
+    platformManufacturerId,
+} from "@wildboar/pc/src/lib/modules/PlatformCertificateProfile/platformManufacturerId.oa";
+import {
+    tBBSecurityAssertions,
+} from "@wildboar/pc/src/lib/modules/PlatformCertificateProfile/tBBSecurityAssertions.oa";
+import {
+    platformConfiguration,
+} from "@wildboar/pc/src/lib/modules/PlatformCertificateProfile/platformConfiguration.oa";
+import {
+    platformConfigUri,
+} from "@wildboar/pc/src/lib/modules/PlatformCertificateProfile/platformConfigUri.oa";
+
 /**
  * @summary Initialize Meerkat DSA's internal index of known attribute types.
  * @description
@@ -548,6 +580,16 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         supportedCmisFunctionalUnits,
         supportedSmaseFunctionalUnits,
         supportsMKMglobalNames,
+        tCGPlatformSpecification,
+        tCGCredentialType,
+        platformManufacturerStr,
+        platformModel,
+        platformVersion,
+        platformSerial,
+        platformManufacturerId,
+        tBBSecurityAssertions,
+        platformConfiguration,
+        platformConfigUri,
     })
         .map(([ name, spec ]) => attributeFromInformationObject(spec, name))
         .forEach((attr) => {
