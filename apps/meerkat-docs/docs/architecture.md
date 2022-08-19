@@ -101,3 +101,16 @@ As of the current version of Nx and/or Webpack I am using, optional chaining
 gets _removed_ from the transpiled output if you use ES2020 or higher as your
 build target. I think this should be fixed with an update to the latest version
 of Nx.
+
+## Why does Meerkat DSA come with so much default schema?
+
+1. It is possible, but still somewhat difficult, to implement drivers for
+   attribute types, context types, and matching rules. To make Meerkat DSA as
+   easy as possible to set up and use quickly, we take this burden off of users.
+2. It is desirable for the names of directory schema objects to be globally
+   unique. For this reason, we load almost all existing defined X.500 and LDAP
+   schema objects, so that directory users are warned against the creation of
+   new schema objects that have names that are already taken.
+3. It is better for schema administrators to build off of existing, already
+   standardized and well-documented schema objects, rather than to "re-invent
+   the wheel."
