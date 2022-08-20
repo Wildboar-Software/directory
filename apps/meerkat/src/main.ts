@@ -39,5 +39,6 @@ i18n
         .then(main)
         .catch((e) => {
             console.error(`COULD_NOT_START: ${e}`);
+            console.error(e?.stack ?? "NO STACK");
             process.exit(1);
         });

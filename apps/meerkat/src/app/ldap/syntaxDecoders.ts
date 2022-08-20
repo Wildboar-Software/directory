@@ -9,7 +9,7 @@ import {
     ObjectIdentifier,
     OBJECT_IDENTIFIER,
 } from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
+import { BER, DER } from "asn1-ts/dist/node/functional";
 import lex from "./lexSchema";
 import isDigit from "../utils/isDigit";
 import {
@@ -71,6 +71,18 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
 import { getSubtreeSpecLexer } from "./lexSubtreeSpec";
 import { phone } from "phone";
+import decodeLDAPDN from "./decodeLDAPDN";
+import {
+    _encode_RelativeDistinguishedName,
+} from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
+import {
+    BootParameterSyntax,
+    _encode_BootParameterSyntax,
+} from "@wildboar/parity-schema/src/lib/modules/NIS/BootParameterSyntax.ta";
+import {
+    NISNetgroupTripleSyntax,
+    _encode_NISNetgroupTripleSyntax,
+} from "@wildboar/parity-schema/src/lib/modules/NIS/NISNetgroupTripleSyntax.ta";
 
 function qdstring (escaped: string): string {
     return escaped
@@ -1139,3 +1151,73 @@ const telephoneNumber: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element => {
     el.printableString = phoneResult.phoneNumber;
     return el;
 };
+
+// export
+// const authPasswordSyntax: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element => {
+//     const str = Buffer.from(value).toString("utf-8");
+// };
+
+export
+const bootParameterSyntax: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element => {
+    const str = Buffer.from(value).toString("utf-8");
+    const indexOfNextEq = str.indexOf("=");
+    if (indexOfNextEq < 0) {
+        throw new Error("2aaf79ea-5509-4380-bca1-822821123046");
+    }
+    const indexOfNextColon = str.indexOf(":", indexOfNextEq + 1);
+    if (indexOfNextColon < 0) {
+        throw new Error("fde3b2d4-d3af-4c4e-a0ba-071e25bb1f9e");
+    }
+    const key = str.slice(0, indexOfNextEq);
+    const server = str.slice(indexOfNextEq + 1, indexOfNextColon);
+    const path = str.slice(indexOfNextColon);
+    const bps = new BootParameterSyntax(key, server, path);
+    return _encode_BootParameterSyntax(bps, BER);
+};
+
+export
+const nisNetgroupTripleSyntax: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element => {
+    const str = Buffer.from(value).toString("latin1");
+    const [ hostname, username, domainname ] = str.slice(1, -1).split(",");
+    const nts = new NISNetgroupTripleSyntax(
+        (hostname?.length && (hostname !== "-")) ? hostname : undefined,
+        (username?.length && (username !== "-")) ? username : undefined,
+        (domainname?.length && (domainname !== "-")) ? domainname : undefined,
+    );
+    return _encode_NISNetgroupTripleSyntax(nts, DER);
+};
+
+// export
+// const componentFilter: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element => {
+//     const str = Buffer.from(value).toString("utf-8");
+// };
+
+export
+const null_: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element => {
+    // Theoretically, we could check the syntax, but there's no point other than
+    // unnecessary policing.
+    return new BERElement(
+        ASN1TagClass.universal,
+        ASN1Construction.primitive,
+        ASN1UniversalType.nill,
+        null,
+    );
+};
+
+// export
+// const open: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element => {
+//     const str = Buffer.from(value).toString("utf-8");
+// };
+
+// export
+// const rdn: LDAPSyntaxDecoder = (value: Uint8Array): ASN1Element => {
+//     const str = Buffer.from(value).toString("utf-8");
+// };
+
+export
+function getRDNDecoder (ctx: Context): LDAPSyntaxDecoder {
+    return (value: Uint8Array): ASN1Element => {
+        const dn = decodeLDAPDN(ctx, value);
+        return _encode_RelativeDistinguishedName(dn[0] ?? [], DER);
+    };
+}

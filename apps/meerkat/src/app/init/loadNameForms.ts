@@ -70,6 +70,86 @@ import {
     registeredInformationNameForm,
 } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/registeredInformationNameForm.oa";
 
+// IANA LDAP Parity Name Forms
+import {
+    accountNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/accountNameForm.oa";
+import {
+    documentNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/documentNameForm.oa";
+import {
+    documentSeriesNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/documentSeriesNameForm.oa";
+import {
+    domainNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/domainNameForm.oa";
+import {
+    friendlyCountryNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/friendlyCountryNameForm.oa";
+import {
+    pilotPersonNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/pilotPersonNameForm.oa";
+import {
+    roomNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/Cosine/roomNameForm.oa";
+import {
+    duaConfigProfileNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/DUAConf/duaConfigProfileNameForm.oa";
+import {
+    fedfsFsnNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsFsnNameForm.oa";
+import {
+    fedfsNfsFslNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/FedFSSchema/fedfsNfsFslNameForm.oa";
+import {
+    inetOrgPersonNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/inetOrgPersonNameForm.oa";
+import {
+    groupOfEntriesNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/groupOfEntriesNameForm.oa";
+import {
+    providerNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/RFC6109CertifiedElectronicMail/providerNameForm.oa";
+import {
+    printerServiceNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/RFC7612Printer/printerServiceNameForm.oa";
+import {
+    tableNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/TableFramework/tableNameForm.oa";
+import {
+    textTableEntryNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/TableFramework/textTableEntryNameForm.oa";
+import {
+    uddiAddressNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiAddressNameForm.oa";
+import {
+    uddiBindingTemplateNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiBindingTemplateNameForm.oa";
+import {
+    uddiBusinessEntityNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiBusinessEntityNameForm.oa";
+import {
+    uddiBusinessServiceNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiBusinessServiceNameForm.oa";
+import {
+    uddiContactNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiContactNameForm.oa";
+import {
+    uddiPublisherAssertionNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiPublisherAssertionNameForm.oa";
+import {
+    uddiTModelInstanceInfoNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiTModelInstanceInfoNameForm.oa";
+import {
+    uddiTModelNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiTModelNameForm.oa";
+import {
+    uddiv3EntityObituaryNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiv3EntityObituaryNameForm.oa";
+import {
+    uddiv3SubscriptionNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiv3SubscriptionNameForm.oa";
+
 /**
  * @summary Initialize Meerkat DSA's internal index of known name forms.
  * @description
@@ -109,6 +189,34 @@ async function loadNameForms (ctx: Context): Promise<void> {
 
         // X.700 Name Forms
         registeredInformationNameForm,
+
+        // IANA LDAP Parity Name Forms
+        accountNameForm,
+        documentNameForm,
+        documentSeriesNameForm,
+        domainNameForm,
+        friendlyCountryNameForm,
+        pilotPersonNameForm,
+        roomNameForm,
+        duaConfigProfileNameForm,
+        fedfsFsnNameForm,
+        fedfsNfsFslNameForm,
+        inetOrgPersonNameForm,
+        groupOfEntriesNameForm,
+        providerNameForm,
+        printerServiceNameForm,
+        tableNameForm,
+        textTableEntryNameForm,
+        uddiAddressNameForm,
+        uddiBindingTemplateNameForm,
+        uddiBusinessEntityNameForm,
+        uddiBusinessServiceNameForm,
+        uddiContactNameForm,
+        uddiPublisherAssertionNameForm,
+        uddiTModelInstanceInfoNameForm,
+        uddiTModelNameForm,
+        uddiv3EntityObituaryNameForm,
+        uddiv3SubscriptionNameForm,
     };
     Object.entries(nameFormInfoObjects)
         .map(([ name, io ]) => nameFormFromInformationObject(io, io["&ldapName"] ?? [ name ]))
