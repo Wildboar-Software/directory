@@ -42,7 +42,6 @@ import * as encoders from "@wildboar/ldap/src/lib/syntaxEncoders";
 import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
 import decodeLDAPDN from "../ldap/decodeLDAPDN";
 import encodeLDAPDN from "../ldap/encodeLDAPDN";
-import { uuid } from "@wildboar/ldap/src/lib/syntaxes";
 import {
     DistinguishedName,
     _decode_DistinguishedName,
@@ -51,43 +50,114 @@ import {
 import * as localEncoders from "../ldap/syntaxEncoders";
 import * as localDecoders from "../ldap/syntaxDecoders";
 
+// IANA LDAP Syntaxes
+import {
+    authPasswordSyntax,
+} from "@wildboar/parity-schema/src/lib/modules/AuthPasswordSchema/authPasswordSyntax.oa";
+import {
+    bootParameterSyntax,
+} from "@wildboar/parity-schema/src/lib/modules/NIS/bootParameterSyntax.oa";
+import {
+    nisNetgroupTripleSyntax,
+} from "@wildboar/parity-schema/src/lib/modules/NIS/nisNetgroupTripleSyntax.oa";
+import {
+    componentFilter,
+} from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/componentFilter.oa";
+import {
+    null_,
+} from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/null.oa";
+import {
+    open,
+} from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/open.oa";
+import {
+    rdn,
+} from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/rdn.oa";
+import {
+    uuid,
+} from "@wildboar/parity-schema/src/lib/modules/UUID/uuid.oa";
+
 const ldapSyntaxes = {
-    "attributeTypeDescription": attributeTypeDescription,
-    "bitString": bitString,
+    attributeTypeDescription,
+    bitString,
     "boolean": boolean_,
-    "countryString": countryString,
-    "dn": dn,
-    "deliveryMethod": deliveryMethod,
-    "directoryString": directoryString,
-    "dITContentRuleDescription": dITContentRuleDescription,
-    "dITStructureRuleDescription": dITStructureRuleDescription,
-    "enhancedGuide": enhancedGuide,
-    "facsimileTelephoneNr": facsimileTelephoneNr,
-    "fax": fax,
-    "generalizedTime": generalizedTime,
-    "guide": guide,
-    "ia5String": ia5String,
-    "integer": integer,
-    "jpeg": jpeg,
-    "matchingRuleDescription": matchingRuleDescription,
-    "matchingRuleUseDescription": matchingRuleUseDescription,
-    "nameAndOptionalUID": nameAndOptionalUID,
-    "nameFormDescription": nameFormDescription,
-    "numericString": numericString,
-    "objectClassDescription": objectClassDescription,
-    "oid": oid,
-    "otherMailbox": otherMailbox,
-    "octetString": octetString,
-    "postalAddr": postalAddr,
-    "presentationAddr": presentationAddr,
-    "printableString": printableString,
-    "subtreeSpec": subtreeSpec,
-    "telephoneNr": telephoneNr,
-    "telexNr": telexNr,
-    "utcTime": utcTime,
-    "ldapSyntaxDescription": ldapSyntaxDescription,
-    "substringAssertion": substringAssertion,
+    countryString,
+    dn,
+    deliveryMethod,
+    directoryString,
+    dITContentRuleDescription,
+    dITStructureRuleDescription,
+    enhancedGuide,
+    facsimileTelephoneNr,
+    fax,
+    generalizedTime,
+    guide,
+    ia5String,
+    integer,
+    jpeg,
+    matchingRuleDescription,
+    matchingRuleUseDescription,
+    nameAndOptionalUID,
+    nameFormDescription,
+    numericString,
+    objectClassDescription,
+    oid,
+    otherMailbox,
+    octetString,
+    postalAddr,
+    presentationAddr,
+    printableString,
+    subtreeSpec,
+    telephoneNr,
+    telexNr,
+    utcTime,
+    ldapSyntaxDescription,
+    substringAssertion,
+    authPasswordSyntax,
+    bootParameterSyntax,
+    nisNetgroupTripleSyntax,
+    componentFilter,
+    "null": null_,
+    open,
+    rdn,
 };
+
+const nisNetgroupTripleSyntaxSyntax: string = `NISNetgroupTripleSyntax ::= SEQUENCE {
+    hostname    [0] IA5String OPTIONAL,
+    username    [1] IA5String OPTIONAL,
+    domainname  [2] IA5String OPTIONAL
+}`;
+
+const componentFilterSyntax: string = `ComponentReference  ::=  UTF8String
+
+ComponentAssertion ::= SEQUENCE {
+    component         ComponentReference (SIZE(1..MAX)) OPTIONAL,
+    useDefaultValues  BOOLEAN DEFAULT TRUE,
+    rule              MATCHING-RULE.&id,
+    value             MATCHING-RULE.&AssertionType,
+    ...
+}
+
+ComponentFilter ::= CHOICE {
+    item  [0] ComponentAssertion,
+    and   [1] SEQUENCE OF ComponentFilter,
+    or    [2] SEQUENCE OF ComponentFilter,
+    not   [3] ComponentFilter,
+    ...
+}`;
+
+const bootParameterSyntaxSyntax: string = `BootParameterSyntax ::= SEQUENCE {
+    key     IA5String,
+    server  IA5String,
+    path    IA5String
+}`;
+
+const authPasswordSyntaxSyntax: string = `PlaintextPasswordSyntax ::= OCTET STRING
+
+AuthPasswordSyntax ::= SEQUENCE {
+    algorithmIdentifier  AlgorithmIdentifier{{SupportedAlgorithms}},
+    hashValue            PlaintextPasswordSyntax,
+    ...
+}`;
 
 const ldapSyntaxToASN1Syntax = {
     "1.3.6.1.4.1.1466.115.121.1.3": "AttributeTypeDescription",
@@ -125,6 +195,13 @@ const ldapSyntaxToASN1Syntax = {
     "1.3.6.1.4.1.1466.115.121.1.52": "TelexNumber",
     "1.3.6.1.4.1.1466.115.121.1.53": "UTCTime",
     "1.3.6.1.1.16.1": "UUID",
+    [authPasswordSyntax["&id"].toString()]: authPasswordSyntaxSyntax, // Not supported, because its LDAP syntax is not well-defined.
+    [bootParameterSyntax["&id"].toString()]: bootParameterSyntaxSyntax,
+    [nisNetgroupTripleSyntax["&id"].toString()]: nisNetgroupTripleSyntaxSyntax,
+    [componentFilter["&id"].toString()]: componentFilterSyntax,
+    [null_["&id"].toString()]: "NULL",
+    [open["&id"].toString()]: "TYPE-IDENTIFIER.&Type",
+    [rdn["&id"].toString()]: "RelativeDistinguishedName",
 };
 
 /**
@@ -150,7 +227,7 @@ function loadLDAPSyntaxes (ctx: Context): void {
         });
 
     ctx.ldapSyntaxes.set(uuid.toString(), {
-        id: uuid,
+        id: uuid["&id"],
         description: "UUID",
         decoder: decoders.uuid,
         encoder: encoders.uuid,

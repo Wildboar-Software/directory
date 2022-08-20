@@ -169,7 +169,7 @@ import {
 } from "@wildboar/x500/src/lib/matching/equality/sOAIdentifierMatch";
 import {
     storedPrefixMatch,
-} from "@wildboar/x500/src/lib/matching/equality/storedPrefixMatch";
+} from "@wildboar/x500/src/lib/matching/substring/storedPrefixMatch";
 import {
     supplierAndConsumersMatch,
 } from "@wildboar/x500/src/lib/matching/equality/supplierAndConsumersMatch";
@@ -251,6 +251,9 @@ import {
 import {
     telephoneNumberSubstringsMatch,
 } from "@wildboar/x500/src/lib/matching/substring/telephoneNumberSubstringsMatch";
+import {
+    caseIgnoreListSubstringsMatch,
+} from "@wildboar/x500/src/lib/matching/substring/caseIgnoreListSubstringsMatch";
 import approx_acceptableCertPoliciesMatch from "../matching/approx/acceptableCertPoliciesMatch";
 import approx_algorithmIdentifierMatch from "../matching/approx/algorithmIdentifierMatch";
 import approx_attDescriptor from "../matching/approx/attDescriptor";
@@ -271,9 +274,8 @@ import approx_pwdEncAlgMatch from "../matching/approx/pwdEncAlgMatch";
 import approx_uniqueMemberMatch from "../matching/approx/uniqueMemberMatch";
 import approx_uriMatch from "../matching/approx/uriMatch";
 import approx_uTCTimeMatch from "../matching/approx/uTCTimeMatch";
-import entryUUID from "../schema/attributes/entryUUID";
-import uuidMatch from "../matching/equality/uuidMatch";
-import uuidOrderingMatch from "../matching/ordering/uuidOrderingMatch";
+import { uuidMatch as uuidMatcher } from "../matching/equality/uuidMatch";
+import { uuidOrderingMatch as uuidOrderingMatcher } from "../matching/ordering/uuidOrderingMatch";
 import type { ASN1Element } from "asn1-ts";
 import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
 import {
@@ -561,6 +563,66 @@ import {
     signingTimeMatch as signingTimeMatchMatcher,
 } from "../matching/equality/signingTimeMatch";
 
+// IANA LDAP Parity Matching Rules
+// import {
+//     authPasswordExactMatch,
+// } from "@wildboar/parity-schema/src/lib/modules/AuthPasswordSchema/authPasswordExactMatch.oa";
+// import {
+//     authPasswordMatch,
+// } from "@wildboar/parity-schema/src/lib/modules/AuthPasswordSchema/authPasswordMatch.oa";
+import {
+    caseExactIA5SubstringsMatch,
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/caseExactIA5SubstringsMatch.oa";
+import {
+    directoryStringApproxMatch,
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/directoryStringApproxMatch.oa";
+import {
+    ia5StringApproxMatch,
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/ia5StringApproxMatch.oa";
+import {
+    integerBitAndMatch,
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/integerBitAndMatch.oa";
+import {
+    integerBitOrMatch,
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/integerBitOrMatch.oa";
+// import {
+//     allComponentsMatch,
+// } from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/allComponentsMatch.oa";
+// import {
+//     componentFilterMatch,
+// } from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/componentFilterMatch.oa";
+// import {
+//     directoryComponentsMatch,
+// } from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/directoryComponentsMatch.oa";
+// import {
+//     presentMatch,
+// } from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/presentMatch.oa";
+import {
+    rdnMatch,
+} from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/rdnMatch.oa";
+import {
+    uuidMatch,
+} from "@wildboar/parity-schema/src/lib/modules/UUID/uuidMatch.oa";
+import {
+    uuidOrderingMatch,
+} from "@wildboar/parity-schema/src/lib/modules/UUID/uuidOrderingMatch.oa";
+import {
+    caseExactIA5SubstringsMatch as caseExactIA5SubstringsMatcher,
+} from "../matching/substring/caseExactIA5SubstringsMatch";
+import {
+    matcher as directoryStringApproxMatcher,
+} from "../matching/equality/directoryStringApproxMatch";
+import {
+    matcher as ia5StringApproxMatcher,
+} from "../matching/equality/ia5StringApproxMatch";
+import {
+    matcher as integerBitAndMatcher,
+} from "../matching/equality/integerBitAndMatch";
+import {
+    matcher as integerBitOrMatcher,
+} from "../matching/equality/integerBitOrMatch";
+import { getRDNMatcher } from "../matching/equality/rdnMatch";
+
 const caseIgnoreSortKeyGetter: SortKeyGetter = (element: ASN1Element): SortKey | null => {
     const ds = _decode_UnboundedDirectoryString(element);
     const str = directoryStringToString(ds).toUpperCase();
@@ -609,7 +671,7 @@ function loadMatchingRules (ctx: Context): void {
         [ x500mr.acceptableCertPoliciesMatch, acceptableCertPoliciesMatch ],
         [ x500mr.accessPointMatch, accessPointMatch ],
         [ x500mr.algorithmIdentifierMatch, algorithmIdentifierMatch ],
-        // [ x500mr.approximateStringMatch, approximateStringMatch ],
+        // [ x500mr.approximateStringMatch, approximateStringMatch ], // Supported by @wildboar/x500#evaluateFilter().
         [ x500mr.attDescriptor, attDescriptor ],
         [ x500mr.attributeCertificateExactMatch, attributeCertificateExactMatch ],
         [ x500mr.attributeCertificateMatch, attributeCertificateMatch ],
@@ -637,17 +699,17 @@ function loadMatchingRules (ctx: Context): void {
         [ x500mr.enhancedCertificateMatch, enhancedCertificateMatch ],
         [ x500mr.extensionPresenceMatch, extensionPresenceMatch ],
         [ x500mr.facsimileNumberMatch, facsimileNumberMatch ],
-        // [ x500mr.generalWordMatch, generalWordMatch ],
+        // TODO: [ x500mr.generalWordMatch, generalWordMatch ],
         [ x500mr.generalizedTimeMatch, generalizedTimeMatch ],
         [ x500mr.holderIssuerMatch, holderIssuerMatch ],
-        // [ x500mr.ignoreIfAbsentMatch, ignoreIfAbsentMatch ],
+        // [ x500mr.ignoreIfAbsentMatch, ignoreIfAbsentMatch ], // Not directly usable.
         [ x500mr.intEmailMatch, intEmailMatch ],
         [ x500mr.integerFirstComponentMatch, integerFirstComponentMatch ],
         [ x500mr.integerMatch, integerMatch ],
         [ x500mr.jidMatch, jidMatch ],
         [ x500mr.keywordMatch, keywordMatch ],
         [ x500mr.masterAndShadowAccessPointsMatch, masterAndShadowAccessPointsMatch ],
-        // [ x500mr.nullMatch, nullMatch ],
+        // [ x500mr.nullMatch, nullMatch ], // Supported by @wildboar/x500#evaluateFilter().
         [ x500mr.numericStringMatch, numericStringMatch ],
         [ x500mr.objectIdentifierFirstComponentMatch, objectIdentifierFirstComponentMatch ],
         [ x500mr.objectIdentifierMatch, objectIdentifierMatch ],
@@ -659,18 +721,17 @@ function loadMatchingRules (ctx: Context): void {
         [ x500mr.pwdEncAlgMatch, pwdEncAlgMatch ],
         [ x500mr.roleSpecCertIdMatch, roleSpecCertIdMatch ],
         [ x500mr.sOAIdentifierMatch, sOAIdentifierMatch ],
-        [ x500mr.storedPrefixMatch, storedPrefixMatch ],
         [ x500mr.supplierAndConsumersMatch, supplierAndConsumersMatch ],
         [ x500mr.supplierOrConsumerInformationMatch, supplierOrConsumerInformationMatch ],
-        // [ x500mr.systemProposedMatch, systemProposedMatch ],
+        // TODO: [ x500mr.systemProposedMatch, systemProposedMatch ],
         [ x500mr.telephoneNumberMatch, telephoneNumberMatch ],
         [ x500mr.timeSpecificationMatch, timeSpecificationMatch ],
         [ x500mr.uTCTimeMatch, uTCTimeMatch ],
         [ x500mr.uUIDPairMatch, uUIDPairMatch ],
         [ x500mr.uniqueMemberMatch, uniqueMemberMatch ],
         [ x500mr.uriMatch, uriMatch ],
-        // [ x500mr.userPwdHistoryMatch, userPwdHistoryMatch ],
-        // [ x500mr.userPwdMatch, userPwdMatch ],
+        // TODO: [ x500mr.userPwdHistoryMatch, userPwdHistoryMatch ],
+        // TODO: [ x500mr.userPwdMatch, userPwdMatch ],
         [ x500mr.wordMatch, wordMatch ],
         // [ x500mr.zonalMatch, zonalMatch ],
         [ addressCapabilitiesMatch, addressCapabilitiesMatchMatcher ],
@@ -717,6 +778,12 @@ function loadMatchingRules (ctx: Context): void {
         [ informationCategoryMatch, informationCategoryMatchMatcher ],
         [ pkcs9CaseIgnoreMatch, pkcs9CaseIgnoreMatchMatcher ],
         [ signingTimeMatch, signingTimeMatchMatcher ],
+        [ directoryStringApproxMatch, directoryStringApproxMatcher ],
+        [ ia5StringApproxMatch, ia5StringApproxMatcher ],
+        [ integerBitAndMatch, integerBitAndMatcher ],
+        [ integerBitOrMatch, integerBitOrMatcher ],
+        [ rdnMatch, getRDNMatcher(ctx) ],
+        [ uuidMatch, uuidMatcher ],
     ];
     const orderingInfo: [ MATCHING_RULE, OrderingMatcher ][] = [
         [ x500mr.caseExactOrderingMatch, caseExactOrderingMatch ],
@@ -727,16 +794,19 @@ function loadMatchingRules (ctx: Context): void {
         [ x500mr.octetStringOrderingMatch, octetStringOrderingMatch ],
         [ x500mr.uTCTimeOrderingMatch, uTCTimeOrderingMatch ],
         [ mSStringOrderingMatch, mSStringOrderingMatchMatcher ],
+        [ uuidOrderingMatch, uuidOrderingMatcher ],
     ];
     const substringsInfo: [ MATCHING_RULE, SubstringsMatcher ][] = [
         [ x500mr.caseExactSubstringsMatch, caseExactSubstringsMatch ],
         [ x500mr.caseIgnoreIA5SubstringsMatch, caseIgnoreIA5SubstringsMatch ],
-        // [ x500mr.caseIgnoreListSubstringsMatch, caseIgnoreListSubstringsMatch ],
+        [ x500mr.caseIgnoreListSubstringsMatch, caseIgnoreListSubstringsMatch ],
         [ x500mr.caseIgnoreSubstringsMatch, caseIgnoreSubstringsMatch ],
         [ x500mr.numericStringSubstringsMatch, numericStringSubstringsMatch ],
         [ x500mr.octetStringSubstringsMatch, octetStringSubstringsMatch ],
         [ x500mr.telephoneNumberSubstringsMatch, telephoneNumberSubstringsMatch ],
+        [ x500mr.storedPrefixMatch, storedPrefixMatch ],
         [ mSSingleSubstringMatch, mSSingleSubstringMatchMatcher ],
+        [ caseExactIA5SubstringsMatch, caseExactIA5SubstringsMatcher ],
     ];
 
     equalityInfo
@@ -854,24 +924,6 @@ function loadMatchingRules (ctx: Context): void {
     ctx.approxMatchingRules.set(
         x500mr.uTCTimeMatch["&id"]!.toString(),
         approx_uTCTimeMatch(86_400_000),
-    );
-    ctx.equalityMatchingRules.set(
-        entryUUID.equalityMatchingRule!.toString(),
-        {
-            id: entryUUID.equalityMatchingRule!,
-            matcher: uuidMatch,
-            obsolete: false,
-            name: ["uuidMatch"],
-        },
-    );
-    ctx.orderingMatchingRules.set(
-        entryUUID.orderingMatchingRule!.toString(),
-        {
-            id: entryUUID.orderingMatchingRule!,
-            matcher: uuidOrderingMatch,
-            obsolete: false,
-            name: ["uuidOrderingMatch"],
-        },
     );
 
     ctx.orderingMatchingRules.get(x500mr.caseExactOrderingMatch["&id"]!.toString())!.sortKeyGetter = caseExactSortKeyGetter;
