@@ -971,7 +971,7 @@ import {
 import {
     authPassword,
 } from "@wildboar/parity-schema/src/lib/modules/AuthPasswordSchema/authPassword.oa";
-import {
+import { // TODO: Driver
     supportedAuthPasswordSchemes,
 } from "@wildboar/parity-schema/src/lib/modules/AuthPasswordSchema/supportedAuthPasswordSchemes.oa";
 import {
@@ -1886,19 +1886,19 @@ import {
 import {
     isMemberOf,
 } from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/isMemberOf.oa";
-import {
+import { // TODO: Driver
     configContext,
 } from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/configContext.oa";
 import {
     monitorContext,
 } from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/monitorContext.oa";
-import {
+import { // TODO: Driver
     superiorUUID,
 } from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/superiorUUID.oa";
 import {
     syncreplCookie,
 } from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/syncreplCookie.oa";
-import {
+import { // TODO: Driver
     syncTimestamp,
 } from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/syncTimestamp.oa";
 import {
@@ -2432,13 +2432,13 @@ import {
 import {
     template_url_syntax,
 } from "@wildboar/parity-schema/src/lib/modules/RFC2926ServiceLocationProtocolSchema/template-url-syntax.oa";
-import {
+import { // TODO: Driver
     vendorName,
 } from "@wildboar/parity-schema/src/lib/modules/RFC3045VendorInfo/vendorName.oa";
-import {
+import { // TODO: Driver
     vendorVersion,
 } from "@wildboar/parity-schema/src/lib/modules/RFC3045VendorInfo/vendorVersion.oa";
-import {
+import { // TODO: Driver
     entryDN,
 } from "@wildboar/parity-schema/src/lib/modules/RFC5020EntryDN/entryDN.oa";
 import {
@@ -3002,6 +3002,56 @@ import {
 import {
     vPIMTextName,
 } from "@wildboar/parity-schema/src/lib/modules/VPIMSchema/vPIMTextName.oa";
+
+// CMS Attribute Types
+import {
+    aa_contentLocation,
+} from "@wildboar/cms/src/lib/modules/CMSProfileAttributes/aa-contentLocation.oa";
+import {
+    aa_contentLocations,
+} from "@wildboar/cms/src/lib/modules/CMSProfileAttributes/aa-contentLocations.oa";
+import {
+    aa_parentBlock,
+} from "@wildboar/cms/src/lib/modules/CMSProfileAttributes/aa-parentBlock.oa";
+import {
+    aa_precedingBlock,
+} from "@wildboar/cms/src/lib/modules/CMSProfileAttributes/aa-precedingBlock.oa";
+import {
+    aa_sidechains,
+} from "@wildboar/cms/src/lib/modules/CMSProfileAttributes/aa-sidechains.oa";
+import {
+    aa_signerInfo,
+} from "@wildboar/cms/src/lib/modules/CMSProfileAttributes/aa-signerInfo.oa";
+import {
+    aa_signerInfos,
+} from "@wildboar/cms/src/lib/modules/CMSProfileAttributes/aa-signerInfos.oa";
+import {
+    aa_timeStamped,
+} from "@wildboar/cms/src/lib/modules/CMSProfileAttributes/aa-timeStamped.oa";
+import {
+    signcryptedEnvelope,
+} from "@wildboar/cms/src/lib/modules/CMSSigncryption/signcryptedEnvelope.oa";
+// import {
+//     aa_contentType,
+// } from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/aa-contentType.oa";
+import {
+    aa_countersignature,
+} from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/aa-countersignature.oa";
+// import {
+//     aa_messageDigest,
+// } from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/aa-messageDigest.oa";
+// import {
+//     aa_signingTime,
+// } from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/aa-signingTime.oa";
+import {
+    aa_encrypKeyPref,
+} from "@wildboar/cms/src/lib/modules/SecureMimeMessageV3dot1-2009/aa-encrypKeyPref.oa";
+// import {
+//     aa_smimeCapabilities,
+// } from "@wildboar/cms/src/lib/modules/SecureMimeMessageV3dot1-2009/aa-smimeCapabilities.oa";
+import {
+    tokenizedParts,
+} from "@wildboar/cms/src/lib/modules/TokenizationManifest/tokenizedParts.oa";
 
 /**
  * @summary Initialize Meerkat DSA's internal index of known attribute types.
@@ -4001,6 +4051,24 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         vPIMSupportedUABehaviors,
         vPIMTelephoneNumber,
         vPIMTextName,
+
+        // CMS Attribute Types
+        "contentLocation": aa_contentLocation,
+        "contentLocations": aa_contentLocations,
+        "parentBlock": aa_parentBlock,
+        "precedingBlock": aa_precedingBlock,
+        "sidechains": aa_sidechains,
+        "signerInfo": aa_signerInfo,
+        "signerInfos": aa_signerInfos,
+        "timeStamped": aa_timeStamped,
+        signcryptedEnvelope,
+        // "contentType": aa_contentType,
+        "countersignature": aa_countersignature,
+        // "messageDigest": aa_messageDigest,
+        // "signingTime": aa_signingTime,
+        "encrypKeyPref": aa_encrypKeyPref,
+        // "smimeCapabilities": aa_smimeCapabilities,
+        tokenizedParts,
     })
         .map(([ name, spec ]) => attributeFromInformationObject(spec, name))
         .forEach((attr) => {
