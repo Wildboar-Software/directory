@@ -509,7 +509,6 @@ async function list_i (
             );
         }
     }
-    const SRcontinuationList: ContinuationReference[] = [];
     const sizeLimit: number = pagingRequest
         ? MAX_RESULTS
         : Number(data.serviceControls?.sizeLimit ?? MAX_RESULTS);
@@ -674,7 +673,7 @@ async function list_i (
                 continue;
             }
             if (subordinate.dse.subr) {
-                SRcontinuationList.push(new ContinuationReference(
+                state.SRcontinuationList.push(new ContinuationReference(
                     /**
                      * The specification says to return the DN of the TARGET, not
                      * the subordinate... This does not quite make sense to me. I
@@ -747,7 +746,7 @@ async function list_i (
     }
 
     if (target.dse.nssr) {
-        SRcontinuationList.push(new ContinuationReference(
+        state.SRcontinuationList.push(new ContinuationReference(
             {
                 rdnSequence: targetDN,
             },

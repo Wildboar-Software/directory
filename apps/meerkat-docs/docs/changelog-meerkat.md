@@ -1,5 +1,51 @@
 # Changelog for Meerkat DSA
 
+## Version 1.2.0
+
+- The List Continuation Reference (LCR) procedure is now supported.
+- Fixed a bug where continuation references produced during the `list` operation
+  where not added to the partial outcome qualifier in the result.
+- Almost all LDAP schema objects
+  [published with IANA](https://www.iana.org/assignments/ldap-parameters/ldap-parameters.xhtml)
+  and almost all X.500 schema objects defined in any ITU recommendation
+  are built-in to Meerkat DSA now.
+  - "Schema objects" refers to attribute types, context types, matching rules,
+    LDAP syntaxes, object classes, and name forms.
+  - These schema objects include those to support:
+    - Samba Servers / Active Directory Domain Controllers
+    - PGP Key Servers
+    - SSH Authentication
+    - PAM Authentication
+    - DNS Servers
+    - Java
+    - Sabayon Servers
+    - Kerberos Servers
+    - Email Servers
+    - FTP Servers
+    - RADIUS Servers
+    - Remote Calendars
+    - Printer Discovery
+    - Sudo Configuration
+    - LDAP Tables
+    - Voicemail
+    - X.400 Messaging
+    - X.952 Open Distributed Processing
+    - DHCP Server Configuration
+    - DUA Configuration
+    - Dynamic Groups
+    - Federated Filesystem
+    - H.323 Multimedia
+    - Intelligent Networks
+    - And more!
+  - Many new operational attributes are supported, such as:
+    - `vendorName`
+    - `vendorVersion`
+    - `administratorsAddress`
+    - `entryDN`
+    - `superiorUUID`
+  - Wildboar Software defined name forms for most structural object classes that
+    were added to this release, to lessen the burden of setup.
+
 ## Version 1.1.0
 
 - Distributed operation is now secure.
