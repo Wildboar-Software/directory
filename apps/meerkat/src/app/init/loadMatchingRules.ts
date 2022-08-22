@@ -419,6 +419,9 @@ import {
     informationCategoryMatch,
 } from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/informationCategoryMatch.oa";
 import {
+    policySpecificationMatch,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/policySpecificationMatch.oa";
+import {
     addressCapabilitiesMatch as addressCapabilitiesMatchMatcher,
 } from "../matching/equality/addressCapabilitiesMatch";
 import {
@@ -622,6 +625,9 @@ import {
     matcher as integerBitOrMatcher,
 } from "../matching/equality/integerBitOrMatch";
 import { getRDNMatcher } from "../matching/equality/rdnMatch";
+import {
+    getPolicySpecificationMatcher,
+} from "../matching/equality/policySpecificationMatch";
 
 const caseIgnoreSortKeyGetter: SortKeyGetter = (element: ASN1Element): SortKey | null => {
     const ds = _decode_UnboundedDirectoryString(element);
@@ -784,6 +790,10 @@ function loadMatchingRules (ctx: Context): void {
         [ integerBitOrMatch, integerBitOrMatcher ],
         [ rdnMatch, getRDNMatcher(ctx) ],
         [ uuidMatch, uuidMatcher ],
+        [ policySpecificationMatch, getPolicySpecificationMatcher(ctx) ],
+        // dynamicPropValueMatch will not be implemented, because it is too
+        // vague, and it is not defined as the equality matching rule for any
+        // attribute type.
     ];
     const orderingInfo: [ MATCHING_RULE, OrderingMatcher ][] = [
         [ x500mr.caseExactOrderingMatch, caseExactOrderingMatch ],

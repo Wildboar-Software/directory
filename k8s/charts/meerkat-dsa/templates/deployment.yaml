@@ -108,6 +108,12 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: administrator_email
                   optional: true
+            - name: MEERKAT_ADMINISTRATOR_EMAIL_PUBLIC
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: administrator_email_public
+                  optional: true
             - name: MEERKAT_BIND_MIN_SLEEP_MS
               valueFrom:
                 configMapKeyRef:
@@ -935,6 +941,18 @@ spec:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: use_database_when_there_are_x_subordinates
+                  optional: true
+            - name: MEERKAT_VENDOR_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: vendor_name
+                  optional: true
+            - name: MEERKAT_VENDOR_VERSION
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: vendor_version
                   optional: true
             - name: MEERKAT_WEB_ADMIN_AUTH_USERNAME
               valueFrom:

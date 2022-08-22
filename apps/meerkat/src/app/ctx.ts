@@ -545,6 +545,12 @@ const bindOverrides: SigningInfo["bindOverrides"] = {
 };
 
 const config: Configuration = {
+    vendorName: process.env.MEERKAT_VENDOR_NAME?.length
+        ? process.env.MEERKAT_VENDOR_NAME
+        : undefined,
+    vendorVersion: process.env.MEERKAT_VENDOR_VERSION?.length
+        ? process.env.MEERKAT_VENDOR_VERSION
+        : undefined,
     authn: {
         lookupPkiPathForUncertifiedStrongAuth: (process.env.MEERKAT_LOOKUP_UNCERT_STRONG_AUTH === "1"),
         attributeCertificationPath,
@@ -894,6 +900,7 @@ const config: Configuration = {
     },
     sentinelDomain: process.env.MEERKAT_SENTINEL_DOMAIN,
     administratorEmail: process.env.MEERKAT_ADMINISTRATOR_EMAIL,
+    administratorEmailPublic: (process.env.MEERKAT_ADMINISTRATOR_EMAIL_PUBLIC === "1"),
     bulkInsertMode,
     bindMinSleepInMilliseconds: Number.parseInt(process.env.MEERKAT_BIND_MIN_SLEEP_MS ?? "") || 1000,
     bindSleepRangeInMilliseconds: Number.parseInt(process.env.MEERKAT_BIND_SLEEP_RANGE_MS ?? "") || 1000,

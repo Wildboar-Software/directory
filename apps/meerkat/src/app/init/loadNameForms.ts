@@ -150,6 +150,46 @@ import {
     uddiv3SubscriptionNameForm,
 } from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiv3SubscriptionNameForm.oa";
 
+import {
+    traderPolicyEntryNF,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/traderPolicyEntryNF.oa";
+import {
+    serviceOfferEntryNF,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/serviceOfferEntryNF.oa";
+import {
+    traderLinkEntryNF,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/traderLinkEntryNF.oa";
+import {
+    proxyOfferEntryNF,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/proxyOfferEntryNF.oa";
+import {
+    uptProviderNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/uptProviderNameForm.oa";
+import {
+    partnerNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/partnerNameForm.oa";
+import {
+    adminUnitNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/adminUnitNameForm.oa";
+import {
+    agreedServiceNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/agreedServiceNameForm.oa";
+import {
+    userProfileNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/userProfileNameForm.oa";
+import {
+    userProfileAliasNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/userProfileAliasNameForm.oa";
+import {
+    calledUptUserNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/calledUptUserNameForm.oa";
+import {
+    callingUptUserNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/callingUptUserNameForm.oa";
+import {
+    callForwardingNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/callForwardingNameForm.oa";
+
 /**
  * @summary Initialize Meerkat DSA's internal index of known name forms.
  * @description
@@ -217,6 +257,21 @@ async function loadNameForms (ctx: Context): Promise<void> {
         uddiTModelNameForm,
         uddiv3EntityObituaryNameForm,
         uddiv3SubscriptionNameForm,
+
+        // X.952 and UPT Name Forms
+        traderPolicyEntryNF,
+        serviceOfferEntryNF,
+        traderLinkEntryNF,
+        proxyOfferEntryNF,
+        uptProviderNameForm,
+        partnerNameForm,
+        adminUnitNameForm,
+        agreedServiceNameForm,
+        userProfileNameForm,
+        userProfileAliasNameForm,
+        calledUptUserNameForm,
+        callingUptUserNameForm,
+        callForwardingNameForm,
     };
     Object.entries(nameFormInfoObjects)
         .map(([ name, io ]) => nameFormFromInformationObject(io, io["&ldapName"] ?? [ name ]))

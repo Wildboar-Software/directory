@@ -210,7 +210,7 @@ class BiometricHeaderTemplate {
      * @static
      * @method
      */
-    public static get _default_value_for_patronHeaderVersion () { return new Uint8Array([ 0x, 0x, 0x ]); }
+    public static get _default_value_for_patronHeaderVersion () { return new Uint8Array([ 0x01, 0x01 ]); }
 }
 /* END_OF_SYMBOL_DEFINITION BiometricHeaderTemplate */
 

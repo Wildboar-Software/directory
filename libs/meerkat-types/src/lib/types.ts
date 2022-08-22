@@ -1529,6 +1529,27 @@ interface AuthenticationConfiguration extends PrivilegeManagementInfrastructureC
 export
 interface Configuration {
 
+    /**
+     * Overrides the name of the vendor of this DSA, which is displayed in the
+     * root DSE. It can be useful for security purposes to obscure the type of
+     * DSA that is in use; this can be done by setting this variable to an
+     * empty string. If this is unset, the `vendorName` attribute will read
+     * "Wildboar Software" regardless of the server's locale or language
+     * settings.
+     */
+    vendorName?: string;
+
+    /**
+     * Overrides the reported version of this DSA, which is displayed in the
+     * root DSE. It can be useful for security purposes to obscure the version
+     * of DSA that is in use; this can be done by setting this variable to an
+     * empty string. If this is unset, the `vendorVersion` attribute will read
+     * "Meerkat DSA, Version X.X.X" regardless of the server's locale or
+     * language settings, where "X.X.X" is replaced with your DSA's actual
+     * version number.
+     */
+    vendorVersion?: string;
+
     authn: AuthenticationConfiguration;
 
     log: {
@@ -1841,6 +1862,13 @@ interface Configuration {
      * a severe security vulnerability is discovered. It is a "remote killswitch."
      */
     sentinelDomain?: string;
+
+    /**
+     * If `true`, the `administratorEmail` will be exposed as an attribute value
+     * of `administratorsAddress` in the Root DSE. See
+     * [this draft IETF RFC](https://datatracker.ietf.org/doc/html/draft-wahl-ldap-adminaddr-05).
+     */
+    administratorEmailPublic: boolean;
 
     /**
      * Currently unused.

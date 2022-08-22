@@ -8,6 +8,7 @@ data:
   {{- if .Values.administrator_email }}
   administrator_email: {{ .Values.administrator_email }}
   {{- end }}
+  administrator_email_public: {{ .Values.administrator_email_public | ternary 1 0 | quote }}
   bind_min_sleep_ms: {{ .Values.bind_min_sleep_ms | default 1000 | quote }}
   bind_sleep_range_ms: {{ .Values.bind_sleep_range_ms | default 3000 | quote }}
   bulk_insert_mode: {{ .Values.bulk_insert_mode | ternary 1 0 | quote }}
@@ -227,6 +228,12 @@ data:
   transcode_values_to_der: {{ .Values.transcode_values_to_der | ternary 1 0 | quote }}
   # trust_anchors_file: use signingTrustAnchorListConfigName
   use_database_when_there_are_x_subordinates: {{ .Values.use_database_when_there_are_x_subordinates | default "1000" | quote }}
+  {{- if .Values.vendor_name }}
+  vendor_name: {{ .Values.vendor_name | quote }}
+  {{- end }}
+  {{- if .Values.vendor_version }}
+  vendor_version: {{ .Values.vendor_version | quote }}
+  {{- end }}
   {{- if .Values.web_admin_auth_username }}
   web_admin_auth_username: {{ .Values.web_admin_auth_username | quote }}
   {{- end }}

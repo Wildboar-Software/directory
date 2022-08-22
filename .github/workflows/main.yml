@@ -716,6 +716,9 @@ jobs:
             --set web_admin_use_tls=false \
             --set enable_dop=true \
             --set enable_dsp=true \
+            --set administrator_email=jonathan@wilbur.space \
+            --set administrator_email_public=1 \
+            --set vendor_version='1.3.0' \
             --atomic \
             --namespace=${{ env.NAMESPACE }}
       - name: Wait 30 Seconds for Public IP to be Allocated
