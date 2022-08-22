@@ -94,6 +94,18 @@ This will help Meerkat network administrators reach out to you to offer support,
 inform you of security vulnerabilities or active attacks, or contact you for
 other Meerkat DSA-related things.
 
+## MEERKAT_ADMINISTRATOR_EMAIL_PUBLIC
+
+If set to `1`, the administrator email configured by 
+[`MEERKAT_ADMINISTRATOR_EMAIL`](#meerkatadministratoremail) will be exposed in
+the root DSE as a value of the `administratorsAddress` attribute.
+
+This can be handy for allowing people and organizations to reach out to you or
+your organization regarding your DSA, such as for GDPR data deletion requests,
+DMCA takedown notices, or to inform you of security vulnerabilities. On the
+other hand, exposing your email address could expose you to phishing, spam, or
+other security issues attendant to an exposed email address.
+
 ## MEERKAT_ATTR_CERT_CHAIN_FILE
 
 The filepath of the chain of attribute certificates and
@@ -1637,6 +1649,83 @@ This file is NOT used for verifying TLS peers.
 Even if subordinates are cached in memory, Meerkat DSA will directly query the
 database to find a specific subordinate instead of iterating through the
 in-memory entries when there are more than this many subordinates in memory.
+
+## MEERKAT_VENDOR_NAME
+
+Overrides the name of the vendor of this DSA, which is displayed in the root DSE
+as the `vendorName` attribute. If this is unset, the `vendorName` attribute will
+read "Wildboar Software" regardless of the server's locale or language settings.
+
+:::caution
+
+Revealing that you are using a Meerkat DSA instance may make it easier for
+malicious users to profile your DSA in cyberattack attempts. For instance, if it
+is known that there is a new security vulnerability in Meerkat DSA, malicious
+users may search for DSAs whose `vendorName` attribute indicates that the DSA
+is made by Wildboar Software. To disable the `vendorName` from displaying that
+this DSA is made by Wildboar Software, set the `MEERKAT_VENDOR_NAME` environment
+variable to an empty string (`""`).
+
+:::
+
+The benefit of not disabling this is that, if there are bugs in how Meerkat DSA
+(or a given version of it) is implemented, clients can use this version
+information for possible workarounds. Minor discrepancies in implementation can
+be handled by clients when the vendor name and version can be discovered.
+
+:::info
+
+Setting the `MEERKAT_VENDOR_NAME` to an empty string will also disable the
+display of the vendor version, since it is assumed that desire for secrecy of
+the vendor version implies a desire for secrecy of the vendor version as well.
+The reverse is _not_ true; it may be acceptable to disclose the vendor name, but
+not the specific version number.
+
+Even still, administrators _SHOULD_ set `MEERKAT_VENDOR_VERSION` to an empty
+string if version privacy is desired, since this behavior may change in the
+future.
+
+:::
+
+## MEERKAT_VENDOR_VERSION
+
+Overrides the reported version of this DSA, which is displayed in the root DSE
+as the `vendorVersion` attribute. If this is unset, the `vendorVersion`
+attribute will read "Meerkat DSA, Version X.X.X", where "X.X.X" is the version
+number, regardless of the server's locale or language settings. Everything said
+in this section is also true for the similar `fullVendorVersion` attribute used
+by OpenDJ.
+
+:::caution
+
+Revealing that you are using a specific version of Meerkat DSA instance may make it easier for
+malicious users to profile your DSA in cyberattack attempts. For instance, if it
+is known that there is a new security vulnerability in Meerkat DSA, malicious
+users may search for DSAs whose `vendorVersion` attribute indicates that the DSA
+is still susceptible to the security vulnerability. To disable the `vendorName`
+from displaying the version, set the `MEERKAT_VENDOR_VERSION` environment variable
+to an empty string (`""`).
+
+:::
+
+The benefit of not disabling this is that, if there are bugs in how Meerkat DSA
+(or a given version of it) is implemented, clients can use this version
+information for possible workarounds. Minor discrepancies in implementation can
+be handled by clients when the vendor name and version can be discovered.
+
+:::info
+
+Setting the `MEERKAT_VENDOR_NAME` to an empty string will also disable the
+display of the vendor version, since it is assumed that desire for secrecy of
+the vendor version implies a desire for secrecy of the vendor version as well.
+The reverse is _not_ true; it may be acceptable to disclose the vendor name, but
+not the specific version number.
+
+Even still, administrators _SHOULD_ set `MEERKAT_VENDOR_VERSION` to an empty
+string if version privacy is desired, since this behavior may change in the
+future.
+
+:::
 
 ## MEERKAT_WEB_ADMIN_AUTH_USERNAME
 

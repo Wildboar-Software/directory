@@ -414,9 +414,9 @@ import {
 import {
     dhcpSubnet,
 } from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpSubnet.oa";
-import {
-    glue as ds389Glue,
-} from "@wildboar/parity-schema/src/lib/modules/DS389CommonSchema/glue.oa";
+// import {
+//     glue as ds389Glue,
+// } from "@wildboar/parity-schema/src/lib/modules/DS389CommonSchema/glue.oa";
 import {
     changeLogEntry,
 } from "@wildboar/parity-schema/src/lib/modules/DSEE/changeLogEntry.oa";
@@ -558,9 +558,9 @@ import {
 import {
     untypedObject,
 } from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/untypedObject.oa";
-import {
-    glue as openldapGlue,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/glue.oa";
+// import {
+//     glue as openldapGlue,
+// } from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/glue.oa";
 import {
     openLDAPdisplayableObject,
 } from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/openLDAPdisplayableObject.oa";
@@ -759,6 +759,84 @@ import {
 import {
     vPIMUser,
 } from "@wildboar/parity-schema/src/lib/modules/VPIMSchema/vPIMUser.oa";
+import {
+    traderEntry,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/traderEntry.oa";
+import {
+    traderPolicyEntry,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/traderPolicyEntry.oa";
+import {
+    serviceOfferEntry,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/serviceOfferEntry.oa";
+import {
+    traderLinkEntry,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/traderLinkEntry.oa";
+import {
+    proxyOfferEntry,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/proxyOfferEntry.oa";
+import {
+    interfaceEntry,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/interfaceEntry.oa";
+import {
+    securityUserInfo,
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/securityUserInfo.oa";
+import {
+    tokensStock,
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/tokensStock.oa";
+import {
+    uptProvider,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/uptProvider.oa";
+import {
+    partner,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/partner.oa";
+import {
+    agreedService,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/agreedService.oa";
+import {
+    administrativeUnit,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/administrativeUnit.oa";
+import {
+    userProfile,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/userProfile.oa";
+import {
+    userProfileAlias,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/userProfileAlias.oa";
+import {
+    calledUptUser,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/calledUptUser.oa";
+import {
+    callingUptUser,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/callingUptUser.oa";
+import {
+    supplementaryService,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/supplementaryService.oa";
+import {
+    callForwarding,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/callForwarding.oa";
+import {
+    commObject,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/commObject.oa";
+import {
+    commURIObject,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/commURIObject.oa";
+import {
+    h323Identity,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h323Identity.oa";
+import {
+    h235Identity,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h235Identity.oa";
+import {
+    h320Identity,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h320Identity.oa";
+import {
+    sIPIdentity,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/sIPIdentity.oa";
+import {
+    genericIdentity,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/genericIdentity.oa";
+import {
+    callPreferenceURIObject,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/callPreferenceURIObject.oa";
 
 function prismaOCK2OCK (ock: PrismaObjectClassKind): ObjectClassKind {
     switch (ock) {
@@ -917,8 +995,8 @@ async function loadObjectClasses (ctx: Context): Promise<void> {
         dhcpSharedNetwork,
         dhcpSubClass,
         dhcpSubnet,
-        ds389Glue,
-        openldapGlue,
+        // ds389Glue,
+        // openldapGlue,
         changeLogEntry,
         duaConfigProfile,
         groupOfURLs,
@@ -1032,6 +1110,34 @@ async function loadObjectClasses (ctx: Context): Promise<void> {
         uddiv3EntityObituary,
         uddiv3Subscription,
         vPIMUser,
+
+        // X.952, X.1089, H.323, UPT, and intelligent networks object classes
+        traderEntry,
+        traderPolicyEntry,
+        serviceOfferEntry,
+        traderLinkEntry,
+        proxyOfferEntry,
+        interfaceEntry,
+        securityUserInfo,
+        tokensStock,
+        uptProvider,
+        partner,
+        agreedService,
+        administrativeUnit,
+        userProfile,
+        userProfileAlias,
+        calledUptUser,
+        callingUptUser,
+        supplementaryService,
+        callForwarding,
+        commObject,
+        commURIObject,
+        h323Identity,
+        h235Identity,
+        h320Identity,
+        sIPIdentity,
+        genericIdentity,
+        callPreferenceURIObject,
     ];
     objectClassInfoObjects
         .map(objectClassFromInformationObject)

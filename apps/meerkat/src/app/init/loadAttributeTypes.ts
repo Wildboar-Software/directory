@@ -16,6 +16,7 @@ import { ObjectIdentifier } from "asn1-ts";
 import accessControlSchemeDriver from "../database/drivers/accessControlScheme";
 import accessControlSubentryListDriver from "../database/drivers/accessControlSubentryList";
 import administrativeRoleDriver from "../database/drivers/administrativeRole";
+import administratorsAddressDriver from "../database/drivers/administratorsAddress";
 import aliasedEntryNameDriver from "../database/drivers/aliasedEntryName";
 import altServerDriver from "../database/drivers/altServer";
 import attributeTypesDriver from "../database/drivers/attributeTypes";
@@ -33,8 +34,10 @@ import dITContextUseDriver from "../database/drivers/dITContextUse";
 import dITStructureRulesDriver from "../database/drivers/dITStructureRules";
 import dseTypeDriver from "../database/drivers/dseType";
 import entryACIDriver from "../database/drivers/entryACI";
+import entryDNDriver from "../database/drivers/entryDN";
 import entryUUIDDriver from "../database/drivers/entryUUID";
 import family_informationDriver from "../database/drivers/family_information";
+import fullVendorVersionDriver from "../database/drivers/fullVendorVersion";
 import friendsDriver from "../database/drivers/friends";
 import governingStructureRuleDriver from "../database/drivers/governingStructureRule";
 import hasSubordinatesDriver from "../database/drivers/hasSubordinates";
@@ -66,16 +69,20 @@ import subentryACIDriver from "../database/drivers/subentryACI";
 import subschemaSubentryListDriver from "../database/drivers/subschemaSubentryList";
 import subtreeSpecificationDriver from "../database/drivers/subtreeSpecification";
 import superiorKnowledgeDriver from "../database/drivers/superiorKnowledge";
+import superiorUUIDDriver from "../database/drivers/superiorUUID";
 import supplierKnowledgeDriver from "../database/drivers/supplierKnowledge";
 import supportedControlDriver from "../database/drivers/supportedControl";
 import supportedExtensionDriver from "../database/drivers/supportedExtension";
 import supportedFeaturesDriver from "../database/drivers/supportedFeatures";
 import supportedLDAPVersionDriver from "../database/drivers/supportedLDAPVersion";
 import supportedSASLMechanismsDriver from "../database/drivers/supportedSASLMechanisms";
+import syncTimestampDriver from "../database/drivers/syncTimestamp";
 import uniqueIdentifierDriver from "../database/drivers/uniqueIdentifier";
 import userPasswordDriver from "../database/drivers/userPassword";
 import userPwdDriver from "../database/drivers/userPwd";
 import userPwdHistoryDriver from "../database/drivers/userPwdHistory";
+import vendorNameDriver from "../database/drivers/vendorName";
+import vendorVersionDriver from "../database/drivers/vendorVersion";
 
 // X.400 Attribute Types
 import {
@@ -471,33 +478,33 @@ import {
 import {
     unstructuredAddress,
 } from "@wildboar/pkcs/src/lib/modules/PKCS-9/unstructuredAddress.oa";
-import {
-    dateOfBirth,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/dateOfBirth.oa";
-import {
-    placeOfBirth,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/placeOfBirth.oa";
-import {
-    gender,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/gender.oa";
-import {
-    countryOfCitizenship,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/countryOfCitizenship.oa";
-import {
-    countryOfResidence,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/countryOfResidence.oa";
+// import {
+//     dateOfBirth,
+// } from "@wildboar/pkcs/src/lib/modules/PKCS-9/dateOfBirth.oa";
+// import {
+//     placeOfBirth,
+// } from "@wildboar/pkcs/src/lib/modules/PKCS-9/placeOfBirth.oa";
+// import {
+//     gender,
+// } from "@wildboar/pkcs/src/lib/modules/PKCS-9/gender.oa";
+// import {
+//     countryOfCitizenship,
+// } from "@wildboar/pkcs/src/lib/modules/PKCS-9/countryOfCitizenship.oa";
+// import {
+//     countryOfResidence,
+// } from "@wildboar/pkcs/src/lib/modules/PKCS-9/countryOfResidence.oa";
 import {
     pseudonym,
 } from "@wildboar/pkcs/src/lib/modules/PKCS-9/pseudonym.oa";
-import {
-    contentType,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/contentType.oa";
-import {
-    messageDigest,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/messageDigest.oa";
-import {
-    signingTime,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/signingTime.oa";
+// import {
+//     contentType,
+// } from "@wildboar/pkcs/src/lib/modules/PKCS-9/contentType.oa";
+// import {
+//     messageDigest,
+// } from "@wildboar/pkcs/src/lib/modules/PKCS-9/messageDigest.oa";
+// import {
+//     signingTime,
+// } from "@wildboar/pkcs/src/lib/modules/PKCS-9/signingTime.oa";
 import {
     randomNonce,
 } from "@wildboar/pkcs/src/lib/modules/PKCS-9/randomNonce.oa";
@@ -522,9 +529,9 @@ import {
 import {
     signingDescription,
 } from "@wildboar/pkcs/src/lib/modules/PKCS-9/signingDescription.oa";
-import {
-    smimeCapabilities,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/smimeCapabilities.oa";
+// import {
+//     smimeCapabilities,
+// } from "@wildboar/pkcs/src/lib/modules/PKCS-9/smimeCapabilities.oa";
 
 // IANA / LDAP Parity Schema
 // import {
@@ -971,9 +978,9 @@ import {
 import {
     authPassword,
 } from "@wildboar/parity-schema/src/lib/modules/AuthPasswordSchema/authPassword.oa";
-import { // TODO: Driver
-    supportedAuthPasswordSchemes,
-} from "@wildboar/parity-schema/src/lib/modules/AuthPasswordSchema/supportedAuthPasswordSchemes.oa";
+// import {
+//     supportedAuthPasswordSchemes,
+// } from "@wildboar/parity-schema/src/lib/modules/AuthPasswordSchema/supportedAuthPasswordSchemes.oa";
 import {
     automountInformation,
 } from "@wildboar/parity-schema/src/lib/modules/AutoFS-Schema/automountInformation.oa";
@@ -1208,9 +1215,9 @@ import {
 import {
     dhcpVersion,
 } from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpVersion.oa";
-import {
-    numSubordinates,
-} from "@wildboar/parity-schema/src/lib/modules/DS389CoreSchema/numSubordinates.oa";
+// import { // Not supported because it would be too computationally expensive to compute access to all subordinates.
+//     numSubordinates,
+// } from "@wildboar/parity-schema/src/lib/modules/DS389CoreSchema/numSubordinates.oa";
 import {
     changeNumber,
 } from "@wildboar/parity-schema/src/lib/modules/DSEE/changeNumber.oa";
@@ -1712,7 +1719,7 @@ import {
 // import {
 //     mailLocalAddress,
 // } from "@wildboar/parity-schema/src/lib/modules/Misc/mailLocalAddress.oa";
-import {
+import { // Duplicate attribute type name. Using the other one, because it is multi-valued and subtypes `mail`.
     mailRoutingAddress as openldapMailRoutingAddress,
 } from "@wildboar/parity-schema/src/lib/modules/Misc/mailRoutingAddress.oa";
 import {
@@ -1877,28 +1884,28 @@ import {
 // import {
 //     emailAddress,
 // } from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/emailAddress.oa";
-import {
-    etag,
-} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/etag.oa";
+// import { // TODO: Eventually support this, when you track the change number.
+//     etag,
+// } from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/etag.oa";
 import {
     fullVendorVersion,
 } from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/fullVendorVersion.oa";
 import {
     isMemberOf,
 } from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/isMemberOf.oa";
-import { // TODO: Driver
-    configContext,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/configContext.oa";
+// import {
+//     configContext,
+// } from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/configContext.oa";
+// import {
+//     monitorContext,
+// } from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/monitorContext.oa";
 import {
-    monitorContext,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/monitorContext.oa";
-import { // TODO: Driver
     superiorUUID,
 } from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/superiorUUID.oa";
+// import {
+//     syncreplCookie,
+// } from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/syncreplCookie.oa";
 import {
-    syncreplCookie,
-} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/syncreplCookie.oa";
-import { // TODO: Driver
     syncTimestamp,
 } from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/syncTimestamp.oa";
 import {
@@ -2432,13 +2439,13 @@ import {
 import {
     template_url_syntax,
 } from "@wildboar/parity-schema/src/lib/modules/RFC2926ServiceLocationProtocolSchema/template-url-syntax.oa";
-import { // TODO: Driver
+import {
     vendorName,
 } from "@wildboar/parity-schema/src/lib/modules/RFC3045VendorInfo/vendorName.oa";
-import { // TODO: Driver
+import {
     vendorVersion,
 } from "@wildboar/parity-schema/src/lib/modules/RFC3045VendorInfo/vendorVersion.oa";
-import { // TODO: Driver
+import {
     entryDN,
 } from "@wildboar/parity-schema/src/lib/modules/RFC5020EntryDN/entryDN.oa";
 import {
@@ -2783,15 +2790,15 @@ import {
 import {
     sambaUserWorkstations,
 } from "@wildboar/parity-schema/src/lib/modules/SambaV3Schema/sambaUserWorkstations.oa";
-// import {
-//     mailHost,
-// } from "@wildboar/parity-schema/src/lib/modules/SendmailSchema/mailHost.oa";
+import {
+    mailHost as sendmailMailHost,
+} from "@wildboar/parity-schema/src/lib/modules/SendmailSchema/mailHost.oa";
 import {
     mailLocalAddress,
 } from "@wildboar/parity-schema/src/lib/modules/SendmailSchema/mailLocalAddress.oa";
-// import {
-//     mailRoutingAddress,
-// } from "@wildboar/parity-schema/src/lib/modules/SendmailSchema/mailRoutingAddress.oa";
+import {
+    mailRoutingAddress as sendmailRoutingAddress,
+} from "@wildboar/parity-schema/src/lib/modules/SendmailSchema/mailRoutingAddress.oa";
 import {
     sudoCommand,
 } from "@wildboar/parity-schema/src/lib/modules/SudoSchema/sudoCommand.oa";
@@ -3028,9 +3035,9 @@ import {
 import {
     aa_timeStamped,
 } from "@wildboar/cms/src/lib/modules/CMSProfileAttributes/aa-timeStamped.oa";
-import {
-    signcryptedEnvelope,
-} from "@wildboar/cms/src/lib/modules/CMSSigncryption/signcryptedEnvelope.oa";
+// import {
+//     signcryptedEnvelope,
+// } from "@wildboar/cms/src/lib/modules/CMSSigncryption/signcryptedEnvelope.oa";
 // import {
 //     aa_contentType,
 // } from "@wildboar/cms/src/lib/modules/CryptographicMessageSyntax-2010/aa-contentType.oa";
@@ -3049,9 +3056,708 @@ import {
 // import {
 //     aa_smimeCapabilities,
 // } from "@wildboar/cms/src/lib/modules/SecureMimeMessageV3dot1-2009/aa-smimeCapabilities.oa";
+// import {
+//     tokenizedParts,
+// } from "@wildboar/cms/src/lib/modules/TokenizationManifest/tokenizedParts.oa";
+
+// ITU Schema
+import {
+    cEKReference,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/cEKReference.oa";
+import {
+    cEKMaxDecrypts,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/cEKMaxDecrypts.oa";
+import {
+    kEKDerivationAlg,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/kEKDerivationAlg.oa";
+import {
+    accessService,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/accessService.oa";
+import {
+    dateOfBirth,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/dateOfBirth.oa";
+import {
+    placeOfBirth,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/placeOfBirth.oa";
+import {
+    gender,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/gender.oa";
+import {
+    countryOfCitizenship,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/countryOfCitizenship.oa";
+import {
+    countryOfResidence,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/countryOfResidence.oa";
+import {
+    deviceOwner,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/deviceOwner.oa";
+import {
+    clearanceSponsor,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/clearanceSponsor.oa";
+import {
+    binarySigningTime,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/binarySigningTime.oa";
 import {
     tokenizedParts,
-} from "@wildboar/cms/src/lib/modules/TokenizationManifest/tokenizedParts.oa";
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/tokenizedParts.oa";
+import {
+    authenticationInfo,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/authenticationInfo.oa";
+import {
+    accesIdentity,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/accesIdentity.oa";
+import {
+    chargingIdentity,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/chargingIdentity.oa";
+import {
+    group,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/group.oa";
+import {
+    clearance_RFC3281,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/clearance-RFC3281.oa";
+import {
+    encAttrs,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/encAttrs.oa";
+import {
+    smimeCapabilities,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/smimeCapabilities.oa";
+// import {
+//     signerInfo,
+// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/signerInfo.oa";
+// import {
+//     signerInfos,
+// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/signerInfos.oa";
+// import {
+//     contentLocation,
+// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/contentLocation.oa";
+// import {
+//     contentLocations,
+// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/contentLocations.oa";
+// import {
+//     precedingBlock,
+// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/precedingBlock.oa";
+// import {
+//     timeStamped,
+// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/timeStamped.oa";
+// import {
+//     sidechains,
+// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/sidechains.oa";
+// import {
+//     parentBlock,
+// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/parentBlock.oa";
+import {
+    signcryptedEnvelope,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/signcryptedEnvelope.oa";
+// import {
+//     encrypKeyPref,
+// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/encrypKeyPref.oa";
+import {
+    firmwarePackageID,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/firmwarePackageID.oa";
+import {
+    targetHardwareIDs,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/targetHardwareIDs.oa";
+import {
+    decryptKeyID,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/decryptKeyID.oa";
+import {
+    implCryptoAlgs,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/implCryptoAlgs.oa";
+import {
+    implCompressAlgs,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/implCompressAlgs.oa";
+import {
+    communityIdentifiers,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/communityIdentifiers.oa";
+import {
+    firmwarePackageInfo,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/firmwarePackageInfo.oa";
+import {
+    wrappedFirmwareKey,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/wrappedFirmwareKey.oa";
+import {
+    contentType,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/contentType.oa";
+import {
+    messageDigest,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/messageDigest.oa";
+import {
+    signingTime,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/signingTime.oa";
+// import {
+//     countersignature,
+// } from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/countersignature.oa";
+import {
+    extension_req,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/extension-req.oa";
+import {
+    unsignedData,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/unsignedData.oa";
+import {
+    multipleSignatures,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/multipleSignatures.oa";
+import {
+    wlanSSID,
+} from "@wildboar/parity-schema/src/lib/modules/OtherAttributes/wlanSSID.oa";
+
+import {
+    commUniqueId,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/commUniqueId.oa";
+import {
+    commOwner,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/commOwner.oa";
+import {
+    commPrivate,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/commPrivate.oa";
+import {
+    commURI,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/commURI.oa";
+import {
+    h323IdentityGKDomain,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h323IdentityGKDomain.oa";
+import {
+    h323Identityh323_ID,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h323Identityh323-ID.oa";
+import {
+    h323IdentitydialedDigits,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h323IdentitydialedDigits.oa";
+import {
+    h323Identityemail_ID,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h323Identityemail-ID.oa";
+import {
+    h323IdentityURL_ID,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h323IdentityURL-ID.oa";
+import {
+    h323IdentitytransportID,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h323IdentitytransportID.oa";
+import {
+    h323IdentitypartyNumber,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h323IdentitypartyNumber.oa";
+import {
+    h323IdentitymobileUIM,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h323IdentitymobileUIM.oa";
+import {
+    h323IdentityEndpointType,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h323IdentityEndpointType.oa";
+import {
+    h323IdentityServiceLevel,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h323IdentityServiceLevel.oa";
+import {
+    h235IdentityEndpointID,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h235IdentityEndpointID.oa";
+import {
+    h235IdentityPassword,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h235IdentityPassword.oa";
+import {
+    h320IdentityCC,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h320IdentityCC.oa";
+import {
+    h320IdentityNDC,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h320IdentityNDC.oa";
+import {
+    h320IdentitySN,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h320IdentitySN.oa";
+import {
+    h320IdentityServiceLevel,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h320IdentityServiceLevel.oa";
+import {
+    h320IdentityExtension,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h320IdentityExtension.oa";
+import {
+    sIPIdentitySIPURI,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/sIPIdentitySIPURI.oa";
+import {
+    sIPIdentityRegistrarAddress,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/sIPIdentityRegistrarAddress.oa";
+import {
+    sIPIdentityProxyAddress,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/sIPIdentityProxyAddress.oa";
+import {
+    sIPIdentityAddress,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/sIPIdentityAddress.oa";
+import {
+    sIPIdentityPassword,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/sIPIdentityPassword.oa";
+import {
+    sIPIdentityUserName,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/sIPIdentityUserName.oa";
+import {
+    sIPIdentityServiceLevel,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/sIPIdentityServiceLevel.oa";
+import {
+    genericIdentityProtocolIdentifier,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/genericIdentityProtocolIdentifier.oa";
+import {
+    genericIdentityMessage,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/genericIdentityMessage.oa";
+import {
+    callPreferenceURI,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/callPreferenceURI.oa";
+import {
+    userSMIMECertificate,
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/userSMIMECertificate.oa";
+
+// ERS
+import {
+    aa_er_External,
+} from "@wildboar/parity-schema/src/lib/modules/ERS/aa-er-External.oa";
+import {
+    aa_er_Internal,
+} from "@wildboar/parity-schema/src/lib/modules/ERS/aa-er-Internal.oa";
+
+// ESS
+import {
+    aa_receiptRequest,
+} from "@wildboar/parity-schema/src/lib/modules/ExtendedSecurityServices-2009/aa-receiptRequest.oa";
+import {
+    aa_contentIdentifier,
+} from "@wildboar/parity-schema/src/lib/modules/ExtendedSecurityServices-2009/aa-contentIdentifier.oa";
+import {
+    aa_contentHint,
+} from "@wildboar/parity-schema/src/lib/modules/ExtendedSecurityServices-2009/aa-contentHint.oa";
+import {
+    aa_msgSigDigest,
+} from "@wildboar/parity-schema/src/lib/modules/ExtendedSecurityServices-2009/aa-msgSigDigest.oa";
+import {
+    aa_contentReference,
+} from "@wildboar/parity-schema/src/lib/modules/ExtendedSecurityServices-2009/aa-contentReference.oa";
+import {
+    aa_securityLabel,
+} from "@wildboar/parity-schema/src/lib/modules/ExtendedSecurityServices-2009/aa-securityLabel.oa";
+import {
+    aa_equivalentLabels,
+} from "@wildboar/parity-schema/src/lib/modules/ExtendedSecurityServices-2009/aa-equivalentLabels.oa";
+import {
+    aa_mlExpandHistory,
+} from "@wildboar/parity-schema/src/lib/modules/ExtendedSecurityServices-2009/aa-mlExpandHistory.oa";
+import {
+    aa_signingCertificate,
+} from "@wildboar/parity-schema/src/lib/modules/ExtendedSecurityServices-2009/aa-signingCertificate.oa";
+import {
+    aa_signingCertificateV2,
+} from "@wildboar/parity-schema/src/lib/modules/ExtendedSecurityServices-2009/aa-signingCertificateV2.oa";
+
+// UPT
+import {
+    providerId,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/providerId.oa";
+import {
+    providedServiceId,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/providedServiceId.oa";
+import {
+    providedLocations,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/providedLocations.oa";
+import {
+    pui,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/pui.oa";
+import {
+    specialPassword,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/specialPassword.oa";
+import {
+    variablePassword,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/variablePassword.oa";
+import {
+    nbOfFailedAuthentications,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/nbOfFailedAuthentications.oa";
+import {
+    userCredit,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/userCredit.oa";
+import {
+    callInfoRecords,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/callInfoRecords.oa";
+import {
+    activeChargingService,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/activeChargingService.oa";
+import {
+    allowedServiceFeatures,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/allowedServiceFeatures.oa";
+import {
+    uptNumber,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/uptNumber.oa";
+import {
+    defaultChargingReference,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/defaultChargingReference.oa";
+import {
+    icRegistrationAddress,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/icRegistrationAddress.oa";
+import {
+    allowedRegistrationAddress,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/allowedRegistrationAddress.oa";
+import {
+    allowedDestinations,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/allowedDestinations.oa";
+import {
+    supplServId,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/supplServId.oa";
+import {
+    supplServiceStatus,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/supplServiceStatus.oa";
+import {
+    forwardedToNumber,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/forwardedToNumber.oa";
+import {
+    typesOfNotification,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/typesOfNotification.oa";
+import {
+    noReplyConditionTimer,
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/noReplyConditionTimer.oa";
+
+// Intelligent Networks Attribute Types
+import {
+    methodUse,
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/methodUse.oa";
+import {
+    securityFacilityId,
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/securityFacilityId.oa";
+import {
+    secretKey,
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/secretKey.oa";
+import {
+    identifierList,
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/identifierList.oa";
+import {
+    bindLevelIfOK,
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/bindLevelIfOK.oa";
+import {
+    lockSession,
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/lockSession.oa";
+import {
+    failureCounter,
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/failureCounter.oa";
+import {
+    maxAttempts,
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/maxAttempts.oa";
+import {
+    currentList,
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/currentList.oa";
+import {
+    stockId,
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/stockId.oa";
+import {
+    source,
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/source.oa";
+import {
+    sizeOfRestocking,
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/sizeOfRestocking.oa";
+import {
+    stock,
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/stock.oa";
+
+// CRMF Attribute Types
+import {
+    regCtrl_regToken,
+} from "@wildboar/parity-schema/src/lib/modules/PKIXCRMF-2009/regCtrl-regToken.oa";
+import {
+    regCtrl_authenticator,
+} from "@wildboar/parity-schema/src/lib/modules/PKIXCRMF-2009/regCtrl-authenticator.oa";
+import {
+    regCtrl_pkiPublicationInfo,
+} from "@wildboar/parity-schema/src/lib/modules/PKIXCRMF-2009/regCtrl-pkiPublicationInfo.oa";
+import {
+    regCtrl_pkiArchiveOptions,
+} from "@wildboar/parity-schema/src/lib/modules/PKIXCRMF-2009/regCtrl-pkiArchiveOptions.oa";
+import {
+    regCtrl_oldCertID,
+} from "@wildboar/parity-schema/src/lib/modules/PKIXCRMF-2009/regCtrl-oldCertID.oa";
+import {
+    regCtrl_protocolEncrKey,
+} from "@wildboar/parity-schema/src/lib/modules/PKIXCRMF-2009/regCtrl-protocolEncrKey.oa";
+import {
+    regInfo_utf8Pairs,
+} from "@wildboar/parity-schema/src/lib/modules/PKIXCRMF-2009/regInfo-utf8Pairs.oa";
+import {
+    regInfo_certReq,
+} from "@wildboar/parity-schema/src/lib/modules/PKIXCRMF-2009/regInfo-certReq.oa";
+
+// Telebiometrics Authentication Infrastructure (TAI) Attribute Types
+import {
+    biometricInformationTemplate,
+} from "@wildboar/parity-schema/src/lib/modules/TAI/biometricInformationTemplate.oa";
+import {
+    bioSecLevelReference,
+} from "@wildboar/parity-schema/src/lib/modules/TAI/bioSecLevelReference.oa";
+import {
+    bDCReportContentInformation,
+} from "@wildboar/parity-schema/src/lib/modules/TAI/bDCReportContentInformation.oa";
+
+// X.952 Printer Service Offer Definitions (Commented out because it turns out this is just an example module.)
+// import {
+//     printerType,
+// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/printerType.oa";
+// import {
+//     locationRoom,
+// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/locationRoom.oa";
+// import {
+//     locationBuilding,
+// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/locationBuilding.oa";
+// import {
+//     costPerPage,
+// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/costPerPage.oa";
+// import {
+//     languagesSupported,
+// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/languagesSupported.oa";
+// import {
+//     pagesPerMinute,
+// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/pagesPerMinute.oa";
+// import {
+//     pageSize,
+// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/pageSize.oa";
+// import {
+//     dotsPerInch,
+// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/dotsPerInch.oa";
+// import {
+//     colourCapable,
+// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/colourCapable.oa";
+// import {
+//     driverName,
+// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/driverName.oa";
+// import {
+//     queueLength,
+// } from "@wildboar/parity-schema/src/lib/modules/PrinterServiceOfferDefinitions/queueLength.oa";
+
+// X.952 Trader Definitions
+import {
+    traderInterface,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/traderInterface.oa";
+import {
+    dsaName,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/dsaName.oa";
+import {
+    typeRepos,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/typeRepos.oa";
+import {
+    defSearchCard,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/defSearchCard.oa";
+import {
+    maxSearchCard,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/maxSearchCard.oa";
+import {
+    defMatchCard,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/defMatchCard.oa";
+import {
+    maxMatchCard,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/maxMatchCard.oa";
+import {
+    defReturnCard,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/defReturnCard.oa";
+import {
+    maxReturnCard,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/maxReturnCard.oa";
+import {
+    defHopCount,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/defHopCount.oa";
+import {
+    maxHopCount,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/maxHopCount.oa";
+import {
+    defFollowPolicy,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/defFollowPolicy.oa";
+import {
+    maxFollowPolicy,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/maxFollowPolicy.oa";
+import {
+    maxLinkFollowPolicy,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/maxLinkFollowPolicy.oa";
+import {
+    supportsModifiableProperties,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/supportsModifiableProperties.oa";
+import {
+    supportsDynamicProperties,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/supportsDynamicProperties.oa";
+import {
+    supportsProxyOffers,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/supportsProxyOffers.oa";
+import {
+    maxList,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/maxList.oa";
+import {
+    requestIdStem,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/requestIdStem.oa";
+import {
+    typeManagementConstraint,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/typeManagementConstraint.oa";
+import {
+    searchConstraint,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/searchConstraint.oa";
+import {
+    offerAcceptanceConstraint,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/offerAcceptanceConstraint.oa";
+import {
+    sOfferId,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/sOfferId.oa";
+import {
+    serviceInterfaceId,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/serviceInterfaceId.oa";
+import {
+    serviceTypeId,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/serviceTypeId.oa";
+import {
+    hasDynamicProperties,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/hasDynamicProperties.oa";
+import {
+    hasModifiableProperties,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/hasModifiableProperties.oa";
+import {
+    dynamicProps,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/dynamicProps.oa";
+import {
+    linkName,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/linkName.oa";
+import {
+    linkId,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/linkId.oa";
+import {
+    targetTraderInterfaceId,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/targetTraderInterfaceId.oa";
+import {
+    defPassOnFollowRule,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/defPassOnFollowRule.oa";
+import {
+    limitingFollowRule,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/limitingFollowRule.oa";
+import {
+    proxyOfferId,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/proxyOfferId.oa";
+import {
+    proxyLookUpInterfaceId,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/proxyLookUpInterfaceId.oa";
+import {
+    constraintRecipe,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/constraintRecipe.oa";
+import {
+    ifMatchAll,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/ifMatchAll.oa";
+import {
+    interfaceReference,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/interfaceReference.oa";
+import {
+    interfaceType,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/interfaceType.oa";
+
+// Matching Rules Suitable for Naming
+import {
+    addressCapabilitiesMatch,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/addressCapabilitiesMatch.oa";
+import {
+    capabilityMatch,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/capabilityMatch.oa";
+import {
+    oRNameExactMatch,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/oRNameExactMatch.oa";
+import {
+    mSStringMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSStringMatch.oa";
+import {
+    mSStringCaseSensitiveMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSStringCaseSensitiveMatch.oa";
+import {
+    mSStringListMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSStringListMatch.oa";
+import {
+    mSStringListElementsMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSStringListElementsMatch.oa";
+import {
+    mSSingleSubstringListMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSSingleSubstringListMatch.oa";
+import {
+    mSSingleSubstringListElementsMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mSSingleSubstringListElementsMatch.oa";
+import {
+    oRAddressMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRAddressMatch.oa";
+import {
+    oRAddressElementsMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRAddressElementsMatch.oa";
+import {
+    oRAddressSubstringElementsMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRAddressSubstringElementsMatch.oa";
+import {
+    oRNameMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRNameMatch.oa";
+import {
+    oRNameElementsMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRNameElementsMatch.oa";
+import {
+    oRNameSubstringElementsMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/oRNameSubstringElementsMatch.oa";
+import {
+    redirectionOrDLExpansionMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/redirectionOrDLExpansionMatch.oa";
+import {
+    redirectionOrDLExpansionElementsMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/redirectionOrDLExpansionElementsMatch.oa";
+import {
+    redirectionOrDLExpansionSubstringElementsMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/redirectionOrDLExpansionSubstringElementsMatch.oa";
+import {
+    mTSIdentifierMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/mTSIdentifierMatch.oa";
+import {
+    contentCorrelatorMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/contentCorrelatorMatch.oa";
+import {
+    contentIdentifierMatch,
+} from "@wildboar/x400/src/lib/modules/MSMatchingRules/contentIdentifierMatch.oa";
+import {
+    iPMIdentifierMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/iPMIdentifierMatch.oa";
+import {
+    oRDescriptorMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/oRDescriptorMatch.oa";
+import {
+    oRDescriptorElementsMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/oRDescriptorElementsMatch.oa";
+import {
+    oRDescriptorSingleElementMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/oRDescriptorSingleElementMatch.oa";
+import {
+    recipientSpecifierMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/recipientSpecifierMatch.oa";
+import {
+    recipientSpecifierElementsMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/recipientSpecifierElementsMatch.oa";
+import {
+    recipientSpecifierSubstringElementsMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/recipientSpecifierSubstringElementsMatch.oa";
+import {
+    circulationMemberMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/circulationMemberMatch.oa";
+import {
+    circulationMemberElementsMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/circulationMemberElementsMatch.oa";
+import {
+    circulationMemberSubstringElementsMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/circulationMemberSubstringElementsMatch.oa";
+import {
+    distributionCodeMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/distributionCodeMatch.oa";
+import {
+    informationCategoryMatch,
+} from "@wildboar/x400/src/lib/modules/IPMSMessageStoreAttributes/informationCategoryMatch.oa";
+import {
+    policySpecificationMatch,
+} from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/policySpecificationMatch.oa";
+import {
+    pkcs9CaseIgnoreMatch,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/pkcs9CaseIgnoreMatch.oa";
+import {
+    signingTimeMatch,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/signingTimeMatch.oa";
+import {
+    directoryStringApproxMatch,
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/directoryStringApproxMatch.oa";
+import {
+    ia5StringApproxMatch,
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/ia5StringApproxMatch.oa";
+import {
+    integerBitAndMatch,
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/integerBitAndMatch.oa";
+import {
+    integerBitOrMatch,
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/integerBitOrMatch.oa";
+import {
+    uuidMatch,
+} from "@wildboar/parity-schema/src/lib/modules/UUID/uuidMatch.oa";
 
 /**
  * @summary Initialize Meerkat DSA's internal index of known attribute types.
@@ -3374,7 +4080,7 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         apacheDnsSoaSerial,
         apacheDnsTtl,
         authPassword,
-        supportedAuthPasswordSchemes,
+        // supportedAuthPasswordSchemes,
         automountInformation,
         corbaIor,
         corbaRepositoryId,
@@ -3453,7 +4159,7 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         dhcpSubclassesDN,
         dhcpSubnetDN,
         dhcpVersion,
-        numSubordinates,
+        // numSubordinates,
         changeNumber,
         changes,
         changeTime,
@@ -3526,6 +4232,7 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         maildest,
         maildrop,
         openldapMailRoutingAddress,
+        sendmailRoutingAddress,
         transport,
         carLicense,
         departmentNumber,
@@ -3620,6 +4327,8 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         pgpUserID,
         pgpVersion,
         mailHost,
+        qmailHost,
+        sendmailMailHost,
         mailLocalAddress,
         mailRoutingAddress,
         associatedX400Domain,
@@ -3676,13 +4385,13 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         legalName,
         administratorsAddress,
         // emailAddress,
-        etag,
+        // etag,
         fullVendorVersion,
         isMemberOf,
-        configContext,
-        monitorContext,
+        // configContext,
+        // monitorContext,
         superiorUUID,
-        syncreplCookie,
+        // syncreplCookie,
         syncTimestamp,
         labeledURI,
         pamExcludeSuffix,
@@ -3714,7 +4423,6 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         filtersender,
         mailAlternateAddress,
         mailForwardingAddress,
-        qmailHost,
         mailMessageStore,
         mailQuotaCount,
         mailQuotaSize,
@@ -4069,6 +4777,211 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         "encrypKeyPref": aa_encrypKeyPref,
         // "smimeCapabilities": aa_smimeCapabilities,
         tokenizedParts,
+
+        // Other ITU and IETF X.500 Attribute Types
+        cEKReference,
+        cEKMaxDecrypts,
+        kEKDerivationAlg,
+        accessService,
+        // dateOfBirth,
+        // placeOfBirth,
+        // gender,
+        // countryOfCitizenship,
+        // countryOfResidence,
+        deviceOwner,
+        clearanceSponsor,
+        binarySigningTime,
+        // tokenizedParts,
+        authenticationInfo,
+        accesIdentity,
+        chargingIdentity,
+        group,
+        clearance_RFC3281,
+        encAttrs,
+        // smimeCapabilities,
+        // signerInfo,
+        // signerInfos,
+        // contentLocation,
+        // contentLocations,
+        // precedingBlock,
+        // timeStamped,
+        // sidechains,
+        // parentBlock,
+        // signcryptedEnvelope,
+        // encrypKeyPref,
+        firmwarePackageID,
+        targetHardwareIDs,
+        decryptKeyID,
+        implCryptoAlgs,
+        implCompressAlgs,
+        communityIdentifiers,
+        firmwarePackageInfo,
+        wrappedFirmwareKey,
+        // contentType,
+        // messageDigest,
+        // signingTime,
+        // countersignature,
+        "extension-req": extension_req,
+        unsignedData,
+        multipleSignatures,
+        wlanSSID,
+
+        // H.323 Attribute Types
+        commUniqueId,
+        commOwner,
+        commPrivate,
+        commURI,
+        h323IdentityGKDomain,
+        "h323Identityh323-ID": h323Identityh323_ID,
+        h323IdentitydialedDigits,
+        "h323Identityemail-ID": h323Identityemail_ID,
+        "h323IdentityURL-ID": h323IdentityURL_ID,
+        h323IdentitytransportID,
+        h323IdentitypartyNumber,
+        h323IdentitymobileUIM,
+        h323IdentityEndpointType,
+        h323IdentityServiceLevel,
+        h235IdentityEndpointID,
+        h235IdentityPassword,
+        h320IdentityCC,
+        h320IdentityNDC,
+        h320IdentitySN,
+        h320IdentityServiceLevel,
+        h320IdentityExtension,
+        sIPIdentitySIPURI,
+        sIPIdentityRegistrarAddress,
+        sIPIdentityProxyAddress,
+        sIPIdentityAddress,
+        sIPIdentityPassword,
+        sIPIdentityUserName,
+        sIPIdentityServiceLevel,
+        genericIdentityProtocolIdentifier,
+        genericIdentityMessage,
+        callPreferenceURI,
+        userSMIMECertificate,
+
+        // ERS Attribute Types
+        "aa-er-External": aa_er_External,
+        "aa-er-Internal": aa_er_Internal,
+
+        // ESS Attribute Types
+        receiptRequest: aa_receiptRequest,
+        contentIdentifier: aa_contentIdentifier,
+        contentHint: aa_contentHint,
+        msgSigDigest: aa_msgSigDigest,
+        contentReference: aa_contentReference,
+        securityLabel: aa_securityLabel,
+        equivalentLabels: aa_equivalentLabels,
+        mlExpandHistory: aa_mlExpandHistory,
+        signingCertificate: aa_signingCertificate,
+        signingCertificateV2: aa_signingCertificateV2,
+
+        // UPT Attribute Types
+        providerId,
+        providedServiceId,
+        providedLocations,
+        pui,
+        specialPassword,
+        variablePassword,
+        nbOfFailedAuthentications,
+        userCredit,
+        callInfoRecords,
+        activeChargingService,
+        allowedServiceFeatures,
+        uptNumber,
+        defaultChargingReference,
+        icRegistrationAddress,
+        allowedRegistrationAddress,
+        allowedDestinations,
+        supplServId,
+        supplServiceStatus,
+        forwardedToNumber,
+        typesOfNotification,
+        noReplyConditionTimer,
+
+        // Intelligent Networks Attribute Types
+        methodUse,
+        securityFacilityId,
+        secretKey,
+        identifierList,
+        bindLevelIfOK,
+        lockSession,
+        failureCounter,
+        maxAttempts,
+        currentList,
+        stockId,
+        source,
+        sizeOfRestocking,
+        stock,
+
+        // CRMF Attribute Types
+        regCtrl_regToken,
+        regCtrl_authenticator,
+        regCtrl_pkiPublicationInfo,
+        regCtrl_pkiArchiveOptions,
+        regCtrl_oldCertID,
+        regCtrl_protocolEncrKey,
+        regInfo_utf8Pairs,
+        regInfo_certReq,
+
+        // Telebiometrics Authentication Infrastructure (TAI) Attribute Types
+        biometricInformationTemplate,
+        bioSecLevelReference,
+        bDCReportContentInformation,
+
+        // Printer Service Offer Attribute Types
+        // printerType,
+        // locationRoom,
+        // locationBuilding,
+        // costPerPage,
+        // languagesSupported,
+        // pagesPerMinute,
+        // pageSize,
+        // dotsPerInch,
+        // colourCapable,
+        // driverName,
+        // queueLength,
+
+        // Trader Definitions Attribute Types
+        traderInterface,
+        dsaName,
+        typeRepos,
+        defSearchCard,
+        maxSearchCard,
+        defMatchCard,
+        maxMatchCard,
+        defReturnCard,
+        maxReturnCard,
+        defHopCount,
+        maxHopCount,
+        defFollowPolicy,
+        maxFollowPolicy,
+        maxLinkFollowPolicy,
+        supportsModifiableProperties,
+        supportsDynamicProperties,
+        supportsProxyOffers,
+        maxList,
+        requestIdStem,
+        typeManagementConstraint,
+        searchConstraint,
+        offerAcceptanceConstraint,
+        sOfferId,
+        serviceInterfaceId,
+        serviceTypeId,
+        hasDynamicProperties,
+        hasModifiableProperties,
+        dynamicProps,
+        linkName,
+        linkId,
+        targetTraderInterfaceId,
+        defPassOnFollowRule,
+        limitingFollowRule,
+        proxyOfferId,
+        proxyLookUpInterfaceId,
+        constraintRecipe,
+        ifMatchAll,
+        interfaceReference,
+        interfaceType,
     })
         .map(([ name, spec ]) => attributeFromInformationObject(spec, name))
         .forEach((attr) => {
@@ -4163,9 +5076,51 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
     ctx.matchingRulesSuitableForNaming.add(x500mr.uriMatch["&id"].toString());
     ctx.matchingRulesSuitableForNaming.add(x500mr.uTCTimeMatch["&id"].toString());
     ctx.matchingRulesSuitableForNaming.add(x500mr.uUIDPairMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(addressCapabilitiesMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(capabilityMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(circulationMemberMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(circulationMemberElementsMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(circulationMemberSubstringElementsMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(contentCorrelatorMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(contentIdentifierMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(directoryStringApproxMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(distributionCodeMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(ia5StringApproxMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(informationCategoryMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(integerBitAndMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(integerBitOrMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(iPMIdentifierMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(mSSingleSubstringListElementsMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(mSSingleSubstringListMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(mSStringCaseSensitiveMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(mSStringListElementsMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(mSStringListMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(mSStringMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(mTSIdentifierMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(oRAddressElementsMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(oRAddressMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(oRAddressSubstringElementsMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(oRDescriptorElementsMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(oRDescriptorMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(oRDescriptorSingleElementMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(oRNameElementsMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(oRNameExactMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(oRNameMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(oRNameSubstringElementsMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(pkcs9CaseIgnoreMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(policySpecificationMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(recipientSpecifierElementsMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(recipientSpecifierMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(recipientSpecifierSubstringElementsMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(redirectionOrDLExpansionElementsMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(redirectionOrDLExpansionMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(redirectionOrDLExpansionSubstringElementsMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(signingTimeMatch["&id"].toString());
+    ctx.matchingRulesSuitableForNaming.add(uuidMatch["&id"].toString());
     ctx.attributeTypes.get(x500at.accessControlScheme["&id"].toString())!.driver = accessControlSchemeDriver;
     ctx.attributeTypes.get(x500at.accessControlSubentryList["&id"].toString())!.driver = accessControlSubentryListDriver;
     ctx.attributeTypes.get(x500at.aliasedEntryName["&id"].toString())!.driver = aliasedEntryNameDriver;
+    ctx.attributeTypes.get(administratorsAddress["&id"].toString())!.driver = administratorsAddressDriver;
     ctx.attributeTypes.get(x500at.administrativeRole["&id"].toString())!.driver = administrativeRoleDriver;
     ctx.attributeTypes.get(x500at.altServer["&id"].toString())!.driver = altServerDriver;
     ctx.attributeTypes.get(x500at.attributeTypes["&id"].toString())!.driver = attributeTypesDriver;
@@ -4183,8 +5138,10 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
     ctx.attributeTypes.get(x500at.dITStructureRules["&id"].toString())!.driver = dITStructureRulesDriver;
     ctx.attributeTypes.get(x500at.dseType["&id"].toString())!.driver = dseTypeDriver;
     ctx.attributeTypes.get(x500at.entryACI["&id"].toString())!.driver = entryACIDriver;
+    ctx.attributeTypes.get(entryDN["&id"].toString())!.driver = entryDNDriver;
     ctx.attributeTypes.get(entryUUID.id.toString())!.driver = entryUUIDDriver;
     ctx.attributeTypes.get(x500at.family_information["&id"].toString())!.driver = family_informationDriver;
+    ctx.attributeTypes.get(fullVendorVersion["&id"].toString())!.driver = fullVendorVersionDriver;
     ctx.attributeTypes.get(x500at.friends["&id"].toString())!.driver = friendsDriver;
     ctx.attributeTypes.get(x500at.governingStructureRule["&id"].toString())!.driver = governingStructureRuleDriver;
     ctx.attributeTypes.get(x500at.hasSubordinates["&id"].toString())!.driver = hasSubordinatesDriver;
@@ -4211,23 +5168,26 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
     ctx.attributeTypes.get(x500at.secondaryShadows["&id"].toString())!.driver = secondaryShadowsDriver;
     ctx.attributeTypes.get(x500at.serviceAdminSubentryList["&id"].toString())!.driver = serviceAdminSubentryListDriver;
     ctx.attributeTypes.get(x500at.specificKnowledge["&id"].toString())!.driver = specificKnowledgeDriver;
-// import { uuid } from "@wildboar/ldap/src/lib/syntaxes";
     ctx.attributeTypes.get(x500at.structuralObjectClass["&id"].toString())!.driver = structuralObjectClassDriver;
     ctx.attributeTypes.get(x500at.subentryACI["&id"].toString())!.driver = subentryACIDriver;
     ctx.attributeTypes.get(x500at.subschemaSubentryList["&id"].toString())!.driver = subschemaSubentryListDriver;
     ctx.attributeTypes.get(x500at.subtreeSpecification["&id"].toString())!.driver = subtreeSpecificationDriver;
     ctx.attributeTypes.get(x500at.superiorKnowledge["&id"].toString())!.driver = superiorKnowledgeDriver;
+    ctx.attributeTypes.get(superiorUUID["&id"].toString())!.driver = superiorUUIDDriver;
     ctx.attributeTypes.get(x500at.supplierKnowledge["&id"].toString())!.driver = supplierKnowledgeDriver;
     ctx.attributeTypes.get(x500at.supportedControl["&id"].toString())!.driver = supportedControlDriver;
     ctx.attributeTypes.get(x500at.supportedExtension["&id"].toString())!.driver = supportedExtensionDriver;
     ctx.attributeTypes.get(x500at.supportedFeatures["&id"].toString())!.driver = supportedFeaturesDriver;
     ctx.attributeTypes.get(x500at.supportedLDAPVersion["&id"].toString())!.driver = supportedLDAPVersionDriver;
     ctx.attributeTypes.get(x500at.supportedSASLMechanisms["&id"].toString())!.driver = supportedSASLMechanismsDriver;
+    ctx.attributeTypes.get(syncTimestamp["&id"].toString())!.driver = syncTimestampDriver;
     ctx.attributeTypes.get(x500at.uniqueIdentifier["&id"].toString())!.driver = uniqueIdentifierDriver;
     ctx.attributeTypes.get(x500at.userPassword["&id"].toString())!.driver = userPasswordDriver;
     ctx.attributeTypes.get(x500at.userPwd["&id"].toString())!.driver = userPwdDriver;
     ctx.attributeTypes.get(userPwdHistory["&id"].toString())!.driver = userPwdHistoryDriver;
     // ctx.attributeTypes.get(userPwdRecentlyExpired["&id"].toString())!.driver = userPwdRecentlyExpiredDriver;
+    ctx.attributeTypes.get(vendorName["&id"].toString())!.driver = vendorNameDriver;
+    ctx.attributeTypes.get(vendorVersion["&id"].toString())!.driver = vendorVersionDriver;
 }
 
 export default loadAttributeTypes;

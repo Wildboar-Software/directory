@@ -101,6 +101,7 @@ databaseSecretName: meerkat-database-secret
 # webAdminProxySecretName: web-admin-proxy-secret
 
 # administrator_email: jonathan@wilbur.space
+# administrator_email_public: true
 bind_min_sleep_ms: 1000
 bind_sleep_range_ms: 3000
 bulk_insert_mode: false
@@ -270,6 +271,8 @@ transcode_distinguished_values_to_der: true
 transcode_values_to_der: true
 # trust_anchors_file: signingTrustAnchorListConfigName
 use_database_when_there_are_x_subordinates: 1000
+# vendor_name: ""
+# vendor_version: ""
 # web_admin_auth_username: admin
 # web_admin_auth_password: "USJ6TrD3GLOAsHN7F7GgkEq/VsQe33wwaPuMm3Ormf8="
 # web_admin_auth_realm: "Bigboi's Playhouse"
