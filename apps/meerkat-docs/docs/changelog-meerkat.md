@@ -5,6 +5,8 @@
 - The List Continuation Reference (LCR) procedure is now supported.
 - Fixed a bug where continuation references produced during the `list` operation
   where not added to the partial outcome qualifier in the result.
+- Fixed a security vulnerability where the names of subordinate references could
+  be disclosed in a `search` operation to clients not authorized to see it.
 - Almost all LDAP schema objects
   [published with IANA](https://www.iana.org/assignments/ldap-parameters/ldap-parameters.xhtml)
   and almost all X.500 schema objects defined in any ITU recommendation

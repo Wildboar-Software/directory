@@ -480,9 +480,9 @@ import {
 import {
     krb5Realm,
 } from "@wildboar/parity-schema/src/lib/modules/KerberosV5KeyDistributionCenter/krb5Realm.oa";
-import {
-    referral,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPReferral/referral.oa";
+// import {
+//     referral,
+// } from "@wildboar/parity-schema/src/lib/modules/LDAPReferral/referral.oa";
 import {
     pgpKeyInfo,
 } from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/pgpKeyInfo.oa";
@@ -1020,7 +1020,7 @@ async function loadObjectClasses (ctx: Context): Promise<void> {
         krb5KDCEntry,
         krb5Principal,
         krb5Realm,
-        referral,
+        // referral,
         pgpKeyInfo,
         pgpServerInfo,
         mozillaAbPersonObsolete,

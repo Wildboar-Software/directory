@@ -1571,27 +1571,27 @@ import {
 import {
     pwdAllowUserChange,
 } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdAllowUserChange.oa";
-import {
-    pwdAttribute,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdAttribute.oa";
+// import {
+//     pwdAttribute,
+// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdAttribute.oa";
 import {
     pwdChangedTime,
 } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdChangedTime.oa";
 import {
     pwdCheckQuality,
 } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdCheckQuality.oa";
-import {
-    pwdEndTime,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdEndTime.oa";
+// import {
+//     pwdEndTime,
+// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdEndTime.oa";
 import {
     pwdExpireWarning,
 } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdExpireWarning.oa";
 import {
     pwdFailureCountInterval,
 } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdFailureCountInterval.oa";
-import {
-    pwdFailureTime,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdFailureTime.oa";
+// import {
+//     pwdFailureTime,
+// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdFailureTime.oa";
 import {
     pwdGraceAuthNLimit,
 } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdGraceAuthNLimit.oa";
@@ -1601,24 +1601,24 @@ import {
 import {
     pwdGraceUseTime,
 } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdGraceUseTime.oa";
-import {
-    pwdHistory,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdHistory.oa";
+// import {
+//     pwdHistory,
+// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdHistory.oa";
 import {
     pwdInHistory,
 } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdInHistory.oa";
-import {
-    pwdLastSuccess,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLastSuccess.oa";
-import {
-    pwdLockout,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLockout.oa";
-import {
-    pwdLockoutDuration,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLockoutDuration.oa";
-import {
-    pwdMaxAge,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMaxAge.oa";
+// import {
+//     pwdLastSuccess,
+// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLastSuccess.oa";
+// import {
+//     pwdLockout,
+// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLockout.oa";
+// import {
+//     pwdLockoutDuration,
+// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLockoutDuration.oa";
+// import {
+//     pwdMaxAge,
+// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMaxAge.oa";
 import {
     pwdMaxDelay,
 } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMaxDelay.oa";
@@ -1637,9 +1637,9 @@ import {
 import {
     pwdMinDelay,
 } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMinDelay.oa";
-import {
-    pwdMinLength,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMinLength.oa";
+// import {
+//     pwdMinLength,
+// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMinLength.oa";
 import {
     pwdMustChange,
 } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMustChange.oa";
@@ -1652,12 +1652,12 @@ import {
 import {
     pwdSafeModify,
 } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdSafeModify.oa";
-import {
-    pwdStartTime,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdStartTime.oa";
-import {
-    ref,
-} from "@wildboar/parity-schema/src/lib/modules/LDAPReferral/ref.oa";
+// import {
+//     pwdStartTime,
+// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdStartTime.oa";
+// import {
+//     ref,
+// } from "@wildboar/parity-schema/src/lib/modules/LDAPReferral/ref.oa";
 import {
     gpgFingerprint,
 } from "@wildboar/parity-schema/src/lib/modules/LegacyPGPFramework/gpgFingerprint.oa";
@@ -4278,38 +4278,38 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         krb5RealmName,
         krb5ValidEnd,
         krb5ValidStart,
-        // TODO: Don't override the X.500 pwd* attributes
+        // NOTE: The commented out pwd* attribute types are already present in the X.500 specifications.
         pwdAccountLockedTime,
         pwdAllowUserChange,
-        pwdAttribute,
+        // pwdAttribute,
         pwdChangedTime,
         pwdCheckQuality,
-        pwdEndTime,
+        // pwdEndTime,
         pwdExpireWarning,
         pwdFailureCountInterval,
-        pwdFailureTime,
+        // pwdFailureTime,
         pwdGraceAuthNLimit,
         pwdGraceExpire,
         pwdGraceUseTime,
-        pwdHistory,
+        // pwdHistory,
         pwdInHistory,
-        pwdLastSuccess,
-        pwdLockout,
-        pwdLockoutDuration,
-        pwdMaxAge,
+        // pwdHistory,
+        // pwdLockout,
+        // pwdLockoutDuration,
+        // pwdMaxAge,
         pwdMaxDelay,
         pwdMaxFailure,
         pwdMaxIdle,
         pwdMaxLength,
         pwdMinAge,
         pwdMinDelay,
-        pwdMinLength,
+        // pwdMinLength,
         pwdMustChange,
         pwdPolicySubentry,
         pwdReset,
         pwdSafeModify,
-        pwdStartTime,
-        ref, // TODO: Driver
+        // pwdStartTime,
+        // ref,
         gpgFingerprint,
         gpgMailbox,
         gpgSubCertID,
@@ -4555,7 +4555,7 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         nisDomain,
         nisPublicKey,
         nisSecretKey,
-        dynamicSubtrees, // TODO: Driver
+        dynamicSubtrees,
         entryTtl: {
             ...entryTtl,
             "&no-user-modification": false, // I believe it was in error that this was defined as NUM in the first place.
