@@ -717,7 +717,7 @@ jobs:
             --set enable_dop=true \
             --set enable_dsp=true \
             --set administrator_email=jonathan@wilbur.space \
-            --set administrator_email_public=1 \
+            --set administrator_email_public=true \
             --set vendor_version='1.3.0' \
             --atomic \
             --namespace=${{ env.NAMESPACE }}
