@@ -987,10 +987,11 @@ async function search_i (
         NAMING_MATCHER,
     );
     let cursorId: number | undefined = searchState.paging?.[1].cursorIds[searchState.depth];
+    const manageDSAIT: boolean = (data.serviceControls?.options?.[manageDSAITBit] === TRUE_BIT);
     if (!searchState.depth && data.pagedResults) { // This should only be done for the first recursion.
         const chainingProhibited = (
             (data.serviceControls?.options?.[chainingProhibitedBit] === TRUE_BIT)
-            || (data.serviceControls?.options?.[manageDSAITBit] === TRUE_BIT)
+            || manageDSAIT
         );
         const preferChaining: boolean = (data.serviceControls?.options?.[preferChainingBit] === TRUE_BIT);
         if (
@@ -1212,6 +1213,7 @@ async function search_i (
         );
         return;
     }
+    // TODO: REVIEW: How would this handle alias dereferencing, joins, hierarchy selection, etc?
     const onBaseObjectIteration: boolean = (targetDN.length === data.baseObject.rdnSequence.length);
     const authorized = (permissions: number[]) => {
         const { authorized } = bacACDF(
@@ -2317,6 +2319,72 @@ async function search_i (
                 continue;
             }
             if (subordinate.dse.subr && !subordinate.dse.cp) { // Step 7.a.
+                /**
+                 * What follows is a DEVIATION from the specification.
+                 * ITU Recommendation X.518 does NOT say anything about checking
+                 * access controls on a subr DSE. The name of the subr DSE may
+                 * be returned in a search result's POQ.unexplored as a
+                 * continuation reference, regardless of authorization to
+                 * discover it!
+                 */
+                const adminPoints: Vertex[] = (subordinate.dse.admPoint
+                    ? [ ...state.admPoints, subordinate ]
+                    : [ ...state.admPoints ])
+                // Array.reverse() works in-place, so we create a new array.
+                const subAccessControlScheme = [ ...adminPoints ].reverse()
+                    .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
+                if ( // If an access control scheme is defined, and...
+                    subAccessControlScheme
+                    && ( // ...if there are any attributes that suggest that this DSE is subject to access control...
+                        subordinate.dse.entryACI?.length
+                        || subordinate.dse.subentry?.prescriptiveACI?.length
+                        || subordinate.dse.admPoint?.subentryACI?.length
+                        // Rule-based access control is not supported yet, so if
+                        // this next line were enabled, it would simply make the
+                        // subr DSE unavailable to all users.
+                        // || subordinate.dse.clearances?.length 
+                    )
+                ) {
+                    const relevantSubentries: Vertex[] = (await Promise.all(
+                        adminPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
+                    )).flat();
+                    const targetACI = getACIItems(
+                        subAccessControlScheme,
+                        target,
+                        subordinate,
+                        relevantSubentries,
+                        Boolean(subordinate.dse.subentry),
+                    );
+                    const acdfTuples: ACDFTuple[] = (targetACI ?? [])
+                        .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+                    const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
+                    const relevantTuples: ACDFTupleExtended[] = await preprocessTuples(
+                        subAccessControlScheme,
+                        acdfTuples,
+                        user,
+                        state.chainingArguments.authenticationLevel ?? UNTRUSTED_REQ_AUTH_LEVEL,
+                        [ ...targetDN, subordinate.dse.rdn ],
+                        isMemberOfGroup,
+                        NAMING_MATCHER,
+                    );
+                    const { authorized: authorizedToDiscoverSubordinate } = bacACDF(
+                        relevantTuples,
+                        user,
+                        {
+                            entry: Array.from(subordinate.dse.objectClass).map(ObjectIdentifier.fromString),
+                        },
+                        [
+                            PERMISSION_CATEGORY_BROWSE,
+                            PERMISSION_CATEGORY_RETURN_DN,
+                        ],
+                        bacSettings,
+                        true,
+                    );
+                    if (!authorizedToDiscoverSubordinate) {
+                        continue;
+                    }
+                }
+                
                 const cr = new ContinuationReference(
                     {
                         /**
