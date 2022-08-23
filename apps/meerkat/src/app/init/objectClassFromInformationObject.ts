@@ -22,7 +22,7 @@ import type {
  * @function
  */
 export
-function objectClassFromInformationObject (io: OBJECT_CLASS): ObjectClassInfo {
+function objectClassFromInformationObject (io: OBJECT_CLASS, name: string): ObjectClassInfo {
     return {
         id: io["&id"],
         name: io["&ldapName"],
@@ -30,7 +30,9 @@ function objectClassFromInformationObject (io: OBJECT_CLASS): ObjectClassInfo {
         kind: io["&kind"] ?? ObjectClassKind_structural,
         mandatoryAttributes: new Set(io["&MandatoryAttributes"]?.map((attr) => attr["&id"]?.toString() ?? "") ?? []),
         optionalAttributes: new Set(io["&OptionalAttributes"]?.map((attr) => attr["&id"]?.toString() ?? "") ?? []),
-        ldapNames: io["&ldapName"],
+        ldapNames: io["&ldapName"]?.length
+            ? io["&ldapName"]
+            : [ name ],   
         ldapDescription: io["&ldapDesc"],
     };
 }
