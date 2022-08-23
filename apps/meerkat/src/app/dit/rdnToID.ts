@@ -9,6 +9,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import { entryExistsFilter } from "../database/entryExistsFilter";
 
 /**
  * @summary Determine the database ID of a subordinate by its RDN
@@ -37,7 +38,7 @@ async function rdnToID (
     const exactMatch = await ctx.db.entry.findFirst({
         where: {
             immediate_superior_id: superior_id,
-            deleteTimestamp: null,
+            ...entryExistsFilter,
             AND: rdn.map((atav) => ({
                 RDN: {
                     some: {

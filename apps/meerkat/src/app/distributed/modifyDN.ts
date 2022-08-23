@@ -180,6 +180,7 @@ import type {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import { printInvokeId } from "../utils/printInvokeId";
 import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
+import { entryExistsFilter } from "../database/entryExistsFilter";
 
 /**
  * @summary Determine whether a DSE is local to this DSA
@@ -738,7 +739,7 @@ async function modifyDN (
                     siblingsCount: await ctx.db.entry.count({
                         where: {
                             immediate_superior_id: target.immediateSuperior.dse.id,
-                            deleteTimestamp: null,
+                            ...entryExistsFilter,
                         },
                     }),
                 },
@@ -1176,7 +1177,7 @@ async function modifyDN (
                     not: target.dse.id,
                 },
                 immediate_superior_id: superior.dse.id,
-                deleteTimestamp: null,
+                ...entryExistsFilter,
                 subentry: true,
                 EntryObjectClass: {
                     some: {

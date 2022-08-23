@@ -144,6 +144,12 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: chaining_tls_optional
                   optional: true
+            - name: MEERKAT_DEFAULT_ENTRY_TTL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: default_entry_ttl
+                  optional: true
             - name: MEERKAT_ENABLE_DOP
               valueFrom:
                 configMapKeyRef:

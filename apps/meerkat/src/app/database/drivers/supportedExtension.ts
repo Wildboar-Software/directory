@@ -18,11 +18,13 @@ import {
 import {
     modifyPassword,
     startTLS,
+    dynamicRefresh,
 } from "@wildboar/ldap/src/lib/extensions";
 
 const extensions = [
     modifyPassword,
     startTLS,
+    dynamicRefresh,
 ];
 
 export

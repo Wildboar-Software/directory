@@ -8,6 +8,9 @@ import {
     ObjectClassKind_auxiliary,
     ObjectClassKind_structural,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
+import {
+    entryTtl,
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa";
 import { ObjectIdentifier } from "asn1-ts";
 import { AssertionError } from "assert";
 import {
@@ -1067,7 +1070,10 @@ async function loadObjectClasses (ctx: Context): Promise<void> {
         radiusprofile,
         nisDomainObject,
         nisKeyObject,
-        dynamicObject,
+        { // I believe it was an error in the spec for this not to permit `entryTtl` as an optional attribute.
+            ...dynamicObject,
+            "&OptionalAttributes": [ entryTtl ],
+        },
         calEntry,
         slpService,
         ldifLocationURLObject,

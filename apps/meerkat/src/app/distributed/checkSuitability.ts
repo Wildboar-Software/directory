@@ -32,6 +32,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import getShadowingAgreementInfo from "../dit/getShadowingAgreementInfo";
 import filterCanBeUsedInShadowedArea from "../x500/filterCanBeUsedInShadowedArea";
+import { entryExistsFilter } from "../database/entryExistsFilter";
 
 /**
  * @summary Determine if a shadow DSE is complete.
@@ -74,7 +75,7 @@ async function areAllSubordinatesComplete (ctx: Context, vertex: Vertex): Promis
     return !(await ctx.db.entry.findFirst({
         where: {
             shadow: true,
-            deleteTimestamp: null,
+            ...entryExistsFilter,
             immediate_superior_id: vertex.dse.id,
             OR: [
                 {

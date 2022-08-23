@@ -3,7 +3,7 @@ import * as errors from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
 import * as net from "net";
 import * as tls from "tls";
-import { BERElement, ASN1TruncationError } from "asn1-ts";
+import { BERElement, ASN1TruncationError, DERElement, ASN1TagClass, ASN1Construction, ASN1UniversalType } from "asn1-ts";
 import { BER } from "asn1-ts/dist/node/functional";
 import {
     LDAPMessage,
@@ -54,6 +54,7 @@ import {
     whoAmI,
     startTLS,
     cancel,
+    dynamicRefresh,
 } from "@wildboar/ldap/src/lib/extensions";
 import encodeLDAPDN from "./encodeLDAPDN";
 import createNoticeOfDisconnection from "./createNoticeOfDisconnection";
@@ -325,6 +326,32 @@ async function handleRequestAndErrors (
                             result.referral,
                             message.protocolOp.extendedReq.requestName,
                             emptySeq.toBytes(),
+                        ),
+                    },
+                    undefined,
+                );
+                assn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+            } else if (oid.isEqualTo(dynamicRefresh)) {
+                /* "In case of an error, the responseTtl field will have the
+                value 0" */
+                const value = BERElement.fromSequence([
+                    new DERElement(
+                        ASN1TagClass.universal,
+                        ASN1Construction.primitive,
+                        ASN1UniversalType.integer,
+                        0,
+                    ),
+                ]);
+                const res = new LDAPMessage(
+                    message.messageID,
+                    {
+                        extendedResp: new ExtendedResponse(
+                            result.resultCode,
+                            result.matchedDN,
+                            result.diagnosticMessage,
+                            result.referral,
+                            message.protocolOp.extendedReq.requestName,
+                            value.toBytes(),
                         ),
                     },
                     undefined,

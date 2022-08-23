@@ -1,4 +1,5 @@
 import type { Context } from "@wildboar/meerkat-types";
+import { entryExistsFilter } from "../database/entryExistsFilter";
 
 export
 async function createDatabaseReport (ctx: Context): Promise<Record<string, any>> {
@@ -6,86 +7,93 @@ async function createDatabaseReport (ctx: Context): Promise<Record<string, any>>
         type: "database",
         entries: {
             nonDeleted: await ctx.db.entry.count({
-                where: {
-                    deleteTimestamp: null,
-                },
+                where: entryExistsFilter,
             }),
             deleted: await ctx.db.entry.count({
                 where: {
-                    deleteTimestamp: {
-                        not: null,
-                    },
+                    OR: [
+                        {
+                            deleteTimestamp: {
+                                not: null,
+                            },
+                        },
+                        {
+                            expiresTimestamp: {
+                                lte: new Date(),
+                            },
+                        },
+                    ],
                 },
             }),
             glue: await ctx.db.entry.count({
                 where: {
-                    deleteTimestamp: null,
+                    ...entryExistsFilter,
                     glue: true,
                 },
             }),
             cp: await ctx.db.entry.count({
                 where: {
-                    deleteTimestamp: null,
+                    ...entryExistsFilter,
                     cp: true,
                 },
             }),
             entry: await ctx.db.entry.count({
                 where: {
-                    deleteTimestamp: null,
+                    ...entryExistsFilter,
                     entry: true,
                 },
             }),
             subr: await ctx.db.entry.count({
                 where: {
-                    deleteTimestamp: null,
+                    ...entryExistsFilter,
                     subr: true,
                 },
             }),
             nssr: await ctx.db.entry.count({
                 where: {
-                    deleteTimestamp: null,
+                    ...entryExistsFilter,
                     nssr: true,
                 },
             }),
             xr: await ctx.db.entry.count({
                 where: {
-                    deleteTimestamp: null,
+                    ...entryExistsFilter,
                     xr: true,
                 },
             }),
             subentry: await ctx.db.entry.count({
                 where: {
-                    deleteTimestamp: null,
+                    ...entryExistsFilter,
                     subentry: true,
                 },
             }),
             shadow: await ctx.db.entry.count({
                 where: {
-                    deleteTimestamp: null,
+                    ...entryExistsFilter,
                     shadow: true,
                 },
             }),
             immSupr: await ctx.db.entry.count({
                 where: {
-                    deleteTimestamp: null,
+                    ...entryExistsFilter,
                     immSupr: true,
                 },
             }),
             rhob: await ctx.db.entry.count({
                 where: {
-                    deleteTimestamp: null,
+                    ...entryExistsFilter,
                     rhob: true,
                 },
             }),
             sa: await ctx.db.entry.count({
                 where: {
-                    deleteTimestamp: null,
+                    ...entryExistsFilter,
                     sa: true,
                 },
             }),
             dsSubentry: await ctx.db.entry.count({
                 where: {
-                    deleteTimestamp: null,
+                    ...entryExistsFilter,
                     dsSubentry: true,
                 },
             }),

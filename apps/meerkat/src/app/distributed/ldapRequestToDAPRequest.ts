@@ -117,6 +117,7 @@ import {
 import {
     modifyPassword,
     cancel,
+    dynamicRefresh,
 } from "@wildboar/ldap/src/lib/extensions";
 import {
     subentries as subentriesOID,
@@ -181,6 +182,9 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import getAttributeParentTypes from "../x500/getAttributeParentTypes";
 import getLDAPDecoder from "../ldap/getLDAPDecoder";
+import {
+    entryTtl,
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa";
 
 const now: TimeAssertion = {
     now: null,
@@ -1422,6 +1426,56 @@ function ldapRequestToDAPRequest (
                     argument,
                 };
             }
+        } else if (oid.isEqualTo(dynamicRefresh)) {
+            if (!req.protocolOp.extendedReq.requestValue) {
+                throw new Error("d89730dc-49a4-4ced-9219-1a176d1c121b");
+            }
+            const el = new BERElement();
+            el.fromBytes(req.protocolOp.extendedReq.requestValue);
+            const components = el.sequence;
+            if (components.length !== 2) {
+                throw new Error("0bede648-7126-4c78-be8a-75b3e0e0ff93");
+            }
+            const [ entryNameElement, requestTtlElement ] = components;
+            const entryName = decodeLDAPDN(ctx, entryNameElement.octetString);
+            const requestTtl = requestTtlElement.integer;
+            if (requestTtl <= 0) {
+                throw new Error("318cee64-ff57-4485-a48d-569af2bf0b10");
+            }
+            if (requestTtl > Number.MAX_SAFE_INTEGER) {
+                throw new Error("0d21d162-31b0-44c8-baee-336b75763f91");
+            }
+            /* No attempt is made to add the `dynamicObject` object class. This
+            object class should have been added to the entry since its creation,
+            if it is to be a dynamic entry. For that matter, DAP does not define
+            a `modifyEntry` modification that declaratively ensures that an
+            attribute value is present, so there's no way to guarantee that this
+            operation would not fail if we attempted to add the new object class
+            value. */
+            const dapReq: ModifyEntryArgument = {
+                unsigned: new ModifyEntryArgumentData(
+                    {
+                        rdnSequence: entryName,
+                    },
+                    [
+                        {
+                            replaceValues: new Attribute(
+                                entryTtl["&id"],
+                                [
+                                    entryTtl.encoderFor["&Type"]!(requestTtl, DER),
+                                ],
+                            ),
+                        },
+                    ],
+                    undefined,
+                ),
+            };
+            const argument = _encode_ModifyEntryArgument(dapReq, DER);
+            return {
+                invokeId,
+                opCode: modifyEntry["&operationCode"],
+                argument,
+            };
         } else if (oid.isEqualTo(cancel)) {
             if (!req.protocolOp.extendedReq.requestValue) {
                 throw new Error("57b99a29-31e7-4dca-a7e7-7280aef4f930");

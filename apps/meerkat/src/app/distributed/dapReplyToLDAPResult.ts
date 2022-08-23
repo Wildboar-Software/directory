@@ -1,5 +1,6 @@
 import type { Context, Vertex } from "@wildboar/meerkat-types";
 import {
+    BERElement,
     DERElement,
     ASN1TagClass,
     ASN1Construction,
@@ -60,6 +61,7 @@ import {
 } from "@wildboar/ldap/src/lib/controls";
 import {
     cancel,
+    dynamicRefresh,
     modifyPassword
 } from "@wildboar/ldap/src/lib/extensions";
 import decodeLDAPOID from "@wildboar/ldap/src/lib/decodeLDAPOID";
@@ -377,6 +379,43 @@ function dapReplyToLDAPResult (
                     undefined,
                     undefined,
                     undefined,
+                ),
+            },
+            undefined,
+        );
+    } else if (
+        compareCode(res.opCode, modifyEntry["&operationCode"]!)
+        && ("extendedReq" in req.protocolOp)
+        && decodeLDAPOID(req.protocolOp.extendedReq.requestName).isEqualTo(dynamicRefresh)
+    ) {
+        if (!req.protocolOp.extendedReq.requestValue) {
+            throw new Error("d89730dc-49a4-4ced-9219-1a176d1c121b");
+        }
+        const el = new BERElement();
+        el.fromBytes(req.protocolOp.extendedReq.requestValue);
+        const components = el.sequence;
+        if (components.length !== 2) {
+            throw new Error("0bede648-7126-4c78-be8a-75b3e0e0ff93");
+        }
+        const [ , requestTtlElement ] = components;
+        const requestTtl = requestTtlElement.integer;
+        return new LDAPMessage(
+            req.messageID,
+            {
+                extendedResp: new ExtendedResponse(
+                    LDAPResult_resultCode_success,
+                    Buffer.alloc(0),
+                    Buffer.from(successMessage, "utf-8"),
+                    undefined,
+                    Buffer.from(dynamicRefresh.toString()),
+                    DERElement.fromSequence([
+                        new DERElement(
+                            ASN1TagClass.universal,
+                            ASN1Construction.primitive,
+                            ASN1UniversalType.integer,
+                            requestTtl,
+                        ),
+                    ]).toBytes(),
                 ),
             },
             undefined,

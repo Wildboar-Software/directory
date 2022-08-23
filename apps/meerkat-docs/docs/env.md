@@ -252,6 +252,16 @@ credentials, etc. are susceptible to inspection by intermediaries, which is a
 security problem. These operations may not be susceptible to tampering (other
 than by omission) if cryptographic signing is used.
 
+## MEERKAT_DEFAULT_ENTRY_TTL
+
+The default value of the `entryTtl` operational attribute, if an entry
+was marked as a dynamic object using the `dynamicObject` object class,
+but the `entryTtl` attribute was not supplied in the attributes of the
+created entry. This value is a non-negative number of seconds before the entry
+should expire and disappear.
+
+See [IETF RFC 2589](https://www.rfc-editor.org/rfc/rfc2589.html).
+
 ## MEERKAT_ECDH_CURVES
 
 A colon-separated list of ECDH curves to use in ECDH key agreement. Each curve

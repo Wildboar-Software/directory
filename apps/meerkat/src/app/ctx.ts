@@ -924,6 +924,9 @@ const config: Configuration = {
     maxPreBindRequests: process.env.MEERKAT_MAX_PRE_BIND_REQUESTS
         ? Number.parseInt(process.env.MEERKAT_MAX_PRE_BIND_REQUESTS, 10)
         : 0,
+    defaultEntryTTL: process.env.MEERKAT_DEFAULT_ENTRY_TTL
+        ? Number.parseInt(process.env.MEERKAT_DEFAULT_ENTRY_TTL, 10)
+        : 60, // One minute.
     dap: {
         enabled: (process.env.MEERKAT_ENABLE_DAP !== "0"),
     },

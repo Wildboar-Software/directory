@@ -67,6 +67,7 @@ import {
 import saveAccessPoint from "../../database/saveAccessPoint";
 import dseFromDatabaseEntry from "../../database/dseFromDatabaseEntry";
 import { strict as assert } from "assert";
+import { entryExistsFilter } from "../../database/entryExistsFilter";
 
 /**
  * @description

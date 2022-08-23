@@ -146,7 +146,7 @@ model Entry {
   ObjectClassDescription         ObjectClassDescription[]
   @@unique([dseUUID])
   @@unique([entryUUID])
-  @@index([immediate_superior_id, deleteTimestamp, subentry])
+  @@index([immediate_superior_id, deleteTimestamp, expiresTimestamp, subentry])
   @@index([materialized_path])
   @@index([hierarchyTop_id])
   @@index([hierarchyParent_id])

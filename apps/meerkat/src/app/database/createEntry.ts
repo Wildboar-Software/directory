@@ -1,4 +1,5 @@
 import type { Context, Vertex, Value } from "@wildboar/meerkat-types";
+import { DER } from "asn1-ts/dist/node/functional";
 import { Prisma } from "@prisma/client";
 import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry";
 import type {
@@ -15,6 +16,12 @@ import { strict as assert } from "assert";
 import { randomUUID } from "crypto";
 import getStructuralObjectClass from "../x500/getStructuralObjectClass";
 import getVertexById from "./getVertexById";
+import {
+    id_oc_dynamicObject,
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/dynamicObject.oa";
+import {
+    entryTtl,
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa";
 
 /**
  * @summary Create a DSE
@@ -49,6 +56,13 @@ async function createEntry (
     const isSubentry = objectClasses.some((oc) => oc.isEqualTo(subentry["&id"]));
     const isAlias = objectClasses.some((oc) => oc.isEqualTo(alias["&id"]));
     // const isFamilyMember = objectClasses.some((oc) => (oc.isEqualTo(parent["&id"]) || oc.isEqualTo(child["&id"])));
+    const isDynamic = objectClasses.some((oc) => oc.isEqualTo(id_oc_dynamicObject));
+    if (isDynamic && !values.some((v) => v.type.isEqualTo(entryTtl["&id"]))) {
+        values.push({
+            type: entryTtl["&id"],
+            value: entryTtl.encoderFor["&Type"]!(3600, DER), // TODO: Make this configurable.
+        });
+    }
     const now = new Date();
     const createdEntry = await ctx.db.entry.create({
         data: {

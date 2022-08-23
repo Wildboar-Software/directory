@@ -823,7 +823,7 @@ interface DSE {
      *
      * https://dzone.com/articles/materialized-paths-tree-structures-relational-database
      */
-         materializedPath: string;
+    materializedPath: string;
 
     /**
      * The internal UUID assigned to this DSE. This UUID is intentionally
@@ -878,6 +878,13 @@ interface DSE {
 
     /** The single value of the `modifyTimestamp` operational attribute. */
     modifyTimestamp?: Date;
+
+    /**
+     * The time upon which this entry should expire, as specified in the
+     * `entryTtl` operational attribute defined in
+     * [IETF RFC 2589](https://www.rfc-editor.org/rfc/rfc2589.html).
+     */
+    expiresTimestamp?: Date;
 
     /** Values of the `entryACI` operational attribute. */
     entryACI?: ACIItem[];
@@ -1782,6 +1789,7 @@ interface Configuration {
         usingTLSv1_3: number;
 
     };
+
     chaining: {
 
         /**
@@ -1968,6 +1976,17 @@ interface Configuration {
      * but it should be a low number. It should probably not be higher than 10.
      */
     maxPreBindRequests: number;
+
+    /**
+     * The default value of the `entryTtl` operational attribute, if an entry
+     * was marked as a dynamic object using the `dynamicObject` object class,
+     * but the `entryTtl` attribute was not supplied in the attributes of the
+     * created entry. This value is the number of seconds before the entry
+     * should expire and disappear.
+     * 
+     * @see {@link https://www.rfc-editor.org/rfc/rfc2589.html IETF RFC 2589}
+     */
+    defaultEntryTTL: number;
 
     /** Directory Access Protocol (DAP) options. */
     dap: {

@@ -178,6 +178,7 @@ import { generateSignature } from "../pki/generateSignature";
 import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
 import { stringifyDN } from "../x500/stringifyDN";
 import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
+import { entryExistsFilter } from "../database/entryExistsFilter";
 
 const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
 const ID_AC_SPECIFIC: string = id_ar_accessControlSpecificArea.toString();
@@ -405,7 +406,7 @@ async function addEntry (
                     ? await ctx.db.entry.count({
                         where: {
                             immediate_superior_id: immediateSuperior.dse.id,
-                            deleteTimestamp: null,
+                            ...entryExistsFilter,
                         },
                     })
                     : undefined,

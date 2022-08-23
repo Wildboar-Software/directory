@@ -33,8 +33,10 @@ import dITContentRulesDriver from "../database/drivers/dITContentRules";
 import dITContextUseDriver from "../database/drivers/dITContextUse";
 import dITStructureRulesDriver from "../database/drivers/dITStructureRules";
 import dseTypeDriver from "../database/drivers/dseType";
+import dynamicSubtreesDriver from "../database/drivers/dynamicSubtrees";
 import entryACIDriver from "../database/drivers/entryACI";
 import entryDNDriver from "../database/drivers/entryDN";
+import entryTtlDriver from "../database/drivers/entryTtl";
 import entryUUIDDriver from "../database/drivers/entryUUID";
 import family_informationDriver from "../database/drivers/family_information";
 import fullVendorVersionDriver from "../database/drivers/fullVendorVersion";
@@ -319,7 +321,7 @@ import {
     derivedOrWithSyntaxChoice,
 } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/derivedOrWithSyntaxChoice.oa";
 import {
-    description,
+    description as x700description,
 } from "@wildboar/x700/src/lib/modules/DefinitionDirectoryASN1Module/description.oa";
 import {
     documentName,
@@ -493,9 +495,9 @@ import {
 // import {
 //     countryOfResidence,
 // } from "@wildboar/pkcs/src/lib/modules/PKCS-9/countryOfResidence.oa";
-import {
-    pseudonym,
-} from "@wildboar/pkcs/src/lib/modules/PKCS-9/pseudonym.oa";
+// import { // This has the same ID as pseudonym from X.520, but different matching rules!
+//     pseudonym,
+// } from "@wildboar/pkcs/src/lib/modules/PKCS-9/pseudonym.oa";
 // import {
 //     contentType,
 // } from "@wildboar/pkcs/src/lib/modules/PKCS-9/contentType.oa";
@@ -975,9 +977,9 @@ import {
 import {
     apacheDnsTtl,
 } from "@wildboar/parity-schema/src/lib/modules/ApacheDNS-Schema/apacheDnsTtl.oa";
-import {
-    authPassword,
-} from "@wildboar/parity-schema/src/lib/modules/AuthPasswordSchema/authPassword.oa";
+// import {
+//     authPassword,
+// } from "@wildboar/parity-schema/src/lib/modules/AuthPasswordSchema/authPassword.oa";
 // import {
 //     supportedAuthPasswordSchemes,
 // } from "@wildboar/parity-schema/src/lib/modules/AuthPasswordSchema/supportedAuthPasswordSchemes.oa";
@@ -3860,7 +3862,7 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         "delete": delete_,
         derivedFrom,
         derivedOrWithSyntaxChoice,
-        description,
+        x700description,
         documentName,
         documentObjectIdentifier,
         fixed,
@@ -3917,7 +3919,7 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         gender,
         countryOfCitizenship,
         countryOfResidence,
-        pseudonym,
+        // pseudonym,
         contentType,
         messageDigest,
         signingTime,
@@ -4079,7 +4081,7 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         apacheDnsSoaRName,
         apacheDnsSoaSerial,
         apacheDnsTtl,
-        authPassword,
+        // authPassword,
         // supportedAuthPasswordSchemes,
         automountInformation,
         corbaIor,
@@ -4276,6 +4278,7 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         krb5RealmName,
         krb5ValidEnd,
         krb5ValidStart,
+        // TODO: Don't override the X.500 pwd* attributes
         pwdAccountLockedTime,
         pwdAllowUserChange,
         pwdAttribute,
@@ -4306,7 +4309,7 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         pwdReset,
         pwdSafeModify,
         pwdStartTime,
-        ref,
+        ref, // TODO: Driver
         gpgFingerprint,
         gpgMailbox,
         gpgSubCertID,
@@ -4552,8 +4555,11 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         nisDomain,
         nisPublicKey,
         nisSecretKey,
-        dynamicSubtrees,
-        entryTtl,
+        dynamicSubtrees, // TODO: Driver
+        entryTtl: {
+            ...entryTtl,
+            "&no-user-modification": false, // I believe it was in error that this was defined as NUM in the first place.
+        },
         calCalAdrURI,
         calCalURI,
         calCAPURI,
@@ -5136,9 +5142,11 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
     ctx.attributeTypes.get(x500at.dITContentRules["&id"].toString())!.driver = dITContentRulesDriver;
     ctx.attributeTypes.get(x500at.dITContextUse["&id"].toString())!.driver = dITContextUseDriver;
     ctx.attributeTypes.get(x500at.dITStructureRules["&id"].toString())!.driver = dITStructureRulesDriver;
+    ctx.attributeTypes.get(dynamicSubtrees["&id"].toString())!.driver = dynamicSubtreesDriver;
     ctx.attributeTypes.get(x500at.dseType["&id"].toString())!.driver = dseTypeDriver;
     ctx.attributeTypes.get(x500at.entryACI["&id"].toString())!.driver = entryACIDriver;
     ctx.attributeTypes.get(entryDN["&id"].toString())!.driver = entryDNDriver;
+    ctx.attributeTypes.get(entryTtl["&id"].toString())!.driver = entryTtlDriver;
     ctx.attributeTypes.get(entryUUID.id.toString())!.driver = entryUUIDDriver;
     ctx.attributeTypes.get(x500at.family_information["&id"].toString())!.driver = family_informationDriver;
     ctx.attributeTypes.get(fullVendorVersion["&id"].toString())!.driver = fullVendorVersionDriver;

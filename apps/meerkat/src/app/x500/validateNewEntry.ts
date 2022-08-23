@@ -130,6 +130,7 @@ import type {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
 import stringifyDN from "./stringifyDN";
 import groupByOID from "../utils/groupByOID";
+import { entryExistsFilter } from "../database/entryExistsFilter";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
@@ -934,7 +935,7 @@ async function validateEntry (
         const subschemaThatAlreadyExists = await ctx.db.entry.findFirst({
             where: {
                 immediate_superior_id: immediateSuperior.dse.id,
-                deleteTimestamp: null,
+                ...entryExistsFilter,
                 subentry: true,
                 EntryObjectClass: {
                     some: {
