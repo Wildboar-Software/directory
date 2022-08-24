@@ -41,6 +41,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls-priority.ta";
 import printCode from "../utils/printCode";
 import stringifyDN from "../x500/stringifyDN";
+import { SecurityParameters } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
 
 /**
  * @summary List Continuation Reference Procedure, as defined in ITU Recommendation X.518.
@@ -103,11 +104,6 @@ async function lcrProcedure (
     );
     const requestor: DistinguishedName | undefined = state.chainingArguments.originator
         ?? assn?.boundNameAndUID?.dn;
-    const signDSPResult: boolean = (
-        (state.chainingArguments.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
-        && (assn instanceof DSPAssociation)
-        && assn.authorizedForSignedResults
-    );
     const highPriority = (data.serviceControls?.priority === ServiceControls_priority_high);
 
     // Part of Step #3
@@ -133,6 +129,11 @@ async function lcrProcedure (
                         listState.poq.entryCount,
                     );
                 }
+            } else {
+                listState.poq = listState.poq = new PartialOutcomeQualifier(
+                    undefined,
+                    [ cr ],
+                );
             }
         };
         for (const api of cr.accessPoints) {
@@ -156,7 +157,7 @@ async function lcrProcedure (
                     ),
                     securityParameters: createSecurityParameters(
                         ctx,
-                        signDSPResult,
+                        ctx.config.chaining.signChainedRequests,
                         api.ae_title.rdnSequence,
                         id_opcode_list,
                     ),

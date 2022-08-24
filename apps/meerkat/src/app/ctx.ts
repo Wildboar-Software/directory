@@ -889,6 +889,8 @@ const config: Configuration = {
         scrParallelism: process.env.MEERKAT_SCR_PARALLELISM
             ? Number.parseInt(process.env.MEERKAT_SCR_PARALLELISM, 10)
             : 0,
+        signChainedRequests: (process.env.MEERKAT_CHAINING_SIGN_REQUESTS !== "0"),
+        checkSignaturesOnResponses: (process.env.MEERKAT_CHAINING_CHECK_SIG !== "0"),
     },
     ob: {
         minAuthRequired: parseAuthLevel(

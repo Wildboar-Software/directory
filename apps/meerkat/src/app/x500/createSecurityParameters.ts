@@ -34,6 +34,8 @@ function createSecurityParameters (
 ): SecurityParameters | undefined {
     const signingCertPath = ctx.config.signing.certPath;
     const signable: boolean = !!(signingCertPath && signed && !ctx.config.bulkInsertMode);
+    // Errors are thrown by the server, not client.
+    // This block is a short-circuit to prevent DoS.
     if (!signable && errorCode) {
         return undefined;
     }

@@ -216,8 +216,7 @@ async function apinfoProcedure (
                     req.argument!,
                 ),
             };
-            const signArguments: boolean = true; // TODO: Make configurable.
-            const payload: Chained = signArguments
+            const payload: Chained = ctx.config.chaining.signChainedRequests
                 ? signChainedArgument(ctx, argument)
                 : argument;
             const result = await connection.writeOperation({
@@ -270,11 +269,10 @@ async function apinfoProcedure (
                     });
                     continue;
                 }
-                const checkChainedResultSignature: boolean = true; // TODO: Make configurable.
                 assert(chainedAbandon["&operationCode"]);
                 assert("local" in chainedAbandon["&operationCode"]);
                 if (
-                    checkChainedResultSignature
+                    ctx.config.chaining.checkSignaturesOnResponses
                     && ("local" in result.opCode)
                     && (result.opCode.local !== chainedAbandon["&operationCode"]!.local)
                     && result.result

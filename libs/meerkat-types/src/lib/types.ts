@@ -1858,6 +1858,17 @@ interface Configuration {
          */
         scrParallelism: number;
 
+        /**
+         * If `true`, Meerkat DSA will sign all outbound DSP requests.
+         */
+        signChainedRequests: boolean;
+
+        /**
+         * If `true`, Meerkat DSA will check the signatures on signed DSP
+         * results or errors.
+         */
+        checkSignaturesOnResponses: boolean;
+
     };
 
     /**

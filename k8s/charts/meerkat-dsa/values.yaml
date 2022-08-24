@@ -106,6 +106,8 @@ bind_min_sleep_ms: 1000
 bind_sleep_range_ms: 3000
 bulk_insert_mode: false
 # client_cert_engine: pkcs11
+chaining_check_sig: true
+chaining_sign_request: true
 chaining_tls_optional: false
 default_entry_ttl: 60
 # ecdh_curves: P-521:P-384:P-256

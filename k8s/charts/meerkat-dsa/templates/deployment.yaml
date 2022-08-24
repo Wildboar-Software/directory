@@ -138,6 +138,18 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: client_cert_engine
                   optional: true
+            - name: MEERKAT_CHAINING_CHECK_SIG
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: chaining_check_sig
+                  optional: true
+            - name: MEERKAT_CHAINING_SIGN_REQUESTS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: chaining_sign_request
+                  optional: true
             - name: MEERKAT_CHAINING_TLS_OPTIONAL
               valueFrom:
                 configMapKeyRef:

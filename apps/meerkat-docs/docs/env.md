@@ -240,6 +240,20 @@ re-enable bulk insert mode.
 This is an open-ended string that specifies the client certificate engine that
 OpenSSL can use to obtain a client certificate.
 
+## MEERKAT_CHAINING_CHECK_SIG
+
+If not set to `0`, Meerkat DSA will verify the digital signatures on received
+signed DSP results and errors. It is better security for this to remain enabled,
+but one good reason to disable it is that DAP users might not care about the
+point-to-point security provided by DSP signing, so long as the chained DAP
+results are digitally signed and verifiable; for these users, this more
+stringent security could mean that their DAP requests simply fail in chaining.
+
+## MEERKAT_CHAINING_SIGN_REQUESTS
+
+If not set to `0`, Meerkat DSA will digitally sign DSP arguments, results, and
+errors.
+
 ## MEERKAT_CHAINING_TLS_OPTIONAL
 
 If set to `1`, this permits the non-usage of TLS in chaining to other DSAs. In
