@@ -130,7 +130,7 @@ import {
     ieee802Device, macAddress,
 } from "@wildboar/parity-schema/src/lib/modules/NIS/ieee802Device.oa";
 import {
-    ipHost,
+    ipHost, ipHostNumber,
 } from "@wildboar/parity-schema/src/lib/modules/NIS/ipHost.oa";
 import { BootParameterSyntax, _encode_BootParameterSyntax } from "@wildboar/parity-schema/src/lib/modules/NIS/BootParameterSyntax.ta";
 
@@ -1048,7 +1048,7 @@ async function seedGB (
                 undefined,
             ),
             new Attribute(
-                ipHost["&id"],
+                ipHostNumber["&id"],
                 [_encodeIA5String("192.168.1.105", DER)],
                 undefined,
             ),
