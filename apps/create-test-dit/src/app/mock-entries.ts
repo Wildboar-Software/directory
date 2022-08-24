@@ -1315,6 +1315,20 @@ function randomPhoneNumber (): string {
 }
 
 export
+function createMockUsername (): string {
+    const firstName = pickRandom(firstNames);
+    const lastName = pickRandom(lastNames);
+    return `${firstName[0]}${lastName}`.toLowerCase();
+}
+
+export
+function createMockEmail (): string {
+    const localpart = createMockUsername();
+    const domain = `${createMockUsername()}.com`;
+    return `${localpart}@${domain}`.toLowerCase();
+}
+
+export
 function createMockPersonAttributes (
     otherObjectClasses?: OBJECT_IDENTIFIER[],
 ): [ RelativeDistinguishedName, Attribute[], string ] {

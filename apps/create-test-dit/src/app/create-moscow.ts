@@ -119,28 +119,7 @@ import {
     UpdateProblem_entryAlreadyExists,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-
-const commonAuxiliaryObjectClasses: OBJECT_IDENTIFIER[] = [
-    oc.integrityInfo["&id"],
-    oc.child["&id"],
-    oc.pmiUser["&id"],
-    oc.pmiAA["&id"],
-    oc.pmiSOA["&id"],
-    oc.attCertCRLDistributionPt["&id"],
-    oc.pmiDelegationPath["&id"],
-    oc.privilegePolicy["&id"],
-    oc.protectedPrivilegePolicy["&id"],
-    oc.pkiUser["&id"],
-    oc.pkiCA["&id"],
-    oc.deltaCRL["&id"],
-    oc.cpCps["&id"],
-    oc.pkiCertPath["&id"],
-    oc.strongAuthenticationUser["&id"],
-    oc.userSecurityInformation["&id"],
-    oc.userPwdClass["&id"],
-    oc.certificationAuthority["&id"],
-    oc.certificationAuthority_V2["&id"],
-];
+import { commonAuxiliaryObjectClasses } from "./objectClassSets";
 
 const allNonSecurityContextTypes: OBJECT_IDENTIFIER[] = [
     ct.languageContext["&id"],

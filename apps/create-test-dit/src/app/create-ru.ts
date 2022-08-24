@@ -188,6 +188,7 @@ import { addDays } from "date-fns";
 import {
     commonName,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
+import { commonAuxiliaryObjectClasses } from "./objectClassSets";
 
 const MOSCOW_ACCESS_POINT = new AccessPoint(
     {
@@ -217,28 +218,6 @@ const MOSCOW_ACCESS_POINT = new AccessPoint(
     ),
     undefined,
 );
-
-const commonAuxiliaryObjectClasses: OBJECT_IDENTIFIER[] = [
-    oc.integrityInfo["&id"],
-    oc.child["&id"],
-    oc.pmiUser["&id"],
-    oc.pmiAA["&id"],
-    oc.pmiSOA["&id"],
-    oc.attCertCRLDistributionPt["&id"],
-    oc.pmiDelegationPath["&id"],
-    oc.privilegePolicy["&id"],
-    oc.protectedPrivilegePolicy["&id"],
-    oc.pkiUser["&id"],
-    oc.pkiCA["&id"],
-    oc.deltaCRL["&id"],
-    oc.cpCps["&id"],
-    oc.pkiCertPath["&id"],
-    oc.strongAuthenticationUser["&id"],
-    oc.userSecurityInformation["&id"],
-    oc.userPwdClass["&id"],
-    oc.certificationAuthority["&id"],
-    oc.certificationAuthority_V2["&id"],
-];
 
 const allNonSecurityContextTypes: OBJECT_IDENTIFIER[] = [
     ct.languageContext["&id"],

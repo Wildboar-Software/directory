@@ -64,6 +64,7 @@ import print from "./printCode";
 import {
     DER,
     _encodeBoolean,
+    _encodeIA5String,
     _encodeInteger,
     _encodeObjectIdentifier,
     _encodePrintableString,
@@ -121,28 +122,17 @@ import {
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { createMockPersonAttributes } from "./mock-entries";
 import { idempotentAddEntry } from "./utils";
-
-const commonAuxiliaryObjectClasses: OBJECT_IDENTIFIER[] = [
-    oc.integrityInfo["&id"],
-    oc.child["&id"],
-    oc.pmiUser["&id"],
-    oc.pmiAA["&id"],
-    oc.pmiSOA["&id"],
-    oc.attCertCRLDistributionPt["&id"],
-    oc.pmiDelegationPath["&id"],
-    oc.privilegePolicy["&id"],
-    oc.protectedPrivilegePolicy["&id"],
-    oc.pkiUser["&id"],
-    oc.pkiCA["&id"],
-    oc.deltaCRL["&id"],
-    oc.cpCps["&id"],
-    oc.pkiCertPath["&id"],
-    oc.strongAuthenticationUser["&id"],
-    oc.userSecurityInformation["&id"],
-    oc.userPwdClass["&id"],
-    oc.certificationAuthority["&id"],
-    oc.certificationAuthority_V2["&id"],
-];
+import { commonAuxiliaryObjectClasses, deviceAuxiliaryObjectClasses } from "./objectClassSets";
+import {
+    bootableDevice, bootFile, bootParameter,
+} from "@wildboar/parity-schema/src/lib/modules/NIS/bootableDevice.oa";
+import {
+    ieee802Device, macAddress,
+} from "@wildboar/parity-schema/src/lib/modules/NIS/ieee802Device.oa";
+import {
+    ipHost,
+} from "@wildboar/parity-schema/src/lib/modules/NIS/ipHost.oa";
+import { BootParameterSyntax, _encode_BootParameterSyntax } from "@wildboar/parity-schema/src/lib/modules/NIS/BootParameterSyntax.ta";
 
 const allNonSecurityContextTypes: OBJECT_IDENTIFIER[] = [
     ct.languageContext["&id"],
@@ -598,7 +588,10 @@ function addSubschemaSubentryArgument (
                 ), DER),
                 _encode_DITContentRuleDescription(new DITContentRuleDescription(
                     oc.device["&id"],
-                    commonAuxiliaryObjectClasses, // auxiliaries
+                    [
+                        ...commonAuxiliaryObjectClasses,
+                        ...deviceAuxiliaryObjectClasses,
+                    ], // auxiliaries
                     undefined, // mandatory
                     undefined, // optional
                     undefined, // precluded
@@ -1015,14 +1008,48 @@ async function seedGB (
             new Attribute(
                 selat.objectClass["&id"],
                 [
-                    _encodeObjectIdentifier(seloc.device["&id"]!, DER),
                     _encodeObjectIdentifier(seloc.child["&id"]!, DER),
+                    _encodeObjectIdentifier(seloc.device["&id"]!, DER),
+                    _encodeObjectIdentifier(bootableDevice["&id"]!, DER),
+                    _encodeObjectIdentifier(ieee802Device["&id"]!, DER),
+                    _encodeObjectIdentifier(ipHost["&id"]!, DER),
                 ],
                 undefined,
             ),
             new Attribute(
                 selat.commonName["&id"]!,
                 [_encodeUTF8String("VCR in the kill room", DER)],
+                undefined,
+            ),
+            new Attribute(
+                bootFile["&id"],
+                [_encodeIA5String("/boot/boot.efi", DER)],
+                undefined,
+            ),
+            new Attribute(
+                bootParameter["&id"],
+                [
+                    _encode_BootParameterSyntax(new BootParameterSyntax(
+                        "number_of_boops",
+                        "www.google.com",
+                        "/games/doom/doom.exe",
+                    ), DER)
+                ],
+                undefined,
+            ),
+            new Attribute(
+                macAddress["&id"],
+                [_encodeIA5String("08:FB:34:11:05:37", DER)],
+                undefined,
+            ),
+            new Attribute(
+                macAddress["&id"],
+                [_encodeIA5String("08:FB:34:11:05:37", DER)],
+                undefined,
+            ),
+            new Attribute(
+                ipHost["&id"],
+                [_encodeIA5String("192.168.1.105", DER)],
                 undefined,
             ),
         ]);
