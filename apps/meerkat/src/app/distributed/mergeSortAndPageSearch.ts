@@ -334,8 +334,8 @@ async function mergeSortAndPageSearch(
         let sizeLimitRemaining: number = (sizeLimit - searchState.results.length);
         let i = 0;
         while ((sizeLimitRemaining > 0) && (i < searchState.resultSets.length)) {
-            i++;
             const resultSet: SearchResult = searchState.resultSets[i];
+            i++;
             const entriesInResultSet: number = getEntryCount(resultSet);
             if (entriesInResultSet > sizeLimitRemaining) {
                 continue;

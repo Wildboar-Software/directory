@@ -301,8 +301,8 @@ async function mergeSortAndPageList(
         let sizeLimitRemaining: number = (sizeLimit - listState.results.length);
         let i = 0;
         while ((sizeLimitRemaining > 0) && (i < listState.resultSets.length)) {
-            i++;
             const resultSet: ListResult = listState.resultSets[i];
+            i++;
             const entriesInResultSet: number = getEntryCount(resultSet);
             if (entriesInResultSet > sizeLimitRemaining) {
                 continue;
