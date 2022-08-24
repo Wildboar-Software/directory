@@ -120,6 +120,9 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { commonAuxiliaryObjectClasses } from "./objectClassSets";
+import {
+    inetOrgPersonNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/inetOrgPersonNameForm.oa";
 
 const allNonSecurityContextTypes: OBJECT_IDENTIFIER[] = [
     ct.languageContext["&id"],
@@ -487,6 +490,11 @@ function addSubschemaSubentryArgument (
                     16,
                     nf.cRLDistPtNameForm["&id"],
                     [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                ), DER),
+                _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
+                    17,
+                    inetOrgPersonNameForm["&id"],
+                    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
                 ), DER),
             ],
             undefined,

@@ -189,6 +189,9 @@ import {
     commonName,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
 import { commonAuxiliaryObjectClasses } from "./objectClassSets";
+import {
+    inetOrgPersonNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/inetOrgPersonNameForm.oa";
 
 const MOSCOW_ACCESS_POINT = new AccessPoint(
     {
@@ -643,6 +646,11 @@ function addSubschemaSubentryArgument (
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     16,
                     nf.cRLDistPtNameForm["&id"],
+                    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                ), DER),
+                _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
+                    17,
+                    inetOrgPersonNameForm["&id"],
                     [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
                 ), DER),
             ],
