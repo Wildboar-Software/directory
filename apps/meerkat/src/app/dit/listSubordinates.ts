@@ -1,7 +1,7 @@
 import type { Context } from "@wildboar/meerkat-types";
 import type { Prisma } from "@prisma/client";
 import { MAX_RESULTS } from "../constants";
-import { entryExistsFilter } from "../database/entryExistsFilter";
+import { getEntryExistsFilter } from "../database/entryExistsFilter";
 
 /**
  * @summary Get the RDNs of immediately suborinate entries
@@ -40,7 +40,7 @@ async function listSubordinates (
         where: {
             ...(where ?? {}),
             immediate_superior_id: entry_id,
-            ...entryExistsFilter,
+            ...getEntryExistsFilter(),
         },
         orderBy: {
             id: "desc", // Theory: newer IDs are more likely to be queried.

@@ -224,7 +224,20 @@ async function do_list (
         }
         ctx.log.info("End of list.");
     } else if ("uncorrelatedListInfo" in resData) {
-        ctx.log.warn("Uncorrelated info."); // FIXME:
+        for (const uli of resData.uncorrelatedListInfo) {
+            const data = getOptionallyProtectedValue(uli);
+            if ("listInfo" in data) {
+                data.listInfo.subordinates
+                .map((sub) => stringifyDN(ctx, [ sub.rdn ]))
+                .forEach((str, i) => console.log(`#${(i + 1).toString().padStart(4, "0")}: ${str}`));
+            if (data.listInfo.partialOutcomeQualifier) {
+                const poq = data.listInfo.partialOutcomeQualifier;
+                printPOQ(ctx, poq);
+            }
+            } else {
+                ctx.log.warn("Uncorrelated info."); // FIXME:
+            }
+        }
     } else {
         ctx.log.warn("Unrecognized result set format.");
     }

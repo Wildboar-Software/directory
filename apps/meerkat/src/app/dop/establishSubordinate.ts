@@ -68,6 +68,11 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import { generateSignature } from "../pki/generateSignature";
 import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
+import { verifySIGNED } from "../pki/verifySIGNED";
+import {
+    _encode_EstablishOperationalBindingResultData,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingResultData.ta";
 
 // dSAOperationalBindingManagementBind OPERATION ::= dSABind
 
@@ -375,6 +380,24 @@ async function establishSubordinate (
             timeLimitInMilliseconds: timeRemainingForOperation,
         });
         assn.close(); // INTENTIONAL_NO_AWAIT
+        if ("result" in response && response.result) {
+            const result = establishOperationalBinding.decoderFor["&ResultType"]!(response.result);
+            if ("signed" in result) {
+                const resultData = getOptionallyProtectedValue(result);
+                const certPath = resultData.securityParameters?.certification_path;
+                await verifySIGNED(
+                    ctx,
+                    undefined,
+                    certPath,
+                    response.invokeId,
+                    aliasDereferenced,
+                    result.signed,
+                    _encode_EstablishOperationalBindingResultData,
+                    signErrors,
+                    "result",
+                );
+            }
+        }
         return {
             arg,
             response,

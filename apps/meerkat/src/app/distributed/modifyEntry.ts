@@ -257,7 +257,7 @@ import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/S
 import { stringifyDN } from "../x500/stringifyDN";
 import { printInvokeId } from "../utils/printInvokeId";
 import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
-import { entryExistsFilter } from "../database/entryExistsFilter";
+import { getEntryExistsFilter } from "../database/entryExistsFilter";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -2724,7 +2724,7 @@ async function modifyEntry (
         const subschemaThatAlreadyExists = await ctx.db.entry.findFirst({
             where: {
                 immediate_superior_id: target.immediateSuperior!.dse.id,
-                ...entryExistsFilter,
+                ...getEntryExistsFilter(),
                 subentry: true,
                 EntryObjectClass: {
                     some: {

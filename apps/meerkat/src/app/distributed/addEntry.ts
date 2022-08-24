@@ -178,7 +178,7 @@ import { generateSignature } from "../pki/generateSignature";
 import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
 import { stringifyDN } from "../x500/stringifyDN";
 import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
-import { entryExistsFilter } from "../database/entryExistsFilter";
+import { getEntryExistsFilter } from "../database/entryExistsFilter";
 
 const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
 const ID_AC_SPECIFIC: string = id_ar_accessControlSpecificArea.toString();
@@ -406,7 +406,7 @@ async function addEntry (
                     ? await ctx.db.entry.count({
                         where: {
                             immediate_superior_id: immediateSuperior.dse.id,
-                            ...entryExistsFilter,
+                            ...getEntryExistsFilter(),
                         },
                     })
                     : undefined,
@@ -1012,7 +1012,7 @@ async function addEntry (
         }
         const result = establishOperationalBinding.decoderFor["&ResultType"]!(obResponse.result);
         const resultData = getOptionallyProtectedValue(result);
-        // TODO: Validate signature.
+        // NOTE: The signature is verified in `establishSubordinate()`.
         if (!("roleB_replies" in resultData.initiator)) {
             throw new errors.ServiceError(
                 ctx.i18n.t("err:received_malformed_dop_response"),

@@ -28,7 +28,7 @@ import {
 import {
     subentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa";
-import { entryExistsFilter } from "../../database/entryExistsFilter";
+import { getEntryExistsFilter } from "../../database/entryExistsFilter";
 
 const PARENT: string = parent["&id"].toString();
 
@@ -109,7 +109,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     if (oid.isEqualTo(child["&id"]) && vertex.immediateSuperior) {
         const childrenCount: number = await ctx.db.entry.count({
             where: {
-                ...entryExistsFilter,
+                ...getEntryExistsFilter(),
                 immediate_superior_id: vertex.immediateSuperior.dse.id,
                 EntryObjectClass: {
                     some: {

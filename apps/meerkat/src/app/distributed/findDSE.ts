@@ -126,7 +126,7 @@ import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
 import {
     CommonArguments,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArguments.ta";
-import { entryExistsFilter } from "../database/entryExistsFilter";
+import { getEntryExistsFilter } from "../database/entryExistsFilter";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -153,7 +153,7 @@ async function someSubordinatesAreCP (
         where: {
             immediate_superior_id: vertex.dse.id,
             cp: true,
-            ...entryExistsFilter,
+            ...getEntryExistsFilter(),
         },
         select: {
             // Select statements cannot be null in Prisma, so we just select
@@ -826,7 +826,7 @@ async function findDSE (
                     AND: [
                         {
                             immediate_superior_id: dse_i.dse.id,
-                            ...entryExistsFilter,
+                            ...getEntryExistsFilter(),
                         },
                         ...needleRDN.map((atav) => ({
                             RDN: {

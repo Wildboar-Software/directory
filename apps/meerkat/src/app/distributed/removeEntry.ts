@@ -127,7 +127,7 @@ import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/S
 import { stringifyDN } from "../x500/stringifyDN";
 import { printInvokeId } from "../utils/printInvokeId";
 import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
-import { entryExistsFilter } from "../database/entryExistsFilter";
+import { getEntryExistsFilter } from "../database/entryExistsFilter";
 
 const PARENT: string = id_oc_parent.toString();
 const CHILD: string = id_oc_child.toString();
@@ -326,7 +326,7 @@ async function removeEntry (
     const nonChildSubordinate = await ctx.db.entry.findFirst({
         where: {
             immediate_superior_id: target.dse.id,
-            ...entryExistsFilter,
+            ...getEntryExistsFilter(),
             EntryObjectClass: {
                 none: {
                     object_class: CHILD,

@@ -1,5 +1,5 @@
 import type { Context } from "@wildboar/meerkat-types";
-import { entryExistsFilter } from "../database/entryExistsFilter";
+import { getEntryExistsFilter } from "../database/entryExistsFilter";
 
 export
 async function createDatabaseReport (ctx: Context): Promise<Record<string, any>> {
@@ -7,7 +7,7 @@ async function createDatabaseReport (ctx: Context): Promise<Record<string, any>>
         type: "database",
         entries: {
             nonDeleted: await ctx.db.entry.count({
-                where: entryExistsFilter,
+                where: getEntryExistsFilter(),
             }),
             deleted: await ctx.db.entry.count({
                 where: {
@@ -27,73 +27,73 @@ async function createDatabaseReport (ctx: Context): Promise<Record<string, any>>
             }),
             glue: await ctx.db.entry.count({
                 where: {
-                    ...entryExistsFilter,
+                    ...getEntryExistsFilter(),
                     glue: true,
                 },
             }),
             cp: await ctx.db.entry.count({
                 where: {
-                    ...entryExistsFilter,
+                    ...getEntryExistsFilter(),
                     cp: true,
                 },
             }),
             entry: await ctx.db.entry.count({
                 where: {
-                    ...entryExistsFilter,
+                    ...getEntryExistsFilter(),
                     entry: true,
                 },
             }),
             subr: await ctx.db.entry.count({
                 where: {
-                    ...entryExistsFilter,
+                    ...getEntryExistsFilter(),
                     subr: true,
                 },
             }),
             nssr: await ctx.db.entry.count({
                 where: {
-                    ...entryExistsFilter,
+                    ...getEntryExistsFilter(),
                     nssr: true,
                 },
             }),
             xr: await ctx.db.entry.count({
                 where: {
-                    ...entryExistsFilter,
+                    ...getEntryExistsFilter(),
                     xr: true,
                 },
             }),
             subentry: await ctx.db.entry.count({
                 where: {
-                    ...entryExistsFilter,
+                    ...getEntryExistsFilter(),
                     subentry: true,
                 },
             }),
             shadow: await ctx.db.entry.count({
                 where: {
-                    ...entryExistsFilter,
+                    ...getEntryExistsFilter(),
                     shadow: true,
                 },
             }),
             immSupr: await ctx.db.entry.count({
                 where: {
-                    ...entryExistsFilter,
+                    ...getEntryExistsFilter(),
                     immSupr: true,
                 },
             }),
             rhob: await ctx.db.entry.count({
                 where: {
-                    ...entryExistsFilter,
+                    ...getEntryExistsFilter(),
                     rhob: true,
                 },
             }),
             sa: await ctx.db.entry.count({
                 where: {
-                    ...entryExistsFilter,
+                    ...getEntryExistsFilter(),
                     sa: true,
                 },
             }),
             dsSubentry: await ctx.db.entry.count({
                 where: {
-                    ...entryExistsFilter,
+                    ...getEntryExistsFilter(),
                     dsSubentry: true,
                 },
             }),

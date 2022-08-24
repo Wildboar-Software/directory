@@ -55,12 +55,21 @@ async function createEntry (
         .map((value) => value.value.objectIdentifier);
     const isSubentry = objectClasses.some((oc) => oc.isEqualTo(subentry["&id"]));
     const isAlias = objectClasses.some((oc) => oc.isEqualTo(alias["&id"]));
+    const couldBeAnEntry = ( // I don't know for sure that this is exhaustive.
+        !entryInit.subr
+        && !entryInit.xr
+        && !entryInit.immSupr
+        && !entryInit.glue
+        && !entryInit.sa
+        && !isAlias
+        && !isSubentry
+    );
     // const isFamilyMember = objectClasses.some((oc) => (oc.isEqualTo(parent["&id"]) || oc.isEqualTo(child["&id"])));
     const isDynamic = objectClasses.some((oc) => oc.isEqualTo(id_oc_dynamicObject));
     if (isDynamic && !values.some((v) => v.type.isEqualTo(entryTtl["&id"]))) {
         values.push({
             type: entryTtl["&id"],
-            value: entryTtl.encoderFor["&Type"]!(3600, DER), // TODO: Make this configurable.
+            value: entryTtl.encoderFor["&Type"]!(ctx.config.defaultEntryTTL, DER),
         });
     }
     const now = new Date();
@@ -81,7 +90,7 @@ async function createEntry (
             deleteTimestamp: now,
             glue: entryInit.glue,
             cp: entryInit.cp,
-            entry: entryInit.entry ?? (!isAlias && !isSubentry),
+            entry: entryInit.entry ?? couldBeAnEntry,
             subr: entryInit.subr,
             nssr: entryInit.nssr,
             xr: entryInit.xr,

@@ -673,66 +673,106 @@ async function list_i (
                 continue;
             }
             if (subordinate.dse.subr) {
-                state.SRcontinuationList.push(new ContinuationReference(
-                    /**
-                     * The specification says to return the DN of the TARGET, not
-                     * the subordinate... This does not quite make sense to me. I
-                     * wonder if the specification is incorrect, but it also seems
-                     * plausible that I am misunderstanding the semantics of the
-                     * ContinuationReference.
-                     *
-                     * Actually, I think this makes sense. You are telling the
-                     * subordinate DSA that it should continue to return the
-                     * subordinates of the target DSE, not the subordinate.
-                     */
-                    // {
-                    //     rdnSequence: [ ...targetDN, subordinate.dse.rdn ],
-                    // },
-                    {
-                        rdnSequence: targetDN,
-                    },
-                    undefined,
-                    new OperationProgress(
-                        OperationProgress_nameResolutionPhase_completed,
+                /**
+                 * [ITU Recommendation X.518 (2019)](https://www.itu.int/rec/T-REC-X.518/en),
+                 * Section 19.3.1.2.1, Bullet Point 3.b.i, states that:
+                 * 
+                 * > If e' is of type `subr`, then there are two cases. In the
+                 * > first case, the subordinate entry's ACI and object class is
+                 * > available locally, in which case, based on local policy and
+                 * > the ACI's permission, add the RDN of e' to
+                 * > `listInfo.subordinates`... The other case is when the ACI
+                 * > of the entry is not available in e', in which case add a
+                 * > Continuation Reference to SRcontinuationList...
+                 * 
+                 * At this point in the code, the access controls were already
+                 * checked: we just need to check if they were checked on the
+                 * basis of ACI data that was replicated in the subordinate
+                 * reference DSE. To do this, we merely check if any ACI items
+                 * are associated directly with the DSE. If not, we assume the
+                 * ACI items have not been replicated, meaning that we do not
+                 * have it locally, meaning that we need to continue the
+                 * request in the subordinate DSA, which should have it.
+                 */
+                const aciAndObjectClassAvailableLocally: boolean = !!(
+                    (subordinate.dse.objectClass.size > 0)
+                    && ( // ...if there are any attributes that suggest that this DSE is subject to access control...
+                        subordinate.dse.entryACI?.length
+                        || subordinate.dse.subentry?.prescriptiveACI?.length
+                        || subordinate.dse.admPoint?.subentryACI?.length
+                        // Rule-based access control is not supported yet, so if
+                        // this next line were enabled, it would simply make the
+                        // subr DSE unavailable to all users.
+                        // || subordinate.dse.clearances?.length 
+                    )
+                );
+                if (!aciAndObjectClassAvailableLocally) {
+                    state.SRcontinuationList.push(new ContinuationReference(
+                        /**
+                         * The specification says to return the DN of the TARGET, not
+                         * the subordinate... This does not quite make sense to me. I
+                         * wonder if the specification is incorrect, but it also seems
+                         * plausible that I am misunderstanding the semantics of the
+                         * ContinuationReference.
+                         *
+                         * Actually, I think this makes sense. You are telling the
+                         * subordinate DSA that it should continue to return the
+                         * subordinates of the target DSE, not the subordinate.
+                         */
+                        // {
+                        //     rdnSequence: [ ...targetDN, subordinate.dse.rdn ],
+                        // },
+                        {
+                            rdnSequence: targetDN,
+                        },
                         undefined,
-                    ),
-                    undefined,
-                    ReferenceType_subordinate,
-                    ((): AccessPointInformation[] => {
-                        const [
-                            masters,
-                            shadows,
-                        ] = splitIntoMastersAndShadows(subordinate.dse.subr.specificKnowledge);
-                        const preferred = shadows[0] ?? masters[0];
-                        if (!preferred) {
-                            return [];
-                        }
-                        return [
-                            new AccessPointInformation(
-                                preferred.ae_title,
-                                preferred.address,
-                                preferred.protocolInformation,
-                                preferred.category,
-                                preferred.chainingRequired,
-                                shadows[0]
-                                    ? [ ...shadows.slice(1), ...masters ]
-                                    : [ ...shadows, ...masters.slice(1) ],
-                            ),
-                        ];
-                    })(),
-                ));
-            }
-            if (subordinate.dse.entry || subordinate.dse.glue) {
+                        new OperationProgress(
+                            OperationProgress_nameResolutionPhase_completed,
+                            undefined,
+                        ),
+                        undefined,
+                        ReferenceType_subordinate,
+                        ((): AccessPointInformation[] => {
+                            const [
+                                masters,
+                                shadows,
+                            ] = splitIntoMastersAndShadows(subordinate.dse.subr.specificKnowledge);
+                            const preferred = shadows[0] ?? masters[0];
+                            if (!preferred) {
+                                return [];
+                            }
+                            return [
+                                new AccessPointInformation(
+                                    preferred.ae_title,
+                                    preferred.address,
+                                    preferred.protocolInformation,
+                                    preferred.category,
+                                    preferred.chainingRequired,
+                                    shadows[0]
+                                        ? [ ...shadows.slice(1), ...masters ]
+                                        : [ ...shadows, ...masters.slice(1) ],
+                                ),
+                            ];
+                        })(),
+                    ));
+                    continue;
+                }
                 ret.results.push(new ListItem(
                     subordinate.dse.rdn,
-                    false,
-                    Boolean(subordinate.dse.shadow),
+                    !!(subordinate.dse.alias && authorizedToKnowSubordinateIsAlias),
+                    !subordinate.dse.shadow,
+                ));
+            } else if (subordinate.dse.entry || subordinate.dse.glue) {
+                ret.results.push(new ListItem(
+                    subordinate.dse.rdn,
+                    FALSE,
+                    !subordinate.dse.shadow,
                 ));
             } else if (subordinate.dse.alias) {
                 ret.results.push(new ListItem(
                     subordinate.dse.rdn,
                     authorizedToKnowSubordinateIsAlias,
-                    Boolean(subordinate.dse.shadow),
+                    !subordinate.dse.shadow,
                 ));
             }
         }
