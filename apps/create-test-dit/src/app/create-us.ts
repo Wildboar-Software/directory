@@ -99,8 +99,12 @@ import {
     gidNumber,
     homeDirectory,
     loginShell,
-    posixAccount, uid, uidNumber,
+    posixAccount,
+    uidNumber,
 } from "@wildboar/parity-schema/src/lib/modules/NIS/posixAccount.oa";
+import {
+    uid,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uid.oa";
 import {
     shadowAccount, shadowLastChange, shadowMax, shadowMin,
 } from "@wildboar/parity-schema/src/lib/modules/NIS/shadowAccount.oa";
