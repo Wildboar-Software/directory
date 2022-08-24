@@ -1,6 +1,5 @@
 import type { MeerkatContext } from "../ctx";
 import type { ClientAssociation } from "@wildboar/meerkat-types";
-import DSPAssociation from "../dsp/DSPConnection";
 import { TRUE_BIT } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
@@ -18,7 +17,6 @@ import type { OperationDispatcherState } from "./OperationDispatcher";
 import {
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
-import { randomInt } from "node:crypto";
 import { id_opcode_list } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-list.va";
 import { OperationProgress } from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress.ta";
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
@@ -41,7 +39,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls-priority.ta";
 import printCode from "../utils/printCode";
 import stringifyDN from "../x500/stringifyDN";
-import { SecurityParameters } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
 
 /**
  * @summary List Continuation Reference Procedure, as defined in ITU Recommendation X.518.
@@ -137,12 +134,10 @@ async function lcrProcedure (
             }
         };
         for (const api of cr.accessPoints) {
-            const invokeId: number = randomInt(2147483648);
             const logMsgInfo = {
                 ae: stringifyDN(ctx, api.ae_title.rdnSequence),
                 aid: assn.id,
-                iid: invokeId,
-                original_iid: ("present" in state.invokeId)
+                iid: ("present" in state.invokeId)
                     ? Number(state.invokeId.present)
                     : 0,
             };
@@ -162,9 +157,7 @@ async function lcrProcedure (
                         id_opcode_list,
                     ),
                 }),
-                invokeId: {
-                    present: invokeId,
-                },
+                invokeId: state.invokeId,
                 opCode: id_opcode_list,
                 argument: _encode_ListArgument(arg, DER),
             };
@@ -193,11 +186,6 @@ async function lcrProcedure (
             // TODO: Shouldn't things like this be checked in apinfoProcedure?
             if (!("present" in response.invokeId)) {
                 ctx.log.warn(ctx.i18n.t("log:lcr_invalid_invoke_id_response", logMsgInfo), logInfo);
-                unexplore();
-                continue;
-            }
-            if (Number(response.invokeId.present) !== Number(invokeId)) {
-                ctx.log.warn(ctx.i18n.t("log:lcr_mismatch_invoke_id", logMsgInfo), logInfo);
                 unexplore();
                 continue;
             }

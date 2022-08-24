@@ -165,7 +165,7 @@
     "idm_error": "Error with code {{code}} received from {{source}}. First few bytes of the error parameter are: {{bytes}}",
     "idm_reject": "Reject with reason {{code}} received from {{source}}.",
     "idm_abort": "Abort with reason {{code}} received from {{source}}.",
-    "lcr_attempt": "Attempting to continue list operation {{original_iid}} for association {{aid}} in DSA {{ae}} via operation {{iid}}.",
+    "lcr_attempt": "Attempting to continue list operation {{iid}} for association {{aid}} in DSA {{ae}}.",
     "lcr_null_response": "No response from remote DSA {{ae}} in chained list continuation for invocation {{iid}}.",
     "lcr_error_response": "Error from from remote DSA {{ae}} in chained list continuation for invocation {{iid}}. The error code and first few bytes of the encoded error are: {{errcode}} {{errbytes}}.",
     "lcr_undefined_result": "Undefined result in response from remote DSA {{ae}} in chained list continuation for invocation {{iid}}. This is either a bug or malicious behavior.",
