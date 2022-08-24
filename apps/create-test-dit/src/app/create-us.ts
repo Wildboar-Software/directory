@@ -112,7 +112,7 @@ import {
     openLDAPdisplayableObject,
 } from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/openLDAPdisplayableObject.oa";
 import {
-    mailQuotaSize,
+    mailQuotaSize, qmailUser,
 } from "@wildboar/parity-schema/src/lib/modules/QMailSchema/qmailUser.oa";
 import {
     displayName,
@@ -399,6 +399,9 @@ async function seedUS (
         }
         if (isEducated) {
             otherObjectClasses.push(eduPerson["&id"]);
+        }
+        if (isQmailUser) {
+            otherObjectClasses.push(qmailUser["&id"]);
         }
         if (isOpenLDAPDisplayable) {
             otherObjectClasses.push(openLDAPdisplayableObject["&id"]);
