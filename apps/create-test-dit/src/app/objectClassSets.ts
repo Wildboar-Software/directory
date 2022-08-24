@@ -51,6 +51,9 @@ import {
 import {
     ipHost,
 } from "@wildboar/parity-schema/src/lib/modules/NIS/ipHost.oa";
+import {
+    naturalPerson,
+} from "@wildboar/pkcs/src/lib/modules/PKCS-9/naturalPerson.oa";
 
 export
 const commonAuxiliaryObjectClasses: OBJECT_IDENTIFIER[] = [
@@ -87,6 +90,7 @@ const commonAuxiliaryObjectClasses: OBJECT_IDENTIFIER[] = [
     sambaSamAccount["&id"],
     mhs_user["&id"],
     edi_user["&id"],
+    naturalPerson["&id"],
 ];
 
 export
