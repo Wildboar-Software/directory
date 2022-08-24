@@ -128,10 +128,10 @@ import {
 import {
     mhs_user,
 } from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-user.oa";
-import {
-    edi_name,
-    edi_user,
-} from "@wildboar/x400/src/lib/modules/EDIMUseOfDirectory/edi-user.oa";
+// import {
+//     edi_name,
+//     edi_user,
+// } from "@wildboar/x400/src/lib/modules/EDIMUseOfDirectory/edi-user.oa";
 import {
     entryTtl,
 } from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa";
@@ -362,8 +362,6 @@ async function seedUS (
         // TODO: pgpKeyInfo
         // TODO: simpleSecurityObject
         // TODO: uidObject
-        // TODO: mhs_user
-        // TODO: edi_user
         const otherObjectClasses: OBJECT_IDENTIFIER[] = [];
         const isNatural: boolean = !(i % 2);
         // const isPGPUser: boolean = !(i % 3);
@@ -426,7 +424,8 @@ async function seedUS (
         }
         if (isMHSUser) {
             otherObjectClasses.push(mhs_user["&id"]);
-            otherObjectClasses.push(edi_user["&id"]);
+            // edi-user is a structural object class.
+            // otherObjectClasses.push(edi_user["&id"]);
         }
         const [ rdn, attributes, cn ] = createMockPersonAttributes(otherObjectClasses);
         const dn: DistinguishedName = [
@@ -620,10 +619,10 @@ async function seedUS (
                 mhs_or_addresses["&id"],
                 [mhs_or_addresses.encoderFor["&Type"]!(orAddress, DER)],
             ));
-            attributes.push(new Attribute(
-                edi_name["&id"],
-                [edi_name.encoderFor["&Type"]!({ uTF8String: "$$$$Bigmunniii$$$$" }, DER)],
-            ));
+            // attributes.push(new Attribute(
+            //     edi_name["&id"],
+            //     [edi_name.encoderFor["&Type"]!({ uTF8String: "$$$$Bigmunniii$$$$" }, DER)],
+            // ));
         }
         if (hasUserSecurityInfo) {
             const alg = new AlgorithmIdentifier(
