@@ -117,6 +117,12 @@ async function apinfoProcedure (
             (nameResolutionIsProceeding && nameResolveOnMaster)
             || (isModificationOperation(req.opCode) && (req.chaining.referenceType === nssr))
         ),
+        securityParameters: createSecurityParameters(
+            ctx,
+            ctx.config.chaining.signChainedRequests,
+            api.ae_title.rdnSequence,
+            req.opCode,
+        ),
     });
     const accessPoints: MasterOrShadowAccessPoint[] = [
         new MasterOrShadowAccessPoint(

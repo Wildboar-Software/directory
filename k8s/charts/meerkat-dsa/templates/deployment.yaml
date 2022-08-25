@@ -148,7 +148,7 @@ spec:
               valueFrom:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
-                  key: chaining_sign_request
+                  key: chaining_sign_requests
                   optional: true
             - name: MEERKAT_CHAINING_TLS_OPTIONAL
               valueFrom:
