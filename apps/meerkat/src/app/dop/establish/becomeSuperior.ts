@@ -214,10 +214,7 @@ async function becomeSuperior (
         ctx,
         superior,
         agreement.rdn,
-        {
-            subr: true,
-            entry: false,
-        },
+        { subr: true },
         sub2sup.entryInfo?.flatMap((attr) => valuesFromAttribute(attr)) ?? [],
         ctx.dsa.accessPoint.ae_title.rdnSequence,
     );
