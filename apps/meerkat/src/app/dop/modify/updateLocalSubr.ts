@@ -126,7 +126,7 @@ async function updateLocalSubr (
     const oldSubordinate = await dnToVertex(ctx, superior, [ oldAgreement.rdn ]);
     if (!oldSubordinate) {
         // The old subordinate should not have disappeared.
-        throw new Error("63c307c5-35b4-41b8-94e6-f95b1828c951");
+        throw new Error("63c307c5-35b4-41b8-94e6-f95b1828c951"); // TODO: Different error.
     }
     if (!compareRDN(oldAgreement.rdn, newAgreement.rdn, getNamingMatcherGetter(ctx))) {
         // If newAgreement.rdn is different, change the RDN of the existing entry.
