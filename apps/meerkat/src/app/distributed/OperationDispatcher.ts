@@ -108,7 +108,6 @@ import { Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 } from "@wildboar/x5
 import ldapRequestToDAPRequest from "../distributed/ldapRequestToDAPRequest";
 import { BER } from "asn1-ts/dist/node/functional";
 import failover from "../utils/failover";
-import emptyChainingResults from "../x500/emptyChainingResults";
 import mergeSortAndPageSearch from "./mergeSortAndPageSearch";
 import mergeSortAndPageList from "./mergeSortAndPageList";
 import { SearchResultData_searchInfo } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResultData-searchInfo.ta";
@@ -401,7 +400,17 @@ class OperationDispatcher {
                 const result = await mergeSortAndPageList(ctx, assn, state, data, postMergeState);
                 const opcr: OPCR = {
                     unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
-                        emptyChainingResults(),
+                        new ChainingResults(
+                            undefined,
+                            undefined,
+                            createSecurityParameters(
+                                ctx,
+                                signDSPResult,
+                                assn.boundNameAndUID?.dn,
+                                list["&operationCode"],
+                            ),
+                            undefined,
+                        ),
                         result.encodedListResult,
                     ),
                 };
@@ -566,7 +575,17 @@ class OperationDispatcher {
             const result = await mergeSortAndPageSearch(ctx, assn, state, postMergeState, data);
             const opcr: OPCR = {
                 unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
-                    emptyChainingResults(),
+                    new ChainingResults(
+                        undefined,
+                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            signDSPResult,
+                            assn.boundNameAndUID?.dn,
+                            search["&operationCode"],
+                        ),
+                        undefined,
+                    ),
                     result.encodedSearchResult,
                 ),
             };
@@ -634,7 +653,17 @@ class OperationDispatcher {
             const result = await doAbandon(ctx, assn, reqData);
             const opcr: OPCR = {
                 unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
-                    emptyChainingResults(),
+                    new ChainingResults(
+                        undefined,
+                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            signDSPResult,
+                            assn.boundNameAndUID?.dn,
+                            abandon["&operationCode"],
+                        ),
+                        undefined,
+                    ),
                     result.result,
                 ),
             };
@@ -678,7 +707,17 @@ class OperationDispatcher {
                 signErrors,
             );
         }
-        const chainingResults = emptyChainingResults();
+        const chainingResults = new ChainingResults(
+            undefined,
+            undefined,
+            createSecurityParameters(
+                ctx,
+                signDSPResult,
+                assn.boundNameAndUID?.dn,
+                req.opCode,
+            ),
+            undefined,
+        );
         const state: OperationDispatcherState = {
             NRcontinuationList: [],
             SRcontinuationList: [],
@@ -1018,7 +1057,17 @@ class OperationDispatcher {
                 signErrors,
             );
         }
-        const chainingResults = emptyChainingResults();
+        const chainingResults = new ChainingResults(
+            undefined,
+            undefined,
+            createSecurityParameters(
+                ctx,
+                false, // Not to be signed, since this is a local DSP request.
+                assn.boundNameAndUID?.dn,
+                search["&operationCode"],
+            ),
+            undefined,
+        );
         const state: OperationDispatcherState = {
             NRcontinuationList: [],
             SRcontinuationList: [],
@@ -1123,7 +1172,17 @@ class OperationDispatcher {
             ? Number(data.serviceControls.timeLimit)
             : 5000);
         // TODO: Log iid, target, timeLimit
-        const chainingResults = emptyChainingResults();
+        const chainingResults = new ChainingResults(
+            undefined,
+            undefined,
+            createSecurityParameters(
+                ctx,
+                false, // Not to be signed, since this is a locally-issued request.
+                undefined,
+                read["&operationCode"],
+            ),
+            undefined,
+        );
         const state: OperationDispatcherState = {
             NRcontinuationList: [],
             SRcontinuationList: [],

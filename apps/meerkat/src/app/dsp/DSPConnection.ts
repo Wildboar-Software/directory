@@ -109,6 +109,7 @@ import {
     _encode_DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as _encode_DBE_Param,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
 import { stringifyDN } from "../x500/stringifyDN";
+import printCode from "../utils/printCode";
 
 /**
  * @summary The handles a request, but not errors
@@ -201,6 +202,12 @@ async function handleRequestAndErrors (
         assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
         return;
     }
+    ctx.log.debug(ctx.i18n.t("log:received_request", {
+        protocol: "DSP",
+        iid: request.invokeID.toString(),
+        op: printCode(request.opcode),
+        cid: assn.id,
+    }), logInfo);
     const stats: OperationStatistics = {
         type: "op",
         inbound: true,

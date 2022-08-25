@@ -126,6 +126,7 @@ import { verifySIGNED } from "../pki/verifySIGNED";
 import {
     Versions_v2,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";
+import printCode from "../utils/printCode";
 
 const securityParametersTagByOpCode: Map<number, number> = new Map([
     [100, 8], // establishOperationalBinding
@@ -254,6 +255,12 @@ async function handleRequestAndErrors (
         assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
         return;
     }
+    ctx.log.debug(ctx.i18n.t("log:received_request", {
+        protocol: "DOP",
+        iid: request.invokeID.toString(),
+        op: printCode(request.opcode),
+        cid: assn.id,
+    }), logInfo);
     const stats: OperationStatistics = {
         type: "op",
         inbound: true,

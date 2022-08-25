@@ -98,7 +98,6 @@ import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry";
 import getACIItems from "../authz/getACIItems";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 import cloneChainingArgs from "../x500/cloneChainingArguments";
-import emptyChainingResults from "../x500/emptyChainingResults";
 import bacSettings from "../authz/bacSettings";
 import {
     NameAndOptionalUID,
@@ -127,6 +126,13 @@ import {
     CommonArguments,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArguments.ta";
 import { getEntryExistsFilter } from "../database/entryExistsFilter";
+import {
+    ChainingResults,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
+import {
+    ProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+import DSPAssociation from "../dsp/DSPConnection";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -1549,6 +1555,22 @@ async function findDSE (
                     state.chainingArguments.excludeWriteableCopies,
                 );
                 state.chainingArguments = newChaining;
+                const signDSPResult: boolean = (
+                    (assn instanceof DSPAssociation) // The outer signature will only be used for DSP, not DAP.
+                    && (state.chainingArguments.securityParameters?.target === ProtectionRequest_signed)
+                    && assn?.authorizedForSignedResults
+                );
+                const chainingResults = new ChainingResults(
+                    undefined,
+                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        signDSPResult,
+                        undefined,
+                        state.operationCode,
+                    ),
+                    undefined,
+                );
                 const newState: OperationDispatcherState = {
                     ...state,
                     NRcontinuationList: [],
@@ -1557,7 +1579,7 @@ async function findDSE (
                     referralRequests: [],
                     emptyHierarchySelect: false,
                     chainingArguments: newChaining,
-                    chainingResults: emptyChainingResults(),
+                    chainingResults,
                     foundDSE: ctx.dit.root,
                     entrySuitable: false,
                     partialName: false,
