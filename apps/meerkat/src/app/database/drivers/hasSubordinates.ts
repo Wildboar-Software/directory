@@ -15,6 +15,7 @@ import { DER, _encodeBoolean } from "asn1-ts/dist/node/functional";
 import {
     hasSubordinates,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/hasSubordinates.oa";
+import { getEntryExistsFilter } from "../../database/entryExistsFilter";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -32,7 +33,7 @@ const readValues: SpecialAttributeDatabaseReader = async (
         const subordinates = await ctx.db.entry.count({
             where: {
                 immediate_superior_id: vertex.dse.id,
-                deleteTimestamp: null,
+                ...getEntryExistsFilter(),
             },
         });
         return [

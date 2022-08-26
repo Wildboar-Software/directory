@@ -8,7 +8,6 @@ import { DER } from "asn1-ts/dist/node/functional";
 import * as errors from "@wildboar/meerkat-types";
 import {
     Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 as ChainedArgument,
-    _encode_Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1 as _encode_ChainedArgument,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import {
     UpdateErrorData,
@@ -66,13 +65,14 @@ import {
 import {
     abandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
-import encodeLDAPDN from "../ldap/encodeLDAPDN";
 import type {
     InvokeId,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 import { addMilliseconds } from "date-fns";
 import { randomInt } from "crypto";
 import { printInvokeId } from "../utils/printInvokeId";
+import { signChainedArgument } from "../pki/signChainedArgument";
+import stringifyDN from "../x500/stringifyDN";
 
 /**
  * @summary Check if name is already taken among NSSR.
@@ -102,6 +102,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
     nonSpecificKnowledges: MasterAndShadowAccessPoints[],
     destinationDN: DistinguishedName,
     timeLimitInMilliseconds?: INTEGER,
+    signErrors: boolean = false,
 ): Promise<void> {
     const op = ("present" in invokeId)
         ? assn.invocations.get(Number(invokeId.present))
@@ -118,6 +119,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             abandoned["&errorCode"],
@@ -126,11 +128,13 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                         aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             const client: Connection | null = await connect(ctx, accessPoint, dsp_ip["&id"]!, {
                 timeLimitInMilliseconds: 15000, // FIXME:
                 tlsOptional: ctx.config.chaining.tlsOptional,
+                signErrors,
             });
             if (!client) {
                 continue;
@@ -169,6 +173,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                     ),
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         accessPoint.ae_title.rdnSequence,
                         chainedRead["&operationCode"],
                     ),
@@ -199,7 +204,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
             });
             const chained: ChainedArgument = new ChainedArgument(
                 new ChainingArguments(
-                    assn.boundNameAndUID?.dn,
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
                     destinationDN,
                     new OperationProgress(
                         OperationProgress_nameResolutionPhase_proceeding,
@@ -218,6 +223,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                         : undefined,
                     createSecurityParameters(
                         ctx,
+                        true,
                         accessPoint.ae_title.rdnSequence,
                         chainedRead["&operationCode"],
                     ),
@@ -231,10 +237,14 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                 ),
                 _encode_ReadArgument(readArg, DER),
             );
+            const signArguments: boolean = true; // TODO: Make configurable.
+            const payload = signArguments
+                ? signChainedArgument(ctx, { unsigned: chained })
+                : { unsigned: chained };
             try {
                 const response = await client.writeOperation({
                     opCode: chainedRead["&operationCode"]!,
-                    argument: _encode_ChainedArgument(chained, DER),
+                    argument: chainedRead.encoderFor["&ArgumentType"]!(payload, DER),
                 });
                 if ("result" in response) {
                     throw new errors.UpdateError(
@@ -245,6 +255,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 accessPoint.ae_title.rdnSequence,
                                 undefined,
                                 updateError["&errorCode"],
@@ -253,13 +264,14 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                             undefined,
                             undefined,
                         ),
+                        signErrors,
                     );
                 } else {
                     break; // Breaks the inner for loop.
                 }
             } catch (e) {
                 ctx.log.warn(ctx.i18n.t("log:failed_to_access_master", {
-                    dsa: encodeLDAPDN(ctx, accessPoint.ae_title.rdnSequence),
+                    dsa: stringifyDN(ctx, accessPoint.ae_title.rdnSequence),
                     e: e.message,
                 }), {
                     remoteFamily: assn.socket.remoteFamily,

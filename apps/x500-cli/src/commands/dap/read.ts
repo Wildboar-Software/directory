@@ -27,6 +27,12 @@ import {
     AttributeValueAssertion,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
 import printError from "../../printers/Error_";
+import {
+    ProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+import {
+    SecurityParameters,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
 
 export
 async function do_read (
@@ -43,7 +49,15 @@ async function do_read (
         TRUE,
         [],
         undefined,
-        undefined,
+        new SecurityParameters(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            ProtectionRequest_signed,
+        ),
         undefined,
         undefined,
         undefined,

@@ -3,7 +3,10 @@ import {
     TRUE_BIT,
     FALSE_BIT,
     unpackBits,
+    BERElement,
 } from "asn1-ts";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { randomBytes } from "crypto";
 import {
     addEntry,
@@ -62,6 +65,10 @@ import {
     UpdateProblem_entryAlreadyExists,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import {
+    _decode_Certificate,
+} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
+import { PEMObject } from "pem-ts";
 
 const TEMPORARY_PASSWORD: string = "asdf";
 
@@ -109,6 +116,14 @@ function addAdminArgument (
             ),
         ],
     ];
+    const certFilePath: string = path.resolve(path.join("data", "keypair", "cert.pem"));
+    const certFile: string = fs.readFileSync(certFilePath, { encoding: "utf-8" });
+    const certPems = PEMObject.parse(certFile);
+    const certs = certPems.map((certPem) => {
+        const el = new BERElement();
+        el.fromBytes(certPem.data);
+        return _decode_Certificate(el);
+    });
     const attributes: Attribute[] = [
         new Attribute(
             selat.administrativeRole["&id"]!,
@@ -122,6 +137,7 @@ function addAdminArgument (
             [
                 _encodeObjectIdentifier(seloc.person["&id"]!, DER),
                 _encodeObjectIdentifier(seloc.userPwdClass["&id"]!, DER),
+                _encodeObjectIdentifier(seloc.pkiCertPath["&id"]!, DER),
             ],
             undefined,
         ),
@@ -149,6 +165,14 @@ function addAdminArgument (
             undefined,
         ),
     ];
+    if (certs.length) {
+        attributes.push(new Attribute(
+            selat.pkiPath["&id"],
+            [
+                selat.pkiPath.encoderFor["&Type"]!(certs.reverse(), DER),
+            ],
+        ));
+    }
     return {
         unsigned: new AddEntryArgumentData(
             {
@@ -168,10 +192,10 @@ async function createAdmin (
     ctx: Context,
     conn: Connection,
 ): Promise<{ password: string }> {
-    const createCountry = addAdminArgument([], TEMPORARY_PASSWORD);
+    const createAdminArg = addAdminArgument([], TEMPORARY_PASSWORD);
     const outcome = await conn.writeOperation({
         opCode: addEntry["&operationCode"],
-        argument: _encode_AddEntryArgument(createCountry, DER),
+        argument: _encode_AddEntryArgument(createAdminArg, DER),
     });
     if ("error" in outcome) {
         if (outcome.errcode) {
@@ -182,7 +206,7 @@ async function createAdmin (
             }
             if (!compareCode(outcome.errcode, updateError["&errorCode"]!)) {
                 ctx.log.error(printCode(outcome.errcode));
-                process.exit(1);
+                process.exit(6642);
             }
             const param = updateError.decoderFor["&ParameterType"]!(outcome.error);
             const data = getOptionallyProtectedValue(param);
@@ -192,10 +216,10 @@ async function createAdmin (
                 };
             }
             ctx.log.error(printCode(outcome.errcode));
-            process.exit(1);
+            process.exit(747);
         } else {
             ctx.log.error("Uncoded error.");
-            process.exit(1);
+            process.exit(787);
         }
     }
     // FIXME: You MUST add access controls to prevent others from modifying this entry.

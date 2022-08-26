@@ -45,6 +45,7 @@ import {
     id_ar_subschemaAdminSpecificArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-subschemaAdminSpecificArea.va";
 import {
+    commonName,
     subentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa";
 import {
@@ -143,27 +144,24 @@ import {
 import {
     PresentationAddress,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PresentationAddress.ta";
+import {
+    inetOrgPersonNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/inetOrgPersonNameForm.oa";
+import {
+    bootableDevice,
+} from "@wildboar/parity-schema/src/lib/modules/NIS/bootableDevice.oa";
+import {
+    ieee802Device,
+} from "@wildboar/parity-schema/src/lib/modules/NIS/ieee802Device.oa";
+import {
+    ipHost,
+} from "@wildboar/parity-schema/src/lib/modules/NIS/ipHost.oa";
+import { commonAuxiliaryObjectClasses } from "./objectClassSets";
 
-const commonAuxiliaryObjectClasses: OBJECT_IDENTIFIER[] = [
-    oc.integrityInfo["&id"],
-    oc.child["&id"],
-    oc.pmiUser["&id"],
-    oc.pmiAA["&id"],
-    oc.pmiSOA["&id"],
-    oc.attCertCRLDistributionPt["&id"],
-    oc.pmiDelegationPath["&id"],
-    oc.privilegePolicy["&id"],
-    oc.protectedPrivilegePolicy["&id"],
-    oc.pkiUser["&id"],
-    oc.pkiCA["&id"],
-    oc.deltaCRL["&id"],
-    oc.cpCps["&id"],
-    oc.pkiCertPath["&id"],
-    oc.strongAuthenticationUser["&id"],
-    oc.userSecurityInformation["&id"],
-    oc.userPwdClass["&id"],
-    oc.certificationAuthority["&id"],
-    oc.certificationAuthority_V2["&id"],
+const deviceAuxiliaryObjectClasses: OBJECT_IDENTIFIER[] = [
+    bootableDevice["&id"],
+    ieee802Device["&id"],
+    ipHost["&id"],
 ];
 
 const allNonSecurityContextTypes: OBJECT_IDENTIFIER[] = [
@@ -565,6 +563,11 @@ function addSubschemaSubentryArgument (
                     nf.cRLDistPtNameForm["&id"],
                     [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
                 ), DER),
+                _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
+                    17,
+                    inetOrgPersonNameForm["&id"],
+                    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                ), DER),
             ],
             undefined,
         ),
@@ -615,7 +618,10 @@ function addSubschemaSubentryArgument (
                 ), DER),
                 _encode_DITContentRuleDescription(new DITContentRuleDescription(
                     oc.device["&id"],
-                    commonAuxiliaryObjectClasses, // auxiliaries
+                    [
+                        ...commonAuxiliaryObjectClasses,
+                        ...deviceAuxiliaryObjectClasses,
+                    ], // auxiliaries
                     undefined, // mandatory
                     undefined, // optional
                     undefined, // precluded
@@ -820,9 +826,17 @@ function addPasswordAdminSubentryArgument (
     };
 }
 
+// TODO: Move these to ./constants.ts.
 const GB_ACCESS_POINT = new AccessPoint(
     {
-        rdnSequence: [],
+        rdnSequence: [
+            [
+                new AttributeTypeAndValue(
+                    commonName["&id"],
+                    _encodeUTF8String("dsa01.gb.mkdemo.wildboar.software", DER),
+                ),
+            ],
+        ],
     },
     new PresentationAddress(
         undefined,
@@ -844,7 +858,14 @@ const GB_ACCESS_POINT = new AccessPoint(
 
 const RU_ACCESS_POINT = new AccessPoint(
     {
-        rdnSequence: [],
+        rdnSequence: [
+            [
+                new AttributeTypeAndValue(
+                    commonName["&id"],
+                    _encodeUTF8String("dsa01.ru.mkdemo.wildboar.software", DER),
+                ),
+            ],
+        ],
     },
     new PresentationAddress(
         undefined,
@@ -887,7 +908,7 @@ async function seedCountries (
                 if (outcome.errcode) {
                     if (!compareCode(outcome.errcode, updateError["&errorCode"]!)) {
                         ctx.log.error(print(outcome.errcode));
-                        process.exit(1);
+                        process.exit(6848);
                     }
                     const param = updateError.decoderFor["&ParameterType"]!(outcome.error);
                     const data = getOptionallyProtectedValue(param);
@@ -895,11 +916,11 @@ async function seedCountries (
                         ctx.log.warn(`Country ${country} already exists.`);
                     } else {
                         ctx.log.error(print(outcome.errcode));
-                        process.exit(1);
+                        process.exit(484);
                     }
                 } else {
                     ctx.log.error("Uncoded error.");
-                    process.exit(1);
+                    process.exit(7875);
                 }
             } else {
                 ctx.log.info(`Created country ${country}.`);
@@ -932,10 +953,10 @@ async function seedCountries (
                         }
                     }
                     ctx.log.error(print(outcome.errcode));
-                    process.exit(1);
+                    process.exit(87841);
                 } else {
                     ctx.log.error("Uncoded error.");
-                    process.exit(1);
+                    process.exit(843);
                 }
             }
             ctx.log.info(`Created ${subentryType} subentry for country ${country}.`);

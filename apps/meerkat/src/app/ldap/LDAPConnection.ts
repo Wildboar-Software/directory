@@ -3,7 +3,7 @@ import * as errors from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
 import * as net from "net";
 import * as tls from "tls";
-import { BERElement, ASN1TruncationError } from "asn1-ts";
+import { BERElement, ASN1TruncationError, DERElement, ASN1TagClass, ASN1Construction, ASN1UniversalType } from "asn1-ts";
 import { BER } from "asn1-ts/dist/node/functional";
 import {
     LDAPMessage,
@@ -54,6 +54,7 @@ import {
     whoAmI,
     startTLS,
     cancel,
+    dynamicRefresh,
 } from "@wildboar/ldap/src/lib/extensions";
 import encodeLDAPDN from "./encodeLDAPDN";
 import createNoticeOfDisconnection from "./createNoticeOfDisconnection";
@@ -71,6 +72,7 @@ import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
 import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics";
 import isDebugging from "is-debugging";
 import { strict as assert } from "assert";
+import { stringifyDN } from "../x500/stringifyDN";
 
 const UNIVERSAL_SEQUENCE_TAG: number = 0x30;
 
@@ -265,10 +267,16 @@ async function handleRequestAndErrors (
                 bytesWritten: assn.socket.bytesWritten,
             },
         });
+        const logInfo = {
+            remoteFamily: assn.socket.remoteFamily,
+            remoteAddress: assn.socket.remoteAddress,
+            remotePort: assn.socket.remotePort,
+            association_id: assn.id,
+            messageID: message.messageID.toString(),
+        };
+        ctx.log.info(`${assn.id}#${message.messageID}: ${e.constructor?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
         if (isDebugging) {
             console.error(e);
-        } else {
-            ctx.log.error(e.message);
         }
         if (!stats.outcome) {
             stats.outcome = {};
@@ -318,6 +326,32 @@ async function handleRequestAndErrors (
                             result.referral,
                             message.protocolOp.extendedReq.requestName,
                             emptySeq.toBytes(),
+                        ),
+                    },
+                    undefined,
+                );
+                assn.socket.write(_encode_LDAPMessage(res, BER).toBytes());
+            } else if (oid.isEqualTo(dynamicRefresh)) {
+                /* "In case of an error, the responseTtl field will have the
+                value 0" */
+                const value = BERElement.fromSequence([
+                    new DERElement(
+                        ASN1TagClass.universal,
+                        ASN1Construction.primitive,
+                        ASN1UniversalType.integer,
+                        0,
+                    ),
+                ]);
+                const res = new LDAPMessage(
+                    message.messageID,
+                    {
+                        extendedResp: new ExtendedResponse(
+                            result.resultCode,
+                            result.matchedDN,
+                            result.diagnosticMessage,
+                            result.referral,
+                            message.protocolOp.extendedReq.requestName,
+                            value.toBytes(),
                         ),
                     },
                     undefined,
@@ -647,6 +681,13 @@ class LDAPAssociation extends ClientAssociation {
                 const startBindTime = new Date();
                 bind(ctx, this.socket, req)
                     .then(async (outcome) => {
+                        const logInfo = {
+                            host: source,
+                            remoteFamily: this.socket.remoteFamily,
+                            remoteAddress: this.socket.remoteAddress,
+                            remotePort: this.socket.remotePort,
+                            association_id: this.id,
+                        };
                         const endBindTime = new Date();
                         const bindTime: number = Math.abs(differenceInMilliseconds(startBindTime, endBindTime));
                         const totalTimeInMilliseconds: number = ctx.config.bindMinSleepInMilliseconds
@@ -681,7 +722,7 @@ class LDAPAssociation extends ClientAssociation {
                             }
                         } else {
                             if (outcome.result.resultCode === LDAPResult_resultCode_invalidCredentials) {
-                                ctx.log.warn(ctx.i18n.t("err:invalid_credentials", { host: source }));
+                                ctx.log.warn(ctx.i18n.t("err:invalid_credentials", logInfo), logInfo);
                             }
                             this.status = Status.UNBOUND;
                         }
@@ -696,8 +737,8 @@ class LDAPAssociation extends ClientAssociation {
                     })
                     .catch((e) => {
                         ctx.log.error(e.message, extraLogData);
-                        if ("stack" in e) {
-                            ctx.log.error(e.stack);
+                        if (isDebugging) {
+                            console.error(e);
                         }
                         ctx.telemetry.trackException({
                             exception: e,
@@ -800,6 +841,9 @@ class LDAPAssociation extends ClientAssociation {
                     }
                 } else if (oid.isEqualTo(whoAmI)) {
                     const successMessage = ctx.i18n.t("main:success");
+                    const dn = this.boundNameAndUID
+                        ? Buffer.from(encodeLDAPDN(ctx, this.boundNameAndUID.dn)).toString("utf-8")
+                        : undefined;
                     const res = new LDAPMessage(
                         message.messageID,
                         {
@@ -809,8 +853,8 @@ class LDAPAssociation extends ClientAssociation {
                                 Buffer.from(successMessage, "utf-8"),
                                 undefined,
                                 undefined,
-                                this.boundNameAndUID
-                                    ? Buffer.from(`dn:${encodeLDAPDN(ctx, this.boundNameAndUID.dn)}`, "utf-8")
+                                dn
+                                    ? Buffer.from(`dn:${dn}`, "utf-8")
                                     : Buffer.alloc(0), // Anonymous.
                             ),
                         },

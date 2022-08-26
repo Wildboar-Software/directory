@@ -67,7 +67,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             dmd_id: decoded.dmdId.toString(),
             rule_id: Number(decoded.id),
             entry_id: vertex.dse.id,
-            ber: Buffer.from(value.value.toBytes()),
+            ber: Buffer.from(value.value.toBytes().buffer),
             service_type: decoded.serviceType?.toJSON(),
             user_class: (decoded.userClass !== undefined)
                 ? Number(decoded.userClass)
@@ -98,7 +98,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
         },
         update: {
             entry_id: vertex.dse.id,
-            ber: Buffer.from(value.value.toBytes()),
+            ber: Buffer.from(value.value.toBytes().buffer),
             service_type: decoded.serviceType?.toJSON(),
             user_class: (decoded.userClass !== undefined)
                 ? Number(decoded.userClass)

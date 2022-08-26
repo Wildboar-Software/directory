@@ -21,14 +21,20 @@ const sidebars = {
             items: [
                 'setup',
                 'env',
+                'webadmin',
                 'database',
                 'authorization',
                 'authentication',
                 'logging-monitoring',
                 'schema',
                 'networking',
+                'tls',
+                'online-pki',
+                'signing',
                 'opbinding',
+                'dynamic',
                 'administration',
+                'troubleshooting',
                 'advice',
                 'usage',
                 'telemetry',
@@ -62,6 +68,20 @@ const sidebars = {
                 'asn1',
                 'specs',
                 'client-config',
+            ],
+        },
+        {
+            type: 'category',
+            label: 'Change Logs',
+            items: [
+                'changelog-meerkat',
+            ],
+        },
+        {
+            type: 'category',
+            label: 'For Developers',
+            items: [
+                'versioning',
             ],
         },
         {

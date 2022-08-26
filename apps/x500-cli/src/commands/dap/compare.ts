@@ -24,6 +24,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
 import { DERElement } from "asn1-ts";
 import printError from "../../printers/Error_";
+import stringifyDN from "../../utils/stringifyDN";
 
 export
 async function do_compare (
@@ -85,7 +86,14 @@ async function do_compare (
     if ("signed" in result) {
         ctx.log.info("This response was signed.");
     }
-    console.log(resData.matched ? "TRUE" : "FALSE");
+    if (resData.name) {
+        console.log(`NAME: ${stringifyDN(ctx, resData.name.rdnSequence)}`);
+    }
+    console.log("MATCHED: " + resData.matched.toString().toUpperCase());
+    console.log("FROM ENTRY: " + (resData.fromEntry ?? true).toString().toUpperCase());
+    if (resData.matchedSubtype) {
+        console.log(`MATCHED SUBTYPE: ${resData.matchedSubtype.toString()}`);
+    }
 }
 
 export default do_compare;

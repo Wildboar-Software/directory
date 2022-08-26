@@ -64,7 +64,7 @@ async function removeValues (
                     tag_class: attr.value.tagClass,
                     constructed: (attr.value.construction === ASN1Construction.constructed),
                     tag_number: attr.value.tagNumber,
-                    ber: Buffer.from(attr.value.toBytes()),
+                    ber: Buffer.from(attr.value.toBytes().buffer),
                 },
             })),
     ];

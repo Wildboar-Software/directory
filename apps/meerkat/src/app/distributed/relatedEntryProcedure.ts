@@ -47,9 +47,11 @@ import type { SearchState } from "./search_i";
 import {
     PartialOutcomeQualifier,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
-import { chainedSearch } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedSearch.oa";
 import type { INTEGER } from "asn1-ts";
 import { randomInt } from "crypto";
+import type {
+    DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 
 /**
  * @summary The Related Entry Procedure, defined in ITU Recommendation X.518.
@@ -76,6 +78,7 @@ async function relatedEntryProcedure (
     search: SearchState,
     argument: SearchArgument,
     chaining?: ChainingArguments,
+    signErrors: boolean = false,
 ): Promise<void> {
     const op = ("present" in state.invokeId)
         ? assn.invocations.get(Number(state.invokeId.present))
@@ -92,6 +95,7 @@ async function relatedEntryProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
@@ -100,10 +104,21 @@ async function relatedEntryProcedure (
                     chaining?.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     };
     const data = getOptionallyProtectedValue(argument);
+    const requestor: DistinguishedName | undefined = data
+        .securityParameters
+        ?.certification_path
+        ?.userCertificate
+        .toBeSigned
+        .subject
+        .rdnSequence
+        ?? state.chainingArguments.originator
+        ?? data.requestor
+        ?? assn.boundNameAndUID?.dn;
     if (!data.joinArguments || chaining?.relatedEntry) { // Yes, relatedEntry is supposed to be ABSENT.
         return;
     }
@@ -117,6 +132,7 @@ async function relatedEntryProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         abandoned["&errorCode"],
@@ -125,6 +141,7 @@ async function relatedEntryProcedure (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         checkTimeLimit();
@@ -139,7 +156,7 @@ async function relatedEntryProcedure (
         //     association_id: assn.id,
         // });
         const newChaining = new ChainingArguments(
-            chaining?.originator,
+            requestor,
             undefined,
             undefined,
             [],
@@ -153,11 +170,7 @@ async function relatedEntryProcedure (
                     generalizedTime: timeLimitEndTime,
                 }
                 : undefined,
-            createSecurityParameters(
-                ctx,
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                chainedSearch["&operationCode"],
-            ),
+            undefined,
             undefined,
             assn.boundNameAndUID?.uid,
             assn.authLevel,

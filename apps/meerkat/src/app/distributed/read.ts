@@ -1,5 +1,6 @@
-import { Context, Vertex, ClientAssociation, OperationReturn, IndexableOID } from "@wildboar/meerkat-types";
-import { ObjectIdentifier, TRUE_BIT, FALSE_BIT, OBJECT_IDENTIFIER } from "asn1-ts";
+import { Vertex, ClientAssociation, OperationReturn, IndexableOID } from "@wildboar/meerkat-types";
+import { ObjectIdentifier, TRUE_BIT, FALSE_BIT, OBJECT_IDENTIFIER, unpackBits } from "asn1-ts";
+import type { MeerkatContext } from "../ctx";
 import * as errors from "@wildboar/meerkat-types";
 import {
     _decode_ReadArgument,
@@ -10,6 +11,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResult.ta";
 import {
     ReadResultData,
+    _encode_ReadResultData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResultData.ta";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
@@ -28,6 +30,7 @@ import {
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
     SecurityProblem_insufficientAccessRights,
+    SecurityProblem_invalidSignature,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
@@ -95,7 +98,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
 import getACIItems from "../authz/getACIItems";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
-import { MINIMUM_MAX_ATTR_SIZE } from "../constants";
+import { INTERNAL_ASSOCIATON_ID, MINIMUM_MAX_ATTR_SIZE, UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
 import {
     ServiceControlOptions_noSubtypeSelection,
     ServiceControlOptions_dontSelectFriends,
@@ -108,6 +111,19 @@ import {
 import preprocessTuples from "../authz/preprocessTuples";
 import { attributeError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
 import isOperationalAttributeType from "../x500/isOperationalAttributeType";
+import {
+    ProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+import {
+    ErrorProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
+import { generateSignature } from "../pki/generateSignature";
+import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+import { stringifyDN } from "../x500/stringifyDN";
+import type {
+    DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import { printInvokeId } from "../utils/printInvokeId";
 
 /**
  * @summary The read operation, as specified in ITU Recommendation X.511.
@@ -126,15 +142,84 @@ import isOperationalAttributeType from "../x500/isOperationalAttributeType";
  */
 export
 async function read (
-    ctx: Context,
-    assn: ClientAssociation,
+    ctx: MeerkatContext,
+    assn: ClientAssociation | undefined,
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const target = state.foundDSE;
     const argument = _decode_ReadArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
+    const signErrors: boolean = (
+        (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+        && (!assn || assn.authorizedForSignedErrors)
+    );
+    const requestor: DistinguishedName | undefined = data
+        .securityParameters
+        ?.certification_path
+        ?.userCertificate
+        .toBeSigned
+        .subject
+        .rdnSequence
+        ?? state.chainingArguments.originator
+        ?? data.requestor
+        ?? assn?.boundNameAndUID?.dn;
+
+    // #region Signature validation
+    /**
+     * Integrity of the signature SHOULD be evaluated at operation evaluation,
+     * not before. Because the operation could get chained to a DSA that has a
+     * different configuration of trust anchors. To be clear, this is not a
+     * requirement of the X.500 specifications--just my personal assessment.
+     *
+     * Meerkat DSA allows operations with invalid signatures to progress
+     * through all pre-operation-evaluation procedures leading up to operation
+     * evaluation, but with `AuthenticationLevel.basicLevels.signed` set to
+     * `FALSE` so that access controls are still respected. Therefore, if we get
+     * to this point in the code, and the argument is signed, but the
+     * authentication level has the `signed` field set to `FALSE`, we throw an
+     * `invalidSignature` error.
+     */
+    if (
+        ("signed" in argument)
+        && state.chainingArguments.authenticationLevel
+        && ("basicLevels" in state.chainingArguments.authenticationLevel)
+        && !state.chainingArguments.authenticationLevel.basicLevels.signed
+    ) {
+        const remoteHostIdentifier = assn
+            ? `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`
+            : "INTERNAL://127.0.0.1/1"; // TODO: Make this a constant.
+        const logInfo = {
+            context: "arg",
+            host: remoteHostIdentifier,
+            aid: assn?.id,
+            iid: printInvokeId(state.invokeId),
+            ap: stringifyDN(ctx, requestor ?? []),
+        };
+        ctx.log.warn(ctx.i18n.t("log:invalid_signature", logInfo), logInfo);
+        throw new errors.SecurityError(
+            ctx.i18n.t("err:invalid_signature", logInfo),
+            new SecurityErrorData(
+                SecurityProblem_invalidSignature,
+                undefined,
+                undefined,
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn?.boundNameAndUID?.dn,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+            signErrors,
+        );
+    }
+    // #endregion Signature validation
     const op = ("present" in state.invokeId)
-        ? assn.invocations.get(Number(state.invokeId.present))
+        ? assn?.invocations.get(Number(state.invokeId.present))
         : undefined;
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const isSubentry: boolean = target.dse.objectClass.has(id_sc_subentry.toString());
@@ -157,9 +242,9 @@ async function read (
     const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
         .flatMap((aci) => getACDFTuplesFromACIItem(aci));
     const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
-    const user = state.chainingArguments.originator
+    const user = requestor
         ? new NameAndOptionalUID(
-            state.chainingArguments.originator,
+            requestor,
             state.chainingArguments.uniqueIdentifier,
         )
         : undefined;
@@ -167,7 +252,9 @@ async function read (
         accessControlScheme,
         acdfTuples,
         user,
-        state.chainingArguments.authenticationLevel ?? assn.authLevel,
+        state.chainingArguments.authenticationLevel
+            ?? assn?.authLevel
+            ?? UNTRUSTED_REQ_AUTH_LEVEL,
         targetDN,
         isMemberOfGroup,
         NAMING_MATCHER,
@@ -193,7 +280,8 @@ async function read (
                     [],
                     createSecurityParameters(
                         ctx,
-                        assn.boundNameAndUID?.dn,
+                        signErrors,
+                        assn?.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
                     ),
@@ -201,6 +289,7 @@ async function read (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -214,7 +303,8 @@ async function read (
                 [],
                 createSecurityParameters(
                     ctx,
-                    assn.boundNameAndUID?.dn,
+                    signErrors,
+                    assn?.boundNameAndUID?.dn,
                     undefined,
                     abandoned["&errorCode"],
                 ),
@@ -222,6 +312,7 @@ async function read (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (op) {
@@ -341,7 +432,8 @@ async function read (
                     [],
                     createSecurityParameters(
                         ctx,
-                        assn.boundNameAndUID?.dn,
+                        signErrors,
+                        assn?.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
                     ),
@@ -349,6 +441,7 @@ async function read (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         // Otherwise, we must pretend that the selected attributes simply do not exist.
@@ -374,7 +467,8 @@ async function read (
                 [],
                 createSecurityParameters(
                     ctx,
-                    assn.boundNameAndUID?.dn,
+                    signErrors,
+                    assn?.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
                 ),
@@ -382,12 +476,14 @@ async function read (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 
     const modifyRights: ModifyRights = [];
     if (
-        data.modifyRightsRequest
+        assn
+        && data.modifyRightsRequest
         // We only return these rights to the user if they are authenticated.
         // TODO: Make this behavior configurable.
         && (("basicLevels" in assn.authLevel) && (assn.authLevel.basicLevels.level > 0))
@@ -432,38 +528,75 @@ async function read (
         }
     }
 
-    const result: ReadResult = {
-        unsigned: new ReadResultData(
-            new EntryInformation(
-                {
-                    rdnSequence: targetDN,
-                },
-                !target.dse.shadow,
-                permittedEntryInfo.information,
-                permittedEntryInfo.discloseIncompleteEntry
-                    ? permittedEntryInfo.incompleteEntry
-                    : false,
-                state.partialName,
-                false,
-            ),
-            (
-                data.modifyRightsRequest
-                && accessControlScheme
-                && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-            )
-                ? modifyRights
-                : undefined,
-            [],
-            createSecurityParameters(
-                ctx,
-                assn.boundNameAndUID?.dn,
-                id_opcode_read,
-            ),
-            ctx.dsa.accessPoint.ae_title.rdnSequence,
-            state.chainingArguments.aliasDereferenced,
-            undefined,
+    const signResults: boolean = (
+        (data.securityParameters?.target === ProtectionRequest_signed)
+        && (!assn || assn.authorizedForSignedResults)
+    );
+    const resultData: ReadResultData = new ReadResultData(
+        new EntryInformation(
+            {
+                rdnSequence: targetDN,
+            },
+            !target.dse.shadow,
+            permittedEntryInfo.information,
+            permittedEntryInfo.discloseIncompleteEntry
+                ? permittedEntryInfo.incompleteEntry
+                : false,
+            state.partialName,
+            false,
         ),
-    };
+        (
+            data.modifyRightsRequest
+            && accessControlScheme
+            && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+        )
+            ? modifyRights
+            : undefined,
+        [],
+        createSecurityParameters(
+            ctx,
+            signResults,
+            assn?.boundNameAndUID?.dn,
+            id_opcode_read,
+        ),
+        ctx.dsa.accessPoint.ae_title.rdnSequence,
+        state.chainingArguments.aliasDereferenced,
+        undefined,
+    );
+    const result: ReadResult = signResults
+        ? (() => {
+            const resultDataBytes = _encode_ReadResultData(resultData, DER).toBytes();
+            const key = ctx.config.signing?.key;
+            if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
+                return {
+                    unsigned: resultData,
+                };
+            }
+            const signingResult = generateSignature(key, resultDataBytes);
+            if (!signingResult) {
+                return {
+                    unsigned: resultData,
+                };
+            }
+            const [ sigAlg, sigValue ] = signingResult;
+            return {
+                signed: new SIGNED(
+                    resultData,
+                    sigAlg,
+                    unpackBits(sigValue),
+                    undefined,
+                    undefined,
+                ),
+            };
+        })()
+        : {
+            unsigned: resultData,
+        };
+
+    const signDSPResult: boolean = (
+        (state.chainingArguments.securityParameters?.target === ProtectionRequest_signed)
+        && (!assn || assn.authorizedForSignedResults)
+    );
     return {
         result: {
             unsigned: new ChainedResult(
@@ -472,7 +605,8 @@ async function read (
                     undefined,
                     createSecurityParameters(
                         ctx,
-                        assn.boundNameAndUID?.dn,
+                        signDSPResult,
+                        assn?.boundNameAndUID?.dn,
                         id_opcode_read,
                     ),
                     undefined,

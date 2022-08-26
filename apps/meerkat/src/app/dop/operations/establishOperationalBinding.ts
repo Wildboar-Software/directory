@@ -1,7 +1,7 @@
 import type { MeerkatContext } from "../../ctx";
 import * as errors from "@wildboar/meerkat-types";
 import DOPAssociation from "../DOPConnection";
-import { INTEGER, FALSE } from "asn1-ts";
+import { INTEGER, FALSE, unpackBits } from "asn1-ts";
 import type {
     EstablishOperationalBindingArgument,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgument.ta";
@@ -13,6 +13,7 @@ import type {
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingResult.ta";
 import {
     EstablishOperationalBindingResultData,
+    _encode_EstablishOperationalBindingResultData,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingResultData.ta";
 import {
     id_op_binding_hierarchical,
@@ -82,6 +83,14 @@ import { getDateFromOBTime } from "../getDateFromOBTime";
 import { printInvokeId } from "../../utils/printInvokeId";
 import { validateEntry, ValidateEntryReturn } from "../../x500/validateNewEntry";
 import { randomInt } from "crypto";
+import {
+    ErrorProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
+import {
+    ProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+import { generateSignature } from "../../pki/generateSignature";
+import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -119,18 +128,22 @@ async function establishOperationalBinding (
 ): Promise<EstablishOperationalBindingResult> {
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const data: EstablishOperationalBindingArgumentData = getOptionallyProtectedValue(arg);
-    ctx.log.info(ctx.i18n.t("log:establishOperationalBinding", {
-        context: "started",
-        type: data.bindingType.toString(),
-        bid: data.bindingID?.identifier.toString(),
-        aid: assn.id,
-    }), {
+    // DOP associations are ALWAYS authorized to receive signed responses.
+    const signResult: boolean = (data.securityParameters?.target === ProtectionRequest_signed);
+    const signErrors: boolean = (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed);
+    const logInfo = {
         remoteFamily: assn.socket.remoteFamily,
         remoteAddress: assn.socket.remoteAddress,
         remotePort: assn.socket.remotePort,
         association_id: assn.id,
         invokeID: printInvokeId({ present: invokeId }),
-    });
+    };
+    ctx.log.info(ctx.i18n.t("log:establishOperationalBinding", {
+        context: "started",
+        type: data.bindingType.toString(),
+        bid: data.bindingID?.identifier.toString(),
+        aid: assn.id,
+    }), logInfo);
     /**
      * @summary Wait for approval of a proposed operational binding
      * @description
@@ -161,17 +174,42 @@ async function establishOperationalBinding (
     ]);
 
     const NOT_SUPPORTED_ERROR = new errors.OperationalBindingError(
-        `Operational binding type ${data.bindingType.toString()} not understood.`,
-        {
-            unsigned: new OpBindingErrorParam(
-                OpBindingErrorParam_problem_unsupportedBindingType,
+        ctx.i18n.t("err:ob_type_unrecognized", {
+            obtype: data.bindingType.toString(),
+        }),
+        new OpBindingErrorParam(
+            OpBindingErrorParam_problem_unsupportedBindingType,
+            data.bindingType,
+            undefined,
+            undefined,
+            [],
+            createSecurityParameters(
+                ctx,
+                signErrors,
+                assn.boundNameAndUID?.dn,
+                undefined,
+                id_err_operationalBindingError,
+            ),
+            ctx.dsa.accessPoint.ae_title.rdnSequence,
+            undefined,
+            undefined,
+        ),
+        signErrors,
+    );
+
+    if (data.valid?.validFrom instanceof ASN1Element) {
+        throw new errors.OperationalBindingError(
+            ctx.i18n.t("err:unrecognized_ob_start_time_syntax"),
+            new OpBindingErrorParam(
+                OpBindingErrorParam_problem_invalidStartTime,
                 data.bindingType,
                 undefined,
                 undefined,
                 [],
                 createSecurityParameters(
                     ctx,
-                    undefined,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
                     undefined,
                     id_err_operationalBindingError,
                 ),
@@ -179,53 +217,30 @@ async function establishOperationalBinding (
                 undefined,
                 undefined,
             ),
-        },
-    );
-
-    if (data.valid?.validFrom instanceof ASN1Element) {
-        throw new errors.OperationalBindingError(
-            ctx.i18n.t("err:unrecognized_ob_start_time_syntax"),
-            {
-                unsigned: new OpBindingErrorParam(
-                    OpBindingErrorParam_problem_invalidStartTime,
-                    data.bindingType,
-                    undefined,
-                    undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        undefined,
-                        undefined,
-                        id_err_operationalBindingError,
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
-                    undefined,
-                ),
-            },
+            signErrors,
         );
     }
     if (data.valid?.validUntil instanceof ASN1Element) {
         throw new errors.OperationalBindingError(
             ctx.i18n.t("err:unrecognized_ob_end_time_syntax"),
-            {
-                unsigned: new OpBindingErrorParam(
-                    OpBindingErrorParam_problem_invalidEndTime,
-                    data.bindingType,
+            new OpBindingErrorParam(
+                OpBindingErrorParam_problem_invalidEndTime,
+                data.bindingType,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
                     undefined,
-                    undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        undefined,
-                        undefined,
-                        id_err_operationalBindingError,
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
-                    undefined,
+                    id_err_operationalBindingError,
                 ),
-            },
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                undefined,
+                undefined,
+            ),
+            signErrors,
         );
     }
 
@@ -253,24 +268,24 @@ async function establishOperationalBinding (
                  */
                 throw new errors.OperationalBindingError(
                     ctx.i18n.t("err:superior_must_specify_entryInfo"),
-                    {
-                        unsigned: new OpBindingErrorParam(
-                            OpBindingErrorParam_problem_parametersMissing,
-                            data.bindingType,
+                    new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_parametersMissing,
+                        data.bindingType,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
                             undefined,
-                            undefined,
-                            [],
-                            createSecurityParameters(
-                                ctx,
-                                undefined,
-                                undefined,
-                                id_err_operationalBindingError,
-                            ),
-                            ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
-                            undefined,
+                            id_err_operationalBindingError,
                         ),
-                    },
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
+                    signErrors,
                 );
             }
             if (!compareDistinguishedName(
@@ -280,24 +295,24 @@ async function establishOperationalBinding (
             )) {
                 throw new errors.OperationalBindingError(
                     ctx.i18n.t("err:hob_contextprefixinfo_did_not_match"),
-                    {
-                        unsigned: new OpBindingErrorParam(
-                            OpBindingErrorParam_problem_invalidAgreement,
-                            data.bindingType,
+                    new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_invalidAgreement,
+                        data.bindingType,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
                             undefined,
-                            undefined,
-                            [],
-                            createSecurityParameters(
-                                ctx,
-                                undefined,
-                                undefined,
-                                id_err_operationalBindingError,
-                            ),
-                            ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
-                            undefined,
+                            id_err_operationalBindingError,
                         ),
-                    },
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
+                    signErrors,
                 );
             }
 
@@ -320,30 +335,32 @@ async function establishOperationalBinding (
                         present: invokeId,
                     },
                     false,
+                    signErrors,
                 );
                 structuralObjectClass = soc;
                 governingStructureRule = gsr;
             } catch (e) {
+                ctx.log.warn(ctx.i18n.t("log:hob_invalid_entryInfo", { e }), logInfo);
                 throw new errors.OperationalBindingError(
-                    ctx.i18n.t("err:hob_invalid_entryInfo"),
-                    {
-                        unsigned: new OpBindingErrorParam(
-                            OpBindingErrorParam_problem_invalidAgreement,
-                            data.bindingType,
+                    ctx.i18n.t("err:hob_invalid_entryInfo", { e }),
+                    new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_invalidAgreement,
+                        data.bindingType,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
                             undefined,
-                            undefined,
-                            [],
-                            createSecurityParameters(
-                                ctx,
-                                undefined,
-                                undefined,
-                                id_err_operationalBindingError,
-                            ),
-                            ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
-                            undefined,
+                            id_err_operationalBindingError,
                         ),
-                    },
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
+                    signErrors,
                 );
             }
 
@@ -390,24 +407,24 @@ async function establishOperationalBinding (
                         ctx.i18n.t("err:ob_duplicate_identifier", {
                             id: data.bindingID.identifier,
                         }),
-                        {
-                            unsigned: new OpBindingErrorParam(
-                                OpBindingErrorParam_problem_duplicateID,
-                                id_op_binding_hierarchical,
+                        new OpBindingErrorParam(
+                            OpBindingErrorParam_problem_duplicateID,
+                            id_op_binding_hierarchical,
+                            undefined,
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                signErrors,
+                                assn.boundNameAndUID?.dn,
                                 undefined,
-                                undefined,
-                                [],
-                                createSecurityParameters(
-                                    ctx,
-                                    assn.boundNameAndUID?.dn,
-                                    undefined,
-                                    id_err_operationalBindingError,
-                                ),
-                                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                                false,
-                                undefined,
+                                id_err_operationalBindingError,
                             ),
-                        },
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            false,
+                            undefined,
+                        ),
+                        signErrors,
                     );
                 } else {
                     newBindingIdentifier = Number(data.bindingID.identifier);
@@ -428,7 +445,7 @@ async function establishOperationalBinding (
                     binding_type: data.bindingType.toString(),
                     binding_identifier: Number(bindingID.identifier),
                     binding_version: Number(bindingID.version),
-                    agreement_ber: Buffer.from(data.agreement.toBytes()),
+                    agreement_ber: Buffer.from(data.agreement.toBytes().buffer),
                     access_point: {
                         connect: {
                             id: access_point_id,
@@ -439,14 +456,14 @@ async function establishOperationalBinding (
                     validity_start: validFrom,
                     validity_end: validUntil,
                     security_certification_path: sp?.certification_path
-                        ? Buffer.from(_encode_CertificationPath(sp.certification_path, DER).toBytes())
+                        ? Buffer.from(_encode_CertificationPath(sp.certification_path, DER).toBytes().buffer)
                         : undefined,
                     security_name: sp?.name?.map((rdn) => rdnToJson(rdn)),
                     security_time: sp?.time
                         ? getDateFromTime(sp.time)
                         : undefined,
                     security_random: sp?.random
-                        ? Buffer.from(packBits(sp.random))
+                        ? Buffer.from(packBits(sp.random).buffer)
                         : undefined,
                     security_target: (sp?.target !== undefined)
                         ? Number(sp.target)
@@ -486,20 +503,20 @@ async function establishOperationalBinding (
                         && ("strong" in assn.bind.credentials)
                         && assn.bind.credentials.strong.certification_path
                     )
-                        ? Buffer.from(_encode_CertificationPath(assn.bind.credentials.strong.certification_path, DER).toBytes())
+                        ? Buffer.from(_encode_CertificationPath(assn.bind.credentials.strong.certification_path, DER).toBytes().buffer)
                         : undefined,
                     source_attr_cert_path: (
                         assn.bind?.credentials
                         && ("strong" in assn.bind.credentials)
                         && assn.bind.credentials.strong.attributeCertificationPath
                     )
-                        ? Buffer.from(_encode_ACP(assn.bind.credentials.strong.attributeCertificationPath, DER).toBytes())
+                        ? Buffer.from(_encode_ACP(assn.bind.credentials.strong.attributeCertificationPath, DER).toBytes().buffer)
                         : undefined,
                     source_bind_token: (
                         assn.bind?.credentials
                         && ("strong" in assn.bind.credentials)
                     )
-                        ? Buffer.from(_encode_Token(assn.bind.credentials.strong.bind_token, DER).toBytes())
+                        ? Buffer.from(_encode_Token(assn.bind.credentials.strong.bind_token, DER).toBytes().buffer)
                         : undefined,
                     source_strong_name: (
                         assn.bind?.credentials
@@ -530,48 +547,48 @@ async function establishOperationalBinding (
                         context: "timeout",
                         uuid: created.uuid,
                     }),
-                    {
-                        unsigned: new OpBindingErrorParam(
-                            OpBindingErrorParam_problem_currentlyNotDecidable,
-                            data.bindingType,
+                    new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_currentlyNotDecidable,
+                        data.bindingType,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
                             undefined,
-                            undefined,
-                            [],
-                            createSecurityParameters(
-                                ctx,
-                                undefined,
-                                undefined,
-                                id_err_operationalBindingError,
-                            ),
-                            ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
-                            undefined,
+                            id_err_operationalBindingError,
                         ),
-                    },
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
+                    signErrors,
                 );
             } else if (approved === false) {
                 throw new errors.OperationalBindingError(
                     ctx.i18n.t("err:ob_rejected", {
                         uuid: created.uuid,
                     }),
-                    {
-                        unsigned: new OpBindingErrorParam(
-                            OpBindingErrorParam_problem_invalidAgreement,
-                            data.bindingType,
+                    new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_invalidAgreement,
+                        data.bindingType,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
                             undefined,
-                            undefined,
-                            [],
-                            createSecurityParameters(
-                                ctx,
-                                undefined,
-                                undefined,
-                                id_err_operationalBindingError,
-                            ),
-                            ctx.dsa.accessPoint.ae_title.rdnSequence,
-                            undefined,
-                            undefined,
+                            id_err_operationalBindingError,
                         ),
-                    },
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
+                    signErrors,
                 );
             }
             try {
@@ -582,6 +599,7 @@ async function establishOperationalBinding (
                     init,
                     structuralObjectClass,
                     governingStructureRule,
+                    signErrors,
                 );
                 ctx.log.info(ctx.i18n.t("log:establishOperationalBinding", {
                     context: "succeeded",
@@ -595,21 +613,48 @@ async function establishOperationalBinding (
                     association_id: assn.id,
                     invokeID: printInvokeId({ present: invokeId }),
                 });
+                const resultData = new EstablishOperationalBindingResultData(
+                    data.bindingType,
+                    bindingID,
+                    ctx.dsa.accessPoint,
+                    {
+                        roleB_replies: _encode_SubordinateToSuperior(reply, DER),
+                    },
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signResult,
+                        assn.boundNameAndUID?.dn,
+                        id_op_establishOperationalBinding,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                );
+                if (!signResult) {
+                    return {
+                        unsigned: resultData,
+                    };
+                }
+                const resultDataBytes = _encode_EstablishOperationalBindingResultData(resultData, DER).toBytes();
+                const key = ctx.config.signing?.key;
+                if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
+                    return {
+                        unsigned: resultData,
+                    };
+                }
+                const signingResult = generateSignature(key, resultDataBytes);
+                if (!signingResult) {
+                    return {
+                        unsigned: resultData,
+                    };
+                }
+                const [ sigAlg, sigValue ] = signingResult;
                 return {
-                    unsigned: new EstablishOperationalBindingResultData(
-                        data.bindingType,
-                        bindingID,
-                        ctx.dsa.accessPoint,
-                        {
-                            roleB_replies: _encode_SubordinateToSuperior(reply, DER),
-                        },
-                        [],
-                        createSecurityParameters(
-                            ctx,
-                            undefined,
-                            id_op_establishOperationalBinding,
-                        ),
-                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    signed: new SIGNED(
+                        resultData,
+                        sigAlg,
+                        unpackBits(sigValue),
                         undefined,
                         undefined,
                     ),
@@ -622,7 +667,7 @@ async function establishOperationalBinding (
                         },
                         data: {
                             accepted: false,
-                            last_ob_problem: getOptionallyProtectedValue(e.data).problem,
+                            last_ob_problem: e.data.problem,
                         },
                     }).then().catch();
                 } else {
@@ -664,24 +709,24 @@ async function establishOperationalBinding (
         } else {
             throw new errors.OperationalBindingError(
                 ctx.i18n.t("err:unrecognized_ob_initiator_syntax"),
-                {
-                    unsigned: new OpBindingErrorParam(
-                        OpBindingErrorParam_problem_invalidAgreement,
-                        data.bindingType,
+                new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_invalidAgreement,
+                    data.bindingType,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
                         undefined,
-                        undefined,
-                        [],
-                        createSecurityParameters(
-                            ctx,
-                            undefined,
-                            undefined,
-                            id_err_operationalBindingError,
-                        ),
-                        ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        undefined,
-                        undefined,
+                        id_err_operationalBindingError,
                     ),
-                },
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+                signErrors,
             );
         }
     } else if (data.bindingType.isEqualTo(id_op_binding_non_specific_hierarchical)) {

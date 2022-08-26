@@ -1,4 +1,5 @@
 import type { Context } from "@wildboar/meerkat-types";
+import { getEntryExistsFilter } from "../database/entryExistsFilter";
 
 /**
  * @summary Determines whether any passwords are defined at all.
@@ -16,9 +17,7 @@ export
 async function anyPasswordsExist (ctx: Context): Promise<boolean> {
     return !!(await ctx.db.password.findFirst({
         where: {
-            entry: {
-                deleteTimestamp: null,
-            },
+            entry: getEntryExistsFilter(),
         },
         select: {
             id: true,

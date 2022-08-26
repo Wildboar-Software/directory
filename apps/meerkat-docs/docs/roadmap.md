@@ -2,37 +2,73 @@
 
 We will not promise any particular schedule of delivery of features or bug fixes
 at this time. However, the very high-level roadmap for Meerkat DSA can be
-broken down to these phases:
+broken down to the following versions.
 
-## Version 1.0.0 / Minimally-Viable Product
+## Version 1.2.0 - Schema Update ("LDAP Parity")
 
-A minimally-viable product. Possible bugs and security vulnerabilities that
-can only be exploited with network access. At this stage, Meerkat DSA is
-generally expected to only be used as an identity provider, a private data store
-running on a private network, or a fully-public data store containing
-non-sensitive information.
+This update will introduce thousands of new attribute types, object classes,
+name forms, matching rules, and more, such that Meerkat DSA will achieve near
+functional parity with OpenLDAP, Apache Directory Server, OpenDJ, and other
+popular LDAP directories.
 
-Since few DSAs are expected to exist at this time, distributed operation will be
-of secondary importance, and likely to have bugs if it works at all.
+For instance, the popular LDAP object class, `inetOrgPerson`, is defined in the
+default schema that comes with installations of OpenLDAP, but it is not present
+in the X.500 schema. In this release, we will convert the LDAP schema to the
+X.500 equivalents and support them in Meerkat DSA.
 
-Notable features to be excluded from this release are:
+## Version 1.3.0 - List Continuation Reference Procedures
 
-- Service administrative areas
-- Password administrative areas
-- Cross References
-- Rule-Based Access Control
-- Shadowing via the DISP
-- LDAP Syntaxes for Public Key Infrastructure Types
-- Results Signing
-- Signature Checking
-- Strong Credentials
-- SASL Authentication
+This update will allow Meerkat DSA to chain the `list` operation to return the
+immediate subordinate entries under a given entry, even when those subordinates
+exist in other DSAs. This is a big deal, because currently, there is no way to
+list remote subordinates.
 
-## Feature Completeness
+## Version 1.3.0 - ITOT
 
-After release of the minimally-viable product, the remaining features needed to
-adhere to the X.500 standards will be implemented, which are named in the
-section above.
+This update will introduce ISO Transport Over TCP (ITOT) as an alternative
+protocol stack to Internet Directly-Mapped (IDM). The rationale for introducing
+this above the many other more desirable features of X.500 directories is that
+older X.500 directory software, such as Quipu, only uses ITOT. Therefore,
+supporting ITOT transport in Meerkat DSA will allow integration with Quipu and
+other older X.500 DSAs and DUAs.
+
+## Version 1.4.0 - Schema Update ("Wildboar Schema")
+
+This update will introduce thousands of new schema objects defined by Wildboar
+Software into the default schema. This is desirable so that X.500 directories
+can build upon a common framework of mutually-understood schemata, rather than
+"re-inventing the wheel" each in isolation from each other. For instance, there
+may be a desire for X.500 directories to store marital information about users,
+using a `married` auxiliary object class that permits the presence of a
+`spouseDN` attribute in an entry. It would be unfortunate for directory
+administrators everywhere to define their own equivalent object classes, thereby
+duplicating work and reducing inter-domain compatibility.
+
+## Version 1.5.0 - Password Administrative Areas
+
+This update will introduce support for X.500 Password Administrative Areas. This
+is a desirable feature early on, since one of the major uses for directories is
+in storing authentication information for people in an organization.
+
+## Version 1.6.0 - Service Administrative Areas
+
+This update will introduce support for X.500 Service Administrative Areas.
+
+## Version 1.7.0 - Shadowing
+
+This update will introduce support for the Directory Information Shadowing
+Protocol (DISP).
+
+## Version 1.8.0 and Beyond
+
+Not much can be said about anything this far in the future. However, these
+features need to be introduced at some point:
+
+- Cross References, allowing DSAs to share knowledge about other DSAs
+- SASL Authentication, allowing alternative authentication mechanisms
+- Rule-Based Access Control, allowing an alternative access control mechanism
+- Search Continuation Procedure, allowing searches to return results from other DSAs
+- Hierarchy Selections, allowing selection of hierarchically-related entries in a search operation
 
 ## Integration, Scalability, and Security
 
@@ -49,7 +85,7 @@ Scalability will be a parameter of this phase; Meerkat DSA will be hardened
 against denial-of-service attacks, excessive resource consumption, and generally
 heavily tuned for performance.
 
-It is expected that, before this is implemented, Quote Administrative Areas
+It is expected that, before this is implemented, Quota Administrative Areas
 will be implemented, which will be a new administrative area type defined by
 Meerkat DSA that rate-limits user activity.
 

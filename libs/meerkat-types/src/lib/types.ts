@@ -108,6 +108,15 @@ import type {
     Clearance,
 } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/Clearance.ta";
 import type { TlsOptions } from "tls";
+import type {
+    CertificateList,
+} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificateList.ta";
+import type {
+    TrustAnchorList,
+} from "@wildboar/tal/src/lib/modules/TrustAnchorInfoModule/TrustAnchorList.ta";
+import type {
+    AttributeCertificationPath,
+} from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/AttributeCertificationPath.ta";
 
 type EventReceiver<T> = (params: T) => void;
 
@@ -134,6 +143,9 @@ type ANY = ASN1Element;
 export
 type DateString = string;
 
+export
+type IndexableDN = string;
+
 /**
  * @summary The log levels used by Meerkat DSA logging
  * @description
@@ -148,6 +160,13 @@ enum LogLevel {
     warn = "warn",
     error = "error",
 };
+
+export
+enum RemoteCRLCheckiness {
+    never = 0,
+    whenCritical = 1, // The technically correct behavior.
+    always = 2,
+}
 
 /**
  * @summary Something that has a uniquely-identifying object identifier
@@ -804,7 +823,7 @@ interface DSE {
      *
      * https://dzone.com/articles/materialized-paths-tree-structures-relational-database
      */
-         materializedPath: string;
+    materializedPath: string;
 
     /**
      * The internal UUID assigned to this DSE. This UUID is intentionally
@@ -859,6 +878,13 @@ interface DSE {
 
     /** The single value of the `modifyTimestamp` operational attribute. */
     modifyTimestamp?: Date;
+
+    /**
+     * The time upon which this entry should expire, as specified in the
+     * `entryTtl` operational attribute defined in
+     * [IETF RFC 2589](https://www.rfc-editor.org/rfc/rfc2589.html).
+     */
+    expiresTimestamp?: Date;
 
     /** Values of the `entryACI` operational attribute. */
     entryACI?: ACIItem[];
@@ -1007,6 +1033,333 @@ interface DITInfo {
 }
 
 /**
+ * @summary Configuration options that pertain to the offline aspects of PKI
+ * @description
+ *
+ * Configuration options that pertain to the offline aspects of Public Key
+ * Infrastructure (PKI), meaning local CRLs and configured trust anchors.
+ *
+ * @interface
+ */
+export
+interface OfflinePKIConfig {
+    /**
+     * The strongly-typed list of trust anchors. If this is not supplied
+     * from the user, it should be instantiated from `tls.rootCertificates`.
+     */
+    trustAnchorList: TrustAnchorList;
+
+    /**
+     * The strongly-typed certificate revocation lists.
+     */
+    certificateRevocationLists: CertificateList[];
+}
+
+/**
+ * @summary Configuration options that pertain to OCSP
+ * @description
+ *
+ * Configuration options that pertain to Online Certificate Status Protocol
+ * (OCSP).
+ *
+ * @interface
+ */
+export
+interface OCSPOptions {
+    /**
+     * If 0, this DSA will not check with OCSP responders for the status of an
+     * asserted certificate. If greater than zero, this DSA will check with OCSP
+     * responders for the status of an asserted certificate and cache the result
+     * for this value's number of seconds.
+     */
+    ocspCheckiness: number;
+
+    /**
+     * Whether an OCSP response with a status of "unknown" should be treated as
+     * a failure to validate a certification path.
+     */
+    ocspUnknownIsFailure: boolean;
+
+    /**
+     * Whether OCSP requests should be digitally signed with this DSA's signing
+     * key.
+     */
+    ocspSignRequests: boolean;
+
+    /**
+     * The maximum number of OCSP responders to check with before giving up for
+     * a given certificate.
+     */
+    maxOCSPRequestsPerCertificate: number;
+
+    /**
+     * The number of seconds for a given OCSP responder to respond before
+     * abandoning the request.
+     */
+    ocspTimeout: number;
+
+    /**
+     * The number of seconds by which the OCSP producedAt time and thisUpdate
+     * time may differ from the current time before an OCSP response is
+     * considered invalid on the grounds of being a possible replay attack.
+     */
+    ocspReplayWindow: number;
+
+    /**
+     * The maximum size in bytes of OCSP responses. If an OCSP response is
+     * fetched and it exceeds this size, Meerkat DSA will cancel fetching it,
+     * and/or refuse to decode it. This limit should NOT be considered exact.
+     */
+    ocspResponseSizeLimit: number;
+}
+
+/**
+ * @summary Configuration options that pertain to fetching remote CRLs
+ * @description
+ *
+ * Configuration options that pertain to fetching remote certificate revocation
+ * lists (CRLs), such as from a `cRLDistributionPoints` X.509v3 extension.
+ *
+ * @interface
+ */
+export
+interface RemoteCRLOptions {
+    /**
+     * Determines how aggressively this DSA demands to check remote CRLs.
+     */
+    remoteCRLCheckiness: RemoteCRLCheckiness;
+
+    /**
+     * The protcols to be supported by remote CRL fetching, identified by their
+     * URL scheme equivalents, e.g. "http", "ftp", "ldaps", etc. If `undefined`,
+     * all supported fetching protocols will be allowed.
+     */
+    remoteCRLSupportedProtocols?: Set<string>;
+
+    /**
+     * If set, unavailable remote CRLs will not be treated as a failure for the
+     * purposes of certification path validation.
+     */
+    tolerateUnavailableRemoteCRL: boolean;
+
+    /**
+     * The number of seconds during which a fetched remote CRL shall remain in
+     * the cache of remote CRLs.
+     */
+    remoteCRLCacheTimeToLiveInSeconds: number;
+
+    /**
+     * The maximum number of CRL endpoints per distribution point from which to
+     * attempt to fetch a remote CRL.
+     */
+    endpointsToAttemptPerDistributionPoint: number;
+
+    /**
+     * The maximum number of CRL distribution points from which to attempt to
+     * fetch a remote CRL per certificate.
+     */
+    distributionPointAttemptsPerCertificate: number;
+
+    /**
+     * The number of seconds for a given CRL distribution point to respond
+     * before abandoning the request.
+     */
+    remoteCRLTimeout: number;
+
+    /**
+     * The maximum size in bytes of remote CRLs. If a remote CRL is fetched and
+     * it exceeds this size, Meerkat DSA will cancel fetching it. This limit
+     * should NOT be considered exact. When used by DAP or LDAP, which can
+     * return multiple objects in a single "fetch," the size limit applies to
+     * the entire response packet.
+     */
+    remoteCRLFetchSizeLimit: number;
+}
+
+/**
+ * @summary Configuration options that pertain to the online aspects of PKI
+ * @description
+ *
+ * Configuration options that pertain to the online aspects of Public Key
+ * Infrastructure (PKI), meaning remote CRLs and OCSP.
+ *
+ * @interface
+ */
+export
+interface OnlinePKIConfig extends RemoteCRLOptions, OCSPOptions {
+
+}
+
+/**
+ * An index of revoked certificates, so that revocation lookups can be faster
+ * than scanning all entries in all local CRLs.
+ */
+export
+interface CRLIndex {
+
+     /**
+      * This is an index of serial numbers of revoked certificates, in
+      * decimal format, from all configured CRLs.
+      *
+      * If a certificate serial number appears in this set, it _does not_
+      * mean that it is revoked, because two different issuers may have used
+      * the same serial numbers. It _does_ tell you, cheaply, if the CRL list
+      * needs to be scanned for a particular certificate; if a particular
+      * serial number does not appear in this set, there is no need to do the
+      * more computationally expensive step of scanning through the CRLs for
+      * a match.
+      */
+     revokedCertificateSerialNumbers: Set<string>;
+}
+
+/**
+ * @summary Configuration options pertaining to certificate policies.
+ * @description
+ *
+ * Configuration options pertaining to certificate policies.
+ *
+ * @interface
+ */
+export
+interface CertificatePolicyConfig {
+    /**
+     * A list of object identifiers of certificate policies that are acceptable
+     * for a given purpose (e.g. signed arguments, results, or errors, or TLS).
+     */
+    acceptableCertificatePolicies?: OBJECT_IDENTIFIER[];
+}
+
+/**
+ * Generic information that pertains to Public Key Infrastructure (PKI).
+ */
+export
+interface PublicKeyInfrastructureConfig
+extends OfflinePKIConfig, OnlinePKIConfig, CRLIndex, CertificatePolicyConfig {
+
+};
+
+/**
+ * Generic information that pertains to Privilege Management Infrastructure (PMI).
+ */
+export
+interface PrivilegeManagementInfrastructureConfig {
+    attributeCertificationPath?: AttributeCertificationPath;
+}
+
+/**
+ * Configuration options for usage of a Server-Based Certificate Validation
+ * Protocol (SCVP) server for validation certification paths.
+ *
+ * Notably, there are no options relating to validating the SCVP server's
+ * response signature. The transport mechanism itself must be trusted.
+ */
+export
+interface SCVPConfiguration {
+
+    /**
+     * URL of the SCVP server's HTTP endpoint against which SCVP requests are to
+     * be `POST`ed.
+     */
+    url: URL;
+
+    /**
+     * Whether to use this DSA's AE-Title as the `requestorName` field of each
+     * SCVP request.
+     */
+    discloseAETitle: boolean; // becomes requestorName
+
+    /**
+     * Arbitrary text to include with each SCVP request.
+     */
+    requestorText?: string;
+
+    /**
+     * The object identifiers of the checks to be requested for public key
+     * certificates, which will be used to populate the `query.checks` field.
+     */
+    publicKeyCertificateChecks: OBJECT_IDENTIFIER[];
+
+    /**
+     * The object identifiers of the checks to be requested for attribute
+     * certificates, which will be used to populate the `query.checks` field.
+     */
+    attributeCertificateChecks: OBJECT_IDENTIFIER[];
+
+    /**
+     * The object identifiers of the "want-backs" for public key certificates
+     * to be requested with each SCVP request involving a public-key
+     * certificate. This is used to populate the `query.wantBack` field of the
+     * SCVP request.
+     */
+    publicKeyCertificateWantBacks: OBJECT_IDENTIFIER[];
+
+    /**
+     * The object identifiers of the "want-backs" for attribute certificates
+     * to be requested with each SCVP request involving a public-key
+     * certificate. This is used to populate the `query.wantBack` field of the
+     * SCVP request.
+     */
+    attributeCertificateWantBacks: OBJECT_IDENTIFIER[];
+
+    /**
+     * The object identifier identifying the policy to be used for validation.
+     */
+    validationPolicyRefId: OBJECT_IDENTIFIER;
+
+    /**
+     * The object identifier identifying the algorithm to be used for validation.
+     */
+    validationAlgorithmId?: OBJECT_IDENTIFIER;
+
+    /**
+     * Whether to inhibit policy mapping.
+     */
+    inhibitPolicyMapping?: BOOLEAN;
+
+    /**
+     * Whether to require an explicit policy.
+     */
+    requireExplicitPolicy?: BOOLEAN;
+
+    /**
+     * Whether to inhibit the use of `anyPolicy`.
+     */
+    inhibitAnyPolicy?: BOOLEAN;
+
+    /**
+     * Whether to include the SCVP request in the response.
+     */
+    fullRequestInResponse: BOOLEAN; // default to FALSE
+
+    /**
+     * Whether to NOT include validation policy parameters.
+     */
+    responseValidationPolicyByRef: BOOLEAN;
+
+    /**
+     * Whether the SCVP response shall be digitally-signed.
+     */
+    protectResponse: BOOLEAN;
+
+    /**
+     * Whether to accept cached responses.
+     */
+    cachedResponse: BOOLEAN;
+
+    /**
+     * The object identifier of the signature algorithm the SCVP client requests
+     * the server to use in signing responses.
+     */
+    signatureAlgorithm?: OBJECT_IDENTIFIER;
+
+    /**
+     * The object identifier of the hash algorithm the server should use to
+     * compute the hash value for the requestHash item in the response.
+     */
+    hashAlgorithm?: OBJECT_IDENTIFIER;
+};
+
+/**
  * @summary Properties of Meerkat DSA's digital signing of requests, responses, and errors.
  * @description
  *
@@ -1016,22 +1369,64 @@ interface DITInfo {
  * @interface
  */
 export
-interface SigningInfo {
+interface SigningInfo extends PublicKeyInfrastructureConfig {
+
+    /**
+     * Whether no digital signatures should be checked at all. If this is
+     * `true`, all digital signatures and certification paths will not be
+     * checked at all.
+     *
+     * When used for bind operations using strong authentication, the signature
+     * will always be treated as invalid. The rationale for this is that it
+     * prevents users from obtaining strong authentication with invalid
+     * credentials. Users will be forced to use simple or lesser authentication.
+     *
+     * For all other operations, signatures will simply be ignored, but requests
+     * may be treated as signed for the purposes of validation.
+     */
+    disableAllSignatureVerification: boolean;
 
     /**
      * The filepath to a private key to use for signing requests and responses
      * from the DSA. This does not affect TLS and may be a totally different key
      * than that used for TLS.
      */
-    key: KeyObject;
+    key?: KeyObject;
 
     /**
      * The filepath to a certificate chain to use for signing requests and responses
      * from the DSA. This does not affect TLS and may be a totally different chain
      * than that used for TLS.
      */
-    certPath: PkiPath;
+    certPath?: PkiPath;
 
+    /**
+     * The required level of authentication for this DSA to honor requests for
+     * signed results or errors.
+     */
+    minAuthRequired: AuthenticationLevel_basicLevels;
+
+    /**
+     * The required level of authentication for this DSA to honor requests for
+     * signed errors, if different from `minAuthRequired`.
+     */
+    signedErrorsMinAuthRequired: AuthenticationLevel_basicLevels;
+
+    /**
+     * The set of all permitted cryptographic signature algorithms for signing
+     * arguments, results, and errors.
+     */
+    permittedSignatureAlgorithms?: Set<IndexableOID>;
+
+    /**
+     * Overrides that apply only to the bind operation. These overrides are only
+     * for the aspects of public key infrastructure that are online, meaning
+     * OCSP and remote CRL checking, primarily. This is useful because a DSA
+     * administrator might want bind requests to be scrutinzed more strictly,
+     * using OCSP and remote CRLs, but allow all subsequent requests to have
+     * signature checking without these computationally-expensive features.
+     */
+    bindOverrides?: Partial<OnlinePKIConfig> & Partial<CertificatePolicyConfig>;
 }
 
 /**
@@ -1090,6 +1485,47 @@ interface NetworkService {
 }
 
 /**
+ * The credentials for a basic authentication scheme.
+ *
+ * @interface
+ */
+export
+interface BasicAuthCredentials {
+    username: string;
+    password: string;
+    realm?: string;
+}
+
+/**
+ * Configuration options pertaining to authentication.
+ *
+ * @interface
+ */
+export
+interface AuthenticationConfiguration extends PrivilegeManagementInfrastructureConfig {
+
+    /**
+     * If set to `true`, a strong authentication attempt that does not provide
+     * a certification path, but which _does_ provide a distinguished name in
+     * the `name` field of the strong credentials, will result in Meerkat DSA
+     * reading the DSE of having the distinguished name `name` if it is present
+     * locally, and, if it has object class `pkiCertPath` and has attribute
+     * values of type `pkiPath`, these values will be used as certification
+     * paths, and each will be tried until a certification path is found that
+     * verifies the bind token. If no such vindicating certification path is
+     * found, Meerkat DSA rejects the authentication attempt. It is strongly
+     * preferred for clients to supply a certification path in the bind argument
+     * so that this lookup need not happen.
+     *
+     * It is recommended to keep this disabled, unless the certification path
+     * itself is highly sensitive and should not be sent over the network, and
+     * the potential threat of denial-of-service is controlled for.
+     */
+    lookupPkiPathForUncertifiedStrongAuth: boolean;
+
+}
+
+/**
  * @summary Meerkat DSA configuration
  * @description
  *
@@ -1099,6 +1535,29 @@ interface NetworkService {
  */
 export
 interface Configuration {
+
+    /**
+     * Overrides the name of the vendor of this DSA, which is displayed in the
+     * root DSE. It can be useful for security purposes to obscure the type of
+     * DSA that is in use; this can be done by setting this variable to an
+     * empty string. If this is unset, the `vendorName` attribute will read
+     * "Wildboar Software" regardless of the server's locale or language
+     * settings.
+     */
+    vendorName?: string;
+
+    /**
+     * Overrides the reported version of this DSA, which is displayed in the
+     * root DSE. It can be useful for security purposes to obscure the version
+     * of DSA that is in use; this can be done by setting this variable to an
+     * empty string. If this is unset, the `vendorVersion` attribute will read
+     * "Meerkat DSA, Version X.X.X" regardless of the server's locale or
+     * language settings, where "X.X.X" is replaced with your DSA's actual
+     * version number.
+     */
+    vendorVersion?: string;
+
+    authn: AuthenticationConfiguration;
 
     log: {
         level: LogLevel;
@@ -1146,7 +1605,7 @@ interface Configuration {
      *
      * Meerkat DSA will take its AE-Title from the public key certificate.
      */
-    signing?: SigningInfo;
+    signing: SigningInfo;
 
     tcp: {
 
@@ -1177,8 +1636,35 @@ interface Configuration {
     /**
      * Options for the TLS socket, which is all of the options for the
      * `TLSSocket` constructor in the NodeJS standard library.
+     *
+     * Even though the NodeJS `ca` and `crl` options can take many forms, they
+     * should always be a string of the concatenated PEM objects.
+     *
+     * These options notably do not extend these interfaces:
+     *
+     * - `OnlinePKIOptions` - Because remote CRLs are checked automatically if
+     *   the CRLDP extension is critical.
+     * - `CertificatePolicyConfig` - Because the NodeJS TLS module does not
+     *   support certificate policies at all.
      */
-    tls: TlsOptions;
+    tls: TlsOptions & OfflinePKIConfig & OCSPOptions & CRLIndex & {
+        ca?: string;
+        crl?: string;
+        answerOCSPRequests: boolean;
+        rejectUnauthorizedServers: boolean;
+        rejectUnauthorizedClients: boolean;
+        // This is a part of TLSSocketOptions, but not TLSOptions.
+        requestOCSP: boolean;
+    };
+
+    /**
+     * Configuration options for usage of a Server-Based Certificate Validation
+     * Protocol (SCVP) server for validation certification paths.
+     *
+     * Notably, there are no options relating to validating the SCVP server's
+     * response signature. The transport mechanism itself must be trusted.
+     */
+    scvp?: SCVPConfiguration;
 
     /**
      * Options for IDM transport.
@@ -1240,7 +1726,10 @@ interface Configuration {
     /**
      * Options for the HTTPS-based web administration console.
      */
-    webAdmin: NetworkService;
+    webAdmin: NetworkService & {
+        auth?: BasicAuthCredentials;
+        useTLS: boolean;
+    };
 
     /**
      * Options pertaining to the "points" added to a user's
@@ -1300,10 +1789,11 @@ interface Configuration {
         usingTLSv1_3: number;
 
     };
+
     chaining: {
 
         /**
-         * The integer representation of the minimum authentication level required for
+         * The minimum authentication level required for
          * Meerkat DSA to chain requests to other DSAs. This is a security feature to
          * prevent unauthenticated (and therefore, unaccountable) users from spamming
          * the distributed directory with cumbersome (if not malicious) requests.
@@ -1311,25 +1801,8 @@ interface Configuration {
          * This is important, because chaining can have the effect of making a request
          * "fan-out" to multiple DSAs. A nefarious request may multiply exponentially
          * without this check in place.
-         *
-         * This defaults to true, which corresponds to simple authentication, meaning that,
-         * to utilize chaining, a user must have authenticated using simple authentication
-         * or something stronger.
          */
-        minAuthLevel: number;
-
-        /**
-         * The minimum `localQualifier` "points" required (on top of the minimum
-         * authentication level) for Meerkat DSA to chain requests to other DSAs.
-         * If the minimum authentication level--as configured by the
-         * `MEERKAT_MIN_AUTH_LEVEL_FOR_CHAINING` environment variable--is exceeded, this
-         * does not matter.
-         *
-         * This is important, because chaining can have the effect of making a request
-         * "fan-out" to multiple DSAs. A nefarious request may multiply exponentially
-         * without this check in place.
-         */
-        minAuthLocalQualifier: number;
+        minAuthRequired: AuthenticationLevel_basicLevels;
 
         /**
          * Whether non-usage of TLS in chaining to other DSAs is permissible. In
@@ -1347,6 +1820,55 @@ interface Configuration {
         /** If true, Meerkat DSA will not chain any requests. */
         prohibited: boolean;
 
+        /**
+         * If greater than 1, Meerkat DSA will make parallel requests in the
+         * List Continuation Reference (LCR) procedure defined in
+         * ITU Recommendation X.518 (2019), Section 20.4.2. This number
+         * determines the number of simultaneous chained list operations that
+         * Meerkat DSA will issue at a given time. If set to 0, 1, or some
+         * other non-sense number or non-number, Meerkat DSA will simply run
+         * all chained subrequests in series. More parallelism generally means
+         * that the distributed list operation completes faster.
+         *
+         * If this value is set too high, malicious users could issue requests
+         * that propagate into so many outbound chained requests that the
+         * responses act as a Distributed Denial-of-Service (DDoS).
+         *
+         * Despite this setting, Meerkat DSA will not use parallel requests
+         * unless the operation has priority set to `high`.
+         */
+        lcrParallelism: number;
+
+        /**
+         * If greater than 1, Meerkat DSA will make parallel requests in the
+         * Search Continuation Reference (SCR) procedure defined in
+         * ITU Recommendation X.518 (2019), Section 20.4.3. This number
+         * determines the number of simultaneous chained search operations that
+         * Meerkat DSA will issue at a given time. If set to 0, 1, or some
+         * other non-sense number or non-number, Meerkat DSA will simply run
+         * all chained subrequests in series. More parallelism generally means
+         * that the distributed search operation completes faster.
+         *
+         * If this value is set too high, malicious users could issue requests
+         * that propagate into so many outbound chained requests that the
+         * responses act as a Distributed Denial-of-Service (DDoS).
+         *
+         * Despite this setting, Meerkat DSA will not use parallel requests
+         * unless the operation has priority set to `high`.
+         */
+        scrParallelism: number;
+
+        /**
+         * If `true`, Meerkat DSA will sign all outbound DSP requests.
+         */
+        signChainedRequests: boolean;
+
+        /**
+         * If `true`, Meerkat DSA will check the signatures on signed DSP
+         * results or errors.
+         */
+        checkSignaturesOnResponses: boolean;
+
     };
 
     /**
@@ -1359,6 +1881,13 @@ interface Configuration {
      * a severe security vulnerability is discovered. It is a "remote killswitch."
      */
     sentinelDomain?: string;
+
+    /**
+     * If `true`, the `administratorEmail` will be exposed as an attribute value
+     * of `administratorsAddress` in the Root DSE. See
+     * [this draft IETF RFC](https://datatracker.ietf.org/doc/html/draft-wahl-ldap-adminaddr-05).
+     */
+    administratorEmailPublic: boolean;
 
     /**
      * Currently unused.
@@ -1392,23 +1921,10 @@ interface Configuration {
     ob: {
 
         /**
-         * The integer representation of the minimum authentication level required for
-         * Meerkat DSA to accept DOP requests.
-         *
-         * This defaults to true, which corresponds to simple authentication, meaning that,
-         * to use DOP, a DSA must have authenticated using simple authentication
-         * or something stronger.
+         * The the minimum authentication level required for Meerkat DSA to
+         * accept DOP requests.
          */
-        minAuthLevel: number;
-
-        /**
-         * The minimum `localQualifier` "points" required (on top of the minimum
-         * authentication level) for Meerkat DSA to accept DOP requests.
-         * If the minimum authentication level--as configured by the
-         * `MEERKAT_MIN_AUTH_LEVEL_FOR_OB` environment variable--is exceeded, this
-         * does not matter.
-         */
-        minAuthLocalQualifier: number;
+        minAuthRequired: AuthenticationLevel_basicLevels;
 
         /**
          * Whether Meerkat DSA shall accept ALL requested operational bindings.
@@ -1471,6 +1987,17 @@ interface Configuration {
      * but it should be a low number. It should probably not be higher than 10.
      */
     maxPreBindRequests: number;
+
+    /**
+     * The default value of the `entryTtl` operational attribute, if an entry
+     * was marked as a dynamic object using the `dynamicObject` object class,
+     * but the `entryTtl` attribute was not supplied in the attributes of the
+     * created entry. This value is the number of seconds before the entry
+     * should expire and disappear.
+     * 
+     * @see {@link https://www.rfc-editor.org/rfc/rfc2589.html IETF RFC 2589}
+     */
+    defaultEntryTTL: number;
 
     /** Directory Access Protocol (DAP) options. */
     dap: {
@@ -2198,6 +2725,16 @@ extends UniquelyIdentifiedByObjectIdentifier, Partial<MultiNamed>, Partial<Descr
 
 }
 
+interface DSARelationship {
+    trustForIBRA: boolean;
+    discloseCrossReferences: boolean;
+}
+
+interface DSARelationships {
+    byStringDN: Map<IndexableDN, DSARelationship>;
+}
+
+
 /**
  * @summary Type definition for the context object
  * @description
@@ -2220,6 +2757,9 @@ interface Context {
 
     /** Information on this DSA */
     dsa: DSAInfo;
+
+    /** Information on other DSAs */
+    otherDSAs: DSARelationships;
 
     /** A map of TLS sockets by reference to application associations, or `null` if no association exists yet */
     associations: Map<Socket, ClientAssociation | null>, // null = the socket exists, but has not bound yet.
@@ -2290,6 +2830,7 @@ interface Context {
 
     /** An index of substrings matching rules by object identifier strings and names */
     substringsMatchingRules: Map<IndexableOID, MatchingRuleInfo<SubstringsMatcher>>;
+
     /**
      * An index of substrings matching rules by object identifier strings and
      * names.
@@ -2514,6 +3055,9 @@ abstract class ClientAssociation {
             false,
         ),
     };
+
+    public authorizedForSignedResults: boolean = false;
+    public authorizedForSignedErrors: boolean = false;
 
     /**
      * An index of the outstanding paged results requests by base64-encoded

@@ -26,6 +26,7 @@ type ConnectionEventEmitter = Emitter<EventMap>;
 export
 interface WriteOperationOptions {
     timeLimitInMilliseconds?: number;
+    signErrors?: boolean;
 }
 
 /**

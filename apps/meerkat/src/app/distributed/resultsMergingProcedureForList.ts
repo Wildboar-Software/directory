@@ -1,9 +1,12 @@
-import type { Context, ClientAssociation } from "@wildboar/meerkat-types";
-import { ContinuationReference } from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
+import type { MeerkatContext } from "../ctx";
+import type { ClientAssociation } from "@wildboar/meerkat-types";
+import type { OperationDispatcherState } from "./OperationDispatcher";
+import type {
+    ListArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgument.ta";
 import {
     OperationProgress_nameResolutionPhase_completed as completed,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
-import { strict as assert } from "assert";
 import lcrProcedure from "./lcrProcedure";
 import type { ListState } from "./list_i";
 
@@ -16,10 +19,10 @@ import type { ListState } from "./list_i";
  *
  * @param ctx The context object
  * @param assn The client association
+ * @param arg The list argument
  * @param res The list operation state
  * @param local Whether the request originated internally by the DSA itself
- * @param NRcontinuationList The list of name resolution continuation references
- * @param SRcontinuationList The list of subrequest continuation references
+ * @param state The operation dispatcher state
  * @returns An updated list operation state
  *
  * @function
@@ -27,12 +30,12 @@ import type { ListState } from "./list_i";
  */
 export
 async function resultsMergingProcedureForList (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: ClientAssociation,
+    arg: ListArgument,
     res: ListState,
     local: boolean,
-    NRcontinuationList: ContinuationReference[],
-    SRcontinuationList: ContinuationReference[],
+    state: OperationDispatcherState,
 ): Promise<ListState> {
     // We skip deduplicating listInfo for now.
     if (local) {
@@ -58,14 +61,19 @@ async function resultsMergingProcedureForList (
         for (const cr of (res.poq.unexplored ?? [])) {
             // None shall be ignored for now.
             if (cr.operationProgress.nameResolutionPhase === completed) {
-                SRcontinuationList.push(cr);
+                state.SRcontinuationList.push(cr);
             } else {
-                NRcontinuationList.push(cr);
+                state.NRcontinuationList.push(cr);
             }
         }
     }
-    if (SRcontinuationList.length) {
-        await lcrProcedure(SRcontinuationList);
+    if (state.SRcontinuationList.length) {
+        // Deviation: this is not specified, but I think we need to do it.
+        if (res.poq?.unexplored) {
+            // We will re-introduce CRs as we fail to access the
+            res.poq.unexplored.length = 0;
+        }
+        await lcrProcedure(ctx, assn, arg, res, state);
     }
     /**
      * The text of the specification seems to imply that NRCR procedure is only

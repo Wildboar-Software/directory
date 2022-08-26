@@ -17,7 +17,7 @@ azure_rg="production"
 zone="mkdemo.wildboar.software"
 
 # instances=("root")
-# instances=("root" "gb" "ru" "ru-moscow")
+# instances=("root" "gb" "ru" "moscow")
 instances=("root" "gb")
 
 # Make sure we are on the right Azure subscription

@@ -568,7 +568,7 @@ async function dseFromDatabaseEntry (
         ret.dsSubentry = true;
     }
 
-    if (!ret.alias && !ret.subentry && !ret.root) {
+    if (dbe.entry) {
         const collectiveExclusions = dbe.EntryCollectiveExclusion
             ?? (await ctx.db.entryCollectiveExclusion.findMany({
                 where: {

@@ -28,11 +28,11 @@ function encodeLDAPDN (ctx: Context, dn: RDNSequence): Uint8Array {
         (attrType: OBJECT_IDENTIFIER) => {
             const attr = ctx.attributeTypes.get(attrType.toString());
             if (!attr?.ldapSyntax) {
-                throw new Error(attrType.toString());
+                return undefined;
             }
             const syntax_ = ctx.ldapSyntaxes.get(attr?.ldapSyntax.toString());
             if (!syntax_ || !syntax_.encoder) {
-                throw new Error(attrType.toString());
+                return undefined;
             }
             return (value: ASN1Element) => Buffer.from(syntax_.encoder!(value)).toString("utf-8");
         },

@@ -55,7 +55,23 @@ async function abandon (
     request: ChainedArgument,
 ): Promise<ChainedResult> {
     const argument = _decode_AbandonArgument(request.argument);
+    // #region Signature validation
+    /**
+     * Integrity of the signature SHOULD be evaluated at operation evaluation,
+     * not before. Because the operation could get chained to a DSA that has a
+     * different configuration of trust anchors. To be clear, this is not a
+     * requirement of the X.500 specifications--just my personal assessment.
+     */
+     if ("signed" in argument) {
+        /*
+         No signature verification takes place for the abandon operation,
+         because it does not have a `SecurityParameters` field, and therefore
+         does not relay a certification-path.
+         */
+    }
+    // #endregion Signature validation
     const data = getOptionallyProtectedValue(argument);
+    const signErrors: boolean = false;
     if (!("present" in data.invokeID)) {
         throw new errors.AbandonFailedError(
             ctx.i18n.t("err:no_invoke_id_specified"),
@@ -65,6 +81,7 @@ async function abandon (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     id_errcode_abandonFailed,
@@ -73,6 +90,7 @@ async function abandon (
                 undefined,
                 undefined,
             ),
+            signErrors,
         );
     }
     const invokeID = data.invokeID.present;
@@ -88,6 +106,7 @@ async function abandon (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     id_errcode_abandonFailed,
@@ -96,6 +115,7 @@ async function abandon (
                 undefined,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (op.pointOfNoReturnTime || op.abandonTime) {
@@ -109,6 +129,7 @@ async function abandon (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     id_errcode_abandonFailed,
@@ -117,6 +138,7 @@ async function abandon (
                 undefined,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -143,6 +165,7 @@ async function abandon (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     id_errcode_abandonFailed,
@@ -151,9 +174,17 @@ async function abandon (
                 undefined,
                 undefined,
             ),
+            signErrors,
         );
     }
 
+    /**
+     * Abandon results will never be signed by Meerkat DSA, because there is no
+     * security parameters in the request, so a user cannot specify that they
+     * want the results to be signed. Since abandon results are generally not
+     * sensitive, Meerkat DSA chooses to avoid signing these results.
+     */
+    const signResult: boolean = false;
     const result: AbandonResult = {
         null_: null,
     };
@@ -163,6 +194,7 @@ async function abandon (
             undefined,
             createSecurityParameters(
                 ctx,
+                signResult,
                 assn.boundNameAndUID?.dn,
                 id_opcode_abandon,
             ),

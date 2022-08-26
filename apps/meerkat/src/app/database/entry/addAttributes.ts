@@ -37,8 +37,16 @@ async function addAttributes (
     attributes: Attribute[],
     modifier?: DistinguishedName,
     checkForExisting: boolean = true,
+    signErrors: boolean = false,
 ): Promise<PrismaPromise<any>[]> {
-    return addValues(ctx, entry, attributes.flatMap(valuesFromAttribute), modifier, checkForExisting);
+    return addValues(
+        ctx,
+        entry,
+        attributes.flatMap(valuesFromAttribute),
+        modifier,
+        checkForExisting,
+        signErrors,
+    );
 }
 
 export default addAttributes;

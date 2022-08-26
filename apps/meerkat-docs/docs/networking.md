@@ -1,6 +1,28 @@
 # Networking
 
-## Directory Protocols
+## Preface on Directory Protocols
+
+In TCP/IP networking, there is generally a one-to-one correspondence between a
+TCP port and a protocol. You don't usually listen on a given TCP port for, say,
+both HTTP and FTP and SSH traffic. In directory systems, network transport is
+logically separated from the _session_, such that you can reuse the same
+transport connection to relay multiple protocols. Hence, to clarify the use of
+terminology here, a "transport" means the stack of protocols by which two
+hosts are networked and X.500 operations are relayed between them, and an
+"association" is a logical connection established by a bind operation that is
+transported over a "transport." Within the same transport, multiple associations
+may be made serially (but not in parallel), via binding and unbinding.
+
+This means that, when Meerkat DSA listens for IDM transport on a given TCP port,
+DAP, DOP, DISP, and DSP associations may be established using IDM transport on
+that TCP port. This defies the usual "one-port-per-service" model often used by
+TCP/IP services.
+
+Note that the above does _not_ apply to LDAP, since LDAP is ALWAYS transported
+over "raw" TCP without IDM, ITOT, or any other OSI transport mechanism layered
+on top.
+
+## Directory Transport Protocols
 
 Currently, Meerkat DSA only supports the transport of X.500 protocols via IDM
 or IDMS (IDM encapsulated in TLS).
@@ -22,25 +44,6 @@ If no port is set, that service does not listen at all. This means that it is
 possible to run Meerkat DSA as an LDAP-only or X.500-only server by simply
 not configuring ports for those services.
 
-## The Web Console
-
-Meerkat DSA also provides a web-based administrative console, which does not
-listen over TLS and which provides no authentication or security at all. **Users
-are expected to place some sort of proxy in front of this that requires
-authentication, or simply not expose it at all.** It is only necessary for
-accepting or rejecting requested operational bindings; everything else can be
-done using the X.500 protocols. In the future, we will find a way to make even
-this possible without the web console.
-
-Note that listening with the web-based
-administrative console is a **security risk** because there is no
-authentication or access controls required; all entries in memory may be read,
-entries may be deleted, and many more hazards. If you do not expect to need
-this, it is strongly recommended that you do not enable it. Also note that, even
-if authentication is configured for the web console via a proxy, there may be
-other security issues; we suspect it may be vulnerable to CSRF, but this has yet
-to be tested.
-
 ## Distributed Operation
 
 For distributed operations, Meerkat DSA stores the access points obtained from
@@ -55,51 +58,9 @@ not using in-memory caching of the DIT.) It is recommended that you instead use
 the Directory Access Protocol with the `manageDSAIT` flag set to modify
 knowledge attributes rather than altering the database directly.
 
-## TLS Configuration
-
-> Many details in this section will change soon.
-
-TLS can be configured via the following environment variables:
-
-- `MEERKAT_TLS_CERT_FILE`
-- `MEERKAT_TLS_KEY_FILE`
-
-Or by including
-
-- `MEERKAT_TLS_PFX_FILE`
-
-`MEERKAT_TLS_CERT_FILE` contains a file path to the X.509 certificate to be
-used for TLS. `MEERKAT_TLS_KEY_FILE` shall contain the file path to the
-private key to be used for TLS. If both of these are present, TLS will be
-enabled. Otherwise, TLS will silently fail.
-
-If either the key file or PFX file are password-protected, these can be
-decrypted by supplying the passphrase in the `MEERKAT_TLS_KEY_PASSPHRASE`
-environment variable.
-
-## Result Signing
-
-Currently, results may not be digitally-signed by Meerkat DSA, but the keypair
-to be used for digital-signing (eventually) can be configured via these
-environment variables:
-
-- `MEERKAT_SIGNING_CERT_CHAIN`
-- `MEERKAT_SIGNING_KEY`
-
-`MEERKAT_SIGNING_CERT_CHAIN` contains the file path to the PEM-encoded X.509
-certificate chain. `MEERKAT_SIGNING_KEY` shall contain the file path to the
-private key to be used for results signing.
-
-Note that these settings may differ from the keypair used for TLS. This is
-intentional, because DSA administrators may want results to be signed with a
-different keypair that what is used for transport-layer security.
-
-Even if you do not plan to use results signing, you should still configure a
-signing key-pair.
-
-_Meerkat DSA determines it's Application Entity (AE) title from its signing certificate._
-
 ## DNS Configuration
+
+### DNS Records
 
 It is not necessary at all, but for the sake of service discovery, it is
 recommended that you configure DNS for your domain to name your directory as
@@ -123,6 +84,27 @@ You will also need A and/or AAAA records corresponding to the hostnames on the
 right hand side of the SRV records.
 
 Again, DNS configuration is NOT required for Meerkat DSA to work.
+
+### DNS Client
+
+Meerkat DSA runs on NodeJS, which uses the `c-ares` library under the hood.
+NodeJS does not expose any functionality for tuning DNS resolution. Fortunately,
+you can tune it using the `RES_OPTIONS` environment variable, which is
+documented [here](https://manpages.ubuntu.com/manpages/kinetic/en/man3/ares_init_options.3.html).
+
+You generally should not mess with this unless you're seeing DNS resolution
+issues. I have personally seen this happen when I change networks while still
+connected to a VPN, but I think this is a pretty uncommon issue.
+
+See [this StackOverflow answer](https://stackoverflow.com/a/45403565/6562635)
+for help.
+
+:::info
+
+This is liable to change if [Bun](https://bun.sh/) proves to be a viable NodeJS
+alternative. I do not know what it uses for DNS under the hood.
+
+:::
 
 ## The Future
 

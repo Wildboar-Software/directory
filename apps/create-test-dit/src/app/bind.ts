@@ -24,7 +24,7 @@ async function createConnection (
         );
         if (!connection) {
             ctx.log.warn(`Could not create connection to this access point: ${accessPointURL}.`);
-            process.exit(1);
+            process.exit(7);
         }
         ctx.log.debug("Connected.");
         return connection;
@@ -35,7 +35,7 @@ async function createConnection (
         } else {
             console.log(e);
             ctx.log.warn(`Could not create connection to this access point: ${accessPointURL}. ${e}`);
-            process.exit(1);
+            process.exit(13);
         }
     }
 }

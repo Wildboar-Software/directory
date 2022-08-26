@@ -34,7 +34,7 @@ async function dnToVertex (
     let currentRoot: Vertex = root;
     for (let i = 0; i < dn.length; i++) {
         const id = await rdnToID(ctx, currentRoot.dse.id, dn[i]);
-        if (!id) {
+        if (id === undefined) {
             return undefined;
         }
         if (derefedAliases?.has(id)) {

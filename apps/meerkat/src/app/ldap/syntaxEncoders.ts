@@ -50,6 +50,19 @@ import {
     Refinement,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Refinement.ta";
 import { phone } from "phone";
+import {
+    _decode_BootParameterSyntax,
+} from "@wildboar/parity-schema/src/lib/modules/NIS/BootParameterSyntax.ta";
+import {
+    _decode_NISNetgroupTripleSyntax,
+} from "@wildboar/parity-schema/src/lib/modules/NIS/NISNetgroupTripleSyntax.ta";
+import {
+    _decode_ComponentFilter,
+} from "@wildboar/parity-schema/src/lib/modules/RFC3687ComponentMatching/ComponentFilter.ta";
+import {
+    _decode_RelativeDistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
+import stringifyRDNSequence from "@wildboar/ldap/src/lib/stringifiers/RDNSequence";
 
 function escapeUBS (str: UBS): string {
     return directoryStringToString(str)
@@ -446,3 +459,48 @@ const telephoneNumber: LDAPSyntaxEncoder = (value: ASN1Element): Uint8Array => {
         return Buffer.from(str, "utf-8");
     }
 };
+
+// export
+// const authPasswordSyntax: LDAPSyntaxEncoder = (value: ASN1Element): Uint8Array => {
+
+// };
+
+export
+const bootParameterSyntax: LDAPSyntaxEncoder = (value: ASN1Element): Uint8Array => {
+    const bps = _decode_BootParameterSyntax(value);
+    return Buffer.from(`${bps.key.replace(/=/g, "")}=${bps.server.replace(/:/g, "")}:${bps.path}`);
+};
+
+export
+const nisNetgroupTripleSyntax: LDAPSyntaxEncoder = (value: ASN1Element): Uint8Array => {
+    const nts = _decode_NISNetgroupTripleSyntax(value);
+    const str = [
+        nts.hostname?.replace(/,/g, "") ?? "-",
+        nts.username?.replace(/,/g, "") ?? "-",
+        nts.domainname?.replace(/,/g, "") ?? "-",
+    ].join(",");
+    return Buffer.from(`(${str})`);
+};
+
+// export
+// const componentFilter: LDAPSyntaxEncoder = (value: ASN1Element): Uint8Array => {
+//     const filter = _decode_ComponentFilter(value);
+// };
+
+export
+const null_: LDAPSyntaxEncoder = (value: ASN1Element): Uint8Array => {
+    return Buffer.from("NULL");
+};
+
+// export
+// const open: LDAPSyntaxEncoder = (value: ASN1Element): Uint8Array => {
+
+// };
+
+export
+function getRDNEncoder (ctx: Context): LDAPSyntaxEncoder {
+    return (value: ASN1Element): Uint8Array => {
+        const r = _decode_RelativeDistinguishedName(value);
+        return encodeLDAPDN(ctx, [ r ]);
+    };
+}

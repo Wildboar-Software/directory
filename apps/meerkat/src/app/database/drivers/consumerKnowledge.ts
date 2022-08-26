@@ -75,7 +75,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
             knowledge_type: Knowledge.CONSUMER,
             OR: [
                 {
-                    ber: Buffer.from(value.value.toBytes()),
+                    ber: Buffer.from(value.value.toBytes().buffer),
                 },
                 {
                     ae_title: {

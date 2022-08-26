@@ -45,6 +45,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingArgument.ta";
 import {
     ModifyOperationalBindingArgumentData,
+    _encode_ModifyOperationalBindingArgumentData,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingArgumentData.ta";
 import {
     SubordinateToSuperior,
@@ -122,6 +123,7 @@ import type {
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { sleep } from "../utils/sleep";
+import { generateSIGNED } from "../pki/generateSIGNED";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -167,6 +169,7 @@ async function updateSuperiorDSA (
     newCP: Vertex,
     aliasDereferenced: boolean,
     options?: UpdateSuperiorOptions,
+    signErrors: boolean = false,
 ): Promise<ResultOrError> {
     const connectionTimeout: number | undefined = options?.timeLimitInMilliseconds;
     const startTime = new Date();
@@ -221,6 +224,7 @@ async function updateSuperiorDSA (
             const assn: Connection | null = await connect(ctx, accessPoint, dop_ip["&id"]!, {
                 timeLimitInMilliseconds: options?.timeLimitInMilliseconds,
                 tlsOptional: ctx.config.chaining.tlsOptional,
+                signErrors,
             });
             if (!assn) {
                 throw new ServiceError(
@@ -230,6 +234,7 @@ async function updateSuperiorDSA (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             undefined,
                             undefined,
                             serviceError["&errorCode"]
@@ -237,6 +242,7 @@ async function updateSuperiorDSA (
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
                         aliasDereferenced,
                     ),
+                    signErrors,
                 );
             }
             const timeRemainingForOperation: number | undefined = timeoutTime
@@ -335,14 +341,14 @@ async function updateSuperiorDSA (
                     binding_type: id_op_binding_hierarchical.toString(),
                     binding_identifier: Number(bindingID.identifier),
                     binding_version: Number(bindingID.version) + 1,
-                    agreement_ber: Buffer.from(encodedNewAgreement.toBytes()),
+                    agreement_ber: Buffer.from(encodedNewAgreement.toBytes().buffer),
                     access_point: {
                         connect: {
                             id: hob.access_point.id,
                         },
                     },
                     initiator: OperationalBindingInitiator.ROLE_B,
-                    initiator_ber: Buffer.from(encodedSub2Sup.toBytes()),
+                    initiator_ber: Buffer.from(encodedSub2Sup.toBytes().buffer),
                     validity_start: hob.validity_start,
                     validity_end: hob.validity_end,
                     new_context_prefix_rdn: rdnToJson(newCP.dse.rdn),
@@ -355,8 +361,8 @@ async function updateSuperiorDSA (
                     uuid: true,
                 },
             });
-            const createArg = (securityParameters: SecurityParameters): ModifyOperationalBindingArgument => ({
-                unsigned: new ModifyOperationalBindingArgumentData(
+            const createArg = (securityParameters?: SecurityParameters): ModifyOperationalBindingArgument => {
+                const argData = new ModifyOperationalBindingArgumentData(
                     id_op_binding_hierarchical,
                     new OperationalBindingID(
                         bindingID.identifier,
@@ -373,12 +379,19 @@ async function updateSuperiorDSA (
                     encodedNewAgreement,
                     undefined, // Validity remains the same.
                     securityParameters,
-                ),
-            });
+                );
+                const signArgument: boolean = true; // TODO: Make configurable.
+                return (signArgument
+                    ? generateSIGNED(ctx, argData, _encode_ModifyOperationalBindingArgumentData)
+                    : {
+                        unsigned: argData,
+                    });
+            };
             // A binary exponential backoff loop for retrying failed updates.
             for (const backoff of updateTimingBackoffInSeconds) {
                 const sp = createSecurityParameters(
                     ctx,
+                    true,
                     accessPoint.ae_title.rdnSequence,
                     modifyOperationalBinding["&operationCode"]!,
                 );
@@ -411,14 +424,14 @@ async function updateSuperiorDSA (
                                 },
                             },
                             security_certification_path: sp?.certification_path
-                                ? Buffer.from(_encode_CertificationPath(sp.certification_path, DER).toBytes())
+                                ? Buffer.from(_encode_CertificationPath(sp.certification_path, DER).toBytes().buffer)
                                 : undefined,
                             security_name: accessPoint.ae_title.rdnSequence.map(rdnToJson),
                             security_time: sp?.time
                                 ? getDateFromTime(sp.time)
                                 : undefined,
                             security_random: sp?.random
-                                ? Buffer.from(packBits(sp.random))
+                                ? Buffer.from(packBits(sp.random).buffer)
                                 : undefined,
                             security_target: (sp?.target !== undefined)
                                 ? Number(sp.target)
@@ -483,6 +496,7 @@ async function updateSuperiorDSA (
             [],
             createSecurityParameters(
                 ctx,
+                signErrors,
                 undefined,
                 undefined,
                 updateError["&errorCode"],
@@ -491,6 +505,7 @@ async function updateSuperiorDSA (
             aliasDereferenced,
             undefined,
         ),
+        signErrors,
     );
 }
 

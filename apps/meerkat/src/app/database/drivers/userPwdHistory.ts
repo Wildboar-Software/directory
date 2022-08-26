@@ -97,7 +97,7 @@ const hasValue: SpecialAttributeValueDetector = async (
     return !!(await ctx.db.passwordHistory.findFirst({
         where: {
             entry_id: vertex.dse.id,
-            password: Buffer.from(seq[1].toBytes()),
+            password: Buffer.from(seq[1].toBytes().buffer),
             time: {
                 gte: subSeconds(seq[0].generalizedTime, 30),
             },

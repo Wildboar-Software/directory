@@ -1,5 +1,5 @@
 import type { Context, Vertex, ClientAssociation, OperationReturn } from "@wildboar/meerkat-types";
-import { ObjectIdentifier } from "asn1-ts";
+import { ObjectIdentifier, unpackBits } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
@@ -10,6 +10,10 @@ import {
     ChangePasswordResult,
     _encode_ChangePasswordResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ChangePasswordResult.ta";
+import {
+    ChangePasswordResultData,
+    _encode_ChangePasswordResultData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ChangePasswordResultData.ta";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
@@ -58,6 +62,15 @@ import {
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
 import preprocessTuples from "../authz/preprocessTuples";
 import { printInvokeId } from "../utils/printInvokeId";
+import { generateSignature } from "../pki/generateSignature";
+import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
+import type {
+    DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import {
+    ProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
 
 const USER_PASSWORD_OID: string = userPassword["&id"].toString();
 const USER_PWD_OID: string = userPwd["&id"].toString();
@@ -84,6 +97,7 @@ async function changePassword (
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const target = state.foundDSE;
+    const signErrors: boolean = false; // TODO: Make this configurable.
     const passwordIsPermittedOnThisEntry: boolean = Array.from(target.dse.objectClass.values())
         .some((oid) => {
             const spec = ctx.objectClasses.get(oid);
@@ -107,6 +121,7 @@ async function changePassword (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
@@ -115,14 +130,32 @@ async function changePassword (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const argument: ChangePasswordArgument = _decode_ChangePasswordArgument(state.operationArgument);
+    // #region Signature validation
+    /**
+     * Integrity of the signature SHOULD be evaluated at operation evaluation,
+     * not before. Because the operation could get chained to a DSA that has a
+     * different configuration of trust anchors. To be clear, this is not a
+     * requirement of the X.500 specifications--just my personal assessment.
+     */
+     if ("signed" in argument) {
+        /*
+         No signature verification takes place for the changePassword operation,
+         because it does not have a `SecurityParameters` field, and therefore
+         does not relay a certification-path.
+         */
+    }
+    // #endregion Signature validation
     const data = getOptionallyProtectedValue(argument);
     const targetDN = getDistinguishedName(target);
-    const user = state.chainingArguments.originator
+    const requestor: DistinguishedName | undefined = state.chainingArguments.originator
+        ?? assn.boundNameAndUID?.dn;
+    const user = requestor
         ? new NameAndOptionalUID(
-            state.chainingArguments.originator,
+            requestor,
             state.chainingArguments.uniqueIdentifier,
         )
         : undefined;
@@ -151,7 +184,7 @@ async function changePassword (
             accessControlScheme,
             acdfTuples,
             user,
-            state.chainingArguments.authenticationLevel ?? assn.authLevel,
+            state.chainingArguments.authenticationLevel ?? UNTRUSTED_REQ_AUTH_LEVEL,
             targetDN,
             isMemberOfGroup,
             NAMING_MATCHER,
@@ -212,6 +245,7 @@ async function changePassword (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
@@ -220,6 +254,7 @@ async function changePassword (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -246,6 +281,7 @@ async function changePassword (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
@@ -254,6 +290,7 @@ async function changePassword (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const promises = await setEntryPassword(ctx, assn, target, data.newPwd);
@@ -262,9 +299,50 @@ async function changePassword (
     operational bindings, but really, no other DSA should have the passwords for
     entries in this DSA. Meerkat DSA will take a principled stance and refuse
     to update HOBs when a password changes. */
+    /**
+     * There are no security parameters in the request data, so a user cannot
+     * specify that they want the results to be signed. In the face of this
+     * ambiguity, Meerkat DSA will not sign any `administerPassword` and
+     * `changePassword` results.
+     */
+    const resultData: ChangePasswordResultData = new ChangePasswordResultData(
+        [],
+        undefined,
+        ctx.dsa.accessPoint.ae_title.rdnSequence,
+        state.chainingArguments.aliasDereferenced,
+        undefined,
+    );
     const result: ChangePasswordResult = {
-        null_: null,
+        information: (() => {
+            const resultDataBytes = _encode_ChangePasswordResultData(resultData, DER).toBytes();
+            const key = ctx.config.signing?.key;
+            if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
+                return {
+                    unsigned: resultData,
+                };
+            }
+            const signingResult = generateSignature(key, resultDataBytes);
+            if (!signingResult) {
+                return {
+                    unsigned: resultData,
+                };
+            }
+            const [ sigAlg, sigValue ] = signingResult;
+            return {
+                signed: new SIGNED(
+                    resultData,
+                    sigAlg,
+                    unpackBits(sigValue),
+                    undefined,
+                    undefined,
+                ),
+            };
+        })(),
     };
+    const signDSPResult: boolean = (
+        (state.chainingArguments.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
     return {
         result: {
             unsigned: new ChainedResult(
@@ -273,6 +351,7 @@ async function changePassword (
                     undefined,
                     createSecurityParameters(
                         ctx,
+                        signDSPResult,
                         assn.boundNameAndUID?.dn,
                         id_opcode_changePassword,
                     ),

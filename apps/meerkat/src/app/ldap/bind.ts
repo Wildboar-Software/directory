@@ -34,13 +34,11 @@ interface LDAPBindReturn extends BindReturn {
     result: BindResponse;
 }
 
-const INVALID_CREDENTIALS_MESSAGE: string = "Invalid credentials or no such object.";
-
-function invalidCredentialsError (name: Uint8Array): BindResponse {
+function invalidCredentialsError (invalidCredsMessage: string, name: Uint8Array): BindResponse {
     return new BindResponse(
         LDAPResult_resultCode_invalidCredentials,
         name,
-        Buffer.from(INVALID_CREDENTIALS_MESSAGE, "utf-8"),
+        Buffer.from(invalidCredsMessage, "utf-8"),
         undefined,
         undefined,
     );
@@ -111,10 +109,11 @@ async function bind (
     const successMessage = ctx.i18n.t("main:success");
     const dn = decodeLDAPDN(ctx, req.name);
     const entry = await dnToVertex(ctx, ctx.dit.root, dn);
+    const invalidCredentialsMessage: string = ctx.i18n.t("err:invalid_credentials");
     if (!entry) {
         return {
             authLevel: notAuthed(),
-            result: invalidCredentialsError(req.name),
+            result: invalidCredentialsError(invalidCredentialsMessage, req.name),
         };
     }
     const encodedDN = encodeLDAPDN(ctx, getDistinguishedName(entry));
@@ -138,18 +137,23 @@ async function bind (
         ),
         boundVertex: entry,
     };
-    const invalidCredentialsMessage: string = ctx.i18n.t("err:invalid_credentials", { host: source });
     const invalidCredentials: LDAPBindReturn = {
         ...ret,
         authLevel: notAuthed(localQualifierPoints),
-        result: invalidCredentialsError(req.name),
+        result: invalidCredentialsError(invalidCredentialsMessage, req.name),
+    };
+    const logInfo = {
+        host: source,
+        remoteFamily: socket.remoteFamily,
+        remoteAddress: socket.remoteAddress,
+        remotePort: socket.remotePort,
     };
     if ("simple" in req.authentication) {
         const suppliedPassword = Buffer.from(req.authentication.simple);
         if (suppliedPassword.length === 0) {
             if (ctx.config.forbidAnonymousBind) {
-                const anonBindDisabledMessage: string = ctx.i18n.t("err:anon_bind_disabled", { host: source });
-                ctx.log.warn(anonBindDisabledMessage);
+                ctx.log.warn(ctx.i18n.t("log:anon_bind_disabled", logInfo), logInfo);
+                const anonBindDisabledMessage: string = ctx.i18n.t("log:anon_bind_disabled");
                 return {
                     ...ret,
                     authLevel: {
@@ -184,7 +188,7 @@ async function bind (
         // const pwd = await readEntryPassword(ctx, entry);
             // attrs.find((attr) => (attr.id.toString() === USER_PWD_OID));
         if (!pwd) {
-            ctx.log.warn(invalidCredentialsMessage);
+            ctx.log.warn(ctx.i18n.t("log:invalid_credentials", logInfo), logInfo);
             return invalidCredentials;
         }
         const authenticated = await attemptPassword(ctx, entry, {
@@ -257,7 +261,7 @@ async function bind (
                     result: new BindResponse(
                         LDAPResult_resultCode_authMethodNotSupported,
                         req.name,
-                        Buffer.from(`SASL Mechanism ${saslMechanism} not supported.`, "utf-8"),
+                        Buffer.from(`SASL Mechanism ${saslMechanism} not supported.`, "utf-8"), // FIXME: i18n
                         undefined,
                         undefined,
                     ),
@@ -278,7 +282,7 @@ async function bind (
             result: new BindResponse(
                 LDAPResult_resultCode_authMethodNotSupported,
                 req.name,
-                Buffer.from("Only simple or SASL authentication permitted.", "utf-8"),
+                Buffer.from("Only simple or SASL authentication permitted.", "utf-8"), // FIXME: i18n
                 undefined,
                 undefined,
             ),

@@ -1,7 +1,7 @@
 # Conformance
 
-In the statements below, the term "Meerkat DSA" refers to version 1.0.0 of
-Meerkat DSA, hence these statements are only claimed for version 1.0.0 of
+In the statements below, the term "Meerkat DSA" refers to version 1.2.0 of
+Meerkat DSA, hence these statements are only claimed for version 1.2.0 of
 Meerkat DSA.
 
 ## X.519 Conformance Statement
@@ -39,8 +39,8 @@ Meerkat DSA is capable of acting as a first-level DSA.
 
 #### D. Chaining Support
 
-Meerkat DSA supports chaining, but does not validate signatures. Inbound
-chained requests are heavily restricted and not recommended.
+Meerkat DSA supports chaining, and validates digital signatures on arguments,
+results, and errors.
 
 #### E. Directory Access Protocol (DAP) Authentication
 
@@ -50,7 +50,7 @@ Directory Access Protocol (DAP).
 | Supported? | Credential Type |
 |------------|-----------------|
 | Yes        | Simple          |
-| No         | Strong          |
+| Yes        | Strong          |
 | No         | External        |
 | No         | SPKM            |
 | No         | SASL            |
@@ -61,13 +61,12 @@ Meerkat DSA supports simple authentication:
 - With a password, and
 - With a protected password.
 
-Meerkat DSA Supports identity-based originator authentication as described in
-the International Telecommunication Union's Recommendation X.518 (2016),
-Section 22.1,1, but **not** signature-based originator authentication as
-described in the International Telecommunication Union's Recommendation X.518
-(2016), Section 22.1.2.
+Meerkat DSA supports both Identity-Based Requestor Authentication (IBRA), as
+described in ITU Recommendation X.518 (2019), Section 22.1.1 as well as
+Signature-Based Requester Authentication (SBRA), as described in ITU
+Recommendation X.518 (2019), Section 22.1.2.
 
-Meerkat DSA does not support result authentication.
+Meerkat DSA supports result authentication.
 
 #### F. Directory System Protocol (DSP) Authentication
 
@@ -77,7 +76,7 @@ Directory System Protocol (DSP).
 | Supported? | Credential Type |
 |------------|-----------------|
 | Yes        | Simple          |
-| No         | Strong          |
+| Yes        | Strong          |
 | No         | External        |
 | No         | SPKM            |
 
@@ -87,13 +86,12 @@ Meerkat DSA supports simple authentication:
 - With a password, and
 - With a protected password.
 
-Meerkat DSA Supports identity-based originator authentication as described in
-the International Telecommunication Union's Recommendation X.518 (2016),
-Section 22.1,1, but **not** signature-based originator authentication as
-described in the International Telecommunication Union's Recommendation X.518
-(2016), Section 22.1.2.
+Meerkat DSA supports both Identity-Based Requestor Authentication (IBRA), as
+described in ITU Recommendation X.518 (2019), Section 22.1.1 as well as
+Signature-Based Requester Authentication (SBRA), as described in ITU
+Recommendation X.518 (2019), Section 22.1.2.
 
-Meerkat DSA does not support result authentication.
+Meerkat DSA supports result authentication.
 
 #### G. Attribute Types
 
@@ -244,6 +242,9 @@ This requirement is not understood by the author of Meerkat DSA, but it is
 believed that this refers to the usage of attribute integrity information, which
 is not supported by Meerkat DSA.
 
+Signed requests, results, and errors _are_ supported, and their signatures are
+checked for validity.
+
 #### Z. Encrypted and Digitally-Signed Information
 
 Meerkat DSA cannot provide access to encrypted and/or signed attributes. For
@@ -253,4 +254,17 @@ supported.
 
 #### AA. Strong Authentication Certificate and CRL Extensions Supported
 
-Meerkat DSA does not support strong authentication.
+Meerkat DSA supports strong authentication, signed arguments, signed results,
+and signed errors.
+
+Meerkat DSA supports all of the X.509v3 public key certificate extensions
+defined in ITU Recommendation X.509 (2019). Meerkat DSA does not support any of
+the certificate revocation list extensions defined in ITU Recommendation X.509,
+but most of these are always non-critical and don't impact revocation checking.
+Notably, the status referral extension is critical and not understood by
+Meerkat DSA.
+
+Meerkat DSA also supports the Online Certificate Status Protocol (OCSP) and uses
+it to check the validity of certification paths according to the procedures
+defined in [IETF RFC 6960](https://datatracker.ietf.org/doc/html/rfc6960), if
+configured to do so.

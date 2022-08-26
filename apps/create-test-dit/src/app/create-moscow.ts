@@ -119,28 +119,10 @@ import {
     UpdateProblem_entryAlreadyExists,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-
-const commonAuxiliaryObjectClasses: OBJECT_IDENTIFIER[] = [
-    oc.integrityInfo["&id"],
-    oc.child["&id"],
-    oc.pmiUser["&id"],
-    oc.pmiAA["&id"],
-    oc.pmiSOA["&id"],
-    oc.attCertCRLDistributionPt["&id"],
-    oc.pmiDelegationPath["&id"],
-    oc.privilegePolicy["&id"],
-    oc.protectedPrivilegePolicy["&id"],
-    oc.pkiUser["&id"],
-    oc.pkiCA["&id"],
-    oc.deltaCRL["&id"],
-    oc.cpCps["&id"],
-    oc.pkiCertPath["&id"],
-    oc.strongAuthenticationUser["&id"],
-    oc.userSecurityInformation["&id"],
-    oc.userPwdClass["&id"],
-    oc.certificationAuthority["&id"],
-    oc.certificationAuthority_V2["&id"],
-];
+import { commonAuxiliaryObjectClasses } from "./objectClassSets";
+import {
+    inetOrgPersonNameForm,
+} from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/inetOrgPersonNameForm.oa";
 
 const allNonSecurityContextTypes: OBJECT_IDENTIFIER[] = [
     ct.languageContext["&id"],
@@ -509,6 +491,11 @@ function addSubschemaSubentryArgument (
                     nf.cRLDistPtNameForm["&id"],
                     [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
                 ), DER),
+                _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
+                    17,
+                    inetOrgPersonNameForm["&id"],
+                    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                ), DER),
             ],
             undefined,
         ),
@@ -790,10 +777,10 @@ async function idempotentAddEntry (
                 }
             }
             ctx.log.error(print(outcome.errcode));
-            process.exit(1);
+            process.exit(800);
         } else {
             ctx.log.error("Uncoded error.");
-            process.exit(1);
+            process.exit(6004);
         }
     }
     ctx.log.info(`Added entry ${dnStr}.`);
@@ -842,10 +829,10 @@ async function seedMoscow (
                     }
                 }
                 ctx.log.error(print(outcome.errcode));
-                process.exit(1);
+                process.exit(843);
             } else {
                 ctx.log.error("Uncoded error.");
-                process.exit(1);
+                process.exit(483);
             }
         }
         ctx.log.info(`Created ${subentryType} subentry for Moscow.`);

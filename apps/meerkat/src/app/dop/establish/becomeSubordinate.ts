@@ -51,6 +51,9 @@ import { INTEGER } from "asn1-ts";
  * @param superiorAccessPoint The superior DSA's access point
  * @param agreement The hierarchical agreement
  * @param sup2sub The `SuperiorToSubordinate` argument of the HOB
+ * @param structuralObjectClass The structural object class of the context prefix
+ * @param governingStructureRule The governing structure rule of the context prefix
+ * @param signErrors Whether to cryptographically sign errors
  * @returns A `SubordinateToSuperior` that can be returned to the superior DSA
  *  in a Directory Operational Binding Management Protocol (DOP) result
  *
@@ -65,6 +68,7 @@ async function becomeSubordinate (
     sup2sub: SuperiorToSubordinate,
     structuralObjectClass: OBJECT_CLASS["&id"],
     governingStructureRule: INTEGER | undefined,
+    signErrors: boolean,
 ): Promise<SubordinateToSuperior> {
     let currentRoot = ctx.dit.root;
     for (let i = 0; i < sup2sub.contextPrefixInfo.length; i++) {
@@ -180,6 +184,8 @@ async function becomeSubordinate (
                 createdCP.immediateSuperior!,
                 sup2sub.immediateSuperiorInfo?.flatMap(valuesFromAttribute) ?? [],
                 [],
+                undefined,
+                signErrors,
             ),
         ]);
         // Take on the subordinates of the existing entry.

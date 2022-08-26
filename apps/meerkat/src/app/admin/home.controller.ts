@@ -1,13 +1,41 @@
 import type { MeerkatContext } from "../ctx";
 import { CONTEXT } from "../constants";
-import { Controller, Get, Post, Render, Inject, Param, Res, NotFoundException } from "@nestjs/common";
-import type { Response } from "express";
+import {
+    Controller,
+    Get,
+    Post,
+    Render,
+    Inject,
+    Param,
+    Req,
+    Res,
+    NotFoundException,
+} from "@nestjs/common";
+import type { Response, Request } from "express";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { flatten } from "flat";
 import { getServerStatistics } from "../telemetry/getServerStatistics";
+import sleep from "../utils/sleep";
+import stringifyDN from "../x500/stringifyDN";
+import { rdnFromJson } from "../x500/rdnFromJson";
 
 const conformancePath = path.join(__dirname, "assets", "static", "conformance.md");
+const ROBOTS: string = `User-agent: *\r\nDisallow: /\r\n`;
+const SECURITY_TXT: string = [
+    "Contact: mailto:jonathan.wilbur@wildboarsoftware.com",
+    "Expires: 2023-12-19T18:28:00.000Z",
+    "Preferred-Languages: en",
+].join("\r\n");
+
+// TODO: Dedupe
+function breakIntoLines (str: string, lineLength: number): string[] {
+    const lines: string[] = [];
+    for (let i = 0; i < str.length; i = i + lineLength) {
+        lines.push(str.slice(i, i + lineLength));
+    }
+    return lines;
+}
 
 @Controller()
 export class HomeController {
@@ -30,16 +58,26 @@ export class HomeController {
     @Get("/index")
     @Get("/home")
     @Render('index')
-    index () {
+    public index (
+        @Req() req: { csrfToken: () => string },
+    ) {
         return {
+            dsa: this.ctx.dsa.accessPoint.ae_title.rdnSequence.length
+                ? stringifyDN(this.ctx, this.ctx.dsa.accessPoint.ae_title.rdnSequence)
+                : "<UNSET> (Consider configuring signing PKI)",
+            csrfToken: req.csrfToken(),
             rootuuid: this.ctx.dit.root.dse.uuid,
+            dhparams: !!process.env.MEERKAT_TLS_DH_PARAM_FILE,
         };
     }
 
     @Get("/conformance")
     @Render("markdown")
-    public async conformance () {
+    public async conformance (
+        @Req() req: { csrfToken: () => string },
+    ) {
         return {
+            csrfToken: req.csrfToken(),
             title: "Conformance",
             content: await fs.readFile(conformancePath, { encoding: "utf-8" }),
         };
@@ -47,8 +85,11 @@ export class HomeController {
 
     @Get("/ob")
     @Render('ob')
-    async ob () {
+    async ob (
+        @Req() req: { csrfToken: () => string },
+    ) {
         const templateVariables = {
+            csrfToken: req.csrfToken(),
             obs: (await this.ctx.db.operationalBinding.findMany({
                 select: {
                     uuid: true,
@@ -101,26 +142,54 @@ export class HomeController {
     @Get("/ob/:id")
     @Render("ob_id")
     async obDetails (
+        @Req() req: { csrfToken: () => string },
         @Param("id") id: string,
     ) {
         const ob = await this.ctx.db.operationalBinding.findUnique({
             where: {
                 uuid: id,
             },
+            include: {
+                previous: {
+                    select: {
+                        uuid: true,
+                    },
+                },
+            },
         });
         if (!ob) {
             throw new NotFoundException();
         }
+        const cp_rdn = ((typeof ob.new_context_prefix_rdn === "object") && ob.new_context_prefix_rdn)
+            ? rdnFromJson(ob.new_context_prefix_rdn as Record<string, string>)
+            : undefined;
+        const cp_superior_dn = Array.isArray(ob.immediate_superior)
+            ? ob.immediate_superior.map(rdnFromJson)
+            : undefined;
+        const cpdn = (cp_superior_dn && cp_rdn)
+            ? [ ...cp_superior_dn, cp_rdn ]
+            : undefined;
         const status: string = (ob.accepted === null)
             ? "WAITING DECISION"
             : (ob.accepted ? "ACCEPTED" : "REJECTED");
         const templateVariables = {
+            csrfToken: req.csrfToken(),
             ...ob,
             status,
             binding_type: ob.binding_type,
             validity_start: ob.validity_start.toISOString(),
             validity_end: ob.validity_end?.toISOString(),
             actionable: (ob.accepted === null),
+            cp: cpdn
+                ? stringifyDN(this.ctx, cpdn)
+                : undefined,
+            agreement_bytes: ob.agreement_ber
+                ? breakIntoLines(ob.agreement_ber.toString("hex"), 60)
+                : undefined,
+            init_param_bytes: ob.initiator_ber
+                ? breakIntoLines(ob.initiator_ber.toString("hex"), 60)
+                : undefined,
+            previous_uuid: ob.previous?.uuid,
         };
         return templateVariables;
     }
@@ -128,6 +197,7 @@ export class HomeController {
     @Post("/ob/:id/accept")
     async accept (
         @Param("id") id: string,
+        @Req() req: Request,
         @Res() res: Response,
     ) {
         const result = await this.ctx.db.operationalBinding.findUnique({
@@ -175,7 +245,22 @@ export class HomeController {
                 validityStart: result.validity_start,
             },
         });
+        await this.ctx.db.accessPoint.updateMany({
+            where: {
+                operational_bindings: {
+                    some: {
+                        uuid: result.uuid,
+                    },
+                },
+            },
+            data: {
+                trust_ibra: (req.body?.ibra === "on"),
+                disclose_cross_refs: (req.body?.xr === "on"),
+            },
+        });
         this.ctx.operationalBindingControlEvents.emit(id, true);
+        // I know it's lazy programming, but this was the best way I could wait until the OB updates.
+        await sleep(3000);
         res.redirect(`/ob/${id}`);
     }
 
@@ -285,6 +370,30 @@ export class HomeController {
         });
         this.ctx.operationalBindingControlEvents.emit(id, false);
         res.redirect(`/ob/${id}`);
+    }
+
+    @Get("/robots.txt")
+    public robots (
+        @Res() res: Response,
+    ) {
+        res.contentType("text/plain; charset=utf-8");
+        res.send(ROBOTS);
+    }
+
+    @Get("/.well-known/security.txt")
+    public wellKnownSecurityTxt (
+        @Res() res: Response,
+    ) {
+        res.contentType("text/plain; charset=utf-8");
+        res.send(SECURITY_TXT);
+    }
+
+    @Get("/security.txt")
+    public securityTxt (
+        @Res() res: Response,
+    ) {
+        res.contentType("text/plain; charset=utf-8");
+        res.send(SECURITY_TXT);
     }
 
 }

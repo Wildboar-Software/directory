@@ -1,8 +1,8 @@
 import {
-    Context,
     BindReturn,
     DirectoryBindError,
 } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import type { Socket } from "net";
 import { TLSSocket } from "tls";
 import {
@@ -17,7 +17,6 @@ import {
 import {
     AuthenticationLevel_basicLevels_level_none,
     AuthenticationLevel_basicLevels_level_simple,
-    // AuthenticationLevel_basicLevels_level_strong,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
 import attemptPassword from "../authn/attemptPassword";
 import getDistinguishedName from "../x500/getDistinguishedName";
@@ -31,6 +30,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
 import versions from "./versions";
 import dnToVertex from "../dit/dnToVertex";
+import { attemptStrongAuth } from "../authn/attemptStrongAuth";
 
 /**
  * @summary X.500 Directory Access Protocol (DSP) bind operation
@@ -54,9 +54,10 @@ import dnToVertex from "../dit/dnToVertex";
  */
 export
 async function bind (
-    ctx: Context,
+    ctx: MeerkatContext,
     socket: Socket | TLSSocket,
     arg: DirectoryBindArgument,
+    signErrors: boolean,
 ): Promise<BindReturn> {
     const tlsProtocol: string | null = ("getProtocol" in socket)
         ? socket.getProtocol()
@@ -72,6 +73,12 @@ async function bind (
     );
 
     const source: string = `${socket.remoteFamily}:${socket.remoteAddress}:${socket.remotePort}`;
+    const logInfo = {
+        host: source,
+        remoteFamily: socket.remoteFamily,
+        remoteAddress: socket.remoteAddress,
+        remotePort: socket.remotePort,
+    };
     const anonymousBindErrorData = new DirectoryBindErrorData(
         versions,
         {
@@ -81,9 +88,11 @@ async function bind (
     );
     if (!arg.credentials) {
         if (ctx.config.forbidAnonymousBind) {
+            ctx.log.warn(ctx.i18n.t("log:anon_bind_disabled", logInfo), logInfo);
             throw new DirectoryBindError(
-                ctx.i18n.t("err:anon_bind_disabled", { host: source }),
+                ctx.i18n.t("err:anon_bind_disabled"),
                 anonymousBindErrorData,
+                signErrors,
             );
         }
         return {
@@ -96,13 +105,22 @@ async function bind (
             },
         };
     }
+    const invalidCredentialsData = new DirectoryBindErrorData(
+        versions,
+        {
+            securityError: SecurityProblem_invalidCredentials,
+        },
+        // No security parameters will be provided for failed auth attempts.
+    );
     if ("simple" in arg.credentials) {
         const foundEntry = await dnToVertex(ctx, ctx.dit.root, arg.credentials.simple.name);
         if (!arg.credentials.simple.password) {
             if (ctx.config.forbidAnonymousBind) {
+                ctx.log.warn(ctx.i18n.t("log:anon_bind_disabled", logInfo), logInfo);
                 throw new DirectoryBindError(
-                    ctx.i18n.t("err:anon_bind_disabled", { host: source }),
+                    ctx.i18n.t("err:anon_bind_disabled"),
                     anonymousBindErrorData,
+                    signErrors,
                 );
             }
             return {
@@ -120,17 +138,12 @@ async function bind (
                 },
             };
         }
-        const invalidCredentialsData = new DirectoryBindErrorData(
-            versions,
-            {
-                securityError: SecurityProblem_invalidCredentials,
-            },
-            // No security parameters will be provided for failed auth attempts.
-        );
         if (!foundEntry) {
+            ctx.log.warn(ctx.i18n.t("log:invalid_credentials", logInfo), logInfo);
             throw new DirectoryBindError(
-                ctx.i18n.t("err:invalid_credentials", { host: source }),
+                ctx.i18n.t("err:invalid_credentials"),
                 invalidCredentialsData,
+                signErrors,
             );
         }
         if (arg.credentials.simple.validity) {
@@ -146,24 +159,30 @@ async function bind (
                     : arg.credentials.simple.validity.time2.gt
                 : undefined;
             if (minimumTime && (minimumTime.valueOf() > (now.valueOf() + 5000))) { // 5 seconds of tolerance.
+                ctx.log.warn(ctx.i18n.t("log:invalid_credentials", logInfo), logInfo);
                 throw new DirectoryBindError(
-                    ctx.i18n.t("err:invalid_credentials", { host: source }),
+                    ctx.i18n.t("err:invalid_credentials"),
                     invalidCredentialsData,
+                    signErrors,
                 );
             }
             if (maximumTime && (maximumTime.valueOf() < (now.valueOf() - 5000))) { // 5 seconds of tolerance.
+                ctx.log.warn(ctx.i18n.t("log:invalid_credentials", logInfo), logInfo);
                 throw new DirectoryBindError(
-                    ctx.i18n.t("err:invalid_credentials", { host: source }),
+                    ctx.i18n.t("err:invalid_credentials"),
                     invalidCredentialsData,
+                    signErrors,
                 );
             }
         }
         // NOTE: Validity has no well-established meaning.
         const passwordIsCorrect: boolean | undefined = await attemptPassword(ctx, foundEntry, arg.credentials.simple.password);
         if (!passwordIsCorrect) {
+            ctx.log.warn(ctx.i18n.t("log:invalid_credentials", logInfo), logInfo);
             throw new DirectoryBindError(
-                ctx.i18n.t("err:invalid_credentials", { host: source }),
+                ctx.i18n.t("err:invalid_credentials"),
                 invalidCredentialsData,
+                signErrors,
             );
         }
         return {
@@ -180,6 +199,16 @@ async function bind (
                 ),
             },
         };
+    } else if ("strong" in arg.credentials) {
+        return attemptStrongAuth(
+            ctx,
+            DirectoryBindError,
+            arg.credentials.strong,
+            signErrors,
+            localQualifierPoints,
+            source,
+            socket,
+        );
     } else {
         throw new DirectoryBindError(
             ctx.i18n.t("err:unsupported_auth_method"),
@@ -190,6 +219,7 @@ async function bind (
                 },
                 // No security parameters will be provided for failed auth attempts.
             ),
+            signErrors,
         );
     }
 }

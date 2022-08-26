@@ -10,6 +10,9 @@ import {
 import {
     AdministerPasswordArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordArgumentData.ta";
+import {
+    _decode_AdministerPasswordResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordResult.ta";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
@@ -17,6 +20,7 @@ import destringifyDN from "../../utils/destringifyDN";
 import MutableWriteable from "../../utils/MutableWriteable";
 import * as readline from "readline";
 import printError from "../../printers/Error_";
+import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 
 const mutedOut = new MutableWriteable();
 
@@ -64,6 +68,16 @@ async function do_administerPassword (
     if (!outcome.result) {
         ctx.log.error("Invalid server response: no result data.");
         return;
+    }
+    const result = _decode_AdministerPasswordResult(outcome.result);
+    if (!("information" in result)) {
+        ctx.log.info("Password changed.");
+        return;
+    }
+    const info = result.information;
+    const data = getOptionallyProtectedValue(info);
+    if (data.aliasDereferenced) {
+        ctx.log.info("Alias dereferenced.");
     }
     ctx.log.info("Password changed.");
 }

@@ -32,6 +32,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import getShadowingAgreementInfo from "../dit/getShadowingAgreementInfo";
 import filterCanBeUsedInShadowedArea from "../x500/filterCanBeUsedInShadowedArea";
+import { getEntryExistsFilter } from "../database/entryExistsFilter";
 
 /**
  * @summary Determine if a shadow DSE is complete.
@@ -74,7 +75,7 @@ async function areAllSubordinatesComplete (ctx: Context, vertex: Vertex): Promis
     return !(await ctx.db.entry.findFirst({
         where: {
             shadow: true,
-            deleteTimestamp: null,
+            ...getEntryExistsFilter(),
             immediate_superior_id: vertex.dse.id,
             OR: [
                 {
@@ -116,7 +117,7 @@ async function areAllSubordinatesComplete (ctx: Context, vertex: Vertex): Promis
 export
 async function checkSuitabilityProcedure (
     ctx: Context,
-    assn: ClientAssociation,
+    assn: ClientAssociation | undefined,
     vertex: Vertex,
     operationType: Code,
     aliasDereferenced: boolean,
@@ -126,6 +127,7 @@ async function checkSuitabilityProcedure (
     excludeShadows: boolean,
     encodedArgument?: ASN1Element,
     searchArgument?: SearchArgument,
+    signErrors: boolean = false,
 ): Promise<boolean> {
     // DEVIATION: This is not required by the specification.
     if (vertex.dse.root && isModificationOperation(operationType)) {
@@ -143,14 +145,16 @@ async function checkSuitabilityProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
-                        assn.boundNameAndUID?.dn,
+                        signErrors,
+                        assn?.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
                     aliasDereferenced,
                     undefined,
-                )
+                ),
+                signErrors,
             );
         }
         return true;
@@ -173,14 +177,16 @@ async function checkSuitabilityProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
-                        assn.boundNameAndUID?.dn,
+                        signErrors,
+                        assn?.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
                     aliasDereferenced,
                     undefined,
-                )
+                ),
+                signErrors,
             );
         }
         return true;

@@ -128,6 +128,9 @@ import type {
 import type {
     OBJECT_CLASS,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
+import stringifyDN from "./stringifyDN";
+import groupByOID from "../utils/groupByOID";
+import { getEntryExistsFilter } from "../database/entryExistsFilter";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
@@ -135,7 +138,8 @@ function namingViolationErrorData (
     ctx: Context,
     assn: ClientAssociation,
     attributeTypes: AttributeType[],
-    aliasDereferenced?: boolean,
+    aliasDereferenced: boolean | undefined,
+    signErrors: boolean,
 ): UpdateErrorData {
     return new UpdateErrorData(
         UpdateProblem_namingViolation,
@@ -145,6 +149,7 @@ function namingViolationErrorData (
         [],
         createSecurityParameters(
             ctx,
+            signErrors,
             assn.boundNameAndUID?.dn,
             undefined,
             updateError["&errorCode"],
@@ -173,6 +178,7 @@ async function validateEntry (
     manageDSAIT: BOOLEAN,
     invokeId: InvokeId,
     tolerateUnknownSchema: boolean = false,
+    signErrors: boolean = false,
 ): Promise<ValidateEntryReturn> {
     const values: Value[] = entry.flatMap(valuesFromAttribute);
     const objectClassValues = values.filter((attr) => attr.type.isEqualTo(id_at_objectClass));
@@ -185,6 +191,7 @@ async function validateEntry (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
@@ -193,6 +200,7 @@ async function validateEntry (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const objectClasses: OBJECT_IDENTIFIER[] = objectClassValues.map((ocv) => ocv.value.objectIdentifier);
@@ -209,6 +217,7 @@ async function validateEntry (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
@@ -217,6 +226,7 @@ async function validateEntry (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const structuralObjectClass = getStructuralObjectClass(ctx, objectClasses);
@@ -273,6 +283,7 @@ async function validateEntry (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
@@ -281,6 +292,7 @@ async function validateEntry (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -302,6 +314,7 @@ async function validateEntry (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
@@ -310,12 +323,16 @@ async function validateEntry (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 
     if (isFirstLevel) {
         if (!await mayAddTopLeveDSE(ctx, assn)) {
-            ctx.log.debug(ctx.i18n.t("log:not_authz_to_add_top_level", { context: "hint" }), {
+            ctx.log.debug(ctx.i18n.t("log:not_authz_to_add_top_level", {
+                context: "hint",
+                dn: stringifyDN(ctx, [ rdn ]),
+            }), {
                 remoteFamily: assn.socket.remoteFamily,
                 remoteAddress: assn.socket.remoteAddress,
                 remotePort: assn.socket.remotePort,
@@ -331,6 +348,7 @@ async function validateEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
@@ -339,6 +357,7 @@ async function validateEntry (
                     aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -377,6 +396,7 @@ async function validateEntry (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
@@ -385,6 +405,7 @@ async function validateEntry (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -408,6 +429,7 @@ async function validateEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -416,6 +438,7 @@ async function validateEntry (
                     aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         if (isAlias) {
@@ -438,6 +461,7 @@ async function validateEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -446,6 +470,7 @@ async function validateEntry (
                     aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -519,6 +544,7 @@ async function validateEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -527,6 +553,7 @@ async function validateEntry (
                     aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -625,6 +652,7 @@ async function validateEntry (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
@@ -633,6 +661,7 @@ async function validateEntry (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 
@@ -665,6 +694,7 @@ async function validateEntry (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn.boundNameAndUID?.dn,
                                 undefined,
                                 updateError["&errorCode"],
@@ -673,6 +703,7 @@ async function validateEntry (
                             aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
                 if (oc.obsolete) {
@@ -696,6 +727,7 @@ async function validateEntry (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn.boundNameAndUID?.dn,
                                 undefined,
                                 updateError["&errorCode"],
@@ -704,6 +736,7 @@ async function validateEntry (
                             aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
                 for (const at of oc.mandatoryAttributes) {
@@ -715,9 +748,17 @@ async function validateEntry (
                 }
             });
 
-        const attributeTypes: Set<IndexableOID> = new Set(entry.map((attr) => attr.type_.toString()));
-        for (const at of attributeTypes.values()) {
-            missingMandatoryAttributes.delete(at);
+        const attributesByType: Record<IndexableOID, Attribute[]> = groupByOID(entry, (attr) => attr.type_);
+        for (const [ at, attrs ] of Object.entries(attributesByType)) {
+            // You not only have to check that the attribute exists, but also that there is at least one value.
+            const atLeastOneAttributeHasAValue: boolean = attrs
+                .some((attr) => (
+                    (attr.values.length > 0)
+                    || ((attr.valuesWithContext ?? 0) > 0)
+                ));
+            if (atLeastOneAttributeHasAValue) {
+                missingMandatoryAttributes.delete(at);
+            }
             if (!isExtensible && !optionalAttributes.has(at)) {
                 throw new errors.UpdateError(
                     ctx.i18n.t("err:attribute_type_not_permitted_by_oc", {
@@ -733,6 +774,7 @@ async function validateEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
@@ -741,6 +783,7 @@ async function validateEntry (
                         aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -757,6 +800,7 @@ async function validateEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -765,6 +809,7 @@ async function validateEntry (
                     aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
 
@@ -807,6 +852,7 @@ async function validateEntry (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn.boundNameAndUID?.dn,
                                 undefined,
                                 nameError["&errorCode"],
@@ -815,6 +861,7 @@ async function validateEntry (
                             aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
             }
@@ -848,7 +895,8 @@ async function validateEntry (
                 ctx.i18n.t("err:rdn_types_duplicated", {
                     oids: duplicatedAFDNs.join(", "),
                 }),
-                namingViolationErrorData(ctx, assn, duplicatedAFDNs, aliasDereferenced),
+                namingViolationErrorData(ctx, assn, duplicatedAFDNs, aliasDereferenced, signErrors),
+                signErrors,
             );
         }
 
@@ -857,7 +905,8 @@ async function validateEntry (
                 ctx.i18n.t("err:rdn_types_unrecognized", {
                     oids: unrecognizedAFDNs.join(", "),
                 }),
-                namingViolationErrorData(ctx, assn, unrecognizedAFDNs, aliasDereferenced),
+                namingViolationErrorData(ctx, assn, unrecognizedAFDNs, aliasDereferenced, signErrors),
+                signErrors,
             );
         }
 
@@ -866,7 +915,8 @@ async function validateEntry (
                 ctx.i18n.t("err:rdn_types_prohibited_in_naming", {
                     oids: cannotBeUsedInNameAFDNs.join(", "),
                 }),
-                namingViolationErrorData(ctx, assn, cannotBeUsedInNameAFDNs, aliasDereferenced),
+                namingViolationErrorData(ctx, assn, cannotBeUsedInNameAFDNs, aliasDereferenced, signErrors),
+                signErrors,
             );
         }
 
@@ -875,7 +925,8 @@ async function validateEntry (
                 ctx.i18n.t("err:rdn_values_not_present_in_entry", {
                     oids: unmatchedAFDNs.join(", "),
                 }),
-                namingViolationErrorData(ctx, assn, unmatchedAFDNs, aliasDereferenced),
+                namingViolationErrorData(ctx, assn, unmatchedAFDNs, aliasDereferenced, signErrors),
+                signErrors,
             );
         }
     }
@@ -884,7 +935,7 @@ async function validateEntry (
         const subschemaThatAlreadyExists = await ctx.db.entry.findFirst({
             where: {
                 immediate_superior_id: immediateSuperior.dse.id,
-                deleteTimestamp: null,
+                ...getEntryExistsFilter(),
                 subentry: true,
                 EntryObjectClass: {
                     some: {
@@ -907,6 +958,7 @@ async function validateEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -915,6 +967,7 @@ async function validateEntry (
                     aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         const subtreeSpec = entry
@@ -935,6 +988,7 @@ async function validateEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
@@ -943,6 +997,7 @@ async function validateEntry (
                         aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             const invalidSubtreeForSubschema = subtreeSpec.values
@@ -967,6 +1022,7 @@ async function validateEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
@@ -975,6 +1031,7 @@ async function validateEntry (
                         aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -1017,6 +1074,7 @@ async function validateEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -1025,6 +1083,7 @@ async function validateEntry (
                     aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         governingStructureRule = Number(structuralRule.ruleIdentifier);
@@ -1058,6 +1117,7 @@ async function validateEntry (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn.boundNameAndUID?.dn,
                                 undefined,
                                 updateError["&errorCode"],
@@ -1066,6 +1126,7 @@ async function validateEntry (
                             aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
             }
@@ -1109,6 +1170,7 @@ async function validateEntry (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn.boundNameAndUID?.dn,
                                 undefined,
                                 updateError["&errorCode"],
@@ -1117,6 +1179,7 @@ async function validateEntry (
                             aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
             }
@@ -1136,6 +1199,7 @@ async function validateEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
@@ -1144,6 +1208,7 @@ async function validateEntry (
                         aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         } else {
@@ -1182,6 +1247,7 @@ async function validateEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
@@ -1190,6 +1256,7 @@ async function validateEntry (
                         aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -1229,6 +1296,7 @@ async function validateEntry (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn.boundNameAndUID?.dn,
                                 undefined,
                                 attributeError["&errorCode"],
@@ -1237,6 +1305,7 @@ async function validateEntry (
                             aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 } else {
                     continue;
@@ -1298,6 +1367,7 @@ async function validateEntry (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn.boundNameAndUID?.dn,
                                 undefined,
                                 attributeError["&errorCode"],
@@ -1306,6 +1376,7 @@ async function validateEntry (
                             aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
             }
@@ -1329,6 +1400,7 @@ async function validateEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             attributeError["&errorCode"],
@@ -1337,6 +1409,7 @@ async function validateEntry (
                         aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }

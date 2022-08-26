@@ -4,6 +4,7 @@ import bind from "./app/bind";
 import { DER, _encodeUTF8String } from "asn1-ts/dist/node/functional";
 import createCountries from "./app/create-countries";
 import createAdmin from "./app/create-admin";
+import { seedUS } from "./app/create-us";
 import { seedGB } from "./app/create-gb";
 import { seedRU } from "./app/create-ru";
 import { seedMoscow } from "./app/create-moscow";
@@ -21,6 +22,8 @@ import { _encodePrintableString } from "asn1-ts/dist/node/functional";
 import {
     localityName,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localityName.oa";
+import { sleep } from "./app/utils";
+
 program.version("1.0.0");
 
 program
@@ -38,9 +41,16 @@ async function main () {
             const connection = await bind(ctx, options["accessPoint"], [], undefined);
             const { password: adminPassword } = await createAdmin(ctx, connection);
             await connection.close();
+            /**
+             * We wait just a second for the admin user to be flushed to the
+             * database to prevent a race condition where the top level entry
+             * creation is attempted before the admin user actually "exists."
+             */
+            await sleep(3000);
             ctx.log.info(`Created global directory administrator cn=admin with password '${adminPassword}'.`);
             const adminConnection = await bind(ctx, options["accessPoint"], adminDN, adminPassword);
             await createCountries(ctx, adminConnection);
+            await seedUS(ctx, adminConnection);
             await adminConnection.close();
             break;
         }
@@ -74,7 +84,7 @@ async function main () {
             await connection.close();
             break;
         }
-        case ("ru-moscow"): {
+        case ("moscow"): {
             const bindDN: DistinguishedName = [
                 [
                     new AttributeTypeAndValue(
@@ -100,10 +110,14 @@ async function main () {
             if (options["tolerateUnknownProfile"]) {
                 process.exit(0);
             } else {
-                process.exit(1);
+                process.exit(2);
             }
         }
     }
 }
 
-main();
+main()
+    .catch((e) => {
+        console.error(e);
+        process.exit(666);
+    });

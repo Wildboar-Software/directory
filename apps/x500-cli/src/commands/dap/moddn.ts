@@ -10,11 +10,16 @@ import {
 import {
     ModifyDNArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgumentData.ta";
+import {
+    _decode_ModifyDNResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNResult.ta";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import destringifyDN from "../../utils/destringifyDN";
 import printError from "../../printers/Error_";
+import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+import stringifyDN from "../../utils/stringifyDN";
 
 export
 async function do_modifyDN (
@@ -64,6 +69,14 @@ async function do_modifyDN (
         ctx.log.error("Invalid server response: no result data.");
         return;
     }
+    const result = _decode_ModifyDNResult(outcome.result);
+    if (!("information" in result)) {
+        ctx.log.info("Entry moved.");
+        return;
+    }
+    const info = result.information;
+    const data = getOptionallyProtectedValue(info);
+    ctx.log.info(`New RDN: ${stringifyDN(ctx, [ data.newRDN ])}`);
     ctx.log.info("Entry moved.");
 }
 

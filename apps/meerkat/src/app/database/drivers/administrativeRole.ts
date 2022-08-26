@@ -27,9 +27,9 @@ import {
 import {
     subschema,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
-import { Prisma } from "@prisma/client";
 import checkNameForm from "@wildboar/x500/src/lib/utils/checkNameForm";
 import getSubschemaSubentry from "../../dit/getSubschemaSubentry";
+import { getEntryExistsFilter } from "../../database/entryExistsFilter";
 
 const ID_AR_AUTONOMOUS: string = id_ar_autonomousArea.toString();
 const ID_AR_SUBSCHEMA: string = id_ar_subschemaAdminSpecificArea.toString();
@@ -65,8 +65,8 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     if (oid.isEqualTo(id_ar_subschemaAdminSpecificArea)) {
         const subschemaSubentry = await ctx.db.entry.findFirst({
             where: {
+                ...getEntryExistsFilter(),
                 immediate_superior_id: vertex.dse.id,
-                deleteTimestamp: null,
                 subentry: true,
                 EntryObjectClass: {
                     some: {
@@ -77,7 +77,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             select: {
                 DITStructureRule: {
                     where: {
-                        superiorStructureRules: Prisma.DbNull,
+                        superiorStructureRules: null,
                     },
                     select: {
                         ruleIdentifier: true,

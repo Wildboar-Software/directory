@@ -60,6 +60,7 @@ import {
     ReferenceType_nonSpecificSubordinate,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
 import { printInvokeId } from "../utils/printInvokeId";
+import { compareAuthenticationLevel } from "@wildboar/x500";
 
 // TODO: Really, this should have the same return type as the OperationDispatcher.
 // This also returns a value, but also mutates the OD state, which is sketchy.
@@ -77,6 +78,7 @@ import { printInvokeId } from "../utils/printInvokeId";
  * @param state The operation dispatcher state
  * @param chainingProhibited Whether chaining was prohibited
  * @param partialNameResolution Whether partial name resolution is permitted
+ * @param signErrors Whether to cryptographically sign errors
  * @returns An optionally-protected chained result or an error
  *
  * @function
@@ -85,14 +87,15 @@ import { printInvokeId } from "../utils/printInvokeId";
 export
 async function nrcrProcedure (
     ctx: MeerkatContext,
-    assn: ClientAssociation,
+    assn: ClientAssociation | undefined,
     reqData: Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
     state: OperationDispatcherState,
     chainingProhibited: BOOLEAN,
     partialNameResolution: BOOLEAN,
+    signErrors: boolean,
 ): Promise<OPCR | Error_> {
     const op = ("present" in state.invokeId)
-        ? assn.invocations.get(Number(state.invokeId.present))
+        ? assn?.invocations.get(Number(state.invokeId.present))
         : undefined;
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
@@ -106,7 +109,8 @@ async function nrcrProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
-                        assn.boundNameAndUID?.dn,
+                        signErrors,
+                        assn?.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
                     ),
@@ -114,6 +118,7 @@ async function nrcrProcedure (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     };
@@ -135,13 +140,16 @@ async function nrcrProcedure (
      * exists to distinguish between different generations of an object having
      * the same name.
      */
-    const insufficientAuthForChaining = (
-        ("basicLevels" in assn.authLevel)
-        && (
-            (assn.authLevel.basicLevels.level < ctx.config.chaining.minAuthLevel)
-            || ((assn.authLevel.basicLevels.localQualifier ?? 0) < ctx.config.chaining.minAuthLocalQualifier)
+    const insufficientAuthForChaining = assn && (
+        (
+            ("basicLevels" in assn.authLevel)
+            && (compareAuthenticationLevel( // Returns true if a > b.
+                ctx.config.chaining.minAuthRequired,
+                assn.authLevel.basicLevels,
+            ))
         )
-    )
+        || !("basicLevels" in assn.authLevel)
+    );
     if (
         ctx.config.chaining.prohibited
         || chainingProhibited
@@ -154,7 +162,8 @@ async function nrcrProcedure (
                 [],
                 createSecurityParameters(
                     ctx,
-                    assn.boundNameAndUID?.dn,
+                    signErrors,
+                    assn?.boundNameAndUID?.dn,
                     undefined,
                     referral["&errorCode"],
                 ),
@@ -162,6 +171,7 @@ async function nrcrProcedure (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const req = {
@@ -180,7 +190,8 @@ async function nrcrProcedure (
                     [],
                     createSecurityParameters(
                         ctx,
-                        assn.boundNameAndUID?.dn,
+                        signErrors,
+                        assn?.boundNameAndUID?.dn,
                         undefined,
                         abandoned["&errorCode"],
                     ),
@@ -188,13 +199,22 @@ async function nrcrProcedure (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         assert(cref.accessPoints[0]);
         checkTimeLimit();
         const isNSSR = (cref.referenceType === ReferenceType_nonSpecificSubordinate);
         if (!isNSSR) {
-            const outcome: ResultOrError | null = await apinfoProcedure(ctx, cref.accessPoints[0], req, assn, state);
+            const outcome: ResultOrError | null = await apinfoProcedure(
+                ctx,
+                cref.accessPoints[0],
+                req,
+                assn,
+                state,
+                signErrors,
+                chainingProhibited,
+            );
             if (!outcome) {
                 continue;
             } else if (("result" in outcome) && outcome.result) {
@@ -214,7 +234,8 @@ async function nrcrProcedure (
                         [],
                         createSecurityParameters(
                             ctx,
-                            assn.boundNameAndUID?.dn,
+                            signErrors,
+                            assn?.boundNameAndUID?.dn,
                             undefined,
                             abandoned["&errorCode"],
                         ),
@@ -222,11 +243,20 @@ async function nrcrProcedure (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             let outcome: ResultOrError | null = null;
             try {
-                outcome = await apinfoProcedure(ctx, ap, req, assn, state);
+                outcome = await apinfoProcedure(
+                    ctx,
+                    ap,
+                    req,
+                    assn,
+                    state,
+                    signErrors,
+                    chainingProhibited,
+                );
             } catch {
                 continue;
             }
@@ -238,10 +268,10 @@ async function nrcrProcedure (
                     return chainedRead.decoderFor["&ResultType"]!(outcome.result);
                 } catch (e) {
                     ctx.log.error(e.message, {
-                        remoteFamily: assn.socket.remoteFamily,
-                        remoteAddress: assn.socket.remoteAddress,
-                        remotePort: assn.socket.remotePort,
-                        association_id: assn.id,
+                        remoteFamily: assn?.socket.remoteFamily,
+                        remoteAddress: assn?.socket.remoteAddress,
+                        remotePort: assn?.socket.remotePort,
+                        association_id: assn?.id,
                         invokeID: printInvokeId(req.invokeId),
                     });
                     continue;
@@ -273,7 +303,8 @@ async function nrcrProcedure (
                                 [],
                                 createSecurityParameters(
                                     ctx,
-                                    assn.boundNameAndUID?.dn,
+                                    signErrors,
+                                    assn?.boundNameAndUID?.dn,
                                     undefined,
                                     serviceError["&errorCode"],
                                 ),
@@ -281,6 +312,7 @@ async function nrcrProcedure (
                                 state.chainingArguments.aliasDereferenced,
                                 undefined,
                             ),
+                            signErrors,
                         );
                     } else {
                         return outcome;
@@ -292,7 +324,10 @@ async function nrcrProcedure (
             }
         } // End of NSSR access point loop.
         if (allServiceErrors) {
-            if (partialNameResolution) {
+            // partialNameResolution simply will not be available for
+            // internally-generated requests so that operationEvaluation() does
+            // not have to be re-written to tolerate an undefined association.
+            if (partialNameResolution && assn) {
                 state.partialName = TRUE;
                 state.entrySuitable = TRUE;
                 state.chainingArguments = cloneChainingArguments(state.chainingArguments, {
@@ -321,7 +356,8 @@ async function nrcrProcedure (
                         [],
                         createSecurityParameters(
                             ctx,
-                            assn.boundNameAndUID?.dn,
+                            signErrors,
+                            assn?.boundNameAndUID?.dn,
                             undefined,
                             nameError["&errorCode"],
                         ),
@@ -329,6 +365,7 @@ async function nrcrProcedure (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -340,7 +377,8 @@ async function nrcrProcedure (
             [],
             createSecurityParameters(
                 ctx,
-                assn.boundNameAndUID?.dn,
+                signErrors,
+                assn?.boundNameAndUID?.dn,
                 undefined,
                 serviceError["&errorCode"],
             ),
@@ -348,6 +386,7 @@ async function nrcrProcedure (
             state.chainingArguments.aliasDereferenced,
             undefined,
         ),
+        signErrors,
     );
 }
 

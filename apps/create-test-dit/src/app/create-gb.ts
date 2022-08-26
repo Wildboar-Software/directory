@@ -2,7 +2,6 @@ import type { Connection, Context } from "./types";
 import {
     TRUE,
     FALSE,
-    TRUE_BIT,
     FALSE_BIT,
     unpackBits,
     OBJECT_IDENTIFIER,
@@ -53,7 +52,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
 import {
     ServiceControlOptions,
-    ServiceControlOptions_manageDSAIT,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import { SecurityParameters } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
 import {
@@ -66,6 +64,7 @@ import print from "./printCode";
 import {
     DER,
     _encodeBoolean,
+    _encodeIA5String,
     _encodeInteger,
     _encodeObjectIdentifier,
     _encodePrintableString,
@@ -121,28 +120,19 @@ import {
     UpdateProblem_entryAlreadyExists,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-
-const commonAuxiliaryObjectClasses: OBJECT_IDENTIFIER[] = [
-    oc.integrityInfo["&id"],
-    oc.child["&id"],
-    oc.pmiUser["&id"],
-    oc.pmiAA["&id"],
-    oc.pmiSOA["&id"],
-    oc.attCertCRLDistributionPt["&id"],
-    oc.pmiDelegationPath["&id"],
-    oc.privilegePolicy["&id"],
-    oc.protectedPrivilegePolicy["&id"],
-    oc.pkiUser["&id"],
-    oc.pkiCA["&id"],
-    oc.deltaCRL["&id"],
-    oc.cpCps["&id"],
-    oc.pkiCertPath["&id"],
-    oc.strongAuthenticationUser["&id"],
-    oc.userSecurityInformation["&id"],
-    oc.userPwdClass["&id"],
-    oc.certificationAuthority["&id"],
-    oc.certificationAuthority_V2["&id"],
-];
+import { createMockPersonAttributes } from "./mock-entries";
+import { idempotentAddEntry } from "./utils";
+import { commonAuxiliaryObjectClasses, deviceAuxiliaryObjectClasses } from "./objectClassSets";
+import {
+    bootableDevice, bootFile, bootParameter,
+} from "@wildboar/parity-schema/src/lib/modules/NIS/bootableDevice.oa";
+import {
+    ieee802Device, macAddress,
+} from "@wildboar/parity-schema/src/lib/modules/NIS/ieee802Device.oa";
+import {
+    ipHost, ipHostNumber,
+} from "@wildboar/parity-schema/src/lib/modules/NIS/ipHost.oa";
+import { BootParameterSyntax, _encode_BootParameterSyntax } from "@wildboar/parity-schema/src/lib/modules/NIS/BootParameterSyntax.ta";
 
 const allNonSecurityContextTypes: OBJECT_IDENTIFIER[] = [
     ct.languageContext["&id"],
@@ -598,7 +588,10 @@ function addSubschemaSubentryArgument (
                 ), DER),
                 _encode_DITContentRuleDescription(new DITContentRuleDescription(
                     oc.device["&id"],
-                    commonAuxiliaryObjectClasses, // auxiliaries
+                    [
+                        ...commonAuxiliaryObjectClasses,
+                        ...deviceAuxiliaryObjectClasses,
+                    ], // auxiliaries
                     undefined, // mandatory
                     undefined, // optional
                     undefined, // precluded
@@ -803,36 +796,6 @@ function addPasswordAdminSubentryArgument (
     };
 }
 
-async function idempotentAddEntry (
-    ctx: Context,
-    conn: Connection,
-    dnStr: string,
-    arg: AddEntryArgument,
-): Promise<void> {
-    const outcome = await conn.writeOperation({
-        opCode: addEntry["&operationCode"],
-        argument: _encode_AddEntryArgument(arg, DER),
-    });
-    if ("error" in outcome) {
-        if (outcome.errcode) {
-            if (compareCode(outcome.errcode, updateError["&errorCode"]!)) {
-                const param = updateError.decoderFor["&ParameterType"]!(outcome.error);
-                const data = getOptionallyProtectedValue(param);
-                if (data.problem === UpdateProblem_entryAlreadyExists) {
-                    ctx.log.warn(`Entry ${dnStr} already exists.`);
-                    return;
-                }
-            }
-            ctx.log.error(print(outcome.errcode));
-            process.exit(1);
-        } else {
-            ctx.log.error("Uncoded error.");
-            process.exit(1);
-        }
-    }
-    ctx.log.info(`Added entry ${dnStr}.`);
-}
-
 const baseObject: DistinguishedName = [
     [
         new AttributeTypeAndValue(
@@ -870,10 +833,10 @@ async function seedGB (
                     }
                 }
                 ctx.log.error(print(outcome.errcode));
-                process.exit(1);
+                process.exit(8482);
             } else {
                 ctx.log.error("Uncoded error.");
-                process.exit(1);
+                process.exit(1235);
             }
         }
         ctx.log.info(`Created ${subentryType} subentry for country GB.`);
@@ -900,7 +863,7 @@ async function seedGB (
             if (outcome.errcode) {
                 if (!compareCode(outcome.errcode, updateError["&errorCode"]!)) {
                     ctx.log.error(print(outcome.errcode));
-                    process.exit(1);
+                    process.exit(4538);
                 }
                 const param = updateError.decoderFor["&ParameterType"]!(outcome.error);
                 const data = getOptionallyProtectedValue(param);
@@ -908,11 +871,11 @@ async function seedGB (
                     ctx.log.warn(`cn=GB,l=${region} already exists.`);
                 } else {
                     ctx.log.error(print(outcome.errcode));
-                    process.exit(1);
+                    process.exit(7373);
                 }
             } else {
                 ctx.log.error("Uncoded error.");
-                process.exit(1);
+                process.exit(83);
             }
         } else {
             ctx.log.info(`Created country cn=GB,l=${region}.`);
@@ -1045,14 +1008,48 @@ async function seedGB (
             new Attribute(
                 selat.objectClass["&id"],
                 [
-                    _encodeObjectIdentifier(seloc.device["&id"]!, DER),
                     _encodeObjectIdentifier(seloc.child["&id"]!, DER),
+                    _encodeObjectIdentifier(seloc.device["&id"]!, DER),
+                    _encodeObjectIdentifier(bootableDevice["&id"]!, DER),
+                    _encodeObjectIdentifier(ieee802Device["&id"]!, DER),
+                    _encodeObjectIdentifier(ipHost["&id"]!, DER),
                 ],
                 undefined,
             ),
             new Attribute(
                 selat.commonName["&id"]!,
                 [_encodeUTF8String("VCR in the kill room", DER)],
+                undefined,
+            ),
+            new Attribute(
+                bootFile["&id"],
+                [_encodeIA5String("/boot/boot.efi", DER)],
+                undefined,
+            ),
+            new Attribute(
+                bootParameter["&id"],
+                [
+                    _encode_BootParameterSyntax(new BootParameterSyntax(
+                        "number_of_boops",
+                        "www.google.com",
+                        "/games/doom/doom.exe",
+                    ), DER)
+                ],
+                undefined,
+            ),
+            new Attribute(
+                macAddress["&id"],
+                [_encodeIA5String("08:FB:34:11:05:37", DER)],
+                undefined,
+            ),
+            new Attribute(
+                macAddress["&id"],
+                [_encodeIA5String("08:FB:34:11:05:37", DER)],
+                undefined,
+            ),
+            new Attribute(
+                ipHostNumber["&id"],
+                [_encodeIA5String("192.168.1.105", DER)],
                 undefined,
             ),
         ]);
@@ -1144,6 +1141,77 @@ async function seedGB (
             ),
         ]);
         await idempotentAddEntry(ctx, conn, "C=GB,L=London,CN=Sadiq Khan", arg);
+    }
+
+    { // subentry C=GB,L=Yorkshire and the Humber,CN=Collective Attributes Subentry
+        const cn: string = "Collective Attributes Subentry";
+        const loc: string = "Yorkshire and the Humber";
+        const arg = createAddEntryArgument([
+            ...baseObject,
+            [
+                new AttributeTypeAndValue(
+                    selat.localityName["&id"]!,
+                    _encodeUTF8String(loc, DER),
+                ),
+            ],
+            [
+                new AttributeTypeAndValue(
+                    selat.commonName["&id"]!,
+                    _encodeUTF8String(cn, DER),
+                ),
+            ],
+        ], [
+            new Attribute(
+                selat.objectClass["&id"],
+                [
+                    _encodeObjectIdentifier(seloc.subentry["&id"]!, DER),
+                    _encodeObjectIdentifier(seloc.collectiveAttributeSubentry["&id"]!, DER),
+                ],
+                undefined,
+            ),
+            new Attribute(
+                selat.commonName["&id"]!,
+                [_encodeUTF8String(cn, DER)],
+                undefined,
+            ),
+            new Attribute(
+                selat.collectiveLocalityName["&id"]!,
+                [_encodeUTF8String(loc, DER)],
+                undefined,
+            ),
+            new Attribute(
+                selat.subtreeSpecification["&id"],
+                [
+                    _encode_SubtreeSpecification(new SubtreeSpecification(
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        [],
+                    ), DER),
+                ],
+                undefined,
+            ),
+        ]);
+        await idempotentAddEntry(ctx, conn, "C=GB,L=Yorkshire and the Humber,CN=Collective Attributes Subentry", arg);
+    }
+
+    // Create random people
+    for (let i = 0; i < 1000; i++) {
+        const [ rdn, attributes, cn ] = createMockPersonAttributes();
+        const dn: DistinguishedName = [
+            ...baseObject,
+            [
+                new AttributeTypeAndValue(
+                    selat.localityName["&id"]!,
+                    _encodeUTF8String("Yorkshire and the Humber", DER),
+                ),
+            ],
+            rdn,
+        ];
+        const arg = createAddEntryArgument(dn, attributes);
+        await idempotentAddEntry(ctx, conn, `C=GB,L=London,CN=${cn}`, arg);
     }
 }
 

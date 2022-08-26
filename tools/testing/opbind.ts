@@ -23,7 +23,7 @@ import {
     _encode_HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
 import * as crypto from "crypto";
-import { ASN1Construction, ASN1TagClass, ASN1UniversalType, DERElement, OBJECT_IDENTIFIER } from "asn1-ts";
+import { ASN1Construction, ASN1TagClass, ASN1UniversalType, DERElement, ObjectIdentifier, OBJECT_IDENTIFIER } from "asn1-ts";
 import {
     IDM_PDU,
     _encode_IDM_PDU,
@@ -73,6 +73,10 @@ import * as net from "net";
 import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
 const { IDMConnection } = require("../../dist/libs/idm/src/index");
 import { DER } from "asn1-ts/dist/node/functional";
+import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+import {
+    applicationProcess,
+} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/applicationProcess.oa";
 
 const US = new AttributeTypeAndValue(
     countryName["&id"],
@@ -150,6 +154,11 @@ async function main() {
                 [utf("qwerty")],
                 undefined,
             ),
+            new Attribute(
+                objectClass["&id"],
+                [oid(applicationProcess["&id"]!)],
+                undefined,
+            ),
         ],
         undefined,
     );
@@ -161,7 +170,7 @@ async function main() {
                     ASN1TagClass.universal,
                     ASN1Construction.primitive,
                     ASN1UniversalType.utf8String,
-                    "bigboi",
+                    "qwerty",
                 ),
             ),
         ],

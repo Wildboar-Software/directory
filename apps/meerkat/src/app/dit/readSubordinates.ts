@@ -2,6 +2,7 @@ import type { Context, Vertex } from "@wildboar/meerkat-types";
 import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry";
 import type { Prisma } from "@prisma/client";
 import { MAX_RESULTS } from "../constants";
+import { getEntryExistsFilter } from "../database/entryExistsFilter";
 
 /**
  * @summary Read a DSE's subordinates into memory from the database
@@ -45,7 +46,7 @@ async function readSubordinates (
                 where: {
                     ...(where ?? {}),
                     immediate_superior_id: entry.dse.id,
-                    deleteTimestamp: null,
+                    ...getEntryExistsFilter(),
                 },
                 include: {
                     RDN: {

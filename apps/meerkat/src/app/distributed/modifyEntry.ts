@@ -16,6 +16,10 @@ import {
     ModifyEntryResult,
     _encode_ModifyEntryResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryResult.ta";
+import {
+    ModifyEntryResultData,
+    _encode_ModifyEntryResultData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryResult.ta";
 import type {
     EntryModification,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryModification.ta";
@@ -55,6 +59,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
 import {
     SecurityProblem_insufficientAccessRights,
+    SecurityProblem_invalidSignature,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import {
     BERElement,
@@ -66,6 +71,7 @@ import {
     ObjectIdentifier,
     OBJECT_IDENTIFIER,
     TRUE_BIT,
+    unpackBits,
 } from "asn1-ts";
 import {
     DER,
@@ -140,9 +146,6 @@ import {
     id_oa_collectiveExclusions,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-collectiveExclusions.va";
 import readPermittedEntryInformation from "../database/entry/readPermittedEntryInformation";
-import {
-    ModifyEntryResultData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryResultData.ta";
 import {
     EntryInformation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
@@ -243,7 +246,18 @@ import {
     id_oa_allAttributeTypes,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-allAttributeTypes.va";
 import isOperationalAttributeType from "../x500/isOperationalAttributeType";
+import {
+    ProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+import {
+    ErrorProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
+import { generateSignature } from "../pki/generateSignature";
+import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+import { stringifyDN } from "../x500/stringifyDN";
 import { printInvokeId } from "../utils/printInvokeId";
+import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
+import { getEntryExistsFilter } from "../database/entryExistsFilter";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -260,7 +274,8 @@ const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 const notPermittedData =  (
     ctx: Context,
     assn: ClientAssociation,
-    aliasDereferenced?: boolean,
+    aliasDereferenced: boolean | undefined,
+    signErrors: boolean,
 ) => new SecurityErrorData(
     SecurityProblem_insufficientAccessRights,
     undefined,
@@ -268,6 +283,7 @@ const notPermittedData =  (
     [],
     createSecurityParameters(
         ctx,
+        signErrors,
         assn.boundNameAndUID?.dn,
         undefined,
         securityError["&errorCode"],
@@ -322,6 +338,7 @@ function getValueAlterer (
     type_: OBJECT_IDENTIFIER,
     toBeAddedElement: ASN1Element,
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): (value: Value) => Value {
     const toBeAdded = (toBeAddedElement.tagNumber === ASN1UniversalType.integer)
         ? Number(toBeAddedElement.integer)
@@ -342,6 +359,7 @@ function getValueAlterer (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     undefined,
                     undefined,
                     attributeError["&errorCode"],
@@ -355,12 +373,14 @@ function getValueAlterer (
             throw new errors.AttributeError(
                 ctx.i18n.t("err:invalid_type_for_alter_values"),
                 attributeErrorData(),
+                signErrors,
             );
         }
         if (value.value.tagNumber !== toBeAddedElement.tagNumber) {
             throw new errors.AttributeError(
                 ctx.i18n.t("err:invalid_type_for_alter_values"),
                 attributeErrorData(),
+                signErrors,
             );
         }
         const currentValue = (value.value.tagNumber === ASN1UniversalType.integer)
@@ -402,6 +422,7 @@ function checkAttributeArity (
     target: Vertex,
     attr: Attribute,
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): void {
     const numberOfValues: number = (attr.values.length + (attr.valuesWithContext?.length ?? 0));
     if (numberOfValues <= 1) {
@@ -432,6 +453,7 @@ function checkAttributeArity (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
@@ -440,6 +462,7 @@ function checkAttributeArity (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 }
@@ -517,6 +540,7 @@ function checkPermissionToAddValues (
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): void {
     if (
         !accessControlScheme
@@ -542,7 +566,8 @@ function checkPermissionToAddValues (
                 mod: modificationType,
                 type: attribute.type_.toString(),
             }),
-            notPermittedData(ctx, assn, aliasDereferenced),
+            notPermittedData(ctx, assn, aliasDereferenced, signErrors),
+            signErrors,
         );
     }
     for (const value of values) {
@@ -571,7 +596,8 @@ function checkPermissionToAddValues (
                     mod: modificationType,
                     type: attribute.type_.toString(),
                 }),
-                notPermittedData(ctx, assn, aliasDereferenced),
+                notPermittedData(ctx, assn, aliasDereferenced, signErrors),
+                signErrors,
             );
         }
     }
@@ -608,6 +634,7 @@ function checkAbilityToModifyAttributeType (
     manageDSAIT: boolean,
     isRemoving: boolean, // For accomodating obsolete attribute types.
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): void {
     const TYPE_OID: string = attributeType.toString();
     const spec = ctx.attributeTypes.get(TYPE_OID);
@@ -630,6 +657,7 @@ function checkAbilityToModifyAttributeType (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
@@ -638,6 +666,7 @@ function checkAbilityToModifyAttributeType (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (spec.noUserModification && !manageDSAIT) {
@@ -652,6 +681,7 @@ function checkAbilityToModifyAttributeType (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     securityError["&errorCode"],
@@ -660,6 +690,7 @@ function checkAbilityToModifyAttributeType (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (spec.dummy) {
@@ -681,6 +712,7 @@ function checkAbilityToModifyAttributeType (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
@@ -689,6 +721,7 @@ function checkAbilityToModifyAttributeType (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (spec.collective && !isSubentry) {
@@ -710,6 +743,7 @@ function checkAbilityToModifyAttributeType (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
@@ -718,6 +752,7 @@ function checkAbilityToModifyAttributeType (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (spec.obsolete && !isRemoving) {
@@ -739,6 +774,7 @@ function checkAbilityToModifyAttributeType (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
@@ -747,6 +783,7 @@ function checkAbilityToModifyAttributeType (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
 }
@@ -891,8 +928,9 @@ async function executeAddAttribute (
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): Promise<PrismaPromise<any>[]> {
-    checkAttributeArity(ctx, assn, entry, mod, aliasDereferenced);
+    checkAttributeArity(ctx, assn, entry, mod, aliasDereferenced, signErrors);
     /**
      * This is done before checking if the attribute is already present to avoid
      * disclosing its presence. Once you've added the attribute, its presence is
@@ -907,6 +945,7 @@ async function executeAddAttribute (
         accessControlScheme,
         relevantACDFTuples,
         aliasDereferenced,
+        signErrors,
     );
     const isPresent: boolean = await checkAttributePresence(ctx, entry, mod.type_);
     if (isPresent) {
@@ -928,6 +967,7 @@ async function executeAddAttribute (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
@@ -936,11 +976,12 @@ async function executeAddAttribute (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const values = valuesFromAttribute(mod);
     addValuesToPatch(patch, mod.type_, values, getNamingMatcherGetter(ctx)(mod.type_));
-    return addValues(ctx, entry, values);
+    return addValues(ctx, entry, values, undefined, true, signErrors);
 }
 
 /**
@@ -985,6 +1026,7 @@ async function executeRemoveAttribute (
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): Promise<PrismaPromise<any>[]> {
     if (entry.dse.rdn.some((atav) => atav.type_.isEqualTo(mod))) {
         throw new errors.UpdateError(
@@ -999,6 +1041,7 @@ async function executeRemoveAttribute (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
@@ -1007,7 +1050,8 @@ async function executeRemoveAttribute (
                 aliasDereferenced,
                 undefined,
             ),
-        )
+            signErrors,
+        );
     }
     /**
      * This is intentionally checked before even checking if the attribute is
@@ -1034,7 +1078,8 @@ async function executeRemoveAttribute (
                     mod: "removeAttribute",
                     type: mod.toString(),
                 }),
-                notPermittedData(ctx, assn, aliasDereferenced),
+                notPermittedData(ctx, assn, aliasDereferenced, signErrors),
+                signErrors,
             );
         }
     }
@@ -1058,6 +1103,7 @@ async function executeRemoveAttribute (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
@@ -1066,6 +1112,7 @@ async function executeRemoveAttribute (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const TYPE_OID: string = mod.toString();
@@ -1117,6 +1164,7 @@ async function executeAddValues (
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): Promise<PrismaPromise<any>[]> {
     const equalityMatcher: boolean = !!bacSettings.getEqualityMatcher(mod.type_);
     if (!equalityMatcher) {
@@ -1138,6 +1186,7 @@ async function executeAddValues (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
@@ -1146,9 +1195,10 @@ async function executeAddValues (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
-    checkAttributeArity(ctx, assn, entry, mod, aliasDereferenced);
+    checkAttributeArity(ctx, assn, entry, mod, aliasDereferenced, signErrors);
     checkPermissionToAddValues(
         "addValues",
         mod,
@@ -1158,10 +1208,11 @@ async function executeAddValues (
         accessControlScheme,
         relevantACDFTuples,
         aliasDereferenced,
+        signErrors,
     );
     const values = valuesFromAttribute(mod);
     addValuesToPatch(patch, mod.type_, values, getNamingMatcherGetter(ctx)(mod.type_));
-    return addValues(ctx, entry, values);
+    return addValues(ctx, entry, values, undefined, true, signErrors);
 }
 
 /**
@@ -1206,6 +1257,7 @@ async function executeRemoveValues (
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): Promise<PrismaPromise<any>[]> {
     const equalityMatcher: boolean = !!bacSettings.getEqualityMatcher(mod.type_);
     if (!equalityMatcher) {
@@ -1227,6 +1279,7 @@ async function executeRemoveValues (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     attributeError["&errorCode"],
@@ -1235,6 +1288,7 @@ async function executeRemoveValues (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const EQUALITY_MATCHER = getNamingMatcherGetter(ctx)(mod.type_);
@@ -1261,6 +1315,7 @@ async function executeRemoveValues (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     updateError["&errorCode"],
@@ -1269,6 +1324,7 @@ async function executeRemoveValues (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         )
     }
     if (
@@ -1294,7 +1350,8 @@ async function executeRemoveValues (
                     mod: "removeValues",
                     type: mod.type_.toString(),
                 }),
-                notPermittedData(ctx, assn, aliasDereferenced),
+                notPermittedData(ctx, assn, aliasDereferenced, signErrors),
+                signErrors,
             );
         }
         for (const value of values) {
@@ -1320,7 +1377,8 @@ async function executeRemoveValues (
                         mod: "removeValues",
                         type: mod.type_.toString(),
                     }),
-                    notPermittedData(ctx, assn, aliasDereferenced),
+                    notPermittedData(ctx, assn, aliasDereferenced, signErrors),
+                    signErrors,
                 );
             }
         }
@@ -1374,6 +1432,7 @@ async function executeAlterValues (
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): Promise<PrismaPromise<any>[]> {
     if (!isAcceptableTypeForAlterValues(mod.value)) {
         throw new errors.AttributeError(
@@ -1392,6 +1451,7 @@ async function executeAlterValues (
                 undefined,
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     undefined,
                     undefined,
                     attributeError["&errorCode"],
@@ -1400,6 +1460,7 @@ async function executeAlterValues (
                 aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (
@@ -1426,11 +1487,19 @@ async function executeAlterValues (
                     mod: "alterValues",
                     type: mod.type_.toString(),
                 }),
-                notPermittedData(ctx, assn, aliasDereferenced),
+                notPermittedData(ctx, assn, aliasDereferenced, signErrors),
+                signErrors,
             );
         }
     }
-    const alterer = getValueAlterer(ctx, entry, mod.type_, mod.value, aliasDereferenced);
+    const alterer = getValueAlterer(
+        ctx,
+        entry,
+        mod.type_,
+        mod.value,
+        aliasDereferenced,
+        signErrors,
+    );
     const values = await readValuesOfType(ctx, entry, mod.type_);
     if (
         accessControlScheme
@@ -1464,7 +1533,8 @@ async function executeAlterValues (
                         mod: "alterValues",
                         type: mod.type_.toString(),
                     }),
-                    notPermittedData(ctx, assn, aliasDereferenced),
+                    notPermittedData(ctx, assn, aliasDereferenced, signErrors),
+                    signErrors,
                 );
             }
         }
@@ -1503,7 +1573,8 @@ async function executeAlterValues (
                         mod: "alterValues",
                         type: mod.type_.toString(),
                     }),
-                    notPermittedData(ctx, assn, aliasDereferenced),
+                    notPermittedData(ctx, assn, aliasDereferenced, signErrors),
+                    signErrors,
                 );
             }
         }
@@ -1514,7 +1585,7 @@ async function executeAlterValues (
     }
     return [
         ...(await removeValues(ctx, entry, values)),
-        ...(await addValues(ctx, entry, newValues)),
+        ...(await addValues(ctx, entry, newValues, undefined, true, signErrors)),
     ];
 }
 
@@ -1560,6 +1631,7 @@ async function executeResetValue (
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): Promise<PrismaPromise<any>[]> {
     const where = {
         entry_id: entry.dse.id,
@@ -1609,7 +1681,8 @@ async function executeResetValue (
                         mod: "resetValue",
                         type: mod.toString(),
                     }),
-                    notPermittedData(ctx, assn, aliasDereferenced),
+                    notPermittedData(ctx, assn, aliasDereferenced, signErrors),
+                    signErrors,
                 );
             }
         }
@@ -1678,8 +1751,9 @@ async function executeReplaceValues (
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): Promise<PrismaPromise<any>[]> {
-    checkAttributeArity(ctx, assn, entry, mod, aliasDereferenced);
+    checkAttributeArity(ctx, assn, entry, mod, aliasDereferenced, signErrors);
     const TYPE_OID: string = mod.type_.toString();
     const values = valuesFromAttribute(mod);
     if (
@@ -1703,7 +1777,8 @@ async function executeReplaceValues (
                     mod: "replaceValues",
                     type: mod.type_.toString(),
                 }),
-                notPermittedData(ctx, assn, aliasDereferenced),
+                notPermittedData(ctx, assn, aliasDereferenced, signErrors),
+                signErrors,
             );
         }
         const existingValues = await readValuesOfType(ctx, entry, mod.type_);
@@ -1728,7 +1803,8 @@ async function executeReplaceValues (
                         mod: "replaceValues",
                         type: mod.type_.toString(),
                     }),
-                    notPermittedData(ctx, assn, aliasDereferenced),
+                    notPermittedData(ctx, assn, aliasDereferenced, signErrors),
+                    signErrors,
                 );
             }
         }
@@ -1738,10 +1814,10 @@ async function executeReplaceValues (
     addValuesToPatch(patch, mod.type_, values, getNamingMatcherGetter(ctx)(mod.type_));
     return [
         ...(await removeAttribute(ctx, entry, mod.type_)),
-        // Last argument to addValues() is false, because we don't want to check
+        // Second to last argument to addValues() is false, because we don't want to check
         // if the potentially added values already exist, because we are just
         // going to wipe out all that exist and replace them.
-        ...(await addValues(ctx, entry, values, undefined, false)),
+        ...(await addValues(ctx, entry, values, undefined, false, signErrors)),
     ];
 }
 
@@ -1778,6 +1854,7 @@ function handleContextRule (
     attribute: Attribute,
     contextRuleIndex: ContextRulesIndex,
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): Attribute {
     const rule = contextRuleIndex.get(attribute.type_.toString())
         ?? contextRuleIndex.get(ALL_ATTRIBUTE_TYPES);
@@ -1799,6 +1876,7 @@ function handleContextRule (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         attributeError["&errorCode"],
@@ -1807,6 +1885,7 @@ function handleContextRule (
                     aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         return attribute;
@@ -1841,6 +1920,7 @@ function handleContextRule (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         attributeError["&errorCode"],
@@ -1849,6 +1929,7 @@ function handleContextRule (
                     aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -1883,6 +1964,7 @@ function handleContextRule (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             attributeError["&errorCode"],
@@ -1891,6 +1973,7 @@ function handleContextRule (
                         aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             mandatoryContextsRemaining.delete(TYPE_OID);
@@ -1915,6 +1998,7 @@ function handleContextRule (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         attributeError["&errorCode"],
@@ -1923,6 +2007,7 @@ function handleContextRule (
                     aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -2058,6 +2143,7 @@ async function executeEntryModification (
     isSubentry: boolean,
     manageDSAIT: boolean,
     aliasDereferenced?: boolean,
+    signErrors: boolean = false,
 ): Promise<PrismaPromise<any>[]> {
 
     const commonArguments = [
@@ -2069,6 +2155,7 @@ async function executeEntryModification (
         accessControlScheme,
         relevantACDFTuples,
         aliasDereferenced,
+        signErrors,
     ] as const;
 
     const check = (
@@ -2084,6 +2171,7 @@ async function executeEntryModification (
         manageDSAIT,
         isRemoving,
         aliasDereferenced,
+        signErrors,
     );
 
     const checkContextRule = (attribute: Attribute): Attribute => handleContextRule(
@@ -2093,6 +2181,7 @@ async function executeEntryModification (
         attribute,
         contextRuleIndex,
         aliasDereferenced,
+        signErrors,
     );
 
     const checkPreclusion = (attributeType: AttributeType) => {
@@ -2111,6 +2200,7 @@ async function executeEntryModification (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -2119,6 +2209,7 @@ async function executeEntryModification (
                     aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     };
@@ -2169,6 +2260,7 @@ async function executeEntryModification (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         attributeError["&errorCode"],
@@ -2177,6 +2269,7 @@ async function executeEntryModification (
                     aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         return executeResetValue(mod.resetValue, ...commonArguments);
@@ -2216,6 +2309,73 @@ async function modifyEntry (
     const target = state.foundDSE;
     const argument = _decode_ModifyEntryArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
+    const signErrors: boolean = (
+        (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+        && (assn.authorizedForSignedErrors)
+    );
+    const requestor: DistinguishedName | undefined = data
+        .securityParameters
+        ?.certification_path
+        ?.userCertificate
+        .toBeSigned
+        .subject
+        .rdnSequence
+        ?? state.chainingArguments.originator
+        ?? data.requestor
+        ?? assn.boundNameAndUID?.dn;
+
+    // #region Signature validation
+    /**
+     * Integrity of the signature SHOULD be evaluated at operation evaluation,
+     * not before. Because the operation could get chained to a DSA that has a
+     * different configuration of trust anchors. To be clear, this is not a
+     * requirement of the X.500 specifications--just my personal assessment.
+     *
+     * Meerkat DSA allows operations with invalid signatures to progress
+     * through all pre-operation-evaluation procedures leading up to operation
+     * evaluation, but with `AuthenticationLevel.basicLevels.signed` set to
+     * `FALSE` so that access controls are still respected. Therefore, if we get
+     * to this point in the code, and the argument is signed, but the
+     * authentication level has the `signed` field set to `FALSE`, we throw an
+     * `invalidSignature` error.
+     */
+    if (
+        ("signed" in argument)
+        && state.chainingArguments.authenticationLevel
+        && ("basicLevels" in state.chainingArguments.authenticationLevel)
+        && !state.chainingArguments.authenticationLevel.basicLevels.signed
+    ) {
+        const remoteHostIdentifier = `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`;
+        const logInfo = {
+            context: "arg",
+            host: remoteHostIdentifier,
+            aid: assn.id,
+            iid: printInvokeId(state.invokeId),
+            ap: stringifyDN(ctx, requestor ?? []),
+        };
+        ctx.log.warn(ctx.i18n.t("log:invalid_signature", logInfo), logInfo);
+        throw new errors.SecurityError(
+            ctx.i18n.t("err:invalid_signature", logInfo),
+            new SecurityErrorData(
+                SecurityProblem_invalidSignature,
+                undefined,
+                undefined,
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn?.boundNameAndUID?.dn,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+            signErrors,
+        );
+    }
+    // #endregion Signature validation
     const op = ("present" in state.invokeId)
         ? assn.invocations.get(Number(state.invokeId.present))
         : undefined;
@@ -2231,6 +2391,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
@@ -2239,6 +2400,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     };
@@ -2273,9 +2435,9 @@ async function modifyEntry (
     const EQUALITY_MATCHER = getNamingMatcherGetter(ctx);
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const targetDN = getDistinguishedName(target);
-    const user = state.chainingArguments.originator
+    const user = requestor
         ? new NameAndOptionalUID(
-            state.chainingArguments.originator,
+            requestor,
             state.chainingArguments.uniqueIdentifier,
         )
         : undefined;
@@ -2304,7 +2466,7 @@ async function modifyEntry (
             accessControlScheme,
             acdfTuples,
             user,
-            state.chainingArguments.authenticationLevel ?? assn.authLevel,
+            state.chainingArguments.authenticationLevel ?? UNTRUSTED_REQ_AUTH_LEVEL,
             targetDN,
             isMemberOfGroup,
             NAMING_MATCHER,
@@ -2342,6 +2504,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
@@ -2350,6 +2513,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -2401,6 +2565,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         abandoned["&errorCode"],
@@ -2409,6 +2574,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         checkTimeLimit();
@@ -2428,6 +2594,7 @@ async function modifyEntry (
                 isSubentry,
                 manageDSAIT,
                 state.chainingArguments.aliasDereferenced,
+                signErrors,
             )),
         );
     }
@@ -2459,6 +2626,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         attributeError["&errorCode"],
@@ -2467,6 +2635,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         if (
@@ -2494,7 +2663,8 @@ async function modifyEntry (
                         mod: "*",
                         type: type_,
                     }),
-                    notPermittedData(ctx, assn, state.chainingArguments.aliasDereferenced),
+                    notPermittedData(ctx, assn, state.chainingArguments.aliasDereferenced, signErrors),
+                    signErrors,
                 );
             }
         }
@@ -2554,7 +2724,7 @@ async function modifyEntry (
         const subschemaThatAlreadyExists = await ctx.db.entry.findFirst({
             where: {
                 immediate_superior_id: target.immediateSuperior!.dse.id,
-                deleteTimestamp: null,
+                ...getEntryExistsFilter(),
                 subentry: true,
                 EntryObjectClass: {
                     some: {
@@ -2577,6 +2747,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -2585,6 +2756,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         const subtreeSpecAdded = patch.addedValues.get(subtreeSpecification["&id"].toString());
@@ -2609,6 +2781,7 @@ async function modifyEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
@@ -2617,6 +2790,7 @@ async function modifyEntry (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             const invalidSubtreeForSubschema = (subtreeSpecAdded ?? [])
@@ -2641,6 +2815,7 @@ async function modifyEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
@@ -2649,6 +2824,7 @@ async function modifyEntry (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -2679,6 +2855,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -2687,6 +2864,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         if (spec.obsolete) {
@@ -2710,6 +2888,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -2718,6 +2897,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         /**
@@ -2752,6 +2932,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -2760,6 +2941,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         } else if (
             (spec.kind === ObjectClassKind_auxiliary)
@@ -2787,6 +2969,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -2795,6 +2978,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         Array.from(spec.mandatoryAttributes).forEach((attr) => requiredAttributes.add(attr));
@@ -2856,6 +3040,7 @@ async function modifyEntry (
         if (missingRequiredAttributeTypes.size > 0) {
             const missing: string[] = Array.from(missingRequiredAttributeTypes);
             throw new errors.UpdateError(
+                // FIXME: i18n
                 `Missing required attribute types: ${missing.join(" ")}`,
                 new UpdateErrorData(
                     UpdateProblem_objectClassViolation,
@@ -2865,6 +3050,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -2873,6 +3059,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -2907,6 +3094,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -2915,6 +3103,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -2933,6 +3122,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -2941,6 +3131,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
 
@@ -2973,6 +3164,7 @@ async function modifyEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
@@ -2981,6 +3173,7 @@ async function modifyEntry (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -3011,6 +3204,7 @@ async function modifyEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
@@ -3019,6 +3213,7 @@ async function modifyEntry (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             /**
@@ -3047,6 +3242,7 @@ async function modifyEntry (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             updateError["&errorCode"],
@@ -3055,6 +3251,7 @@ async function modifyEntry (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -3078,6 +3275,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -3086,6 +3284,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
         const inHierarchy = await ctx.attributeTypes
@@ -3115,6 +3314,7 @@ async function modifyEntry (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         updateError["&errorCode"],
@@ -3123,6 +3323,7 @@ async function modifyEntry (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
@@ -3136,6 +3337,7 @@ async function modifyEntry (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     abandoned["&errorCode"],
@@ -3144,6 +3346,7 @@ async function modifyEntry (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     if (op) {
@@ -3273,6 +3476,8 @@ async function modifyEntry (
                 targetDN.slice(0, -1),
                 target.immediateSuperior,
                 state.chainingArguments.aliasDereferenced ?? false,
+                undefined,
+                signErrors,
             ) // INTENTIONAL_NO_AWAIT
                 .then(() => {
                     ctx.log.info(ctx.i18n.t("log:updated_superior_dsa"), {
@@ -3297,34 +3502,34 @@ async function modifyEntry (
 
     // TODO: Update Shadows
 
-    if (data.selection) {
-        if (
-            accessControlScheme
-            && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-            && !authorizedToEntry([ PERMISSION_CATEGORY_READ ])
-        ) {
-            const result: ModifyEntryResult = {
-                null_: null,
-            };
-            return {
-                result: {
-                    unsigned: new ChainedResult(
-                        new ChainingResults(
-                            undefined,
-                            undefined,
-                            createSecurityParameters(
-                                ctx,
-                                assn.boundNameAndUID?.dn,
-                                id_opcode_modifyEntry,
-                            ),
-                            undefined,
-                        ),
-                        _encode_ModifyEntryResult(result, DER),
-                    ),
-                },
-                stats: {},
-            };
-        }
+    const signResults: boolean = (
+        (data.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
+    let resultData: ModifyEntryResultData = new ModifyEntryResultData(
+        undefined,
+        [],
+        createSecurityParameters(
+            ctx,
+            signResults,
+            assn.boundNameAndUID?.dn,
+            id_opcode_modifyEntry,
+        ),
+        ctx.dsa.accessPoint.ae_title.rdnSequence,
+        state.chainingArguments.aliasDereferenced,
+        undefined,
+    );
+
+    if (
+        data.selection
+        && (
+            !accessControlScheme
+            || (
+                accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
+                && !authorizedToEntry([ PERMISSION_CATEGORY_READ ])
+            )
+        )
+    ) {
         const permittedEntryInfo = await readPermittedEntryInformation(
             ctx,
             target,
@@ -3384,66 +3589,65 @@ async function modifyEntry (
                 attribute: familyInfoAttr,
             });
         }
-        const result: ModifyEntryResult = {
-            information: {
-                unsigned: new ModifyEntryResultData(
-                    new EntryInformation(
-                        {
-                            rdnSequence: getDistinguishedName(target),
-                        },
-                        !target.dse.shadow,
-                        permittedEntryInfo.information,
-                        permittedEntryInfo.discloseIncompleteEntry
-                            ? permittedEntryInfo.incompleteEntry
-                            : false,
-                        undefined,
-                        undefined,
-                    ),
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        assn.boundNameAndUID?.dn,
-                        id_opcode_modifyEntry,
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    state.chainingArguments.aliasDereferenced,
-                    undefined,
-                ),
-            },
-        };
-        return {
-            result: {
-                unsigned: new ChainedResult(
-                    new ChainingResults(
-                        undefined,
-                        undefined,
-                        createSecurityParameters(
-                            ctx,
-                            assn.boundNameAndUID?.dn,
-                            id_opcode_modifyEntry,
-                        ),
-                        undefined,
-                    ),
-                    _encode_ModifyEntryResult(result, DER),
-                ),
-            },
-            stats: {
-                request: failover(() => ({
-                    operationCode: codeToString(id_opcode_modifyEntry),
-                    ...getStatisticsFromCommonArguments(data),
-                    targetNameLength: targetDN.length,
-                    modifications: data.changes.map(getEntryModificationStatistics),
-                    eis: data.selection
-                        ? getEntryInformationSelectionStatistics(data.selection)
-                        : undefined,
-                }), undefined),
-            },
-        };
+        resultData = new ModifyEntryResultData(
+            new EntryInformation(
+                {
+                    rdnSequence: getDistinguishedName(target),
+                },
+                !target.dse.shadow,
+                permittedEntryInfo.information,
+                permittedEntryInfo.discloseIncompleteEntry
+                    ? permittedEntryInfo.incompleteEntry
+                    : false,
+                undefined,
+                undefined,
+            ),
+            resultData._unrecognizedExtensionsList,
+            resultData.securityParameters,
+            resultData.performer,
+            resultData.aliasDereferenced,
+            resultData.notification,
+        );
     }
 
-    const result: ModifyEntryResult = {
-        null_: null,
-    };
+    const result: ModifyEntryResult = signResults
+        ? {
+            information: (() => {
+                const resultDataBytes = _encode_ModifyEntryResultData(resultData, DER).toBytes();
+                const key = ctx.config.signing?.key;
+                if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
+                    return {
+                        unsigned: resultData,
+                    };
+                }
+                const signingResult = generateSignature(key, resultDataBytes);
+                if (!signingResult) {
+                    return {
+                        unsigned: resultData,
+                    };
+                }
+                const [ sigAlg, sigValue ] = signingResult;
+                return {
+                    signed: new SIGNED(
+                        resultData,
+                        sigAlg,
+                        unpackBits(sigValue),
+                        undefined,
+                        undefined,
+                    ),
+                };
+            })(),
+        }
+        : {
+            information: {
+                unsigned: resultData,
+            },
+        };
+
+    const signDSPResult: boolean = (
+        (state.chainingArguments.securityParameters?.target === ProtectionRequest_signed)
+        && assn.authorizedForSignedResults
+    );
     return {
         result: {
             unsigned: new ChainedResult(
@@ -3452,6 +3656,7 @@ async function modifyEntry (
                     undefined,
                     createSecurityParameters(
                         ctx,
+                        signDSPResult,
                         assn.boundNameAndUID?.dn,
                         id_opcode_modifyEntry,
                     ),

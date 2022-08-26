@@ -1,11 +1,11 @@
 import {
-    Context,
     Vertex,
     ClientAssociation,
     WithRequestStatistics,
     WithOutcomeStatistics,
     PagedResultsRequestState,
 } from "@wildboar/meerkat-types";
+import type { MeerkatContext } from "../ctx";
 import { ObjectIdentifier, TRUE_BIT, FALSE } from "asn1-ts";
 import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
 import * as errors from "@wildboar/meerkat-types";
@@ -20,6 +20,9 @@ import {
     ServiceControlOptions_manageDSAIT as manageDSAITBit,
     ServiceControlOptions_preferChaining as preferChainingBit,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+import {
+    SecurityProblem_invalidSignature,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import readSubordinates from "../dit/readSubordinates";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { AccessPointInformation, ContinuationReference } from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
@@ -100,10 +103,13 @@ import {
     parent,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/parent.oa";
 import type { Prisma } from "@prisma/client";
-import { MAX_RESULTS } from "../constants";
+import { MAX_RESULTS, UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
 import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+import {
+    ErrorProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import bacSettings from "../authz/bacSettings";
 import {
@@ -131,7 +137,18 @@ import {
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+import { stringifyDN } from "../x500/stringifyDN";
+import type {
+    DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import { printInvokeId } from "../utils/printInvokeId";
+import {
+    SecurityErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import {
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import DSPAssociation from "../dsp/DSPConnection";
 
 const BYTES_IN_A_UUID: number = 16;
 const PARENT: string = parent["&id"].toString();
@@ -166,13 +183,82 @@ interface ListState extends Partial<WithRequestStatistics>, Partial<WithOutcomeS
  */
 export
 async function list_i (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<ListState> {
     const target = state.foundDSE;
-    const arg: ListArgument = _decode_ListArgument(state.operationArgument);
-    const data = getOptionallyProtectedValue(arg);
+    const argument: ListArgument = _decode_ListArgument(state.operationArgument);
+    const data = getOptionallyProtectedValue(argument);
+    const signErrors: boolean = (
+        (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+        && (assn.authorizedForSignedErrors)
+    );
+
+    const requestor: DistinguishedName | undefined = data
+        .securityParameters
+        ?.certification_path
+        ?.userCertificate
+        .toBeSigned
+        .subject
+        .rdnSequence
+        ?? state.chainingArguments.originator
+        ?? data.requestor
+        ?? assn.boundNameAndUID?.dn;
+
+    // #region Signature validation
+    /**
+     * Integrity of the signature SHOULD be evaluated at operation evaluation,
+     * not before. Because the operation could get chained to a DSA that has a
+     * different configuration of trust anchors. To be clear, this is not a
+     * requirement of the X.500 specifications--just my personal assessment.
+     *
+     * Meerkat DSA allows operations with invalid signatures to progress
+     * through all pre-operation-evaluation procedures leading up to operation
+     * evaluation, but with `AuthenticationLevel.basicLevels.signed` set to
+     * `FALSE` so that access controls are still respected. Therefore, if we get
+     * to this point in the code, and the argument is signed, but the
+     * authentication level has the `signed` field set to `FALSE`, we throw an
+     * `invalidSignature` error.
+     */
+    if (
+        ("signed" in argument)
+        && state.chainingArguments.authenticationLevel
+        && ("basicLevels" in state.chainingArguments.authenticationLevel)
+        && !state.chainingArguments.authenticationLevel.basicLevels.signed
+    ) {
+        const remoteHostIdentifier = `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`;
+        const logInfo = {
+            context: "arg",
+            host: remoteHostIdentifier,
+            aid: assn.id,
+            iid: printInvokeId(state.invokeId),
+            ap: stringifyDN(ctx, requestor ?? []),
+        };
+        ctx.log.warn(ctx.i18n.t("log:invalid_signature", logInfo), logInfo);
+        throw new errors.SecurityError(
+            ctx.i18n.t("err:invalid_signature", logInfo),
+            new SecurityErrorData(
+                SecurityProblem_invalidSignature,
+                undefined,
+                undefined,
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn?.boundNameAndUID?.dn,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+            signErrors,
+        );
+    }
+    // #endregion Signature validation
+
     const chainingProhibited = (
         (data.serviceControls?.options?.[chainingProhibitedBit] === TRUE_BIT)
         || (data.serviceControls?.options?.[manageDSAITBit] === TRUE_BIT)
@@ -190,6 +276,7 @@ async function list_i (
                 [],
                 createSecurityParameters(
                     ctx,
+                    signErrors,
                     assn.boundNameAndUID?.dn,
                     undefined,
                     serviceError["&errorCode"],
@@ -198,6 +285,7 @@ async function list_i (
                 state.chainingArguments.aliasDereferenced,
                 undefined,
             ),
+            signErrors,
         );
     }
     const op = ("present" in state.invokeId)
@@ -207,9 +295,9 @@ async function list_i (
         ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
     const targetDN = getDistinguishedName(target);
-    const user = state.chainingArguments.originator
+    const user = requestor
         ? new NameAndOptionalUID(
-            state.chainingArguments.originator,
+            requestor,
             state.chainingArguments.uniqueIdentifier,
         )
         : undefined;
@@ -230,11 +318,17 @@ async function list_i (
     let pagingRequest: PagedResultsRequest_newRequest | undefined;
     let queryReference: string | undefined;
     let cursorId: number | undefined;
+    const signDSPResult: boolean = (
+        (state.chainingArguments.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+        && (assn instanceof DSPAssociation)
+        && assn.authorizedForSignedResults
+    );
     const chainingResults = new ChainingResults(
         undefined,
         undefined,
         createSecurityParameters(
             ctx,
+            signDSPResult,
             assn.boundNameAndUID?.dn,
             id_opcode_list,
         ),
@@ -261,6 +355,7 @@ async function list_i (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             serviceError["&errorCode"],
@@ -269,6 +364,7 @@ async function list_i (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             // pageSize = 0 is a problem because we push entry to results before checking if we have a full page.
@@ -282,6 +378,7 @@ async function list_i (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             serviceError["&errorCode"],
@@ -290,6 +387,7 @@ async function list_i (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             if (nr.sortKeys?.length) {
@@ -304,6 +402,7 @@ async function list_i (
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 assn.boundNameAndUID?.dn,
                                 undefined,
                                 serviceError["&errorCode"],
@@ -312,6 +411,7 @@ async function list_i (
                             state.chainingArguments.aliasDereferenced,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
                 if (nr.sortKeys.length > 3) {
@@ -352,6 +452,7 @@ async function list_i (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             serviceError["&errorCode"],
@@ -360,6 +461,7 @@ async function list_i (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             pagingRequest = paging.request;
@@ -375,6 +477,7 @@ async function list_i (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         abandoned["&errorCode"],
@@ -383,6 +486,7 @@ async function list_i (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         } else {
             throw new errors.ServiceError(
@@ -392,6 +496,7 @@ async function list_i (
                     [],
                     createSecurityParameters(
                         ctx,
+                        signErrors,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
@@ -400,10 +505,10 @@ async function list_i (
                     state.chainingArguments.aliasDereferenced,
                     undefined,
                 ),
+                signErrors,
             );
         }
     }
-    const SRcontinuationList: ContinuationReference[] = [];
     const sizeLimit: number = pagingRequest
         ? MAX_RESULTS
         : Number(data.serviceControls?.sizeLimit ?? MAX_RESULTS);
@@ -431,6 +536,7 @@ async function list_i (
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             assn.boundNameAndUID?.dn,
                             undefined,
                             abandoned["&errorCode"],
@@ -439,6 +545,7 @@ async function list_i (
                         state.chainingArguments.aliasDereferenced,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
             if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
@@ -491,7 +598,7 @@ async function list_i (
                     effectiveAccessControlScheme,
                     subordinateACDFTuples,
                     user,
-                    state.chainingArguments.authenticationLevel ?? assn.authLevel,
+                    state.chainingArguments.authenticationLevel ?? UNTRUSTED_REQ_AUTH_LEVEL,
                     subordinateDN,
                     isMemberOfGroup,
                     NAMING_MATCHER,
@@ -566,66 +673,106 @@ async function list_i (
                 continue;
             }
             if (subordinate.dse.subr) {
-                SRcontinuationList.push(new ContinuationReference(
-                    /**
-                     * The specification says to return the DN of the TARGET, not
-                     * the subordinate... This does not quite make sense to me. I
-                     * wonder if the specification is incorrect, but it also seems
-                     * plausible that I am misunderstanding the semantics of the
-                     * ContinuationReference.
-                     *
-                     * Actually, I think this makes sense. You are telling the
-                     * subordinate DSA that it should continue to return the
-                     * subordinates of the target DSE, not the subordinate.
-                     */
-                    // {
-                    //     rdnSequence: [ ...targetDN, subordinate.dse.rdn ],
-                    // },
-                    {
-                        rdnSequence: targetDN,
-                    },
-                    undefined,
-                    new OperationProgress(
-                        OperationProgress_nameResolutionPhase_completed,
+                /**
+                 * [ITU Recommendation X.518 (2019)](https://www.itu.int/rec/T-REC-X.518/en),
+                 * Section 19.3.1.2.1, Bullet Point 3.b.i, states that:
+                 * 
+                 * > If e' is of type `subr`, then there are two cases. In the
+                 * > first case, the subordinate entry's ACI and object class is
+                 * > available locally, in which case, based on local policy and
+                 * > the ACI's permission, add the RDN of e' to
+                 * > `listInfo.subordinates`... The other case is when the ACI
+                 * > of the entry is not available in e', in which case add a
+                 * > Continuation Reference to SRcontinuationList...
+                 * 
+                 * At this point in the code, the access controls were already
+                 * checked: we just need to check if they were checked on the
+                 * basis of ACI data that was replicated in the subordinate
+                 * reference DSE. To do this, we merely check if any ACI items
+                 * are associated directly with the DSE. If not, we assume the
+                 * ACI items have not been replicated, meaning that we do not
+                 * have it locally, meaning that we need to continue the
+                 * request in the subordinate DSA, which should have it.
+                 */
+                const aciAndObjectClassAvailableLocally: boolean = !!(
+                    (subordinate.dse.objectClass.size > 0)
+                    && ( // ...if there are any attributes that suggest that this DSE is subject to access control...
+                        subordinate.dse.entryACI?.length
+                        || subordinate.dse.subentry?.prescriptiveACI?.length
+                        || subordinate.dse.admPoint?.subentryACI?.length
+                        // Rule-based access control is not supported yet, so if
+                        // this next line were enabled, it would simply make the
+                        // subr DSE unavailable to all users.
+                        // || subordinate.dse.clearances?.length 
+                    )
+                );
+                if (!aciAndObjectClassAvailableLocally) {
+                    state.SRcontinuationList.push(new ContinuationReference(
+                        /**
+                         * The specification says to return the DN of the TARGET, not
+                         * the subordinate... This does not quite make sense to me. I
+                         * wonder if the specification is incorrect, but it also seems
+                         * plausible that I am misunderstanding the semantics of the
+                         * ContinuationReference.
+                         *
+                         * Actually, I think this makes sense. You are telling the
+                         * subordinate DSA that it should continue to return the
+                         * subordinates of the target DSE, not the subordinate.
+                         */
+                        // {
+                        //     rdnSequence: [ ...targetDN, subordinate.dse.rdn ],
+                        // },
+                        {
+                            rdnSequence: targetDN,
+                        },
                         undefined,
-                    ),
-                    undefined,
-                    ReferenceType_subordinate,
-                    ((): AccessPointInformation[] => {
-                        const [
-                            masters,
-                            shadows,
-                        ] = splitIntoMastersAndShadows(subordinate.dse.subr.specificKnowledge);
-                        const preferred = shadows[0] ?? masters[0];
-                        if (!preferred) {
-                            return [];
-                        }
-                        return [
-                            new AccessPointInformation(
-                                preferred.ae_title,
-                                preferred.address,
-                                preferred.protocolInformation,
-                                preferred.category,
-                                preferred.chainingRequired,
-                                shadows[0]
-                                    ? [ ...shadows.slice(1), ...masters ]
-                                    : [ ...shadows, ...masters.slice(1) ],
-                            ),
-                        ];
-                    })(),
-                ));
-            }
-            if (subordinate.dse.entry || subordinate.dse.glue) {
+                        new OperationProgress(
+                            OperationProgress_nameResolutionPhase_completed,
+                            undefined,
+                        ),
+                        undefined,
+                        ReferenceType_subordinate,
+                        ((): AccessPointInformation[] => {
+                            const [
+                                masters,
+                                shadows,
+                            ] = splitIntoMastersAndShadows(subordinate.dse.subr.specificKnowledge);
+                            const preferred = shadows[0] ?? masters[0];
+                            if (!preferred) {
+                                return [];
+                            }
+                            return [
+                                new AccessPointInformation(
+                                    preferred.ae_title,
+                                    preferred.address,
+                                    preferred.protocolInformation,
+                                    preferred.category,
+                                    preferred.chainingRequired,
+                                    shadows[0]
+                                        ? [ ...shadows.slice(1), ...masters ]
+                                        : [ ...shadows, ...masters.slice(1) ],
+                                ),
+                            ];
+                        })(),
+                    ));
+                    continue;
+                }
                 ret.results.push(new ListItem(
                     subordinate.dse.rdn,
-                    false,
-                    Boolean(subordinate.dse.shadow),
+                    !!(subordinate.dse.alias && authorizedToKnowSubordinateIsAlias),
+                    !subordinate.dse.shadow,
+                ));
+            } else if (subordinate.dse.entry || subordinate.dse.glue) {
+                ret.results.push(new ListItem(
+                    subordinate.dse.rdn,
+                    FALSE,
+                    !subordinate.dse.shadow,
                 ));
             } else if (subordinate.dse.alias) {
                 ret.results.push(new ListItem(
                     subordinate.dse.rdn,
                     authorizedToKnowSubordinateIsAlias,
-                    Boolean(subordinate.dse.shadow),
+                    !subordinate.dse.shadow,
                 ));
             }
         }
@@ -639,7 +786,7 @@ async function list_i (
     }
 
     if (target.dse.nssr) {
-        SRcontinuationList.push(new ContinuationReference(
+        state.SRcontinuationList.push(new ContinuationReference(
             {
                 rdnSequence: targetDN,
             },

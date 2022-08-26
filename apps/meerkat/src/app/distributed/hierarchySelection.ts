@@ -44,6 +44,7 @@ function hierarchySelectionProcedure (
     ctx: Context,
     hierarchySelections: HierarchySelections,
     serviceControls_serviceType?: OBJECT_IDENTIFIER,
+    signErrors: boolean = false,
 ): never {
     const notificationAttributes: Attribute[] = [
         new Attribute(
@@ -70,11 +71,12 @@ function hierarchySelectionProcedure (
         new ServiceErrorData(
             ServiceProblem_requestedServiceNotAvailable,
             [],
-            createSecurityParameters(ctx),
+            createSecurityParameters(ctx, signErrors),
             ctx.dsa.accessPoint.ae_title.rdnSequence,
             undefined,
             notificationAttributes,
         ),
+        signErrors,
     );
 }
 

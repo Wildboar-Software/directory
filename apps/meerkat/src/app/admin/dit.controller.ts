@@ -1,7 +1,17 @@
 import type { Context, Vertex } from "@wildboar/meerkat-types";
 import { CONTEXT } from "../constants";
 import type { Entry } from "@prisma/client";
-import { Controller, Get, Post, Render, Inject, Param, NotFoundException, Res } from "@nestjs/common";
+import {
+    Controller,
+    Get,
+    Post,
+    Render,
+    Inject,
+    Param,
+    NotFoundException,
+    Req,
+    Res,
+} from "@nestjs/common";
 import type { Response } from "express";
 import rdnToString from "@wildboar/ldap/src/lib/stringifiers/RelativeDistinguishedName";
 import type StringEncoderGetter from "@wildboar/ldap/src/lib/types/StringEncoderGetter";
@@ -42,7 +52,7 @@ import {
 import {
     _decode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import encodeLDAPDN from "../ldap/encodeLDAPDN";
+import stringifyDN from "../x500/stringifyDN";
 import readSubordinates from "../dit/readSubordinates";
 
 const selectAllInfo = new EntryInformationSelection(
@@ -220,28 +230,6 @@ function printFlags (vertex: Vertex): string {
     return ret;
 }
 
-async function convertSubtreeToHTML (ctx: Context, vertex: Vertex): Promise<string> {
-    const stringifiedRDN = (vertex.dse.rdn.length === 0)
-        ? "(Empty RDN)"
-        : escape(encodeRDN(ctx, vertex.dse.rdn));
-
-    const subordinates = await Promise.all(
-        vertex.subordinates?.map((sub) => convertSubtreeToHTML(ctx, sub)) ?? [],
-    );
-
-    return (
-        "<li>"
-        + "<span>"
-        + `<a href="/dsait/dse/${vertex.dse.uuid}">${stringifiedRDN}</a>&nbsp;`
-        + printFlags(vertex)
-        + "</span>"
-        + "<ul>"
-        + subordinates.join("")
-        + "</ul>"
-        + "</li>"
-    );
-}
-
 function convertDSEToHTML (ctx: Context, vertex: Vertex): [ string, string, string ] {
     const stringifiedRDN = (vertex.dse.rdn.length === 0)
         ? "(Empty RDN)"
@@ -283,6 +271,7 @@ export class DitController {
     @Get("/dsait/dse/:id")
     @Render("dsait_dse_id")
     async dse_id (
+        @Req() req: { csrfToken: () => string },
         @Param("id") id: string,
     ) {
         const entry = await this.ctx.db.entry.findUnique({
@@ -324,8 +313,7 @@ export class DitController {
                     const spec = this.ctx.attributeTypes.get(attr.type.toString());
                     if (spec?.equalityMatchingRule?.isEqualTo(distinguishedNameMatch["&id"])) {
                         const dn_ = _decode_DistinguishedName(attr.value);
-                        // Reverse the DN so that it is an X.500-style DN, not an LDAP DN.
-                        return Buffer.from(encodeLDAPDN(this.ctx, [ ...dn_ ].reverse())).toString("utf-8");
+                        return stringifyDN(this.ctx, dn_);
                     }
                     if (!spec?.ldapSyntax) {
                         return defaultEncoder(attr.value);
@@ -350,6 +338,7 @@ export class DitController {
             .map((sub) => convertDSEToHTML(this.ctx, sub));
 
         return {
+            csrfToken: req.csrfToken(),
             ...entry,
             uuid: entry.dseUUID,
             superiorUUID,

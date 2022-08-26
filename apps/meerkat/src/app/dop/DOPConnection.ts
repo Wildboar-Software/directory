@@ -6,10 +6,11 @@ import {
     MistypedPDUError,
     DSABindError,
     BindReturn,
+    MistypedArgumentError,
 } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
-import { ASN1Element } from "asn1-ts";
+import { ASN1Element, ASN1TagClass, TRUE_BIT } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
     IDMConnection,
@@ -34,6 +35,18 @@ import {
 import {
     operationalBindingError,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
+import {
+    _encode_OpBindingErrorParam,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam.ta";
+import {
+    _decode_SecurityParameters,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
+import {
+    _decode_AlgorithmIdentifier,
+} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
+import {
+    SIGNED,
+} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
 import {
     IdmReject_reason_duplicateInvokeIDRequest,
     IdmReject_reason_unsupportedOperationRequest,
@@ -88,7 +101,6 @@ import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
-import encodeLDAPDN from "../ldap/encodeLDAPDN";
 import getServerStatistics from "../telemetry/getServerStatistics";
 import getConnectionStatistics from "../telemetry/getConnectionStatistics";
 import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
@@ -96,9 +108,31 @@ import isDebugging from "is-debugging";
 import { strict as assert } from "assert";
 import { flatten } from "flat";
 import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { printInvokeId } from "../utils/printInvokeId";
-import { getStatisticsFromSecurityParameters } from "../telemetry/getStatisticsFromSecurityParameters";
+import {
+    getStatisticsFromSecurityParameters,
+} from "../telemetry/getStatisticsFromSecurityParameters";
+import { signDirectoryError } from "../pki/signDirectoryError";
+import {
+    compareAuthenticationLevel,
+} from "@wildboar/x500/src/lib/comparators/compareAuthenticationLevel";
+import {
+    _encode_DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as _encode_DBE_Param,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
+import stringifyDN from "../x500/stringifyDN";
+import { AuthenticationLevel_basicLevels } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
+import { isArgumentSigned } from "../x500/isArgumentSigned";
+import { verifySIGNED } from "../pki/verifySIGNED";
+import {
+    Versions_v2,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";
+import printCode from "../utils/printCode";
+
+const securityParametersTagByOpCode: Map<number, number> = new Map([
+    [100, 8], // establishOperationalBinding
+    [102, 9], // modifyOperationalBinding
+    [101, 6], // terminateOperationalBinding
+]);
 
 /**
  * @summary The handles a request, but not errors
@@ -183,16 +217,23 @@ async function handleRequestAndErrors (
     assn: DOPAssociation, // eslint-disable-line
     request: Request,
 ): Promise<void> {
+    if (!("local" in request.opcode)) {
+        assn.idm.writeReject(request.invokeID, IdmReject_reason_mistypedPDU);
+        return;
+    }
+    const opcode = Number(request.opcode.local);
+    const logInfo = {
+        remoteFamily: assn.socket.remoteFamily,
+        remoteAddress: assn.socket.remoteAddress,
+        remotePort: assn.socket.remotePort,
+        association_id: assn.id,
+        invokeID: printInvokeId({ present: request.invokeID }),
+    };
     if ((request.invokeID < 0) || (request.invokeID > Number.MAX_SAFE_INTEGER)) {
         ctx.log.warn(ctx.i18n.t("log:unusual_invoke_id", {
             host: assn.socket.remoteAddress,
             cid: assn.id,
-        }), {
-            remoteFamily: assn.socket.remoteFamily,
-            remoteAddress: assn.socket.remoteAddress,
-            remotePort: assn.socket.remotePort,
-            association_id: assn.id,
-        });
+        }), logInfo);
         assn.idm.writeAbort(Abort_invalidPDU);
         return;
     }
@@ -201,13 +242,7 @@ async function handleRequestAndErrors (
             host: assn.socket.remoteAddress,
             iid: request.invokeID.toString(),
             cid: assn.id,
-        }), {
-            remoteFamily: assn.socket.remoteFamily,
-            remoteAddress: assn.socket.remoteAddress,
-            remotePort: assn.socket.remotePort,
-            association_id: assn.id,
-            invokeID: printInvokeId({ present: request.invokeID }),
-        });
+        }), logInfo);
         assn.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
         return;
     }
@@ -216,16 +251,16 @@ async function handleRequestAndErrors (
             host: assn.socket.remoteAddress,
             cid: assn.id,
             iid: request.invokeID.toString(),
-        }), {
-            remoteFamily: assn.socket.remoteFamily,
-            remoteAddress: assn.socket.remoteAddress,
-            remotePort: assn.socket.remotePort,
-            association_id: assn.id,
-            invokeID: printInvokeId({ present: request.invokeID }),
-        });
+        }), logInfo);
         assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
         return;
     }
+    ctx.log.debug(ctx.i18n.t("log:received_request", {
+        protocol: "DOP",
+        iid: request.invokeID.toString(),
+        op: printCode(request.opcode),
+        cid: assn.id,
+    }), logInfo);
     const stats: OperationStatistics = {
         type: "op",
         inbound: true,
@@ -250,8 +285,14 @@ async function handleRequestAndErrors (
          */
         if (
             !("basicLevels" in assn.authLevel)
-            || (assn.authLevel.basicLevels.level < ctx.config.ob.minAuthLevel)
-            || ((assn.authLevel.basicLevels.localQualifier ?? 0) < ctx.config.ob.minAuthLocalQualifier)
+            || compareAuthenticationLevel( // Returns true if a > b.
+                ctx.config.ob.minAuthRequired,
+                new AuthenticationLevel_basicLevels(
+                    assn.authLevel.basicLevels.level,
+                    assn.authLevel.basicLevels.localQualifier,
+                    isArgumentSigned(request.opcode, request.argument),
+                ),
+            )
         ) {
             throw new SecurityError(
                 ctx.i18n.t("err:not_authorized_ob"),
@@ -262,6 +303,7 @@ async function handleRequestAndErrors (
                     [],
                     createSecurityParameters(
                         ctx,
+                        true,
                         assn.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
@@ -270,6 +312,58 @@ async function handleRequestAndErrors (
                     false,
                     undefined,
                 ),
+                /**
+                 * It is difficult to extract the errorProtection from DOP
+                 * arguments, because security parameters has a different tag
+                 * based on the arguments.
+                 */
+                false,
+            );
+        }
+        if (isArgumentSigned(request.opcode, request.argument)) {
+            const signedArgElements = request.argument.sequence;
+            const tbsElement = signedArgElements[0];
+            const securityParametersTagNumber: number | undefined = securityParametersTagByOpCode.get(opcode);
+            if (securityParametersTagNumber === undefined) {
+                throw new MistypedArgumentError("d9375ea1-43b1-498e-9a3f-ff8b2da033c2");
+            }
+            const spElement = tbsElement.sequence.find((el) => (
+                (el.tagClass === ASN1TagClass.context)
+                && (el.tagNumber === securityParametersTagNumber)
+            ));
+            if (!spElement) {
+                throw new MistypedArgumentError("0bac794f-6962-4115-8f49-0345591a4a98");
+            }
+            const securityParameters = _decode_SecurityParameters(spElement.inner);
+            const sigAlgElement = signedArgElements[1];
+            const sigValueElement = signedArgElements[2];
+            if (
+                !tbsElement
+                || !sigAlgElement
+                || !sigValueElement
+                || !securityParameters.certification_path
+            ) {
+                throw new MistypedArgumentError("0d5a1692-0c8a-4b7e-bd8d-9590e056b907");
+            }
+            const certPath = securityParameters.certification_path;
+            const sigAlg = _decode_AlgorithmIdentifier(sigAlgElement);
+            await verifySIGNED(
+                ctx,
+                assn,
+                certPath,
+                {
+                    present: Number(request.invokeID),
+                },
+                false,
+                new SIGNED(
+                    tbsElement,
+                    sigAlg,
+                    sigValueElement.bitString,
+                    undefined,
+                    undefined,
+                ),
+                () => tbsElement,
+                (assn.bind?.versions?.[Versions_v2] === TRUE_BIT),
             );
         }
         await handleRequest(ctx, assn, request);
@@ -310,16 +404,9 @@ async function handleRequestAndErrors (
                 idmFramesReceived: assn.idm.getFramesReceived(),
             },
         });
+        ctx.log.info(`${assn.id}#${request.invokeID}: ${e?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
         if (isDebugging) {
             console.error(e);
-        } else {
-            ctx.log.error(e.message, {
-                remoteFamily: assn.socket.remoteFamily,
-                remoteAddress: assn.socket.remoteAddress,
-                remotePort: assn.socket.remotePort,
-                association_id: assn.id,
-                invokeID: printInvokeId({ present: request.invokeID }),
-            });
         }
         if (!stats.outcome) {
             stats.outcome = {};
@@ -332,17 +419,31 @@ async function handleRequestAndErrors (
         }
         if (e instanceof errors.OperationalBindingError) {
             const code = _encode_Code(SecurityError.errcode, DER);
-            const param = operationalBindingError.encoderFor["&ParameterType"]!(e.data, DER);
-            assn.idm.writeError(request.invokeID, code, param);
-            const data = getOptionallyProtectedValue(e.data);
-            stats.outcome.error.problem = data.problem;
-            stats.outcome.error.bindingType = data.bindingType?.toString();
-            stats.outcome.error.retryAt = data.retryAt?.toString();
-            stats.outcome.error.newAgreementProposed = Boolean(data.agreementProposal);
+            // DOP associations are ALWAYS authorized to receive signed responses.
+            const signError: boolean = e.shouldBeSigned;
+            const param: typeof operationalBindingError["&ParameterType"] = signError
+                ? signDirectoryError(ctx, e.data, _encode_OpBindingErrorParam)
+                : {
+                    unsigned: e.data,
+                };
+            const payload = operationalBindingError.encoderFor["&ParameterType"]!(param, DER);
+            assn.idm.writeError(request.invokeID, code, payload);
+            stats.outcome.error.problem = e.data.problem;
+            stats.outcome.error.bindingType = e.data.bindingType?.toString();
+            stats.outcome.error.retryAt = e.data.retryAt?.toString();
+            stats.outcome.error.newAgreementProposed = Boolean(e.data.agreementProposal);
         } else if (e instanceof SecurityError) {
-            const code = _encode_Code(SecurityError.errcode, DER);
-            const data = _encode_SecurityErrorData(e.data, DER);
-            assn.idm.writeError(request.invokeID, code, data);
+            const code = _encode_Code(errors.SecurityError.errcode, DER);
+            // DOP associations are ALWAYS authorized to receive signed responses.
+            const signError: boolean = e.shouldBeSigned;
+            const param: typeof securityError["&ParameterType"] = signError
+                ? signDirectoryError(ctx, e.data, _encode_SecurityErrorData)
+                : {
+                    unsigned: e.data,
+                };
+            const payload = securityError.encoderFor["&ParameterType"]!(param, DER);
+            assn.idm.writeError(request.invokeID, code, payload);
+            stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof UnknownOperationError) {
             assn.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
         } else if (e instanceof errors.DuplicateInvokeIdError) {
@@ -433,13 +534,34 @@ class DOPAssociation extends ClientAssociation {
             remotePort: this.socket.remotePort,
             association_id: this.id,
         };
+        /**
+         * ITU Recommendation X.518 (2019), Section 11.1.4 states that:
+         *
+         * > If the Bind request was using strong authentication or if SPKM
+         * > credentials were supplied, then the Bind responder may sign the
+         * > error parameters.
+         */
+        const signErrors: boolean = !!(
+            this.authorizedForSignedErrors
+            && arg_.credentials
+            && (
+                ("strong" in arg_.credentials)
+                || ("spkm" in arg_.credentials)
+            )
+        );
         const startBindTime = new Date();
         let outcome!: BindReturn;
         try {
-            outcome = await doBind(ctx, this.idm.socket, arg_);
+            outcome = await doBind(ctx, this.idm.socket, arg_, signErrors);
         } catch (e) {
+            const logInfo = {
+                remoteFamily: this.socket.remoteFamily,
+                remoteAddress: this.socket.remoteAddress,
+                remotePort: this.socket.remotePort,
+                association_id: this.id,
+            };
             if (e instanceof DSABindError) {
-                ctx.log.warn(e.message);
+                ctx.log.warn(e.message, logInfo);
                 const endBindTime = new Date();
                 const bindTime: number = Math.abs(differenceInMilliseconds(startBindTime, endBindTime));
                 const totalTimeInMilliseconds: number = this.ctx.config.bindMinSleepInMilliseconds
@@ -449,7 +571,10 @@ class DOPAssociation extends ClientAssociation {
                 const err: typeof directoryBindError["&ParameterType"] = {
                     unsigned: e.data,
                 };
-                const error = directoryBindError.encoderFor["&ParameterType"]!(err, DER);
+                const payload = signErrors
+                    ? signDirectoryError(ctx, e.data, _encode_DBE_Param)
+                    : err;
+                const error = directoryBindError.encoderFor["&ParameterType"]!(payload, DER);
                 idm.writeBindError(dop_ip["&id"]!, error);
                 const serviceProblem = ("serviceError" in e.data.error)
                     ? e.data.error.serviceError
@@ -474,7 +599,10 @@ class DOPAssociation extends ClientAssociation {
                     },
                 });
             } else {
-                ctx.log.warn(e?.message);
+                ctx.log.warn(`${this.id}: ${e.constructor?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
+                if (isDebugging) {
+                    console.error(e);
+                }
                 idm.writeAbort(Abort_reasonNotSpecified);
                 ctx.telemetry.trackException({
                     exception: e,
@@ -509,9 +637,27 @@ class DOPAssociation extends ClientAssociation {
                 protocol: "DOP",
                 aid: this.id,
                 dn: this.boundNameAndUID?.dn
-                    ? encodeLDAPDN(ctx, this.boundNameAndUID.dn)
+                    ? stringifyDN(ctx, this.boundNameAndUID.dn)
                     : "",
             }), extraLogData);
+        }
+        if (
+            ("basicLevels" in this.authLevel)
+            && !compareAuthenticationLevel( // Returns true if a > b.
+                ctx.config.signing.minAuthRequired,
+                this.authLevel.basicLevels,
+            )
+        ) {
+            this.authorizedForSignedResults = true;
+        }
+        if (
+            ("basicLevels" in this.authLevel)
+            && !compareAuthenticationLevel( // Returns true if a > b.
+                ctx.config.signing.signedErrorsMinAuthRequired,
+                this.authLevel.basicLevels,
+            )
+        ) {
+            this.authorizedForSignedErrors = true;
         }
         const bindResult = new DSABindArgument(
             undefined, // TODO: Supply return credentials. NOTE that the specification says that this must be the same CHOICE that the user supplied.
@@ -617,6 +763,12 @@ class DOPAssociation extends ClientAssociation {
         super();
         this.socket = idm.s;
         assert(ctx.config.dop.enabled, "User somehow bound via DOP when it was disabled.");
+        const logInfo = {
+            remoteFamily: this.socket.remoteFamily,
+            remoteAddress: this.socket.remoteAddress,
+            remotePort: this.socket.remotePort,
+            association_id: this.id,
+        };
         idm.events.on("unbind", this.handleUnbind.bind(this));
         idm.events.removeAllListeners("request");
         idm.events.on("request", (request: Request) => {
@@ -624,16 +776,20 @@ class DOPAssociation extends ClientAssociation {
                 ctx.log.warn(ctx.i18n.t("log:too_many_prebind_requests", {
                     host: this.socket.remoteAddress,
                     cid: this.id,
-                }), {
-                    remoteFamily: this.socket.remoteFamily,
-                    remoteAddress: this.socket.remoteAddress,
-                    remotePort: this.socket.remotePort,
-                    association_id: this.id,
-                });
+                }), logInfo);
                 idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
                 return;
             }
             this.prebindRequests.push(request);
         });
+        if ( // This allows bind errors to be signed.
+            ("basicLevels" in this.authLevel)
+            && !compareAuthenticationLevel( // Returns true if a > b.
+                ctx.config.signing.signedErrorsMinAuthRequired,
+                this.authLevel.basicLevels,
+            )
+        ) {
+            this.authorizedForSignedErrors = true;
+        }
     }
 }

@@ -107,8 +107,8 @@ variables and their effects are documented [here](./env.md).
 At minimum, you MUST define `DATABASE_URL`. Besides that, you SHOULD define the
 following other environment variables:
 
-- `MEERKAT_SIGNING_CERT_CHAIN`, which is documented [here](./env.md#meerkatsigningcertchain).
-- `MEERKAT_SIGNING_KEY`, which is documented [here](./env.md#meerkatsigningkey).
+- `MEERKAT_SIGNING_CERTS_CHAIN_FILE`, which is documented [here](./env.md#meerkatsigningcertschainfile).
+- `MEERKAT_SIGNING_KEY_FILE`, which is documented [here](./env.md#meerkatsigningkeyfile).
 - `MEERKAT_TLS_CERT_FILE`, which is documented [here](./env.md#meerkattlscertfile).
 - `MEERKAT_TLS_KEY_FILE`, which is documented [here](./env.md#meerkattlskeyfile).
 - `NODE_ENV`, which should always be set to `production` unless you are
@@ -245,12 +245,39 @@ run these commands to deploy Meerkat DSA:
    instance to be publicly accessible, add `--set service.type=LoadBalancer` to
    that command.
 
+:::tip
+
+You should configure Kubernetes
+[inter-pod affinity](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity)
+so that your Meerkat DSA runs on the same node as your database to minimize
+latency. It does not seem like there is an easy way to do this using the Helm
+CLI alone: you might have to define a values override file. See
+`.github/workflows/main.yml` within this repository for an example
+(specifically, the `deploy_demo` job).
+
+:::
+
 If you want access to the web admin console, add
-`--set dangerouslyExposeWebAdmin=true`
-to the command above, but beware that the admin console does not provide any
-authentication or security, and grants full administrative access. You will
-almost certainly want to put the admin console behind a reverse HTTP proxy that
-requires authentication and TLS.
+`--set dangerouslyExposeWebAdmin=true` to the command above, but be sure to
+configure authentication for it or put it behind a secure reverse HTTP proxy
+that requires authentication and TLS. Client TLS authentication would be even
+better than basic authentication.
+
+:::caution
+
+Access to the web administration console means full permission to do anything.
+It is highly recommended that you not only configure
+[authentication](./webadmin.md#authentication) for it, but also use Kubernetes
+[Network Policy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+to ensure that other pods cannot even reach it.
+
+As an even more secure measure, you may simply not expose a service for that pod
+at all, requiring that you use
+[`kubectl port-forward`](https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/#forward-a-local-port-to-a-port-on-the-pod)
+to access it. This means that only your Kubernetes cluster administrators would
+be able to reach the web admin console, but this might work for your use case.
+
+:::
 
 You can see example deployments to Kubernetes clusters in Bash scripts
 [here](https://github.com/Wildboar-Software/directory/blob/master/scripts/publish.sh)
@@ -259,22 +286,8 @@ and in GitHub Actions YAML configuration
 
 ## DSA Initialization
 
-When your DSA comes online, if there are no DITs, it creates a new default DIT.
-If there are no entries within this DIT, your DSA will create a single root DSE.
-
-You can create first-level entries of your choice using a Directory User Agent
-of your choice. However, note that, when
-
-:::caution
-
-If you do not define an autonomous administrative point that is superior to
-every naming context your DSAs serve, you will implicitly allow superior
-naming contexts (potentially operated by other people / organizations) to
-control security policies of your DSA. Allowing somebody else to control your
-DSA like that is probably not what you intend! This could result in outages or
-unwanted information disclosures!
-
-:::
+When your DSA comes online, if there is not root DSE, your DSA will create it.
+Otherwise, there are no entries in existence.
 
 ## Access Control
 

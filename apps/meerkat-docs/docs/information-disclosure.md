@@ -38,6 +38,7 @@ The known information disclosures are listed below:
   checked, the user already has remove permissions, can probably read the
   object class of the entry or its superior (which would have `parent`), and
   might be able to read `dseType`.
+- The `AE-Title` of your DSA is always discoverable.
 
 There are probably more information disclosures out there, but the most severe
 ones are believed to be prevented and covered by tests.

@@ -22,6 +22,12 @@ import {
 import {
     UpdateErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
+import {
+    OpBindingErrorParam,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam.ta";
+import {
+    ShadowErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowErrorData.ta";
 import type {
     Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
@@ -52,6 +58,9 @@ import {
 import {
     operationalBindingError,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
+import {
+    id_errcode_shadowError,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-shadowError.va";
 import { ASN1Element } from "asn1-ts";
 import {
     DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as DirectoryBindErrorData,
@@ -82,7 +91,10 @@ abstract class BindError extends Error {
     /**
      * @param message An error message
      */
-    constructor (readonly message: string) {
+    constructor (
+        readonly message: string,
+        readonly shouldBeSigned: boolean = false,
+    ) {
         super(message);
         Object.setPrototypeOf(this, BindError.prototype);
     }
@@ -108,7 +120,10 @@ abstract class DirectoryError extends Error {
     /** A function for retrieving the error code */
     public abstract getErrCode (): Code;
 
-    constructor(message: string) {
+    constructor (
+        message: string,
+        readonly shouldBeSigned: boolean = false,
+    ) {
         super(message);
     }
 
@@ -151,14 +166,17 @@ class DirectoryBindError extends BindError {
      * @param message The error message
      * @param data The error parameter
      */
-    constructor (readonly message: string, readonly data: DirectoryBindErrorData) {
-        super(message);
+    constructor (
+        readonly message: string,
+        readonly data: DirectoryBindErrorData,
+        readonly shouldBeSigned: boolean = false,
+    ) {
+        super(message, shouldBeSigned);
         Object.setPrototypeOf(this, DirectoryBindError.prototype);
     }
 
 }
 
-// FIXME: I don't think this is necessary. This is the same as `DirectoryBindError`.
 export
 class DSABindError extends BindError {
 
@@ -166,8 +184,12 @@ class DSABindError extends BindError {
      * @param message The error message
      * @param data The error parameter
      */
-    constructor (readonly message: string, readonly data: DirectoryBindErrorData) {
-        super(message);
+    constructor (
+        readonly message: string,
+        readonly data: DirectoryBindErrorData,
+        readonly shouldBeSigned: boolean = false,
+    ) {
+        super(message, shouldBeSigned);
         Object.setPrototypeOf(this, DSABindError.prototype);
     }
 
@@ -193,8 +215,12 @@ class AbandonError extends DirectoryError {
      * @param message The error message
      * @param data The error parameter
      */
-    constructor (readonly message: string, readonly data: AbandonedData) {
-        super(message);
+    constructor (
+        readonly message: string,
+        readonly data: AbandonedData,
+        readonly shouldBeSigned: boolean = false,
+    ) {
+        super(message, shouldBeSigned);
         Object.setPrototypeOf(this, AbandonError.prototype);
     }
 
@@ -225,8 +251,12 @@ class AbandonFailedError extends DirectoryError {
      * @param message The error message
      * @param data The error parameter
      */
-    constructor (readonly message: string, readonly data: AbandonFailedData) {
-        super(message);
+    constructor (
+        readonly message: string,
+        readonly data: AbandonFailedData,
+        readonly shouldBeSigned: boolean = false,
+    ) {
+        super(message, shouldBeSigned);
         Object.setPrototypeOf(this, AbandonFailedError.prototype);
     }
 
@@ -257,8 +287,12 @@ class AttributeError extends DirectoryError {
      * @param message The error message
      * @param data The error parameter
      */
-    constructor (readonly message: string, readonly data: AttributeErrorData) {
-        super(message);
+    constructor (
+        readonly message: string,
+        readonly data: AttributeErrorData,
+        readonly shouldBeSigned: boolean = false,
+    ) {
+        super(message, shouldBeSigned);
         Object.setPrototypeOf(this, AttributeError.prototype);
     }
 
@@ -289,8 +323,12 @@ class NameError extends DirectoryError {
      * @param message The error message
      * @param data The error parameter
      */
-    constructor (readonly message: string, readonly data: NameErrorData) {
-        super(message);
+    constructor (
+        readonly message: string,
+        readonly data: NameErrorData,
+        readonly shouldBeSigned: boolean = false,
+    ) {
+        super(message, shouldBeSigned);
         Object.setPrototypeOf(this, NameError.prototype);
     }
 
@@ -321,8 +359,12 @@ class ReferralError extends DirectoryError {
      * @param message The error message
      * @param data The error parameter
      */
-    constructor (readonly message: string, readonly data: ReferralData) {
-        super(message);
+    constructor (
+        readonly message: string,
+        readonly data: ReferralData,
+        readonly shouldBeSigned: boolean = false,
+    ) {
+        super(message, shouldBeSigned);
         Object.setPrototypeOf(this, ReferralError.prototype);
     }
 
@@ -353,8 +395,12 @@ class SecurityError extends DirectoryError {
      * @param message The error message
      * @param data The error parameter
      */
-    constructor (readonly message: string, readonly data: SecurityErrorData) {
-        super(message);
+    constructor (
+        readonly message: string,
+        readonly data: SecurityErrorData,
+        readonly shouldBeSigned: boolean = false,
+    ) {
+        super(message, shouldBeSigned);
         Object.setPrototypeOf(this, SecurityError.prototype);
     }
 
@@ -385,8 +431,12 @@ class ServiceError extends DirectoryError {
      * @param message The error message
      * @param data The error parameter
      */
-    constructor (readonly message: string, readonly data: ServiceErrorData) {
-        super(message);
+    constructor (
+        readonly message: string,
+        readonly data: ServiceErrorData,
+        readonly shouldBeSigned: boolean = false,
+    ) {
+        super(message, shouldBeSigned);
         Object.setPrototypeOf(this, ServiceError.prototype);
     }
 
@@ -417,8 +467,12 @@ class UpdateError extends DirectoryError {
      * @param message The error message
      * @param data The error parameter
      */
-    constructor (readonly message: string, readonly data: UpdateErrorData) {
-        super(message);
+    constructor (
+        readonly message: string,
+        readonly data: UpdateErrorData,
+        readonly shouldBeSigned: boolean = false,
+    ) {
+        super(message, shouldBeSigned);
         Object.setPrototypeOf(this, UpdateError.prototype);
     }
 
@@ -451,9 +505,10 @@ class OperationalBindingError extends DirectoryError {
      */
     constructor (
         readonly message: string,
-        readonly data: typeof operationalBindingError["&ParameterType"],
+        readonly data: OpBindingErrorParam,
+        readonly shouldBeSigned: boolean = false,
     ) {
-        super(message);
+        super(message, shouldBeSigned);
         Object.setPrototypeOf(this, OperationalBindingError.prototype);
     }
 
@@ -463,6 +518,42 @@ class OperationalBindingError extends DirectoryError {
     }
 
 }
+
+/**
+ * @summary A throwable `shadowError`
+ * @description
+ *
+ * A throwable error type corresponding to the `shadowError` defined in
+ * ITU Recommendation X.525 (2019), Section 12.
+ *
+ * @class
+ * @augments DirectoryError
+ */
+ export
+ class ShadowError extends DirectoryError {
+
+     /** The error code */
+     public static readonly errcode: Code = id_errcode_shadowError;
+
+     /**
+      * @param message The error message
+      * @param data The error parameter
+      */
+     constructor (
+         readonly message: string,
+         readonly data: ShadowErrorData,
+         readonly shouldBeSigned: boolean = false,
+     ) {
+         super(message, shouldBeSigned);
+         Object.setPrototypeOf(this, ShadowError.prototype);
+     }
+
+     /** A function for retrieving the error code */
+     public getErrCode (): Code {
+         return ShadowError.errcode;
+     }
+
+ }
 
 /**
  * @summary Converts a non-thrown error received from a chained operation into a throwable error
@@ -487,6 +578,7 @@ class ChainedError extends Error {
         readonly message: string,
         readonly error?: ASN1Element,
         readonly errcode?: Code,
+        readonly shouldBeSigned: boolean = false,
     ) {
         super(message);
         Object.setPrototypeOf(this, ChainedError.prototype);

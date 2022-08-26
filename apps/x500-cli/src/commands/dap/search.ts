@@ -72,6 +72,12 @@ import {
     FamilyGrouping_multiStrand,
     FamilyGrouping_compoundEntry,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
+import {
+    ProtectionRequest_signed,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+import {
+    SecurityParameters,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
 
 function subsetFromString (str: string): SearchArgumentData_subset {
     const str_ = str.toLowerCase();
@@ -294,8 +300,17 @@ async function search_new (
         undefined, // Joins unsupported.
         [],
         serviceControls,
-        undefined, // FIXME: security parameters
-        bindDN,
+        new SecurityParameters(
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            ProtectionRequest_signed,
+            undefined,
+            undefined,
+            undefined,
+        ), // FIXME: security parameters
+        undefined,
         undefined,
         undefined, // FIXME: Fill in criticalExtensions
         undefined,

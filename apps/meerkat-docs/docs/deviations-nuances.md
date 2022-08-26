@@ -170,6 +170,8 @@ noted below are nuances in Meerkat DSA:
   deletion.
 - Meerkat DSA does not throw an error if a search or list operation returns a
   null result (a result with zero entries or RDNs).
+- The way Meerkat DSA handles invalid signed operations is complicated and is
+  described [here](./distributed.md#handling-of-invalid-signatures).
 
 ## The "Never Contributing" Bug
 

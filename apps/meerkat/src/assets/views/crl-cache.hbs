@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>Remote CRL Cache - Meerkat DSA</title>
+        <meta name="referrer" content="no-referrer">
+        <meta name="csrf-token" content="{{csrfToken}}">
+        <meta name="robots" content="noindex">
+        <style>
+            body {
+                background-color: black;
+                color: white;
+            }
+            a {
+                color: #F44336;
+            }
+            a:hover {
+                color: #EF9A9A;
+            }
+            a:visited {
+                color: #7B1FA2;
+            }
+            @media screen and (prefers-color-scheme: light) {
+                body {
+                    background-color: white;
+                    color: black;
+                }
+            }
+            td {
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Remote CRL Cache</h1>
+        <hr />
+        <nav><a href="/">Back to Home</a></nav>
+        <hr />
+        <div>
+            <p>
+                This page displays all cached remote CRLs.
+            </p>
+        </div>
+        <hr />
+        <table style="width: 100%;">
+            <thead>
+                <tr>
+                    <th scope="col">Expires from the cache</th>
+                    <th scope="col">URL</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each crl}}
+                    <tr>
+                        <td>{{this.date}}</td>
+                        <td>{{this.url}}</td>
+                    </tr>
+                {{/each}}
+            </tbody>
+            <tfoot></tfoot>
+        </table>
+    </body>
+</html>

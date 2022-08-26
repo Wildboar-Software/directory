@@ -1,4 +1,5 @@
 import type { Context, Vertex, Value } from "@wildboar/meerkat-types";
+import { DER } from "asn1-ts/dist/node/functional";
 import { Prisma } from "@prisma/client";
 import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry";
 import type {
@@ -15,6 +16,12 @@ import { strict as assert } from "assert";
 import { randomUUID } from "crypto";
 import getStructuralObjectClass from "../x500/getStructuralObjectClass";
 import getVertexById from "./getVertexById";
+import {
+    id_oc_dynamicObject,
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/dynamicObject.oa";
+import {
+    entryTtl,
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa";
 
 /**
  * @summary Create a DSE
@@ -41,13 +48,30 @@ async function createEntry (
     entryInit: Partial<Prisma.EntryCreateInput>,
     values: Value[] = [],
     modifier: DistinguishedName = [],
+    signErrors: boolean = false,
 ): Promise<Vertex> {
     const objectClasses = values
         .filter((value) => value.type.isEqualTo(objectClass["&id"]))
         .map((value) => value.value.objectIdentifier);
     const isSubentry = objectClasses.some((oc) => oc.isEqualTo(subentry["&id"]));
     const isAlias = objectClasses.some((oc) => oc.isEqualTo(alias["&id"]));
+    const couldBeAnEntry = ( // I don't know for sure that this is exhaustive.
+        !entryInit.subr
+        && !entryInit.xr
+        && !entryInit.immSupr
+        && !entryInit.glue
+        && !entryInit.sa
+        && !isAlias
+        && !isSubentry
+    );
     // const isFamilyMember = objectClasses.some((oc) => (oc.isEqualTo(parent["&id"]) || oc.isEqualTo(child["&id"])));
+    const isDynamic = objectClasses.some((oc) => oc.isEqualTo(id_oc_dynamicObject));
+    if (isDynamic && !values.some((v) => v.type.isEqualTo(entryTtl["&id"]))) {
+        values.push({
+            type: entryTtl["&id"],
+            value: entryTtl.encoderFor["&Type"]!(ctx.config.defaultEntryTTL, DER),
+        });
+    }
     const now = new Date();
     const createdEntry = await ctx.db.entry.create({
         data: {
@@ -66,7 +90,7 @@ async function createEntry (
             deleteTimestamp: now,
             glue: entryInit.glue,
             cp: entryInit.cp,
-            entry: entryInit.entry ?? (!isAlias && !isSubentry),
+            entry: entryInit.entry ?? couldBeAnEntry,
             subr: entryInit.subr,
             nssr: entryInit.nssr,
             xr: entryInit.xr,
@@ -84,7 +108,7 @@ async function createEntry (
                     data: rdn.map((atav, i) => ({
                         // entry_id: createdEntry.id,
                         type: atav.type_.toString(),
-                        value: Buffer.from(atav.value.toBytes()),
+                        value: Buffer.from(atav.value.toBytes().buffer),
                         str: atav.value.toString(),
                         order_index: i,
                     })),
@@ -106,7 +130,14 @@ async function createEntry (
         EntryCollectiveExclusion: [],
     });
     await ctx.db.$transaction([
-        ...await addValues(ctx, vertex, values, modifier),
+        ...await addValues(
+            ctx,
+            vertex,
+            values,
+            modifier,
+            undefined,
+            signErrors,
+        ),
         ctx.db.entry.update({
             where: {
                 id: createdEntry.id,

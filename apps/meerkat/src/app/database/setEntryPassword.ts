@@ -82,14 +82,14 @@ async function setEntryPassword (
                     encrypted: Buffer.from(encrypted),
                     algorithm_oid: algid.algorithm.toString(),
                     algorithm_parameters_der: algid.parameters
-                        ? Buffer.from(algid.parameters.toBytes())
+                        ? Buffer.from(algid.parameters.toBytes().buffer)
                         : undefined,
                 },
                 update: {
                     encrypted: Buffer.from(encrypted),
                     algorithm_oid: algid.algorithm.toString(),
                     algorithm_parameters_der: algid.parameters
-                        ? Buffer.from(algid.parameters.toBytes())
+                        ? Buffer.from(algid.parameters.toBytes().buffer)
                         : undefined,
                 },
             }),
@@ -111,7 +111,7 @@ async function setEntryPassword (
                     tag_class: nowElement.tagClass,
                     constructed: false,
                     tag_number: nowElement.tagNumber,
-                    ber: Buffer.from(nowElement.toBytes()),
+                    ber: Buffer.from(nowElement.toBytes().buffer),
                     jer: nowElement.toJSON() as string,
                 },
             }),
@@ -146,14 +146,14 @@ async function setEntryPassword (
                     encrypted: Buffer.from(pwd.encrypted.encryptedString),
                     algorithm_oid: pwd.encrypted.algorithmIdentifier.algorithm.toString(),
                     algorithm_parameters_der: pwd.encrypted.algorithmIdentifier.parameters
-                        ? Buffer.from(pwd.encrypted.algorithmIdentifier.parameters.toBytes())
+                        ? Buffer.from(pwd.encrypted.algorithmIdentifier.parameters.toBytes().buffer)
                         : undefined,
                 },
                 update: {
                     encrypted: Buffer.from(pwd.encrypted.encryptedString),
                     algorithm_oid: pwd.encrypted.algorithmIdentifier.algorithm.toString(),
                     algorithm_parameters_der: pwd.encrypted.algorithmIdentifier.parameters
-                        ? Buffer.from(pwd.encrypted.algorithmIdentifier.parameters.toBytes())
+                        ? Buffer.from(pwd.encrypted.algorithmIdentifier.parameters.toBytes().buffer)
                         : undefined,
                 },
             }),
@@ -175,7 +175,7 @@ async function setEntryPassword (
                     tag_class: nowElement.tagClass,
                     constructed: false,
                     tag_number: nowElement.tagNumber,
-                    ber: Buffer.from(nowElement.toBytes()),
+                    ber: Buffer.from(nowElement.toBytes().buffer),
                     jer: nowElement.toJSON() as string,
                 },
             }),

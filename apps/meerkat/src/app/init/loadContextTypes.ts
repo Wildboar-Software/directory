@@ -1,5 +1,5 @@
 import type { Context } from "@wildboar/meerkat-types";
-import { BERElement, ObjectIdentifier, TRUE } from "asn1-ts";
+import { BERElement, ObjectIdentifier } from "asn1-ts";
 import contextTypeFromInformationObject from "./contextTypeFromInformationObject";
 import * as x500c from "@wildboar/x500/src/lib/collections/contexts";
 import type {
@@ -19,6 +19,50 @@ import {
     evaluateTemporalContext,
 } from "@wildboar/x500/src/lib/matching/context/temporalContext";
 import compareElements from "@wildboar/x500/src/lib/comparators/compareElements";
+import {
+    dl_administrator_annotation,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/dl-administrator-annotation.oa";
+import {
+    dl_nested_dl,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/dl-nested-dl.oa";
+import {
+    dl_reset_originator,
+} from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/dl-reset-originator.oa";
+import { evaluateDLAdministratorAnnotationContext } from "../matching/context/dl-administrator-annotation";
+
+import {
+    basicServiceContext,
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/basicServiceContext.oa";
+import {
+    lineIdentityContext,
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/lineIdentityContext.oa";
+import {
+    assignmentContext,
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/assignmentContext.oa";
+
+import {
+    basicServiceContext as basicServiceContextMatcher,
+} from "../matching/context/basicServiceContext";
+import {
+    lineIdentityContext as lineIdentityContextMatcher,
+} from "../matching/context/lineIdentityContext";
+import {
+    getAssignmentContext as getAssignmentContextMatcher,
+} from "../matching/context/assignmentContext";
+
+// basicServiceContext
+// lineIdentityContext
+// assignmentContext
+
+const basicServiceContextSyntax = `BasicService ::= INTEGER {
+    telephony(1), faxGroup2-3(2), faxGroup4(3), teletexBasicAndMixed(4),
+    teletexBazicAndProcessable(5), teletexBasic(6), syntaxBasedVideotex(7),
+    internationalVideotex(8), telex(9), messageHandlingSystems(10),
+    osiApplication(11), audioVisual(12)}`;
+
+const lineIdentityContextSyntax = `Digits{B2:b2} ::= OCTET STRING(SIZE (b2.&minDigitsLength..b2.&maxDigitsLength))
+
+IsdnAddress{SCF-SSF-BOUNDS:b2} ::= Digits{b2}`;
 
 /**
  * @summary Initialize Meerkat DSA's internal index of known context types.
@@ -37,6 +81,16 @@ async function loadContextTypes (ctx: Context): Promise<void> {
         [ x500c.ldapAttributeOptionContext, evaluateLDAPAttributeOptionContext, "AttributeOptionList" ],
         [ x500c.localeContext, evaluateLocaleContext, "LocaleContextSyntax" ],
         [ x500c.temporalContext, evaluateTemporalContext, "TimeSpecification", "TimeAssertion" ],
+        [
+            dl_administrator_annotation,
+            evaluateDLAdministratorAnnotationContext,
+            "CHOICE {bmpstring BMPString, universalstring UniversalString}",
+        ],
+        [ dl_nested_dl, () => true, "NULL" ],
+        [ dl_reset_originator, () => true, "NULL" ],
+        [ basicServiceContext, basicServiceContextMatcher, basicServiceContextSyntax ],
+        [ lineIdentityContext, lineIdentityContextMatcher, lineIdentityContextSyntax ],
+        [ assignmentContext, getAssignmentContextMatcher(ctx), "DistinguishedName" ],
     ];
     contextTypes
         .forEach(([ ct, matcher, valueSyntax, assertionSyntax ]) => {

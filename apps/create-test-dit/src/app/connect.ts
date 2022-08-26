@@ -33,6 +33,7 @@ import * as crypto from "crypto";
 import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
 import { strict as assert } from "assert";
 import { DER } from "asn1-ts/dist/node/functional";
+import printCode from "./printCode";
 
 export
 async function connect (
@@ -124,17 +125,18 @@ async function connect (
         },
         events: new EventEmitter(),
     };
-    // idm.events.on("error_", (e) => {
-    //     console.error(e);
-    //     ret.events.emit("error", undefined);
-    // });
-    idm.events.on("reject", () => {
-        ret.events.emit("error", undefined);
-        // console.log("REJECTED.");
+    idm.events.on("error_", (e) => {
+        console.error(`Invocation ${e.invokeID} returned an error with code ${printCode(e.errcode)}`);
+        console.error(`Error parameter: ${Buffer.from(e.error.toBytes()).toString("hex")}`);
+        process.exit(34);
     });
-    idm.events.on("abort", () => {
-        ret.events.emit("error", undefined);
-        // console.log("ABORTED.");
+    idm.events.on("reject", (r) => {
+        console.error(`Invocation ${r.invokeID} rejected with reason: ${r.reason}`);
+        process.exit(46);
+    });
+    idm.events.on("abort", (a) => {
+        console.error(`Association aborted with reason: ${a}`);
+        process.exit(57);
     });
     return ret;
 }

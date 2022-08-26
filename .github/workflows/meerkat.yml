@@ -1,0 +1,790 @@
+name: Meerkat DSA Workflow
+
+on:
+  push:
+    tags:        
+      - v2.*
+      - v1.*
+
+env:
+  CLUSTER_NAME: production
+  RESOURCE_GROUP: production
+  # NOTE: If you change the NAMESPACE, you need to change INIT_DB_CONFIG as well.
+  NAMESPACE: demo
+  ZONE: mkdemo.wildboar.software
+  STORAGE_ACCOUNT_NAME: wildboarprod
+  CHART_CONTAINER: helm-charts
+  CHART_REPO: wildboar
+  CHART_NAME: meerkat-dsa
+  DEMO_TRUST_ANCHOR_CONFIG_NAME: demo-trust-anchor
+  VALUES_OVERRIDE: |
+    affinity:
+      podAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: mysql
+              app.kubernetes.io/instance: meerkat-db
+          topologyKey: "kubernetes.io/hostname"
+  CA_CERT: |
+    -----BEGIN CERTIFICATE-----
+    MIIDbTCCAlWgAwIBAgIULVexlqqnsQ1/ezE1u8+lQW3iC/8wDQYJKoZIhvcNAQEL
+    BQAwRjELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAkZMMQ4wDAYDVQQHDAVUYW1wYTEa
+    MBgGA1UECgwRV2lsZGJvYXIgU29mdHdhcmUwHhcNMjIwNDA2MDAxODA5WhcNNDkw
+    ODIyMDAxODA5WjBGMQswCQYDVQQGEwJVUzELMAkGA1UECAwCRkwxDjAMBgNVBAcM
+    BVRhbXBhMRowGAYDVQQKDBFXaWxkYm9hciBTb2Z0d2FyZTCCASIwDQYJKoZIhvcN
+    AQEBBQADggEPADCCAQoCggEBANfoJHPvPB0PTbywZ/LJwYTN75d2rqaRo/0jf+f2
+    uviyVVLIeVMRsImjfhBCK32kDp4EUB3jwhjoMnb0LubuY63o40uCF9STb2pT9b/C
+    5QsBdH1UGAgfGykRFkGG8SDAx+prkafiy69ha/ZtLRZW78bfPmGWDq7ALwEMKdvz
+    xEF0+B7Nj5hmvVnt51+Tf2nUi8LXLn3uyK8Tu9HkZt3LkQgCAQENOGg97kpXU7aj
+    +Ime99pIQr9ehnioCt8tegHXJkQF42Yh6xnlfwqakLMYjPsulfM+1ZF3TGbabHA9
+    owt1w0aOtmoicNeLdZ31YSXGrAZTa9U9YlYh1cH0Y7Kr14UCAwEAAaNTMFEwHQYD
+    VR0OBBYEFNnD4JAJEcfK/62LwuKq8RQnrTmwMB8GA1UdIwQYMBaAFNnD4JAJEcfK
+    /62LwuKq8RQnrTmwMA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEB
+    AAkWT0CbFTaUttuZJNDYX7vtdId2dS3BF3cPglaXuYag7IZmvMQ/XrOW2Wr3CcKU
+    Mg0rbIuCmn37fBFrggDg+NICOcOAuXs9wdufUvAQx9RFc4kv749uTmjWA2H4Oz+R
+    S8cyDlwXICD/QaEjo9I306umXZA1bkO8M2jHjIBDslLFsSWwQags08DrWZTwC9tU
+    W1rwqkOlabEpphV4snFuuYqyHXTmCVjUQVipPj4mLi9J5ydSyJSnhKy4neoOGYyC
+    lfpmMNCkvSpqT3Z2DXoYk38sH8SWfJfcX3ao6InIMq6v12mpnQwhvgTGuAmwDHLz
+    4omJCGN3ohmP9kr2tp3Cf6o=
+    -----END CERTIFICATE-----
+  INIT_DB_CONFIG: |
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: database-init
+      namespace: demo
+    data:
+      init.sql: |
+        CREATE DATABASE directory_root;
+        CREATE DATABASE directory_gb;
+        CREATE DATABASE directory_ru;
+        CREATE DATABASE directory_moscow;
+        CREATE DATABASE directory_test;
+        CREATE USER 'root_user' IDENTIFIED BY 'asdf_root';
+        CREATE USER 'gb_user' IDENTIFIED BY 'asdf_gb';
+        CREATE USER 'ru_user' IDENTIFIED BY 'asdf_ru';
+        CREATE USER 'moscow_user' IDENTIFIED BY 'asdf_moscow';
+        CREATE USER 'test_user' IDENTIFIED BY 'asdf_test';
+        GRANT ALL PRIVILEGES ON directory_root.* TO 'root_user';
+        GRANT ALL PRIVILEGES ON directory_gb.* TO 'gb_user';
+        GRANT ALL PRIVILEGES ON directory_ru.* TO 'ru_user';
+        GRANT ALL PRIVILEGES ON directory_moscow.* TO 'moscow_user';
+        GRANT ALL PRIVILEGES ON directory_test.* TO 'test_user';
+
+jobs:
+
+  lint:
+    name: Linting
+    runs-on: ubuntu-latest
+    environment: production
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '17'
+      - name: Install NPM Packages
+        run: npm ci
+      - name: Generate Prisma Client
+        run: npx -q prisma generate --schema=apps/meerkat/src/prisma/schema.prisma
+      - name: Run Linter
+        run: npx nx run-many --target=lint --all --skip-nx-cache
+        timeout-minutes: 2
+      - name: Lint Helm Charts
+        run: helm lint ./k8s/charts/meerkat-dsa/
+
+  # TODO: For now, this job is disabled. For some reason, it just hangs there
+  # indefinitely until it times out. This happens locally, so I know it's not
+  # just a GitHub Actions problem.
+  # unit_testing:
+  #   name: Unit Testing
+  #   runs-on: ubuntu-latest
+  #   environment: production
+  #   strategy:
+  #     fail-fast: false
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #     - name: Install Node.js
+  #       uses: actions/setup-node@v2
+  #       with:
+  #         node-version: '17'
+  #     - name: Install NPM Packages
+  #       run: npm ci
+  #     - name: Generate Prisma Client
+  #       run: npx -q prisma generate --schema=apps/meerkat/src/prisma/schema.prisma
+  #     - name: Run Unit Tests
+  #       run: npx nx run-many --target=test --all --skip-nx-cache
+  #       timeout-minutes: 5
+
+  publish_libs:
+    name: Publish Libraries
+    runs-on: ubuntu-latest
+    environment: production
+    strategy:
+      fail-fast: false
+      matrix:
+        library:
+          - 'idm'
+          - 'ldap-socket'
+          - 'meerkat-types'
+          - 'x500-cli-config'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '17'
+      - name: Install NPM Packages
+        run: npm ci
+      - name: Generate Prisma Client
+        run: npx -q prisma generate --schema=apps/meerkat/src/prisma/schema.prisma
+      - name: Compile ${{ matrix.library }} Library
+        run: npx nx run ${{ matrix.library }}:build --skip-nx-cache
+        # We use || true here because the version numbers will usually be the
+        # same between pipeline runs, so most attempted publishing will fail due
+        # to duplicate version numbers.
+      - name: Publish NPM Package
+        uses: JS-DevTools/npm-publish@v1
+        with:
+          package: ./dist/libs/${{ matrix.library }}/package.json
+          token: ${{ secrets.NPM_TOKEN }}
+
+  build_meerkat_dsa:
+    name: Build Meerkat DSA
+    runs-on: ubuntu-latest
+    needs:
+      - publish_libs
+    environment: production
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Determine Meerkat DSA Version
+        run: |
+            echo "PUBLISHING_MEERKAT_VERSION=$(cat k8s/charts/meerkat-dsa/Chart.yaml | grep appVersion | sed 's/appVersion: //' | sed 's/\r$//')" >> $GITHUB_ENV
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '17'
+      - name: Install NPM Packages
+        run: npm ci
+      - name: Generate Prisma Client
+        run: npx -q prisma generate --schema=apps/meerkat/src/prisma/schema.prisma
+      - name: Compile Meerkat DSA
+        run: npx nx run meerkat:build:production --skip-nx-cache
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Login to the Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: ghcr.io/wildboar-software/meerkat-dsa:latest,ghcr.io/wildboar-software/meerkat-dsa:${{ env.PUBLISHING_MEERKAT_VERSION }}
+          context: ./
+          file: ./meerkat.dockerfile
+
+  # HOW DOES THIS EVEN WORK?
+  # There is no point in this job where it installs Helm, but yet, somehow, this
+  # job runs the `helm` command successfully!
+  helm:
+    name: Publish Helm Chart
+    runs-on: ubuntu-latest
+    environment: production
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Create the Helm Package
+        run: helm package .
+        working-directory: ./k8s/charts/meerkat-dsa
+      - name: Create the Helm Index
+        run: helm repo index . --url https://${{ env.STORAGE_ACCOUNT_NAME }}.blob.core.windows.net/${{ env.CHART_CONTAINER }}
+        working-directory: ./k8s/charts/meerkat-dsa
+      - name: Upload Helm Packages
+        uses: bacongobbler/azure-blob-storage-upload@main
+        with:
+          source_dir: ./k8s/charts/meerkat-dsa
+          container_name: ${{ env.CHART_CONTAINER }}
+          connection_string: ${{ secrets.AZURE_BLOB_CNXN_STRING }}
+          extra_args: '--pattern *.tgz'
+          overwrite: 'true'
+      - name: Upload Helm Index
+        uses: bacongobbler/azure-blob-storage-upload@main
+        with:
+          source_dir: ./k8s/charts/meerkat-dsa
+          container_name: ${{ env.CHART_CONTAINER }}
+          connection_string: ${{ secrets.AZURE_BLOB_CNXN_STRING }}
+          extra_args: '--pattern index.yaml'
+          overwrite: 'true'
+
+  ensure_k8s_namespaces:
+    name: Create Kubernetes Namespaces
+    runs-on: ubuntu-latest
+    environment: production
+    strategy:
+      fail-fast: false
+      matrix:
+        ns:
+          - 'test'
+          - 'demo'
+    steps:
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Setup Kubectl
+        uses: azure/setup-kubectl@v2.0
+      - name: Set Kubernetes Context
+        uses: azure/aks-set-context@v1
+        with:
+          creds: '${{ secrets.AZURE_CREDENTIALS }}'
+          cluster-name: ${{ env.CLUSTER_NAME }}
+          resource-group: ${{ env.RESOURCE_GROUP }}
+      - name: Create Kubernetes Namespace
+        run: kubectl create ns ${{ matrix.ns }}
+        continue-on-error: true
+
+  reset_environments:
+    name: Reset the Demo Environment
+    runs-on: ubuntu-latest
+    needs:
+      - ensure_k8s_namespaces
+    environment: production
+    strategy:
+      fail-fast: false
+      matrix:
+        # 'test' is not included in here because we might want to keep it between deployments.
+        dmd:
+          - 'root'
+          - 'gb'
+          - 'ru'
+          - 'moscow'
+          - 'test'
+    steps:
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Setup Kubectl
+        uses: azure/setup-kubectl@v2.0
+      - name: Setup Helm
+        uses: azure/setup-helm@v1
+      - name: Set Kubernetes Context
+        uses: azure/aks-set-context@v1
+        with:
+          creds: '${{ secrets.AZURE_CREDENTIALS }}'
+          cluster-name: ${{ env.CLUSTER_NAME }}
+          resource-group: ${{ env.RESOURCE_GROUP }}
+      - name: Delete Migration Job
+        run: kubectl delete job meerkat-dsa-${{ matrix.dmd }}-migrate -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Uninstall Previous Meerkat DSA Release
+        run: helm uninstall meerkat-dsa-${{ matrix.dmd }} -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Uninstall Previous MySQL Database
+        run: helm uninstall meerkat-db -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Delete MySQL Secret
+        run: kubectl delete secret mysql-db-${{ matrix.dmd }} -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Delete Meerkat Database Secret
+        run: kubectl delete secret meerkat-${{ matrix.dmd }}-db -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Delete Meerkat Signing Secret
+        run: kubectl delete secret meerkat-${{ matrix.dmd }}-signing -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Delete Meerkat TLS Secret
+        run: kubectl delete secret meerkat-${{ matrix.dmd }}-tls -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Delete MySQL Database Data
+        run: kubectl delete pvc data-meerkat-db-mysql-0 -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Delete DSA DNS Record
+        run: |
+          az network dns record-set a delete \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --zone-name ${{ env.ZONE }} \
+            --name dsa01.${{ matrix.dmd }} \
+            --yes
+        continue-on-error: true
+      - name: Delete Web Admin DNS Record
+        run: |
+          az network dns record-set a delete \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --zone-name ${{ env.ZONE }} \
+            --name webadm01.${{ matrix.dmd }} \
+            --yes
+        continue-on-error: true
+
+  deploy_db:
+    name: Deploy the Database
+    runs-on: ubuntu-latest
+    needs:
+      - reset_environments
+    environment: production
+    strategy:
+      fail-fast: false
+    env:
+      PASSWORD: y7HocD1hloSb15xx
+    steps:
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Setup Kubectl
+        uses: azure/setup-kubectl@v2.0
+      - name: Setup Helm
+        uses: azure/setup-helm@v1
+      - name: Set Kubernetes Context
+        uses: azure/aks-set-context@v1
+        with:
+          creds: '${{ secrets.AZURE_CREDENTIALS }}'
+          cluster-name: ${{ env.CLUSTER_NAME }}
+          resource-group: ${{ env.RESOURCE_GROUP }}
+      - name: Create Database Initialization Configmap
+        run: echo "${{ env.INIT_DB_CONFIG }}" > initdb.cm.yaml
+      - name: Apply Database Initialization Configmap
+        run: kubectl apply -f initdb.cm.yaml
+        # I was having an issue getting a new instance to start. I think the issue
+        # is that the password settings for a given chart are only applied the first
+        # time it is deployed. When you delete a bitnami/mysql release, it does NOT
+        # delete the PVCs it created, which means that the OLD password will
+        # persist. Since this script deletes and re-installs under the same name
+        # every time, it must necessarily have a deterministic password.
+        # See this GitHub issue: https://github.com/bitnami/charts/issues/9083
+      - name: Create MySQL Secret for the Root DSA
+        run: |
+          kubectl create secret generic mysql-db-root \
+            --from-literal=mysql-root-password=${{ env.PASSWORD }} \
+            --from-literal=mysql-replication-password=${{ env.PASSWORD }} \
+            --from-literal=mysql-password=${{ env.PASSWORD }} \
+            --namespace=${{ env.NAMESPACE }}
+      - name: Create Meerkat Database Secret for Root DSA
+        run: |
+          kubectl create secret generic meerkat-root-db \
+            --from-literal=databaseUrl=mysql://root_user:asdf_root@meerkat-db-mysql.${{ env.NAMESPACE }}.svc.cluster.local:3306/directory_root \
+            --namespace=${{ env.NAMESPACE }}
+      - name: Create Meerkat Database Secret for C=GB DSA
+        run: |
+          kubectl create secret generic meerkat-gb-db \
+            --from-literal=databaseUrl=mysql://gb_user:asdf_gb@meerkat-db-mysql.${{ env.NAMESPACE }}.svc.cluster.local:3306/directory_gb \
+            --namespace=${{ env.NAMESPACE }}
+      - name: Create Meerkat Database Secret for C=RU DSA
+        run: |
+          kubectl create secret generic meerkat-ru-db \
+            --from-literal=databaseUrl=mysql://ru_user:asdf_ru@meerkat-db-mysql.${{ env.NAMESPACE }}.svc.cluster.local:3306/directory_ru \
+            --namespace=${{ env.NAMESPACE }}
+      - name: Create Meerkat Database Secret for C=RU,L=Moscow DSA
+        run: |
+          kubectl create secret generic meerkat-moscow-db \
+            --from-literal=databaseUrl=mysql://moscow_user:asdf_moscow@meerkat-db-mysql.${{ env.NAMESPACE }}.svc.cluster.local:3306/directory_moscow \
+            --namespace=${{ env.NAMESPACE }}
+      - name: Create Meerkat Database Secret for the Test DSA
+        run: |
+          kubectl create secret generic meerkat-test-db \
+            --from-literal=databaseUrl=mysql://test_user:asdf_test@meerkat-db-mysql.${{ env.NAMESPACE }}.svc.cluster.local:3306/directory_test \
+            --namespace=${{ env.NAMESPACE }}
+      - name: Add Bitnami Helm Repo
+        run: helm repo add bitnami https://charts.bitnami.com/bitnami
+      - name: Update Helm Repo Index
+        run: helm repo update
+      - name: Install MySQL
+        run: |
+          helm install meerkat-db bitnami/mysql \
+            --set auth.existingSecret=mysql-db-root \
+            --set auth.database=directory \
+            --set initdbScriptsConfigMap=database-init \
+            --atomic \
+            --namespace=${{ env.NAMESPACE }}
+
+  deploy_test:
+    name: Deploy Test Environment
+    runs-on: ubuntu-latest
+    needs:
+      - build_meerkat_dsa
+      - helm
+      - deploy_db
+    environment: production
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Setup Kubectl
+        uses: azure/setup-kubectl@v2.0
+        # with:
+        #   version: 'v1.18.8'
+      - name: Setup Helm
+        uses: azure/setup-helm@v1
+        # with:
+        #   version: '<version>' # default is latest stable
+        # id: install
+      - name: Set Kubernetes Context
+        uses: azure/aks-set-context@v1
+        with:
+          creds: '${{ secrets.AZURE_CREDENTIALS }}'
+          cluster-name: ${{ env.CLUSTER_NAME }}
+          resource-group: ${{ env.RESOURCE_GROUP }}
+      - name: Create Temp Folder
+        run: mkdir -p ./tmp
+      - name: Create OpenSSL Keypair
+        run: |
+          openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes \
+            -keyout ./tmp/test.key \
+            -out ./tmp/test.crt \
+            -subj "/CN=dsa01.test.${{ env.ZONE }}" \
+            -addext "subjectAltName=DNS:dsa01.test.${{ env.ZONE }}"
+      - name: Create Meerkat Signing Secret
+        run: |
+          kubectl create secret tls meerkat-test-signing \
+            --cert=./tmp/test.crt \
+            --key=./tmp/test.key \
+            --namespace=${{ env.NAMESPACE }}
+      - name: Create Meerkat TLS Secret
+        run: |
+          kubectl create secret tls meerkat-test-tls \
+            --cert=./tmp/test.crt \
+            --key=./tmp/test.key \
+            --namespace=${{ env.NAMESPACE }}
+      - name: Add Wildboar Helm Repo
+        run: helm repo add ${{ env.CHART_REPO }} https://${{ env.STORAGE_ACCOUNT_NAME }}.blob.core.windows.net/${{ env.CHART_CONTAINER }}
+      - name: Update Helm Repo Index
+        run: helm repo update
+      - name: Create Values Override File
+        run: echo "${{ env.VALUES_OVERRIDE }}" > values_override.yaml
+      - name: Deploy Meerkat DSA via Helm
+        run: |
+          helm install meerkat-dsa-test ${{ env.CHART_REPO }}/${{ env.CHART_NAME }} \
+            -f values_override.yaml \
+            --set fullnameOverride=meerkat-test \
+            --set service.type=LoadBalancer \
+            --set adminService.type=LoadBalancer \
+            --set log_level=debug \
+            --set "my_access_point_nsaps={idm://dsa01.test.${{ env.ZONE }}:4632,ldap://dsa01.test.${{ env.ZONE }}:389}" \
+            --set min_auth_level_for_chaining=0 \
+            --set min_auth_local_qualifier_for_chaining=0 \
+            --set chaining_tls_optional=true \
+            --set prohibit_chaining=false \
+            --set min_auth_level_for_ob=0 \
+            --set min_auth_local_qualifier_for_ob=0 \
+            --set ob_auto_accept=true \
+            --set dangerouslyExposeWebAdmin=true \
+            --set databaseSecretName=meerkat-test-db \
+            --set signingSecretName=meerkat-test-signing \
+            --set tlsSecretName=meerkat-test-tls \
+            --set open_top_level=true \
+            --set max_connections=100 \
+            --set max_connections_per_address=50 \
+            --set max_concurrent_operations_per_connection=50 \
+            --atomic \
+            --namespace=${{ env.NAMESPACE }}
+      - name: Wait 30 Seconds for Public IP to be Allocated
+        run: sleep 30
+      - name: Save Directory Service IP Address
+        run: |
+          echo 'DIRECTORY_SERVICE_IP=$(kubectl get svc -n ${{ env.NAMESPACE }} meerkat-test-directory --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")' >> $GITHUB_ENV
+      - name: Save Web Admin Service IP Address
+        run: |
+          echo 'WEB_ADMIN_SERVICE_IP=$(kubectl get svc -n ${{ env.NAMESPACE }} meerkat-test-web-admin --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")' >> $GITHUB_ENV
+      - name: Create DSA DNS Record
+        run: |
+          az network dns record-set a add-record \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --zone-name ${{ env.ZONE }} \
+            --ttl 60 \
+            --record-set-name dsa01.test \
+            --ipv4-address ${{ env.DIRECTORY_SERVICE_IP }}
+      - name: Create WebAdmin DNS Record
+        run: |
+          az network dns record-set a add-record \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --zone-name ${{ env.ZONE }} \
+            --ttl 60 \
+            --record-set-name webadm01.test \
+            --ipv4-address ${{ env.WEB_ADMIN_SERVICE_IP }}
+
+  create_demo_pki:
+    name: Create Demo PKI
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Setup Kubectl
+        uses: azure/setup-kubectl@v2.0
+      - name: Setup Helm
+        uses: azure/setup-helm@v1
+      - name: Set Kubernetes Context
+        uses: azure/aks-set-context@v1
+        with:
+          creds: '${{ secrets.AZURE_CREDENTIALS }}'
+          cluster-name: ${{ env.CLUSTER_NAME }}
+          resource-group: ${{ env.RESOURCE_GROUP }}
+      - name: Create Temp Folder
+        run: mkdir -p ./tmp
+      - name: Create Certificate Authority Certificate
+        run: echo "${{ env.CA_CERT }}" > ca.crt
+      - name: Delete Demo Trust Anchor ConfigMap
+        run: kubectl delete configmap ${{ env.DEMO_TRUST_ANCHOR_CONFIG_NAME }} -n ${{ env.NAMESPACE }}
+        continue-on-error: true
+      - name: Create Demo Trust Anchor ConfigMap
+        run: |
+          kubectl create configmap ${{ env.DEMO_TRUST_ANCHOR_CONFIG_NAME }} \
+            --from-file=ca.pem=ca.crt \
+            --namespace=${{ env.NAMESPACE }}
+
+  deploy_demo:
+    name: Deploy Demo Environment
+    runs-on: ubuntu-latest
+    needs:
+      - build_meerkat_dsa
+      - helm
+      - create_demo_pki
+      - deploy_db
+    environment: production
+    env:
+      # Credits: https://blogg.bekk.no/how-to-sign-a-certificate-request-with-openssl-e046c933d3ae
+      CA_CONFIG: |
+        [ ca ]
+        default_ca = ca_default
+        [ ca_default ]
+        certs = .
+        new_certs_dir = ./ca.db.certs
+        database = ./ca.db.index
+        serial = ./ca.db.serial
+        RANDFILE = ./ca.db.rand
+        certificate = ./ca.crt
+        private_key = ./ca.key
+        default_days = 730
+        default_crl_days = 30
+        default_md = sha256
+        preserve = no
+        policy = generic_policy
+        copy_extensions = copyall
+        [ generic_policy ]
+        countryName = optional
+        stateOrProvinceName = optional
+        localityName = optional
+        organizationName = optional
+        organizationalUnitName = optional
+        commonName = optional
+        emailAddress = optional
+    strategy:
+      fail-fast: false
+      # It seems like things start failing to deploy if you try to deploy more
+      # than two apps to the Kubernetes cluster at a time.
+      max-parallel: 2
+      matrix:
+        dmd:
+          - 'root'
+          - 'gb'
+          - 'ru'
+          - 'moscow'
+    steps:
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Setup Kubectl
+        uses: azure/setup-kubectl@v2.0
+      - name: Setup Helm
+        uses: azure/setup-helm@v1
+      - name: Set Kubernetes Context
+        uses: azure/aks-set-context@v1
+        with:
+          creds: '${{ secrets.AZURE_CREDENTIALS }}'
+          cluster-name: ${{ env.CLUSTER_NAME }}
+          resource-group: ${{ env.RESOURCE_GROUP }}
+      - name: Create Temp Folder
+        run: mkdir -p ./tmp
+      - name: Create Certificate Authority Config
+        run: echo "${{ env.CA_CONFIG }}" > openssl.conf
+      - name: Create Certificate Authority Certificate
+        run: echo "${{ env.CA_CERT }}" > ca.crt
+      - name: Create Certificate Authority Private Key
+        run: echo "${{ secrets.CA_PRIVATE_KEY }}" > ca.key
+      - name: Setup Certificate Authority Files
+        run: mkdir ca.db.certs && mkdir ca.db.index
+      # This is not actually used, because we use the -rand_serial option below.
+      - name: Create Certificate Authority Serial Number File
+        run: openssl rand -hex 4 > ca.db.serial
+      - name: Create DSA's CSR
+        run: |
+          openssl req \
+            -new \
+            -newkey rsa:4096 \
+            -nodes \
+            -subj "/CN=dsa01.${{ matrix.dmd }}.${{ env.ZONE }}" \
+            -addext "subjectAltName=DNS:dsa01.${{ matrix.dmd }}.${{ env.ZONE }}" \
+            -keyout ./tmp/${{ matrix.dmd }}.key \
+            -out ./tmp/${{ matrix.dmd }}.csr
+      - name: Create DSA's Keypair
+        run: |
+          openssl ca \
+            -batch \
+            -config openssl.conf \
+            -out ./tmp/${{ matrix.dmd }}.crt \
+            -rand_serial \
+            -subj "/CN=dsa01.${{ matrix.dmd }}.${{ env.ZONE }}" \
+            -infiles ./tmp/${{ matrix.dmd }}.csr
+      - name: Create Meerkat Signing Certificate Chain
+        run: cat ./tmp/${{ matrix.dmd }}.crt ca.crt > signing.chain.pem
+      - name: Create Meerkat TLS Certificate Chain
+        run: cat ./tmp/${{ matrix.dmd }}.crt ca.crt > tls.chain.pem
+      - name: Create Meerkat Signing Secret
+        run: |
+          kubectl create secret tls meerkat-${{ matrix.dmd }}-signing \
+            --cert=signing.chain.pem \
+            --key=./tmp/${{ matrix.dmd }}.key \
+            --namespace=${{ env.NAMESPACE }}
+      - name: Create Meerkat TLS Secret
+        run: |
+          kubectl create secret tls meerkat-${{ matrix.dmd }}-tls \
+            --cert=tls.chain.pem \
+            --key=./tmp/${{ matrix.dmd }}.key \
+            --namespace=${{ env.NAMESPACE }}
+      - name: Add Wildboar Helm Repo
+        run: helm repo add ${{ env.CHART_REPO }} https://${{ env.STORAGE_ACCOUNT_NAME }}.blob.core.windows.net/${{ env.CHART_CONTAINER }}
+      - name: Update Helm Repo Index
+        run: helm repo update
+      - name: Create Values Override File
+        run: echo "${{ env.VALUES_OVERRIDE }}" > values_override.yaml
+      - name: Deploy Meerkat DSA via Helm
+        run: |
+          helm install meerkat-dsa-${{ matrix.dmd }} ${{ env.CHART_REPO }}/${{ env.CHART_NAME }} \
+            -f values_override.yaml \
+            --set fullnameOverride=meerkat-${{ matrix.dmd }} \
+            --set service.type=LoadBalancer \
+            --set adminService.type=LoadBalancer \
+            --set log_level=debug \
+            --set "my_access_point_nsaps={idms://dsa01.${{ matrix.dmd }}.${{ env.ZONE }}:44632,idm://dsa01.${{ matrix.dmd }}.${{ env.ZONE }}:4632,ldaps://dsa01.${{ matrix.dmd }}.${{ env.ZONE }}:636,ldap://dsa01.${{ matrix.dmd }}.${{ env.ZONE }}:389}" \
+            --set min_auth_level_for_chaining=0 \
+            --set min_auth_local_qualifier_for_chaining=0 \
+            --set chaining_tls_optional=true \
+            --set prohibit_chaining=false \
+            --set min_auth_level_for_ob=0 \
+            --set min_auth_local_qualifier_for_ob=0 \
+            --set ob_auto_accept=true \
+            --set dangerouslyExposeWebAdmin=true \
+            --set databaseSecretName=meerkat-${{ matrix.dmd }}-db \
+            --set signingSecretName=meerkat-${{ matrix.dmd }}-signing \
+            --set signingCaConfigName=${{ env.DEMO_TRUST_ANCHOR_CONFIG_NAME }} \
+            --set tlsSecretName=meerkat-${{ matrix.dmd }}-tls \
+            --set tlsCaConfigName=${{ env.DEMO_TRUST_ANCHOR_CONFIG_NAME }} \
+            --set web_admin_use_tls=false \
+            --set enable_dop=true \
+            --set enable_dsp=true \
+            --set administrator_email=jonathan@wilbur.space \
+            --set administrator_email_public=true \
+            --set vendor_version='1.3.0' \
+            --set signing_required_for_chaining=false \
+            --atomic \
+            --namespace=${{ env.NAMESPACE }}
+      - name: Wait 30 Seconds for Public IP to be Allocated
+        run: sleep 30
+      - name: Save Directory Service IP Address
+        run: |
+          echo 'DIRECTORY_SERVICE_IP=$(kubectl get svc -n ${{ env.NAMESPACE }} meerkat-${{ matrix.dmd }}-directory --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")' >> $GITHUB_ENV
+      - name: Save Web Admin Service IP Address
+        run: |
+          echo 'WEB_ADMIN_SERVICE_IP=$(kubectl get svc -n ${{ env.NAMESPACE }} meerkat-${{ matrix.dmd }}-web-admin --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")' >> $GITHUB_ENV
+      - name: Create DSA DNS Record
+        run: |
+          az network dns record-set a add-record \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --zone-name ${{ env.ZONE }} \
+            --ttl 60 \
+            --record-set-name dsa01.${{ matrix.dmd }} \
+            --ipv4-address ${{ env.DIRECTORY_SERVICE_IP }}
+      - name: Create WebAdmin DNS Record
+        run: |
+          az network dns record-set a add-record \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --zone-name ${{ env.ZONE }} \
+            --ttl 60 \
+            --record-set-name webadm01.${{ matrix.dmd }} \
+            --ipv4-address ${{ env.WEB_ADMIN_SERVICE_IP }}
+
+  seed_demo:
+    name: Seed Demo Data
+    runs-on: ubuntu-latest
+    needs:
+      - deploy_demo
+    environment: production
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '17'
+      - name: Install NPM Packages
+        run: npm ci
+      - name: Compile the Test DIT Creator
+        run: npx nx run create-test-dit:build:production --skip-nx-cache
+      - name: Seed the Root DSA
+        run: |
+          node ./dist/apps/create-test-dit/main.js \
+            --accessPoint="idm://dsa01.root.${{ env.ZONE }}:4632" \
+            --profile=root \
+            -t
+      - name: Seed the C=GB DSA
+        run: |
+          node ./dist/apps/create-test-dit/main.js \
+            --accessPoint="idm://dsa01.gb.${{ env.ZONE }}:4632" \
+            --profile=gb \
+            -t
+      - name: Seed the C=RU DSA
+        run: |
+          node ./dist/apps/create-test-dit/main.js \
+            --accessPoint="idm://dsa01.ru.${{ env.ZONE }}:4632" \
+            --profile=ru \
+            -t
+      - name: Seed the C=RU,L=Moscow DSA
+        run: |
+          node ./dist/apps/create-test-dit/main.js \
+            --accessPoint="idm://dsa01.moscow.${{ env.ZONE }}:4632" \
+            --profile=moscow \
+            -t
+
+  functional_testing:
+    name: Functional Testing
+    runs-on: ubuntu-latest
+    needs:
+      - deploy_test
+    environment: production
+    env:
+      MEERKAT_TEST_HOST: dsa01.test.mkdemo.wildboar.software
+      MEERKAT_TEST_PORT: "4632"
+      MEERKAT_TEST_LDAP_PORT: "389"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '17'
+      - name: Install NPM Packages
+        run: npm ci
+      - name: Run the functional tests
+        run: npx nx run x500-functional-tests:test --skip-nx-cache
+        timeout-minutes: 10

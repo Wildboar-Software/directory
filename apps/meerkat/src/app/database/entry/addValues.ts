@@ -51,6 +51,7 @@ async function validateValues(
     entry: Vertex,
     values: Value[],
     checkForExisting: boolean = true,
+    signErrors: boolean = false,
 ): Promise<void> {
     for (const value of values) {
         const TYPE_OID: string = value.type.toString();
@@ -77,6 +78,7 @@ async function validateValues(
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             undefined,
                             undefined,
                             attributeError["&errorCode"],
@@ -85,6 +87,7 @@ async function validateValues(
                         undefined,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -117,6 +120,7 @@ async function validateValues(
                             [],
                             createSecurityParameters(
                                 ctx,
+                                signErrors,
                                 undefined,
                                 undefined,
                                 attributeError["&errorCode"],
@@ -125,6 +129,7 @@ async function validateValues(
                             undefined,
                             undefined,
                         ),
+                        signErrors,
                     );
                 }
             }
@@ -144,7 +149,7 @@ async function validateValues(
                         tag_class: value.value.tagClass,
                         constructed: (value.value.construction === ASN1Construction.constructed),
                         tag_number: value.value.tagNumber,
-                        ber: Buffer.from(value.value.toBytes()),
+                        ber: Buffer.from(value.value.toBytes().buffer),
                     },
                     select: {
                         id: true,
@@ -186,6 +191,7 @@ async function validateValues(
                         [],
                         createSecurityParameters(
                             ctx,
+                            signErrors,
                             undefined,
                             undefined,
                             attributeError["&errorCode"],
@@ -194,6 +200,7 @@ async function validateValues(
                         undefined,
                         undefined,
                     ),
+                    signErrors,
                 );
             }
         }
@@ -223,6 +230,7 @@ async function validateValues(
                                 [],
                                 createSecurityParameters(
                                     ctx,
+                                    signErrors,
                                     undefined,
                                     undefined,
                                     attributeError["&errorCode"],
@@ -231,6 +239,7 @@ async function validateValues(
                                 undefined,
                                 undefined,
                             ),
+                            signErrors,
                         );
                     }
                 }
@@ -266,9 +275,16 @@ async function addValues(
     values: Value[],
     modifier?: DistinguishedName,
     checkForExisting: boolean = true,
+    signErrors: boolean = false,
 ): Promise<PrismaPromise<any>[]> {
     if (!ctx.config.bulkInsertMode) {
-        await validateValues(ctx, entry, values, checkForExisting);
+        await validateValues(
+            ctx,
+            entry,
+            values,
+            checkForExisting,
+            signErrors,
+        );
     }
     const pendingUpdates: PendingUpdates = {
         entryUpdate: {
@@ -303,7 +319,7 @@ async function addValues(
                 tag_class: attr.value.tagClass,
                 constructed: (attr.value.construction === ASN1Construction.constructed),
                 tag_number: attr.value.tagNumber,
-                ber: Buffer.from(attr.value.toBytes()),
+                ber: Buffer.from(attr.value.toBytes().buffer),
                 jer: attr.value.toJSON() as Prisma.InputJsonValue,
             })),
         }),
@@ -316,7 +332,7 @@ async function addValues(
                     tag_class: attr.value.tagClass,
                     constructed: (attr.value.construction === ASN1Construction.constructed),
                     tag_number: attr.value.tagNumber,
-                    ber: Buffer.from(attr.value.toBytes()),
+                    ber: Buffer.from(attr.value.toBytes().buffer),
                     jer: attr.value.toJSON() as Prisma.InputJsonValue,
                     ContextValue: {
                         createMany: {
@@ -326,7 +342,7 @@ async function addValues(
                                     tag_class: cv.tagClass,
                                     constructed: (cv.construction === ASN1Construction.constructed),
                                     tag_number: cv.tagNumber,
-                                    ber: Buffer.from(cv.toBytes()),
+                                    ber: Buffer.from(cv.toBytes().buffer),
                                     fallback: context.fallback ?? false,
                                 }))),
                         },

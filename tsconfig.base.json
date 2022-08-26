@@ -8,18 +8,21 @@
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "importHelpers": true,
-        "target": "es2015",
+        "target": "ES2019",
         "module": "esnext",
-        "lib": ["es2017", "es2019", "dom"],
+        "lib": ["es2021", "es2017", "es2019", "dom"],
         "skipLibCheck": true,
         "skipDefaultLibCheck": true,
         "strictNullChecks": true,
         "baseUrl": ".",
         "paths": {
             "@wildboar/idm": ["libs/idm/src/index.ts"],
+            "@wildboar/itu-schema": ["libs/itu-schema/src/index.ts"],
             "@wildboar/itot": ["libs/itot/src/index.ts"],
             "@wildboar/ldap-socket": ["libs/ldap-socket/src/index.ts"],
             "@wildboar/meerkat-types": ["libs/meerkat-types/src/index.ts"],
+            "@wildboar/ocsp-client": ["libs/ocsp-client/src/index.ts"],
+            "@wildboar/parity-schema/*": ["libs/parity-schema/*"],
             "@wildboar/x500-cli-config": ["libs/x500-cli-config/src/index.ts"],
             "x500-functional-tests": ["libs/x500-functional-tests/src/index.ts"]
         }
