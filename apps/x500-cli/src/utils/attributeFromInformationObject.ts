@@ -9,7 +9,9 @@ function attributeFromInformationObject (io: ATTRIBUTE, name?: string): Attribut
         id: io["&id"],
         name,
         ldapSyntax: io["&ldapSyntax"],
-        ldapNames: io["&ldapName"],
+        ldapNames: io["&ldapName"]?.length
+            ? io["&ldapName"]
+            : (name ? [ name ] : undefined),
         ldapDescription: io["&ldapDesc"],
     };
 }

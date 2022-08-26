@@ -10,11 +10,15 @@ import {
 import {
     RemoveEntryArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgumentData.ta";
+import {
+    _decode_RemoveEntryResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryResult.ta";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import destringifyDN from "../../utils/destringifyDN";
 import printError from "../../printers/Error_";
+import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 
 export
 async function do_removeEntry (
@@ -55,6 +59,16 @@ async function do_removeEntry (
     if (!outcome.result) {
         ctx.log.error("Invalid server response: no result data.");
         return;
+    }
+    const result = _decode_RemoveEntryResult(outcome.result);
+    if (!("information" in result)) {
+        ctx.log.info("Entry removed.");
+        return;
+    }
+    const info = result.information;
+    const data = getOptionallyProtectedValue(info);
+    if (data.aliasDereferenced) {
+        ctx.log.info("Alias dereferenced.");
     }
     ctx.log.info("Entry removed.");
 }

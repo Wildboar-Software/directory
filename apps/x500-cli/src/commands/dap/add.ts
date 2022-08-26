@@ -10,6 +10,9 @@ import {
 import {
     AddEntryArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta";
+import {
+    _decode_AddEntryResult,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryResult.ta";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
@@ -50,6 +53,7 @@ import {
     ServiceControls_scopeOfReferral_country,
     ServiceControls_scopeOfReferral_dmd,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls-scopeOfReferral.ta";
+import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 
 function priorityFromString (str?: string): ServiceControls_priority {
     if (!str) {
@@ -141,6 +145,16 @@ async function do_addEntry (
     if (!outcome.result) {
         ctx.log.error("Invalid server response: no result data.");
         return;
+    }
+    const result = _decode_AddEntryResult(outcome.result);
+    if (!("information" in result)) {
+        ctx.log.info("Entry created.");
+        return;
+    }
+    const info = result.information;
+    const data = getOptionallyProtectedValue(info);
+    if (data.aliasDereferenced) {
+        ctx.log.info("Alias dereferenced.");
     }
     ctx.log.info("Entry created.");
 }
