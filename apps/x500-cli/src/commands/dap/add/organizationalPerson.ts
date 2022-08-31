@@ -52,47 +52,34 @@ async function do_addEntry_organizationalPerson (
             ],
             undefined,
         ),
-        ...[ argv.commonName ]
-            .flat()
-            .map((value: string) => new Attribute(
-                selat.commonName["&id"]!,
-                [
-                    _encodeUTF8String(value, DER),
-                ],
-                undefined,
-            )),
-        ...[ argv.surname ]
-            .flat()
-            .map((value: string) => new Attribute(
-                selat.surname["&id"]!,
-                [
-                    _encodeUTF8String(value, DER),
-                ],
-                undefined,
-            )),
+        new Attribute(
+            selat.commonName["&id"]!,
+            argv.commonName
+                .flat()
+                .map((value: string) => _encodeUTF8String(value, DER)),
+            undefined,
+        ),
+        new Attribute(
+            selat.surname["&id"]!,
+            argv.surname
+                .flat()
+                .map((value: string) => _encodeUTF8String(value, DER)),
+            undefined,
+        ),
     ];
     if (argv.description?.length) {
-        const values = [ argv.description ].flat();
-        attributes.push(...values.map((value: string) => new Attribute(
+        const values: string[] = [ argv.description ].flat();
+        attributes.push(new Attribute(
             selat.description["&id"]!,
-            [
-                _encodeUTF8String(value, DER),
-            ],
-            undefined,
-        )));
+            values.map((value) => _encodeUTF8String(value, DER)),
+        ));
     }
     if (argv.seeAlso?.length) {
-        const values = [ argv.seeAlso ].flat();
-        attributes.push(...values.map((value: string) => {
-            const seeAlso = destringifyDN(ctx, value);
-            return new Attribute(
-                selat.seeAlso["&id"]!,
-                [
-                    _encode_RDNSequence(seeAlso, DER),
-                ],
-                undefined,
-            );
-        }));
+        const values: string[] = [ argv.seeAlso ].flat();
+        attributes.push(new Attribute(
+            selat.seeAlso["&id"],
+            values.map((value) => _encode_RDNSequence(destringifyDN(ctx, value), DER)),
+        ));
     }
     if (typeof argv.userPassword === "string") {
         attributes.push(new Attribute(
@@ -104,127 +91,94 @@ async function do_addEntry_organizationalPerson (
         ));
     }
     if (argv.stateOrProvinceName?.length) {
-        const values = [ argv.stateOrProvinceName ].flat();
-        attributes.push(...values.map((value: string) => new Attribute(
+        const values: string[] = [ argv.stateOrProvinceName ].flat();
+        attributes.push(new Attribute(
             selat.stateOrProvinceName["&id"]!,
-            [
-                _encodeUTF8String(value, DER),
-            ],
-            undefined,
-        )));
+            values.map((value) => _encodeUTF8String(value, DER)),
+        ));
     }
     if (argv.localityName?.length) {
-        const values = [ argv.localityName ].flat();
-        attributes.push(...values.map((value: string) => new Attribute(
+        const values: string[] = [ argv.localityName ].flat();
+        attributes.push(new Attribute(
             selat.localityName["&id"]!,
-            [
-                _encodeUTF8String(value, DER),
-            ],
-            undefined,
-        )));
+            values.map((value) => _encodeUTF8String(value, DER)),
+        ));
     }
     if (argv.streetAddress?.length) {
-        const values = [ argv.streetAddress ].flat();
-        attributes.push(...values.map((value: string) => new Attribute(
+        const values: string[] = [ argv.streetAddress ].flat();
+        attributes.push(new Attribute(
             selat.streetAddress["&id"]!,
-            [
-                _encodeUTF8String(value, DER),
-            ],
-            undefined,
-        )));
+            values.map((value) => _encodeUTF8String(value, DER)),
+        ));
     }
     if (argv.physicalDeliveryOfficeName?.length) {
-        const values = [ argv.physicalDeliveryOfficeName ].flat();
-        attributes.push(...values.map((value: string) => new Attribute(
+        const values: string[] = [ argv.physicalDeliveryOfficeName ].flat();
+        attributes.push(new Attribute(
             selat.physicalDeliveryOfficeName["&id"]!,
-            [
-                _encodeUTF8String(value, DER),
-            ],
-            undefined,
-        )));
+            values.map((value) => _encodeUTF8String(value, DER)),
+        ));
     }
     if (argv.postalAddress?.length) {
-        const values = [ argv.postalAddress ].flat();
-        attributes.push(...values.map((value: string) => {
-            const postalAddress: PostalAddress = value
-                .split(/\r?\n/g)
-                .map((line) => ({
-                    uTF8String: line,
-                }));
-            return new Attribute(
-                selat.postalAddress["&id"]!,
-                [
-                    _encode_PostalAddress(postalAddress, DER),
-                ],
-                undefined,
-            );
-        }));
+        const values: string[] = [ argv.postalAddress ].flat();
+        attributes.push(new Attribute(
+            selat.postalAddress["&id"]!,
+            values.map((value) => {
+                const postalAddress: PostalAddress = value
+                    .split("$")
+                    .map((line) => ({
+                        uTF8String: line.trim(),
+                    }));
+                return _encode_PostalAddress(postalAddress, DER);
+            }),
+        ));
     }
     if (argv.postalCode?.length) {
-        const values = [ argv.postalCode ].flat();
-        attributes.push(...values.map((value: string) => new Attribute(
+        const values: string[] = [ argv.postalCode ].flat();
+        attributes.push(new Attribute(
             selat.postalCode["&id"]!,
-            [
-                _encodeUTF8String(value, DER),
-            ],
-            undefined,
-        )));
+            values.map((value) => _encodeUTF8String(value, DER)),
+        ));
     }
     if (argv.postOfficeBox?.length) {
-        const values = [ argv.postOfficeBox ].flat();
-        attributes.push(...values.map((value: string) => new Attribute(
+        const values: string[] = [ argv.postOfficeBox ].flat();
+        attributes.push(new Attribute(
             selat.postOfficeBox["&id"]!,
-            [
-                _encodeUTF8String(value, DER),
-            ],
-            undefined,
-        )));
+            values.map((value) => _encodeUTF8String(value, DER)),
+        ));
     }
     if (argv.telephoneNumber?.length) {
-        const values = [ argv.telephoneNumber ].flat();
-        attributes.push(...values.map((value: string) => new Attribute(
+        const values: string[] = [ argv.telephoneNumber ].flat();
+        attributes.push(new Attribute(
             selat.telephoneNumber["&id"]!,
-            [
-                _encodePrintableString(value, DER),
-            ],
-            undefined,
-        )));
+            values.map((value) => _encodePrintableString(value, DER)),
+        ));
     }
     if (argv.facsimileTelephoneNumber?.length) {
-        const values = [ argv.facsimileTelephoneNumber ].flat();
-        attributes.push(...values.map((value: string) => {
-            const fax: FacsimileTelephoneNumber = new FacsimileTelephoneNumber(
-                value,
-                undefined,
-            );
-            return new Attribute(
-                selat.facsimileTelephoneNumber["&id"]!,
-                [
-                    _encode_FacsimileTelephoneNumber(fax, DER),
-                ],
-                undefined,
-            );
-        }));
+        const values: string[] = [ argv.facsimileTelephoneNumber ].flat();
+        attributes.push(new Attribute(
+            selat.facsimileTelephoneNumber["&id"]!,
+            values.map((value) => {
+                const fax: FacsimileTelephoneNumber = new FacsimileTelephoneNumber(
+                    value,
+                    undefined,
+                );
+                return  _encode_FacsimileTelephoneNumber(fax, DER);
+            }),
+        ));
     }
     if (argv.organizationalUnitName?.length) {
-        const values = [ argv.organizationalUnitName ].flat();
-        attributes.push(...values.map((value: string) => new Attribute(
+        const values: string[] = [ argv.organizationalUnitName ].flat();
+        attributes.push(new Attribute(
             selat.organizationalUnitName["&id"]!,
-            [
-                _encodeUTF8String(value, DER),
-            ],
-            undefined,
-        )));
+            values.map((value) => _encodeUTF8String(value, DER)),
+        ));
     }
     if (argv.title?.length) {
-        const values = [ argv.title ].flat();
-        attributes.push(...values.map((value: string) => new Attribute(
+        const values: string[] = [ argv.title ].flat();
+        attributes.push(new Attribute(
             selat.title["&id"]!,
-            [
-                _encodeUTF8String(value, DER),
-            ],
-            undefined,
-        )));
+            values.map((value) => _encodeUTF8String(value, DER)),
+        ));
     }
     return do_addEntry(ctx, conn, argv, attributes);
 }

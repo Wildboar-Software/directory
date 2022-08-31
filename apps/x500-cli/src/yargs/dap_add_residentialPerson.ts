@@ -68,7 +68,7 @@ function create (ctx: Context): CommandModule<{}, CommonAddOptions> {
                 })
                 .option("postalAddress", {
                     type: "array",
-                    description: "The full, multi-line postal address",
+                    description: "The full, multi-line postal address, where lines are separated by dollar signs '$'.",
                 })
                 .option("postalCode", {
                     type: "array",

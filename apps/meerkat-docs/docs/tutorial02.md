@@ -119,14 +119,6 @@ options name entries themselves and all of their attribute types and values as
 the objects of this ACI item. Finally, we use every single `--grant*` option to
 permit the subject every permissions to the objects.
 
-:::tip
-
-You will almost _always_ want to use an authentication level of `simple` for
-anything that needs to be restricted, because `none` means no authentication,
-and `strong` authentication is not (currently) supported by Meerkat DSA.
-
-:::
-
 In X.500 directories, subentries are controlled separately by subentry ACI
 items, which are stored in their respective administrative points. We need to
 create a separate ACI item for this so we can read and write to our subentry!

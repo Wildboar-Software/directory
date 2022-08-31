@@ -148,7 +148,7 @@ async function do_addEntry_residentialPerson (
         const values = [ argv.postalAddress ].flat();
         attributes.push(...values.map((value: string) => {
             const postalAddress: PostalAddress = value
-                .split(/\r?\n/g)
+                .split("$")
                 .map((line) => ({
                     uTF8String: line,
                 }));
