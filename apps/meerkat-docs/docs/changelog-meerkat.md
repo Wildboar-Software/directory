@@ -1,5 +1,13 @@
 # Changelog for Meerkat DSA
 
+## Version 1.2.1
+
+- Fixed invalid object classes, such as `inetOrgPerson`, which did not permit
+  some optional attributes that it should have, such as `mail`.
+
+No administrative action is needed to upgrade to this version. Just download it
+and use it.
+
 ## Version 1.2.0
 
 - The List Continuation Reference (LCR) procedure is now supported.

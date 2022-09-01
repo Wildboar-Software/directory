@@ -101,6 +101,10 @@ export { janetMailbox } from "../Cosine/janetMailbox.oa";
 import { pilotObjectClass } from "../Cosine/pilotObjectClass.va";
 export { pilotObjectClass } from "../Cosine/pilotObjectClass.va";
 import { mail } from "./mail.oa";
+import { mobileTelephoneNumber } from "./mobileTelephoneNumber.oa";
+import { pagerTelephoneNumber } from "./pagerTelephoneNumber.oa";
+import { organizationalStatus } from "./organizationalStatus.oa";
+import { mailPreferenceOption } from "./mailPreferenceOption.oa";
 
 
 /* START_OF_SYMBOL_DEFINITION pilotPerson */
@@ -153,7 +157,25 @@ const pilotPerson: OBJECT_CLASS = {
     },
     "&Superclasses": [ person, ] /* OBJECT_FIELD_SETTING */,
     "&kind": structural /* OBJECT_FIELD_SETTING */,
-    "&OptionalAttributes": [ uid, textEncodedORAddress, mail, favouriteDrink, roomNumber, userClass, homeTelephoneNumber, homePostalAddress, secretary, personalTitle, preferredDeliveryMethod, businessCategory, janetMailbox, ] /* OBJECT_FIELD_SETTING */,
+    "&OptionalAttributes": [
+        uid,
+        textEncodedORAddress,
+        mail,
+        favouriteDrink,
+        roomNumber,
+        userClass,
+        homeTelephoneNumber,
+        homePostalAddress,
+        secretary,
+        personalTitle,
+        preferredDeliveryMethod,
+        businessCategory,
+        janetMailbox,
+        mobileTelephoneNumber,
+        pagerTelephoneNumber,
+        organizationalStatus,
+        mailPreferenceOption,
+    ] /* OBJECT_FIELD_SETTING */,
     "&ldapName": ["pilotPerson","newPilotPerson"] /* OBJECT_FIELD_SETTING */,
     "&id": new _OID([4,], pilotObjectClass) /* OBJECT_FIELD_SETTING *//* UNIQUE_OBJECT_FIELD_SETTING */,
 };

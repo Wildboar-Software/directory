@@ -106,6 +106,8 @@ import { telephoneNumber } from "@wildboar/x500/src/lib/modules/SelectedAttribut
 export { telephoneNumber } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/telephoneNumber.oa";
 import { pilotObjectClass } from "../Cosine/pilotObjectClass.va";
 export { pilotObjectClass } from "../Cosine/pilotObjectClass.va";
+import { telexNumber } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/telexNumber.oa";
+import { x121Address } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/x121Address.oa";
 
 
 /* START_OF_SYMBOL_DEFINITION rFC822localPart */
@@ -135,7 +137,6 @@ export { pilotObjectClass } from "../Cosine/pilotObjectClass.va";
  *         | streetAddress
  *         | surname
  *         | telephoneNumber
- *         | telephoneNumber
  *         -- | teletexTerminalIdentifier
  *         | telexNumber
  *         | x121Address
@@ -158,7 +159,25 @@ const rFC822localPart: OBJECT_CLASS = {
     },
     "&Superclasses": [ domain, ] /* OBJECT_FIELD_SETTING */,
     "&kind": structural /* OBJECT_FIELD_SETTING */,
-    "&OptionalAttributes": [ commonName, description, destinationIndicator, facsimileTelephoneNumber, internationalISDNNumber, physicalDeliveryOfficeName, postalAddress, postalCode, postOfficeBox, preferredDeliveryMethod, registeredAddress, seeAlso, streetAddress, surname, telephoneNumber, telephoneNumber, ] /* OBJECT_FIELD_SETTING */,
+    "&OptionalAttributes": [
+        commonName,
+        description,
+        destinationIndicator,
+        facsimileTelephoneNumber,
+        internationalISDNNumber,
+        physicalDeliveryOfficeName,
+        postalAddress,
+        postalCode,
+        postOfficeBox,
+        preferredDeliveryMethod,
+        registeredAddress,
+        seeAlso,
+        streetAddress,
+        surname,
+        telephoneNumber,
+        telexNumber,
+        x121Address,
+    ] /* OBJECT_FIELD_SETTING */,
     "&ldapName": ["rFC822localPart"] /* OBJECT_FIELD_SETTING */,
     "&id": new _OID([14,], pilotObjectClass) /* OBJECT_FIELD_SETTING *//* UNIQUE_OBJECT_FIELD_SETTING */,
 };

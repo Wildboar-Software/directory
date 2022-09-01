@@ -325,6 +325,7 @@ async function do_modify_become_pwdsub (
         ctx.log.error("Invalid server response: no result data.");
         return;
     }
+    ctx.log.info("Done.");
 }
 
 export default do_modify_become_pwdsub;

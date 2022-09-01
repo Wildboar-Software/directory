@@ -259,6 +259,17 @@ async function main () {
                 await do_seedCountries(ctx, connection, argv);
                 await connection.close();
             })
+            .command("seed-org <orgname>", "seed directory with an organization", (seedYargs) => {
+                return seedYargs
+                    .positional("orgname", {
+                        describe: "The base object under which to place the countries.",
+                    })
+                    ;
+            }, async (argv) => {
+                const connection = await bind(ctx, argv);
+                await do_seedCountries(ctx, connection, argv);
+                await connection.close();
+            })
             .command("config", "Configuration", (configYargs) => {
                 configYargs
                     .command(config_init(ctx))

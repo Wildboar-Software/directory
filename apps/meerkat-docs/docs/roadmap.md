@@ -4,25 +4,6 @@ We will not promise any particular schedule of delivery of features or bug fixes
 at this time. However, the very high-level roadmap for Meerkat DSA can be
 broken down to the following versions.
 
-## Version 1.2.0 - Schema Update ("LDAP Parity")
-
-This update will introduce thousands of new attribute types, object classes,
-name forms, matching rules, and more, such that Meerkat DSA will achieve near
-functional parity with OpenLDAP, Apache Directory Server, OpenDJ, and other
-popular LDAP directories.
-
-For instance, the popular LDAP object class, `inetOrgPerson`, is defined in the
-default schema that comes with installations of OpenLDAP, but it is not present
-in the X.500 schema. In this release, we will convert the LDAP schema to the
-X.500 equivalents and support them in Meerkat DSA.
-
-## Version 1.3.0 - List Continuation Reference Procedures
-
-This update will allow Meerkat DSA to chain the `list` operation to return the
-immediate subordinate entries under a given entry, even when those subordinates
-exist in other DSAs. This is a big deal, because currently, there is no way to
-list remote subordinates.
-
 ## Version 1.3.0 - ITOT
 
 This update will introduce ISO Transport Over TCP (ITOT) as an alternative

@@ -49,6 +49,21 @@ async function connect (
             ? Number.parseInt(url.port)
             : 102,
     });
+    socket.on("error", (e) => {
+        console.error(e);
+        process.exit(192);
+    });
+    socket.on("lookup", (err, addr, fam, host) => {
+        if (err) {
+            console.error(`Lookup error: ${err} ${addr} ${fam} ${host}`);
+            process.exit(53);
+        }
+        ctx.log.debug(`Resolved host '${host}' to ${addr}.`);
+    });
+    socket.on("timeout", () => {
+        console.error("Socket timeout");
+        process.exit(2359);
+    });
     if (url.protocol.toLowerCase().endsWith("s")) {
         socket = new tls.TLSSocket(socket);
     }

@@ -1,6 +1,6 @@
 {
     "name": "@wildboar/x500-cli",
-    "version": "0.5.0",
+    "version": "0.5.1",
     "bin": {
         "x500": "./main.js"
     },
