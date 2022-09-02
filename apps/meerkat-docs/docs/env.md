@@ -96,7 +96,7 @@ other Meerkat DSA-related things.
 
 ## MEERKAT_ADMINISTRATOR_EMAIL_PUBLIC
 
-If set to `1`, the administrator email configured by 
+If set to `1`, the administrator email configured by
 [`MEERKAT_ADMINISTRATOR_EMAIL`](#meerkatadministratoremail) will be exposed in
 the root DSE as a value of the `administratorsAddress` attribute.
 
@@ -697,6 +697,52 @@ OpenSSL can use to obtain a private key.
 If set to `1`, Meerkat DSA will not chain any requests. If you expect to operate
 your DSA instance in isolation from all other DSAs, it is recommended to enable
 this (meaning that chaining would be disabled).
+
+## MEERKAT_REVEAL_USER_PWD
+
+If set to `1`, Meerkat DSA will return non-zero-length `OCTET STRING`s in the
+`encryptedString` field of the `userPwd` attribute's value. Meerkat DSA does
+not store passwords unencrypted.
+
+For reference, this is the `userPwd` attribute's ASN.1 specification:
+
+```asn1
+
+userPwd	ATTRIBUTE ::= {
+  WITH SYNTAX              UserPwd
+  EQUALITY MATCHING RULE   userPwdMatch
+  SINGLE VALUE             TRUE
+  LDAP-SYNTAX              userPwdDescription.&id
+  LDAP-NAME                {"userPwd"}
+  ID                       id-at-userPwd }
+
+UserPwd ::= CHOICE {
+  clear                 UTF8String,
+  encrypted             SEQUENCE {
+    algorithmIdentifier   AlgorithmIdentifier{{SupportedAlgorithms}},
+    encryptedString       OCTET STRING,
+    ...},
+  ...}
+
+```
+
+:::caution
+
+Meerkat DSA does not do this by default because it could expose your users to
+offline dictionary attacks, which is an exponentially greater threat than
+automated brute-force password guessing, because it can be done an order of
+magnitude faster.
+
+If you enable this feature, attackers that have permissions to view values of
+the `userPwd` attribute can download / save those values and attempt rapid,
+repeated guesses of the hashed password without the rate-limiting that Meerkat
+DSA imposes.
+
+It is recommended that you keep this disabled unless you know you need it for
+some reason. If enabled, you should configure access controls to prevent
+unauthorized users from viewing values of the `userPwd` attribute.
+
+:::
 
 ## MEERKAT_SCR_PARALLELISM
 

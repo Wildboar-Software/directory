@@ -48,7 +48,9 @@ const readValues: SpecialAttributeDatabaseReader = async (
                 value: userPwd.encoderFor["&Type"]!({
                     encrypted: new UserPwd_encrypted(
                         pwd.encrypted.algorithmIdentifier,
-                        new Uint8Array(),
+                        ctx.config.revealUserPwdEncryptedValues
+                            ? pwd.encrypted.encryptedString
+                            : new Uint8Array(),
                     ),
                 }, DER),
             },

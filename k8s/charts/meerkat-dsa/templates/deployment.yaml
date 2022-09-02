@@ -432,6 +432,12 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: prohibit_chaining
                   optional: true
+            - name: MEERKAT_REVEAL_USER_PWD
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: reveal_user_pwd
+                  optional: true
             - name: MEERKAT_SCR_PARALLELISM
               valueFrom:
                 configMapKeyRef:

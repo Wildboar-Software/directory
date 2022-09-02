@@ -1,5 +1,15 @@
 # Changelog for Meerkat DSA
 
+## Version 1.2.2
+
+- Fixed access controls being too restrictive on LDAP users. Now LDAP user
+  access controls work just like DAP user access controls.
+- Added the `MEERKAT_REVEAL_USER_PWD` configuration option, which allows for
+  hashed password values to be disclosed in the `userPwd` attribute.
+
+No administrative action is needed to upgrade to this version. Just download it
+and use it.
+
 ## Version 1.2.1
 
 - Fixed invalid object classes, such as `inetOrgPerson`, which did not permit

@@ -161,6 +161,7 @@ ob_auto_accept: false
 open_top_level: false
 # private_key_engine: pkcs11
 prohibit_chaining: false
+reveal_user_pwd: false
 src_parallelism: 0
 # scvp_attr_cert_checks:
 #   - "2.5.4.3"

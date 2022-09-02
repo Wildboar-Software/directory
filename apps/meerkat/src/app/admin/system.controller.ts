@@ -48,7 +48,7 @@ export class SystemController {
     ) {
         return {
             csrfToken: req.csrfToken(),
-            version: "1.2.1",
+            version: "1.2.2",
             hash: "", // TODO:
             license: "", // TODO:
             os_arch: canFail(() => os.arch()),

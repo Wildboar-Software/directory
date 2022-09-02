@@ -707,16 +707,16 @@ class LDAPAssociation extends ClientAssociation {
                                 assert(!ctx.config.forbidAnonymousBind, "Somehow a user bound anonymously when anonymous binds are forbidden.");
                                 ctx.log.info(ctx.i18n.t("log:connection_bound_anon", {
                                     source: remoteHostIdentifier,
-                                    protocol: "DAP",
+                                    protocol: "LDAP",
                                     aid: this.id,
                                 }), extraLogData);
                             } else {
                                 ctx.log.info(ctx.i18n.t("log:connection_bound_auth", {
                                     source: remoteHostIdentifier,
-                                    protocol: "DAP",
+                                    protocol: "LDAP",
                                     aid: this.id,
                                     dn: this.boundNameAndUID?.dn
-                                        ? encodeLDAPDN(ctx, this.boundNameAndUID.dn)
+                                        ? stringifyDN(ctx, this.boundNameAndUID.dn)
                                         : "",
                                 }), extraLogData);
                             }
