@@ -1,5 +1,12 @@
 # Changelog for Meerkat DSA
 
+## Version 1.2.3
+
+- Fixed a bug where `uid` and `dc` did not have LDAP names.
+
+No administrative action is needed to upgrade to this version. Just download it
+and use it.
+
 ## Version 1.2.2
 
 - Fixed access controls being too restrictive on LDAP users. Now LDAP user
