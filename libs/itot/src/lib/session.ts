@@ -1,3 +1,72 @@
+import { TypedEmitter } from "tiny-typed-emitter";
+
+type SerialNumber = number;
+
+// These events still need to be handled.
+// TODO: SCONreq
+// TODO: SCONrsp+
+// TODO: SCONrsp-
+// TODO: SDTreq
+// TODO: SRELreq
+// TODO: SRELrsp+
+// TODO: SRELrsp-
+// TODO: SUABind
+// TODO: TIM_Timer
+// TODO: TCONind
+// TODO: TCONcnf
+// TODO: TDISind
+
+export const TIMER_TIME_IN_MS: number = 3000;
+
+// #region protocol_version
+
+export const SESSION_PROTOCOL_VERSION_1: number = 1;
+export const SESSION_PROTOCOL_VERSION_2: number = 2;
+
+// #endregion
+
+// #region connection states
+
+// Table A.2 in Annex A of ITU Rec. X.225.
+// Yes, there are some numbers missing from the sequence, such as STA07 and STA17.
+export
+enum TableA2SessionConnectionState {
+    STA01, // Idle, no transport connection
+    STA01A, // Wait for the ABORT ACCEPT SPDU
+    STA01B, // Wait for the T-CONNECT confirm
+    STA01C, // Idle, transport connected
+    STA01D, // Wait for the CONNECT DATA OVERFLOW SPDU
+    STA02A, // Wait for the ACCEPT SPDU
+    STA02B, // Wait for the OVERFLOW ACCEPT SPDU
+    STA03, // Wait for the DISCONNECT SPDU
+    STA04A, // Wait for the MAJOR SYNC ACK SPDU or PREPARE SPDU
+    STA04B, // Wait for the ACTIVITY END ACK SPDU or PREPARE SPDU
+    STA05A, // Wait for the RESYNCHRONIZE ACK SPDU or PREPARE SPDU
+    STA05B, // Wait for the ACTIVITY INTERRUPT ACK SPDU or PREPARE SPDU
+    STA05C, // Wait for the ACTIVITY DISCARD ACK SPDU or PREPARE SPDU
+    STA06, // Wait for the RESYNCHRONIZE SPDU
+    STA08, // Wait for S-CONNECT response
+    STA09, // Wait for S-RELEASE response
+    STA10A, // Wait for S-SYNC-MAJOR response
+    STA10B, // Wait for S-ACTIVITY-END response
+    STA11A, // Wait for S-RESYNCHRONIZE response
+    STA11B, // Wait for S-ACTIVITY-INTERRUPT response
+    STA11C, // Wait for S-ACTIVITY-DISCARD response
+    STA15A, // After PREPARE, wait for MAJOR SYNC ACK SPDU or ACTIVITY END ACK SPDU
+    STA15B, // After PREPARE, wait for RESYNCHRONIZE SPDU or ACTIVITY INTERRUPT SPDU or ACTIVITY DISCARD SPDU
+    STA15C, // After PREPARE, wait for RESYNCHRONIZE ACK SPDU or ACTIVITY INTERRUPT ACK SPDU or ACTIVITY DISCARD ACK SPDU
+    STA15D, // After PREPARE, wait for the ABORT SPDU
+    STA16, // Wait for T-DISCONNECT indication
+    STA18, // Wait for the GIVE TOKENS ACK SPDU
+    STA19, // Wait for a recovery request or SPDU
+    STA20, // Wait for a recovery SPDU or request
+    STA21, // Wait for the CAPABILITY DATA ACK SPDU
+    STA22, // Wait for S-CAPABILITY-DATA response
+    STA713, // Data transfer state
+}
+
+// #endregion
+
 // #region error_code
 
 export const ERR_MULTIPLE_SPDU_IN_TSDU: number = -1;
@@ -9,6 +78,8 @@ export const ERR_PI_LENGTH: number = -6;
 export const ERR_DUPLICATE_PARAM: number = -7;
 export const ERR_MISSING_REQ_PARAM: number = -8;
 export const ERR_MALFORMED_PARAM: number = -9;
+export const ERR_UNSUPPORTED_SPDU: number = -10;
+export const ERR_UNSUPPORTED_PREPARE_TYPE: number = -11;
 
 // #endregion error_code
 
@@ -193,6 +264,20 @@ const serialNumberDigitToStrDigit: Map<number, string> = new Map([
     [ SERIAL_NUMBER_DIGIT_9, "9" ],
 ]);
 
+export
+const strDigitToSerialNumberDigit: Map<number, number> = new Map([
+    [ "0".charCodeAt(0), SERIAL_NUMBER_DIGIT_0 ],
+    [ "1".charCodeAt(0), SERIAL_NUMBER_DIGIT_1 ],
+    [ "2".charCodeAt(0), SERIAL_NUMBER_DIGIT_2 ],
+    [ "3".charCodeAt(0), SERIAL_NUMBER_DIGIT_3 ],
+    [ "4".charCodeAt(0), SERIAL_NUMBER_DIGIT_4 ],
+    [ "5".charCodeAt(0), SERIAL_NUMBER_DIGIT_5 ],
+    [ "6".charCodeAt(0), SERIAL_NUMBER_DIGIT_6 ],
+    [ "7".charCodeAt(0), SERIAL_NUMBER_DIGIT_7 ],
+    [ "8".charCodeAt(0), SERIAL_NUMBER_DIGIT_8 ],
+    [ "9".charCodeAt(0), SERIAL_NUMBER_DIGIT_9 ],
+]);
+
 // #endregion
 
 // #region token_setting
@@ -271,6 +356,1665 @@ export const RC_UNRECOVERABLE_PROCEDURAL_ERROR: number = 6;
 export const RC_DEMAND_DATA_TOKEN: number = 128;
 
 // #endregion reason_code
+
+// #region events
+
+export
+interface SessionLayerKernelFunctionalUnitEvents {
+    CONNECT: (pdu: CONNECT_SPDU) => unknown;
+    OVERFLOW_ACCEPT: (pdu: OVERFLOW_ACCEPT_SPDU) => unknown;
+    CONNECT_DATA_OVERFLOW: (pdu: CONNECT_DATA_OVERFLOW_SPDU) => unknown;
+    ACCEPT: (pdu: ACCEPT_SPDU) => unknown;
+    REFUSE: (pdu: REFUSE_SPDU) => unknown;
+    FINISH: (pdu: FINISH_SPDU) => unknown;
+    DISCONNECT: (pdu: DISCONNECT_SPDU) => unknown;
+    ABORT: (pdu: ABORT_SPDU) => unknown;
+    ABORT_ACCEPT: (pdu: ABORT_ACCEPT_SPDU) => unknown;
+    DATA_TRANSFER: (pdu: DATA_TRANSFER_SPDU) => unknown;
+    PREPARE: (pdu: PREPARE_SPDU) => unknown;
+}
+
+export
+interface SessionLayerEvents extends SessionLayerKernelFunctionalUnitEvents {
+    TSDU: (bytes: Buffer) => unknown;
+}
+
+export
+class SessionLayerEventEmitter extends TypedEmitter<SessionLayerEvents> {
+
+}
+
+export
+interface SessionLayerIncomingEvents {
+    SACTDreq: () => unknown;
+    SACTDrsp: () => unknown;
+    SACTEreq: () => unknown;
+    SACTErsp: () => unknown;
+    SACTIreq: () => unknown;
+    SACTIrsp: () => unknown;
+    SACTRreq: () => unknown;
+    SACTSreq: () => unknown;
+    SCDreq: () => unknown;
+    SCDrsp: () => unknown;
+    SCGreq: () => unknown;
+    SCONreq: (spdu: CONNECT_SPDU) => unknown;
+    SCONrsp_accept: (spdu: ACCEPT_SPDU) => unknown;
+    SCONrsp_reject: () => unknown;
+    SDTreq: () => unknown;
+    SEXreq: () => unknown;
+    SGTreq: () => unknown;
+    SPTreq: () => unknown;
+    SRELreq: () => unknown;
+    SRELrsp_accept: () => unknown;
+    SRELrsp_reject: () => unknown;
+    SRSYNreq_a: () => unknown;
+    SRSYNreq_r: () => unknown;
+    SRSYNreq_s: () => unknown;
+    SRSYNrsp: () => unknown;
+    SSYNMreq: () => unknown;
+    SSYNMrsp: () => unknown;
+    SSYNmreq: () => unknown;
+    SSYNmdreq: () => unknown;
+    SSYNmrsp: () => unknown;
+    STDreq: () => unknown;
+    SUABreq: () => unknown;
+    SUERreq: () => unknown;
+    TCONind: () => unknown;
+    TCONcnf: () => unknown;
+    TDISind: () => unknown;
+    TIM_Timer: () => unknown;
+    AA: () => unknown;
+    AB_nr: () => unknown;
+    AB_r: () => unknown;
+    AC: () => unknown;
+    AD: () => unknown;
+    ADA: () => unknown;
+    AE: () => unknown;
+    AEA: () => unknown;
+    AI: () => unknown;
+    AIA: () => unknown;
+    AR: () => unknown;
+    AS: () => unknown;
+    CD: () => unknown;
+    CDA: () => unknown;
+    CDO: () => unknown;
+    CN: () => unknown;
+    DN: () => unknown;
+    DT: () => unknown;
+    ED: () => unknown;
+    ER: () => unknown;
+    EX: () => unknown;
+    FN_nr: () => unknown;
+    FN_r: () => unknown;
+    GT: () => unknown;
+    GTA: () => unknown;
+    GTC: () => unknown;
+    MAA: () => unknown;
+    MAP: () => unknown;
+    MIA: () => unknown;
+    MIP: () => unknown;
+    MIP_d: () => unknown;
+    NF: () => unknown;
+    OA: () => unknown;
+    PR_AB: () => unknown;
+    PR_MAA: () => unknown;
+    PR_RA: () => unknown;
+    PR_RS: () => unknown;
+    PT: () => unknown;
+    RA: () => unknown;
+    RF_nr: () => unknown;
+    RF_r: () => unknown;
+    RS_a: () => unknown;
+    RS_r: () => unknown;
+    RS_s: () => unknown;
+    TD: () => unknown;
+}
+
+export
+interface SessionLayerOutgoingEvents {
+    SACTDind: () => unknown;
+    SACTDcnf: () => unknown;
+    SACTEind: () => unknown;
+    SACTEcnf: () => unknown;
+    SACTIind: () => unknown;
+    SACTIcnf: () => unknown;
+    SACTRind: () => unknown;
+    SACTSind: () => unknown;
+    SCDind: () => unknown;
+    SCDcnf: () => unknown;
+    SCGind: () => unknown;
+    SCONind: () => unknown;
+    SCONcnf_accept: () => unknown;
+    SCONcnf_reject: () => unknown;
+    SDTind: () => unknown;
+    SEXind: () => unknown;
+    SGTind: () => unknown;
+    SPABind: () => unknown;
+    SPERind: () => unknown;
+    SPTind: () => unknown;
+    SRELind: () => unknown;
+    SRELcnf_accept: () => unknown;
+    SRELcnf_reject: () => unknown;
+    SRSYNind: () => unknown;
+    SRSYNcnf: () => unknown;
+    SSYNMind: () => unknown;
+    SSYNMcnf: () => unknown;
+    SSYNmind: () => unknown;
+    SSYNmdind: () => unknown;
+    SSYNmcnf: () => unknown;
+    STDind: () => unknown;
+    SUABind: () => unknown;
+    SUERind: () => unknown;
+    TCONreq: () => unknown;
+    TCONrsp: () => unknown;
+    TDISreq: () => unknown;
+    AA: () => unknown;
+    AB_nr: () => unknown;
+    AB_r: () => unknown;
+    AC: () => unknown;
+    AD: () => unknown;
+    ADA: () => unknown;
+    AE: () => unknown;
+    AEA: () => unknown;
+    AI: () => unknown;
+    AIA: () => unknown;
+    AR: () => unknown;
+    AS: () => unknown;
+    CD: () => unknown;
+    CDA: () => unknown;
+    CDO: () => unknown;
+    CN: () => unknown;
+    DN: () => unknown;
+    DT: () => unknown;
+    ED: () => unknown;
+    EX: () => unknown;
+    FN_nr: () => unknown;
+    FN_r: () => unknown;
+    GT: () => unknown;
+    GTA: () => unknown;
+    GTC: () => unknown;
+    MAA: () => unknown;
+    MAP: () => unknown;
+    MIA: () => unknown;
+    MIP: () => unknown;
+    MIP_d: () => unknown;
+    NF: () => unknown;
+    OA: () => unknown;
+    PR_AB: () => unknown;
+    PR_MAA: () => unknown;
+    PR_RA: () => unknown;
+    PR_RS: () => unknown;
+    PT: () => unknown;
+    RA: () => unknown;
+    RF_nr: () => unknown;
+    RF_r: () => unknown;
+    RS_a: () => unknown;
+    RS_r: () => unknown;
+    RS_s: () => unknown;
+    TD: () => unknown;
+}
+
+export
+class SessionLayerIncomingEventEmitter extends TypedEmitter<SessionLayerIncomingEvents> {
+
+}
+
+export
+class SessionLayerOutgoingEventEmitter extends TypedEmitter<SessionLayerOutgoingEvents> {
+
+}
+
+// export
+// function dispatch_SACTDreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SACTDrsp (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SACTEreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SACTErsp (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SACTIreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SACTIrsp (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SACTRreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SACTSreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SCDreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SCDrsp (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SCGreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SCONreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+export
+function dispatch_SCONrsp_accept (state: SessionServiceConnectionState, spdu: ACCEPT_SPDU, cn: CONNECT_SPDU): SessionServiceConnectionState {
+    switch (state.state) {
+        case (TableA2SessionConnectionState.STA08): {
+            // NOTE: It is not clear what to do if this is unset.
+            state.V_A = spdu.connectAcceptItem?.initialSerialNumber ?? 0;
+            state.V_M = spdu.connectAcceptItem?.initialSerialNumber ?? 0;
+            state.V_R = 0;
+            state.Vcoll = false;
+            state.Vrsp = "no";
+            state.Vsc = false;
+            state.Vado = -1;
+            state.Vadi = -1;
+            state.TEXP = true; // TODO: I think this has to be set based on the connect PDU...
+            state.FU = ((spdu.sessionUserRequirements ?? 0) & (cn.sessionUserRequirements ?? 0)) % 65535;
+            state.Vact = false; // This is supposed to get set to false if FU(ACT), but it defaults to that...
+            state.Vdnr = false;
+            if (spdu.tokenItem) {
+                const dataTokenSetting: number = (spdu.tokenItem & 0b0000_0011);
+                const syncMinorTokenSetting: number = (spdu.tokenItem & 0b0000_1100) >> 2;
+                const activityTokenSetting: number = (spdu.tokenItem & 0b0011_0000) >> 4;
+                const releaseTokenSetting: number = (spdu.tokenItem & 0b1100_0000) >> 6;
+                const settings: SessionServiceTokenPossession[] = [
+                    SessionServiceTokenPossession.remote,
+                    SessionServiceTokenPossession.local,
+                    SessionServiceTokenPossession.remote, // TODO: Make configurable.
+                    SessionServiceTokenPossession.local,
+                ];
+                state.dataToken = settings[dataTokenSetting];
+                state.synchronizeMinorToken = settings[syncMinorTokenSetting];
+                state.majorActivityToken = settings[activityTokenSetting];
+                state.releaseToken = settings[releaseTokenSetting];
+            } else {
+                state.dataToken = SessionServiceTokenPossession.remote;
+                state.synchronizeMinorToken = SessionServiceTokenPossession.remote;
+                state.majorActivityToken = SessionServiceTokenPossession.remote;
+                state.releaseToken = SessionServiceTokenPossession.remote;
+            }
+            state.state = TableA2SessionConnectionState.STA713;
+            const tsdu = encode_ACCEPT_SPDU(spdu);
+            state.transport.writeTSDU(tsdu);
+            break;
+        }
+        case (TableA2SessionConnectionState.STA15D): {
+            // This seems like a NOOP.
+            break;
+        }
+        default: {
+            return handleInvalidSequence(state);
+        }
+    }
+    return state;
+}
+
+export
+function dispatch_SCONrsp_reject (state: SessionServiceConnectionState, spdu: REFUSE_SPDU): SessionServiceConnectionState {
+    switch (state.state) {
+        case (TableA2SessionConnectionState.STA08): {
+            const p02_local_choice: boolean = false;
+            const p02: boolean = (p02_local_choice && !state.TEXP);
+            if (p02) {
+                const tsdu = encode_REFUSE_SPDU({
+                    ...spdu,
+                    transportDisconnect: TRANSPORT_DISCONNECT_KEPT,
+                }); // RF-r
+                state.transport.writeTSDU(tsdu);
+                state.TIM = setTimeout(() => {
+                    state.transport.disconnect();
+                }, TIMER_TIME_IN_MS);
+                state.state = TableA2SessionConnectionState.STA16;
+            } else {
+                const tsdu = encode_REFUSE_SPDU({
+                    ...spdu,
+                    transportDisconnect: TRANSPORT_DISCONNECT_RELEASED,
+                }); // RF-nr
+                state.transport.writeTSDU(tsdu);
+                state.state = TableA2SessionConnectionState.STA01C;
+            }
+            return state;
+        }
+        case (TableA2SessionConnectionState.STA15D): {
+            state.TIM = setTimeout(() => {
+                state.transport.disconnect();
+            }, TIMER_TIME_IN_MS);
+            state.state = TableA2SessionConnectionState.STA16;
+            return state;
+        }
+        default: {
+            return handleInvalidSequence(state);
+        }
+    }
+}
+
+// export
+// function dispatch_SDTreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SEXreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SGTreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SPTreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SRELreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SRELrsp_accept (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SRELrsp_reject (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SRSYNreq_a (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SRSYNreq_r (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SRSYNreq_s (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SRSYNrsp (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SSYNMreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SSYNMrsp (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SSYNmreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SSYNmdreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SSYNmrsp (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_STDreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SUABreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_SUERreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_TCONind (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_TCONcnf (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_TDISind (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_TIM_Timer (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+export
+function dispatch_AA (state: SessionServiceConnectionState): SessionServiceConnectionState {
+    switch (state.state) {
+        case (TableA2SessionConnectionState.STA01A): {
+            if (state.TIM) {
+                clearTimeout(state.TIM);
+            }
+            state.state = TableA2SessionConnectionState.STA01C;
+            break;
+        }
+        case (TableA2SessionConnectionState.STA01C):
+        case (TableA2SessionConnectionState.STA01D): {
+            state.transport.disconnect();
+            state.state = TableA2SessionConnectionState.STA01;
+            break;
+        }
+        case (TableA2SessionConnectionState.STA16): {
+            if (state.TIM) {
+                clearTimeout(state.TIM);
+            }
+            state.transport.disconnect();
+            state.state = TableA2SessionConnectionState.STA01;
+            break;
+        }
+        default: {
+            return handleInvalidSequence(state);
+        }
+    }
+    return state;
+}
+
+export
+function dispatch_AB_nr (state: SessionServiceConnectionState, spdu: ABORT_SPDU): SessionServiceConnectionState {
+    const p02_local_choice: boolean = false;
+    const p02: boolean = (p02_local_choice && !state.TEXP);
+    switch (state.state) {
+        case (TableA2SessionConnectionState.STA01A):
+        case (TableA2SessionConnectionState.STA16):
+        {
+            if (state.TIM) {
+                clearTimeout(state.TIM);
+            }
+            state.transport.disconnect();
+            state.state = TableA2SessionConnectionState.STA01;
+            break;
+        }
+        case (TableA2SessionConnectionState.STA01C):
+        case (TableA2SessionConnectionState.STA01D): {
+            state.transport.disconnect();
+            state.state = TableA2SessionConnectionState.STA01;
+            break;
+        }
+        case (TableA2SessionConnectionState.STA02A):
+        case (TableA2SessionConnectionState.STA03):
+        case (TableA2SessionConnectionState.STA04A):
+        case (TableA2SessionConnectionState.STA04B):
+        case (TableA2SessionConnectionState.STA05A):
+        case (TableA2SessionConnectionState.STA05B):
+        case (TableA2SessionConnectionState.STA05C):
+        case (TableA2SessionConnectionState.STA08):
+        case (TableA2SessionConnectionState.STA09):
+        case (TableA2SessionConnectionState.STA10A):
+        case (TableA2SessionConnectionState.STA10B):
+        case (TableA2SessionConnectionState.STA11A):
+        case (TableA2SessionConnectionState.STA11B):
+        case (TableA2SessionConnectionState.STA11C):
+        case (TableA2SessionConnectionState.STA18):
+        case (TableA2SessionConnectionState.STA19):
+        case (TableA2SessionConnectionState.STA20):
+        case (TableA2SessionConnectionState.STA21):
+        case (TableA2SessionConnectionState.STA22):
+        case (TableA2SessionConnectionState.STA713):
+        {
+            if (
+                (spdu.transportDisconnect !== undefined)
+                && (spdu.transportDisconnect & 0b10) // user abort
+            ) {
+                state.outgoingEvents.emit("SUABind");
+            } else {
+                state.outgoingEvents.emit("SPABind");
+            }
+            if (p02) {
+                state.transport.writeTSDU(Buffer.from([
+                    SI_AA_SPDU,
+                    0,
+                ]));
+                state.TIM = setTimeout(() => {
+                    state.transport.disconnect();
+                }, TIMER_TIME_IN_MS);
+                state.state = TableA2SessionConnectionState.STA16;
+            } else {
+                state.transport.disconnect();
+                state.state = TableA2SessionConnectionState.STA01;
+            }
+            break;
+        }
+        case (TableA2SessionConnectionState.STA02B):
+        case (TableA2SessionConnectionState.STA06):
+        case (TableA2SessionConnectionState.STA15A):
+        case (TableA2SessionConnectionState.STA15B):
+        case (TableA2SessionConnectionState.STA15C):
+            case (TableA2SessionConnectionState.STA15D):
+        {
+            if (
+                (spdu.transportDisconnect !== undefined)
+                && (spdu.transportDisconnect & 0b10) // user abort
+            ) {
+                state.outgoingEvents.emit("SUABind");
+            } else {
+                state.outgoingEvents.emit("SPABind");
+            }
+            state.transport.disconnect();
+            state.state = TableA2SessionConnectionState.STA01;
+            break;
+        }
+        default: {
+            return handleInvalidSequence(state);
+        }
+    }
+    return state;
+}
+
+export
+function dispatch_AB_r (state: SessionServiceConnectionState, spdu: ABORT_SPDU): SessionServiceConnectionState {
+    const p02_local_choice: boolean = false;
+    const p02: boolean = (p02_local_choice && !state.TEXP);
+    switch (state.state) {
+        case (TableA2SessionConnectionState.STA01A): {
+            if (state.TIM) {
+                clearTimeout(state.TIM);
+            }
+            state.state = TableA2SessionConnectionState.STA01C;
+            break;
+        }
+        case (TableA2SessionConnectionState.STA01C):
+        case (TableA2SessionConnectionState.STA01D):
+        {
+            if (p02) {
+                state.transport.writeTSDU(Buffer.from([
+                    SI_AA_SPDU,
+                    0,
+                ]));
+                state.state = TableA2SessionConnectionState.STA01C;
+            } else {
+                state.transport.disconnect();
+                state.state = TableA2SessionConnectionState.STA01;
+            }
+            break;
+        }
+        case (TableA2SessionConnectionState.STA02A):
+        case (TableA2SessionConnectionState.STA02B):
+        case (TableA2SessionConnectionState.STA03):
+        case (TableA2SessionConnectionState.STA04A):
+        case (TableA2SessionConnectionState.STA04B):
+        case (TableA2SessionConnectionState.STA05A):
+        case (TableA2SessionConnectionState.STA05B):
+        case (TableA2SessionConnectionState.STA05C):
+        case (TableA2SessionConnectionState.STA08):
+        case (TableA2SessionConnectionState.STA09):
+        case (TableA2SessionConnectionState.STA10A):
+        case (TableA2SessionConnectionState.STA10B):
+        case (TableA2SessionConnectionState.STA11A):
+        case (TableA2SessionConnectionState.STA11B):
+        case (TableA2SessionConnectionState.STA11C):
+        case (TableA2SessionConnectionState.STA18):
+        case (TableA2SessionConnectionState.STA19):
+        case (TableA2SessionConnectionState.STA20):
+        case (TableA2SessionConnectionState.STA21):
+        case (TableA2SessionConnectionState.STA22):
+        case (TableA2SessionConnectionState.STA713):
+        {
+            if (
+                (spdu.transportDisconnect !== undefined)
+                && (spdu.transportDisconnect & 0b10) // user abort
+            ) {
+                state.outgoingEvents.emit("SUABind");
+            } else {
+                state.outgoingEvents.emit("SPABind");
+            }
+            if (p02) {
+                state.transport.writeTSDU(Buffer.from([
+                    SI_AA_SPDU,
+                    0,
+                ]));
+                state.state = TableA2SessionConnectionState.STA01C;
+            } else {
+                state.transport.disconnect();
+                state.state = TableA2SessionConnectionState.STA01;
+            }
+            break;
+        }
+        case (TableA2SessionConnectionState.STA16): {
+            if (state.TIM) {
+                clearTimeout(state.TIM);
+            }
+            state.transport.disconnect();
+            state.state = TableA2SessionConnectionState.STA01;
+            break;
+        }
+        default: {
+            return handleInvalidSequence(state);
+        }
+    }
+    return state;
+}
+
+export
+function dispatch_AC (
+    state: SessionServiceConnectionState,
+    spdu: ACCEPT_SPDU,
+): SessionServiceConnectionState {
+    switch (state.state) {
+        case (TableA2SessionConnectionState.STA01A): {
+            // NOOP.
+            break;
+        }
+        case (TableA2SessionConnectionState.STA01C): {
+            state.transport.disconnect();
+            state.state = TableA2SessionConnectionState.STA01;
+            break;
+        }
+        case (TableA2SessionConnectionState.STA02A): {
+            // TODO: SCONcnf+
+            // NOTE: It is not clear what to do if this is unset.
+            state.V_A = spdu.connectAcceptItem?.initialSerialNumber ?? 0;
+            state.V_M = spdu.connectAcceptItem?.initialSerialNumber ?? 0;
+            state.V_R = 0;
+            state.Vcoll = false;
+            state.Vrsp = "no";
+            state.Vsc = false;
+            state.Vado = -1;
+            state.Vadi = -1;
+            state.TEXP = true; // TODO: I think this has to be set based on the connect PDU...
+            state.FU = ((spdu.sessionUserRequirements ?? 0) & (spdu.sessionUserRequirements ?? 0)) % 65535;
+            state.Vact = false; // This is supposed to get set to false if FU(ACT), but it defaults to that...
+            state.Vdnr = false;
+            if (spdu.tokenItem) {
+                const dataTokenSetting: number = (spdu.tokenItem & 0b0000_0011);
+                const syncMinorTokenSetting: number = (spdu.tokenItem & 0b0000_1100) >> 2;
+                const activityTokenSetting: number = (spdu.tokenItem & 0b0011_0000) >> 4;
+                const releaseTokenSetting: number = (spdu.tokenItem & 0b1100_0000) >> 6;
+                const settings: SessionServiceTokenPossession[] = [
+                    SessionServiceTokenPossession.remote,
+                    SessionServiceTokenPossession.local,
+                    SessionServiceTokenPossession.local, // This should not happen.
+                    SessionServiceTokenPossession.local,
+                ];
+                state.dataToken = settings[dataTokenSetting];
+                state.synchronizeMinorToken = settings[syncMinorTokenSetting];
+                state.majorActivityToken = settings[activityTokenSetting];
+                state.releaseToken = settings[releaseTokenSetting];
+            } else {
+                state.dataToken = SessionServiceTokenPossession.local;
+                state.synchronizeMinorToken = SessionServiceTokenPossession.local;
+                state.majorActivityToken = SessionServiceTokenPossession.local;
+                state.releaseToken = SessionServiceTokenPossession.local;
+            }
+            state.state = TableA2SessionConnectionState.STA713;
+            break;
+        }
+        case (TableA2SessionConnectionState.STA15D): {
+            // NOOP.
+            break;
+        }
+        case (TableA2SessionConnectionState.STA16): {
+            // NOOP.
+            break;
+        }
+        default: {
+            return handleInvalidSequence(state);
+        }
+    }
+    return state;
+}
+
+// export
+// function dispatch_AD (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_ADA (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_AE (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_AEA (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_AI (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_AIA (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_AR (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_AS (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_CD (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_CDA (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+export
+function dispatch_CDO (
+    state: SessionServiceConnectionState,
+    spdu: CONNECT_DATA_OVERFLOW_SPDU,
+): SessionServiceConnectionState {
+    switch (state.state) {
+        case (TableA2SessionConnectionState.STA01C): {
+            state.transport.disconnect();
+            state.state = TableA2SessionConnectionState.STA01;
+            break;
+        }
+        case (TableA2SessionConnectionState.STA01D): {
+            const p202: boolean = ((spdu.enclosureItem & 0b10) > 0); // End of user data.
+            // TODO: [50: Preserve user data for subsequent SCONind]
+            if (p202) {
+                // TODO: SCONind
+                state.state = TableA2SessionConnectionState.STA08;
+            } // The else condition is effectively a NOOP.
+            break;
+        }
+        case (TableA2SessionConnectionState.STA15D): {
+            // NOOP
+            break;
+        }
+        default: {
+            return handleInvalidSequence(state);
+        }
+    }
+    return state;
+}
+
+export
+function dispatch_CN (state: SessionServiceConnectionState, spdu: CONNECT_SPDU): SessionServiceConnectionState {
+    switch (state.state) {
+        case (TableA2SessionConnectionState.STA01A): {
+            if (state.TIM) {
+                clearTimeout(state.TIM);
+            }
+            state.transport.disconnect();
+            state.state = TableA2SessionConnectionState.STA01;
+            break;
+        }
+        case (TableA2SessionConnectionState.STA01C): {
+            const p02_local_choice: boolean = true; // TODO: Make this configurable.
+            const p76_temporary_congestion: boolean = false;
+            const p76_version_not_supported: boolean = (
+                (spdu.connectAcceptItem?.versionNumber !== undefined)
+                && (spdu.connectAcceptItem.versionNumber > 2)
+            );
+            const p01: boolean = (!state.Vtca);
+            const p02: boolean = (p02_local_choice && !state.TEXP);
+            const p76: boolean = (
+                p76_temporary_congestion
+                || p76_version_not_supported
+            );
+            // TODO: Configurable temporary congestion.
+            // TODO: Session selector unknown?
+            const p204: boolean = (spdu.dataOverflow !== undefined); // More than 10 240 octets of SS-user data to be transferred
+
+            if (p01) { // If this SPM initiated this transport.
+                state.transport.disconnect(); // TDISreq
+                state.state = TableA2SessionConnectionState.STA01;
+                return state;
+            }
+
+            // If this SPM did not initiate the transport, and there is no problem with the CN SPDU.
+            if (!p76) {
+                if (p204) { // ...and there is more than 10240 octets to transfer.
+                    // Send OA SPDU.
+                    // Specific Action 50: Preserve user data for subsequent SCONind
+                    state.userDataBuffer = spdu.userData;
+                    state.state = TableA2SessionConnectionState.STA01D;
+                } else {
+                    // SCONind
+                    state.state = TableA2SessionConnectionState.STA08;
+                }
+            } else { // There was a problem.
+                if (!p02) { // ...and we are using expedited transport...
+                    // RF-nr (not reuse)
+                    // Specific Action [4]: Start timer.
+                    state.state = TableA2SessionConnectionState.STA16;
+                } else {
+                    // RF-r (reuse)
+                    state.state = TableA2SessionConnectionState.STA01C;
+                }
+            }
+            break;
+        }
+        case (TableA2SessionConnectionState.STA16): {
+            if (state.TIM) {
+                clearTimeout(state.TIM);
+            }
+            state.transport.disconnect();
+            state.state = TableA2SessionConnectionState.STA01;
+            break;
+        }
+        default: { /* NOOP or Not Possible. */}
+    }
+    return state;
+}
+
+export
+function dispatch_DN (state: SessionServiceConnectionState): SessionServiceConnectionState {
+    switch (state.state) {
+        case (TableA2SessionConnectionState.STA01A): {
+            // NOOP
+            break;
+        }
+        case (TableA2SessionConnectionState.STA01C): {
+            state.transport.disconnect();
+            state.state = TableA2SessionConnectionState.STA01;
+            break;
+        }
+        case (TableA2SessionConnectionState.STA01D): {
+            state.transport.disconnect();
+            state.state = TableA2SessionConnectionState.STA01;
+            break;
+        }
+        case (TableA2SessionConnectionState.STA03): {
+            // TODO: SRELcnf+
+            const p66: boolean = state.Vtrr;
+            if (p66) {
+                state.state = TableA2SessionConnectionState.STA01C;
+            } else {
+                state.transport.disconnect();
+                state.state = TableA2SessionConnectionState.STA01;
+            }
+            break;
+        }
+        case (TableA2SessionConnectionState.STA09): {
+            const p69: boolean = state.Vcoll;
+            const p01: boolean = !state.Vtca;
+            if (!p69 || p01) {
+                return handleInvalidSequence(state);
+            }
+            // TODO: SRELcnf+
+            if (!state.Vsc) {
+                state.V_A = state.V_M;
+            }
+            state.V_M++;
+            state.state = TableA2SessionConnectionState.STA09;
+            break;
+        }
+        case (TableA2SessionConnectionState.STA16): {
+            // NOOP
+            break;
+        }
+        default: {
+            return handleInvalidSequence(state);
+        }
+    }
+    return state;
+}
+
+export
+function dispatch_DT (state: SessionServiceConnectionState, spdu: DATA_TRANSFER_SPDU): SessionServiceConnectionState {
+    const p05: boolean = (
+        ((state.FU & SUR_HALF_DUPLEX) === 0) // !AV(dk)
+        || (state.dataToken !== SessionServiceTokenPossession.local) // !OWNED(dk)
+    ); // A(dk)
+    const p81: boolean = (
+        ( // ¬FU(SS) & V(Ado) ≥ V(A
+            ((state.FU & SUR_SYMMETRIC_SYNC) === 0) // ¬FU(SS)
+            && (state.Vado >= state.V_A) // V(Ado) ≥ V(A)
+        )
+        || ( // FU(SS) & V(Ado) ≥ V(As)
+            ((state.FU & SUR_SYMMETRIC_SYNC) > 0) // FU(SS)
+            && (state.Vado >= state.VAs) // V(Ado) ≥ V(As)
+        )
+    );
+    const p185: boolean = state.Discard_rcv_flow && !p81;
+    switch (state.state) {
+        case (TableA2SessionConnectionState.STA01A): {
+            // NOOP
+            break;
+        }
+        case (TableA2SessionConnectionState.STA01C):
+        case (TableA2SessionConnectionState.STA01D): {
+            state.transport.disconnect();
+            state.state = TableA2SessionConnectionState.STA01;
+            break;
+        }
+        case (TableA2SessionConnectionState.STA03): {
+            const p10: boolean = !state.Vcoll;
+            if (p05 && p10) {
+                state.outgoingEvents.emit("SDTind");
+            } else {
+                return handleInvalidSequence(state);
+            }
+            break;
+        }
+        case (TableA2SessionConnectionState.STA04A):
+        case (TableA2SessionConnectionState.STA04B):
+        case (TableA2SessionConnectionState.STA15A):
+        case (TableA2SessionConnectionState.STA713):
+        {
+            if (p05) {
+                state.outgoingEvents.emit("SDTind");
+            } else {
+                return handleInvalidSequence(state);
+            }
+            break;
+        }
+        case (TableA2SessionConnectionState.STA05A):
+        case (TableA2SessionConnectionState.STA06):
+        case (TableA2SessionConnectionState.STA15B):
+        case (TableA2SessionConnectionState.STA15C):
+        {
+            if (p05) {
+                if (p185) {
+                    // NOOP
+                } else {
+                    state.outgoingEvents.emit("SDTind");
+                }
+            } else {
+                return handleInvalidSequence(state);
+            }
+            break;
+        }
+        case (TableA2SessionConnectionState.STA05B):
+        case (TableA2SessionConnectionState.STA05C):
+        case (TableA2SessionConnectionState.STA20):
+        {
+            if (p05) {
+                // NOOP
+            } else {
+                return handleInvalidSequence(state);
+            }
+            break;
+        }
+        case (TableA2SessionConnectionState.STA11A): {
+            if (p05 && !p185) {
+                state.outgoingEvents.emit("SDTind");
+            } else {
+                return handleInvalidSequence(state);
+            }
+            break;
+        }
+        case (TableA2SessionConnectionState.STA15D): {
+            // NOOP
+            break;
+        }
+        case (TableA2SessionConnectionState.STA16): {
+            // NOOP
+            break;
+        }
+        case (TableA2SessionConnectionState.STA18):
+        case (TableA2SessionConnectionState.STA21):
+        {
+            const p70: boolean = (state.FU & SUR_DUPLEX) > 0;
+            if (p70) {
+                state.outgoingEvents.emit("SDTind");
+            } else {
+                return handleInvalidSequence(state);
+            }
+            break;
+        }
+        case (TableA2SessionConnectionState.STA19): {
+            // NOOP
+            break;
+        }
+        default: {
+            return handleInvalidSequence(state);
+        }
+    }
+    return state;
+}
+
+// export
+// function dispatch_ED (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_ER (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_EX (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+export
+function dispatch_FN_nr (state: SessionServiceConnectionState): SessionServiceConnectionState {
+    switch (state.state) {
+        case (TableA2SessionConnectionState.STA01A): {
+            // NOOP
+            break;
+        }
+        case (TableA2SessionConnectionState.STA01C):
+        case (TableA2SessionConnectionState.STA01D): {
+            state.transport.disconnect();
+            state.state = TableA2SessionConnectionState.STA01;
+            break;
+        }
+        case (TableA2SessionConnectionState.STA03): {
+            const p65: boolean = !!(
+                (state.FU & SUR_MINOR_SYNC)
+                || (state.FU & SUR_HALF_DUPLEX)
+                || (state.FU & SUR_NEGOTIATED_RELEASE)
+                || (state.FU & SUR_MAJOR_SYNC)
+                || (state.FU & SUR_ACTIVITY_MANAGEMENT)
+            ); // ANY(AV, tk-dom)
+            if (!p65) {
+                // TODO: SRELind
+                state.Vtrr = false;
+                state.Vcoll = true;
+                state.state = TableA2SessionConnectionState.STA09;
+            }
+            break;
+        }
+        case (TableA2SessionConnectionState.STA05A):
+        case (TableA2SessionConnectionState.STA06): {
+            // ALL(A, tk-dom) = none of the available tokens are owned
+            // And (the activity management FU is not supported OR an activity is not in  progress)
+            const p68: boolean = (
+                ( // ALL(A, tk-dom)
+                    (!(state.FU & SUR_MINOR_SYNC) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                    && (!(state.FU & SUR_HALF_DUPLEX) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                    && (!(state.FU & SUR_NEGOTIATED_RELEASE) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                    && (!(
+                        (state.FU & SUR_MAJOR_SYNC)
+                        || (state.FU & SUR_ACTIVITY_MANAGEMENT)
+                    ) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                )
+                && ( // [¬FU(ACT) OR ¬Vact]
+                    !(state.FU & SUR_ACTIVITY_MANAGEMENT)
+                    || !state.Vact
+                )
+            );
+            if (!p68) {
+                return handleInvalidSequence(state);
+            }
+            break;
+        }
+        case (TableA2SessionConnectionState.STA15C): {
+            // ALL(A, tk-dom) = none of the available tokens are owned
+            // And (the activity management FU is not supported OR an activity is not in  progress)
+            const p68: boolean = (
+                ( // ALL(A, tk-dom)
+                    (!(state.FU & SUR_MINOR_SYNC) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                    && (!(state.FU & SUR_HALF_DUPLEX) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                    && (!(state.FU & SUR_NEGOTIATED_RELEASE) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                    && (!(
+                        (state.FU & SUR_MAJOR_SYNC)
+                        || (state.FU & SUR_ACTIVITY_MANAGEMENT)
+                    ) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                )
+                && ( // [¬FU(ACT) OR ¬Vact]
+                    !(state.FU & SUR_ACTIVITY_MANAGEMENT)
+                    || !state.Vact
+                )
+            );
+            if (!p68) { // REVIEW: Not sure how to interpret this cell.
+                return handleInvalidSequence(state);
+            }
+            break;
+        }
+        case (TableA2SessionConnectionState.STA15D): {
+            // NOOP
+            break;
+        }
+        case (TableA2SessionConnectionState.STA16): {
+            // NOOP
+            break;
+        }
+        case (TableA2SessionConnectionState.STA19):
+            case (TableA2SessionConnectionState.STA20):{
+            // ALL(A, tk-dom) = none of the available tokens are owned
+            // And (the activity management FU is not supported OR an activity is not in  progress)
+            const p68: boolean = (
+                ( // ALL(A, tk-dom)
+                    (!(state.FU & SUR_MINOR_SYNC) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                    && (!(state.FU & SUR_HALF_DUPLEX) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                    && (!(state.FU & SUR_NEGOTIATED_RELEASE) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                    && (!(
+                        (state.FU & SUR_MAJOR_SYNC)
+                        || (state.FU & SUR_ACTIVITY_MANAGEMENT)
+                    ) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                )
+                && ( // [¬FU(ACT) OR ¬Vact]
+                    !(state.FU & SUR_ACTIVITY_MANAGEMENT)
+                    || !state.Vact
+                )
+            );
+            if (!p68) {
+                return handleInvalidSequence(state);
+            }
+            break;
+        }
+        case (TableA2SessionConnectionState.STA713): {
+            // ALL(A, tk-dom) = none of the available tokens are owned
+            // And (the activity management FU is not supported OR an activity is not in  progress)
+            const p68: boolean = (
+                ( // ALL(A, tk-dom)
+                    (!(state.FU & SUR_MINOR_SYNC) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                    && (!(state.FU & SUR_HALF_DUPLEX) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                    && (!(state.FU & SUR_NEGOTIATED_RELEASE) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                    && (!(
+                        (state.FU & SUR_MAJOR_SYNC)
+                        || (state.FU & SUR_ACTIVITY_MANAGEMENT)
+                    ) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                )
+                && ( // [¬FU(ACT) OR ¬Vact]
+                    !(state.FU & SUR_ACTIVITY_MANAGEMENT)
+                    || !state.Vact
+                )
+            );
+            if (p68) {
+                // TODO: SRELind
+                state.Vtrr = false;
+                state.state = TableA2SessionConnectionState.STA09;
+            }
+            break;
+        }
+        default: {
+            return handleInvalidSequence(state);
+        }
+    }
+    return state;
+}
+
+export
+function dispatch_FN_r (state: SessionServiceConnectionState, fn: FINISH_SPDU): SessionServiceConnectionState {
+    switch (state.state) {
+        case (TableA2SessionConnectionState.STA01A): {
+            // NOOP
+            break;
+        }
+        case (TableA2SessionConnectionState.STA01C):
+        case (TableA2SessionConnectionState.STA01D): {
+            state.transport.disconnect();
+            state.state = TableA2SessionConnectionState.STA01;
+            break;
+        }
+        case (TableA2SessionConnectionState.STA03): {
+            const p65: boolean = !!(
+                (state.FU & SUR_MINOR_SYNC)
+                || (state.FU & SUR_HALF_DUPLEX)
+                || (state.FU & SUR_NEGOTIATED_RELEASE)
+                || (state.FU & SUR_MAJOR_SYNC)
+                || (state.FU & SUR_ACTIVITY_MANAGEMENT)
+            ); // ANY(AV, tk-dom)
+            const p01: boolean = !state.Vtca;
+            const p16: boolean = !state.TEXP;
+            if (!p65 && !p01 && p16) {
+                // TODO: SRELind
+                state.Vtrr = false;
+                state.Vcoll = true;
+                state.state = TableA2SessionConnectionState.STA09;
+            }
+            break;
+        }
+        case (TableA2SessionConnectionState.STA05A): {
+            // ALL(A, tk-dom) = none of the available tokens are owned
+            // And (the activity management FU is not supported OR an activity is not in  progress)
+            const p68: boolean = (
+                ( // ALL(A, tk-dom)
+                    (!(state.FU & SUR_MINOR_SYNC) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                    && (!(state.FU & SUR_HALF_DUPLEX) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                    && (!(state.FU & SUR_NEGOTIATED_RELEASE) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                    && (!(
+                        (state.FU & SUR_MAJOR_SYNC)
+                        || (state.FU & SUR_ACTIVITY_MANAGEMENT)
+                    ) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                )
+                && ( // [¬FU(ACT) OR ¬Vact]
+                    !(state.FU & SUR_ACTIVITY_MANAGEMENT)
+                    || !state.Vact
+                )
+            );
+            const p01: boolean = !state.Vtca;
+            const p16: boolean = !state.TEXP;
+            if (!p68 || p01 || !p16) {
+                return handleInvalidSequence(state);
+            }
+            break;
+        }
+        case (TableA2SessionConnectionState.STA15C): {
+            // ALL(A, tk-dom) = none of the available tokens are owned
+            // And (the activity management FU is not supported OR an activity is not in  progress)
+            const p68: boolean = (
+                ( // ALL(A, tk-dom)
+                    (!(state.FU & SUR_MINOR_SYNC) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                    && (!(state.FU & SUR_HALF_DUPLEX) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                    && (!(state.FU & SUR_NEGOTIATED_RELEASE) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                    && (!(
+                        (state.FU & SUR_MAJOR_SYNC)
+                        || (state.FU & SUR_ACTIVITY_MANAGEMENT)
+                    ) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                )
+                && ( // [¬FU(ACT) OR ¬Vact]
+                    !(state.FU & SUR_ACTIVITY_MANAGEMENT)
+                    || !state.Vact
+                )
+            );
+            const p01: boolean = !state.Vtca;
+            const p16: boolean = !state.TEXP;
+            if (!(p68 && !p01 && p16)) { // REVIEW: Not sure how to interpret this cell.
+                return handleInvalidSequence(state);
+            }
+            break;
+        }
+        case (TableA2SessionConnectionState.STA16): {
+            // NOOP
+            break;
+        }
+        case (TableA2SessionConnectionState.STA19):
+            case (TableA2SessionConnectionState.STA20):{
+            // ALL(A, tk-dom) = none of the available tokens are owned
+            // And (the activity management FU is not supported OR an activity is not in  progress)
+            const p68: boolean = (
+                ( // ALL(A, tk-dom)
+                    (!(state.FU & SUR_MINOR_SYNC) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                    && (!(state.FU & SUR_HALF_DUPLEX) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                    && (!(state.FU & SUR_NEGOTIATED_RELEASE) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                    && (!(
+                        (state.FU & SUR_MAJOR_SYNC)
+                        || (state.FU & SUR_ACTIVITY_MANAGEMENT)
+                    ) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                )
+                && ( // [¬FU(ACT) OR ¬Vact]
+                    !(state.FU & SUR_ACTIVITY_MANAGEMENT)
+                    || !state.Vact
+                )
+            );
+            const p01: boolean = !state.Vtca;
+            const p16: boolean = !state.TEXP;
+            if (!(p68 && !p01 && p16)) { // REVIEW: Not sure how to interpret this cell.
+                return handleInvalidSequence(state);
+            }
+            break;
+        }
+        case (TableA2SessionConnectionState.STA713): {
+            // ALL(A, tk-dom) = none of the available tokens are owned
+            // And (the activity management FU is not supported OR an activity is not in  progress)
+            const p68: boolean = (
+                ( // ALL(A, tk-dom)
+                    (!(state.FU & SUR_MINOR_SYNC) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                    && (!(state.FU & SUR_HALF_DUPLEX) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                    && (!(state.FU & SUR_NEGOTIATED_RELEASE) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                    && (!(
+                        (state.FU & SUR_MAJOR_SYNC)
+                        || (state.FU & SUR_ACTIVITY_MANAGEMENT)
+                    ) || (state.synchronizeMinorToken !== SessionServiceTokenPossession.local))
+                )
+                && ( // [¬FU(ACT) OR ¬Vact]
+                    !(state.FU & SUR_ACTIVITY_MANAGEMENT)
+                    || !state.Vact
+                )
+            );
+            if (p68) {
+                // TODO: SRELind
+                state.Vtrr = (fn.transportDisconnect === TRANSPORT_DISCONNECT_KEPT);
+                state.state = TableA2SessionConnectionState.STA09;
+            }
+            break;
+        }
+        default: {
+            return handleInvalidSequence(state);
+        }
+    }
+    return state;
+}
+
+// export
+// function dispatch_GT (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_GTA (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_GTC (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_MAA (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_MAP (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_MIA (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_MIP (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_MIP_d (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+export
+function dispatch_NF (state: SessionServiceConnectionState): SessionServiceConnectionState {
+    switch (state.state) {
+        case (TableA2SessionConnectionState.STA01A): {
+            // NOOP
+            break;
+        }
+        case (TableA2SessionConnectionState.STA01C):
+        case (TableA2SessionConnectionState.STA01D): {
+            state.transport.disconnect();
+            state.state = TableA2SessionConnectionState.STA01;
+            break;
+        }
+        case (TableA2SessionConnectionState.STA03): {
+            const p67: boolean = false;
+            if (p67) {
+                // TODO: SRELcnf-
+                state.state = TableA2SessionConnectionState.STA713;
+            }
+            // TODO: Else?
+            break;
+        }
+        case (TableA2SessionConnectionState.STA05A): {
+            const p67: boolean = false;
+            if (p67) {
+                // TODO: SRELcnf-
+                state.state = TableA2SessionConnectionState.STA15B;
+            }
+            // TODO: Else?
+            break;
+        }
+        case (TableA2SessionConnectionState.STA15D):
+        case (TableA2SessionConnectionState.STA16): {
+            // NOOP
+            break;
+        }
+        default: {
+            return handleInvalidSequence(state);
+        }
+    }
+    return state;
+}
+
+export
+function dispatch_OA (
+    state: SessionServiceConnectionState,
+    spdu: OVERFLOW_ACCEPT_SPDU,
+    userData: Buffer, // This should include the first 10240 octets that should have already been sent.
+): SessionServiceConnectionState {
+    switch (state.state) {
+        case (TableA2SessionConnectionState.STA01C): {
+            state.transport.disconnect();
+            state.state = TableA2SessionConnectionState.STA01;
+            break;
+        }
+        case (TableA2SessionConnectionState.STA02B): {
+            const tsduMaximumSize = state.tsduMaximumSize ?? 65500;
+            let octetsSent: number = 10240;
+            let p201: boolean = (octetsSent < userData.length);
+            let first: boolean = true;
+            while (p201) {
+                const nextSegment = userData.subarray(octetsSent, octetsSent + tsduMaximumSize);
+                octetsSent += tsduMaximumSize;
+                p201 = (octetsSent < userData.length);
+                const tsdu = encode_CONNECT_DATA_OVERFLOW_SPDU({
+                    enclosureItem: (
+                        (!p201 ? 0b10 : 0b00)
+                        | (first ? 0b1 : 0b0)
+                    ),
+                    userData: nextSegment,
+                });
+                state.transport.writeTSDU(tsdu);
+                first = false;
+            }
+            state.state = TableA2SessionConnectionState.STA02A;
+            break;
+        }
+        case (TableA2SessionConnectionState.STA15D): {
+            // This seems to be a NOOP.
+            break;
+        }
+        default: {
+            return handleInvalidSequence(state);
+        }
+    }
+    return state;
+}
+
+export
+function dispatch_PR_AB (state: SessionServiceConnectionState): SessionServiceConnectionState {
+    switch (state.state) {
+        case (TableA2SessionConnectionState.STA01C): {
+            state.transport.disconnect();
+            state.state = TableA2SessionConnectionState.STA01;
+            break;
+        }
+        case (TableA2SessionConnectionState.STA16): {
+            if (state.TIM) {
+                clearTimeout(state.TIM);
+            }
+            state.transport.disconnect();
+            state.state = TableA2SessionConnectionState.STA01;
+            break;
+        }
+        case (TableA2SessionConnectionState.STA02A):
+        case (TableA2SessionConnectionState.STA03):
+        case (TableA2SessionConnectionState.STA04A):
+        case (TableA2SessionConnectionState.STA04B):
+        case (TableA2SessionConnectionState.STA05A):
+        case (TableA2SessionConnectionState.STA05B):
+        case (TableA2SessionConnectionState.STA05C):
+        case (TableA2SessionConnectionState.STA06):
+        case (TableA2SessionConnectionState.STA08):
+        case (TableA2SessionConnectionState.STA09):
+        case (TableA2SessionConnectionState.STA10A):
+        case (TableA2SessionConnectionState.STA10B):
+        case (TableA2SessionConnectionState.STA11A):
+        case (TableA2SessionConnectionState.STA11B):
+        case (TableA2SessionConnectionState.STA11C):
+        case (TableA2SessionConnectionState.STA15A):
+        case (TableA2SessionConnectionState.STA15B):
+        case (TableA2SessionConnectionState.STA15C):
+        case (TableA2SessionConnectionState.STA18):
+        case (TableA2SessionConnectionState.STA19):
+        case (TableA2SessionConnectionState.STA20):
+        case (TableA2SessionConnectionState.STA22):
+        case (TableA2SessionConnectionState.STA713):
+        {
+            state.state = TableA2SessionConnectionState.STA15D;
+            break;
+        }
+    }
+    return state;
+}
+
+// export
+// function dispatch_PR_MAA (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_PR_RA (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_PR_RS (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_PT (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_RA (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+export
+function dispatch_RF_nr (state: SessionServiceConnectionState): SessionServiceConnectionState {
+    switch (state.state) {
+        case (TableA2SessionConnectionState.STA01A): {
+            // NOOP.
+            break;
+        }
+        case (TableA2SessionConnectionState.STA01C): {
+            state.transport.disconnect();
+            state.state = TableA2SessionConnectionState.STA01;
+            break;
+        }
+        case (TableA2SessionConnectionState.STA02A): {
+            // TODO: SCONcnf-
+            state.transport.disconnect();
+            state.state = TableA2SessionConnectionState.STA01;
+            break;
+        }
+        case (TableA2SessionConnectionState.STA02B): {
+            // TODO: SCONcnf-
+            state.transport.disconnect();
+            state.state = TableA2SessionConnectionState.STA01;
+            break;
+        }
+        case (TableA2SessionConnectionState.STA16): {
+            // NOOP.
+            break;
+        }
+        default: {
+            return handleInvalidSequence(state);
+        }
+    }
+    return state;
+}
+
+export
+function dispatch_RF_r (state: SessionServiceConnectionState): SessionServiceConnectionState {
+    switch (state.state) {
+        case (TableA2SessionConnectionState.STA01A): {
+            // NOOP.
+            break;
+        }
+        case (TableA2SessionConnectionState.STA01C): {
+            state.transport.disconnect();
+            state.state = TableA2SessionConnectionState.STA01;
+            break;
+        }
+        case (TableA2SessionConnectionState.STA02A):
+        case (TableA2SessionConnectionState.STA02B): {
+            // TODO: SCONcnf-
+            const p02_local_choice: boolean = true;
+            const p02: boolean = (p02_local_choice && !state.TEXP);
+            if (p02) {
+                state.state = TableA2SessionConnectionState.STA01C;
+            } else {
+                state.transport.disconnect();
+                state.state = TableA2SessionConnectionState.STA01;
+            }
+            break;
+        }
+        case (TableA2SessionConnectionState.STA16): {
+            // NOOP.
+            break;
+        }
+        default: {
+            return handleInvalidSequence(state);
+        }
+    }
+    return state;
+}
+
+// export
+// function dispatch_RS_a (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_RS_r (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_RS_s (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// export
+// function dispatch_TD (state: SessionServiceConnectionState): SessionServiceConnectionState {
+
+// }
+
+// #endregion events
 
 // #region PDUs
 
@@ -428,6 +2172,7 @@ enum SessionServicePhase {
     establishment,
     dataTransfer,
     release,
+    disconnected,
 }
 
 export
@@ -437,33 +2182,614 @@ interface SessionServicePDUParserState {
 }
 
 export
-interface SessionServiceConnectionState extends SessionServicePDUParserState {
+interface AnnexASessionState {
+    /**
+     * An 16-bit field for the supported functional units.
+     */
+    FU: number;
+
+    /**
+     * If true, use of transport expedited service is selected for use on this
+     * session connection.
+     */
+    TEXP: boolean;
+
+    /**
+     * If true, an activity is in progress.
+     */
+    Vact: boolean;
+
+    /**
+     * The next value of Vact when a MAJOR SYNC ACK SPDU or an ACTIVITY END ACK
+     * SPDU is sent or received.
+     */
+    Vnextact: boolean;
+
+    /**
+     * Indicates what kind of resynchronization is currently in progress.
+     */
+    Vrsp: "no" | "a" | "r" | "s" | "dsc" | "int";
+
+    /**
+     * The serial number in case of resynchronize restart.
+     */
+    Vrspnb: number;
+
+    /**
+     * The resync type of the sending flow.
+     */
+    Vrsps: AnnexASessionState["Vrsp"];
+
+    /**
+     * The resync type of the receiving flow.
+     */
+    Vrspr: AnnexASessionState["Vrsp"];
+
+    /**
+     * The serial number for the SPM's receiving flow in the case of
+     * resynchronize restart.
+     */
+    Vrspnbr: number;
+
+    /**
+     * The serial number for the SPM's sending flow in the case of
+     * resynchronize restart.
+     */
+    Vrspnbs: number;
+
+    /**
+     * Which SPM wins in a collision.
+     */
+    SPMWinner: boolean;
+
+    /**
+     * If true, the SPM received the T-CONNECT indication; if false, the SPM
+     * initiated the T-CONNECT indication. In other words, if this is false,
+     * the local SPM created the transport connection.
+     */
+    Vtca: boolean;
+
+    /**
+     * Whether the transport connection can be reused by the SPM for another
+     * session connection.
+     */
+    Vtrr: boolean;
+
+    /**
+     * Whether there has been a collision of FINISH SPDUs.
+     */
+    Vcoll: boolean;
+
+    /**
+     * Whether a DISCONNECT SPDU has been received in STA09 (collision of
+     * FINISH SPDUs).
+     */
+    Vdnr: boolean;
+
+    /**
+     * The lowest serial number to which a sync point confirmation is expected.
+     */
+    V_A: SerialNumber;
+
+    /**
+     * The next serial number to be used.
+     */
+    V_M: SerialNumber;
+
+    /**
+     * The lowest serial number to which resynchronization restart is permitted.
+     */
+    V_R: SerialNumber;
+
+    /**
+     * Whether the SS-user has the right to issue minor sync point responses
+     * when V(A) is less than V(M).
+     */
+    Vsc: boolean;
+
+    /**
+     * The highest sync point serial number which was sent in a MINOR
+     * SYNCHRONIZATION POINT SPDU with the data separation parameter set to
+     * true.
+     */
+    Vado: SerialNumber;
+
+    /**
+     * The highest sync point serial number which was received in a MINOR
+     * SYNCHRONIZATION POINT SPDU with the data separation parameter set to
+     * true.
+     */
+    Vadi: SerialNumber;
+
+    /**
+     * The lowest serial number on the SPM's sending data flow to which a
+     * sync point confirmation is expected to be received.
+     */
+    VAs: SerialNumber;
+
+    /**
+     * The lowest serial number on the SPM's receiving data flow for which a
+     * confirmation has not yet been sent.
+     */
+    VAr: SerialNumber;
+
+    /**
+     * The serial number of the next sync point to be sent.
+     */
+    VMs: SerialNumber;
+
+    /**
+     * The serial number of the next sync point to be received.
+     */
+    VMr: SerialNumber;
+
+    /**
+     * The lowest serial number on the SPM's sending data flow to which resync
+     * restart is permitted.
+     */
+    VRs: SerialNumber;
+
+    /**
+     * The lowest serial number on the SPM's receiving data flow to which resync
+     * restart is permitted.
+     */
+    VRr: SerialNumber;
+
+    /**
+     * Whether the receiving flow is in the process of resynchronization.
+     */
+    Discard_rcv_flow: boolean;
+
+    /**
+     * Whether the sending flow is in the process of resynchronization.
+     */
+    Discard_snd_flow: boolean;
+}
+
+export
+interface TransportLayer {
+    writeTSDU: (tsdu: Buffer) => unknown;
+    disconnect: () => unknown;
+}
+
+export
+interface SessionServiceConnectionState extends SessionServicePDUParserState, AnnexASessionState {
+    version: number;
     caller: boolean;
+    state: TableA2SessionConnectionState;
     phase: SessionServicePhase;
+    disconnectReason?: number;
     dataToken?: SessionServiceTokenPossession;
     releaseToken?: SessionServiceTokenPossession;
     synchronizeMinorToken?: SessionServiceTokenPossession;
     majorActivityToken?: SessionServiceTokenPossession;
-    onPDU?: (bytes: Buffer) => unknown;
-    // TODO: onLength
-    onCONNECT?: (pdu: CONNECT_SPDU) => unknown;
-    onACCEPT?: (pdu: ACCEPT_SPDU) => unknown;
-    onREFUSE?: (pdu: REFUSE_SPDU) => unknown;
-    onDISCONNECT?: (pdu: DISCONNECT_SPDU) => unknown;
-    onABORT?: (pdu: ABORT_SPDU) => unknown;
-    onABORT_ACCEPT?: (pdu: ABORT_ACCEPT_SPDU) => unknown;
-    onDATA_TRANSFER?: (pdu: DATA_TRANSFER_SPDU) => unknown;
+    peerEvents: SessionLayerEventEmitter; // SPDUs received from the SS-peer
+    localEvents: SessionLayerEventEmitter; // SPDUs sent by the SPM
+    transport: TransportLayer;
+    tsduMaximumSize?: number;
+
+    /**
+     * Detailed in [ITU Recommendation X.225 (1995)](https://www.itu.int/rec/T-REC-X.225/en),
+     * Section 7.9.2. This timeout is used to control when the SPM "gives up"
+     * waiting for an ABORT ACCEPT or a T-DISCONNECT.
+     */
+    TIM?: NodeJS.Timeout;
+
+    connectData: Buffer;
+    userDataBuffer: Buffer;
+    outgoingEvents: SessionLayerOutgoingEventEmitter;
 }
 
 export
-function newSessionConnection (caller: boolean = true): SessionServiceConnectionState {
+function newSessionConnection (
+    transport: TransportLayer,
+    caller: boolean = true,
+    transportCaller: boolean = false,
+): SessionServiceConnectionState {
     return {
+        version: SESSION_PROTOCOL_VERSION_1, // Default, per ITU Rec. X.225 (1995), Section 8.3.1.9.
         buffer: Buffer.alloc(0),
         bufferIndex: 0,
         caller,
         phase: SessionServicePhase.establishment,
+        state: TableA2SessionConnectionState.STA01C, // This is the default state after transport is established.
+        peerEvents: new SessionLayerEventEmitter(),
+        localEvents: new SessionLayerEventEmitter(),
+        FU: 0,
+        TEXP: false,
+        Vact: false,
+        Vnextact: false,
+        Vrsp: "no",
+        Vrspnb: 0,
+        Vrsps: "no",
+        Vrspr: "no",
+        Vrspnbr: 0,
+        Vrspnbs: 0,
+        SPMWinner: false,
+        Vtca: transportCaller,
+        Vtrr: false, // No specified default value, but better safe than sorry.
+        Vcoll: false,
+        Vdnr: false,
+        V_A: 0,
+        V_M: 0,
+        V_R: 0,
+        Vsc: false,
+        Vado: 0,
+        Vadi: 0,
+        VAs: 0,
+        VAr: 0,
+        VMs: 0,
+        VMr: 0,
+        VRs: 0,
+        VRr: 0,
+        Discard_rcv_flow: false,
+        Discard_snd_flow: false,
+        transport,
+        connectData: Buffer.alloc(0),
+        userDataBuffer: Buffer.alloc(0),
+        outgoingEvents: new SessionLayerOutgoingEventEmitter(),
     };
 }
+
+// #region encoders
+
+// function encodeParameter (param: SessionParameter): Buffer
+
+function encodeSPDU (spdu: SPDU): Buffer {
+    const bufs: Buffer[] = [];
+    for (const param of spdu.parameters) {
+        if ("pgi" in param) { // Parameter Group
+            const pgi_bufs: Buffer[] = [];
+            for (const pgiparam of param.parameters) {
+                if (pgiparam.value.length > 254) {
+                    const pi_and_li = Buffer.from([
+                        pgiparam.pi,
+                        0xFF,
+                        0,
+                        0,
+                    ]);
+                    pi_and_li.writeUint16BE(pgiparam.value.length, 2);
+                    pgi_bufs.push(pi_and_li);
+                    pgi_bufs.push(pgiparam.value);
+                } else {
+                    const pi_and_li = Buffer.from([
+                        pgiparam.pi,
+                        pgiparam.value.length,
+                    ]);
+                    pgi_bufs.push(pi_and_li);
+                    pgi_bufs.push(pgiparam.value);
+                }
+            }
+            let pg_len: number = 0;
+            for (const pgb of pgi_bufs) {
+                pg_len += pgb.length;
+            }
+            if (pg_len > 254) {
+                const pgi_and_li = Buffer.from([
+                    param.pgi,
+                    0xFF,
+                    0,
+                    0,
+                ]);
+                pgi_and_li.writeUint16BE(pg_len, 2);
+                bufs.push(pgi_and_li);
+                bufs.push(...pgi_bufs);
+            } else {
+                const pgi_and_li = Buffer.from([
+                    param.pgi,
+                    pg_len,
+                ]);
+                bufs.push(pgi_and_li);
+                bufs.push(...pgi_bufs);
+            }
+        } else { // Single Parameter
+            if (param.value.length > 254) {
+                const pi_and_li = Buffer.from([
+                    param.pi,
+                    0xFF,
+                    0,
+                    0,
+                ]);
+                pi_and_li.writeUint16BE(param.value.length, 2);
+                bufs.push(pi_and_li);
+                bufs.push(param.value);
+            } else {
+                const pi_and_li = Buffer.from([
+                    param.pi,
+                    param.value.length,
+                ]);
+                bufs.push(pi_and_li);
+                bufs.push(param.value);
+            }
+        }
+    }
+    let len: number = 0;
+    for (const b of bufs) {
+        len += b.length;
+    }
+    // TODO: If len > 65535, return null or something.
+    if (len > 254) {
+        const si_and_li = Buffer.from([
+            spdu.si,
+            0xFF,
+            0,
+            0,
+        ]);
+        si_and_li.writeUint16BE(len, 2);
+        return Buffer.concat([
+            si_and_li,
+            ...bufs,
+        ]);
+    } else {
+        const si_and_li = Buffer.from([
+            spdu.si,
+            len,
+        ]);
+        return Buffer.concat([
+            si_and_li,
+            ...bufs,
+        ]);
+    }
+}
+
+function encode_serial_number (sn: SerialNumber | bigint): Buffer {
+    const str = sn.toString(10);
+    const ret = Buffer.allocUnsafe(str.length);
+    for (let i = 0; i < str.length; i++) {
+        const charCode = str.charCodeAt(i);
+        const digit = strDigitToSerialNumberDigit.get(charCode);
+        if (digit === undefined) {
+            ret[i] = 0x00;
+        } else {
+            ret[i] = digit;
+        }
+    }
+    return ret;
+}
+
+function encodeConnectionIdentifier (cid: ConnectionIdentifier): SessionParameterGroup {
+    const ret: SessionParameterGroup = {
+        pgi: PGI_CONNECTION_ID,
+        parameters: [],
+    };
+    if (cid.callingSSUserReference) {
+        ret.parameters.push({
+            pi: PI_CALLING_SS_USER_REF,
+            value: cid.callingSSUserReference,
+        });
+    }
+    if (cid.calledSSUserReference) {
+        ret.parameters.push({
+            pi: PI_CALLED_SS_USER_REF,
+            value: cid.calledSSUserReference,
+        });
+    }
+    if (cid.commonReference) {
+        ret.parameters.push({
+            pi: PI_COMMON_REFERENCE,
+            value: cid.commonReference,
+        });
+    }
+    if (cid.additionalReferenceInformation) {
+        ret.parameters.push({
+            pi: PI_ADDITIONAL_REF_INFO,
+            value: cid.additionalReferenceInformation,
+        });
+    }
+    return ret;
+}
+
+function encodeConnectAcceptItem (cai: ConnectAcceptItem): SessionParameterGroup {
+    const ret: SessionParameterGroup = {
+        pgi: PGI_CONNECT_ACCEPT,
+        parameters: [],
+    };
+    if (cai.protocolOptions !== undefined) {
+        ret.parameters.push({
+            pi: PI_PROTOCOL_OPTIONS,
+            value: Buffer.from([ cai.protocolOptions ]),
+        });
+    }
+    if (cai.tsduMaximumSize !== undefined) {
+        const value = Buffer.allocUnsafe(4);
+        value.writeUint32BE(cai.tsduMaximumSize);
+        ret.parameters.push({
+            pi: PI_TSDU_MAX_SIZE,
+            value,
+        });
+    }
+    if (cai.versionNumber !== undefined) {
+        ret.parameters.push({
+            pi: PI_VERSION_NUMBER,
+            value: Buffer.from([ cai.versionNumber ]),
+        });
+    }
+    if (cai.initialSerialNumber !== undefined) {
+        const value = encode_serial_number(cai.initialSerialNumber);
+        ret.parameters.push({
+            pi: PI_INITIAL_SERIAL_NUMBER,
+            value,
+        });
+    }
+    if (cai.tokenSettingItem !== undefined) {
+        ret.parameters.push({
+            pi: PI_TOKEN_SETTING_ITEM,
+            value: Buffer.from([ cai.tokenSettingItem ]),
+        });
+    }
+    if (cai.secondInitialSerialNumber !== undefined) {
+        const value = encode_serial_number(cai.secondInitialSerialNumber);
+        ret.parameters.push({
+            pi: PI_SECOND_INITIAL_SERIAL_NUMBER,
+            value,
+        });
+    }
+    if (cai.upperLimitSerialNumber) {
+        const value = encode_serial_number(cai.upperLimitSerialNumber);
+        ret.parameters.push({
+            pi: PI_UPPER_LIMIT_SERIAL_NUMBER,
+            value,
+        });
+    }
+    if (cai.largeInitialSerialNumber) {
+        const value = encode_serial_number(cai.largeInitialSerialNumber);
+        ret.parameters.push({
+            pi: PI_LARGE_INITIAL_SERIAL_NUMBER,
+            value,
+        });
+    }
+    if (cai.largeSecondInitialSerialNumber) {
+        const value = encode_serial_number(cai.largeSecondInitialSerialNumber);
+        ret.parameters.push({
+            pi: PI_LARGE_SECOND_INITIAL_SERIAL_NUMBER,
+            value,
+        });
+    }
+    return ret;
+}
+
+function encode_ACCEPT_SPDU (pdu: ACCEPT_SPDU): Buffer {
+    const ret: SPDU = {
+        si: SI_AC_SPDU,
+        parameters: [],
+    };
+    if (pdu.connectionIdentifier) {
+        ret.parameters.push(encodeConnectionIdentifier(pdu.connectionIdentifier));
+    }
+    if (pdu.connectAcceptItem) {
+        ret.parameters.push(encodeConnectAcceptItem(pdu.connectAcceptItem));
+    }
+    if (pdu.tokenItem !== undefined) {
+        ret.parameters.push({
+            pi: PI_TOKEN_ITEM,
+            value: Buffer.from([ pdu.tokenItem ]),
+        });
+    }
+    if (pdu.sessionUserRequirements !== undefined) {
+        const value = Buffer.allocUnsafe(2);
+        value.writeUint16BE(pdu.sessionUserRequirements);
+        ret.parameters.push({
+            pi: PI_SESSION_USER_REQUIREMENTS,
+            value,
+        });
+    }
+    if (pdu.enclosureItem !== undefined) {
+        ret.parameters.push({
+            pi: PI_ENCLOSURE_ITEM,
+            value: Buffer.from([ pdu.enclosureItem ]),
+        });
+    }
+    if (pdu.callingSessionSelector) {
+        ret.parameters.push({
+            pi: PI_CALLING_SESSION_SELECTOR,
+            value: pdu.callingSessionSelector,
+        });
+    }
+    if (pdu.respondingSessionSelector) {
+        ret.parameters.push({
+            pi: PI_RESPONDING_SESSION_SELECTOR,
+            value: pdu.respondingSessionSelector,
+        });
+    }
+    return encodeSPDU(ret);
+}
+
+function encode_REFUSE_SPDU (pdu: REFUSE_SPDU): Buffer {
+    const ret: SPDU = {
+        si: SI_RF_SPDU,
+        parameters: [],
+    };
+    if (pdu.connectionIdentifier) {
+        ret.parameters.push(encodeConnectionIdentifier(pdu.connectionIdentifier));
+    }
+    if (pdu.transportDisconnect !== undefined) {
+        ret.parameters.push({
+            pi: PI_TRANSPORT_DISCONNECT,
+            value: Buffer.from([ pdu.transportDisconnect ]),
+        });
+    }
+    if (pdu.sessionUserRequirements !== undefined) {
+        const value = Buffer.allocUnsafe(0);
+        value.writeUint16BE(pdu.sessionUserRequirements);
+        ret.parameters.push({
+            pi: PI_SESSION_USER_REQUIREMENTS,
+            value,
+        });
+    }
+    if (pdu.versionNumber !== undefined) {
+        ret.parameters.push({
+            pi: PI_VERSION_NUMBER,
+            value: Buffer.from([ pdu.versionNumber ]),
+        });
+    }
+    if (pdu.enclosureItem !== undefined) {
+        ret.parameters.push({
+            pi: PI_ENCLOSURE_ITEM,
+            value: Buffer.from([ pdu.enclosureItem ]),
+        });
+    }
+    if (pdu.reasonCode !== undefined) {
+        ret.parameters.push({
+            pi: PI_REASON_CODE,
+            value: Buffer.from([ pdu.reasonCode ]),
+        });
+    }
+    return encodeSPDU(ret);
+}
+
+function encode_CONNECT_DATA_OVERFLOW_SPDU (pdu: CONNECT_DATA_OVERFLOW_SPDU): Buffer {
+    const ret: SPDU = {
+        si: SI_CDO_SPDU,
+        parameters: [],
+    };
+    if (pdu.enclosureItem !== undefined) {
+        ret.parameters.push({
+            pi: PI_ENCLOSURE_ITEM,
+            value: Buffer.from([ pdu.enclosureItem ]),
+        });
+    }
+    if (pdu.userData !== undefined) {
+        ret.parameters.push({
+            pi: PI_USER_DATA,
+            value: pdu.userData,
+        });
+    }
+    return encodeSPDU(ret);
+}
+
+function encode_ABORT_SPDU (pdu: ABORT_SPDU): Buffer {
+    const ret: SPDU = {
+        si: SI_RF_SPDU,
+        parameters: [],
+    };
+    if (pdu.reflectParameterValues) {
+        ret.parameters.push({
+            pi: PI_REFLECT_PARAMETER_VALUES,
+            value: pdu.reflectParameterValues,
+        });
+    }
+    if (pdu.transportDisconnect !== undefined) {
+        ret.parameters.push({
+            pi: PI_TRANSPORT_DISCONNECT,
+            value: Buffer.from([ pdu.transportDisconnect ]),
+        });
+    }
+    if (pdu.enclosureItem !== undefined) {
+        ret.parameters.push({
+            pi: PI_ENCLOSURE_ITEM,
+            value: Buffer.from([ pdu.enclosureItem ]),
+        });
+    }
+    if (pdu.userData) {
+        ret.parameters.push({
+            pi: PI_USER_DATA,
+            value: pdu.userData,
+        });
+    }
+    return encodeSPDU(ret);
+}
+
+// #endregion encoders
 
 // #endregion connection state
 
@@ -601,7 +2927,7 @@ function parseConnectAcceptItem (pg: SessionParameterGroup): ConnectAcceptItem |
             }
             case (PI_UPPER_LIMIT_SERIAL_NUMBER): {
                 if (param.value.length !== 1) {
-                    return ERR_PI_LENGTH; 
+                    return ERR_PI_LENGTH;
                 }
                 cai.upperLimitSerialNumber = param.value[0];
                 break;
@@ -1119,53 +3445,152 @@ function parse_PR_SPDU (spdu: SPDU): PREPARE_SPDU | number {
     };
 }
 
+/**
+ * @summary Handle an "invalid intersection" between the SPM state and an event.
+ * @description
+ *
+ * This function handles an "invalid intersection" between the Session Protocol
+ * Machine (SPM) state and an event received. This can be thought of as an
+ * "invalid sequence" handler. An example of an invalid sequence would be
+ * sending an ABORT before a connection was ever established.
+ *
+ * This procedure is described in
+ * [ITU Recommendation X.225 (1995)](https://www.itu.int/rec/T-REC-X.225/en),
+ * Annex A, Section A.4.1.
+ *
+ * @param state The input state
+ * @returns The new state
+ */
+export
+function handleInvalidSequence (state: SessionServiceConnectionState): SessionServiceConnectionState {
+    // Section A.4.1.1 is unhandled.
+    const response: ABORT_SPDU = {};
+    const tsdu = encode_ABORT_SPDU(response);
+    state.localEvents.emit("ABORT", response);
+    state.localEvents.emit("TSDU", tsdu);
+    state.TIM = setTimeout(() => state.transport.disconnect(), TIMER_TIME_IN_MS); // TODO: Make this configurable.
+    return state;
+}
+
 export
 function handleSPDU (state: SessionServiceConnectionState, spdu: SPDU): [ state: SessionServiceConnectionState, err?: number ] {
     switch (spdu.si) {
         case (SI_CN_SPDU): {
-            if (state.phase !== SessionServicePhase.establishment) {
-                return [ state, ERR_INVALID_SEQ ];
-            }
             const cn = parse_CN_SPDU(spdu);
             if (typeof cn === "number") {
                 return [ state, cn ];
             }
-            if (state.onCONNECT) {
-                state.onCONNECT(cn);
-            }
-            state.phase = SessionServicePhase.dataTransfer;
-            return [ state ];
+            state.peerEvents.emit("CONNECT", cn);
+            const newState = dispatch_CN(state, cn);
+            return [ newState ];
         }
-        // TODO: Actually use these.
         case (SI_OA_SPDU): {
-            break;
+            // TODO: Abort if protocol is version 1.
+            const oa = parse_OA_SPDU(spdu);
+            if (typeof oa === "number") {
+                return [ state, oa ];
+            }
+            state.peerEvents.emit("OVERFLOW_ACCEPT", oa);
+            const newState = dispatch_OA(state, oa, state.connectData);
+            return [ newState ];
         }
         case (SI_CDO_SPDU): {
-            break;
+            const cdo = parse_CDO_SPDU(spdu);
+            if (typeof cdo === "number") {
+                return [ state, cdo ];
+            }
+            state.peerEvents.emit("CONNECT_DATA_OVERFLOW", cdo);
+            const newState = dispatch_CDO(state, cdo);
+            return [ newState ];
         }
         case (SI_AC_SPDU): {
-            break;
+            const ac = parse_AC_SPDU(spdu);
+            if (typeof ac === "number") {
+                return [ state, ac ];
+            }
+            state.peerEvents.emit("ACCEPT", ac);
+            const newState = dispatch_AC(state, ac);
+            return [ newState ];
         }
         case (SI_RF_SPDU): {
-            break;
+            const rf = parse_RF_SPDU(spdu);
+            if (typeof rf === "number") {
+                return [ state, rf ];
+            }
+            state.peerEvents.emit("REFUSE", rf);
+            const r: boolean = (rf.transportDisconnect === TRANSPORT_DISCONNECT_KEPT);
+            if (r) {
+                const newState = dispatch_RF_r(state);
+                return [ newState ];
+            } else {
+                const newState = dispatch_RF_nr(state);
+                return [ newState ];
+            }
         }
         case (SI_FN_SPDU): {
-            break;
+            const fn = parse_FN_SPDU(spdu);
+            if (typeof fn === "number") {
+                return [ state, fn ];
+            }
+            state.peerEvents.emit("FINISH", fn);
+            const r: boolean = (fn.transportDisconnect === TRANSPORT_DISCONNECT_KEPT);
+            if (r) {
+                const newState = dispatch_FN_r(state, fn);
+                return [ newState ];
+            } else {
+                const newState = dispatch_FN_nr(state);
+                return [ newState ];
+            }
         }
         case (SI_DN_SPDU): {
-            break;
+            const dn = parse_DN_SPDU(spdu);
+            if (typeof dn === "number") {
+                return [ state, dn ];
+            }
+            state.peerEvents.emit("DISCONNECT", dn);
+            const newState = dispatch_DN(state);
+            return [ newState ];
         }
         case (SI_NF_SPDU): {
-            break;
+            const nf = parse_NF_SPDU(spdu);
+            if (typeof nf === "number") {
+                return [ state, nf ];
+            }
+            // state.peerEvents.emit("", nf);
+            const newState = dispatch_NF(state);
+            return [ newState ];
         }
         case (SI_AB_SPDU): {
-            break;
+            const ab = parse_AB_SPDU(spdu);
+            if (typeof ab === "number") {
+                return [ state, ab ];
+            }
+            state.peerEvents.emit("ABORT", ab);
+            const r: boolean = (ab.transportDisconnect === TRANSPORT_DISCONNECT_KEPT);
+            if (r) {
+                const newState = dispatch_AB_r(state, ab);
+                return [ newState ];
+            } else {
+                const newState = dispatch_AB_nr(state, ab);
+                return [ newState ];
+            }
         }
         case (SI_AA_SPDU): {
-            break;
+            const aa = parse_AA_SPDU(spdu);
+            if (typeof aa === "number") {
+                return [ state, aa ];
+            }
+            // state.peerEvents.emit("", nf);
+            const newState = dispatch_AA(state);
+            return [ newState ];
         }
         case (SI_DT_SPDU): {
-            break;
+            const dt = parse_DT_SPDU(spdu);
+            if (typeof dt === "number") {
+                return [ state, dt ];
+            }
+            const newState = dispatch_DT(state, dt);
+            return [ newState ];
         }
         // case (SI_EX_SPDU): {
         //     break;
@@ -1210,7 +3635,16 @@ function handleSPDU (state: SessionServiceConnectionState, spdu: SPDU): [ state:
         //     break;
         // }
         case (SI_PR_SPDU): {
-            break;
+            const pr = parse_PR_SPDU(spdu);
+            if (typeof pr === "number") {
+                return [ state, pr ];
+            }
+            if (pr.prepareType === PREPARE_TYPE_ABORT) {
+                const newState = dispatch_PR_AB(state);
+                return [ newState ];
+            } else {
+                return [ state, ERR_UNSUPPORTED_PREPARE_TYPE ];
+            }
         }
         // case (SI_ER_SPDU): {
         //     break;
@@ -1406,7 +3840,7 @@ function receiveTSDU (conn: SessionServiceConnectionState, tsdu: Buffer): [ spdu
         spdus.push(spdu);
     }
     if ((spdus.length === 1) && category_2_spdus.has(spdus[0].si)) {
-        return [ [], ERR_SINGLE_SPDU_IN_TSDU ]; 
+        return [ [], ERR_SINGLE_SPDU_IN_TSDU ];
     }
     newConn = {
         ...newConn,
