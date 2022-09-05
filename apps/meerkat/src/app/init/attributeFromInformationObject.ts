@@ -37,7 +37,9 @@ function attributeFromInformationObject (io: ATTRIBUTE, name?: string): Attribut
         obsolete: io["&obsolete"] ?? false,
         usage: io["&usage"] ?? AttributeUsage_userApplications,
         ldapSyntax: io["&ldapSyntax"],
-        ldapNames: io["&ldapName"],
+        ldapNames: (io["&ldapName"]?.length || !name)
+            ? io["&ldapName"]
+            : [ name ],
         ldapDescription: io["&ldapDesc"],
         compatibleMatchingRules: new Set(),
         validator: io.decoderFor["&Type"]

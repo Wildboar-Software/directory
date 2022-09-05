@@ -1557,9 +1557,26 @@ interface Configuration {
      */
     vendorVersion?: string;
 
+    /**
+     * If true, the `userPwd` will contain the actual encrypted password value,
+     * rather than a zero-length encrypted password. Meerkat DSA does not
+     * disclose this password by default to prevent offline dictionary attacks,
+     * but this may be necessary to enable for interoperability reasons.
+     */
+    revealUserPwdEncryptedValues: boolean;
+
     authn: AuthenticationConfiguration;
 
     log: {
+        /**
+         * If true, Meerkat DSA will log distinguished names of bound clients,
+         * if they are not bound anonymously. It may be useful to log this for
+         * debugging purposes, but it may also be desirable to leave this
+         * disabled, because Meerkat DSA logs IP addresses, and tying an IP
+         * address to a distinguished name could have data privacy law
+         * implications.
+         */
+        boundDN: boolean;
         level: LogLevel;
         color: boolean;
         timestamp: boolean;
@@ -1994,7 +2011,7 @@ interface Configuration {
      * but the `entryTtl` attribute was not supplied in the attributes of the
      * created entry. This value is the number of seconds before the entry
      * should expire and disappear.
-     * 
+     *
      * @see {@link https://www.rfc-editor.org/rfc/rfc2589.html IETF RFC 2589}
      */
     defaultEntryTTL: number;

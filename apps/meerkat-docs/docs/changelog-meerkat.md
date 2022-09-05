@@ -1,5 +1,44 @@
 # Changelog for Meerkat DSA
 
+## Version 1.2.4
+
+- Log much more information on LDAP searches
+  - Almost the entire search request is logged.
+  - The number of search results returned is logged.
+  - This was implemented specifically to make it easier to diagnose issues with
+    integration with tools that use LDAP authentication. Often, LDAP searches
+    are used to enumerate users, so it is important to be able to debug these.
+- Log bound distinguished names if the `MEERKAT_LOG_BOUND_DN` environment
+  variable is set to `1`.
+
+No administrative action is needed to upgrade to this version. Just download it
+and use it.
+
+## Version 1.2.3
+
+- Fixed a bug where `uid` and `dc` did not have LDAP names.
+
+No administrative action is needed to upgrade to this version. Just download it
+and use it.
+
+## Version 1.2.2
+
+- Fixed access controls being too restrictive on LDAP users. Now LDAP user
+  access controls work just like DAP user access controls.
+- Added the `MEERKAT_REVEAL_USER_PWD` configuration option, which allows for
+  hashed password values to be disclosed in the `userPwd` attribute.
+
+No administrative action is needed to upgrade to this version. Just download it
+and use it.
+
+## Version 1.2.1
+
+- Fixed invalid object classes, such as `inetOrgPerson`, which did not permit
+  some optional attributes that it should have, such as `mail`.
+
+No administrative action is needed to upgrade to this version. Just download it
+and use it.
+
 ## Version 1.2.0
 
 - The List Continuation Reference (LCR) procedure is now supported.

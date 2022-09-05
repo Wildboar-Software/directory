@@ -23,7 +23,9 @@ function nameFormFromInformationObject (io: NAME_FORM, name?: string[]): NameFor
         namedObjectClass: io["&namedObjectClass"]["&id"],
         mandatoryAttributes: io["&MandatoryAttributes"].map((attr) => attr["&id"]),
         optionalAttributes: io["&OptionalAttributes"]?.map((attr) => attr["&id"]) ?? [],
-        name: name ?? io["&ldapName"],
+        name: (io["&ldapName"]?.length || !name)
+            ? io["&ldapName"]
+            : name,
         description: io["&ldapDesc"],
         obsolete: false,
     };

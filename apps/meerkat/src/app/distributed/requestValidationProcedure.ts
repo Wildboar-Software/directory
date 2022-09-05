@@ -93,6 +93,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArguments.ta";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import DAPAssociation from "../dap/DAPConnection";
+import LDAPAssociation from "../ldap/LDAPConnection";
 import {
     AuthenticationLevel_basicLevels_level_none,
     AuthenticationLevel_basicLevels_level_strong,
@@ -542,7 +543,7 @@ function getEffectiveAuthLevel (
     trustClientDSAForIBRA: boolean,
     dapSignatureValid: boolean,
 ): AuthenticationLevel {
-    if (assn instanceof DAPAssociation) {
+    if ((assn instanceof DAPAssociation) || (assn instanceof LDAPAssociation)) {
         if (!("basicLevels" in assn.authLevel)) {
             return assn.authLevel;
         }
@@ -740,7 +741,7 @@ async function requestValidationProcedure (
      * Recommendation X.511 (2019), Section 7.3.
      */
     if (
-        (assn instanceof DAPAssociation)
+        ((assn instanceof DAPAssociation) || (assn instanceof LDAPAssociation))
         && commonArgs?.requestor
         && assn.boundNameAndUID?.dn
         && !compareDistinguishedName(
@@ -1005,7 +1006,7 @@ async function requestValidationProcedure (
             invokeID: printInvokeId(req.invokeId),
         });
     }
-    if (assn instanceof DAPAssociation) {
+    if ((assn instanceof DAPAssociation) || (assn instanceof LDAPAssociation)) {
         if (
             chainedArgument.authenticationLevel
             && ("basicLevels" in chainedArgument.authenticationLevel)

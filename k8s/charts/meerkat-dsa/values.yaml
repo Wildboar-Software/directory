@@ -132,6 +132,7 @@ local_qualifier_points_for_using_tls_1_0: 32
 local_qualifier_points_for_using_tls_1_1: 64
 local_qualifier_points_for_using_tls_1_2: 128
 local_qualifier_points_for_using_tls_1_3: 256
+log_bound_dn: false
 # log_file: /var/log/meerkat.log
 # log_file_max_files: 100
 # log_file_max_size: "1000000"
@@ -161,6 +162,7 @@ ob_auto_accept: false
 open_top_level: false
 # private_key_engine: pkcs11
 prohibit_chaining: false
+reveal_user_pwd: false
 src_parallelism: 0
 # scvp_attr_cert_checks:
 #   - "2.5.4.3"

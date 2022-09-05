@@ -551,11 +551,13 @@ const config: Configuration = {
     vendorVersion: process.env.MEERKAT_VENDOR_VERSION?.length
         ? process.env.MEERKAT_VENDOR_VERSION
         : undefined,
+    revealUserPwdEncryptedValues: (process.env.MEERKAT_REVEAL_USER_PWD === "1"),
     authn: {
         lookupPkiPathForUncertifiedStrongAuth: (process.env.MEERKAT_LOOKUP_UNCERT_STRONG_AUTH === "1"),
         attributeCertificationPath,
     },
     log: {
+        boundDN: (process.env.MEERKAT_LOG_BOUND_DN === "1"),
         level: logLevel as LogLevel,
         console: !logNoConsole,
         color: !logNoColor,

@@ -172,5 +172,7 @@
     "lcr_invalid_invoke_id_response": "Invalid invokeID format in response from remote DSA {{ae}} in chained list continuation for invocation {{iid}}. This is either a bug or malicious behavior.",
     "lcr_mismatch_invoke_id": "InvokeID in response from remote DSA {{ae}} in chained list continuation for invocation {{iid}} did not match the request. This is a bug. Please report it to https://github.com/Wildboar-Software/directory/issues.",
     "lcr_missing_opcode": "Missing opCode in response from remote DSA {{ae}} in chained list continuation for invocation {{iid}}. This is either a bug or malicious behavior.",
-    "lcr_mismatch_opcode": "OpCode in response from remote DSA {{ae}} in chained list continuation for invocation {{iid}} was not the opCode for list. This is either a bug or malicious behavior."
+    "lcr_mismatch_opcode": "OpCode in response from remote DSA {{ae}} in chained list continuation for invocation {{iid}} was not the opCode for list. This is either a bug or malicious behavior.",
+    "ldap_search": "{{cid}}#{{mid}}: LDAP search: SCOPE={{scope}}; BASE='{{base}}'; FILTER='{{filter}}'; SELECTION='{{sel}}'; TYPES_ONLY={{typesOnly}}; DEREF_ALIASES={{deref}}; SIZE_LIMIT={{size}}; TIME_LIMIT={{time}}.",
+    "ldap_search_result": "{{cid}}#{{mid}}: LDAP search returned {{count}} results."
 }

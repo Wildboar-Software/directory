@@ -66,6 +66,7 @@ import {
 } from "@wildboar/ldap/src/lib/extensions";
 import decodeLDAPOID from "@wildboar/ldap/src/lib/decodeLDAPOID";
 import { strict as assert } from "assert";
+import LDAPAssociation from "../ldap/LDAPConnection";
 
 /**
  * @summary Break apart an X.500 SearchResult into LDAP search results
@@ -81,12 +82,13 @@ import { strict as assert } from "assert";
  * @function
  * @async
  */
-async function getSearchResultEntries (
+function getSearchResultEntries (
     ctx: Context,
     searchResult: SearchResult,
     onEntry: (entry: SearchResultEntry) => void,
-): Promise<void> {
+): number {
     const data = getOptionallyProtectedValue(searchResult);
+    let count: number = 0;
     if ("searchInfo" in data) {
         for (const einfo of data.searchInfo.entries) {
             try {
@@ -101,11 +103,13 @@ async function getSearchResultEntries (
                 ctx.log.error(ctx.i18n.t("err:error_converting_entry_to_ldap", { e }));
             }
         }
+        count += data.searchInfo.entries.length;
     } else if ("uncorrelatedSearchInfo" in data) {
         for (const resultSet of data.uncorrelatedSearchInfo) {
-            getSearchResultEntries(ctx, resultSet, onEntry);
+            count += getSearchResultEntries(ctx, resultSet, onEntry);
         }
     }
+    return count;
 }
 
 /**
@@ -116,8 +120,9 @@ async function getSearchResultEntries (
  * ITU X.518 (2016), Section 20.7.
  *
  * @param ctx The context object
+ * @param assn The LDAP association.
  * @param res The X.500 directory result that is to be translated to an LDAP result
- * @param messageId The message ID of the original LDAP request
+ * @param req The message of the original LDAP request
  * @param onEntry A callback that takes a search result
  * @param foundDSE The DSE returned by the Find DSE procedure.
  * @returns An LDAP message response
@@ -128,6 +133,7 @@ async function getSearchResultEntries (
 export
 function dapReplyToLDAPResult (
     ctx: Context,
+    assn: LDAPAssociation,
     res: Result,
     req: LDAPMessage,
     onEntry: (entry: SearchResultEntry) => void,
@@ -296,7 +302,18 @@ function dapReplyToLDAPResult (
     if (compareCode(res.opCode, search["&operationCode"]!)) {
         const result = search.decoderFor["&ResultType"]!(res.result!);
         const data = getOptionallyProtectedValue(result);
-        getSearchResultEntries(ctx, result, onEntry);
+        const count = getSearchResultEntries(ctx, result, onEntry);
+        const logInfo = {
+            remoteFamily: assn.socket.remoteFamily,
+            remoteAddress: assn.socket.remoteAddress,
+            remotePort: assn.socket.remotePort,
+            association_id: assn.id,
+        };
+        ctx.log.debug(ctx.i18n.t("log:ldap_search_result", {
+            cid: assn.id,
+            mid: req.messageID,
+            count,
+        }), logInfo);
         const responseControls: Control[] = [];
         if (sortRequestControl) {
             responseControls.push(new Control(

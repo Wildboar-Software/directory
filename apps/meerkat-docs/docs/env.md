@@ -96,7 +96,7 @@ other Meerkat DSA-related things.
 
 ## MEERKAT_ADMINISTRATOR_EMAIL_PUBLIC
 
-If set to `1`, the administrator email configured by 
+If set to `1`, the administrator email configured by
 [`MEERKAT_ADMINISTRATOR_EMAIL`](#meerkatadministratoremail) will be exposed in
 the root DSE as a value of the `administratorsAddress` attribute.
 
@@ -415,6 +415,34 @@ for using TLS version 1.3 to secure their traffic. These points are added
 on top of the points granted via the
 `MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS` environment variable.
 
+## MEERKAT_LOG_BOUND_DN
+
+If set to `1`, Meerkat DSA will log the distinguished names of bound clients, if
+they have authenticated using a mechanism that relates to an entry in the DIT,
+such as simple authentication (as opposed to anonymous access).
+
+:::tip
+
+It may be desirable to enable this for debugging integrations or for identifying
+brute force attacks.
+
+:::
+
+:::caution
+
+It might **NOT** be desirable to enable this because doing so could have legal
+implications. Meerkat DSA logs IP addresses. If Meerkat DSA also logs
+distinguished names, and if distinguished names can readily be related to a real
+person (e.g. `C=US,ST=FL,CN=John Doe`), it could be argued that the logs are
+storing Personally-Identifiable Information (PII), because the real person's IP
+address is stored in the logs along with their identity.
+
+Consult with an attorney on the legality of using this. It may be safer to only
+enable this in corporate or home environments where no such right to privacy
+may exist.
+
+:::
+
 ## MEERKAT_LOG_FILE
 
 The filepath of the Meerkat DSA's log file. If set, Meerkat DSA will log to
@@ -697,6 +725,52 @@ OpenSSL can use to obtain a private key.
 If set to `1`, Meerkat DSA will not chain any requests. If you expect to operate
 your DSA instance in isolation from all other DSAs, it is recommended to enable
 this (meaning that chaining would be disabled).
+
+## MEERKAT_REVEAL_USER_PWD
+
+If set to `1`, Meerkat DSA will return non-zero-length `OCTET STRING`s in the
+`encryptedString` field of the `userPwd` attribute's value. Meerkat DSA does
+not store passwords unencrypted.
+
+For reference, this is the `userPwd` attribute's ASN.1 specification:
+
+```asn1
+
+userPwd	ATTRIBUTE ::= {
+  WITH SYNTAX              UserPwd
+  EQUALITY MATCHING RULE   userPwdMatch
+  SINGLE VALUE             TRUE
+  LDAP-SYNTAX              userPwdDescription.&id
+  LDAP-NAME                {"userPwd"}
+  ID                       id-at-userPwd }
+
+UserPwd ::= CHOICE {
+  clear                 UTF8String,
+  encrypted             SEQUENCE {
+    algorithmIdentifier   AlgorithmIdentifier{{SupportedAlgorithms}},
+    encryptedString       OCTET STRING,
+    ...},
+  ...}
+
+```
+
+:::caution
+
+Meerkat DSA does not do this by default because it could expose your users to
+offline dictionary attacks, which is an exponentially greater threat than
+automated brute-force password guessing, because it can be done an order of
+magnitude faster.
+
+If you enable this feature, attackers that have permissions to view values of
+the `userPwd` attribute can download / save those values and attempt rapid,
+repeated guesses of the hashed password without the rate-limiting that Meerkat
+DSA imposes.
+
+It is recommended that you keep this disabled unless you know you need it for
+some reason. If enabled, you should configure access controls to prevent
+unauthorized users from viewing values of the `userPwd` attribute.
+
+:::
 
 ## MEERKAT_SCR_PARALLELISM
 

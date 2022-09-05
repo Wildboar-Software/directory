@@ -112,6 +112,11 @@ import { telephoneNumber } from "@wildboar/x500/src/lib/modules/SelectedAttribut
 export { telephoneNumber } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/telephoneNumber.oa";
 import { pilotObjectClass } from "../Cosine/pilotObjectClass.va";
 export { pilotObjectClass } from "../Cosine/pilotObjectClass.va";
+import { telexNumber } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/telexNumber.oa";
+import { preferredDeliveryMethod } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/preferredDeliveryMethod.oa";
+import { destinationIndicator } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/destinationIndicator.oa";
+import { registeredAddress } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/registeredAddress.oa";
+import { x121Address } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/x121Address.oa";
 
 
 /* START_OF_SYMBOL_DEFINITION domain */
@@ -172,7 +177,30 @@ const domain: OBJECT_CLASS = {
     "&Superclasses": [ top, ] /* OBJECT_FIELD_SETTING */,
     "&kind": structural /* OBJECT_FIELD_SETTING */,
     "&MandatoryAttributes": [ dc, ] /* OBJECT_FIELD_SETTING */,
-    "&OptionalAttributes": [ associatedName, organizationName, description, businessCategory, seeAlso, searchGuide, userPassword, localityName, stateOrProvinceName, physicalDeliveryOfficeName, postalAddress, postalCode, postOfficeBox, streetAddress, facsimileTelephoneNumber, internationalISDNNumber, telephoneNumber, ] /* OBJECT_FIELD_SETTING */,
+    "&OptionalAttributes": [
+        associatedName,
+        organizationName,
+        description,
+        businessCategory,
+        seeAlso,
+        searchGuide,
+        userPassword,
+        localityName,
+        stateOrProvinceName,
+        physicalDeliveryOfficeName,
+        postalAddress,
+        postalCode,
+        postOfficeBox,
+        streetAddress,
+        facsimileTelephoneNumber,
+        internationalISDNNumber,
+        telephoneNumber,
+        telexNumber,
+        preferredDeliveryMethod,
+        destinationIndicator,
+        registeredAddress,
+        x121Address,
+    ] /* OBJECT_FIELD_SETTING */,
     "&ldapName": ["domain"] /* OBJECT_FIELD_SETTING */,
     "&id": new _OID([13,], pilotObjectClass) /* OBJECT_FIELD_SETTING *//* UNIQUE_OBJECT_FIELD_SETTING */,
 };

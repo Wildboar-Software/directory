@@ -98,15 +98,27 @@ import { initials } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/
 export { initials } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/initials.oa";
 import { netscapeDirectory } from "../InetOrgPerson/netscapeDirectory.va";
 export { netscapeDirectory } from "../InetOrgPerson/netscapeDirectory.va";
+import { labeledURI } from "../OpenLDAPCoreSchema/labeledURI.oa";
+import { mail } from "../Cosine/mail.oa";
+import { mobileTelephoneNumber } from "../Cosine/mobileTelephoneNumber.oa";
+import { organizationName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationName.oa";
+import { pagerTelephoneNumber } from "../Cosine/pagerTelephoneNumber.oa";
+import { roomNumber } from "../Cosine/roomNumber.oa";
+import { secretary } from "../Cosine/secretary.oa";
+import { uid } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uid.oa";
+import { userCertificate } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userCertificate.oa";
+import { uniqueIdentifier } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uniqueIdentifier.oa";
+import { preferredLanguage } from "./preferredLanguage.oa";
+import { userSMIMECertificate } from "../H323-X500-Schema/userSMIMECertificate.oa";
 
 
 /* START_OF_SYMBOL_DEFINITION inetOrgPerson */
 /**
  * @summary inetOrgPerson
  * @description
- * 
+ *
  * ### ASN.1 Definition:
- * 
+ *
  * ```asn1
  * inetOrgPerson OBJECT-CLASS ::= {
  *     SUBCLASS OF     {organizationalPerson}
@@ -145,7 +157,7 @@ export { netscapeDirectory } from "../InetOrgPerson/netscapeDirectory.va";
  *     ID                { netscapeDirectory 2 2 }
  * }
  * ```
- * 
+ *
  * @constant
  * @type {OBJECT_CLASS}
  * @implements {OBJECT_CLASS}
@@ -159,7 +171,31 @@ const inetOrgPerson: OBJECT_CLASS = {
     },
     "&Superclasses": [ organizationalPerson, ] /* OBJECT_FIELD_SETTING */,
     "&kind": structural /* OBJECT_FIELD_SETTING */,
-    "&OptionalAttributes": [ audio, businessCategory, carLicense, departmentNumber, displayName, employeeNumber, employeeType, givenName, homeTelephoneNumber, homePostalAddress, initials, ] /* OBJECT_FIELD_SETTING */,
+    "&OptionalAttributes": [
+        audio,
+        businessCategory,
+        carLicense,
+        departmentNumber,
+        displayName,
+        employeeNumber,
+        employeeType,
+        givenName,
+        homeTelephoneNumber,
+        homePostalAddress,
+        initials,
+        labeledURI,
+        mail,
+        mobileTelephoneNumber,
+        organizationName,
+        pagerTelephoneNumber,
+        roomNumber,
+        secretary,
+        uid,
+        userCertificate,
+        uniqueIdentifier,
+        preferredLanguage,
+        userSMIMECertificate,
+    ] /* OBJECT_FIELD_SETTING */,
     "&ldapName": ["inetOrgPerson"] /* OBJECT_FIELD_SETTING */,
     "&ldapDesc": "RFC2798: Internet Organizational Person" /* OBJECT_FIELD_SETTING */,
     "&id": new _OID([2, 2,], netscapeDirectory) /* OBJECT_FIELD_SETTING *//* UNIQUE_OBJECT_FIELD_SETTING */,

@@ -78,6 +78,10 @@ import { info } from "../Cosine/info.oa";
 export { info } from "../Cosine/info.oa";
 import { pilotObjectClass } from "../Cosine/pilotObjectClass.va";
 export { pilotObjectClass } from "../Cosine/pilotObjectClass.va";
+import { manager } from "./manager.oa";
+import { uniqueIdentifier } from "./uniqueIdentifier.oa";
+import { dITRedirect } from "./dITRedirect.oa";
+import { audio } from "./audio.oa";
 
 
 /* START_OF_SYMBOL_DEFINITION pilotObject */
@@ -118,7 +122,13 @@ const pilotObject: OBJECT_CLASS = {
     encoderFor: {
     },
     "&Superclasses": [ top, ] /* OBJECT_FIELD_SETTING */,
-    "&OptionalAttributes": [ info, ] /* OBJECT_FIELD_SETTING */,
+    "&OptionalAttributes": [
+        info,
+        manager,
+        uniqueIdentifier,
+        dITRedirect,
+        audio,
+    ] /* OBJECT_FIELD_SETTING */,
     "&ldapName": ["pilotObject"] /* OBJECT_FIELD_SETTING */,
     "&ldapDesc": "RFC1274: pilot object" /* OBJECT_FIELD_SETTING */,
     "&id": new _OID([3,], pilotObjectClass) /* OBJECT_FIELD_SETTING *//* UNIQUE_OBJECT_FIELD_SETTING */,

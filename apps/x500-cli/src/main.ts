@@ -32,6 +32,7 @@ import dap_add_residentialPerson from "./yargs/dap_add_residentialPerson";
 import dap_add_process from "./yargs/dap_add_process";
 import dap_add_device from "./yargs/dap_add_device";
 import dap_add_dmd from "./yargs/dap_add_dmd";
+import dap_add_inetOrgPerson from "./yargs/dap_add_inetOrgPerson";
 import dap_list from "./yargs/dap_list";
 import dap_mod_add_acs from "./yargs/dap_mod_add_acs";
 import dap_mod_add_aci from "./yargs/dap_mod_add_aci";
@@ -136,6 +137,7 @@ async function main () {
                             .command(dap_add_process(ctx))
                             .command(dap_add_device(ctx))
                             .command(dap_add_dmd(ctx))
+                            .command(dap_add_inetOrgPerson(ctx))
                             .demandCommand()
                             ;
                     })
@@ -249,6 +251,17 @@ async function main () {
             .command("seed-countries <base>", "seed directory with countries", (seedYargs) => {
                 return seedYargs
                     .positional("base", {
+                        describe: "The base object under which to place the countries.",
+                    })
+                    ;
+            }, async (argv) => {
+                const connection = await bind(ctx, argv);
+                await do_seedCountries(ctx, connection, argv);
+                await connection.close();
+            })
+            .command("seed-org <orgname>", "seed directory with an organization", (seedYargs) => {
+                return seedYargs
+                    .positional("orgname", {
                         describe: "The base object under which to place the countries.",
                     })
                     ;

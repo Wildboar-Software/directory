@@ -50,7 +50,7 @@
     "@wildboar/scvp": "^1.0.4",
     "@wildboar/tal": "^1.0.6",
     "@wildboar/x400": "^1.0.4",
-    "@wildboar/x500": "^1.0.51",
+    "@wildboar/x500": "^1.0.54",
     "@wildboar/x700": "^1.0.3",
     "applicationinsights": "^2.3.4",
     "applicationinsights-native-metrics": "^0.0.7",
