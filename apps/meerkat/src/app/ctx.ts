@@ -557,6 +557,7 @@ const config: Configuration = {
         attributeCertificationPath,
     },
     log: {
+        boundDN: (process.env.MEERKAT_LOG_BOUND_DN === "1"),
         level: logLevel as LogLevel,
         console: !logNoConsole,
         color: !logNoColor,

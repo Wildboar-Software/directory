@@ -47,9 +47,6 @@ import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
 import getServerStatistics from "../telemetry/getServerStatistics";
 import getConnectionStatistics from "../telemetry/getConnectionStatistics";
 import {
-    SearchRequest_scope_baseObject,
-} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchRequest-scope.ta";
-import {
     modifyPassword,
     whoAmI,
     startTLS,
@@ -73,6 +70,16 @@ import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics"
 import isDebugging from "is-debugging";
 import { strict as assert } from "assert";
 import { stringifyDN } from "../x500/stringifyDN";
+import {
+    SearchRequest_scope,
+    SearchRequest_scope_baseObject,
+    SearchRequest_scope_singleLevel,
+    SearchRequest_scope_wholeSubtree,
+} from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchRequest-scope.ta";
+import decodeLDAPDN from "./decodeLDAPDN";
+import {
+    stringifyFilter,
+} from "@wildboar/ldap/src/lib/stringifiers/Filter";
 
 const UNIVERSAL_SEQUENCE_TAG: number = 0x30;
 
@@ -92,6 +99,14 @@ function isRootSubschemaDN (dn: Uint8Array): boolean {
     ].includes(dnstr);
 }
 
+function scopeToString (scope: SearchRequest_scope): string {
+    return {
+        [SearchRequest_scope_baseObject]: "base",
+        [SearchRequest_scope_singleLevel]: "oneLevel",
+        [SearchRequest_scope_wholeSubtree]: "subtree",
+    }[scope] ?? "UNKNOWN";
+}
+
 async function handleRequest (
     ctx: MeerkatContext,
     assn: LDAPAssociation,
@@ -108,6 +123,26 @@ async function handleRequest (
         remotePort: assn.socket.remotePort,
         association_id: assn.id,
     });
+    if ("searchRequest" in message.protocolOp) {
+        const sr = message.protocolOp.searchRequest;
+        ctx.log.debug(ctx.i18n.t("log:ldap_search", {
+            mid: message.messageID,
+            cid: assn.id,
+            scope: scopeToString(sr.scope),
+            base: stringifyDN(ctx, decodeLDAPDN(ctx, sr.baseObject)).slice(0, 128),
+            filter: stringifyFilter(sr.filter).slice(0, 128),
+            sel: sr.attributes.map((attr) => Buffer.from(attr.buffer).toString("utf-8")).join(", "),
+            typesOnly: sr.typesOnly ? "TRUE": "FALSE",
+            deref: sr.derefAliases,
+            size: sr.sizeLimit,
+            time: sr.timeLimit,
+        }), {
+            remoteFamily: assn.socket.remoteFamily,
+            remoteAddress: assn.socket.remoteAddress,
+            remotePort: assn.socket.remotePort,
+            association_id: assn.id,
+        });
+    }
     // let toWriteBuffer: Buffer = Buffer.alloc(0);
     // let resultsBuffered: number = 0;
     const onEntry = (searchResEntry: SearchResultEntry): void => {
@@ -194,7 +229,7 @@ async function handleRequest (
     stats.request = result.request ?? stats.request;
     stats.outcome = result.outcome ?? stats.outcome;
     const unprotectedResult = getOptionallyProtectedValue(result.result);
-    const ldapResult = dapReplyToLDAPResult(ctx, {
+    const ldapResult = dapReplyToLDAPResult(ctx, assn, {
         invokeId: dapRequest.invokeId,
         opCode: dapRequest.opCode,
         result: unprotectedResult.result,
@@ -712,11 +747,12 @@ class LDAPAssociation extends ClientAssociation {
                                 }), extraLogData);
                             } else {
                                 ctx.log.info(ctx.i18n.t("log:connection_bound_auth", {
+                                    context: ctx.config.log.boundDN ? "with_dn" : undefined,
                                     source: remoteHostIdentifier,
                                     protocol: "LDAP",
                                     aid: this.id,
                                     dn: this.boundNameAndUID?.dn
-                                        ? stringifyDN(ctx, this.boundNameAndUID.dn)
+                                        ? stringifyDN(ctx, this.boundNameAndUID.dn).slice(0, 512)
                                         : "",
                                 }), extraLogData);
                             }

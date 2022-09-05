@@ -583,11 +583,12 @@ class DSPAssociation extends ClientAssociation {
             }), extraLogData);
         } else {
             ctx.log.info(ctx.i18n.t("log:connection_bound_auth", {
+                context: ctx.config.log.boundDN ? "with_dn" : undefined,
                 source: remoteHostIdentifier,
                 protocol: "DSP",
                 aid: this.id,
                 dn: this.boundNameAndUID?.dn
-                    ? stringifyDN(ctx, this.boundNameAndUID.dn)
+                    ? stringifyDN(ctx, this.boundNameAndUID.dn).slice(0, 512)
                     : "",
             }), extraLogData);
         }

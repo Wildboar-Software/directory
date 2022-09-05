@@ -1,5 +1,19 @@
 # Changelog for Meerkat DSA
 
+## Version 1.2.4
+
+- Log much more information on LDAP searches
+  - Almost the entire search request is logged.
+  - The number of search results returned is logged.
+  - This was implemented specifically to make it easier to diagnose issues with
+    integration with tools that use LDAP authentication. Often, LDAP searches
+    are used to enumerate users, so it is important to be able to debug these.
+- Log bound distinguished names if the `MEERKAT_LOG_BOUND_DN` environment
+  variable is set to `1`.
+
+No administrative action is needed to upgrade to this version. Just download it
+and use it.
+
 ## Version 1.2.3
 
 - Fixed a bug where `uid` and `dc` did not have LDAP names.

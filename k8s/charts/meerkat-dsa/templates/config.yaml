@@ -36,6 +36,7 @@ data:
   ldap_buffer_size: {{ .Values.ldap_buffer_size | default "1000000" | quote }}
   ldap_port: {{ .Values.ldap_port | default 389 | quote }}
   ldaps_port: {{ .Values.ldaps_port | default 636 | quote }}
+  log_bound_dn: {{ .Values.log_bound_dn | default false | ternary 1 0 | quote }}
   local_qualifier_points_for_using_ssl3: {{ .Values.local_qualifier_points_for_using_starttls | default 8 | quote }}
   local_qualifier_points_for_using_starttls: {{ .Values.local_qualifier_points_for_using_starttls | default 16 | quote }}
   local_qualifier_points_for_using_tls: {{ .Values.local_qualifier_points_for_using_starttls | default 32 | quote }}

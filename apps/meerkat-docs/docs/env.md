@@ -415,6 +415,34 @@ for using TLS version 1.3 to secure their traffic. These points are added
 on top of the points granted via the
 `MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS` environment variable.
 
+## MEERKAT_LOG_BOUND_DN
+
+If set to `1`, Meerkat DSA will log the distinguished names of bound clients, if
+they have authenticated using a mechanism that relates to an entry in the DIT,
+such as simple authentication (as opposed to anonymous access).
+
+:::tip
+
+It may be desirable to enable this for debugging integrations or for identifying
+brute force attacks.
+
+:::
+
+:::caution
+
+It might **NOT** be desirable to enable this because doing so could have legal
+implications. Meerkat DSA logs IP addresses. If Meerkat DSA also logs
+distinguished names, and if distinguished names can readily be related to a real
+person (e.g. `C=US,ST=FL,CN=John Doe`), it could be argued that the logs are
+storing Personally-Identifiable Information (PII), because the real person's IP
+address is stored in the logs along with their identity.
+
+Consult with an attorney on the legality of using this. It may be safer to only
+enable this in corporate or home environments where no such right to privacy
+may exist.
+
+:::
+
 ## MEERKAT_LOG_FILE
 
 The filepath of the Meerkat DSA's log file. If set, Meerkat DSA will log to

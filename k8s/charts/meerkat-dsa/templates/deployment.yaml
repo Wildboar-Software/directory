@@ -264,6 +264,12 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: local_qualifier_points_for_using_tls_1_3
                   optional: true
+            - name: MEERKAT_LOG_BOUND_DN
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: log_bound_dn
+                  optional: true
             - name: MEERKAT_LOG_FILE
               valueFrom:
                 configMapKeyRef:

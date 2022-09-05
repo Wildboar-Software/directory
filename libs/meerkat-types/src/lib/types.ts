@@ -1568,6 +1568,15 @@ interface Configuration {
     authn: AuthenticationConfiguration;
 
     log: {
+        /**
+         * If true, Meerkat DSA will log distinguished names of bound clients,
+         * if they are not bound anonymously. It may be useful to log this for
+         * debugging purposes, but it may also be desirable to leave this
+         * disabled, because Meerkat DSA logs IP addresses, and tying an IP
+         * address to a distinguished name could have data privacy law
+         * implications.
+         */
+        boundDN: boolean;
         level: LogLevel;
         color: boolean;
         timestamp: boolean;
