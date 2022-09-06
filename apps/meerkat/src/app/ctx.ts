@@ -425,7 +425,7 @@ const signingCRLs: CertificateList[] = signingCRLFileContents
     ? parseCRLs(signingCRLFileContents)
     : [];
 
-const signingCertChain: PkiPath = signingCertFileContents
+const signingCertChain: PkiPath | undefined = signingCertFileContents
     ? decodePkiPathFromPEM(signingCertFileContents)
     : undefined;
 
