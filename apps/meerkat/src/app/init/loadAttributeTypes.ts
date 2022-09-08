@@ -59,6 +59,7 @@ import myAccessPointDriver from "../database/drivers/myAccessPoint";
 import nameFormsDriver from "../database/drivers/nameForms";
 import namingContextsDriver from "../database/drivers/namingContexts";
 import nonSpecificKnowledgeDriver from "../database/drivers/nonSpecificKnowledge";
+import numSubordinatesDriver from "../database/drivers/numSubordinates";
 import objectClassDriver from "../database/drivers/objectClass";
 import objectClassesDriver from "../database/drivers/objectClasses";
 import prescriptiveACIDriver from "../database/drivers/prescriptiveACI";
@@ -1220,9 +1221,9 @@ import {
 import {
     dhcpVersion,
 } from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpVersion.oa";
-// import { // Not supported because it would be too computationally expensive to compute access to all subordinates.
-//     numSubordinates,
-// } from "@wildboar/parity-schema/src/lib/modules/DS389CoreSchema/numSubordinates.oa";
+import {
+    numSubordinates,
+} from "@wildboar/parity-schema/src/lib/modules/DS389CoreSchema/numSubordinates.oa";
 import {
     changeNumber,
 } from "@wildboar/parity-schema/src/lib/modules/DSEE/changeNumber.oa";
@@ -4167,7 +4168,7 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         dhcpSubclassesDN,
         dhcpSubnetDN,
         dhcpVersion,
-        // numSubordinates,
+        numSubordinates,
         changeNumber,
         changes,
         changeTime,
@@ -5172,6 +5173,7 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
     ctx.attributeTypes.get(x500at.nameForms["&id"].toString())!.driver = nameFormsDriver;
     ctx.attributeTypes.get(x500at.namingContexts["&id"].toString())!.driver = namingContextsDriver;
     ctx.attributeTypes.get(x500at.nonSpecificKnowledge["&id"].toString())!.driver = nonSpecificKnowledgeDriver;
+    ctx.attributeTypes.get(numSubordinates["&id"].toString())!.driver = numSubordinatesDriver;
     ctx.attributeTypes.get(x500at.objectClass["&id"].toString())!.driver = objectClassDriver;
     ctx.attributeTypes.get(x500at.objectClasses["&id"].toString())!.driver = objectClassesDriver;
     ctx.attributeTypes.get(x500at.prescriptiveACI["&id"].toString())!.driver = prescriptiveACIDriver;
