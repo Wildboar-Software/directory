@@ -102,6 +102,42 @@ import type {
     ATTRIBUTE,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
 import * as x500at from "@wildboar/x500/src/lib/collections/attributes";
+import {
+    entryUUID,
+} from "@wildboar/parity-schema/src/lib/modules/UUID/entryUUID.oa";
+import {
+    entryDN,
+} from "@wildboar/parity-schema/src/lib/modules/RFC5020EntryDN/entryDN.oa";
+import {
+    superiorUUID,
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/superiorUUID.oa";
+import {
+    dynamicSubtrees,
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/dynamicSubtrees.oa";
+import {
+    entryTtl,
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa";
+import {
+    vendorName,
+} from "@wildboar/parity-schema/src/lib/modules/RFC3045VendorInfo/vendorName.oa";
+import {
+    vendorVersion,
+} from "@wildboar/parity-schema/src/lib/modules/RFC3045VendorInfo/vendorVersion.oa";
+import {
+    syncTimestamp,
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/syncTimestamp.oa";
+import {
+    fullVendorVersion,
+} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/fullVendorVersion.oa";
+import {
+    administratorsAddress,
+} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/administratorsAddress.oa";
+import {
+    isMemberOf,
+} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/isMemberOf.oa";
+import {
+    numSubordinates,
+} from "@wildboar/parity-schema/src/lib/modules/DS389CoreSchema/numSubordinates.oa";
 
 const ALL_OPERATIONAL_ATTRIBUTE_TYPES: OBJECT_IDENTIFIER[] = [
     x500at.accessControlScheme["&id"],
@@ -182,6 +218,18 @@ const ALL_OPERATIONAL_ATTRIBUTE_TYPES: OBJECT_IDENTIFIER[] = [
     x500at.supportedFeatures["&id"],
     x500at.supportedLDAPVersion["&id"],
     x500at.supportedSASLMechanisms["&id"],
+    entryUUID["&id"],
+    entryDN["&id"],
+    superiorUUID["&id"],
+    dynamicSubtrees["&id"],
+    entryTtl["&id"],
+    fullVendorVersion["&id"],
+    syncTimestamp["&id"],
+    vendorName["&id"],
+    vendorVersion["&id"],
+    administratorsAddress["&id"],
+    isMemberOf["&id"],
+    numSubordinates["&id"],
 ];
 
 function levelFromString (str: string): AuthenticationLevel_basicLevels_level {
