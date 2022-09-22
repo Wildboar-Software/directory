@@ -1030,7 +1030,7 @@ async function main (): Promise<void> {
                 },
             });
         }).catch(); // This handles the new promise returned by .then().
-    }, 30 * 1000); // Weekly
+    }, 604_800_000); // Weekly
 
     /**
      * This section handles the delayed termination of operational bindings that

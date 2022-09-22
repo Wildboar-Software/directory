@@ -1,5 +1,9 @@
 # Changelog for Meerkat DSA
 
+## Version 1.2.7
+
+- Fix excessively frequent database report telemetry.
+
 ## Version 1.2.6
 
 - Fix crashes caused by use of telemetry.
