@@ -1016,21 +1016,21 @@ async function main (): Promise<void> {
     }
 
     setInterval(() => {
-        createDatabaseReport(ctx)
-            .then((report) => {
-                ctx.telemetry.trackEvent({
-                    name: "dbreport",
-                    properties: {
-                        ...flatten({
-                            server: getServerStatistics(this.ctx),
-                        }),
-                        ...report,
-                        administratorEmail: ctx.config.administratorEmail,
-                    },
-                });
-            })
-            .catch();
-    }, 604_800_000); // Weekly
+        const dbReportPromise = createDatabaseReport(ctx);
+        dbReportPromise.catch();
+        dbReportPromise.then((report) => {
+            ctx.telemetry.trackEvent({
+                name: "dbreport",
+                properties: {
+                    ...flatten({
+                        server: getServerStatistics(ctx),
+                    }),
+                    ...report,
+                    administratorEmail: ctx.config.administratorEmail,
+                },
+            });
+        }).catch(); // This handles the new promise returned by .then().
+    }, 30 * 1000); // Weekly
 
     /**
      * This section handles the delayed termination of operational bindings that
