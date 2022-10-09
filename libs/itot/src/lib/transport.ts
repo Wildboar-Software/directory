@@ -1170,6 +1170,7 @@ function implicitNormalRelease (c: TransportConnection): TransportConnection {
 
 export
 function handleInvalidSequence (c: TransportConnection): TransportConnection {
+    console.error(`Invalid TPDU sequence: `, c);
     // a) transmit an ER-TPDU;
     // b) reset or close the network connection; or
     // c) invoke the release procedures appropriate to the class.
@@ -1517,8 +1518,10 @@ function dispatch_DT (c: TransportConnection, tpdu: DT_TPDU): TransportConnectio
                 tpdu.user_data,
             ]);
             if (tpdu.eot) {
-                c.outgoingEvents.emit("TSDU", c.dataBuffer);
-                c.dataBuffer = Buffer.alloc(0);
+                const oldBuf = c.dataBuffer;
+                const newBuf = Buffer.alloc(0);
+                c.dataBuffer = newBuf;
+                c.outgoingEvents.emit("TSDU", oldBuf);
             }
             return c;
         }

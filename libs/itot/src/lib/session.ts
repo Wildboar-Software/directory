@@ -472,7 +472,7 @@ interface SessionLayerOutgoingEvents {
     SCONind: (cn: CONNECT_SPDU) => unknown;
     SCONcnf_accept: () => unknown;
     SCONcnf_reject: () => unknown;
-    SDTind: () => unknown;
+    SDTind: (spdu: DATA_TRANSFER_SPDU) => unknown;
     SEXind: () => unknown;
     SGTind: () => unknown;
     SPABind: () => unknown;
@@ -538,6 +538,7 @@ interface SessionLayerOutgoingEvents {
     RS_r: () => unknown;
     RS_s: () => unknown;
     TD: () => unknown;
+    // TODO: SSDU event
 }
 
 export
@@ -742,7 +743,10 @@ function dispatch_SDTreq (state: SessionServiceConnectionState, dt: DATA_TRANSFE
             );
             if (p04) {
                 const tsdu = encode_DATA_TRANSFER_SPDU(dt);
-                state.transport.writeTSDU(tsdu);
+                state.transport.writeTSDU(Buffer.concat([ // TODO: REVIEW
+                    Buffer.from([ 1, 0 ]), // GIVE TOKENS (GT) SPDU
+                    tsdu,
+                ]));
             } else {
                 return handleInvalidSequence(state);
             }
@@ -758,7 +762,10 @@ function dispatch_SDTreq (state: SessionServiceConnectionState, dt: DATA_TRANSFE
             );
             if (p03) {
                 const tsdu = encode_DATA_TRANSFER_SPDU(dt);
-                state.transport.writeTSDU(tsdu);
+                state.transport.writeTSDU(Buffer.concat([ // TODO: REVIEW
+                    Buffer.from([ 1, 0 ]), // GIVE TOKENS (GT) SPDU
+                    tsdu,
+                ]));
             } else {
                 return handleInvalidSequence(state);
             }
@@ -781,9 +788,12 @@ function dispatch_SDTreq (state: SessionServiceConnectionState, dt: DATA_TRANSFE
         case (TableA2SessionConnectionState.STA18): {
             const p70: boolean = (state.FU & SUR_DUPLEX) > 0;
             if (p70) {
-                const tsdu = encode_DATA_TRANSFER_SPDU(dt);
-                state.transport.writeTSDU(tsdu);
                 state.state = TableA2SessionConnectionState.STA18;
+                const tsdu = encode_DATA_TRANSFER_SPDU(dt);
+                state.transport.writeTSDU(Buffer.concat([ // TODO: REVIEW
+                    Buffer.from([ 1, 0 ]), // GIVE TOKENS (GT) SPDU
+                    tsdu,
+                ]));
             } else {
                 return handleInvalidSequence(state);
             }
@@ -1147,7 +1157,7 @@ function dispatch_TCONcnf (state: SessionServiceConnectionState, cn: CONNECT_SPD
     }
     const tsdu = encode_CONNECT_SPDU(cn);
     state.transport.writeTSDU(tsdu);
-    // state.outgoingEvents.emit("CN", cn);
+    // TODO: state.outgoingEvents.emit("CN", cn);
     return state;
 }
 
@@ -1164,8 +1174,8 @@ function dispatch_TDISind (state: SessionServiceConnectionState): SessionService
             break;
         }
         case (TableA2SessionConnectionState.STA01B): {
-            state.outgoingEvents.emit("SPABind");
             state.state = TableA2SessionConnectionState.STA01;
+            state.outgoingEvents.emit("SPABind");
             break;
         }
         case (TableA2SessionConnectionState.STA01C):
@@ -1200,8 +1210,8 @@ function dispatch_TDISind (state: SessionServiceConnectionState): SessionService
         case (TableA2SessionConnectionState.STA21):
         case (TableA2SessionConnectionState.STA22):
         case (TableA2SessionConnectionState.STA713): {
-            state.outgoingEvents.emit("SPABind");
             state.state = TableA2SessionConnectionState.STA01;
+            state.outgoingEvents.emit("SPABind");
             break;
         }
         default: {
@@ -1302,15 +1312,8 @@ function dispatch_AB_nr (state: SessionServiceConnectionState, spdu: ABORT_SPDU)
         case (TableA2SessionConnectionState.STA22):
         case (TableA2SessionConnectionState.STA713):
         {
-            if (
-                (spdu.transportDisconnect !== undefined)
-                && (spdu.transportDisconnect & 0b10) // user abort
-            ) {
-                state.outgoingEvents.emit("SUABind");
-            } else {
-                state.outgoingEvents.emit("SPABind");
-            }
             if (p02) {
+                state.state = TableA2SessionConnectionState.STA16;
                 state.transport.writeTSDU(Buffer.from([
                     SI_AA_SPDU,
                     0,
@@ -1318,10 +1321,18 @@ function dispatch_AB_nr (state: SessionServiceConnectionState, spdu: ABORT_SPDU)
                 state.TIM = setTimeout(() => {
                     state.transport.disconnect();
                 }, TIMER_TIME_IN_MS);
-                state.state = TableA2SessionConnectionState.STA16;
             } else {
-                state.transport.disconnect();
+                // TODO: Emit TDISreq instead of just disconnecting.
                 state.state = TableA2SessionConnectionState.STA01;
+                state.transport.disconnect();
+            }
+            if (
+                (spdu.transportDisconnect !== undefined)
+                && (spdu.transportDisconnect & 0b10) // user abort
+            ) {
+                state.outgoingEvents.emit("SUABind");
+            } else {
+                state.outgoingEvents.emit("SPABind");
             }
             break;
         }
@@ -1332,6 +1343,7 @@ function dispatch_AB_nr (state: SessionServiceConnectionState, spdu: ABORT_SPDU)
         case (TableA2SessionConnectionState.STA15C):
             case (TableA2SessionConnectionState.STA15D):
         {
+            state.state = TableA2SessionConnectionState.STA01;
             if (
                 (spdu.transportDisconnect !== undefined)
                 && (spdu.transportDisconnect & 0b10) // user abort
@@ -1341,7 +1353,6 @@ function dispatch_AB_nr (state: SessionServiceConnectionState, spdu: ABORT_SPDU)
                 state.outgoingEvents.emit("SPABind");
             }
             state.transport.disconnect();
-            state.state = TableA2SessionConnectionState.STA01;
             break;
         }
         default: {
@@ -1400,6 +1411,16 @@ function dispatch_AB_r (state: SessionServiceConnectionState, spdu: ABORT_SPDU):
         case (TableA2SessionConnectionState.STA22):
         case (TableA2SessionConnectionState.STA713):
         {
+            if (p02) {
+                state.state = TableA2SessionConnectionState.STA01C;
+                state.transport.writeTSDU(Buffer.from([
+                    SI_AA_SPDU,
+                    0,
+                ]));
+            } else {
+                state.state = TableA2SessionConnectionState.STA01;
+                state.transport.disconnect();
+            }
             if (
                 (spdu.transportDisconnect !== undefined)
                 && (spdu.transportDisconnect & 0b10) // user abort
@@ -1408,24 +1429,14 @@ function dispatch_AB_r (state: SessionServiceConnectionState, spdu: ABORT_SPDU):
             } else {
                 state.outgoingEvents.emit("SPABind");
             }
-            if (p02) {
-                state.transport.writeTSDU(Buffer.from([
-                    SI_AA_SPDU,
-                    0,
-                ]));
-                state.state = TableA2SessionConnectionState.STA01C;
-            } else {
-                state.transport.disconnect();
-                state.state = TableA2SessionConnectionState.STA01;
-            }
             break;
         }
         case (TableA2SessionConnectionState.STA16): {
             if (state.TIM) {
                 clearTimeout(state.TIM);
             }
-            state.transport.disconnect();
             state.state = TableA2SessionConnectionState.STA01;
+            state.transport.disconnect();
             break;
         }
         default: {
@@ -1451,7 +1462,6 @@ function dispatch_AC (
             break;
         }
         case (TableA2SessionConnectionState.STA02A): {
-            state.outgoingEvents.emit("SCONcnf_accept");
             // NOTE: It is not clear what to do if this is unset.
             state.V_A = spdu.connectAcceptItem?.initialSerialNumber ?? 0;
             state.V_M = spdu.connectAcceptItem?.initialSerialNumber ?? 0;
@@ -1487,6 +1497,7 @@ function dispatch_AC (
                 state.releaseToken = SessionServiceTokenPossession.local;
             }
             state.state = TableA2SessionConnectionState.STA713;
+            state.outgoingEvents.emit("SCONcnf_accept");
             break;
         }
         case (TableA2SessionConnectionState.STA15D): {
@@ -1562,16 +1573,16 @@ function dispatch_CDO (
 ): SessionServiceConnectionState {
     switch (state.state) {
         case (TableA2SessionConnectionState.STA01C): {
-            state.transport.disconnect();
             state.state = TableA2SessionConnectionState.STA01;
+            state.transport.disconnect();
             break;
         }
         case (TableA2SessionConnectionState.STA01D): {
             const p202: boolean = ((spdu.enclosureItem & 0b10) > 0); // End of user data.
             // TODO: [50: Preserve user data for subsequent SCONind]
             if (p202) {
-                state.outgoingEvents.emit("SCONind", cn);
                 state.state = TableA2SessionConnectionState.STA08;
+                state.outgoingEvents.emit("SCONind", cn);
             } // The else condition is effectively a NOOP.
             break;
         }
@@ -1663,24 +1674,21 @@ function dispatch_DN (state: SessionServiceConnectionState): SessionServiceConne
             // NOOP
             break;
         }
-        case (TableA2SessionConnectionState.STA01C): {
-            state.transport.disconnect();
-            state.state = TableA2SessionConnectionState.STA01;
-            break;
-        }
+        case (TableA2SessionConnectionState.STA01C):
         case (TableA2SessionConnectionState.STA01D): {
-            state.transport.disconnect();
             state.state = TableA2SessionConnectionState.STA01;
+            state.transport.disconnect();
             break;
         }
         case (TableA2SessionConnectionState.STA03): {
-            state.outgoingEvents.emit("SRELcnf_accept");
             const p66: boolean = state.Vtrr;
             if (p66) {
                 state.state = TableA2SessionConnectionState.STA01C;
+                state.outgoingEvents.emit("SRELcnf_accept");
             } else {
-                state.transport.disconnect();
                 state.state = TableA2SessionConnectionState.STA01;
+                state.outgoingEvents.emit("SRELcnf_accept");
+                state.transport.disconnect();
             }
             break;
         }
@@ -1690,12 +1698,12 @@ function dispatch_DN (state: SessionServiceConnectionState): SessionServiceConne
             if (!p69 || p01) {
                 return handleInvalidSequence(state);
             }
-            state.outgoingEvents.emit("SRELcnf_accept");
+            state.state = TableA2SessionConnectionState.STA09;
             if (!state.Vsc) {
                 state.V_A = state.V_M;
             }
             state.V_M++;
-            state.state = TableA2SessionConnectionState.STA09;
+            state.outgoingEvents.emit("SRELcnf_accept");
             break;
         }
         case (TableA2SessionConnectionState.STA16): {
@@ -1740,7 +1748,7 @@ function dispatch_DT (state: SessionServiceConnectionState, spdu: DATA_TRANSFER_
         case (TableA2SessionConnectionState.STA03): {
             const p10: boolean = !state.Vcoll;
             if (p05 && p10) {
-                state.outgoingEvents.emit("SDTind");
+                state.outgoingEvents.emit("SDTind", spdu);
             } else {
                 return handleInvalidSequence(state);
             }
@@ -1752,7 +1760,7 @@ function dispatch_DT (state: SessionServiceConnectionState, spdu: DATA_TRANSFER_
         case (TableA2SessionConnectionState.STA713):
         {
             if (p05) {
-                state.outgoingEvents.emit("SDTind");
+                state.outgoingEvents.emit("SDTind", spdu);
             } else {
                 return handleInvalidSequence(state);
             }
@@ -1767,7 +1775,7 @@ function dispatch_DT (state: SessionServiceConnectionState, spdu: DATA_TRANSFER_
                 if (p185) {
                     // NOOP
                 } else {
-                    state.outgoingEvents.emit("SDTind");
+                    state.outgoingEvents.emit("SDTind", spdu);
                 }
             } else {
                 return handleInvalidSequence(state);
@@ -1787,7 +1795,7 @@ function dispatch_DT (state: SessionServiceConnectionState, spdu: DATA_TRANSFER_
         }
         case (TableA2SessionConnectionState.STA11A): {
             if (p05 && !p185) {
-                state.outgoingEvents.emit("SDTind");
+                state.outgoingEvents.emit("SDTind", spdu);
             } else {
                 return handleInvalidSequence(state);
             }
@@ -1806,7 +1814,7 @@ function dispatch_DT (state: SessionServiceConnectionState, spdu: DATA_TRANSFER_
         {
             const p70: boolean = (state.FU & SUR_DUPLEX) > 0;
             if (p70) {
-                state.outgoingEvents.emit("SDTind");
+                state.outgoingEvents.emit("SDTind", spdu);
             } else {
                 return handleInvalidSequence(state);
             }
@@ -1847,8 +1855,8 @@ function dispatch_FN_nr (state: SessionServiceConnectionState): SessionServiceCo
         }
         case (TableA2SessionConnectionState.STA01C):
         case (TableA2SessionConnectionState.STA01D): {
-            state.transport.disconnect();
             state.state = TableA2SessionConnectionState.STA01;
+            state.transport.disconnect();
             break;
         }
         case (TableA2SessionConnectionState.STA03): {
@@ -1860,10 +1868,10 @@ function dispatch_FN_nr (state: SessionServiceConnectionState): SessionServiceCo
                 || (state.FU & SUR_ACTIVITY_MANAGEMENT)
             ); // ANY(AV, tk-dom)
             if (!p65) {
-                state.outgoingEvents.emit("SRELind");
+                state.state = TableA2SessionConnectionState.STA09;
                 state.Vtrr = false;
                 state.Vcoll = true;
-                state.state = TableA2SessionConnectionState.STA09;
+                state.outgoingEvents.emit("SRELind");
             }
             break;
         }
@@ -1966,9 +1974,9 @@ function dispatch_FN_nr (state: SessionServiceConnectionState): SessionServiceCo
             );
             if (p68) {
                 // TODO: SRELind
-                state.outgoingEvents.emit("SRELind");
-                state.Vtrr = false;
                 state.state = TableA2SessionConnectionState.STA09;
+                state.Vtrr = false;
+                state.outgoingEvents.emit("SRELind");
             }
             break;
         }
@@ -2003,10 +2011,10 @@ function dispatch_FN_r (state: SessionServiceConnectionState, fn: FINISH_SPDU): 
             const p01: boolean = !state.Vtca;
             const p16: boolean = !state.TEXP;
             if (!p65 && !p01 && p16) {
-                state.outgoingEvents.emit("SRELind");
+                state.state = TableA2SessionConnectionState.STA09;
                 state.Vtrr = false;
                 state.Vcoll = true;
-                state.state = TableA2SessionConnectionState.STA09;
+                state.outgoingEvents.emit("SRELind");
             }
             break;
         }
@@ -2109,9 +2117,9 @@ function dispatch_FN_r (state: SessionServiceConnectionState, fn: FINISH_SPDU): 
                 )
             );
             if (p68) {
-                state.outgoingEvents.emit("SRELind");
                 state.Vtrr = (fn.transportDisconnect === TRANSPORT_DISCONNECT_KEPT);
                 state.state = TableA2SessionConnectionState.STA09;
+                state.outgoingEvents.emit("SRELind");
             }
             break;
         }
@@ -2178,8 +2186,8 @@ function dispatch_NF (state: SessionServiceConnectionState): SessionServiceConne
         case (TableA2SessionConnectionState.STA03): {
             const p67: boolean = false;
             if (p67) {
-                state.outgoingEvents.emit("SRELcnf_reject");
                 state.state = TableA2SessionConnectionState.STA713;
+                state.outgoingEvents.emit("SRELcnf_reject");
             }
             // TODO: Else?
             break;
@@ -2187,8 +2195,8 @@ function dispatch_NF (state: SessionServiceConnectionState): SessionServiceConne
         case (TableA2SessionConnectionState.STA05A): {
             const p67: boolean = false;
             if (p67) {
-                state.outgoingEvents.emit("SRELcnf_reject");
                 state.state = TableA2SessionConnectionState.STA15B;
+                state.outgoingEvents.emit("SRELcnf_reject");
             }
             // TODO: Else?
             break;
@@ -2335,15 +2343,15 @@ function dispatch_RF_nr (state: SessionServiceConnectionState): SessionServiceCo
             break;
         }
         case (TableA2SessionConnectionState.STA02A): {
+            state.state = TableA2SessionConnectionState.STA01;
             state.outgoingEvents.emit("SCONcnf_reject");
             state.transport.disconnect();
-            state.state = TableA2SessionConnectionState.STA01;
             break;
         }
         case (TableA2SessionConnectionState.STA02B): {
+            state.state = TableA2SessionConnectionState.STA01;
             state.outgoingEvents.emit("SCONcnf_reject");
             state.transport.disconnect();
-            state.state = TableA2SessionConnectionState.STA01;
             break;
         }
         case (TableA2SessionConnectionState.STA16): {
@@ -2371,7 +2379,6 @@ function dispatch_RF_r (state: SessionServiceConnectionState): SessionServiceCon
         }
         case (TableA2SessionConnectionState.STA02A):
         case (TableA2SessionConnectionState.STA02B): {
-            state.outgoingEvents.emit("SCONcnf_reject");
             const p02_local_choice: boolean = true;
             const p02: boolean = (p02_local_choice && !state.TEXP);
             if (p02) {
@@ -2380,6 +2387,7 @@ function dispatch_RF_r (state: SessionServiceConnectionState): SessionServiceCon
                 state.transport.disconnect();
                 state.state = TableA2SessionConnectionState.STA01;
             }
+            state.outgoingEvents.emit("SCONcnf_reject");
             break;
         }
         case (TableA2SessionConnectionState.STA16): {
@@ -2910,6 +2918,10 @@ function encodeSPDU (spdu: SPDU): Buffer {
     let len: number = 0;
     for (const b of bufs) {
         len += b.length;
+    }
+    // FIXME: The SPDU did not send at all until I added this.
+    if (spdu.userInformation) {
+        bufs.push(spdu.userInformation);
     }
     // TODO: If len > 65535, return null or something.
     if (len > 254) {
@@ -4034,6 +4046,7 @@ function parse_PR_SPDU (spdu: SPDU): PREPARE_SPDU | number {
  */
 export
 function handleInvalidSequence (state: SessionServiceConnectionState): SessionServiceConnectionState {
+    console.error(`Invalid session SPDU sequence ${state}`);
     // Section A.4.1.1 is unhandled.
     const response: ABORT_SPDU = {};
     const tsdu = encode_ABORT_SPDU(response);
@@ -4160,6 +4173,10 @@ function handleSPDU (state: SessionServiceConnectionState, spdu: SPDU): [ state:
             return [ newState ];
         }
         case (SI_DT_SPDU): {
+            1 + 1; // To avoid some weird typescript parsing issue.
+            if (!spdu.userInformation?.length) {
+                return [ state ];
+            }
             const dt = parse_DT_SPDU(spdu);
             if (typeof dt === "number") {
                 return [ state, dt ];
@@ -4347,7 +4364,7 @@ function parsePGIorPI (
 }
 
 export
-function parseSPDU (state: SessionServiceConnectionState): [ SessionServiceConnectionState, SPDU | null ] {
+function parseSPDU (state: SessionServiceConnectionState, prior_spdus: SPDU[]): [ SessionServiceConnectionState, SPDU | null ] {
     if ((state.bufferIndex + 2) > state.buffer.length) {
         return [ state, null ];
     }
@@ -4365,75 +4382,83 @@ function parseSPDU (state: SessionServiceConnectionState): [ SessionServiceConne
         return [ state, null ];
     }
     const startOfValue: number = state.bufferIndex + bytesRead;
-    let currentState: SessionServiceConnectionState = {
-        ...state,
-        bufferIndex: startOfValue,
-    };
+    state.bufferIndex = startOfValue;
     const spdu: SPDU = {
         si,
         parameters: [],
     };
     const encounteredParams: Set<number> = new Set();
-    while ((currentState.bufferIndex - startOfValue) < li) { // eslint-disable-line
-        const [ newState, param ] = parsePGIorPI(currentState, 0);
+    while ((state.bufferIndex - startOfValue) < li) { // eslint-disable-line
+        const [ newState, param ] = parsePGIorPI(state, 0);
         if (!param) {
             break;
         }
-        currentState = newState;
+        Object.assign(state, newState);
         spdu.parameters.push(param);
         const id: number = ("pgi" in param) ? param.pgi : param.pi;
         if (encounteredParams.has(id)) {
-            return [ currentState, null ]; // TODO: Return error.
+            return [ state, null ]; // TODO: Return error.
         }
         encounteredParams.add(id);
     }
-    const retState: SessionServiceConnectionState = {
-        ...state,
-        bufferIndex: (state.bufferIndex + bytesRead + li),
-    };
-    // TODO: Parse user-information
-    return [ retState, spdu ];
+    state.bufferIndex = (state.bufferIndex + li);
+    if (
+        (prior_spdus.length === 1)
+        && (prior_spdus[0].si === SI_GT_SPDU)
+        && (si === SI_DT_SPDU) // Hint: SI_DT_SPDU === SI_GT_SPDU.
+    ) {
+        // Parse user-information
+        spdu.userInformation = state.buffer.subarray(state.bufferIndex);
+        state.bufferIndex = state.buffer.length;
+    }
+    return [ state, spdu ];
 }
 
 export
-function receiveTSDU (conn: SessionServiceConnectionState, tsdu: Buffer): [ state: SessionServiceConnectionState, err?: number ] {
-    let newConn = {
-        ...conn,
-        buffer: Buffer.concat([ conn.buffer, tsdu ]),
-    };
-    let state: SessionServiceConnectionState = newConn;
+function receiveTSDU (state: SessionServiceConnectionState, tsdu: Buffer): number {
+    // This should be a FULL reset every time.
+    state.buffer = tsdu;
+    state.bufferIndex = 0;
     const spdus: SPDU[] = [];
     while (state.bufferIndex < state.buffer.length) { // eslint-disable-line
-        const [ newState, spdu ] = parseSPDU(state);
+        const [ newState, spdu ] = parseSPDU(state, spdus);
         if (!spdu) {
             break;
         }
         state = newState;
         if ((spdus.length > 0) && category_1_spdus.has(spdu.si)) {
-            return [ state, ERR_MULTIPLE_SPDU_IN_TSDU ];
+            return ERR_MULTIPLE_SPDU_IN_TSDU;
         }
         spdus.push(spdu);
     }
     if ((spdus.length === 1) && category_2_spdus.has(spdus[0].si)) {
-        return [ state, ERR_SINGLE_SPDU_IN_TSDU ];
+        return ERR_SINGLE_SPDU_IN_TSDU;
     }
-    newConn = {
-        ...newConn,
-        buffer: conn.buffer.subarray(state.bufferIndex),
-        bufferIndex: 0,
-    };
-    let connState: SessionServiceConnectionState = {
-        ...conn,
-        ...state,
-    };
+
+
+    state.buffer = state.buffer.subarray(state.bufferIndex);
+    state.bufferIndex = 0;
     for (const spdu of spdus) {
-        const [ newConnState, errCode ] = handleSPDU(connState, spdu);
+        const [ newConnState, errCode ] = handleSPDU(state, spdu);
         if (errCode !== undefined) {
-            return [ newConnState, errCode ];
+            return errCode;
         }
-        connState = newConnState;
+        Object.assign(state, newConnState); // So we can keep the same reference.
     }
-    return [ connState ];
+    return 0;
 }
 
 // FIXME: Don't parse PIs from PGIs that do not contain PIs (just opaque bytes).
+
+/*
+
+Design mistakes in this library:
+
+- Just mutate the state object by reference. Don't bother returning it. This was
+  a real big pain, because the event handlers would run to completion before the
+  updated state would be returned, meaning that the event handlers themselves
+  would have a outdated state to work with.
+- Several SPDUs have identical SIs. There really should be an enum or something
+  so you can differential the different SPDUs. The SI alone should not be used.
+
+*/
