@@ -1,4 +1,5 @@
 import { TypedEmitter } from "tiny-typed-emitter";
+import { strict as assert } from "node:assert";
 
 // FIXME: Anywhere state is updated, THEN an indication emitted needs to be reversed.
 // TODO: Refactor magic numbers into constants.
@@ -46,8 +47,27 @@ export const PC_INACTIVITY_TIMER: number = 0b1111_0010;
 // #endregion TPDU parameter codes
 
 // #region DR-TPDU reason codes
-// TODO:
+export const DR_REASON_NORMAL_DISCONNECT: number = 128 + 0;
+export const DR_REASON_REMOTE_CONGESTION: number = 128 + 1;
+export const DR_REASON_NEGOTIATION_FAILED: number = 128 + 2;
+export const DR_REASON_DUPLICATE_SRC_REF: number = 128 + 3;
+export const DR_REASON_MISMATCHED_REFS: number = 128 + 4;
+export const DR_REASON_PROTOCOL_ERROR: number = 128 + 5;
+export const DR_REASON_REFERENCE_OVERFLOW: number = 128 + 7;
+export const DR_REASON_CR_REFUSED: number = 128 + 8;
+export const DR_REASON_HEADER_OR_PARAMETER_LENGTH_INVALID: number = 128 + 10;
+export const DR_REASON_NOT_SPECIFIED: number = 0;
+export const DR_REASON_CONGESTION_AT_TSAP: number = 1;
+export const DR_REASON_SESSION_ENTITY_NOT_ATTACHED_TO_TSAP: number = 2;
+export const DR_REASON_ADDRESS_UNKNOWN: number = 3;
 // #endregion
+
+// #region ER-TPDU reject cause codes
+export const ER_REJECT_CAUSE_NOT_SPECIFIED: number = 0b0000_0000;
+export const ER_REJECT_CAUSE_INVALID_PARAMETER_CODE: number = 0b0000_0001;
+export const ER_REJECT_CAUSE_INVALID_TPDU_TYPE: number = 0b0000_0010;
+export const ER_REJECT_CAUSE_INVALID_PARAMETER_VALUE: number = 0b0000_0011;
+// #endregion ER-TPDU reject cause codes
 
 // #region Return codes
 export const RETURN_OK: ReturnCode = 0;
@@ -74,6 +94,8 @@ export const TPDU_VALIDATION_CR_UNRECOGNIZED_CLASS: number = -2;
 export const TPDU_VALIDATION_CR_DST_REF_NOT_ZEROED: number = -3;
 export const TPDU_MALFORMED: number = -4;
 // #endregion TPDU validation return codes
+
+// FIXME: Validate and handle SRC-REF and DST-REF
 
 function encodeUnsignedBigEndianInteger (value: number): Buffer {
     const bytes: Buffer = Buffer.alloc(4);
@@ -119,13 +141,13 @@ interface TransportLayerOutgoingEvents {
     NCONreq: () => unknown,
     CR: (tpdu: CR_TPDU) => unknown,
     CC: (tpdu: CC_TPDU) => unknown,
-    DR: () => unknown,
-    DC: () => unknown,
+    DR: (tpdu: DR_TPDU) => unknown,
+    DC: (tpdu: DC_TPDU) => unknown,
     AK: () => unknown,
     EA: () => unknown,
-    DT: () => unknown,
+    DT: (tpdu: DT_TPDU) => unknown,
     ED: () => unknown,
-    ER: () => unknown,
+    ER: (tpdu: ER_TPDU) => unknown,
     RJ: () => unknown,
 
     // Not specified in Table A.3, but still useful.
@@ -180,6 +202,14 @@ function createTransportConnection (network: NetworkLayerService, id?: string): 
     // FIXME: Error handling.
     outgoingEvents.on("CR", (tpdu) => network.write_nsdu(encode_CR(tpdu)));
     outgoingEvents.on("CC", (tpdu) => network.write_nsdu(encode_CC(tpdu)));
+    outgoingEvents.on("DR", (tpdu) => network.write_nsdu(encode_DR(tpdu)));
+    outgoingEvents.on("DC", (tpdu) => network.write_nsdu(encode_DC(tpdu)));
+    outgoingEvents.on("DT", (tpdu) => network.write_nsdu(encode_DT(tpdu)));
+    // outgoingEvents.on("ED", (tpdu) => network.write_nsdu(encode_ED(tpdu)));
+    // outgoingEvents.on("AK", (tpdu) => network.write_nsdu(encode_AK(tpdu)));
+    // outgoingEvents.on("EA", (tpdu) => network.write_nsdu(encode_EA(tpdu)));
+    // outgoingEvents.on("RJ", (tpdu) => network.write_nsdu(encode_RJ(tpdu)));
+    outgoingEvents.on("ER", (tpdu) => network.write_nsdu(encode_ER(tpdu)));
     return {
         id,
         // This seems to be the expected default state, but I cannot find confirmation.
@@ -1257,13 +1287,13 @@ function dispatch_TEXreq (c: TransportConnection): TransportConnection {
 }
 
 export
-function dispatch_TDISreq (c: TransportConnection): TransportConnection {
+function dispatch_TDISreq (c: TransportConnection, tpdu: DR_TPDU): TransportConnection {
     switch (c.state) {
         case (TransportConnectionState.WFNC): {
+            c.state = TransportConnectionState.CLOSED;
             if (c.network.transportConnectionsServed() <= 1) {
                 c.network.disconnect();
             }
-            c.state = TransportConnectionState.CLOSED;
             return c;
         }
         case (TransportConnectionState.WFCC): {
@@ -1271,8 +1301,8 @@ function dispatch_TDISreq (c: TransportConnection): TransportConnection {
             if (p7) {
                 c.state = TransportConnectionState.WBCL;
             } else {
-                c.outgoingEvents.emit("NDISreq");
                 c.state = TransportConnectionState.CLOSED;
+                c.outgoingEvents.emit("NDISreq");
             }
             return c;
         }
@@ -1284,11 +1314,11 @@ function dispatch_TDISreq (c: TransportConnection): TransportConnection {
             const p5: boolean = TRANSPORT_CLASS === 0;
             const p7: boolean = TRANSPORT_CLASS === 2;
             if (p5) {
-                c.outgoingEvents.emit("NDISreq");
                 c.state = TransportConnectionState.CLOSED;
+                c.outgoingEvents.emit("NDISreq");
             } else if (p7) {
-                c.outgoingEvents.emit("DR");
                 c.state = TransportConnectionState.CLOSING;
+                c.outgoingEvents.emit("DR", tpdu);
             } else {
                 return handleInvalidSequence(c);
             }
@@ -1299,8 +1329,8 @@ function dispatch_TDISreq (c: TransportConnection): TransportConnection {
             return handleInvalidSequence(c);
         }
         case (TransportConnectionState.WFTRESP): {
-            c.outgoingEvents.emit("DR");
             c.state = TransportConnectionState.CLOSED;
+            c.outgoingEvents.emit("DR", tpdu);
             return c;
         }
         default: return handleInvalidSequence(c);
@@ -1315,8 +1345,8 @@ function dispatch_NDISind (c: TransportConnection): TransportConnection {
         case (TransportConnectionState.OPEN):
         case (TransportConnectionState.WFTRESP):
         {
-            c.outgoingEvents.emit("TDISind");
             c.state = TransportConnectionState.CLOSED;
+            c.outgoingEvents.emit("TDISind");
             return c;
         }
         case (TransportConnectionState.WBCL):
@@ -1334,8 +1364,8 @@ function dispatch_NCONconf (c: TransportConnection, tpdu: CR_TPDU): TransportCon
     switch (c.state) {
         case (TransportConnectionState.WFNC):
         {
-            c.outgoingEvents.emit("CR", tpdu);
             c.state = TransportConnectionState.WFCC;
+            c.outgoingEvents.emit("CR", tpdu);
             return c;
         }
         default: return handleInvalidSequence(c);
@@ -1349,12 +1379,12 @@ function dispatch_NRSTind (c: TransportConnection): TransportConnection {
         case (TransportConnectionState.OPEN):
         case (TransportConnectionState.WFTRESP):
         {
+            c.state = TransportConnectionState.CLOSED;
             c.outgoingEvents.emit("TDISind");
             if (c.network.transportConnectionsServed() <= 1) { // [1]
                 c.network.disconnect();
             }
             // REVIEW: I don't get how [5] differs from [1].
-            c.state = TransportConnectionState.CLOSED;
             return c;
         }
         case (TransportConnectionState.WBCL):
@@ -1385,12 +1415,22 @@ function dispatch_CR (c: TransportConnection, tpdu: CR_TPDU): TransportConnectio
             const cr_validation_result = validate_CR(tpdu);
             const p1: boolean = (cr_validation_result !== TPDU_VALIDATION_RC_OK); // Unacceptable CR-TPDU
             if (p1) {
-                if (cr_validation_result > 0) { // The connection parameters were unacceptable, but the TPDU was valid.
-                    c.outgoingEvents.emit("DR");
-                } else { // Negative: The TPDU was invalid in some way.
-                    c.outgoingEvents.emit("ER");
-                }
                 c.state = TransportConnectionState.CLOSED;
+                if (cr_validation_result > 0) { // The connection parameters were unacceptable, but the TPDU was valid.
+                    const dr: DR_TPDU = {
+                        dstRef: tpdu.dstRef,
+                        srcRef: tpdu.srcRef,
+                        reason: DR_REASON_NEGOTIATION_FAILED,
+                        user_data: Buffer.alloc(0),
+                    };
+                    c.outgoingEvents.emit("DR", dr);
+                } else { // Negative: The TPDU was invalid in some way.
+                    const er: ER_TPDU = {
+                        dstRef: tpdu.dstRef,
+                        reject_cause: ER_REJECT_CAUSE_NOT_SPECIFIED,
+                    };
+                    c.outgoingEvents.emit("ER", er);
+                }
             } else {
                 c.state = TransportConnectionState.WFTRESP;
                 c.outgoingEvents.emit("TCONind", tpdu);
@@ -1421,7 +1461,13 @@ function dispatch_CC (c: TransportConnection, tpdu: CC_TPDU): TransportConnectio
             else if (p6 && p7) {
                 c.state = TransportConnectionState.CLOSING;
                 c.outgoingEvents.emit("TDISind");
-                c.outgoingEvents.emit("DR");
+                const dr: DR_TPDU = {
+                    dstRef: tpdu.dstRef,
+                    srcRef: tpdu.srcRef,
+                    reason: DR_REASON_NEGOTIATION_FAILED,
+                    user_data: Buffer.alloc(0),
+                };
+                c.outgoingEvents.emit("DR", dr);
             }
             else {
                 return handleInvalidSequence(c);
@@ -1429,7 +1475,13 @@ function dispatch_CC (c: TransportConnection, tpdu: CC_TPDU): TransportConnectio
             return c;
         }
         case (TransportConnectionState.CLOSED): {
-            c.outgoingEvents.emit("DR");
+            const dr: DR_TPDU = {
+                dstRef: tpdu.dstRef,
+                srcRef: tpdu.srcRef,
+                reason: DR_REASON_PROTOCOL_ERROR,
+                user_data: Buffer.alloc(0),
+            };
+            c.outgoingEvents.emit("DR", dr);
             return c;
         }
         case (TransportConnectionState.WBCL):
@@ -1447,11 +1499,11 @@ function dispatch_DR (c: TransportConnection): TransportConnection {
     // For some reason, this row in the state table is bifurcated. What does this mean?
     switch (c.state) {
         case (TransportConnectionState.WFCC): {
+            c.state = TransportConnectionState.CLOSED;
             c.outgoingEvents.emit("TDISind");
             if (c.network.transportConnectionsServed() <= 1) { // [1]
                 c.network.disconnect();
             }
-            c.state = TransportConnectionState.CLOSED;
             return c;
         }
         case (TransportConnectionState.OPEN): {
@@ -1461,20 +1513,27 @@ function dispatch_DR (c: TransportConnection): TransportConnection {
                 // Only available in class 2.
                 return handleInvalidSequence(c);
             } else if (p7) {
-                c.outgoingEvents.emit("DC");
-                c.outgoingEvents.emit("TDISind");
-                c.state = TransportConnectionState.CLOSED;
+                assert(false, "Class 2 OSI transport code used when class 0 is HARD-CODED!");
+                // c.state = TransportConnectionState.CLOSED;
+                // const dr: DC_TPDU = {
+                //     dstRef: tpdu.dstRef,
+                //     srcRef: tpdu.srcRef,
+                //     reason: DR_REASON_PROTOCOL_ERROR,
+                //     user_data: Buffer.alloc(0),
+                // };
+                // c.outgoingEvents.emit("DC");
+                // c.outgoingEvents.emit("TDISind");
             }
             return c;
         }
         case (TransportConnectionState.WFTRESP): {
             const p10: boolean = false; // Local choice.
-            if (p10) {
-                // [6]
-                c.outgoingEvents.emit("DC");
-            }
-            c.outgoingEvents.emit("TDISind");
+            // if (p10) {
+            //     // [6]
+            //     c.outgoingEvents.emit("DC");
+            // }
             c.state = TransportConnectionState.CLOSED;
+            c.outgoingEvents.emit("TDISind");
             return c;
         }
         case (TransportConnectionState.CLOSED): {
@@ -1549,11 +1608,11 @@ function dispatch_ER (c: TransportConnection): TransportConnection {
             return c;
         }
         case (TransportConnectionState.WFCC): {
+            c.state = TransportConnectionState.CLOSED;
             c.outgoingEvents.emit("TDISind");
             if (c.network.transportConnectionsServed() <= 1) { // [1]
                 c.network.disconnect();
             }
-            c.state = TransportConnectionState.CLOSED;
             return c;
         }
         case (TransportConnectionState.CLOSED): {

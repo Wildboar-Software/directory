@@ -22,7 +22,10 @@ import {
     ACCEPT_SPDU,
     dispatch_SDTreq,
     DATA_TRANSFER_SPDU,
-    dispatch_SCONrsp_reject,
+    dispatch_SRELreq,
+    dispatch_SRELrsp_accept,
+    FINISH_SPDU,
+    DISCONNECT_SPDU,
 } from "./session";
 import { Socket } from "node:net";
 
@@ -64,8 +67,6 @@ describe("The OSI network stack", () => {
                     user_data: Buffer.alloc(0),
                 };
                 stack1.transport = dispatch_TCONreq(stack1.transport, tpdu);
-                // const nsdu = encode_CR(tpdu);
-                // t1.network.write_nsdu(nsdu);
             },
             disconnect: jest.fn(),
             writeTSDU: (tsdu: Buffer) => {
@@ -101,6 +102,10 @@ describe("The OSI network stack", () => {
         s1.outgoingEvents.on("SCONind", (cn) => {
             const ac: ACCEPT_SPDU = {};
             stack1.session = dispatch_SCONrsp_accept(stack1.session, ac, cn);
+        });
+        s1.outgoingEvents.on("SRELind", () => {
+            const dn: DISCONNECT_SPDU = {};
+            stack1.session = dispatch_SRELrsp_accept(stack1.session, dn);
         });
 
         const socket2 = new Socket();
@@ -164,8 +169,12 @@ describe("The OSI network stack", () => {
             const ac: ACCEPT_SPDU = {};
             stack2.session = dispatch_SCONrsp_accept(stack2.session, ac, cn);
         });
-        const cn: CONNECT_SPDU = {};
+        s2.outgoingEvents.on("SRELind", () => {
+            const dn: DISCONNECT_SPDU = {};
+            stack2.session = dispatch_SRELrsp_accept(stack2.session, dn);
+        });
 
+        const cn: CONNECT_SPDU = {};
         stack2.transport.outgoingEvents.on("TCONconf", (cc) => {
             stack2.session.transport = {
                 ...stack2.session.transport,
@@ -180,19 +189,26 @@ describe("The OSI network stack", () => {
                 connected: () => true,
             };
             stack1.session = dispatch_TCONcnf(stack1.session, cn);
-            expect(stack2.session.state).toBe(TableA2SessionConnectionState.STA713);
+            expect(stack2.session.state).toBe(TableA2SessionConnectionState.STA01);
         });
         const test_str = "Hello world";
         stack2.session.outgoingEvents.on("SDTind", (spdu) => {
             const received = spdu.userInformation.toString("utf-8");
             console.log(received);
             expect(received).toBe(test_str);
+            const fn: FINISH_SPDU = {};
+            stack2.session = dispatch_SRELreq(stack2.session, fn);
         });
         stack1.session.outgoingEvents.on("SCONcnf_accept", () => {
             const data: DATA_TRANSFER_SPDU = {
                 userInformation: Buffer.from(test_str),
             };
             stack1.session = dispatch_SDTreq(stack1.session, data);
+        });
+        stack1.session.outgoingEvents.once("SRELcnf_accept", () => {
+            console.log("Session connection released.");
+            expect(stack1.session.state).toBe(TableA2SessionConnectionState.STA01C);
+            expect(stack2.session.state).toBe(TableA2SessionConnectionState.STA01C);
         });
         stack1.session = dispatch_SCONreq(stack1.session, cn);
     });
