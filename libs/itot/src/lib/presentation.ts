@@ -1,19 +1,25 @@
 import { TypedEmitter } from "tiny-typed-emitter";
 import { Context_list_Item } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Context-list-Item.ta";
-import type {
+import {
     CP_type,
+    _encode_CP_type,
 } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/CP-type.ta";
-import type {
+import {
     CPR_PPDU,
+    CPR_PPDU_normal_mode_parameters,
+    _encode_CPR_PPDU,
 } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/CPR-PPDU.ta";
-import type {
+import {
     CPA_PPDU,
+    _encode_CPA_PPDU,
 } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/CPA-PPDU.ta";
-import type {
+import {
     ARU_PPDU,
+    _encode_ARU_PPDU,
 } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/ARU-PPDU.ta";
-import type {
+import {
     ARP_PPDU,
+    _encode_ARP_PPDU,
 } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/ARP-PPDU.ta";
 import {
     Result,
@@ -26,14 +32,17 @@ import {
 import type {
     Result_list,
 } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Result-list.ta";
-import type {
-    User_data,
+import {
+    User_data, _encode_User_data,
 } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/User-data.ta";
 import type {
     Default_context_name,
 } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Default-context-name.ta";
 import { OBJECT_IDENTIFIER } from "asn1-ts";
+import { BER } from "asn1-ts/dist/node/functional";
 import { strict as assert } from "node:assert";
+import { randomBytes } from "node:crypto";
+import { Default_context_result } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Default-context-result.ta";
 
 /**
  * @summary Presentation layer state
@@ -67,9 +76,9 @@ interface SessionLayerOutgoingEvents {
     ACA: () => unknown, // PPDU ALTER CONTEXT ACKNOWLEDGE
     ARP: (ppdu: ARP_PPDU) => unknown, // PPDU PROVIDER ABORT
     ARU: (ppdu: ARU_PPDU) => unknown, // PPDU USER ABORT
-    CP: () => unknown, // PPDU PRESENTATION CONNECT
-    CPA: () => unknown, // PPDU PRESENTATION CONNECT ACCEPT
-    CPR: () => unknown, // PPDU PRESENTATION CONNECT REJECT
+    CP: (ppdu: CP_type) => unknown, // PPDU PRESENTATION CONNECT
+    CPA: (ppdu: CPA_PPDU) => unknown, // PPDU PRESENTATION CONNECT ACCEPT
+    CPR: (ppdu: CPR_PPDU) => unknown, // PPDU PRESENTATION CONNECT REJECT
     "P-ACTDcnf": () => unknown, // PS primitive P-ACTIVITY-DISCARD confirm
     "P-ACTDind": () => unknown, // PS primitive P-ACTIVITY-DISCARD indication
     "P-ACTEcnf": () => unknown, // PS primitive P-ACTIVITY-END confirm
@@ -83,10 +92,10 @@ interface SessionLayerOutgoingEvents {
     "P-CDcnf": () => unknown, // PS primitive P-CAPABILITY-DATA confirm
     "P-CDind": () => unknown, // PS primitive P-CAPABILITY-DATA indication
     "P-CGind": () => unknown, // PS primitive P-CONTROL-GIVE indication
-    "P-CONcnf+": () => unknown, // PS primitive P-CONNECT confirm accept
-    "P-CONcnf-": () => unknown, // PS primitive P-CONNECT confirm reject
-    "P-CONind": () => unknown, // PS primitive P-CONNECT indication
-    "P-DTind": () => unknown, // PS primitive P-DATA indication
+    "P-CONcnf+": (ppdu: CPA_PPDU) => unknown, // PS primitive P-CONNECT confirm accept
+    "P-CONcnf-": (ppdu: CPR_PPDU) => unknown, // PS primitive P-CONNECT confirm reject
+    "P-CONind": (ppdu: CP_type) => unknown, // PS primitive P-CONNECT indication
+    "P-DTind": (ppdu: User_data) => unknown, // PS primitive P-DATA indication
     "P-EXind": () => unknown, // PS primitive P-EXPEDITED-DATA indication
     "P-GTind": () => unknown, // PS primitive P-TOKEN-GIVE indication
     "P-PABind": (ppdu: ARP_PPDU) => unknown, // PS primitive P-P-ABORT indication
@@ -129,7 +138,7 @@ interface SessionLayerOutgoingEvents {
     "S-UERreq": () => unknown, // SS primitive S-U-EXCEPTION-REPORT request
     TC: () => unknown, // PPDU CAPABILITY DATA
     TCC: () => unknown, // PPDU CAPABILITY DATA ACKNOWLEDGE
-    TD: () => unknown, // PPDU DATA
+    TD: (ppdu: User_data) => unknown, // PPDU DATA
     TE: () => unknown, // PPDU EXPEDITED DATA
     TTD: () => unknown, // PPDU P-TYPED DATA
 }
@@ -140,9 +149,62 @@ class SessionLayerOutgoingEventEmitter extends TypedEmitter<SessionLayerOutgoing
 }
 
 export
-interface SessionLayer {
-
+interface S_CONNECT_Request {
+    session_connection_identifier?: Buffer;
+    calling_session_address: Buffer;
+    called_session_address: Buffer;
+    quality_of_service: number;
+    session_requirements: number;
+    first_initial_synchronization_point_serial_number?: number;
+    second_initial_synchronization_point_serial_number?: number;
+    initial_assignment_of_tokens?: number;
+    user_data?: Buffer;
 }
+
+export
+interface S_CONNECT_Response {
+    session_connection_identifier?: Buffer;
+    responding_session_address: Buffer;
+    refuse_reason?: number;
+    quality_of_service: number;
+    session_requirements: number;
+    first_initial_synchronization_point_serial_number?: number;
+    second_initial_synchronization_point_serial_number?: number;
+    initial_assignment_of_tokens?: number;
+    user_data?: Buffer;
+}
+
+export
+interface S_DATA_Request {
+    user_data: Buffer;
+}
+
+export
+interface S_RELEASE_Request {
+    user_data?: Buffer;
+}
+
+export
+interface S_U_ABORT_Request {
+    user_data?: Buffer;
+}
+
+export
+interface S_P_ABORT_Request {
+    reason: number;
+}
+
+export
+interface SessionLayer {
+    request_S_CONNECT: (req: S_CONNECT_Request) => void;
+    respond_S_CONNECT: (res: S_CONNECT_Response) => void;
+    S_DATA: (req: S_DATA_Request) => void;
+    S_RELEASE: (req: S_RELEASE_Request) => void;
+    S_U_ABORT: (req: S_U_ABORT_Request) => void;
+    S_P_ABORT: (req: S_P_ABORT_Request) => void;
+}
+
+
 
 // I don't really know if this is the right type for this.
 export type SynchronizationPoint = number;
@@ -235,8 +297,49 @@ function createPresentationConnection (
     is_context_acceptable: PresentationConnection["is_context_acceptable"],
     get_preferred_context: PresentationConnection["get_preferred_context"],
 ): PresentationConnection {
+    const outgoingEvents = new SessionLayerOutgoingEventEmitter();
+    outgoingEvents.on("CP", (ppdu) => {
+        const ssdu = Buffer.from(_encode_CP_type(ppdu, BER).toBytes());
+        session.request_S_CONNECT({
+            called_session_address: randomBytes(16),
+            calling_session_address: randomBytes(16),
+            quality_of_service: 0,
+            session_requirements: 0,
+            user_data: ssdu,
+        });
+    });
+    outgoingEvents.on("CPA", (ppdu) => {
+        const ssdu = Buffer.from(_encode_CPA_PPDU(ppdu, BER).toBytes());
+        session.respond_S_CONNECT({
+            quality_of_service: 0,
+            responding_session_address: randomBytes(16),
+            refuse_reason: undefined,
+            session_requirements: 0,
+            user_data: ssdu,
+        });
+    });
+    outgoingEvents.on("CPR", (ppdu) => {
+        const ssdu = Buffer.from(_encode_CPR_PPDU(ppdu, BER).toBytes());
+        session.respond_S_CONNECT({
+            quality_of_service: 0,
+            responding_session_address: randomBytes(16),
+            refuse_reason: 0,
+            session_requirements: 0,
+            user_data: ssdu,
+        });
+    });
+    outgoingEvents.on("ARP", (ppdu) => {
+        // FIXME:
+    });
+    outgoingEvents.on("ARU", (ppdu) => {
+        // FIXME:
+    });
+    outgoingEvents.on("TD", (ppdu) => {
+        const ssdu = Buffer.from(_encode_User_data(ppdu, BER).toBytes());
+        session.S_DATA({ user_data: ssdu });
+    });
     return {
-        outgoingEvents: new SessionLayerOutgoingEventEmitter(),
+        outgoingEvents,
         get_preferred_context,
         is_context_acceptable,
         session,
@@ -275,6 +378,7 @@ function handleInvalidSequence (
     provider_reason?: Abort_reason,
     event_identifier?: number,
 ): void {
+    console.error("INVALID PRESENTATION STATE.");
     const ppdu: ARP_PPDU = {
         provider_reason,
         event_identifier,
@@ -289,6 +393,7 @@ function handleInvalidSequence (
 
 export
 function handleInvalidPPDU (c: PresentationConnection, event_identifier?: number): void {
+    console.error("INVALID PRESENTATION PPDU.");
     const ppdu: ARP_PPDU = {
         provider_reason: Abort_reason_invalid_ppdu_parameter_value,
         event_identifier,
@@ -305,14 +410,17 @@ export
 function getDCS (
     c: PresentationConnection,
     results: Result_list,
+    c_is_initiator: boolean = false,
 ): Map<string, Context_list_Item> | null {
     const dcs: Map<string, Context_list_Item> = new Map();
     // Index the proposed contexts by PCI.
-    for (const cli of c.contextSets.proposed_for_addition_initiated_locally) {
+    const proposed = c_is_initiator
+        ? c.contextSets.proposed_for_addition_initiated_locally
+        : c.contextSets.proposed_for_addition_initiated_remotely.map((p) => p[0]);
+    for (const cli of proposed) {
         dcs.set(cli.presentation_context_identifier.toString(), cli);
     }
     // Already asserted above that they are the same length.
-    const proposed = c.contextSets.proposed_for_addition_initiated_locally;
     // Remove non-accepted contexts from the DCS.
     for (let i = 0; i < proposed.length; i++) {
         const result = results[i];
@@ -675,7 +783,7 @@ function dispatch_CP (c: PresentationConnection, ppdu: CP_type): void {
                 c.cr = false;
                 c.rl = false;
                 c.aep = false;
-                c.outgoingEvents.emit("P-CONind");
+                c.outgoingEvents.emit("P-CONind", ppdu);
             }
             else if (!p01 || !p02 || !p22) {
                 c.state = PresentationLayerState.STAI0;
@@ -685,7 +793,18 @@ function dispatch_CP (c: PresentationConnection, ppdu: CP_type): void {
                         // By default, this implementation does not reject any contexts at the provider level.
                         .map((pcd) => [ pcd, Result_acceptance ]);
                 }
-                c.outgoingEvents.emit("CPR");
+                // TODO: Add more info here.
+                const cpr: CPR_PPDU = {
+                    normal_mode_parameters: new CPR_PPDU_normal_mode_parameters(
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                    ),
+                };
+                c.outgoingEvents.emit("CPR", cpr);
             }
             else {
                 return handleInvalidSequence(c);
@@ -704,7 +823,7 @@ function dispatch_CPA (c: PresentationConnection, cp: CP_type, cpa: CPA_PPDU): v
             if (c.contextSets.proposed_for_addition_initiated_locally.length !== results.length) {
                 return handleInvalidPPDU(c);
             }
-            const dcs = getDCS(c, results);
+            const dcs = getDCS(c, results, true);
             if (!dcs) {
                 return handleInvalidPPDU(c);
             }
@@ -731,7 +850,7 @@ function dispatch_CPA (c: PresentationConnection, cp: CP_type, cpa: CPA_PPDU): v
                 && cpa.normal_mode_parameters.presentation_requirements[1]
             );
             c.state = PresentationLayerState.STAt0;
-            c.outgoingEvents.emit("P-CONcnf+");
+            c.outgoingEvents.emit("P-CONcnf+", cpa);
             break;
         }
         default: handleInvalidSequence(c);
@@ -748,7 +867,7 @@ function dispatch_CPR (c: PresentationConnection, cp: CP_type, cpr: CPR_PPDU): v
             if (c.contextSets.proposed_for_addition_initiated_locally.length !== results.length) {
                 return handleInvalidPPDU(c);
             }
-            const dcs = getDCS(c, results);
+            const dcs = getDCS(c, results, true);
             if (!dcs) {
                 return handleInvalidPPDU(c);
             }
@@ -760,7 +879,7 @@ function dispatch_CPR (c: PresentationConnection, cp: CP_type, cpr: CPR_PPDU): v
                 return handleInvalidPPDU(c);
             }
             c.state = PresentationLayerState.STAI0;
-            c.outgoingEvents.emit("P-CONcnf-");
+            c.outgoingEvents.emit("P-CONcnf-", cpr);
             break;
         }
         default: handleInvalidSequence(c);
@@ -867,25 +986,33 @@ function dispatch_P_ALTERrsp (c: PresentationConnection): void {
     }
 }
 
-export
-function dispatch_P_CDreq (c: PresentationConnection): void {
-    switch (c.state) {
-        case (PresentationLayerState.STAI0): {
-            break;
-        }
-        default: handleInvalidSequence(c);
-    }
-}
+// export
+// function dispatch_P_CDreq (c: PresentationConnection): void {
+//     switch (c.state) {
+//         case (PresentationLayerState.STAac0):
+//         case (PresentationLayerState.STAac1):
+//         case (PresentationLayerState.STAac2):
+//         case (PresentationLayerState.STAt0):
+//         {
+//             break;
+//         }
+//         default: handleInvalidSequence(c);
+//     }
+// }
 
-export
-function dispatch_P_CDrsp (c: PresentationConnection): void {
-    switch (c.state) {
-        case (PresentationLayerState.STAI0): {
-            break;
-        }
-        default: handleInvalidSequence(c);
-    }
-}
+// export
+// function dispatch_P_CDrsp (c: PresentationConnection): void {
+//     switch (c.state) {
+//         case (PresentationLayerState.STAac0):
+//         case (PresentationLayerState.STAac1):
+//         case (PresentationLayerState.STAac2):
+//         case (PresentationLayerState.STAt0):
+//         {
+//             break;
+//         }
+//         default: handleInvalidSequence(c);
+//     }
+// }
 
 export
 function dispatch_P_CGreq (c: PresentationConnection): void {
@@ -941,8 +1068,11 @@ function dispatch_P_CONreq (c: PresentationConnection, ppdu: CP_type): void {
             c.cr = false;
             c.rl = false;
             c.aep = false;
+            c.contextSets.proposed_for_addition_initiated_locally = ppdu
+                .normal_mode_parameters
+                ?.presentation_context_definition_list ?? [];
             c.state = PresentationLayerState.STAI1;
-            c.outgoingEvents.emit("CP");
+            c.outgoingEvents.emit("CP", ppdu);
             break;
         }
         default: handleInvalidSequence(c);
@@ -954,10 +1084,10 @@ function dispatch_P_CONrsp_accept (c: PresentationConnection, cp: CP_type, cpa: 
     switch (c.state) {
         case (PresentationLayerState.STAI2): {
             const results = (cpa.normal_mode_parameters?.presentation_context_definition_result_list ?? []);
-            if (c.contextSets.proposed_for_addition_initiated_locally.length !== results.length) {
+            if (c.contextSets.proposed_for_addition_initiated_remotely.length !== results.length) {
                 return handleInvalidPPDU(c);
             }
-            const dcs = getDCS(c, results);
+            const dcs = getDCS(c, results, false);
             if (!dcs) {
                 return handleInvalidPPDU(c);
             }
@@ -981,8 +1111,10 @@ function dispatch_P_CONrsp_accept (c: PresentationConnection, cp: CP_type, cpa: 
                 && cp.normal_mode_parameters.presentation_requirements[1]
                 && cpa.normal_mode_parameters.presentation_requirements[1]
             );
+            // This step is not in the spec, but required.
+            c.contextSets.dcs_agreed_during_connection_establishment = dcs;
             c.state = PresentationLayerState.STAt0;
-            c.outgoingEvents.emit("CPA");
+            c.outgoingEvents.emit("CPA", cpa);
             break;
         }
         default: handleInvalidSequence(c);
@@ -999,7 +1131,7 @@ function dispatch_P_CONrsp_reject (c: PresentationConnection, cpr: CPR_PPDU): vo
             if (c.contextSets.proposed_for_addition_initiated_locally.length !== results.length) {
                 return handleInvalidPPDU(c);
             }
-            const dcs = getDCS(c, results);
+            const dcs = getDCS(c, results, false);
             if (!dcs) {
                 return handleInvalidPPDU(c);
             }
@@ -1012,7 +1144,7 @@ function dispatch_P_CONrsp_reject (c: PresentationConnection, cpr: CPR_PPDU): vo
             }
             // [6]: It is assumed that the P-CONNECT argument already contains the selected transfer syntaxes.
             c.state = PresentationLayerState.STAI0;
-            c.outgoingEvents.emit("CPR");
+            c.outgoingEvents.emit("CPR", cpr);
             break;
         }
         default: handleInvalidSequence(c);
@@ -1020,24 +1152,53 @@ function dispatch_P_CONrsp_reject (c: PresentationConnection, cpr: CPR_PPDU): vo
 }
 
 export
-function dispatch_P_DTreq (c: PresentationConnection): void {
+function dispatch_P_DTreq (c: PresentationConnection, ppdu: User_data): void {
+    const dcs = c.contextSets.dcs_agreed_during_connection_establishment;
+    const p05: boolean = data_is_from_dcs(
+        c.contextSets.default_context,
+        dcs,
+        ppdu,
+    );
+    const p07_dcs = get_dcs_not_proposed_for_deletion(c);
+    const p07: boolean = data_is_from_dcs(c.contextSets.default_context, p07_dcs, ppdu);
     switch (c.state) {
-        case (PresentationLayerState.STAI0): {
-            break;
-        }
+        case (PresentationLayerState.STAac0):
+        case (PresentationLayerState.STAac2):
+            {
+                if (p07) {
+                    c.outgoingEvents.emit("TD", ppdu);
+                } else {
+                    return handleInvalidSequence(c);
+                }
+                break;
+            }
+        case (PresentationLayerState.STAac1):
+        case (PresentationLayerState.STAt0):
+            {
+                if (p05) {
+                    c.outgoingEvents.emit("TD", ppdu);
+                } else {
+                    return handleInvalidSequence(c);
+                }
+                break;
+            }
         default: handleInvalidSequence(c);
     }
 }
 
-export
-function dispatch_P_EXreq (c: PresentationConnection): void {
-    switch (c.state) {
-        case (PresentationLayerState.STAI0): {
-            break;
-        }
-        default: handleInvalidSequence(c);
-    }
-}
+// export
+// function dispatch_P_EXreq (c: PresentationConnection): void {
+//     switch (c.state) {
+//         case (PresentationLayerState.STAac0):
+//         case (PresentationLayerState.STAac1):
+//         case (PresentationLayerState.STAac2):
+//         case (PresentationLayerState.STAt0):
+//         {
+//             break;
+//         }
+//         default: handleInvalidSequence(c);
+//     }
+// }
 
 export
 function dispatch_P_GTreq (c: PresentationConnection): void {
@@ -1254,15 +1415,27 @@ function dispatch_P_SYNmrsp (c: PresentationConnection): void {
     }
 }
 
-export
-function dispatch_P_TDreq (c: PresentationConnection): void {
-    switch (c.state) {
-        case (PresentationLayerState.STAI0): {
-            break;
-        }
-        default: handleInvalidSequence(c);
-    }
-}
+// export
+// function dispatch_P_TDreq (c: PresentationConnection, ): void {
+//     const dcs = c.contextSets.dcs_agreed_during_connection_establishment;
+//     const p05: boolean = data_is_from_dcs(
+//         c.contextSets.default_context,
+//         dcs,
+//         ppdu,
+//     );
+//     const p07_dcs = get_dcs_not_proposed_for_deletion(c);
+//     const p07: boolean = data_is_from_dcs(c.contextSets.default_context, p07_dcs, ppdu);
+//     switch (c.state) {
+//         case (PresentationLayerState.STAac0):
+//         case (PresentationLayerState.STAac1):
+//         case (PresentationLayerState.STAac2):
+//         case (PresentationLayerState.STAt0):
+//         {
+//             break;
+//         }
+//         default: handleInvalidSequence(c);
+//     }
+// }
 
 export
 function dispatch_P_UABreq (c: PresentationConnection, ppdu: ARU_PPDU): void {
@@ -1412,11 +1585,11 @@ function dispatch_S_CGind (c: PresentationConnection): void {
 }
 
 export
-function dispatch_S_CONcnf_reject (c: PresentationConnection): void {
+function dispatch_S_CONcnf_reject (c: PresentationConnection, ppdu: CPR_PPDU): void {
     switch (c.state) {
         case (PresentationLayerState.STAI1): {
             c.state = PresentationLayerState.STAI0;
-            c.outgoingEvents.emit("P-CONcnf-");
+            c.outgoingEvents.emit("P-CONcnf-", ppdu);
             break;
         }
         default: handleInvalidSequence(c);
@@ -1679,53 +1852,100 @@ function dispatch_S_UERind (c: PresentationConnection): void {
     }
 }
 
+// export
+// function dispatch_TC (c: PresentationConnection): void {
+//     switch (c.state) {
+//         case (PresentationLayerState.STAac0):
+//         case (PresentationLayerState.STAac1):
+//         case (PresentationLayerState.STAac2):
+//         case (PresentationLayerState.STAt0):
+//         {
+//             break;
+//         }
+//         default: handleInvalidSequence(c);
+//     }
+// }
+
+// export
+// function dispatch_TCC (c: PresentationConnection): void {
+//     switch (c.state) {
+//         case (PresentationLayerState.STAac0):
+//         case (PresentationLayerState.STAac1):
+//         case (PresentationLayerState.STAac2):
+//         case (PresentationLayerState.STAt0):
+//         {
+//             break;
+//         }
+//         default: handleInvalidSequence(c);
+//     }
+// }
+
 export
-function dispatch_TC (c: PresentationConnection): void {
+function dispatch_TD (c: PresentationConnection, ppdu: User_data): void {
+    const dcs = c.contextSets.dcs_agreed_during_connection_establishment;
+    const p05: boolean = data_is_from_dcs(
+        c.contextSets.default_context,
+        dcs,
+        ppdu,
+    );
+    const p06_dcs = get_dcs_not_proposed_for_deletion(c);
+    const p06: boolean = data_is_from_dcs(c.contextSets.default_context, p06_dcs, ppdu);
     switch (c.state) {
-        case (PresentationLayerState.STAI0): {
-            break;
-        }
+        case (PresentationLayerState.STAac0):
+        case (PresentationLayerState.STAt0):
+            {
+                if ((c.state === PresentationLayerState.STAt0) && c.aep) {
+                    c.aep = false;
+                    if (c.FU_CR) {
+                        // the synchronization points associated with the last activity no longer have associated DCSs.
+                    }
+                }
+                if (p05) {
+                    c.outgoingEvents.emit("P-DTind", ppdu);
+                } else {
+                    return handleInvalidSequence(c);
+                }
+                break;
+            }
+        case (PresentationLayerState.STAac1):
+        case (PresentationLayerState.STAac2):
+            {
+                if (p06) {
+                    c.outgoingEvents.emit("P-DTind", ppdu);
+                } else {
+                    return handleInvalidSequence(c);
+                }
+                break;
+            }
         default: handleInvalidSequence(c);
     }
 }
 
-export
-function dispatch_TCC (c: PresentationConnection): void {
-    switch (c.state) {
-        case (PresentationLayerState.STAI0): {
-            break;
-        }
-        default: handleInvalidSequence(c);
-    }
-}
+// export
+// function dispatch_TE (c: PresentationConnection): void {
+//     switch (c.state) {
+//         case (PresentationLayerState.STAac0):
+//         case (PresentationLayerState.STAac1):
+//         case (PresentationLayerState.STAac2):
+//         case (PresentationLayerState.STAt0):
+//         {
+//             break;
+//         }
+//         default: handleInvalidSequence(c);
+//     }
+// }
 
-export
-function dispatch_TD (c: PresentationConnection): void {
-    switch (c.state) {
-        case (PresentationLayerState.STAI0): {
-            break;
-        }
-        default: handleInvalidSequence(c);
-    }
-}
-
-export
-function dispatch_TE (c: PresentationConnection): void {
-    switch (c.state) {
-        case (PresentationLayerState.STAI0): {
-            break;
-        }
-        default: handleInvalidSequence(c);
-    }
-}
-
-export
-function dispatch_TTD (c: PresentationConnection): void {
-    switch (c.state) {
-        case (PresentationLayerState.STAI0): {
-            break;
-        }
-        default: handleInvalidSequence(c);
-    }
-}
+// export
+// function dispatch_TTD (c: PresentationConnection): void {
+//     switch (c.state) {
+//         case (PresentationLayerState.STAac0):
+//         case (PresentationLayerState.STAac1):
+//         case (PresentationLayerState.STAac2):
+//         case (PresentationLayerState.STAt0):
+//         {
+//             break;
+//         }
+//         default: handleInvalidSequence(c);
+//     }
+// }
 
