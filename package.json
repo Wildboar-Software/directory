@@ -39,6 +39,7 @@
     "@nestjs/swagger": "^6.0.5",
     "@nestjs/terminus": "^9.1.0",
     "@prisma/client": "^4.1.1",
+    "@wildboar/acse": "^1.0.5",
     "@wildboar/cms": "^1.0.4",
     "@wildboar/copp": "^1.0.2",
     "@wildboar/ldap": "^1.2.11",
