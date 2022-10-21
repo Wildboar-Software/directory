@@ -510,7 +510,7 @@ interface SessionLayerOutgoingEvents {
     CDA: () => unknown;
     CDO: () => unknown;
     CN: (spdu: CONNECT_SPDU) => unknown;
-    DN: () => unknown;
+    DN: (spdu: DISCONNECT_SPDU) => unknown;
     DT: (spdu: DATA_TRANSFER_SPDU) => unknown;
     ED: () => unknown;
     EX: () => unknown;
@@ -2802,6 +2802,8 @@ function newSessionConnection (
     outgoingEvents.on("FN_r", (spdu) => transport.writeTSDU(encode_FINISH_SPDU(spdu)));
     outgoingEvents.on("AB_nr", (spdu) => transport.writeTSDU(encode_ABORT_SPDU(spdu)));
     outgoingEvents.on("AB_r", (spdu) => transport.writeTSDU(encode_ABORT_SPDU(spdu)));
+    outgoingEvents.on("DT", (spdu) => transport.writeTSDU(encode_DATA_TRANSFER_SPDU(spdu)));
+    outgoingEvents.on("DN", (spdu) => transport.writeTSDU(encode_DISCONNECT_SPDU(spdu)));
     return {
         version: SESSION_PROTOCOL_VERSION_1, // Default, per ITU Rec. X.225 (1995), Section 8.3.1.9.
         buffer: Buffer.alloc(0),

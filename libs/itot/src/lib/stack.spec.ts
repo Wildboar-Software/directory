@@ -1,4 +1,4 @@
-import { ITOTSocket } from "./itot";
+import { ITOTSocket } from "./tpkt";
 import {
     TransportConnection,
     createTransportConnection,
