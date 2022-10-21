@@ -53,12 +53,11 @@ class ITOTSocket extends NetworkLayerOutgoingEventEmitter {
                 return;
             }
             const length = this.buffer.readUint16BE(i + 2);
-            if (this.buffer.length < (i + 4 + length)) {
+            if (this.buffer.length < (i + length)) {
                 return;
             }
             const nsdu = this.buffer.subarray((i + 4), (i + 4 + length));
             console.log("Received NSDU: ", nsdu);
-            // this.emit("NSDU", nsdu);
             nsdus.push(nsdu);
             i += 4 + length;
         }
@@ -68,7 +67,7 @@ class ITOTSocket extends NetworkLayerOutgoingEventEmitter {
 
     public writeNSDU (nsdu: Buffer): void {
         const tpkt_header = Buffer.from([ TPKT_VERSION, 0, 0, 0 ]);
-        tpkt_header.writeUint16BE(nsdu.length, 2);
+        tpkt_header.writeUint16BE(nsdu.length + 4, 2);
         this.socket.cork();
         this.socket.write(tpkt_header);
         this.socket.write(nsdu);
