@@ -1,3 +1,4 @@
+import { createConnection, createServer, Server } from "node:net";
 import { ISOTransportOverTCPStack } from "./itot";
 import { ITOTSocket } from "./tpkt";
 import {
@@ -123,8 +124,6 @@ import { ARU_PPDU_normal_mode_parameters } from "@wildboar/copp/src/lib/modules/
 import { AARQ_apdu, _decode_AARQ_apdu, _encode_AARQ_apdu } from "@wildboar/acse/src/lib/modules/ACSE-1/AARQ-apdu.ta";
 import { AARE_apdu, _decode_AARE_apdu } from "@wildboar/acse/src/lib/modules/ACSE-1/AARE-apdu.ta";
 
-jest.mock("node:net");
-
 const id_ber = new ObjectIdentifier([ 2, 1, 1 ]);
 const id_acse = new ObjectIdentifier([ 2, 2, 1, 0, 1 ]);
 const id_random_protocol = new ObjectIdentifier([ 1, 2, 3, 4 ]);
@@ -206,20 +205,58 @@ const cn: CONNECT_SPDU = {
     userData: Buffer.from(_encode_CP_type(cp_ppdu, BER).toBytes()),
 };
 
-describe("The OSI network stack", () => {
-    test("it works", () => {
-        const socket1 = new Socket();
-        const socket1write = jest.spyOn(socket1, "write");
-        socket1write.mockImplementation((data: any, ...args: any[]): any => {
-            n2.receiveData(data);
+const PORT: number = 44005;
+
+function withSockets (test: (clientSocket: Socket, serverSocket: Socket, server: Server, done: jest.DoneCallback) => void): any {
+    const server = createServer();
+    return function (done: jest.DoneCallback) {
+        server.on("listening", () => {
+            server.on("connection", (c) => {
+                test(client, c, server, done);
+            });
+            const client = createConnection({
+                host: "localhost",
+                port: PORT,
+                timeout: 1000,
+            });
         });
+        server.listen(PORT);
+    };
+}
+
+describe("The OSI network stack", () => {
+
+    let _server: Server | undefined;
+    let _socket1: Socket | undefined;
+    let _socket2: Socket | undefined;
+
+    afterEach(() => {
+        if (_socket1 && _socket1.writable) {
+            _socket1.destroy();
+        }
+        if (_socket2 && _socket2.writable) {
+            _socket2.destroy();
+        }
+        if (_server && _server.listening) {
+            _server.close();
+        }
+    });
+
+    test("it works", withSockets((socket1, socket2, server, done) => {
+        _server = server;
+        _socket1 = socket1;
+        _socket2 = socket2;
+
         const n1 = new ITOTSocket(socket1);
+        const n2 = new ITOTSocket(socket2);
+        socket1.on("data", (data) => n1.receiveData(data));
+        socket2.on("data", (data) => n2.receiveData(data));
         const t1 = createTransportConnection({
             available: () => true,
-            disconnect: jest.fn(),
+            disconnect: () => socket1.end(),
             max_nsdu_size: () => 10_000_000,
-            open: () => true,
-            openInProgress: () => false,
+            open: () => socket1.writable,
+            openInProgress: () => socket1.connecting,
             transportConnectionsServed: () => 1,
             write_nsdu: (nsdu: Buffer) => n1.writeNSDU(nsdu),
         }, "CLIENT");
@@ -431,12 +468,6 @@ describe("The OSI network stack", () => {
             stack1.session = dispatch_SRELrsp_accept(stack1.session, dn);
         });
 
-        const socket2 = new Socket();
-        const socket2write = jest.spyOn(socket2, "write");
-        socket2write.mockImplementation((data: any, ...args: any[]): any => {
-            n1.receiveData(data);
-        });
-        const n2 = new ITOTSocket(socket2);
         const t2 = createTransportConnection({
             available: () => true,
             disconnect: jest.fn(),
@@ -674,17 +705,13 @@ describe("The OSI network stack", () => {
                 assert(false, "hey big boi");
             }
         });
-        // stack1.session.outgoingEvents.once("SRELcnf_accept", () => {
-        //     console.log("Session connection released.");
-        //     expect(stack1.session.state).toBe(TableA2SessionConnectionState.STA01C);
-        //     expect(stack2.session.state).toBe(TableA2SessionConnectionState.STA01C);
-        // });
         stack2.presentation.outgoingEvents.on("P-DTind", (ppdu) => {
             if ("fully_encoded_data" in ppdu) {
                 for (const pdv of ppdu.fully_encoded_data) {
                     if ("single_ASN1_type" in pdv.presentation_data_values) {
                         console.log("Presentation layer received " +
                             pdv.presentation_data_values.single_ASN1_type.utf8String);
+                        done();
                     }
                 }
             }
@@ -770,5 +797,5 @@ describe("The OSI network stack", () => {
             dispatch_P_DTreq(stack1.presentation, ppdu);
         });
         dispatch_A_ASCreq(stack1.acse, aarq);
-    });
+    }));
 });
