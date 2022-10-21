@@ -1155,9 +1155,7 @@ function dispatch_TCONcnf (state: SessionServiceConnectionState, cn: CONNECT_SPD
     } else {
         state.state = TableA2SessionConnectionState.STA02A;
     }
-    const tsdu = encode_CONNECT_SPDU(cn);
-    state.transport.writeTSDU(tsdu);
-    // TODO: state.outgoingEvents.emit("CN", cn);
+    state.outgoingEvents.emit("CN", cn);
     return state;
 }
 
@@ -2772,8 +2770,6 @@ interface SessionServiceConnectionState extends SessionServicePDUParserState, An
     releaseToken?: SessionServiceTokenPossession;
     synchronizeMinorToken?: SessionServiceTokenPossession;
     majorActivityToken?: SessionServiceTokenPossession;
-    peerEvents: SessionLayerEventEmitter; // SPDUs received from the SS-peer
-    localEvents: SessionLayerEventEmitter; // SPDUs sent by the SPM
     transport: TransportLayer;
     tsduMaximumSize?: number;
     cn?: CONNECT_SPDU; // FIXME: Clean up after disconnect.
@@ -2796,6 +2792,16 @@ function newSessionConnection (
     caller: boolean = true,
     transportCaller: boolean = false,
 ): SessionServiceConnectionState {
+    const outgoingEvents = new SessionLayerOutgoingEventEmitter();
+    outgoingEvents.on("CN", (spdu) => transport.writeTSDU(encode_CONNECT_SPDU(spdu)));
+    // outgoingEvents.on("OA", (cn) => transport.writeTSDU(encode_O(cn)));
+    outgoingEvents.on("AC", (spdu) => transport.writeTSDU(encode_ACCEPT_SPDU(spdu)));
+    outgoingEvents.on("RF_nr", (spdu) => transport.writeTSDU(encode_REFUSE_SPDU(spdu)));
+    outgoingEvents.on("RF_r", (spdu) => transport.writeTSDU(encode_REFUSE_SPDU(spdu)));
+    outgoingEvents.on("FN_nr", (spdu) => transport.writeTSDU(encode_FINISH_SPDU(spdu)));
+    outgoingEvents.on("FN_r", (spdu) => transport.writeTSDU(encode_FINISH_SPDU(spdu)));
+    outgoingEvents.on("AB_nr", (spdu) => transport.writeTSDU(encode_ABORT_SPDU(spdu)));
+    outgoingEvents.on("AB_r", (spdu) => transport.writeTSDU(encode_ABORT_SPDU(spdu)));
     return {
         version: SESSION_PROTOCOL_VERSION_1, // Default, per ITU Rec. X.225 (1995), Section 8.3.1.9.
         buffer: Buffer.alloc(0),
@@ -2805,8 +2811,6 @@ function newSessionConnection (
         state: transport.connected()
             ? TableA2SessionConnectionState.STA01C // This is the default state after transport is established.
             : TableA2SessionConnectionState.STA01,
-        peerEvents: new SessionLayerEventEmitter(),
-        localEvents: new SessionLayerEventEmitter(),
         FU: 0,
         TEXP: false,
         Vact: false,
@@ -2839,7 +2843,7 @@ function newSessionConnection (
         transport,
         connectData: Buffer.alloc(0),
         userDataBuffer: Buffer.alloc(0),
-        outgoingEvents: new SessionLayerOutgoingEventEmitter(),
+        outgoingEvents,
     };
 }
 
@@ -4055,9 +4059,7 @@ export
 function handleInvalidSequence (state: SessionServiceConnectionState): SessionServiceConnectionState {
     // Section A.4.1.1 is unhandled.
     const response: ABORT_SPDU = {};
-    const tsdu = encode_ABORT_SPDU(response);
-    state.localEvents.emit("ABORT", response);
-    state.localEvents.emit("TSDU", tsdu);
+    state.outgoingEvents.emit("AB_nr", response); // TODO: Should this be nr?
     state.TIM = setTimeout(() => state.transport.disconnect(), TIMER_TIME_IN_MS); // TODO: Make this configurable.
     return state;
 }
@@ -4070,7 +4072,6 @@ function handleSPDU (state: SessionServiceConnectionState, spdu: SPDU): [ state:
             if (typeof cn === "number") {
                 return [ state, cn ];
             }
-            state.peerEvents.emit("CONNECT", cn);
             const newState = dispatch_CN(state, cn);
             return [ newState ];
         }
@@ -4080,7 +4081,6 @@ function handleSPDU (state: SessionServiceConnectionState, spdu: SPDU): [ state:
             if (typeof oa === "number") {
                 return [ state, oa ];
             }
-            state.peerEvents.emit("OVERFLOW_ACCEPT", oa);
             const newState = dispatch_OA(state, oa, state.connectData);
             return [ newState ];
         }
@@ -4093,7 +4093,6 @@ function handleSPDU (state: SessionServiceConnectionState, spdu: SPDU): [ state:
             if (typeof cdo === "number") {
                 return [ state, cdo ];
             }
-            state.peerEvents.emit("CONNECT_DATA_OVERFLOW", cdo);
             const newState = dispatch_CDO(state, state.cn, cdo);
             return [ newState ];
         }
@@ -4102,7 +4101,6 @@ function handleSPDU (state: SessionServiceConnectionState, spdu: SPDU): [ state:
             if (typeof ac === "number") {
                 return [ state, ac ];
             }
-            state.peerEvents.emit("ACCEPT", ac);
             const newState = dispatch_AC(state, ac);
             return [ newState ];
         }
@@ -4111,7 +4109,6 @@ function handleSPDU (state: SessionServiceConnectionState, spdu: SPDU): [ state:
             if (typeof rf === "number") {
                 return [ state, rf ];
             }
-            state.peerEvents.emit("REFUSE", rf);
             const r: boolean = (rf.transportDisconnect === TRANSPORT_DISCONNECT_KEPT);
             if (r) {
                 const newState = dispatch_RF_r(state, rf);
@@ -4126,7 +4123,6 @@ function handleSPDU (state: SessionServiceConnectionState, spdu: SPDU): [ state:
             if (typeof fn === "number") {
                 return [ state, fn ];
             }
-            state.peerEvents.emit("FINISH", fn);
             const r: boolean = (fn.transportDisconnect === TRANSPORT_DISCONNECT_KEPT);
             if (r) {
                 const newState = dispatch_FN_r(state, fn);
@@ -4141,7 +4137,6 @@ function handleSPDU (state: SessionServiceConnectionState, spdu: SPDU): [ state:
             if (typeof dn === "number") {
                 return [ state, dn ];
             }
-            state.peerEvents.emit("DISCONNECT", dn);
             const newState = dispatch_DN(state);
             return [ newState ];
         }
@@ -4159,7 +4154,6 @@ function handleSPDU (state: SessionServiceConnectionState, spdu: SPDU): [ state:
             if (typeof ab === "number") {
                 return [ state, ab ];
             }
-            state.peerEvents.emit("ABORT", ab);
             const r: boolean = (ab.transportDisconnect === TRANSPORT_DISCONNECT_KEPT);
             if (r) {
                 const newState = dispatch_AB_r(state, ab);

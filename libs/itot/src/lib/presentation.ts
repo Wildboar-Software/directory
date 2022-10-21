@@ -289,6 +289,8 @@ interface PresentationConnection {
      */
     contextSets: ContextSets;
 
+    cp?: CP_type;
+
 }
 
 export
@@ -707,6 +709,7 @@ function dispatch_ARU (c: PresentationConnection, ppdu: ARU_PPDU): void {
 
 export
 function dispatch_CP (c: PresentationConnection, ppdu: CP_type): void {
+    c.cp = ppdu;
     switch (c.state) {
         case (PresentationLayerState.STAI0): {
             const dcs: Map<string, Context_list_Item> = new Map();
@@ -816,7 +819,11 @@ function dispatch_CP (c: PresentationConnection, ppdu: CP_type): void {
 }
 
 export
-function dispatch_CPA (c: PresentationConnection, cp: CP_type, cpa: CPA_PPDU): void {
+function dispatch_CPA (c: PresentationConnection, cpa: CPA_PPDU): void {
+    const cp = c.cp;
+    if (!cp) {
+        return handleInvalidSequence(c);
+    }
     switch (c.state) {
         case (PresentationLayerState.STAI1): {
             const results = (cpa.normal_mode_parameters?.presentation_context_definition_result_list ?? []);
@@ -858,7 +865,11 @@ function dispatch_CPA (c: PresentationConnection, cp: CP_type, cpa: CPA_PPDU): v
 }
 
 export
-function dispatch_CPR (c: PresentationConnection, cp: CP_type, cpr: CPR_PPDU): void {
+function dispatch_CPR (c: PresentationConnection, cpr: CPR_PPDU): void {
+    const cp = c.cp;
+    if (!cp) {
+        return handleInvalidSequence(c);
+    }
     switch (c.state) {
         case (PresentationLayerState.STAI1): {
             const results = ("normal_mode_parameters" in cpr)
@@ -1026,6 +1037,7 @@ function dispatch_P_CGreq (c: PresentationConnection): void {
 
 export
 function dispatch_P_CONreq (c: PresentationConnection, ppdu: CP_type): void {
+    c.cp = ppdu;
     switch (c.state) {
         case (PresentationLayerState.STAI0): {
             const dcs: Map<string, Context_list_Item> = new Map();

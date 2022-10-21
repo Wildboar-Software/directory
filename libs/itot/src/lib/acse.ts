@@ -44,7 +44,7 @@ import {
     ABRT_diagnostic_protocol_error,
 } from "@wildboar/acse/src/lib/modules/ACSE-1/ABRT-diagnostic.ta";
 import type {
-    CP_type_normal_mode_parameters,
+    CP_type_normal_mode_parameters, User_data,
 } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/CP-type-normal-mode-parameters.ta";
 import type {
     CPA_PPDU_normal_mode_parameters,
@@ -72,23 +72,18 @@ interface P_CONNECT_Response extends Partial<CPA_PPDU_normal_mode_parameters> {
 
 export
 interface P_RELEASE_Request {
-    user_data?: ASN1Element;
+    user_data?: User_data;
 }
 
 export
 interface P_RELEASE_Response {
     result?: number;
-    user_data?: ASN1Element;
+    user_data?: User_data;
 }
 
 export
 interface P_U_ABORT_Request {
-    user_data?: ASN1Element;
-}
-
-export
-interface P_P_ABORT_Request {
-    provider_reason: number;
+    user_data?: User_data;
 }
 
 export
@@ -98,9 +93,9 @@ interface PresentationService {
     request_P_RELEASE: (args: P_RELEASE_Request) => unknown;
     respond_P_RELEASE: (args: P_RELEASE_Response) => unknown;
     request_P_U_ABORT: (args: P_U_ABORT_Request) => unknown;
-    request_P_P_ABORT: (args: P_P_ABORT_Request) => unknown;
 }
 
+// TODO: Rename. Basically same as ACPMState.
 /**
  * ACPM states as defined in table A.2 of ITU Recommendation X.227 (1995),
  * Annex A.
@@ -164,8 +159,6 @@ interface ACPMState {
     responding_AP_invocation_identifier?: AP_invocation_identifier;
     responding_AE_invocation_identifier?: AE_invocation_identifier;
 }
-
-
 
 export
 function createAssociationControlState (
@@ -254,7 +247,10 @@ function createAssociationControlState (
 
 export
 function canSupportAssociation (aarq: AARQ_apdu): boolean {
-    if (aarq.protocol_version && aarq.protocol_version[0] !== TRUE_BIT) {
+    if (
+        aarq.protocol_version?.length
+        && (aarq.protocol_version[0] !== TRUE_BIT)
+    ) {
         return false;
     }
     if (
