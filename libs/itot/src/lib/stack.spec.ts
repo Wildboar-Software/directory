@@ -1,3 +1,4 @@
+import { ISOTransportOverTCPStack } from "./itot";
 import { ITOTSocket } from "./tpkt";
 import {
     TransportConnection,
@@ -205,15 +206,6 @@ const cn: CONNECT_SPDU = {
     userData: Buffer.from(_encode_CP_type(cp_ppdu, BER).toBytes()),
 };
 
-export
-interface OSINetworkStack {
-    network: ITOTSocket;
-    transport: TransportConnection;
-    session: SessionServiceConnectionState;
-    presentation: PresentationConnection;
-    acse: ACPMState;
-}
-
 describe("The OSI network stack", () => {
     test("it works", () => {
         const socket1 = new Socket();
@@ -287,7 +279,7 @@ describe("The OSI network stack", () => {
                 };
                 stack1.session = dispatch_SUABreq(stack1.session, spdu);
             },
-            S_P_ABORT: (req) => {
+            S_P_ABORT: () => {
                 const spdu: ABORT_SPDU = {};
                 stack1.session = dispatch_SUABreq(stack1.session, spdu);
             },
@@ -395,54 +387,7 @@ describe("The OSI network stack", () => {
                 dispatch_P_UABreq(stack1.presentation, ppdu);
             },
         });
-        // const cpa_ppdu: CPA_PPDU = new CPA_PPDU(
-        //     new Mode_selector(Mode_selector_mode_value_normal_mode),
-        //     undefined,
-        //     new CPA_PPDU_normal_mode_parameters(
-        //         undefined,
-        //         undefined,
-        //         [
-        //             new Result_list_Item(
-        //                 Result_acceptance,
-        //                 id_ber,
-        //                 undefined,
-        //             ),
-        //             new Result_list_Item(
-        //                 Result_acceptance,
-        //                 id_ber,
-        //                 undefined,
-        //             ),
-        //         ],
-        //         undefined,
-        //         undefined,
-        //         undefined,
-        //         undefined,
-        //         {
-        //             fully_encoded_data: [
-        //                 new PDV_list(
-        //                     undefined,
-        //                     1,
-        //                     { // Later, this will be the ACSE APDU.
-        //                         single_ASN1_type: new BERElement(),
-        //                     },
-        //                 ),
-        //             ],
-        //         },
-        //     ),
-        // );
-        s1.outgoingEvents.on("FN_r", (spdu) => {
-
-        });
-        s1.outgoingEvents.on("FN_r", (spdu) => {
-
-        });
-        s1.outgoingEvents.on("AB_nr", (spdu) => {
-
-        });
-        s1.outgoingEvents.on("AB_r", (spdu) => {
-
-        });
-        const stack1: OSINetworkStack = {
+        const stack1: ISOTransportOverTCPStack = {
             network: n1,
             transport: t1,
             session: s1,
@@ -457,7 +402,7 @@ describe("The OSI network stack", () => {
                 throw rc;
             }
         });
-        t1.outgoingEvents.on("TCONind", (cr) => {
+        t1.outgoingEvents.on("TCONind", () => {
             stack1.session = dispatch_TCONind(stack1.session);
         });
         s1.outgoingEvents.on("TCONrsp", () => {
@@ -555,7 +500,7 @@ describe("The OSI network stack", () => {
                 };
                 stack2.session = dispatch_SUABreq(stack2.session, spdu);
             },
-            S_P_ABORT: (req) => {
+            S_P_ABORT: () => {
                 const spdu: ABORT_SPDU = {};
                 stack2.session = dispatch_SUABreq(stack2.session, spdu);
             },
@@ -669,19 +614,7 @@ describe("The OSI network stack", () => {
             const ppdu = _decode_User_data(el);
             dispatch_TD(stack2.presentation, ppdu);
         });
-        s2.outgoingEvents.on("FN_r", (spdu) => {
-
-        });
-        s2.outgoingEvents.on("FN_r", (spdu) => {
-
-        });
-        s2.outgoingEvents.on("AB_nr", (spdu) => {
-
-        });
-        s2.outgoingEvents.on("AB_r", (spdu) => {
-
-        });
-        const stack2: OSINetworkStack = {
+        const stack2: ISOTransportOverTCPStack = {
             network: n2,
             transport: t2,
             session: s2,
@@ -696,7 +629,7 @@ describe("The OSI network stack", () => {
                 throw rc;
             }
         });
-        t2.outgoingEvents.on("TCONind", (cr) => {
+        t2.outgoingEvents.on("TCONind", () => {
             stack2.session = dispatch_TCONind(stack2.session);
         });
         s2.outgoingEvents.on("TCONrsp", () => {
@@ -790,7 +723,7 @@ describe("The OSI network stack", () => {
                 }
             }
         });
-        stack2.acse.outgoingEvents.on("A-ASCind", (apdu) => {
+        stack2.acse.outgoingEvents.on("A-ASCind", () => {
             const aare: AARE_apdu = new AARE_apdu(
                 undefined,
                 id_random_protocol,
@@ -822,7 +755,7 @@ describe("The OSI network stack", () => {
             );
             dispatch_A_ASCrsp_accept(stack2.acse, aare);
         });
-        stack1.acse.outgoingEvents.on("A-ASCcnf+", (apdu) => {
+        stack1.acse.outgoingEvents.on("A-ASCcnf+", () => {
             const ppdu: User_data = {
                 fully_encoded_data: [
                     new PDV_list(
