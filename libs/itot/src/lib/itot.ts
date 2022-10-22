@@ -136,13 +136,18 @@ interface ISOTransportOverTCPStack {
 }
 
 export
-function create_itot_stack (socket: Socket): ISOTransportOverTCPStack {
+function create_itot_stack (
+    socket: Socket,
+    sessionCaller: boolean = true,
+    transportCaller: boolean = true,
+    max_nsdu_size: number = 10_000_000,
+): ISOTransportOverTCPStack {
     const tpkt = new ITOTSocket(socket);
     socket.on("data", (data) => tpkt.receiveData(data));
     const transport = createTransportConnection({
         available: () => socket.writable && socket.readable,
         disconnect: () => socket.end(),
-        max_nsdu_size: () => 10_000_000, // TODO: Make configurable.
+        max_nsdu_size: () => max_nsdu_size,
         open: () => socket.writable,
         openInProgress: () => socket.connecting,
         transportConnectionsServed: () => 1,
@@ -168,7 +173,7 @@ function create_itot_stack (socket: Socket): ISOTransportOverTCPStack {
         writeTSDU: (tsdu: Buffer) => {
             stack.transport = dispatch_TDTreq(stack.transport, tsdu);
         },
-    }, true, true); // FIXME: Maybe make these arguments?
+    }, sessionCaller, transportCaller);
     const presentation = createPresentationConnection({
         request_S_CONNECT: (req) => {
             const spdu: CONNECT_SPDU = {
