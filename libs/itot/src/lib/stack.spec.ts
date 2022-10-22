@@ -289,7 +289,7 @@ describe("The OSI network stack", () => {
                     const spdu: ACCEPT_SPDU = {
                         userData: res.user_data,
                     };
-                    stack1.session = dispatch_SCONrsp_accept(stack1.session, spdu, {}); // FIXME: Use a valid CONNECT SPDU.
+                    stack1.session = dispatch_SCONrsp_accept(stack1.session, spdu);
                 } else {
                     const spdu: REFUSE_SPDU = {
                         userData: res.user_data,
@@ -384,8 +384,7 @@ describe("The OSI network stack", () => {
                             args.user_data,
                         ),
                     );
-                    const cp = new CP_type({ mode_value: Mode_selector_mode_value_normal_mode }, undefined, undefined);
-                    dispatch_P_CONrsp_accept(stack1.presentation, cp, ppdu); // TODO: Replace with a real CP-type
+                    dispatch_P_CONrsp_accept(stack1.presentation, ppdu);
                 } else {
                     const ppdu: CPR_PPDU = {
                         normal_mode_parameters: new CPR_PPDU_normal_mode_parameters(
@@ -460,7 +459,7 @@ describe("The OSI network stack", () => {
                 dispatch_CP(stack1.presentation, ppdu);
             } else {
                 const ac: ACCEPT_SPDU = {};
-                stack1.session = dispatch_SCONrsp_accept(stack1.session, ac, cn);
+                stack1.session = dispatch_SCONrsp_accept(stack1.session, ac);
             }
         });
         s1.outgoingEvents.on("SRELind", () => {
@@ -504,7 +503,7 @@ describe("The OSI network stack", () => {
                     const spdu: ACCEPT_SPDU = {
                         userData: res.user_data,
                     };
-                    stack2.session = dispatch_SCONrsp_accept(stack2.session, spdu, {}); // FIXME: Use a valid CONNECT SPDU.
+                    stack2.session = dispatch_SCONrsp_accept(stack2.session, spdu);
                 } else {
                     const spdu: REFUSE_SPDU = {
                         userData: res.user_data,
@@ -599,8 +598,7 @@ describe("The OSI network stack", () => {
                             args.user_data,
                         ),
                     );
-                    const cp = new CP_type({ mode_value: Mode_selector_mode_value_normal_mode }, undefined, undefined);
-                    dispatch_P_CONrsp_accept(stack2.presentation, cp, ppdu); // TODO: Replace with a real CP-type
+                    dispatch_P_CONrsp_accept(stack2.presentation, ppdu);
                 } else {
                     const ppdu: CPR_PPDU = {
                         normal_mode_parameters: new CPR_PPDU_normal_mode_parameters(
@@ -681,7 +679,7 @@ describe("The OSI network stack", () => {
                 dispatch_CP(stack2.presentation, ppdu);
             } else {
                 const ac: ACCEPT_SPDU = {};
-                stack2.session = dispatch_SCONrsp_accept(stack2.session, ac, cn);
+                stack2.session = dispatch_SCONrsp_accept(stack2.session, ac);
             }
         });
         s2.outgoingEvents.on("SRELind", () => {

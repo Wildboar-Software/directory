@@ -86,6 +86,7 @@ interface P_U_ABORT_Request {
     user_data?: User_data;
 }
 
+// TODO: Change this to just use the PPDUs directly.
 export
 interface PresentationService {
     request_P_CONNECT: (args: P_CONNECT_Request) => unknown;
@@ -165,78 +166,79 @@ function createAssociationControlState (
     presentation: PresentationService,
 ): ACPMState {
     const outgoingEvents = new ACSEOutgoingEventEmitter();
-    outgoingEvents.on("AARQ", (apdu) => {
-        presentation.request_P_CONNECT({
-            presentation_context_definition_list: [
-                new Context_list_Item(
-                    1,
-                    id_acse,
-                    [id_ber],
-                ),
-            ],
-            user_data: {
-                fully_encoded_data: [
-                    new PDV_list(
-                        undefined,
-                        1,
-                        {
-                            single_ASN1_type: _encode_AARQ_apdu(apdu, BER),
-                        },
-                    ),
-                ],
-            },
-        });
-    });
-    outgoingEvents.on("AARE+", (apdu) => {
-        presentation.respond_P_CONNECT({
-            user_data: {
-                fully_encoded_data: [
-                    new PDV_list(
-                        undefined,
-                        1,
-                        {
-                            single_ASN1_type: _encode_AARE_apdu(apdu, BER),
-                        },
-                    ),
-                ],
-            },
-        });
-    });
-    outgoingEvents.on("AARE-", (apdu) => {
-        presentation.respond_P_CONNECT({
-            user_data: {
-                fully_encoded_data: [
-                    new PDV_list(
-                        undefined,
-                        1,
-                        {
-                            single_ASN1_type: _encode_AARE_apdu(apdu, BER),
-                        },
-                    ),
-                ],
-            },
-        });
-    });
-    outgoingEvents.on("ABRT", (apdu) => {
-        presentation.request_P_U_ABORT({
-            user_data: _encode_ABRT_apdu(apdu, BER),
-        });
-    });
-    outgoingEvents.on("RLRQ", (apdu) => {
-        presentation.request_P_RELEASE({
-            user_data: _encode_RLRQ_apdu(apdu, BER),
-        });
-    });
-    outgoingEvents.on("RLRE+", (apdu) => {
-        presentation.respond_P_RELEASE({
-            user_data: _encode_RLRE_apdu(apdu, BER),
-        });
-    });
-    outgoingEvents.on("RLRE-", (apdu) => {
-        presentation.respond_P_RELEASE({
-            user_data: _encode_RLRE_apdu(apdu, BER),
-        });
-    });
+    // TODO: We are going to let these get handled by the actual application.
+    // outgoingEvents.on("AARQ", (apdu) => {
+    //     presentation.request_P_CONNECT({
+    //         presentation_context_definition_list: [
+    //             new Context_list_Item(
+    //                 1,
+    //                 id_acse,
+    //                 [id_ber],
+    //             ),
+    //         ],
+    //         user_data: {
+    //             fully_encoded_data: [
+    //                 new PDV_list(
+    //                     undefined,
+    //                     1,
+    //                     {
+    //                         single_ASN1_type: _encode_AARQ_apdu(apdu, BER),
+    //                     },
+    //                 ),
+    //             ],
+    //         },
+    //     });
+    // });
+    // outgoingEvents.on("AARE+", (apdu) => {
+    //     presentation.respond_P_CONNECT({
+    //         user_data: {
+    //             fully_encoded_data: [
+    //                 new PDV_list(
+    //                     undefined,
+    //                     1,
+    //                     {
+    //                         single_ASN1_type: _encode_AARE_apdu(apdu, BER),
+    //                     },
+    //                 ),
+    //             ],
+    //         },
+    //     });
+    // });
+    // outgoingEvents.on("AARE-", (apdu) => {
+    //     presentation.respond_P_CONNECT({
+    //         user_data: {
+    //             fully_encoded_data: [
+    //                 new PDV_list(
+    //                     undefined,
+    //                     1,
+    //                     {
+    //                         single_ASN1_type: _encode_AARE_apdu(apdu, BER),
+    //                     },
+    //                 ),
+    //             ],
+    //         },
+    //     });
+    // });
+    // outgoingEvents.on("ABRT", (apdu) => {
+    //     presentation.request_P_U_ABORT({
+    //         user_data: _encode_ABRT_apdu(apdu, BER),
+    //     });
+    // });
+    // outgoingEvents.on("RLRQ", (apdu) => {
+    //     presentation.request_P_RELEASE({
+    //         user_data: _encode_RLRQ_apdu(apdu, BER),
+    //     });
+    // });
+    // outgoingEvents.on("RLRE+", (apdu) => {
+    //     presentation.respond_P_RELEASE({
+    //         user_data: _encode_RLRE_apdu(apdu, BER),
+    //     });
+    // });
+    // outgoingEvents.on("RLRE-", (apdu) => {
+    //     presentation.respond_P_RELEASE({
+    //         user_data: _encode_RLRE_apdu(apdu, BER),
+    //     });
+    // });
     return {
         state: AssociationControlProtocolMachineState.STA0,
         outgoingEvents,

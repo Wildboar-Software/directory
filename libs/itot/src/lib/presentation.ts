@@ -1092,7 +1092,10 @@ function dispatch_P_CONreq (c: PresentationConnection, ppdu: CP_type): void {
 }
 
 export
-function dispatch_P_CONrsp_accept (c: PresentationConnection, cp: CP_type, cpa: CPA_PPDU): void {
+function dispatch_P_CONrsp_accept (c: PresentationConnection, cpa: CPA_PPDU): void {
+    if (!c.cp) {
+        return;
+    }
     switch (c.state) {
         case (PresentationLayerState.STAI2): {
             const results = (cpa.normal_mode_parameters?.presentation_context_definition_result_list ?? []);
@@ -1112,15 +1115,15 @@ function dispatch_P_CONrsp_accept (c: PresentationConnection, cp: CP_type, cpa: 
             }
             // [6]: It is assumed that the P-CONNECT argument already contains the selected transfer syntaxes.
             c.FU_CM = !!( // CM is enabled if the first bit is set both in CP and CPA.
-                cp.normal_mode_parameters?.presentation_requirements
+                c.cp.normal_mode_parameters?.presentation_requirements
                 && cpa.normal_mode_parameters?.presentation_requirements
-                && cp.normal_mode_parameters.presentation_requirements[0]
+                && c.cp.normal_mode_parameters.presentation_requirements[0]
                 && cpa.normal_mode_parameters.presentation_requirements[0]
             );
             c.FU_CR = !!( // CM is enabled if the second bit is set both in CP and CPA.
-                cp.normal_mode_parameters?.presentation_requirements
+                c.cp.normal_mode_parameters?.presentation_requirements
                 && cpa.normal_mode_parameters?.presentation_requirements
-                && cp.normal_mode_parameters.presentation_requirements[1]
+                && c.cp.normal_mode_parameters.presentation_requirements[1]
                 && cpa.normal_mode_parameters.presentation_requirements[1]
             );
             // This step is not in the spec, but required.

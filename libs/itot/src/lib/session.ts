@@ -640,7 +640,10 @@ function dispatch_SCONreq (state: SessionServiceConnectionState, cn: CONNECT_SPD
 }
 
 export
-function dispatch_SCONrsp_accept (state: SessionServiceConnectionState, spdu: ACCEPT_SPDU, cn: CONNECT_SPDU): SessionServiceConnectionState {
+function dispatch_SCONrsp_accept (state: SessionServiceConnectionState, spdu: ACCEPT_SPDU): SessionServiceConnectionState {
+    if (!state.cn) {
+        return state;
+    }
     switch (state.state) {
         case (TableA2SessionConnectionState.STA08): {
             // NOTE: It is not clear what to do if this is unset.
@@ -653,7 +656,7 @@ function dispatch_SCONrsp_accept (state: SessionServiceConnectionState, spdu: AC
             state.Vado = -1;
             state.Vadi = -1;
             state.TEXP = true; // TODO: I think this has to be set based on the connect PDU...
-            state.FU = ((spdu.sessionUserRequirements ?? 0) & (cn.sessionUserRequirements ?? 0)) % 65535;
+            state.FU = ((spdu.sessionUserRequirements ?? 0) & (state.cn.sessionUserRequirements ?? 0)) % 65535;
             state.Vact = false; // This is supposed to get set to false if FU(ACT), but it defaults to that...
             state.Vdnr = false;
             if (spdu.tokenItem) {
