@@ -129,9 +129,9 @@ interface ACSEOutgoingEvents {
     "AARQ": (apdu: AARQ_apdu) => unknown; // A-ASSOCIATE-REQUEST APDU The AARQ is sent as user data on a P-CONNECT request primitive
     "AARE+": (apdu: AARE_apdu) => unknown; // A-ASSOCIATE-RESPONSE APDU (Result = “accepted”) The AARE+ is sent as user data on a P-CONNECT+ response primitive (Result = “acceptance”)
     "AARE-": (apdu: AARE_apdu) => unknown; // A-ASSOCIATE-RESPONSE APDU (Result = “rejected (permanent)” or “rejected (transient)”) The AARE- is sent as user data on a P-CONNECT– response primitive (Result = “user-rejection”)
-    "A-RLSind": () => unknown; // A-RELEASE indication primitive
-    "A-RLScnf+": () => unknown; // A-RELEASE confirm primitive // (Result = “affirmative”)
-    "A-RLScnf-": () => unknown; // A-RELEASE confirm primitive // (Result = “negative”)
+    "A-RLSind": (apdu: RLRQ_apdu) => unknown; // A-RELEASE indication primitive
+    "A-RLScnf+": (apdu: RLRE_apdu) => unknown; // A-RELEASE confirm primitive // (Result = “affirmative”)
+    "A-RLScnf-": (apdu: RLRE_apdu) => unknown; // A-RELEASE confirm primitive // (Result = “negative”)
     "RLRQ": (apdu: RLRQ_apdu) => unknown; // A-RELEASE-REQUEST ADPU The RLRQ is sent as user data on a P-RELEASE request primitive
     "RLRE+": (apdu: RLRE_apdu) => unknown; // A-RELEASE-RESPONSE APDU The RLRE+ is sent as user data on a P-RELEASE response primitive (Result = “affirmative”)
     "RLRE-": (apdu: RLRE_apdu) => unknown; // A-RELEASE-RESPONSE APDU The RLRE- is sent as user data on a P-RELEASE response primitive (Result = “negative”)
@@ -462,24 +462,24 @@ function dispatch_A_RLSrsp_reject (state: ACPMState, apdu: RLRE_apdu): void {
 }
 
 export
-function dispatch_RLRQ (state: ACPMState): void {
+function dispatch_RLRQ (state: ACPMState, apdu: RLRQ_apdu): void {
     switch (state.state) {
         case (AssociationControlProtocolMachineState.STA3):
             {
                 const p2: boolean = state.initiator;
                 if (p2) {
                     state.state = AssociationControlProtocolMachineState.STA6;
-                    state.outgoingEvents.emit("A-RLSind");
+                    state.outgoingEvents.emit("A-RLSind", apdu);
                 } else {
                     state.state = AssociationControlProtocolMachineState.STA7;
-                    state.outgoingEvents.emit("A-RLSind");
+                    state.outgoingEvents.emit("A-RLSind", apdu);
                 }
                 break;
             }
         case (AssociationControlProtocolMachineState.STA5):
             {
                 state.state = AssociationControlProtocolMachineState.STA4;
-                state.outgoingEvents.emit("A-RLSind");
+                state.outgoingEvents.emit("A-RLSind", apdu);
                 break;
             }
         default: return handleInvalidSequence(state);
@@ -487,18 +487,18 @@ function dispatch_RLRQ (state: ACPMState): void {
 }
 
 export
-function dispatch_RLRE_accept (state: ACPMState): void {
+function dispatch_RLRE_accept (state: ACPMState, apdu: RLRE_apdu): void {
     switch (state.state) {
         case (AssociationControlProtocolMachineState.STA3):
             {
                 state.state = AssociationControlProtocolMachineState.STA0;
-                state.outgoingEvents.emit("A-RLScnf+");
+                state.outgoingEvents.emit("A-RLScnf+", apdu);
                 break;
             }
         case (AssociationControlProtocolMachineState.STA7):
             {
                 state.state = AssociationControlProtocolMachineState.STA4;
-                state.outgoingEvents.emit("A-RLScnf+");
+                state.outgoingEvents.emit("A-RLScnf+", apdu);
                 break;
             }
         default: return handleInvalidSequence(state);
@@ -506,12 +506,12 @@ function dispatch_RLRE_accept (state: ACPMState): void {
 }
 
 export
-function dispatch_RLRE_reject (state: ACPMState): void {
+function dispatch_RLRE_reject (state: ACPMState, apdu: RLRE_apdu): void {
     switch (state.state) {
         case (AssociationControlProtocolMachineState.STA3):
             {
                 state.state = AssociationControlProtocolMachineState.STA5;
-                state.outgoingEvents.emit("A-RLScnf-");
+                state.outgoingEvents.emit("A-RLScnf-", apdu);
                 break;
             }
         default: return handleInvalidSequence(state);

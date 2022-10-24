@@ -1527,7 +1527,7 @@ function dispatch_DR (c: TransportConnection): TransportConnection {
             return c;
         }
         case (TransportConnectionState.WFTRESP): {
-            const p10: boolean = false; // Local choice.
+            // const p10: boolean = false; // Local choice.
             // if (p10) {
             //     // [6]
             //     c.outgoingEvents.emit("DC");
@@ -1678,7 +1678,7 @@ function dispatch_NSDU (c: TransportConnection, nsdu: Buffer): ReturnCode {
         if (typeof parse_result === "number") {
             return parse_result;
         }
-        const [ bytes_read, tpdu ] = parse_result;
+        const [ bytes_read, ] = parse_result;
         if (bytes_read !== nsdu.length) {
             return DISPATCH_NSDU_RETURN_INVALID_CONCAT;
         }
@@ -1689,7 +1689,7 @@ function dispatch_NSDU (c: TransportConnection, nsdu: Buffer): ReturnCode {
         if (typeof parse_result === "number") {
             return parse_result;
         }
-        const [ bytes_read, tpdu ] = parse_result;
+        const [ bytes_read, ] = parse_result;
         if (bytes_read !== nsdu.length) {
             return DISPATCH_NSDU_RETURN_INVALID_CONCAT;
         }

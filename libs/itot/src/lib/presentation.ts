@@ -15,11 +15,9 @@ import {
 } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/CPA-PPDU.ta";
 import {
     ARU_PPDU,
-    _encode_ARU_PPDU,
 } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/ARU-PPDU.ta";
 import {
     ARP_PPDU,
-    _encode_ARP_PPDU,
 } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/ARP-PPDU.ta";
 import {
     Result,
@@ -42,7 +40,6 @@ import { OBJECT_IDENTIFIER } from "asn1-ts";
 import { BER } from "asn1-ts/dist/node/functional";
 import { strict as assert } from "node:assert";
 import { randomBytes } from "node:crypto";
-import { Default_context_result } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Default-context-result.ta";
 
 /**
  * @summary Presentation layer state
@@ -101,9 +98,9 @@ interface SessionLayerOutgoingEvents {
     "P-PABind": (ppdu: ARP_PPDU) => unknown, // PS primitive P-P-ABORT indication
     "P-PERind": () => unknown, // PS primitive P-P-EXCEPTION-REPORT indication
     "P-PTind": () => unknown, // PS primitive P-TOKEN-PLEASE indication
-    "P-RELcnf+": () => unknown, // PS primitive P-RELEASE confirm accept
-    "P-RELcnf-": () => unknown, // PS primitive P-RELEASE confirm reject
-    "P-RELind": () => unknown, // PS primitive P-RELEASE indication
+    "P-RELcnf+": (ppdu: User_data) => unknown, // PS primitive P-RELEASE confirm accept
+    "P-RELcnf-": (ppdu: User_data) => unknown, // PS primitive P-RELEASE confirm reject
+    "P-RELind": (ppdu: User_data) => unknown, // PS primitive P-RELEASE indication
     "P-RSYNcnf": () => unknown, // PS primitive P-RESYNCHRONIZE confirm
     "P-RSYNind": () => unknown, // PS primitive P-RESYNCHRONIZE indication
     "P-SYNMcnf": () => unknown, // PS primitive P-SYNC-MAJOR confirm
@@ -126,9 +123,9 @@ interface SessionLayerOutgoingEvents {
     "S-CGreq": () => unknown, // SS primitive S-CONTROL-GIVE request
     "S-GTreq": () => unknown, // SS primitive S-TOKEN-GIVE request
     "S-PTreq": () => unknown, // SS primitive S-TOKEN-PLEASE request
-    "S-RELreq": () => unknown, // SS primitive S-RELEASE request
-    "S-RELrsp+": () => unknown, // SS primitive S-RELEASE response accept
-    "S-RELrsp-": () => unknown, // SS primitive S-RELEASE response reject
+    "S-RELreq": (ppdu: User_data) => unknown, // SS primitive S-RELEASE request
+    "S-RELrsp+": (ppdu: User_data) => unknown, // SS primitive S-RELEASE response accept
+    "S-RELrsp-": (ppdu: User_data) => unknown, // SS primitive S-RELEASE response reject
     "S-RSYNreq": () => unknown, // SS primitive S-RESYNCHRONIZE request
     "S-RSYNrsp": () => unknown, // SS primitive S-RESYNCHRONIZE response
     "S-SYNMreq": () => unknown, // SS primitive S-SYNCHRONIZE-MAJOR request
@@ -1091,6 +1088,7 @@ function dispatch_P_CONreq (c: PresentationConnection, ppdu: CP_type): void {
     }
 }
 
+// TODO: Check that all initiator-proposed PCIs use odd integers and all responder-proposed are even.
 export
 function dispatch_P_CONrsp_accept (c: PresentationConnection, cpa: CPA_PPDU): void {
     if (!c.cp) {
@@ -1249,7 +1247,7 @@ function dispatch_P_RELreq (c: PresentationConnection, ppdu: User_data): void {
                         c.cr = true;
                     }
                     c.rl = true;
-                    c.outgoingEvents.emit("S-RELreq");
+                    c.outgoingEvents.emit("S-RELreq", ppdu);
                 } else {
                     return handleInvalidSequence(c);
                 }
@@ -1270,7 +1268,7 @@ function dispatch_P_RELreq (c: PresentationConnection, ppdu: User_data): void {
                         c.cr = true;
                     }
                     c.rl = true;
-                    c.outgoingEvents.emit("S-RELreq");
+                    c.outgoingEvents.emit("S-RELreq", ppdu);
                 } else {
                     return handleInvalidSequence(c);
                 }
@@ -1300,7 +1298,7 @@ function dispatch_P_RELrsp_accept (c: PresentationConnection, ppdu: User_data): 
                 } else {
                     c.state = PresentationLayerState.STAI0;
                 }
-                c.outgoingEvents.emit("S-RELrsp+");
+                c.outgoingEvents.emit("S-RELrsp+", ppdu);
                 break;
             }
         case (PresentationLayerState.STAac1):
@@ -1324,7 +1322,7 @@ function dispatch_P_RELrsp_accept (c: PresentationConnection, ppdu: User_data): 
                 } else {
                     c.state = PresentationLayerState.STAI0;
                 }
-                c.outgoingEvents.emit("S-RELrsp+");
+                c.outgoingEvents.emit("S-RELrsp+", ppdu);
                 break;
             }
         default: handleInvalidSequence(c);
@@ -1345,7 +1343,7 @@ function dispatch_P_RELrsp_reject (c: PresentationConnection, ppdu: User_data): 
                 }
                 c.cr = false;
                 c.rl = false;
-                c.outgoingEvents.emit("S-RELrsp-");
+                c.outgoingEvents.emit("S-RELrsp-", ppdu);
                 break;
             }
         case (PresentationLayerState.STAac1):
@@ -1363,7 +1361,7 @@ function dispatch_P_RELrsp_reject (c: PresentationConnection, ppdu: User_data): 
                 }
                 c.cr = false;
                 c.rl = false;
-                c.outgoingEvents.emit("S-RELrsp-");
+                c.outgoingEvents.emit("S-RELrsp-", ppdu);
                 break;
             }
         default: handleInvalidSequence(c);
@@ -1671,7 +1669,7 @@ function dispatch_S_RELcnf_accept (c: PresentationConnection, ppdu: User_data): 
                 } else {
                     c.state = PresentationLayerState.STAI0;
                 }
-                c.outgoingEvents.emit("P-RELcnf+");
+                c.outgoingEvents.emit("P-RELcnf+", ppdu);
                 break;
             }
         case (PresentationLayerState.STAac1):
@@ -1690,7 +1688,7 @@ function dispatch_S_RELcnf_accept (c: PresentationConnection, ppdu: User_data): 
                 } else {
                     c.state = PresentationLayerState.STAI0;
                 }
-                c.outgoingEvents.emit("P-RELcnf+");
+                c.outgoingEvents.emit("P-RELcnf+", ppdu);
                 break;
             }
         default: handleInvalidSequence(c);
@@ -1727,7 +1725,7 @@ function dispatch_S_RELcnf_reject (c: PresentationConnection, ppdu: User_data): 
                 if (p05) {
                     c.cr = false;
                     c.rl = false;
-                    c.outgoingEvents.emit("P-RELcnf-");
+                    c.outgoingEvents.emit("P-RELcnf-", ppdu);
                 } else {
                     return handleInvalidSequence(c);
                 }
@@ -1742,7 +1740,7 @@ function dispatch_S_RELcnf_reject (c: PresentationConnection, ppdu: User_data): 
                 if (p06) {
                     c.cr = false;
                     c.rl = false;
-                    c.outgoingEvents.emit("P-RELcnf-");
+                    c.outgoingEvents.emit("P-RELcnf-", ppdu);
                 } else {
                     return handleInvalidSequence(c);
                 }
@@ -1770,7 +1768,7 @@ function dispatch_S_RELind (c: PresentationConnection, ppdu: User_data): void {
                         c.cr = true;
                     }
                     c.rl = true;
-                    c.outgoingEvents.emit("P-RELind");
+                    c.outgoingEvents.emit("P-RELind", ppdu);
                 } else {
                     return handleInvalidSequence(c);
                 }
@@ -1787,7 +1785,7 @@ function dispatch_S_RELind (c: PresentationConnection, ppdu: User_data): void {
                         c.cr = true;
                     }
                     c.rl = true;
-                    c.outgoingEvents.emit("P-RELind");
+                    c.outgoingEvents.emit("P-RELind", ppdu);
                 } else {
                     return handleInvalidSequence(c);
                 }
