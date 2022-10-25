@@ -101,11 +101,16 @@ import {
     Result_list_Item_provider_reason_proposed_transfer_syntaxes_not_supported,
     Result_list_Item_provider_reason_reason_not_specified,
 } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Result-list-Item-provider-reason.ta";
+import {
+    _encode_TheOsiBind,
+} from "@wildboar/x500/src/lib/modules/OSIProtocolSpecification/TheOsiBind.ta";
+import {
+    _encode_TheOsiBindRes,
+} from "@wildboar/x500/src/lib/modules/OSIProtocolSpecification/TheOsiBindRes.ta";
 
 const id_ber = new ObjectIdentifier([2, 1, 1]);
 const id_acse = new ObjectIdentifier([2, 2, 1, 0, 1]);
 const id_dap = new ObjectIdentifier([2, 5, 9, 1]);
-const id_random_protocol = new ObjectIdentifier([1, 2, 3, 4]);
 
 const PORT: number = 44005;
 
@@ -298,7 +303,7 @@ describe("The OSI network stack", () => {
         stack2.acse.outgoingEvents.on("A-ASCind", () => {
             const aare: AARE_apdu = new AARE_apdu(
                 undefined,
-                id_random_protocol,
+                id_dap,
                 ACSEResult_acceptance,
                 {
                     acse_service_provider: 0,
@@ -321,7 +326,7 @@ describe("The OSI network stack", () => {
                         id_ber,
                         3,
                         undefined,
-                        _encode_DirectoryBindResult(new DirectoryBindResult(), BER),
+                        _encode_TheOsiBindRes(_encode_DirectoryBindResult(new DirectoryBindResult(), BER), BER),
                     ),
                 ],
             );
@@ -509,7 +514,7 @@ describe("The OSI network stack", () => {
                     id_ber,
                     3,
                     undefined,
-                    _encode_DirectoryBindArgument(new DirectoryBindArgument(undefined, undefined), BER),
+                    _encode_TheOsiBind(_encode_DirectoryBindArgument(new DirectoryBindArgument(undefined, undefined), BER), BER),
                 ),
             ],
         );
