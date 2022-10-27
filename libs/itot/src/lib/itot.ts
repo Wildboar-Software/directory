@@ -10,7 +10,8 @@ import {
     dispatch_TCONresp,
     TransportConnectionState,
     dispatch_TDISreq,
-    DR_TPDU,
+    DR_REASON_NOT_SPECIFIED,
+    dispatch_NDISind,
 } from "./transport";
 import {
     SessionServiceConnectionState,
@@ -67,11 +68,11 @@ import {
     P_U_ABORT_Request,
     dispatch_AARQ,
     dispatch_AARE_accept,
-    dispatch_AARE_reject,
     dispatch_P_PABind,
     dispatch_RLRE_accept,
     dispatch_RLRE_reject,
     dispatch_RLRQ,
+    dispatch_P_CONcnf_reject,
 } from "./acse";
 import {
     CP_type,
@@ -112,7 +113,9 @@ import {
 import { BERElement, ObjectIdentifier, OPTIONAL, ASN1Element } from "asn1-ts";
 import { Socket } from "node:net";
 import { BER } from "asn1-ts/dist/node/functional";
-import { ARU_PPDU_normal_mode_parameters } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/ARU-PPDU-normal-mode-parameters.ta";
+import {
+    ARU_PPDU_normal_mode_parameters,
+} from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/ARU-PPDU-normal-mode-parameters.ta";
 import { _decode_AARQ_apdu } from "@wildboar/acse/src/lib/modules/ACSE-1/AARQ-apdu.ta";
 import { _decode_AARE_apdu } from "@wildboar/acse/src/lib/modules/ACSE-1/AARE-apdu.ta";
 import { ABRT_apdu, _encode_ABRT_apdu } from "@wildboar/acse/src/lib/modules/ACSE-1/ABRT-apdu.ta";
@@ -124,8 +127,18 @@ import {
 import {
     _decode_RLRE_apdu,
 } from "@wildboar/acse/src/lib/modules/ACSE-1/RLRE-apdu.ta";
+import {
+    Context_list_Item
+} from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Context-list-Item.ta";
+import {
+    Presentation_context_identifier_list_Item,
+} from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Presentation-context-identifier-list-Item.ta";
+import { randomBytes, randomInt } from "node:crypto";
 
 const id_ber = new ObjectIdentifier([2, 1, 1]);
+const id_acse = new ObjectIdentifier([ 2, 2, 1, 0, 1 ]);
+
+export const TIMER_TIME_IN_MS: number = 3000;
 
 export
 interface ISOTransportOverTCPStack {
@@ -158,15 +171,44 @@ function require_acse_user_data (user_data: OPTIONAL<User_data>): [ PDV_list, AS
     return [ pdv, pdv.presentation_data_values.single_ASN1_type ];
 }
 
-function get_aru (): ARU_PPDU {
+function get_aru (c: PresentationConnection): ARU_PPDU {
+    const acse_ber_context: Context_list_Item = [
+        ...Array.from(c.contextSets.dcs_agreed_during_connection_establishment.values()),
+        ...c.contextSets.proposed_for_addition_initiated_locally,
+        ...c.contextSets.proposed_for_addition_initiated_remotely.map((x) => x[0]),
+    ]
+        .find((ctx) => (
+            ctx.abstract_syntax_name.isEqualTo(id_acse)
+            && ctx.transfer_syntax_name_list.some((t) => t.isEqualTo(id_ber))))
+        /*
+            ITU Recommendation X.519 (2019) requires there to be a context list
+            provided in the ARU PPDU. (This might be a requirement in the X.200
+            series as well, but I haven't seen it.) And this context list is
+            expected to contain ACSE-BER. In this implementation, if such a
+            context was never defined, we produce a random new context to at
+            least communicate the application context and transfer syntax, which
+            deviates from the specifications. It is the hope of this
+            implementation that hosts will not allocate PCIs in the range
+            of 5000-5247, so these can be used for this ad-hoc contexts.
+        */
+        ?? new Context_list_Item(
+            randomInt(5000, 5247),
+            id_acse,
+            [id_ber],
+        );
     return {
         normal_mode_parameters: new ARU_PPDU_normal_mode_parameters(
-            undefined, // TODO: X.519 requires this to be filled in.
+            [
+                new Presentation_context_identifier_list_Item(
+                    acse_ber_context.presentation_context_identifier,
+                    id_ber,
+                ),
+            ],
             {
                 fully_encoded_data: [
                     new PDV_list(
                         undefined,
-                        1, // FIXME:
+                        acse_ber_context.presentation_context_identifier,
                         {
                             single_ASN1_type: _encode_ABRT_apdu(new ABRT_apdu(
                                 ABRT_source_acse_service_provider,
@@ -190,12 +232,12 @@ function create_itot_stack (
     sessionCaller: boolean = true,
     transportCaller: boolean = true,
     max_nsdu_size: number = 10_000_000,
+    abort_timeout_ms?: number,
 ): ISOTransportOverTCPStack {
     const tpkt = new ITOTSocket(socket);
     socket.on("data", (data) => tpkt.receiveData(data));
     const transport = createTransportConnection({
         available: () => socket.writable && socket.readable,
-        disconnect: () => socket.end(),
         max_nsdu_size: () => max_nsdu_size,
         open: () => socket.writable,
         openInProgress: () => socket.connecting,
@@ -213,12 +255,17 @@ function create_itot_stack (
                 cdt: 0,
                 class_option: 0,
                 dstRef: 0,
-                srcRef: 0,
+                srcRef: randomBytes(2).readUint16BE(),
                 user_data: Buffer.alloc(0),
             };
             stack.transport = dispatch_TCONreq(stack.transport, tpdu);
         },
-        disconnect: () => transport.network.disconnect(), // TODO: Just use TDISreq instead.
+        disconnect: () => dispatch_TDISreq(stack.transport, {
+            dstRef: stack.transport.dst_ref,
+            srcRef: stack.transport.src_ref,
+            reason: DR_REASON_NOT_SPECIFIED, // This is actually an approriate value.
+            user_data: Buffer.alloc(0),
+        }),
         writeTSDU: (tsdu: Buffer) => {
             stack.transport = dispatch_TDTreq(stack.transport, tsdu);
         },
@@ -364,12 +411,12 @@ function create_itot_stack (
     stack.transport.outgoingEvents.on("TCONind", () => {
         stack.session = dispatch_TCONind(stack.session);
     });
-    stack.session.outgoingEvents.on("TCONrsp", () => { // TODO: Should this be handled by the session layer?
+    stack.session.outgoingEvents.on("TCONrsp", () => {
         const cc: CC_TPDU = {
             cdt: 0,
             class_option: 0,
-            dstRef: 0, // TODO: Properly assign random refs.
-            srcRef: 0,
+            dstRef: stack.transport.dst_ref,
+            srcRef: stack.transport.src_ref,
             user_data: Buffer.alloc(0),
         };
         stack.transport = dispatch_TCONresp(stack.transport, cc);
@@ -382,16 +429,22 @@ function create_itot_stack (
     });
     stack.transport.outgoingEvents.on("TSDU", (tsdu) => {
         const rc = receiveTSDU(stack.session, tsdu);
-        if (rc) { // TODO: Is this an appropriate action?
-            const dr: DR_TPDU = {
-                reason: 0,
-                user_data: Buffer.alloc(0),
-                dstRef: 0, // TODO: Use correct values.
-                srcRef: 0,
-            };
-            dispatch_TDISreq(stack.transport, dr);
+        if (rc) {
+            // X.519 implies that it is okay to not transport a PPDU when the
+            // abort was caused by a session-layer problem.
+            const response: ABORT_SPDU = {};
+            stack.session.outgoingEvents.emit("AB_nr", response);
+            stack.session.TIM = setTimeout(
+                () => stack.session.transport.disconnect(),
+                abort_timeout_ms ?? TIMER_TIME_IN_MS
+            );
         }
     });
+    stack.transport.outgoingEvents.on("NDISreq", () => socket.end());
+    // stack.transport.outgoingEvents.on("NRSTresp", () => {});
+    // It is not clear to me how this would even be implemented: how would this
+    // even get the network address unless it is passed in from the upper layers?
+    // stack.transport.outgoingEvents.on("NCONreq", () => {});
     stack.session.outgoingEvents.on("SCONind", (cn) => {
         if (cn.userData) {
             const el = new BERElement();
@@ -399,14 +452,10 @@ function create_itot_stack (
             const ppdu = _decode_CP_type(el);
             dispatch_CP(stack.presentation, ppdu);
         } else {
-            const ac: ACCEPT_SPDU = {}; // TODO: Take this from S-user input.
+            const ac: ACCEPT_SPDU = {};
             stack.session = dispatch_SCONrsp_accept(stack.session, ac);
         }
     });
-    // stack.session.outgoingEvents.on("SRELind", (spdu) => {
-    //     const dn: DISCONNECT_SPDU = {}; // TODO: Take this from S-user input.
-    //     stack.session = dispatch_SRELrsp_accept(stack.session, dn);
-    // });
     stack.session.outgoingEvents.on("SDTind", (spdu) => {
         const el = new BERElement();
         el.fromBytes(spdu.userInformation);
@@ -427,7 +476,7 @@ function create_itot_stack (
             const ppdu = _decode_CPA_PPDU(el);
             dispatch_CPA(stack.presentation, ppdu);
         } else {
-            const ac: ACCEPT_SPDU = {}; // TODO: Take this from S-user input.
+            const ac: ACCEPT_SPDU = {};
             stack.session = dispatch_SCONrsp_accept(stack.session, ac);
         }
     });
@@ -502,15 +551,15 @@ function create_itot_stack (
                 dispatch_AARE_accept(stack.acse, aare);
             } else {
                 // You cannot reject an ACSE association with a P-CONNECT accept.
-                dispatch_P_UABreq(stack.presentation, get_aru());
+                dispatch_P_UABreq(stack.presentation, get_aru(stack.presentation));
             }
         } else {
-            dispatch_P_UABreq(stack.presentation, get_aru());
+            dispatch_P_UABreq(stack.presentation, get_aru(stack.presentation));
         }
     });
     stack.presentation.outgoingEvents.on("P-CONcnf-", (ppdu) => {
         if (!("normal_mode_parameters" in ppdu)) {
-            dispatch_P_UABreq(stack.presentation, get_aru());
+            dispatch_P_UABreq(stack.presentation, get_aru(stack.presentation));
             return;
         }
         const pdv = require_acse_user_data(ppdu.normal_mode_parameters?.user_data);
@@ -518,16 +567,13 @@ function create_itot_stack (
             const [ , value ] = pdv;
             const aare = _decode_AARE_apdu(value);
             if (aare.result === ACSEResult_acceptance) {
-                // You cannot accept an ACSE connection within a P-CONNECT rejection.
-                dispatch_P_UABreq(stack.presentation, get_aru());
+                // Do nothing: you cannot accept an ACSE connection within a P-CONNECT rejection.
             } else {
-                dispatch_AARE_reject(stack.acse, aare);
+                dispatch_P_CONcnf_reject(stack.acse, aare);
             }
         } else {
-            dispatch_P_UABreq(stack.presentation, get_aru());
+            dispatch_P_CONcnf_reject(stack.acse);
         }
-        // TODO: Which to dispatch?
-        // dispatch_P_CONcnf_reject(stack.acse);
     });
     stack.presentation.outgoingEvents.on("P-CONind", (ppdu) => {
         const pdv = require_acse_user_data(ppdu.normal_mode_parameters?.user_data);
@@ -536,31 +582,15 @@ function create_itot_stack (
             const aarq = _decode_AARQ_apdu(value);
             dispatch_AARQ(stack.acse, aarq);
         } else {
-            dispatch_P_UABreq(stack.presentation, get_aru());
+            dispatch_P_UABreq(stack.presentation, get_aru(stack.presentation));
         }
     });
-    // This should be handled outside of this function.
-    // stack.presentation.outgoingEvents.on("P-DTind", (ppdu) => {
-    //     const pdv = require_acse_user_data(ppdu);
-    //     if (pdv) {
-    //         const [ , value ] = pdv;
-    //         const aarq = _decode_AARQ_apdu(value);
-    //         dispatch_AARQ(stack.acse, aarq);
-    //     } else {
-    //         dispatch_P_UABreq(stack.presentation, get_aru());
-    //     }
-    // });
-    // stack.presentation.outgoingEvents.on("P-EXind", () => {
-    //     // TODO: Decode User-Data
-    // });
-    // stack.presentation.outgoingEvents.on("P-GTind", () => {
-    // });
+    // stack.presentation.outgoingEvents.on("P-EXind", () => {});
+    // stack.presentation.outgoingEvents.on("P-GTind", () => {});
     stack.presentation.outgoingEvents.on("P-PABind", () => {
         dispatch_P_PABind(stack.acse);
     });
-    // stack.presentation.outgoingEvents.on("P-PERind", () => {
-
-    // });
+    // stack.presentation.outgoingEvents.on("P-PERind", () => {});
     stack.presentation.outgoingEvents.on("P-RELcnf+", (ppdu) => {
         const pdv = require_acse_user_data(ppdu);
         if (pdv) {
@@ -568,7 +598,7 @@ function create_itot_stack (
             const rlre = _decode_RLRE_apdu(value);
             dispatch_RLRE_accept(stack.acse, rlre);
         } else {
-            dispatch_P_UABreq(stack.presentation, get_aru());
+            dispatch_P_UABreq(stack.presentation, get_aru(stack.presentation));
         }
     });
     stack.presentation.outgoingEvents.on("P-RELcnf-", (ppdu) => {
@@ -578,7 +608,7 @@ function create_itot_stack (
             const rlre = _decode_RLRE_apdu(value);
             dispatch_RLRE_reject(stack.acse, rlre);
         } else {
-            dispatch_P_UABreq(stack.presentation, get_aru());
+            dispatch_P_UABreq(stack.presentation, get_aru(stack.presentation));
         }
     });
     stack.presentation.outgoingEvents.on("P-RELind", (ppdu) => {
@@ -588,7 +618,7 @@ function create_itot_stack (
             const rlrq = _decode_RLRQ_apdu(value);
             dispatch_RLRQ(stack.acse, rlrq);
         } else {
-            dispatch_P_UABreq(stack.presentation, get_aru());
+            dispatch_P_UABreq(stack.presentation, get_aru(stack.presentation));
         }
     });
     stack.presentation.outgoingEvents.on("S-RELreq", (ppdu) => {
@@ -609,8 +639,11 @@ function create_itot_stack (
         };
         dispatch_SRELrsp_reject(stack.session, spdu);
     });
+    socket.on("error", () => socket.destroy());
+    socket.on("end", () => socket.end());
+    socket.on("close", () => dispatch_NDISind(stack.transport));
+    socket.on("timeout", () => socket.end());
     // stack.presentation.outgoingEvents.on("S-UERreq", (ppdu) => {});
     // stack.presentation.outgoingEvents.on("S-GTreq", (ppdu) => {});
-    // TODO: What to do when socket disconnects? errors?
     return stack;
 }

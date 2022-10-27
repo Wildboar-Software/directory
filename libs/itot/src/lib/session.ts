@@ -4069,7 +4069,7 @@ export
 function handleInvalidSequence (state: SessionServiceConnectionState): SessionServiceConnectionState {
     // Section A.4.1.1 is unhandled.
     const response: ABORT_SPDU = {};
-    state.outgoingEvents.emit("AB_nr", response); // TODO: Should this be nr?
+    state.outgoingEvents.emit("AB_nr", response);
     state.TIM = setTimeout(() => state.transport.disconnect(), TIMER_TIME_IN_MS); // TODO: Make this configurable.
     return state;
 }

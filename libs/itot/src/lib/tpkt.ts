@@ -21,14 +21,6 @@ enum ISOTransportPhase {
     release,
 }
 
-// ITU X.224, Section 13.2
-export
-enum COTP_TPDU_ParserState {
-    length_indicator,
-    header,
-    data,
-}
-
 export
 class ITOTSocket extends NetworkLayerOutgoingEventEmitter {
 

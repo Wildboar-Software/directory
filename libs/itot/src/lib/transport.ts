@@ -1,8 +1,6 @@
 import { TypedEmitter } from "tiny-typed-emitter";
 import { strict as assert } from "node:assert";
-
-// FIXME: Anywhere state is updated, THEN an indication emitted needs to be reversed.
-// TODO: Refactor magic numbers into constants.
+import { randomBytes } from "node:crypto";
 
 export type ReturnCode = number;
 export type ParseResult <T> = [ number, T ] | ReturnCode;
@@ -95,8 +93,6 @@ export const TPDU_VALIDATION_CR_DST_REF_NOT_ZEROED: number = -3;
 export const TPDU_MALFORMED: number = -4;
 // #endregion TPDU validation return codes
 
-// FIXME: Validate and handle SRC-REF and DST-REF
-
 function encodeUnsignedBigEndianInteger (value: number): Buffer {
     const bytes: Buffer = Buffer.alloc(4);
     bytes.writeUInt32BE(value);
@@ -122,7 +118,6 @@ interface NetworkLayerService {
     available: () => boolean,
     open: () => boolean,
     openInProgress: () => boolean,
-    disconnect: () => unknown,
     transportConnectionsServed: () => number,
     max_nsdu_size: () => number,
     write_nsdu: (nsdu: Buffer) => unknown,
@@ -193,13 +188,14 @@ interface TransportConnection {
     network: NetworkLayerService;
     outgoingEvents: TransportLayerOutgoingEventEmitter;
     dataBuffer: Buffer;
+    src_ref: number;
+    dst_ref: number;
+    t_selector?: Buffer;
 }
 
 export
 function createTransportConnection (network: NetworkLayerService, id?: string): TransportConnection {
     const outgoingEvents = new TransportLayerOutgoingEventEmitter();
-    // FIXME: Handle all packets
-    // FIXME: Error handling.
     outgoingEvents.on("CR", (tpdu) => network.write_nsdu(encode_CR(tpdu)));
     outgoingEvents.on("CC", (tpdu) => network.write_nsdu(encode_CC(tpdu)));
     outgoingEvents.on("DR", (tpdu) => network.write_nsdu(encode_DR(tpdu)));
@@ -217,6 +213,8 @@ function createTransportConnection (network: NetworkLayerService, id?: string): 
         network,
         outgoingEvents,
         dataBuffer: Buffer.alloc(0),
+        src_ref: 0,
+        dst_ref: 0,
     };
 }
 
@@ -1194,7 +1192,7 @@ function encode_ER (tpdu: ER_TPDU): Buffer {
 // This is the normal release procedure for class 0.
 export
 function implicitNormalRelease (c: TransportConnection): TransportConnection {
-    c.network.disconnect();
+    c.outgoingEvents.emit("NDISreq");
     return c;
 }
 
@@ -1207,6 +1205,11 @@ function handleInvalidSequence (c: TransportConnection): TransportConnection {
 
     // This implementation will choose option B every time for now, just so we
     // can ensure that implementations are not silently producing errors.
+    return implicitNormalRelease(c);
+}
+
+export
+function handle_invalid_ref (c: TransportConnection): TransportConnection {
     return implicitNormalRelease(c);
 }
 
@@ -1228,6 +1231,7 @@ function dispatch_TCONreq (c: TransportConnection, tpdu: CR_TPDU): TransportConn
                 c.outgoingEvents.emit("NCONreq");
             } else if (p3) {
                 c.state = TransportConnectionState.WFCC;
+                c.src_ref = tpdu.srcRef;
                 c.outgoingEvents.emit("CR", tpdu);
             } else if (p4) {
                 c.state = TransportConnectionState.WFNC;
@@ -1292,7 +1296,7 @@ function dispatch_TDISreq (c: TransportConnection, tpdu: DR_TPDU): TransportConn
         case (TransportConnectionState.WFNC): {
             c.state = TransportConnectionState.CLOSED;
             if (c.network.transportConnectionsServed() <= 1) {
-                c.network.disconnect();
+                c.outgoingEvents.emit("NDISreq");
             }
             return c;
         }
@@ -1353,9 +1357,9 @@ function dispatch_NDISind (c: TransportConnection): TransportConnection {
         case (TransportConnectionState.CLOSING):
         {
             // Only available in class 2.
-            return handleInvalidSequence(c);
+            return c; // NOOP
         }
-        default: return handleInvalidSequence(c);
+        default: return c; // NOOP
     }
 }
 
@@ -1382,7 +1386,7 @@ function dispatch_NRSTind (c: TransportConnection): TransportConnection {
             c.state = TransportConnectionState.CLOSED;
             c.outgoingEvents.emit("TDISind");
             if (c.network.transportConnectionsServed() <= 1) { // [1]
-                c.network.disconnect();
+                c.outgoingEvents.emit("NDISreq");
             }
             // REVIEW: I don't get how [5] differs from [1].
             return c;
@@ -1433,6 +1437,8 @@ function dispatch_CR (c: TransportConnection, tpdu: CR_TPDU): TransportConnectio
                 }
             } else {
                 c.state = TransportConnectionState.WFTRESP;
+                c.src_ref = tpdu.srcRef;
+                c.dst_ref = randomBytes(2).readUint16BE();
                 c.outgoingEvents.emit("TCONind", tpdu);
             }
             return c;
@@ -1441,16 +1447,73 @@ function dispatch_CR (c: TransportConnection, tpdu: CR_TPDU): TransportConnectio
     }
 }
 
+function validate_CC (c: TransportConnection, tpdu: CC_TPDU): boolean {
+    if (c.src_ref !== tpdu.srcRef) {
+        return false;
+    }
+    if (tpdu.dstRef === 0) {
+        return false;
+    }
+    // User data is not permitted in class 0.
+    if (TRANSPORT_CLASS === 0) {
+        if (tpdu.user_data?.length) {
+            return false;
+        }
+        if (tpdu.version_number !== undefined) {
+            return false;
+        }
+        if (tpdu.protection_parameters !== undefined) {
+            return false;
+        }
+        if (tpdu.throughput !== undefined) {
+            return false;
+        }
+        if (tpdu.residual_error_rate !== undefined) {
+            return false;
+        }
+        if (tpdu.priority !== undefined) {
+            return false;
+        }
+        if (tpdu.transit_delay !== undefined) {
+            return false;
+        }
+    } else {
+        // If not class 0, it must not contain more than 32 bytes of user data.
+        if ((tpdu.user_data?.length ?? 0) > 32) {
+            return false;
+        }
+        if (tpdu.additional_option_selection !== undefined) {
+            return false;
+        }
+        if (tpdu.alternative_protocol_classes !== undefined) {
+            return false;
+        }
+    }
+    if (TRANSPORT_CLASS !== 4) {
+        if (tpdu.inactivity_timer !== undefined) {
+            return false;
+        }
+        if (tpdu.checksum !== undefined) {
+            return false;
+        }
+        if (tpdu.acknowledgement_time !== undefined) {
+            return false;
+        }
+    }
+    return true;
+}
+
 export
 function dispatch_CC (c: TransportConnection, tpdu: CC_TPDU): TransportConnection {
     switch (c.state) {
         case (TransportConnectionState.WFCC): {
             const p5: boolean = TRANSPORT_CLASS === 0;
-            const p6: boolean = false; // FIXME: Validate: Unacceptable CC
+            const p6: boolean = !validate_CC(c, tpdu); // Unacceptable CC
             const p7: boolean = TRANSPORT_CLASS === 2;
-            const p8: boolean = true; // FIXME: Validate: Acceptable CC
+            const p8: boolean = validate_CC(c, tpdu); // Acceptable CC
             if (p8) {
                 c.state = TransportConnectionState.OPEN;
+                c.dst_ref = tpdu.dstRef;
                 c.outgoingEvents.emit("TCONconf", tpdu);
             }
             else if (p6 && p5) {
@@ -1502,7 +1565,7 @@ function dispatch_DR (c: TransportConnection): TransportConnection {
             c.state = TransportConnectionState.CLOSED;
             c.outgoingEvents.emit("TDISind");
             if (c.network.transportConnectionsServed() <= 1) { // [1]
-                c.network.disconnect();
+                c.outgoingEvents.emit("NDISreq");
             }
             return c;
         }
@@ -1570,6 +1633,9 @@ function dispatch_EA (c: TransportConnection): TransportConnection {
 
 export
 function dispatch_DT (c: TransportConnection, tpdu: DT_TPDU): TransportConnection {
+    if (tpdu.dstRef !== c.dst_ref) {
+        return handle_invalid_ref(c);
+    }
     switch (c.state) {
         case (TransportConnectionState.OPEN): {
             c.dataBuffer = Buffer.concat([
@@ -1611,7 +1677,7 @@ function dispatch_ER (c: TransportConnection): TransportConnection {
             c.state = TransportConnectionState.CLOSED;
             c.outgoingEvents.emit("TDISind");
             if (c.network.transportConnectionsServed() <= 1) { // [1]
-                c.network.disconnect();
+                c.outgoingEvents.emit("NDISreq");
             }
             return c;
         }
@@ -1683,7 +1749,6 @@ function dispatch_NSDU (c: TransportConnection, nsdu: Buffer): ReturnCode {
             return DISPATCH_NSDU_RETURN_INVALID_CONCAT;
         }
         dispatch_ER(c);
-        // dispatch_ER(c, tpdu); // FIXME:
     } else if (code === TPDU_CODE_DR) {
         const parse_result = decode_DR(nsdu);
         if (typeof parse_result === "number") {
@@ -1694,7 +1759,6 @@ function dispatch_NSDU (c: TransportConnection, nsdu: Buffer): ReturnCode {
             return DISPATCH_NSDU_RETURN_INVALID_CONCAT;
         }
         dispatch_DR(c);
-        // dispatch_DR(c, tpdu); // FIXME:
     } else {
         return DISPATCH_NSDU_RETURN_UNRECOGNIZED_TPDU;
     }

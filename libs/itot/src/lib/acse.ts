@@ -404,12 +404,12 @@ function dispatch_AARE_reject (state: ACPMState, apdu: AARE_apdu): void {
 }
 
 export
-function dispatch_P_CONcnf_reject (state: ACPMState): void {
+function dispatch_P_CONcnf_reject (state: ACPMState, apdu?: AARE_apdu): void {
     switch (state.state) {
         case (AssociationControlProtocolMachineState.STA1):
             {
                 state.state = AssociationControlProtocolMachineState.STA0;
-                state.outgoingEvents.emit("A-ASCcnf-");
+                state.outgoingEvents.emit("A-ASCcnf-", apdu);
                 break;
             }
         default: return handleInvalidSequence(state);
