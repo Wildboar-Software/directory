@@ -1,23 +1,18 @@
 import { TypedEmitter } from "tiny-typed-emitter";
 import {
     AARQ_apdu,
-    _encode_AARQ_apdu,
 } from "@wildboar/acse/src/lib/modules/ACSE-1/AARQ-apdu.ta";
 import {
     AARE_apdu,
-    _encode_AARE_apdu,
 } from "@wildboar/acse/src/lib/modules/ACSE-1/AARE-apdu.ta";
 import {
     RLRQ_apdu,
-    _encode_RLRQ_apdu,
 } from "@wildboar/acse/src/lib/modules/ACSE-1/RLRQ-apdu.ta";
 import {
     RLRE_apdu,
-    _encode_RLRE_apdu,
 } from "@wildboar/acse/src/lib/modules/ACSE-1/RLRE-apdu.ta";
 import {
     ABRT_apdu,
-    _encode_ABRT_apdu,
 } from "@wildboar/acse/src/lib/modules/ACSE-1/ABRT-apdu.ta";
 import {
     Associate_result_rejected_permanent,
@@ -52,13 +47,8 @@ import type {
 import type {
     CPR_PPDU_normal_mode_parameters,
 } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/CPR-PPDU-normal-mode-parameters.ta";
-import { TRUE_BIT, ASN1Element, ObjectIdentifier } from "asn1-ts";
-import { BER } from "asn1-ts/dist/node/functional";
-import { Context_list_Item } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Context-list-Item.ta";
-import { PDV_list } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/PDV-list.ta";
+import { TRUE_BIT } from "asn1-ts";
 
-const id_ber = new ObjectIdentifier([ 2, 1, 1 ]);
-const id_acse = new ObjectIdentifier([ 2, 2, 1, 0, 1 ]);
 
 export
 interface P_CONNECT_Request extends Partial<CP_type_normal_mode_parameters> {
@@ -86,7 +76,6 @@ interface P_U_ABORT_Request {
     user_data?: User_data;
 }
 
-// TODO: Change this to just use the PPDUs directly.
 export
 interface PresentationService {
     request_P_CONNECT: (args: P_CONNECT_Request) => unknown;
@@ -96,13 +85,12 @@ interface PresentationService {
     request_P_U_ABORT: (args: P_U_ABORT_Request) => unknown;
 }
 
-// TODO: Rename. Basically same as ACPMState.
 /**
  * ACPM states as defined in table A.2 of ITU Recommendation X.227 (1995),
  * Annex A.
  */
 export
-enum AssociationControlProtocolMachineState {
+enum TableA2AssociationState {
     /** idle: unassociated */
     STA0,
     /** awaiting AARE APDU */
@@ -151,7 +139,7 @@ class ACSEOutgoingEventEmitter extends TypedEmitter<ACSEOutgoingEvents> {
 
 export
 interface ACPMState {
-    state: AssociationControlProtocolMachineState;
+    state: TableA2AssociationState;
     outgoingEvents: ACSEOutgoingEventEmitter;
     initiator: boolean;
     presentation: PresentationService;
@@ -166,81 +154,8 @@ function createAssociationControlState (
     presentation: PresentationService,
 ): ACPMState {
     const outgoingEvents = new ACSEOutgoingEventEmitter();
-    // TODO: We are going to let these get handled by the actual application.
-    // outgoingEvents.on("AARQ", (apdu) => {
-    //     presentation.request_P_CONNECT({
-    //         presentation_context_definition_list: [
-    //             new Context_list_Item(
-    //                 1,
-    //                 id_acse,
-    //                 [id_ber],
-    //             ),
-    //         ],
-    //         user_data: {
-    //             fully_encoded_data: [
-    //                 new PDV_list(
-    //                     undefined,
-    //                     1,
-    //                     {
-    //                         single_ASN1_type: _encode_AARQ_apdu(apdu, BER),
-    //                     },
-    //                 ),
-    //             ],
-    //         },
-    //     });
-    // });
-    // outgoingEvents.on("AARE+", (apdu) => {
-    //     presentation.respond_P_CONNECT({
-    //         user_data: {
-    //             fully_encoded_data: [
-    //                 new PDV_list(
-    //                     undefined,
-    //                     1,
-    //                     {
-    //                         single_ASN1_type: _encode_AARE_apdu(apdu, BER),
-    //                     },
-    //                 ),
-    //             ],
-    //         },
-    //     });
-    // });
-    // outgoingEvents.on("AARE-", (apdu) => {
-    //     presentation.respond_P_CONNECT({
-    //         user_data: {
-    //             fully_encoded_data: [
-    //                 new PDV_list(
-    //                     undefined,
-    //                     1,
-    //                     {
-    //                         single_ASN1_type: _encode_AARE_apdu(apdu, BER),
-    //                     },
-    //                 ),
-    //             ],
-    //         },
-    //     });
-    // });
-    // outgoingEvents.on("ABRT", (apdu) => {
-    //     presentation.request_P_U_ABORT({
-    //         user_data: _encode_ABRT_apdu(apdu, BER),
-    //     });
-    // });
-    // outgoingEvents.on("RLRQ", (apdu) => {
-    //     presentation.request_P_RELEASE({
-    //         user_data: _encode_RLRQ_apdu(apdu, BER),
-    //     });
-    // });
-    // outgoingEvents.on("RLRE+", (apdu) => {
-    //     presentation.respond_P_RELEASE({
-    //         user_data: _encode_RLRE_apdu(apdu, BER),
-    //     });
-    // });
-    // outgoingEvents.on("RLRE-", (apdu) => {
-    //     presentation.respond_P_RELEASE({
-    //         user_data: _encode_RLRE_apdu(apdu, BER),
-    //     });
-    // });
     return {
-        state: AssociationControlProtocolMachineState.STA0,
+        state: TableA2AssociationState.STA0,
         outgoingEvents,
         initiator: true,
         presentation,
@@ -264,7 +179,6 @@ function canSupportAssociation (aarq: AARQ_apdu): boolean {
     return true;
 }
 
-// TODO: Handle invalid sequence by service user a little more gracefully.
 /**
  * @summary Procedure for handling an invalid sequence
  * @description
@@ -289,64 +203,72 @@ function handleInvalidSequence (state: ACPMState): void {
     state.outgoingEvents.emit("ABRT", abrt);
 }
 
+// There is no defined way to handle invalid user input...
+// Maybe you could make the request dispatchers return a number indicating
+// success/failure?
+export
+function handle_invalid_user_input (state: ACPMState): void { /* eslint-disable-line */
+    return;
+}
+
 export
 function dispatch_A_ASCreq (state: ACPMState, apdu: AARQ_apdu): void {
     switch (state.state) {
-        case (AssociationControlProtocolMachineState.STA0):
+        case (TableA2AssociationState.STA0):
             {
                 const p1: boolean = canSupportAssociation(apdu);
                 if (p1) {
                     state.initiator = true;
-                    state.state = AssociationControlProtocolMachineState.STA1;
+                    state.state = TableA2AssociationState.STA1;
                     state.outgoingEvents.emit("AARQ", apdu);
                 } else {
-                    return handleInvalidSequence(state);
+                    return handle_invalid_user_input(state);
                 }
                 break;
             }
-        default: return handleInvalidSequence(state);
+        default: return handle_invalid_user_input(state);
     }
 }
 
 export
 function dispatch_A_ASCrsp_accept (state: ACPMState, apdu: AARE_apdu): void {
     switch (state.state) {
-        case (AssociationControlProtocolMachineState.STA2):
+        case (TableA2AssociationState.STA2):
             {
                 state.initiator = false;
-                state.state = AssociationControlProtocolMachineState.STA5;
+                state.state = TableA2AssociationState.STA5;
                 state.outgoingEvents.emit("AARE+", apdu);
                 break;
             }
-        default: return handleInvalidSequence(state);
+        default: return handle_invalid_user_input(state);
     }
 }
 
 export
 function dispatch_A_ASCrsp_reject (state: ACPMState, apdu: AARE_apdu): void {
     switch (state.state) {
-        case (AssociationControlProtocolMachineState.STA2):
+        case (TableA2AssociationState.STA2):
             {
                 state.initiator = false;
-                state.state = AssociationControlProtocolMachineState.STA0;
+                state.state = TableA2AssociationState.STA0;
                 state.outgoingEvents.emit("AARE-", apdu);
                 break;
             }
-        default: return handleInvalidSequence(state);
+        default: return handle_invalid_user_input(state);
     }
 }
 
 export
 function dispatch_AARQ (state: ACPMState, apdu: AARQ_apdu): void {
     switch (state.state) {
-        case (AssociationControlProtocolMachineState.STA0):
+        case (TableA2AssociationState.STA0):
             {
                 const p1: boolean = canSupportAssociation(apdu);
                 if (p1) {
-                    state.state = AssociationControlProtocolMachineState.STA2;
+                    state.state = TableA2AssociationState.STA2;
                     state.outgoingEvents.emit("A-ASCind", apdu);
                 } else {
-                    state.state = AssociationControlProtocolMachineState.STA0;
+                    state.state = TableA2AssociationState.STA0;
                     const aare: AARE_apdu = new AARE_apdu(
                         undefined,
                         apdu.aSO_context_name,
@@ -380,105 +302,105 @@ function dispatch_AARQ (state: ACPMState, apdu: AARQ_apdu): void {
 export
 function dispatch_AARE_accept (state: ACPMState, apdu: AARE_apdu): void {
     switch (state.state) {
-        case (AssociationControlProtocolMachineState.STA1):
+        case (TableA2AssociationState.STA1):
             {
-                state.state = AssociationControlProtocolMachineState.STA5;
+                state.state = TableA2AssociationState.STA5;
                 state.outgoingEvents.emit("A-ASCcnf+", apdu);
                 break;
             }
-        default: return handleInvalidSequence(state);
+        default: return handle_invalid_user_input(state);
     }
 }
 
 export
 function dispatch_AARE_reject (state: ACPMState, apdu: AARE_apdu): void {
     switch (state.state) {
-        case (AssociationControlProtocolMachineState.STA1):
+        case (TableA2AssociationState.STA1):
             {
-                state.state = AssociationControlProtocolMachineState.STA0;
+                state.state = TableA2AssociationState.STA0;
                 state.outgoingEvents.emit("A-ASCcnf-", apdu);
                 break;
             }
-        default: return handleInvalidSequence(state);
+        default: return handle_invalid_user_input(state);
     }
 }
 
 export
 function dispatch_P_CONcnf_reject (state: ACPMState, apdu?: AARE_apdu): void {
     switch (state.state) {
-        case (AssociationControlProtocolMachineState.STA1):
+        case (TableA2AssociationState.STA1):
             {
-                state.state = AssociationControlProtocolMachineState.STA0;
+                state.state = TableA2AssociationState.STA0;
                 state.outgoingEvents.emit("A-ASCcnf-", apdu);
                 break;
             }
-        default: return handleInvalidSequence(state);
+        default: return;
     }
 }
 
 export
 function dispatch_A_RLSreq (state: ACPMState, apdu: RLRQ_apdu): void {
     switch (state.state) {
-        case (AssociationControlProtocolMachineState.STA5):
+        case (TableA2AssociationState.STA5):
             {
-                state.state = AssociationControlProtocolMachineState.STA3;
+                state.state = TableA2AssociationState.STA3;
                 state.outgoingEvents.emit("RLRQ", apdu);
                 break;
             }
-        default: return handleInvalidSequence(state);
+        default: return handle_invalid_user_input(state);
     }
 }
 
 export
 function dispatch_A_RLSrsp_accept (state: ACPMState, apdu: RLRE_apdu): void {
     switch (state.state) {
-        case (AssociationControlProtocolMachineState.STA4):
+        case (TableA2AssociationState.STA4):
             {
-                state.state = AssociationControlProtocolMachineState.STA0;
+                state.state = TableA2AssociationState.STA0;
                 state.outgoingEvents.emit("RLRE+", apdu);
                 break;
             }
-        case (AssociationControlProtocolMachineState.STA6):
+        case (TableA2AssociationState.STA6):
             {
-                state.state = AssociationControlProtocolMachineState.STA3;
+                state.state = TableA2AssociationState.STA3;
                 state.outgoingEvents.emit("RLRE+", apdu);
                 break;
             }
-        default: return handleInvalidSequence(state);
+        default: return handle_invalid_user_input(state);
     }
 }
 
 export
 function dispatch_A_RLSrsp_reject (state: ACPMState, apdu: RLRE_apdu): void {
     switch (state.state) {
-        case (AssociationControlProtocolMachineState.STA4):
+        case (TableA2AssociationState.STA4):
             {
-                state.state = AssociationControlProtocolMachineState.STA5;
+                state.state = TableA2AssociationState.STA5;
                 state.outgoingEvents.emit("RLRE-", apdu);
                 break;
             }
-        default: return handleInvalidSequence(state);
+        default: return handle_invalid_user_input(state);
     }
 }
 
 export
 function dispatch_RLRQ (state: ACPMState, apdu: RLRQ_apdu): void {
     switch (state.state) {
-        case (AssociationControlProtocolMachineState.STA3):
+        case (TableA2AssociationState.STA3):
             {
                 const p2: boolean = state.initiator;
                 if (p2) {
-                    state.state = AssociationControlProtocolMachineState.STA6;
+                    state.state = TableA2AssociationState.STA6;
                     state.outgoingEvents.emit("A-RLSind", apdu);
                 } else {
-                    state.state = AssociationControlProtocolMachineState.STA7;
+                    state.state = TableA2AssociationState.STA7;
                     state.outgoingEvents.emit("A-RLSind", apdu);
                 }
                 break;
             }
-        case (AssociationControlProtocolMachineState.STA5):
+        case (TableA2AssociationState.STA5):
             {
-                state.state = AssociationControlProtocolMachineState.STA4;
+                state.state = TableA2AssociationState.STA4;
                 state.outgoingEvents.emit("A-RLSind", apdu);
                 break;
             }
@@ -489,66 +411,66 @@ function dispatch_RLRQ (state: ACPMState, apdu: RLRQ_apdu): void {
 export
 function dispatch_RLRE_accept (state: ACPMState, apdu: RLRE_apdu): void {
     switch (state.state) {
-        case (AssociationControlProtocolMachineState.STA3):
+        case (TableA2AssociationState.STA3):
             {
-                state.state = AssociationControlProtocolMachineState.STA0;
+                state.state = TableA2AssociationState.STA0;
                 state.outgoingEvents.emit("A-RLScnf+", apdu);
                 break;
             }
-        case (AssociationControlProtocolMachineState.STA7):
+        case (TableA2AssociationState.STA7):
             {
-                state.state = AssociationControlProtocolMachineState.STA4;
+                state.state = TableA2AssociationState.STA4;
                 state.outgoingEvents.emit("A-RLScnf+", apdu);
                 break;
             }
-        default: return handleInvalidSequence(state);
+        default: return handle_invalid_user_input(state);
     }
 }
 
 export
 function dispatch_RLRE_reject (state: ACPMState, apdu: RLRE_apdu): void {
     switch (state.state) {
-        case (AssociationControlProtocolMachineState.STA3):
+        case (TableA2AssociationState.STA3):
             {
-                state.state = AssociationControlProtocolMachineState.STA5;
+                state.state = TableA2AssociationState.STA5;
                 state.outgoingEvents.emit("A-RLScnf-", apdu);
                 break;
             }
-        default: return handleInvalidSequence(state);
+        default: return handle_invalid_user_input(state);
     }
 }
 
 export
 function dispatch_A_ABRreq (state: ACPMState, apdu: ABRT_apdu): void {
     switch (state.state) {
-        case (AssociationControlProtocolMachineState.STA1):
-        case (AssociationControlProtocolMachineState.STA2):
-        case (AssociationControlProtocolMachineState.STA3):
-        case (AssociationControlProtocolMachineState.STA4):
-        case (AssociationControlProtocolMachineState.STA5):
-        case (AssociationControlProtocolMachineState.STA6):
-        case (AssociationControlProtocolMachineState.STA7):
+        case (TableA2AssociationState.STA1):
+        case (TableA2AssociationState.STA2):
+        case (TableA2AssociationState.STA3):
+        case (TableA2AssociationState.STA4):
+        case (TableA2AssociationState.STA5):
+        case (TableA2AssociationState.STA6):
+        case (TableA2AssociationState.STA7):
             {
-                state.state = AssociationControlProtocolMachineState.STA0;
+                state.state = TableA2AssociationState.STA0;
                 state.outgoingEvents.emit("ABRT", apdu);
                 break;
             }
-        default: return handleInvalidSequence(state);
+        default: return handle_invalid_user_input(state);
     }
 }
 
 export
 function dispatch_ABRT (state: ACPMState, apdu: ABRT_apdu): void {
     switch (state.state) {
-        case (AssociationControlProtocolMachineState.STA1):
-        case (AssociationControlProtocolMachineState.STA2):
-        case (AssociationControlProtocolMachineState.STA3):
-        case (AssociationControlProtocolMachineState.STA4):
-        case (AssociationControlProtocolMachineState.STA5):
-        case (AssociationControlProtocolMachineState.STA6):
-        case (AssociationControlProtocolMachineState.STA7):
+        case (TableA2AssociationState.STA1):
+        case (TableA2AssociationState.STA2):
+        case (TableA2AssociationState.STA3):
+        case (TableA2AssociationState.STA4):
+        case (TableA2AssociationState.STA5):
+        case (TableA2AssociationState.STA6):
+        case (TableA2AssociationState.STA7):
             {
-                state.state = AssociationControlProtocolMachineState.STA0;
+                state.state = TableA2AssociationState.STA0;
                 state.outgoingEvents.emit("A-ABRind", apdu);
                 break;
             }
@@ -564,15 +486,15 @@ function dispatch_ABRT (state: ACPMState, apdu: ABRT_apdu): void {
 export
 function dispatch_P_PABind (state: ACPMState): void {
     switch (state.state) {
-        case (AssociationControlProtocolMachineState.STA1):
-        case (AssociationControlProtocolMachineState.STA2):
-        case (AssociationControlProtocolMachineState.STA3):
-        case (AssociationControlProtocolMachineState.STA4):
-        case (AssociationControlProtocolMachineState.STA5):
-        case (AssociationControlProtocolMachineState.STA6):
-        case (AssociationControlProtocolMachineState.STA7):
+        case (TableA2AssociationState.STA1):
+        case (TableA2AssociationState.STA2):
+        case (TableA2AssociationState.STA3):
+        case (TableA2AssociationState.STA4):
+        case (TableA2AssociationState.STA5):
+        case (TableA2AssociationState.STA6):
+        case (TableA2AssociationState.STA7):
             {
-                state.state = AssociationControlProtocolMachineState.STA0;
+                state.state = TableA2AssociationState.STA0;
                 state.outgoingEvents.emit("P-PABind");
                 break;
             }
@@ -583,10 +505,10 @@ function dispatch_P_PABind (state: ACPMState): void {
 export
 function dispatch_EXTRN_1 (state: ACPMState): void {
     switch (state.state) {
-        case (AssociationControlProtocolMachineState.STA3):
-        case (AssociationControlProtocolMachineState.STA5):
+        case (TableA2AssociationState.STA3):
+        case (TableA2AssociationState.STA5):
             {
-                state.state = AssociationControlProtocolMachineState.STA5;
+                state.state = TableA2AssociationState.STA5;
                 break;
             }
         default: return handleInvalidSequence(state);
@@ -596,10 +518,10 @@ function dispatch_EXTRN_1 (state: ACPMState): void {
 export
 function dispatch_EXTRN_2 (state: ACPMState): void {
     switch (state.state) {
-        case (AssociationControlProtocolMachineState.STA4):
-        case (AssociationControlProtocolMachineState.STA5):
+        case (TableA2AssociationState.STA4):
+        case (TableA2AssociationState.STA5):
             {
-                state.state = AssociationControlProtocolMachineState.STA5;
+                state.state = TableA2AssociationState.STA5;
                 break;
             }
         default: return handleInvalidSequence(state);

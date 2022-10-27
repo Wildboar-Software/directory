@@ -1198,7 +1198,6 @@ function implicitNormalRelease (c: TransportConnection): TransportConnection {
 
 export
 function handleInvalidSequence (c: TransportConnection): TransportConnection {
-    console.error(`Invalid TPDU sequence: `, c);
     // a) transmit an ER-TPDU;
     // b) reset or close the network connection; or
     // c) invoke the release procedures appropriate to the class.
@@ -1217,6 +1216,7 @@ function handle_invalid_ref (c: TransportConnection): TransportConnection {
 
 export
 function dispatch_TCONreq (c: TransportConnection, tpdu: CR_TPDU): TransportConnection {
+    c.src_ref = tpdu.srcRef;
     switch (c.state) {
         case (TransportConnectionState.CLOSED): {
             const p0: boolean = false; // T-CONNECT request unacceptable
@@ -1231,7 +1231,6 @@ function dispatch_TCONreq (c: TransportConnection, tpdu: CR_TPDU): TransportConn
                 c.outgoingEvents.emit("NCONreq");
             } else if (p3) {
                 c.state = TransportConnectionState.WFCC;
-                c.src_ref = tpdu.srcRef;
                 c.outgoingEvents.emit("CR", tpdu);
             } else if (p4) {
                 c.state = TransportConnectionState.WFNC;
@@ -1246,6 +1245,7 @@ function dispatch_TCONreq (c: TransportConnection, tpdu: CR_TPDU): TransportConn
 
 export
 function dispatch_TCONresp (c: TransportConnection, tpdu: CC_TPDU): TransportConnection {
+    c.dst_ref = tpdu.dstRef;
     switch (c.state) {
         case (TransportConnectionState.WFTRESP): {
             c.state = TransportConnectionState.OPEN;
@@ -1270,6 +1270,8 @@ function dispatch_TDTreq (c: TransportConnection, user_data: Buffer): TransportC
                     eot: false,
                     roa: false,
                     nr: 0,
+                    // Class 0 DT TPDU should not have a DST-REF.
+                    // dstRef: c.dst_ref,
                     user_data: user_data.subarray(i, i + user_data_length),
                 };
                 i += user_data_length;
@@ -1633,9 +1635,10 @@ function dispatch_EA (c: TransportConnection): TransportConnection {
 
 export
 function dispatch_DT (c: TransportConnection, tpdu: DT_TPDU): TransportConnection {
-    if (tpdu.dstRef !== c.dst_ref) {
-        return handle_invalid_ref(c);
-    }
+    // There shouldn't be a dstRef in a TPDU in class 0.
+    // if (tpdu.dstRef !== c.dst_ref) {
+    //     return handle_invalid_ref(c);
+    // }
     switch (c.state) {
         case (TransportConnectionState.OPEN): {
             c.dataBuffer = Buffer.concat([

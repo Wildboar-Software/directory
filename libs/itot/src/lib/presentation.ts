@@ -15,9 +15,11 @@ import {
 } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/CPA-PPDU.ta";
 import {
     ARU_PPDU,
+    _encode_ARU_PPDU,
 } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/ARU-PPDU.ta";
 import {
     ARP_PPDU,
+    _encode_ARP_PPDU
 } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/ARP-PPDU.ta";
 import {
     Result,
@@ -36,10 +38,12 @@ import {
 import type {
     Default_context_name,
 } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Default-context-name.ta";
-import { OBJECT_IDENTIFIER } from "asn1-ts";
+import { OBJECT_IDENTIFIER, TRUE_BIT } from "asn1-ts";
 import { BER } from "asn1-ts/dist/node/functional";
 import { strict as assert } from "node:assert";
 import { randomBytes } from "node:crypto";
+import { Mode_selector_mode_value_normal_mode } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Mode-selector-mode-value.ta";
+import { Provider_reason_reason_not_specified } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Provider-reason.ta";
 
 /**
  * @summary Presentation layer state
@@ -286,7 +290,17 @@ interface PresentationConnection {
      */
     contextSets: ContextSets;
 
+    /**
+     * The CP PPDU issued to create this connection. (This must be preserved
+     * because it is used for determining future behavior.)
+     */
     cp?: CP_type;
+
+    /**
+     * The maximum number of contexts that may appear in the context definition
+     * list, or which may exist in total for this presentation connection.
+     */
+    max_contexts: number;
 
 }
 
@@ -295,6 +309,7 @@ function createPresentationConnection (
     session: SessionLayer,
     is_context_acceptable: PresentationConnection["is_context_acceptable"],
     get_preferred_context: PresentationConnection["get_preferred_context"],
+    max_contexts: number = 10,
 ): PresentationConnection {
     const outgoingEvents = new SessionLayerOutgoingEventEmitter();
     outgoingEvents.on("CP", (ppdu) => {
@@ -328,10 +343,16 @@ function createPresentationConnection (
         });
     });
     outgoingEvents.on("ARP", (ppdu) => {
-        // FIXME:
+        const ssdu = Buffer.from(_encode_ARP_PPDU(ppdu, BER).toBytes());
+        session.S_U_ABORT({
+            user_data: ssdu,
+        });
     });
     outgoingEvents.on("ARU", (ppdu) => {
-        // FIXME:
+        const ssdu = Buffer.from(_encode_ARU_PPDU(ppdu, BER).toBytes());
+        session.S_U_ABORT({
+            user_data: ssdu,
+        });
     });
     outgoingEvents.on("TD", (ppdu) => {
         const ssdu = Buffer.from(_encode_User_data(ppdu, BER).toBytes());
@@ -357,6 +378,7 @@ function createPresentationConnection (
             inter_activity_dcs: [],
             contents_of_the_dcs_at_synchronization_points: new Map(),
         },
+        max_contexts,
     };
 }
 
@@ -597,7 +619,35 @@ function dispatch_ARP (c: PresentationConnection, ppdu: ARP_PPDU): void {
 
 export
 function dispatch_ARU (c: PresentationConnection, ppdu: ARU_PPDU): void {
-    const p03: boolean = false; // FIXME:
+    if (!c.cp) {
+        return handleInvalidSequence(c);
+    }
+    const p03: boolean = (
+        ("normal_mode_parameters" in ppdu)
+        && ppdu.normal_mode_parameters.user_data
+        && ("fully_encoded_data" in ppdu.normal_mode_parameters.user_data)
+    )
+        ? ppdu.normal_mode_parameters.user_data.fully_encoded_data
+            .every((ud) => {
+                const dc = c.cp
+                    ?.normal_mode_parameters
+                    ?.presentation_context_definition_list
+                    ?.find((pc) => (
+                        pc.presentation_context_identifier.toString()
+                        === ud.presentation_context_identifier.toString()));
+                // No such context assigned this identifier.
+                if (!dc) {
+                    return false;
+                }
+                // No transfer syntax defined for it, so no possible discrepancy.
+                if (!ud.transfer_syntax_name) {
+                    return true;
+                }
+                // If the identified context actually names the used transfer syntax, it is fine.
+                return dc.transfer_syntax_name_list
+                    .some((tsn) => tsn.isEqualTo(ud.transfer_syntax_name!));
+            })
+        : false;
     const dcs = c.contextSets.dcs_agreed_during_connection_establishment;
     const p05: boolean = (("normal_mode_parameters" in ppdu) && ppdu.normal_mode_parameters.user_data)
         ? data_is_from_dcs(
@@ -705,13 +755,56 @@ function dispatch_ARU (c: PresentationConnection, ppdu: ARU_PPDU): void {
 }
 
 export
+function cp_is_acceptable (c: PresentationConnection, ppdu: CP_type): boolean {
+    if (ppdu.x410_mode_parameters) {
+        return false;
+    }
+    if (ppdu.mode_selector.mode_value !== Mode_selector_mode_value_normal_mode) {
+        return false;
+    }
+    if (!ppdu.normal_mode_parameters) {
+        return false;
+    }
+    const context_list_length = ppdu
+        .normal_mode_parameters
+        .presentation_context_definition_list?.length ?? 0;
+    if (context_list_length > c.max_contexts) {
+        return false;
+    }
+    // None of the presentation layer's defined optional functional units are supported.
+    const preqs = Array.from(ppdu.normal_mode_parameters.presentation_requirements ?? []);
+    if (preqs.some((bit) => (bit === TRUE_BIT))) {
+        return false;
+    }
+    // None of the session layer's defined optional functional units are supported.
+    const sreqs = Array.from(ppdu.normal_mode_parameters.user_session_requirements ?? []);
+    if (sreqs.some((bit) => (bit === TRUE_BIT))) {
+        return false;
+    }
+    // None of the presentation layer protocol options are supported.
+    // It is not even clear in the specifications what these mean.
+    const protocol_opts = Array.from(ppdu.normal_mode_parameters.protocol_options ?? []);
+    if (protocol_opts.some((bit) => (bit === TRUE_BIT))) {
+        return false;
+    }
+    if (ppdu.normal_mode_parameters.initiators_nominated_context) {
+        return false;
+    }
+    return true;
+}
+
+export
 function dispatch_CP (c: PresentationConnection, ppdu: CP_type): void {
     c.cp = ppdu;
     switch (c.state) {
         case (PresentationLayerState.STAI0): {
             const dcs: Map<string, Context_list_Item> = new Map();
             for (const pcd of ppdu.normal_mode_parameters?.presentation_context_definition_list ?? []) {
-                // TODO: Validate the PCI.
+                const pci = Number(pcd.presentation_context_identifier);
+                const pci_is_odd: boolean = (pci % 2) > 0;
+                if (!pci_is_odd) { // PCIs supplied in the CP PPDU must be odd.
+                    return handleInvalidPPDU(c);
+                }
                 if (pcd.transfer_syntax_name_list.length === 0) {
                     return handleInvalidSequence(c);
                 }
@@ -722,7 +815,7 @@ function dispatch_CP (c: PresentationConnection, ppdu: CP_type): void {
                 dcs.set(key, pcd);
             }
 
-            const p01: boolean = true; // TODO: The connection is acceptable to the PPM.
+            const p01: boolean = cp_is_acceptable(c, ppdu);
             const p02: boolean = !!(
                 !ppdu.normal_mode_parameters?.default_context_name
                 || c.is_context_acceptable(
@@ -793,14 +886,13 @@ function dispatch_CP (c: PresentationConnection, ppdu: CP_type): void {
                         // By default, this implementation does not reject any contexts at the provider level.
                         .map((pcd) => [ pcd, Result_acceptance ]);
                 }
-                // TODO: Add more info here.
                 const cpr: CPR_PPDU = {
                     normal_mode_parameters: new CPR_PPDU_normal_mode_parameters(
                         undefined,
                         undefined,
                         undefined,
                         undefined,
-                        undefined,
+                        Provider_reason_reason_not_specified,
                         undefined,
                     ),
                 };
@@ -1088,7 +1180,6 @@ function dispatch_P_CONreq (c: PresentationConnection, ppdu: CP_type): void {
     }
 }
 
-// TODO: Check that all initiator-proposed PCIs use odd integers and all responder-proposed are even.
 export
 function dispatch_P_CONrsp_accept (c: PresentationConnection, cpa: CPA_PPDU): void {
     if (!c.cp) {
