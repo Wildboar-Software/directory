@@ -371,92 +371,6 @@ class SessionLayerEventEmitter extends TypedEmitter<SessionLayerEvents> {
 }
 
 export
-interface SessionLayerIncomingEvents {
-    SACTDreq: () => unknown;
-    SACTDrsp: () => unknown;
-    SACTEreq: () => unknown;
-    SACTErsp: () => unknown;
-    SACTIreq: () => unknown;
-    SACTIrsp: () => unknown;
-    SACTRreq: () => unknown;
-    SACTSreq: () => unknown;
-    SCDreq: () => unknown;
-    SCDrsp: () => unknown;
-    SCGreq: () => unknown;
-    SCONreq: (spdu: CONNECT_SPDU) => unknown;
-    SCONrsp_accept: (spdu: ACCEPT_SPDU) => unknown;
-    SCONrsp_reject: () => unknown;
-    SDTreq: () => unknown;
-    SEXreq: () => unknown;
-    SGTreq: () => unknown;
-    SPTreq: () => unknown;
-    SRELreq: () => unknown;
-    SRELrsp_accept: () => unknown;
-    SRELrsp_reject: () => unknown;
-    SRSYNreq_a: () => unknown;
-    SRSYNreq_r: () => unknown;
-    SRSYNreq_s: () => unknown;
-    SRSYNrsp: () => unknown;
-    SSYNMreq: () => unknown;
-    SSYNMrsp: () => unknown;
-    SSYNmreq: () => unknown;
-    SSYNmdreq: () => unknown;
-    SSYNmrsp: () => unknown;
-    STDreq: () => unknown;
-    SUABreq: () => unknown;
-    SUERreq: () => unknown;
-    TCONind: () => unknown;
-    TCONcnf: () => unknown;
-    TDISind: () => unknown;
-    TIM_Timer: () => unknown;
-    AA: () => unknown;
-    AB_nr: () => unknown;
-    AB_r: () => unknown;
-    AC: () => unknown;
-    AD: () => unknown;
-    ADA: () => unknown;
-    AE: () => unknown;
-    AEA: () => unknown;
-    AI: () => unknown;
-    AIA: () => unknown;
-    AR: () => unknown;
-    AS: () => unknown;
-    CD: () => unknown;
-    CDA: () => unknown;
-    CDO: () => unknown;
-    CN: () => unknown;
-    DN: () => unknown;
-    DT: () => unknown;
-    ED: () => unknown;
-    ER: () => unknown;
-    EX: () => unknown;
-    FN_nr: () => unknown;
-    FN_r: () => unknown;
-    GT: () => unknown;
-    GTA: () => unknown;
-    GTC: () => unknown;
-    MAA: () => unknown;
-    MAP: () => unknown;
-    MIA: () => unknown;
-    MIP: () => unknown;
-    MIP_d: () => unknown;
-    NF: () => unknown;
-    OA: () => unknown;
-    PR_AB: () => unknown;
-    PR_MAA: () => unknown;
-    PR_RA: () => unknown;
-    PR_RS: () => unknown;
-    PT: () => unknown;
-    RA: () => unknown;
-    RF_nr: () => unknown;
-    RF_r: () => unknown;
-    RS_a: () => unknown;
-    RS_r: () => unknown;
-    RS_s: () => unknown;
-    TD: () => unknown;
-}
-
-export
 interface SessionLayerOutgoingEvents {
     SACTDind: () => unknown;
     SACTDcnf: () => unknown;
@@ -497,7 +411,7 @@ interface SessionLayerOutgoingEvents {
     AA: () => unknown;
     AB_nr: (spdu: ABORT_SPDU) => unknown;
     AB_r: (spdu: ABORT_SPDU) => unknown;
-    AC: (spdu: ACCEPT_SPDU) => unknown; // FIXME: This appears to be unused.
+    AC: (spdu: ACCEPT_SPDU) => unknown;
     AD: () => unknown;
     ADA: () => unknown;
     AE: () => unknown;
@@ -508,7 +422,7 @@ interface SessionLayerOutgoingEvents {
     AS: () => unknown;
     CD: () => unknown;
     CDA: () => unknown;
-    CDO: () => unknown;
+    CDO: (spdu: CONNECT_DATA_OVERFLOW_SPDU) => unknown;
     CN: (spdu: CONNECT_SPDU) => unknown;
     DN: (spdu: DISCONNECT_SPDU) => unknown;
     DT: (spdu: DATA_TRANSFER_SPDU) => unknown;
@@ -525,7 +439,7 @@ interface SessionLayerOutgoingEvents {
     MIP: () => unknown;
     MIP_d: () => unknown;
     NF: (spdu: NOT_FINISHED_SPDU) => unknown;
-    OA: () => unknown;
+    OA: (spdu: OVERFLOW_ACCEPT_SPDU) => unknown;
     PR_AB: () => unknown;
     PR_MAA: () => unknown;
     PR_RA: () => unknown;
@@ -538,12 +452,6 @@ interface SessionLayerOutgoingEvents {
     RS_r: () => unknown;
     RS_s: () => unknown;
     TD: () => unknown;
-    // TODO: SSDU event
-}
-
-export
-class SessionLayerIncomingEventEmitter extends TypedEmitter<SessionLayerIncomingEvents> {
-
 }
 
 export
@@ -626,15 +534,14 @@ function dispatch_SCONreq (state: SessionServiceConnectionState, cn: CONNECT_SPD
                 } else {
                     state.state = TableA2SessionConnectionState.STA02A; // Await AC
                 }
-                const tsdu = encode_CONNECT_SPDU(cn);
-                state.transport.writeTSDU(tsdu);
+                state.outgoingEvents.emit("CN", cn);
             } else {
                 return handleInvalidSequence(state);
             }
             break;
         }
         default: {
-            return handleInvalidSequence(state); // TODO: Will this work if not already connected?
+            return handleInvalidSequence(state);
         }
     }
     return state;
@@ -656,7 +563,7 @@ function dispatch_SCONrsp_accept (state: SessionServiceConnectionState, spdu: AC
             state.Vsc = false;
             state.Vado = -1;
             state.Vadi = -1;
-            state.TEXP = true; // TODO: I think this has to be set based on the connect PDU...
+            state.TEXP = ((state.cn.sessionUserRequirements ?? 0) & SUR_EXPEDITED_DATA) > 0;
             state.FU = ((spdu.sessionUserRequirements ?? 0) & (state.cn.sessionUserRequirements ?? 0)) % 65535;
             state.Vact = false; // This is supposed to get set to false if FU(ACT), but it defaults to that...
             state.Vdnr = false;
@@ -682,8 +589,7 @@ function dispatch_SCONrsp_accept (state: SessionServiceConnectionState, spdu: AC
                 state.releaseToken = SessionServiceTokenPossession.remote;
             }
             state.state = TableA2SessionConnectionState.STA713;
-            const tsdu = encode_ACCEPT_SPDU(spdu);
-            state.transport.writeTSDU(tsdu);
+            state.outgoingEvents.emit("AC", spdu);
             break;
         }
         case (TableA2SessionConnectionState.STA15D): {
@@ -706,26 +612,24 @@ function dispatch_SCONrsp_reject (state: SessionServiceConnectionState, spdu: RE
             if (p02) {
                 state.state = TableA2SessionConnectionState.STA16;
                 state.TIM = setTimeout(() => {
-                    state.transport.disconnect();
+                    state.outgoingEvents.emit("TDISreq");
                 }, TIMER_TIME_IN_MS);
-                const tsdu = encode_REFUSE_SPDU({
+                state.outgoingEvents.emit("RF_r", {
                     ...spdu,
                     transportDisconnect: TRANSPORT_DISCONNECT_KEPT,
-                }); // RF-r
-                state.transport.writeTSDU(tsdu);
+                });
             } else {
                 state.state = TableA2SessionConnectionState.STA01C;
-                const tsdu = encode_REFUSE_SPDU({
+                state.outgoingEvents.emit("RF_nr", {
                     ...spdu,
                     transportDisconnect: TRANSPORT_DISCONNECT_RELEASED,
-                }); // RF-nr
-                state.transport.writeTSDU(tsdu);
+                });
             }
             return state;
         }
         case (TableA2SessionConnectionState.STA15D): {
             state.TIM = setTimeout(() => {
-                state.transport.disconnect();
+                state.outgoingEvents.emit("TDISreq");
             }, TIMER_TIME_IN_MS);
             state.state = TableA2SessionConnectionState.STA16;
             return state;
@@ -736,7 +640,7 @@ function dispatch_SCONrsp_reject (state: SessionServiceConnectionState, spdu: RE
     }
 }
 
-// TODO: Segment data?
+// NOTE: Data is already segmented within `writeTSDU()`.
 export
 function dispatch_SDTreq (state: SessionServiceConnectionState, dt: DATA_TRANSFER_SPDU): SessionServiceConnectionState {
     switch (state.state) {
@@ -747,7 +651,7 @@ function dispatch_SDTreq (state: SessionServiceConnectionState, dt: DATA_TRANSFE
             );
             if (p04) {
                 const tsdu = encode_DATA_TRANSFER_SPDU(dt);
-                state.transport.writeTSDU(Buffer.concat([ // TODO: REVIEW
+                state.transport.writeTSDU(Buffer.concat([
                     Buffer.from([ 1, 0 ]), // GIVE TOKENS (GT) SPDU
                     tsdu,
                 ]));
@@ -766,7 +670,7 @@ function dispatch_SDTreq (state: SessionServiceConnectionState, dt: DATA_TRANSFE
             );
             if (p03) {
                 const tsdu = encode_DATA_TRANSFER_SPDU(dt);
-                state.transport.writeTSDU(Buffer.concat([ // TODO: REVIEW
+                state.transport.writeTSDU(Buffer.concat([
                     Buffer.from([ 1, 0 ]), // GIVE TOKENS (GT) SPDU
                     tsdu,
                 ]));
@@ -794,7 +698,7 @@ function dispatch_SDTreq (state: SessionServiceConnectionState, dt: DATA_TRANSFE
             if (p70) {
                 state.state = TableA2SessionConnectionState.STA18;
                 const tsdu = encode_DATA_TRANSFER_SPDU(dt);
-                state.transport.writeTSDU(Buffer.concat([ // TODO: REVIEW
+                state.transport.writeTSDU(Buffer.concat([
                     Buffer.from([ 1, 0 ]), // GIVE TOKENS (GT) SPDU
                     tsdu,
                 ]));
@@ -842,8 +746,10 @@ function dispatch_SRELreq (state: SessionServiceConnectionState, fn: FINISH_SPDU
                 state.Vtrr = false;
                 state.Vcoll = true;
                 state.state = TableA2SessionConnectionState.STA09;
-                const tsdu = encode_FINISH_SPDU(fn);
-                state.transport.writeTSDU(tsdu);
+                state.outgoingEvents.emit("FN_nr", {
+                    ...fn,
+                    transportDisconnect: TRANSPORT_DISCONNECT_RELEASED,
+                });
             }
             break;
         }
@@ -884,7 +790,7 @@ function dispatch_SRELreq (state: SessionServiceConnectionState, fn: FINISH_SPDU
                     || !state.Vact
                 )
             );
-            const p64_local_choice: boolean = false; // TODO: Make configurable.
+            const p64_local_choice: boolean = false;
             const p64: boolean = (
                 p64_local_choice
                 && !state.Vtca
@@ -894,18 +800,16 @@ function dispatch_SRELreq (state: SessionServiceConnectionState, fn: FINISH_SPDU
                 state.state = TableA2SessionConnectionState.STA03;
                 if (p64) {
                     state.Vtrr = true;
-                    const tsdu = encode_FINISH_SPDU({
+                    state.outgoingEvents.emit("FN_r", {
                         ...fn,
                         transportDisconnect: TRANSPORT_DISCONNECT_KEPT,
                     });
-                    state.transport.writeTSDU(tsdu);
                 } else {
                     state.Vtrr = false;
-                    const tsdu = encode_FINISH_SPDU({
+                    state.outgoingEvents.emit("FN_nr", {
                         ...fn,
                         transportDisconnect: TRANSPORT_DISCONNECT_RELEASED,
                     });
-                    state.transport.writeTSDU(tsdu);
                 }
             } else {
                 return handleInvalidSequence(state);
@@ -929,19 +833,16 @@ function dispatch_SRELrsp_accept (state: SessionServiceConnectionState, dn: DISC
             const p01: boolean = !state.Vtca;
             if (p66) {
                 state.state = TableA2SessionConnectionState.STA01C;
-                const tsdu = encode_DISCONNECT_SPDU(dn);
-                state.transport.writeTSDU(tsdu);
+                state.outgoingEvents.emit("DN", dn);
             } else if (!p66 && p75) {
-                const tsdu = encode_DISCONNECT_SPDU(dn);
                 state.TIM = setTimeout(() => {
-                    state.transport.disconnect();
+                    state.outgoingEvents.emit("TDISreq");
                 }, TIMER_TIME_IN_MS);
                 state.state = TableA2SessionConnectionState.STA16;
-                state.transport.writeTSDU(tsdu);
+                state.outgoingEvents.emit("DN", dn);
             } else if (p69 && p01) {
-                const tsdu = encode_DISCONNECT_SPDU(dn);
                 state.state = TableA2SessionConnectionState.STA03;
-                state.transport.writeTSDU(tsdu);
+                state.outgoingEvents.emit("DN", dn);
             } else {
                 return handleInvalidSequence(state);
             }
@@ -949,7 +850,7 @@ function dispatch_SRELrsp_accept (state: SessionServiceConnectionState, dn: DISC
         }
         case (TableA2SessionConnectionState.STA15D): {
             state.TIM = setTimeout(() => {
-                state.transport.disconnect();
+                state.outgoingEvents.emit("TDISreq");
             }, TIMER_TIME_IN_MS);
             state.state = TableA2SessionConnectionState.STA16;
             break;
@@ -968,8 +869,7 @@ function dispatch_SRELrsp_reject (state: SessionServiceConnectionState, nf: NOT_
             const p67: boolean = (state.FU & SUR_NEGOTIATED_RELEASE) > 0;
             if (p67) {
                 state.state = TableA2SessionConnectionState.STA713;
-                const tsdu = encode_NOT_FINISHED_SPDU(nf);
-                state.transport.writeTSDU(tsdu);
+                state.outgoingEvents.emit("NF", nf);
             } else {
                 return handleInvalidSequence(state);
             }
@@ -1051,29 +951,28 @@ function dispatch_SUABreq (state: SessionServiceConnectionState, ab: ABORT_SPDU)
                     prepareType: PREPARE_TYPE_ABORT,
                 };
                 const pr_tsdu = encode_PREPARE_SPDU(pr);
-                const ab_tsdu = encode_ABORT_SPDU({
-                    ...ab,
-                    transportDisconnect: TRANSPORT_DISCONNECT_RELEASED,
-                });
                 state.TIM = setTimeout(() => {
-                    state.transport.disconnect();
+                    state.outgoingEvents.emit("TDISreq");
                 }, TIMER_TIME_IN_MS);
                 state.state = TableA2SessionConnectionState.STA16;
                 state.transport.writeTSDU(pr_tsdu);
-                state.transport.writeTSDU(ab_tsdu);
+                state.outgoingEvents.emit("AB_nr", {
+                    ...ab,
+                    transportDisconnect: TRANSPORT_DISCONNECT_RELEASED,
+                });
             }
             break;
         }
         case (TableA2SessionConnectionState.STA15D): {
             state.state = TableA2SessionConnectionState.STA16;
             state.TIM = setTimeout(() => {
-                state.transport.disconnect();
+                state.outgoingEvents.emit("TDISreq");
             }, TIMER_TIME_IN_MS);
             break;
         }
         case (TableA2SessionConnectionState.STA01B): {
             state.state = TableA2SessionConnectionState.STA01;
-            state.transport.disconnect();
+            state.outgoingEvents.emit("TDISreq");
             break;
         }
         case (TableA2SessionConnectionState.STA02A):
@@ -1098,30 +997,28 @@ function dispatch_SUABreq (state: SessionServiceConnectionState, ab: ABORT_SPDU)
         case (TableA2SessionConnectionState.STA22):
         case (TableA2SessionConnectionState.STA713): {
             if (p02) {
-                const ab_tsdu = encode_ABORT_SPDU({
+                state.TIM = setTimeout(() => {
+                    state.outgoingEvents.emit("TDISreq");
+                }, TIMER_TIME_IN_MS);
+                state.state = TableA2SessionConnectionState.STA01A;
+                state.outgoingEvents.emit("AB_r", {
                     ...ab,
                     transportDisconnect: TRANSPORT_DISCONNECT_KEPT,
                 });
-                state.TIM = setTimeout(() => {
-                    state.transport.disconnect();
-                }, TIMER_TIME_IN_MS);
-                state.state = TableA2SessionConnectionState.STA01A;
-                state.transport.writeTSDU(ab_tsdu);
             } else {
                 const pr: PREPARE_SPDU = {
                     prepareType: PREPARE_TYPE_ABORT,
                 };
                 const pr_tsdu = encode_PREPARE_SPDU(pr);
-                const ab_tsdu = encode_ABORT_SPDU({
-                    ...ab,
-                    transportDisconnect: TRANSPORT_DISCONNECT_RELEASED,
-                });
                 state.TIM = setTimeout(() => {
-                    state.transport.disconnect();
+                    state.outgoingEvents.emit("TDISreq");
                 }, TIMER_TIME_IN_MS);
                 state.state = TableA2SessionConnectionState.STA16;
                 state.transport.writeTSDU(pr_tsdu);
-                state.transport.writeTSDU(ab_tsdu);
+                state.outgoingEvents.emit("AB_nr", {
+                    ...ab,
+                    transportDisconnect: TRANSPORT_DISCONNECT_RELEASED,
+                });
             }
             break;
         }
@@ -1175,17 +1072,20 @@ function dispatch_TDISind (state: SessionServiceConnectionState): SessionService
             if (state.TIM) { // [3]
                 clearTimeout(state.TIM);
             }
+            state.cn = undefined;
             state.state = TableA2SessionConnectionState.STA01;
             break;
         }
         case (TableA2SessionConnectionState.STA01B): {
             state.state = TableA2SessionConnectionState.STA01;
+            state.cn = undefined;
             state.outgoingEvents.emit("SPABind");
             break;
         }
         case (TableA2SessionConnectionState.STA01C):
         case (TableA2SessionConnectionState.STA01D):
         {
+            state.cn = undefined;
             state.state = TableA2SessionConnectionState.STA01;
             break;
         }
@@ -1216,6 +1116,7 @@ function dispatch_TDISind (state: SessionServiceConnectionState): SessionService
         case (TableA2SessionConnectionState.STA22):
         case (TableA2SessionConnectionState.STA713): {
             state.state = TableA2SessionConnectionState.STA01;
+            state.cn = undefined;
             state.outgoingEvents.emit("SPABind");
             break;
         }
@@ -1234,7 +1135,7 @@ function dispatch_TIM_Timer (state: SessionServiceConnectionState): SessionServi
         case (TableA2SessionConnectionState.STA16):
         {
             state.state = TableA2SessionConnectionState.STA01;
-            state.transport.disconnect();
+            state.outgoingEvents.emit("TDISreq");
             break;
         }
         default: {
@@ -1257,7 +1158,7 @@ function dispatch_AA (state: SessionServiceConnectionState): SessionServiceConne
         case (TableA2SessionConnectionState.STA01C):
         case (TableA2SessionConnectionState.STA01D): {
             state.state = TableA2SessionConnectionState.STA01;
-            state.transport.disconnect();
+            state.outgoingEvents.emit("TDISreq");
             break;
         }
         case (TableA2SessionConnectionState.STA16): {
@@ -1265,7 +1166,7 @@ function dispatch_AA (state: SessionServiceConnectionState): SessionServiceConne
                 clearTimeout(state.TIM);
             }
             state.state = TableA2SessionConnectionState.STA01;
-            state.transport.disconnect();
+            state.outgoingEvents.emit("TDISreq");
             break;
         }
         default: {
@@ -1277,6 +1178,7 @@ function dispatch_AA (state: SessionServiceConnectionState): SessionServiceConne
 
 export
 function dispatch_AB_nr (state: SessionServiceConnectionState, spdu: ABORT_SPDU): SessionServiceConnectionState {
+    state.cn = undefined;
     const p02_local_choice: boolean = false;
     const p02: boolean = (p02_local_choice && !state.TEXP);
     switch (state.state) {
@@ -1287,13 +1189,13 @@ function dispatch_AB_nr (state: SessionServiceConnectionState, spdu: ABORT_SPDU)
                 clearTimeout(state.TIM);
             }
             state.state = TableA2SessionConnectionState.STA01;
-            state.transport.disconnect();
+            state.outgoingEvents.emit("TDISreq");
             break;
         }
         case (TableA2SessionConnectionState.STA01C):
         case (TableA2SessionConnectionState.STA01D): {
             state.state = TableA2SessionConnectionState.STA01;
-            state.transport.disconnect();
+            state.outgoingEvents.emit("TDISreq");
             break;
         }
         case (TableA2SessionConnectionState.STA02A):
@@ -1320,16 +1222,12 @@ function dispatch_AB_nr (state: SessionServiceConnectionState, spdu: ABORT_SPDU)
             if (p02) {
                 state.state = TableA2SessionConnectionState.STA16;
                 state.TIM = setTimeout(() => {
-                    state.transport.disconnect();
+                    state.outgoingEvents.emit("TDISreq");
                 }, TIMER_TIME_IN_MS);
-                state.transport.writeTSDU(Buffer.from([
-                    SI_AA_SPDU,
-                    0,
-                ]));
+                state.outgoingEvents.emit("AA");
             } else {
-                // TODO: Emit TDISreq instead of just disconnecting.
                 state.state = TableA2SessionConnectionState.STA01;
-                state.transport.disconnect();
+                state.outgoingEvents.emit("TDISreq");
             }
             if (
                 (spdu.transportDisconnect !== undefined)
@@ -1357,7 +1255,7 @@ function dispatch_AB_nr (state: SessionServiceConnectionState, spdu: ABORT_SPDU)
             } else {
                 state.outgoingEvents.emit("SPABind");
             }
-            state.transport.disconnect();
+            state.outgoingEvents.emit("TDISreq");
             break;
         }
         default: {
@@ -1369,6 +1267,7 @@ function dispatch_AB_nr (state: SessionServiceConnectionState, spdu: ABORT_SPDU)
 
 export
 function dispatch_AB_r (state: SessionServiceConnectionState, spdu: ABORT_SPDU): SessionServiceConnectionState {
+    state.cn = undefined;
     const p02_local_choice: boolean = false;
     const p02: boolean = (p02_local_choice && !state.TEXP);
     switch (state.state) {
@@ -1384,13 +1283,10 @@ function dispatch_AB_r (state: SessionServiceConnectionState, spdu: ABORT_SPDU):
         {
             if (p02) {
                 state.state = TableA2SessionConnectionState.STA01C;
-                state.transport.writeTSDU(Buffer.from([
-                    SI_AA_SPDU,
-                    0,
-                ]));
+                state.outgoingEvents.emit("AA");
             } else {
                 state.state = TableA2SessionConnectionState.STA01;
-                state.transport.disconnect();
+                state.outgoingEvents.emit("TDISreq");
             }
             break;
         }
@@ -1418,13 +1314,10 @@ function dispatch_AB_r (state: SessionServiceConnectionState, spdu: ABORT_SPDU):
         {
             if (p02) {
                 state.state = TableA2SessionConnectionState.STA01C;
-                state.transport.writeTSDU(Buffer.from([
-                    SI_AA_SPDU,
-                    0,
-                ]));
+                state.outgoingEvents.emit("AA");
             } else {
                 state.state = TableA2SessionConnectionState.STA01;
-                state.transport.disconnect();
+                state.outgoingEvents.emit("TDISreq");
             }
             if (
                 (spdu.transportDisconnect !== undefined)
@@ -1441,7 +1334,7 @@ function dispatch_AB_r (state: SessionServiceConnectionState, spdu: ABORT_SPDU):
                 clearTimeout(state.TIM);
             }
             state.state = TableA2SessionConnectionState.STA01;
-            state.transport.disconnect();
+            state.outgoingEvents.emit("TDISreq");
             break;
         }
         default: {
@@ -1456,6 +1349,9 @@ function dispatch_AC (
     state: SessionServiceConnectionState,
     spdu: ACCEPT_SPDU,
 ): SessionServiceConnectionState {
+    if (!state.cn) {
+        return handleInvalidSequence(state);
+    }
     switch (state.state) {
         case (TableA2SessionConnectionState.STA01A): {
             // NOOP.
@@ -1463,7 +1359,7 @@ function dispatch_AC (
         }
         case (TableA2SessionConnectionState.STA01C): {
             state.state = TableA2SessionConnectionState.STA01;
-            state.transport.disconnect();
+            state.outgoingEvents.emit("TDISreq");
             break;
         }
         case (TableA2SessionConnectionState.STA02A): {
@@ -1476,7 +1372,7 @@ function dispatch_AC (
             state.Vsc = false;
             state.Vado = -1;
             state.Vadi = -1;
-            state.TEXP = true; // TODO: I think this has to be set based on the connect PDU...
+            state.TEXP = ((state.cn.sessionUserRequirements ?? 0) & SUR_EXPEDITED_DATA) > 0;
             state.FU = ((spdu.sessionUserRequirements ?? 0) & (spdu.sessionUserRequirements ?? 0)) % 65535;
             state.Vact = false; // This is supposed to get set to false if FU(ACT), but it defaults to that...
             state.Vdnr = false;
@@ -1579,12 +1475,18 @@ function dispatch_CDO (
     switch (state.state) {
         case (TableA2SessionConnectionState.STA01C): {
             state.state = TableA2SessionConnectionState.STA01;
-            state.transport.disconnect();
+            state.outgoingEvents.emit("TDISreq");
             break;
         }
         case (TableA2SessionConnectionState.STA01D): {
             const p202: boolean = ((spdu.enclosureItem & 0b10) > 0); // End of user data.
-            // TODO: [50: Preserve user data for subsequent SCONind]
+            // [50: Preserve user data for subsequent SCONind]
+            if (spdu.userData) {
+                state.userDataBuffer = Buffer.concat([
+                    state.userDataBuffer,
+                    spdu.userData,
+                ]);
+            }
             if (p202) {
                 state.state = TableA2SessionConnectionState.STA08;
                 state.outgoingEvents.emit("SCONind", cn);
@@ -1611,11 +1513,11 @@ function dispatch_CN (state: SessionServiceConnectionState, spdu: CONNECT_SPDU):
                 clearTimeout(state.TIM);
             }
             state.state = TableA2SessionConnectionState.STA01;
-            state.transport.disconnect();
+            state.outgoingEvents.emit("TDISreq");
             break;
         }
         case (TableA2SessionConnectionState.STA01C): {
-            const p02_local_choice: boolean = true; // TODO: Make this configurable.
+            const p02_local_choice: boolean = false;
             const p76_temporary_congestion: boolean = false;
             const p76_version_not_supported: boolean = (
                 (spdu.connectAcceptItem?.versionNumber !== undefined)
@@ -1633,15 +1535,18 @@ function dispatch_CN (state: SessionServiceConnectionState, spdu: CONNECT_SPDU):
 
             if (p01) { // If this SPM initiated this transport.
                 state.state = TableA2SessionConnectionState.STA01;
-                state.transport.disconnect(); // TDISreq
+                state.outgoingEvents.emit("TDISreq"); // TDISreq
                 return state;
             }
 
             // If this SPM did not initiate the transport, and there is no problem with the CN SPDU.
             if (!p76) {
                 if (p204) { // ...and there is more than 10240 octets to transfer.
-                    // FIXME: Send OA SPDU.
-                    // FIXME: Specific Action 50: Preserve user data for subsequent SCONind
+                    state.outgoingEvents.emit("OA", {
+                        versionNumber: 0b0000_0010,
+                        tsduMaximumSize: state.tsduMaximumSize,
+                    });
+                    // [50]: Preserve user data for subsequent SCONind
                     state.userDataBuffer = spdu.extendedUserData ?? spdu.userData ?? Buffer.alloc(0);
                     state.state = TableA2SessionConnectionState.STA01D;
                 } else {
@@ -1649,12 +1554,23 @@ function dispatch_CN (state: SessionServiceConnectionState, spdu: CONNECT_SPDU):
                     state.outgoingEvents.emit("SCONind", spdu);
                 }
             } else { // There was a problem.
+                const rf: REFUSE_SPDU = {
+                    reasonCode: 0, // Reason not specified.
+                };
                 if (!p02) { // ...and we are using expedited transport...
-                    // FIXME: RF-nr (not reuse)
-                    // FIXME: Specific Action [4]: Start timer.
+                    state.outgoingEvents.emit("RF_nr", {
+                        ...rf,
+                        transportDisconnect: TRANSPORT_DISCONNECT_RELEASED,
+                    });
+                    state.TIM = setTimeout(() => { // [4]
+                        state.outgoingEvents.emit("TDISreq");
+                    }, TIMER_TIME_IN_MS);
                     state.state = TableA2SessionConnectionState.STA16;
                 } else {
-                    // FIXME: RF-r (reuse)
+                    state.outgoingEvents.emit("RF_r", {
+                        ...rf,
+                        transportDisconnect: TRANSPORT_DISCONNECT_KEPT,
+                    });
                     state.state = TableA2SessionConnectionState.STA01C;
                 }
             }
@@ -1664,7 +1580,7 @@ function dispatch_CN (state: SessionServiceConnectionState, spdu: CONNECT_SPDU):
             if (state.TIM) {
                 clearTimeout(state.TIM);
             }
-            state.transport.disconnect();
+            state.outgoingEvents.emit("TDISreq");
             state.state = TableA2SessionConnectionState.STA01;
             break;
         }
@@ -1683,18 +1599,20 @@ function dispatch_DN (state: SessionServiceConnectionState, spdu: DISCONNECT_SPD
         case (TableA2SessionConnectionState.STA01C):
         case (TableA2SessionConnectionState.STA01D): {
             state.state = TableA2SessionConnectionState.STA01;
-            state.transport.disconnect();
+            state.outgoingEvents.emit("TDISreq");
             break;
         }
         case (TableA2SessionConnectionState.STA03): {
             const p66: boolean = state.Vtrr;
             if (p66) {
                 state.state = TableA2SessionConnectionState.STA01C;
+                state.cn = undefined;
                 state.outgoingEvents.emit("SRELcnf_accept", spdu);
             } else {
                 state.state = TableA2SessionConnectionState.STA01;
+                state.cn = undefined;
                 state.outgoingEvents.emit("SRELcnf_accept", spdu);
-                state.transport.disconnect();
+                state.outgoingEvents.emit("TDISreq");
             }
             break;
         }
@@ -1709,6 +1627,7 @@ function dispatch_DN (state: SessionServiceConnectionState, spdu: DISCONNECT_SPD
                 state.V_A = state.V_M;
             }
             state.V_M++;
+            state.cn = undefined;
             state.outgoingEvents.emit("SRELcnf_accept", spdu);
             break;
         }
@@ -1748,7 +1667,7 @@ function dispatch_DT (state: SessionServiceConnectionState, spdu: DATA_TRANSFER_
         case (TableA2SessionConnectionState.STA01C):
         case (TableA2SessionConnectionState.STA01D): {
             state.state = TableA2SessionConnectionState.STA01;
-            state.transport.disconnect();
+            state.outgoingEvents.emit("TDISreq");
             break;
         }
         case (TableA2SessionConnectionState.STA03): {
@@ -1862,7 +1781,7 @@ function dispatch_FN_nr (state: SessionServiceConnectionState, spdu: FINISH_SPDU
         case (TableA2SessionConnectionState.STA01C):
         case (TableA2SessionConnectionState.STA01D): {
             state.state = TableA2SessionConnectionState.STA01;
-            state.transport.disconnect();
+            state.outgoingEvents.emit("TDISreq");
             break;
         }
         case (TableA2SessionConnectionState.STA03): {
@@ -2001,7 +1920,7 @@ function dispatch_FN_r (state: SessionServiceConnectionState, spdu: FINISH_SPDU)
         }
         case (TableA2SessionConnectionState.STA01C):
         case (TableA2SessionConnectionState.STA01D): {
-            state.transport.disconnect();
+            state.outgoingEvents.emit("TDISreq");
             state.state = TableA2SessionConnectionState.STA01;
             break;
         }
@@ -2185,7 +2104,7 @@ function dispatch_NF (state: SessionServiceConnectionState, spdu: NOT_FINISHED_S
         case (TableA2SessionConnectionState.STA01C):
         case (TableA2SessionConnectionState.STA01D): {
             state.state = TableA2SessionConnectionState.STA01;
-            state.transport.disconnect();
+            state.outgoingEvents.emit("TDISreq");
             break;
         }
         case (TableA2SessionConnectionState.STA03): {
@@ -2193,8 +2112,9 @@ function dispatch_NF (state: SessionServiceConnectionState, spdu: NOT_FINISHED_S
             if (p67) {
                 state.state = TableA2SessionConnectionState.STA713;
                 state.outgoingEvents.emit("SRELcnf_reject", spdu);
+            } else {
+                return handleInvalidSequence(state);
             }
-            // TODO: Else?
             break;
         }
         case (TableA2SessionConnectionState.STA05A): {
@@ -2202,8 +2122,9 @@ function dispatch_NF (state: SessionServiceConnectionState, spdu: NOT_FINISHED_S
             if (p67) {
                 state.state = TableA2SessionConnectionState.STA15B;
                 state.outgoingEvents.emit("SRELcnf_reject", spdu);
+            } else {
+                return handleInvalidSequence(state);
             }
-            // TODO: Else?
             break;
         }
         case (TableA2SessionConnectionState.STA15D):
@@ -2227,7 +2148,7 @@ function dispatch_OA (
     switch (state.state) {
         case (TableA2SessionConnectionState.STA01C): {
             state.state = TableA2SessionConnectionState.STA01;
-            state.transport.disconnect();
+            state.outgoingEvents.emit("TDISreq");
             break;
         }
         case (TableA2SessionConnectionState.STA02B): {
@@ -2268,7 +2189,7 @@ function dispatch_PR_AB (state: SessionServiceConnectionState): SessionServiceCo
     switch (state.state) {
         case (TableA2SessionConnectionState.STA01C): {
             state.state = TableA2SessionConnectionState.STA01;
-            state.transport.disconnect();
+            state.outgoingEvents.emit("TDISreq");
             break;
         }
         case (TableA2SessionConnectionState.STA16): {
@@ -2276,7 +2197,7 @@ function dispatch_PR_AB (state: SessionServiceConnectionState): SessionServiceCo
                 clearTimeout(state.TIM);
             }
             state.state = TableA2SessionConnectionState.STA01;
-            state.transport.disconnect();
+            state.outgoingEvents.emit("TDISreq");
             break;
         }
         case (TableA2SessionConnectionState.STA02A):
@@ -2344,19 +2265,19 @@ function dispatch_RF_nr (state: SessionServiceConnectionState, spdu: REFUSE_SPDU
         }
         case (TableA2SessionConnectionState.STA01C): {
             state.state = TableA2SessionConnectionState.STA01;
-            state.transport.disconnect();
+            state.outgoingEvents.emit("TDISreq");
             break;
         }
         case (TableA2SessionConnectionState.STA02A): {
             state.state = TableA2SessionConnectionState.STA01;
             state.outgoingEvents.emit("SCONcnf_reject", spdu);
-            state.transport.disconnect();
+            state.outgoingEvents.emit("TDISreq");
             break;
         }
         case (TableA2SessionConnectionState.STA02B): {
             state.state = TableA2SessionConnectionState.STA01;
             state.outgoingEvents.emit("SCONcnf_reject", spdu);
-            state.transport.disconnect();
+            state.outgoingEvents.emit("TDISreq");
             break;
         }
         case (TableA2SessionConnectionState.STA16): {
@@ -2379,7 +2300,7 @@ function dispatch_RF_r (state: SessionServiceConnectionState, spdu: REFUSE_SPDU)
         }
         case (TableA2SessionConnectionState.STA01C): {
             state.state = TableA2SessionConnectionState.STA01;
-            state.transport.disconnect();
+            state.outgoingEvents.emit("TDISreq");
             break;
         }
         case (TableA2SessionConnectionState.STA02A):
@@ -2390,7 +2311,7 @@ function dispatch_RF_r (state: SessionServiceConnectionState, spdu: REFUSE_SPDU)
                 state.state = TableA2SessionConnectionState.STA01C;
             } else {
                 state.state = TableA2SessionConnectionState.STA01;
-                state.transport.disconnect();
+                state.outgoingEvents.emit("TDISreq");
             }
             state.outgoingEvents.emit("SCONcnf_reject", spdu);
             break;
@@ -2764,7 +2685,6 @@ interface TransportLayer {
     connected: () => boolean,
     writeTSDU: (tsdu: Buffer) => unknown;
     connect: () => unknown;
-    disconnect: () => unknown;
 }
 
 export
@@ -2780,7 +2700,7 @@ interface SessionServiceConnectionState extends SessionServicePDUParserState, An
     majorActivityToken?: SessionServiceTokenPossession;
     transport: TransportLayer;
     tsduMaximumSize?: number;
-    cn?: CONNECT_SPDU; // FIXME: Clean up after disconnect.
+    cn?: CONNECT_SPDU;
 
     /**
      * Detailed in [ITU Recommendation X.225 (1995)](https://www.itu.int/rec/T-REC-X.225/en),
@@ -2802,7 +2722,8 @@ function newSessionConnection (
 ): SessionServiceConnectionState {
     const outgoingEvents = new SessionLayerOutgoingEventEmitter();
     outgoingEvents.on("CN", (spdu) => transport.writeTSDU(encode_CONNECT_SPDU(spdu)));
-    // outgoingEvents.on("OA", (cn) => transport.writeTSDU(encode_O(cn)));
+    outgoingEvents.on("CDO", (spdu) => transport.writeTSDU(encode_CONNECT_DATA_OVERFLOW_SPDU(spdu)));
+    outgoingEvents.on("OA", (spdu) => transport.writeTSDU(encode_OVERFLOW_ACCEPT_SPDU(spdu)));
     outgoingEvents.on("AC", (spdu) => transport.writeTSDU(encode_ACCEPT_SPDU(spdu)));
     outgoingEvents.on("RF_nr", (spdu) => transport.writeTSDU(encode_REFUSE_SPDU(spdu)));
     outgoingEvents.on("RF_r", (spdu) => transport.writeTSDU(encode_REFUSE_SPDU(spdu)));
@@ -2812,6 +2733,8 @@ function newSessionConnection (
     outgoingEvents.on("AB_r", (spdu) => transport.writeTSDU(encode_ABORT_SPDU(spdu)));
     outgoingEvents.on("DT", (spdu) => transport.writeTSDU(encode_DATA_TRANSFER_SPDU(spdu)));
     outgoingEvents.on("DN", (spdu) => transport.writeTSDU(encode_DISCONNECT_SPDU(spdu)));
+    outgoingEvents.on("AA", () => transport.writeTSDU(Buffer.from([ SI_AA_SPDU, 0 ])));
+    outgoingEvents.on("NF", (spdu) => transport.writeTSDU(encode_NOT_FINISHED_SPDU(spdu)));
     return {
         version: SESSION_PROTOCOL_VERSION_1, // Default, per ITU Rec. X.225 (1995), Section 8.3.1.9.
         buffer: Buffer.alloc(0),
@@ -2933,11 +2856,12 @@ function encodeSPDU (spdu: SPDU): Buffer {
     for (const b of bufs) {
         len += b.length;
     }
-    // FIXME: The SPDU did not send at all until I added this.
     if (spdu.userInformation) {
         bufs.push(spdu.userInformation);
     }
-    // TODO: If len > 65535, return null or something.
+    if (len > 65535) { // This was the best I could do without massive changes.
+        throw new Error("SPDU cannot have more than 65535 bytes of header information.");
+    }
     if (len > 254) {
         const si_and_li = Buffer.from([
             spdu.si,
@@ -3116,7 +3040,6 @@ function encode_CONNECT_SPDU (pdu: CONNECT_SPDU): Buffer {
             value: Buffer.from([ pdu.dataOverflow ]),
         });
     }
-    // FIXME: The way user data is encoded is very different between SPDUs.
     if (pdu.userData) {
         ret.parameters.push({
             pi: PGI_USER_DATA,
@@ -3243,8 +3166,36 @@ function encode_CONNECT_DATA_OVERFLOW_SPDU (pdu: CONNECT_DATA_OVERFLOW_SPDU): Bu
     }
     if (pdu.userData !== undefined) {
         ret.parameters.push({
-            pi: PI_USER_DATA,
-            value: pdu.userData,
+            pgi: PGI_USER_DATA,
+            parameters: [
+                {
+                    pi: PI_USER_DATA,
+                    value: pdu.userData,
+                },
+            ],
+        })
+    }
+    return encodeSPDU(ret);
+}
+
+export
+function encode_OVERFLOW_ACCEPT_SPDU (pdu: OVERFLOW_ACCEPT_SPDU): Buffer {
+    const ret: SPDU = {
+        si: SI_OA_SPDU,
+        parameters: [],
+    };
+    if (pdu.tsduMaximumSize !== undefined) {
+        const value = Buffer.allocUnsafe(4);
+        value.writeUint32BE(pdu.tsduMaximumSize);
+        ret.parameters.push({
+            pi: PI_TSDU_MAX_SIZE,
+            value,
+        });
+    }
+    if (pdu.versionNumber !== undefined) {
+        ret.parameters.push({
+            pi: PI_VERSION_NUMBER,
+            value: Buffer.from([ pdu.versionNumber ]),
         });
     }
     return encodeSPDU(ret);
@@ -3292,7 +3243,7 @@ function encode_ABORT_SPDU (pdu: ABORT_SPDU): Buffer {
     }
     if (pdu.userData) {
         ret.parameters.push({
-            pi: PI_USER_DATA,
+            pi: PGI_USER_DATA,
             value: pdu.userData,
         });
     }
@@ -4067,10 +4018,13 @@ function parse_PR_SPDU (spdu: SPDU): PREPARE_SPDU | number {
  */
 export
 function handleInvalidSequence (state: SessionServiceConnectionState): SessionServiceConnectionState {
+    if (!state.transport.connected()) {
+        return state;
+    }
     // Section A.4.1.1 is unhandled.
     const response: ABORT_SPDU = {};
     state.outgoingEvents.emit("AB_nr", response);
-    state.TIM = setTimeout(() => state.transport.disconnect(), TIMER_TIME_IN_MS); // TODO: Make this configurable.
+    state.TIM = setTimeout(() => state.outgoingEvents.emit("TDISreq"), TIMER_TIME_IN_MS); // TODO: Make this configurable.
     return state;
 }
 

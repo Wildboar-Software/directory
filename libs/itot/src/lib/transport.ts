@@ -5,7 +5,17 @@ import { randomBytes } from "node:crypto";
 export type ReturnCode = number;
 export type ParseResult <T> = [ number, T ] | ReturnCode;
 
-const TRANSPORT_CLASS: number = 0;
+export const TRANSPORT_CLASS: number = 0;
+
+export const DEFAULT_MAX_TSDU_SIZE_FOR_OSI: number = 128;
+/**
+ * According to [IETF RFC 1006](https://datatracker.ietf.org/doc/html/rfc1006):
+ *
+ * > In order to achieve good performance, the default TPDU size is 65531
+ * > octets, instead of 128 octets.
+ */
+export const DEFAULT_MAX_TSDU_SIZE_FOR_ITOT: number = 65531;
+export const DEFAULT_MAX_TSDU_SIZE: number = DEFAULT_MAX_TSDU_SIZE_FOR_ITOT;
 
 // #region TPDU codes
 // export const TPDU_CODE_CR: number = 7;
@@ -191,6 +201,7 @@ interface TransportConnection {
     src_ref: number;
     dst_ref: number;
     t_selector?: Buffer;
+    max_tsdu_size: number;
 }
 
 export
@@ -215,6 +226,7 @@ function createTransportConnection (network: NetworkLayerService, id?: string): 
         dataBuffer: Buffer.alloc(0),
         src_ref: 0,
         dst_ref: 0,
+        max_tsdu_size: DEFAULT_MAX_TSDU_SIZE,
     };
 }
 
@@ -1263,7 +1275,10 @@ function dispatch_TDTreq (c: TransportConnection, user_data: Buffer): TransportC
             const max_nsdu_size = c.network.max_nsdu_size();
             // This assumes we use no variable header parameters.
             // None are defined for use in the class 0 DT TPDU, so we're fine here.
-            const user_data_length: number = (max_nsdu_size - DT_TPDU_FIXED_HEADER_LENGTH);
+            const chunk_length: number = Math.min(
+                c.max_tsdu_size,
+                (max_nsdu_size - DT_TPDU_FIXED_HEADER_LENGTH),
+            );
             let i = 0;
             while (i < user_data.length) {
                 const tpdu: DT_TPDU = {
@@ -1272,9 +1287,9 @@ function dispatch_TDTreq (c: TransportConnection, user_data: Buffer): TransportC
                     nr: 0,
                     // Class 0 DT TPDU should not have a DST-REF.
                     // dstRef: c.dst_ref,
-                    user_data: user_data.subarray(i, i + user_data_length),
+                    user_data: user_data.subarray(i, i + chunk_length),
                 };
-                i += user_data_length;
+                i += chunk_length;
                 if (i >= user_data.length) {
                     tpdu.eot = true;
                 }

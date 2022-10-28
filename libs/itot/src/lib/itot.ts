@@ -260,12 +260,6 @@ function create_itot_stack (
             };
             stack.transport = dispatch_TCONreq(stack.transport, tpdu);
         },
-        disconnect: () => dispatch_TDISreq(stack.transport, {
-            dstRef: stack.transport.dst_ref,
-            srcRef: stack.transport.src_ref,
-            reason: DR_REASON_NOT_SPECIFIED, // This is actually an approriate value.
-            user_data: Buffer.alloc(0),
-        }),
         writeTSDU: (tsdu: Buffer) => {
             stack.transport = dispatch_TDTreq(stack.transport, tsdu);
         },
@@ -435,12 +429,20 @@ function create_itot_stack (
             const response: ABORT_SPDU = {};
             stack.session.outgoingEvents.emit("AB_nr", response);
             stack.session.TIM = setTimeout(
-                () => stack.session.transport.disconnect(),
+                () => stack.session.outgoingEvents.emit("TDISreq"),
                 abort_timeout_ms ?? TIMER_TIME_IN_MS
             );
         }
     });
     stack.transport.outgoingEvents.on("NDISreq", () => socket.end());
+    stack.session.outgoingEvents.on("TDISreq", () => {
+        dispatch_TDISreq(stack.transport, {
+            dstRef: stack.transport.dst_ref,
+            srcRef: stack.transport.src_ref,
+            reason: DR_REASON_NOT_SPECIFIED, // This is actually an approriate value.
+            user_data: Buffer.alloc(0),
+        });
+    });
     // stack.transport.outgoingEvents.on("NRSTresp", () => {});
     // It is not clear to me how this would even be implemented: how would this
     // even get the network address unless it is passed in from the upper layers?
