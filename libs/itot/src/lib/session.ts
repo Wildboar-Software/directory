@@ -2,8 +2,6 @@ import { TypedEmitter } from "tiny-typed-emitter";
 
 type SerialNumber = number;
 
-export const TIMER_TIME_IN_MS: number = 3000;
-
 // #region protocol_version
 
 export const SESSION_PROTOCOL_VERSION_1: number = 1;
@@ -613,7 +611,7 @@ function dispatch_SCONrsp_reject (state: SessionServiceConnectionState, spdu: RE
                 state.state = TableA2SessionConnectionState.STA16;
                 state.TIM = setTimeout(() => {
                     state.outgoingEvents.emit("TDISreq");
-                }, TIMER_TIME_IN_MS);
+                }, state.timer_timeout);
                 state.outgoingEvents.emit("RF_r", {
                     ...spdu,
                     transportDisconnect: TRANSPORT_DISCONNECT_KEPT,
@@ -630,7 +628,7 @@ function dispatch_SCONrsp_reject (state: SessionServiceConnectionState, spdu: RE
         case (TableA2SessionConnectionState.STA15D): {
             state.TIM = setTimeout(() => {
                 state.outgoingEvents.emit("TDISreq");
-            }, TIMER_TIME_IN_MS);
+            }, state.timer_timeout);
             state.state = TableA2SessionConnectionState.STA16;
             return state;
         }
@@ -837,7 +835,7 @@ function dispatch_SRELrsp_accept (state: SessionServiceConnectionState, dn: DISC
             } else if (!p66 && p75) {
                 state.TIM = setTimeout(() => {
                     state.outgoingEvents.emit("TDISreq");
-                }, TIMER_TIME_IN_MS);
+                }, state.timer_timeout);
                 state.state = TableA2SessionConnectionState.STA16;
                 state.outgoingEvents.emit("DN", dn);
             } else if (p69 && p01) {
@@ -851,7 +849,7 @@ function dispatch_SRELrsp_accept (state: SessionServiceConnectionState, dn: DISC
         case (TableA2SessionConnectionState.STA15D): {
             state.TIM = setTimeout(() => {
                 state.outgoingEvents.emit("TDISreq");
-            }, TIMER_TIME_IN_MS);
+            }, state.timer_timeout);
             state.state = TableA2SessionConnectionState.STA16;
             break;
         }
@@ -953,7 +951,7 @@ function dispatch_SUABreq (state: SessionServiceConnectionState, ab: ABORT_SPDU)
                 const pr_tsdu = encode_PREPARE_SPDU(pr);
                 state.TIM = setTimeout(() => {
                     state.outgoingEvents.emit("TDISreq");
-                }, TIMER_TIME_IN_MS);
+                }, state.timer_timeout);
                 state.state = TableA2SessionConnectionState.STA16;
                 state.transport.writeTSDU(pr_tsdu);
                 state.outgoingEvents.emit("AB_nr", {
@@ -967,7 +965,7 @@ function dispatch_SUABreq (state: SessionServiceConnectionState, ab: ABORT_SPDU)
             state.state = TableA2SessionConnectionState.STA16;
             state.TIM = setTimeout(() => {
                 state.outgoingEvents.emit("TDISreq");
-            }, TIMER_TIME_IN_MS);
+            }, state.timer_timeout);
             break;
         }
         case (TableA2SessionConnectionState.STA01B): {
@@ -999,7 +997,7 @@ function dispatch_SUABreq (state: SessionServiceConnectionState, ab: ABORT_SPDU)
             if (p02) {
                 state.TIM = setTimeout(() => {
                     state.outgoingEvents.emit("TDISreq");
-                }, TIMER_TIME_IN_MS);
+                }, state.timer_timeout);
                 state.state = TableA2SessionConnectionState.STA01A;
                 state.outgoingEvents.emit("AB_r", {
                     ...ab,
@@ -1012,7 +1010,7 @@ function dispatch_SUABreq (state: SessionServiceConnectionState, ab: ABORT_SPDU)
                 const pr_tsdu = encode_PREPARE_SPDU(pr);
                 state.TIM = setTimeout(() => {
                     state.outgoingEvents.emit("TDISreq");
-                }, TIMER_TIME_IN_MS);
+                }, state.timer_timeout);
                 state.state = TableA2SessionConnectionState.STA16;
                 state.transport.writeTSDU(pr_tsdu);
                 state.outgoingEvents.emit("AB_nr", {
@@ -1223,7 +1221,7 @@ function dispatch_AB_nr (state: SessionServiceConnectionState, spdu: ABORT_SPDU)
                 state.state = TableA2SessionConnectionState.STA16;
                 state.TIM = setTimeout(() => {
                     state.outgoingEvents.emit("TDISreq");
-                }, TIMER_TIME_IN_MS);
+                }, state.timer_timeout);
                 state.outgoingEvents.emit("AA");
             } else {
                 state.state = TableA2SessionConnectionState.STA01;
@@ -1352,6 +1350,11 @@ function dispatch_AC (
     if (!state.cn) {
         return handleInvalidSequence(state);
     }
+    state.version = (
+        (spdu.connectAcceptItem?.versionNumber ?? 0b0000_0001) & (0b0000_0010)
+            ? 2
+            : 1
+    );
     switch (state.state) {
         case (TableA2SessionConnectionState.STA01A): {
             // NOOP.
@@ -1564,7 +1567,7 @@ function dispatch_CN (state: SessionServiceConnectionState, spdu: CONNECT_SPDU):
                     });
                     state.TIM = setTimeout(() => { // [4]
                         state.outgoingEvents.emit("TDISreq");
-                    }, TIMER_TIME_IN_MS);
+                    }, state.timer_timeout);
                     state.state = TableA2SessionConnectionState.STA16;
                 } else {
                     state.outgoingEvents.emit("RF_r", {
@@ -2390,7 +2393,6 @@ interface OVERFLOW_ACCEPT_SPDU {
     versionNumber: number;
 }
 
-// TODO: Forbid this SPDU if version 1 protocol is in use.
 export
 interface CONNECT_DATA_OVERFLOW_SPDU {
     enclosureItem: number;
@@ -2700,6 +2702,7 @@ interface SessionServiceConnectionState extends SessionServicePDUParserState, An
     majorActivityToken?: SessionServiceTokenPossession;
     transport: TransportLayer;
     tsduMaximumSize?: number;
+    timer_timeout: number;
     cn?: CONNECT_SPDU;
 
     /**
@@ -2719,6 +2722,7 @@ function newSessionConnection (
     transport: TransportLayer,
     caller: boolean = true,
     transportCaller: boolean = false,
+    timer_timeout_in_ms: number = 3000,
 ): SessionServiceConnectionState {
     const outgoingEvents = new SessionLayerOutgoingEventEmitter();
     outgoingEvents.on("CN", (spdu) => transport.writeTSDU(encode_CONNECT_SPDU(spdu)));
@@ -2777,6 +2781,7 @@ function newSessionConnection (
         connectData: Buffer.alloc(0),
         userDataBuffer: Buffer.alloc(0),
         outgoingEvents,
+        timer_timeout: timer_timeout_in_ms,
     };
 }
 
@@ -4024,7 +4029,19 @@ function handleInvalidSequence (state: SessionServiceConnectionState): SessionSe
     // Section A.4.1.1 is unhandled.
     const response: ABORT_SPDU = {};
     state.outgoingEvents.emit("AB_nr", response);
-    state.TIM = setTimeout(() => state.outgoingEvents.emit("TDISreq"), TIMER_TIME_IN_MS); // TODO: Make this configurable.
+    state.TIM = setTimeout(() => state.outgoingEvents.emit("TDISreq"), state.timer_timeout);
+    return state;
+}
+
+export
+function handleInvalidSPDU (state: SessionServiceConnectionState): SessionServiceConnectionState {
+    if (!state.transport.connected()) {
+        return state;
+    }
+    // Section A.4.1.1 is unhandled.
+    const response: ABORT_SPDU = {};
+    state.outgoingEvents.emit("AB_nr", response);
+    state.TIM = setTimeout(() => state.outgoingEvents.emit("TDISreq"), state.timer_timeout);
     return state;
 }
 
@@ -4040,7 +4057,6 @@ function handleSPDU (state: SessionServiceConnectionState, spdu: SPDU): [ state:
             return [ newState ];
         }
         case (SI_OA_SPDU): {
-            // TODO: Abort if protocol is version 1.
             const oa = parse_OA_SPDU(spdu);
             if (typeof oa === "number") {
                 return [ state, oa ];
@@ -4267,7 +4283,7 @@ export
 function parsePGIorPI (
     state: SessionServiceConnectionState,
     depth: number = 0,
-): [ SessionServiceConnectionState, SessionParameter | SessionParameterGroup | null ] {
+): [ SessionServiceConnectionState, SessionParameter | SessionParameterGroup | null ] | number {
     if ((state.bufferIndex + 2) > state.buffer.length) {
         return [ state, null ];
     }
@@ -4315,7 +4331,7 @@ function parsePGIorPI (
             paramGroup.parameters.push(param);
             const id: number = param.pi;
             if (encounteredParams.has(id)) {
-                return [ currentState, null ]; // TODO: Return error.
+                return ERR_DUPLICATE_PARAM;
             }
             encounteredParams.add(id);
         }
@@ -4327,7 +4343,7 @@ function parsePGIorPI (
 }
 
 export
-function parseSPDU (state: SessionServiceConnectionState, prior_spdus: SPDU[]): [ SessionServiceConnectionState, SPDU | null ] {
+function parseSPDU (state: SessionServiceConnectionState, prior_spdus: SPDU[]): [ SessionServiceConnectionState, SPDU | null ] | number {
     if ((state.bufferIndex + 2) > state.buffer.length) {
         return [ state, null ];
     }
@@ -4352,7 +4368,11 @@ function parseSPDU (state: SessionServiceConnectionState, prior_spdus: SPDU[]): 
     };
     const encounteredParams: Set<number> = new Set();
     while ((state.bufferIndex - startOfValue) < li) { // eslint-disable-line
-        const [ newState, param ] = parsePGIorPI(state, 0);
+        const parsePGIorPIResult = parsePGIorPI(state, 0);
+        if (typeof parsePGIorPIResult === "number") {
+            return parsePGIorPIResult;
+        }
+        const [ newState, param ] = parsePGIorPIResult;
         if (!param) {
             break;
         }
@@ -4360,7 +4380,7 @@ function parseSPDU (state: SessionServiceConnectionState, prior_spdus: SPDU[]): 
         spdu.parameters.push(param);
         const id: number = ("pgi" in param) ? param.pgi : param.pi;
         if (encounteredParams.has(id)) {
-            return [ state, null ]; // TODO: Return error.
+            return ERR_DUPLICATE_PARAM;
         }
         encounteredParams.add(id);
     }
@@ -4384,7 +4404,12 @@ function receiveTSDU (state: SessionServiceConnectionState, tsdu: Buffer): numbe
     state.bufferIndex = 0;
     const spdus: SPDU[] = [];
     while (state.bufferIndex < state.buffer.length) { // eslint-disable-line
-        const [ newState, spdu ] = parseSPDU(state, spdus);
+        const parse_spdu_result = parseSPDU(state, spdus);
+        if (typeof parse_spdu_result === "number") {
+            handleInvalidSPDU(state);
+            return 0;
+        }
+        const [ newState, spdu ] = parse_spdu_result;
         if (!spdu) {
             break;
         }
@@ -4410,8 +4435,6 @@ function receiveTSDU (state: SessionServiceConnectionState, tsdu: Buffer): numbe
     }
     return 0;
 }
-
-// FIXME: Don't parse PIs from PGIs that do not contain PIs (just opaque bytes).
 
 /*
 
