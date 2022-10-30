@@ -111,21 +111,25 @@ import {
     _encode_TheOsiBindRes,
 } from "@wildboar/x500/src/lib/modules/OSIProtocolSpecification/TheOsiBindRes.ta";
 import {
-    ABRT_source, ABRT_source_acse_service_provider, ABRT_source_acse_service_user,
+    ABRT_source_acse_service_user,
 } from "@wildboar/acse/src/lib/modules/ACSE-1/ABRT-source.ta";
 import {
     ABRT_diagnostic_authentication_required,
 } from "@wildboar/acse/src/lib/modules/ACSE-1/ABRT-diagnostic.ta";
 import { randomInt } from "node:crypto";
+import isDebugging from "is-debugging";
 
 const id_ber = new ObjectIdentifier([2, 1, 1]);
 const id_acse = new ObjectIdentifier([2, 2, 1, 0, 1]);
 const id_dap = new ObjectIdentifier([2, 5, 9, 1]);
 
-const PORT: number = 44005;
+const DEFAULT_PORT: number = 44005;
 
 function withSockets(test: (clientSocket: Socket, serverSocket: Socket, server: Server, cb: () => void) => void) {
     const server = createServer();
+    const port: number = isDebugging
+        ? DEFAULT_PORT
+        : randomInt(44400, 44600);
     return function (done: jest.DoneCallback) {
         server.on("listening", () => {
             server.on("connection", (c) => {
@@ -147,14 +151,14 @@ function withSockets(test: (clientSocket: Socket, serverSocket: Socket, server: 
             });
             const client = createConnection({
                 host: "localhost",
-                port: PORT,
+                port,
                 timeout: 1000,
             }, () => {
                 client.unref();
             });
         });
         server.unref();
-        server.listen(PORT);
+        server.listen(port);
     };
 }
 
@@ -552,9 +556,12 @@ describe("The OSI network stack", () => {
             );
             dispatch_A_ABRreq(stack2.acse, abrt);
         });
+        let acse_abort_received: boolean = false;
         stack1.acse.outgoingEvents.on("A-ABRind", () => {
-            socket1.destroy();
-            socket2.destroy();
+            acse_abort_received = true;
+        });
+        stack2.network.socket.on("close", () => {
+            expect(acse_abort_received).toBe(true);
             done();
         });
 
@@ -588,5 +595,5 @@ describe("The OSI network stack", () => {
             ],
         );
         dispatch_A_ASCreq(stack1.acse, aarq);
-    }), 60000);
+    }));
 });

@@ -49,7 +49,6 @@ class ITOTSocket extends NetworkLayerOutgoingEventEmitter {
                 return;
             }
             const nsdu = this.buffer.subarray((i + 4), (i + 4 + length));
-            console.log("Received NSDU: ", nsdu);
             nsdus.push(nsdu);
             i += 4 + length;
         }
