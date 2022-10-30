@@ -507,13 +507,25 @@ function data_is_from_dcs (
         return false;
     } else if ("fully_encoded_data" in user_data) {
         for (const pdv of user_data.fully_encoded_data) {
-            // This field is only for CP data values, because transfer syntax hasn't been negotiated yet.
-            if (pdv.transfer_syntax_name) {
+            const dc = dcs.get(pdv.presentation_context_identifier.toString());
+            if (!dc) {
                 return false;
             }
-        }
-        for (const pdv of user_data.fully_encoded_data) {
-            if (!dcs.has(pdv.presentation_context_identifier.toString())) {
+            /**
+             * Technically, the transfer syntax field of a PDU is supposed to be
+             * for the CP PPDU only, because contexts have not been negotiated
+             * yet, so the transfer syntax used needs to be made explicit.
+             *
+             * However, this implementation will allow this as long as the
+             * named transfer syntax was listed in the chosen presentation
+             * context. (Which, in this case may be "mocked" from the parameters
+             * of the CP PPDU.)
+             */
+            if (
+                pdv.transfer_syntax_name
+                && !dc.transfer_syntax_name_list
+                    .some((tsyn) => tsyn.isEqualTo(pdv.transfer_syntax_name!))
+            ) {
                 return false;
             }
         }

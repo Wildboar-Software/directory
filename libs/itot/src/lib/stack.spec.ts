@@ -180,7 +180,7 @@ function configure_itot_for_directory(stack: ISOTransportOverTCPStack): void {
             user_data: {
                 fully_encoded_data: [
                     new PDV_list(
-                        undefined,
+                        id_ber,
                         1,
                         {
                             single_ASN1_type: _encode_AARQ_apdu(apdu, BER),
@@ -191,6 +191,7 @@ function configure_itot_for_directory(stack: ISOTransportOverTCPStack): void {
         });
     });
     stack.acse.outgoingEvents.on("AARE+", (apdu) => {
+        const acse_ber_context: Context_list_Item = get_acse_ber_context(stack.presentation);
         stack.acse.presentation.respond_P_CONNECT({
             presentation_context_definition_result_list: stack
                 .presentation
@@ -219,8 +220,8 @@ function configure_itot_for_directory(stack: ISOTransportOverTCPStack): void {
             user_data: {
                 fully_encoded_data: [
                     new PDV_list(
-                        undefined,
-                        1,
+                        id_ber,
+                        acse_ber_context.presentation_context_identifier,
                         {
                             single_ASN1_type: _encode_AARE_apdu(apdu, BER),
                         },
@@ -230,12 +231,13 @@ function configure_itot_for_directory(stack: ISOTransportOverTCPStack): void {
         });
     });
     stack.acse.outgoingEvents.on("AARE-", (apdu) => {
+        const acse_ber_context: Context_list_Item = get_acse_ber_context(stack.presentation);
         stack.acse.presentation.respond_P_CONNECT({
             user_data: {
                 fully_encoded_data: [
                     new PDV_list(
-                        undefined,
-                        1,
+                        id_ber,
+                        acse_ber_context.presentation_context_identifier,
                         {
                             single_ASN1_type: _encode_AARE_apdu(apdu, BER),
                         },
@@ -250,8 +252,7 @@ function configure_itot_for_directory(stack: ISOTransportOverTCPStack): void {
             user_data: {
                 fully_encoded_data: [
                     new PDV_list(
-                        // id_ber, // FIXME:
-                        undefined,
+                        id_ber,
                         acse_ber_context.presentation_context_identifier,
                         {
                             single_ASN1_type: _encode_ABRT_apdu(apdu, BER),
@@ -267,7 +268,7 @@ function configure_itot_for_directory(stack: ISOTransportOverTCPStack): void {
             user_data: {
                 fully_encoded_data: [
                     new PDV_list(
-                        undefined,
+                        id_ber,
                         acse_ber_context.presentation_context_identifier,
                         {
                             single_ASN1_type: _encode_RLRQ_apdu(apdu, BER),
@@ -283,7 +284,7 @@ function configure_itot_for_directory(stack: ISOTransportOverTCPStack): void {
             user_data: {
                 fully_encoded_data: [
                     new PDV_list(
-                        undefined,
+                        id_ber,
                         acse_ber_context.presentation_context_identifier,
                         {
                             single_ASN1_type: _encode_RLRE_apdu(apdu, BER),
@@ -299,7 +300,7 @@ function configure_itot_for_directory(stack: ISOTransportOverTCPStack): void {
             user_data: {
                 fully_encoded_data: [
                     new PDV_list(
-                        undefined,
+                        id_ber,
                         acse_ber_context.presentation_context_identifier,
                         {
                             single_ASN1_type: _encode_RLRE_apdu(apdu, BER),
