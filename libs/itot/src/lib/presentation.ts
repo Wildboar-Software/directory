@@ -38,12 +38,16 @@ import {
 import type {
     Default_context_name,
 } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Default-context-name.ta";
-import { OBJECT_IDENTIFIER, TRUE_BIT } from "asn1-ts";
+import { OBJECT_IDENTIFIER, TRUE_BIT, ObjectIdentifier } from "asn1-ts";
 import { BER } from "asn1-ts/dist/node/functional";
 import { strict as assert } from "node:assert";
-import { randomBytes } from "node:crypto";
-import { Mode_selector_mode_value_normal_mode } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Mode-selector-mode-value.ta";
-import { Provider_reason_reason_not_specified } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Provider-reason.ta";
+import { randomBytes, randomInt } from "node:crypto";
+import {
+    Mode_selector_mode_value_normal_mode,
+} from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Mode-selector-mode-value.ta";
+import {
+    Provider_reason_reason_not_specified,
+} from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Provider-reason.ta";
 
 /**
  * @summary Presentation layer state
@@ -112,7 +116,7 @@ interface SessionLayerOutgoingEvents {
     "P-SYNmcnf": () => unknown, // PS primitive P-SYNC-MINOR confirm
     "P-SYNmind": () => unknown, // PS primitive P-SYNC-MINOR indication
     "P-TDind": () => unknown, // PS primitive P-TYPED-DATA indication
-    "P-UABind": () => unknown, // PS primitive P-U-ABORT indication
+    "P-UABind": (ppdu: ARU_PPDU) => unknown, // PS primitive P-U-ABORT indication
     "P-UERind": () => unknown, // PS primitive P-U-EXCEPTION-REPORT indication
     RS: () => unknown, // PPDU RESYNCHRONIZE
     RSA: () => unknown, // PPDU RESYNCHRONIZE acknowledge
@@ -660,30 +664,41 @@ function dispatch_ARU (c: PresentationConnection, ppdu: ARU_PPDU): void {
     const p06: boolean = (("normal_mode_parameters" in ppdu) && ppdu.normal_mode_parameters.user_data)
         ? data_is_from_dcs(c.contextSets.default_context, p06_dcs, ppdu.normal_mode_parameters.user_data)
         : true;
+    const ppdu_dcs = (("normal_mode_parameters" in ppdu) && ppdu.normal_mode_parameters.user_data)
+        ? new Map(
+            ppdu
+                .normal_mode_parameters
+                .presentation_context_identifier_list
+                ?.map((pcid) => {
+                    const key = pcid.presentation_context_identifier.toString();
+                    pcid.transfer_syntax_name
+                    const dc = c.cp
+                        ?.normal_mode_parameters
+                        ?.presentation_context_definition_list
+                        ?.find((pc) => pc.presentation_context_identifier.toString() === key);
+                    if (!dc) {
+                        return undefined;
+                    }
+                    return [
+                        pcid.presentation_context_identifier.toString(),
+                        new Context_list_Item(
+                            dc.presentation_context_identifier,
+                            dc.abstract_syntax_name,
+                            [
+                                pcid.transfer_syntax_name,
+                            ],
+                        ),
+                    ];
+                })
+                .filter((x): x is [ string, Context_list_Item ] => !!x)
+        )
+        : undefined;
     // Each presentation data value is from presentation contexts specified in the PPDU, or from the default context if
     // no presentation contexts are specified in the PPDU.
-    const p21: boolean = (("normal_mode_parameters" in ppdu) && ppdu.normal_mode_parameters.user_data)
+    const p21: boolean = (("normal_mode_parameters" in ppdu) && ppdu.normal_mode_parameters.user_data && ppdu_dcs)
         ? data_is_from_dcs(
             c.contextSets.default_context,
-            new Map(
-                ppdu
-                    .normal_mode_parameters
-                    .presentation_context_identifier_list
-                    ?.map((pcid) => {
-                        const key = pcid.presentation_context_identifier.toString();
-                        const dc = c.contextSets
-                            .dcs_agreed_during_connection_establishment
-                            .get(key);
-                        if (!dc) {
-                            return undefined;
-                        }
-                        return [
-                            pcid.presentation_context_identifier.toString(),
-                            dc,
-                        ];
-                    })
-                    .filter((x): x is [ string, Context_list_Item ] => !!x)
-            ),
+            ppdu_dcs,
             ppdu.normal_mode_parameters.user_data,
         )
         : true;
@@ -751,7 +766,7 @@ function dispatch_ARU (c: PresentationConnection, ppdu: ARU_PPDU): void {
         default: return handleInvalidSequence(c);
     }
     c.state = PresentationLayerState.STAI0;
-    c.outgoingEvents.emit("P-UABind");
+    c.outgoingEvents.emit("P-UABind", ppdu);
 }
 
 export
@@ -1557,8 +1572,8 @@ function dispatch_P_UABreq (c: PresentationConnection, ppdu: ARU_PPDU): void {
             // P-user from being able to abort a connection, even if their request to do so was incorrect.
             const p03: boolean = true;
             if (p03) {
-                c.outgoingEvents.emit("ARU", ppdu);
                 c.state = PresentationLayerState.STAI0;
+                c.outgoingEvents.emit("ARU", ppdu);
             } else {
                 return handleInvalidSequence(c);
             }
@@ -2053,3 +2068,34 @@ function dispatch_TD (c: PresentationConnection, ppdu: User_data): void {
 //     }
 // }
 
+const id_ber = new ObjectIdentifier([2, 1, 1]);
+const id_acse = new ObjectIdentifier([2, 2, 1, 0, 1]);
+
+export
+function get_acse_ber_context (c: PresentationConnection): Context_list_Item {
+    const acse_ber_context: Context_list_Item = [
+        ...Array.from(c.contextSets.dcs_agreed_during_connection_establishment.values()),
+        ...c.contextSets.proposed_for_addition_initiated_locally,
+        ...c.contextSets.proposed_for_addition_initiated_remotely.map((x) => x[0]),
+    ]
+        .find((ctx) => (
+            ctx.abstract_syntax_name.isEqualTo(id_acse)
+            && ctx.transfer_syntax_name_list.some((t) => t.isEqualTo(id_ber))))
+        /*
+            ITU Recommendation X.519 (2019) requires there to be a context list
+            provided in the ARU PPDU. (This might be a requirement in the X.200
+            series as well, but I haven't seen it.) And this context list is
+            expected to contain ACSE-BER. In this implementation, if such a
+            context was never defined, we produce a random new context to at
+            least communicate the application context and transfer syntax, which
+            deviates from the specifications. It is the hope of this
+            implementation that hosts will not allocate PCIs in the range
+            of 5000-5247, so these can be used for this ad-hoc contexts.
+        */
+        ?? new Context_list_Item(
+            randomInt(5000, 5247),
+            id_acse,
+            [id_ber],
+        );
+    return acse_ber_context;
+}

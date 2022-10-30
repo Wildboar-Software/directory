@@ -43,6 +43,8 @@ import {
     dispatch_CP,
     dispatch_CPA,
     dispatch_TD,
+    dispatch_ARP,
+    dispatch_ARU,
     dispatch_P_CONrsp_accept,
     dispatch_P_CONrsp_reject,
     dispatch_P_CONreq,
@@ -57,6 +59,7 @@ import {
     dispatch_S_PERind,
     dispatch_S_UERind,
     dispatch_S_GTind,
+    get_acse_ber_context,
 } from "./presentation";
 import {
     createAssociationControlState,
@@ -73,6 +76,7 @@ import {
     dispatch_RLRE_reject,
     dispatch_RLRQ,
     dispatch_P_CONcnf_reject,
+    dispatch_ABRT,
 } from "./acse";
 import {
     CP_type,
@@ -89,6 +93,7 @@ import {
 import {
     ARP_PPDU,
     ARU_PPDU,
+    _decode_Abort_type,
 } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Abort-type.ta";
 import {
     User_data,
@@ -118,7 +123,7 @@ import {
 } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/ARU-PPDU-normal-mode-parameters.ta";
 import { _decode_AARQ_apdu } from "@wildboar/acse/src/lib/modules/ACSE-1/AARQ-apdu.ta";
 import { _decode_AARE_apdu } from "@wildboar/acse/src/lib/modules/ACSE-1/AARE-apdu.ta";
-import { ABRT_apdu, _encode_ABRT_apdu } from "@wildboar/acse/src/lib/modules/ACSE-1/ABRT-apdu.ta";
+import { ABRT_apdu, _encode_ABRT_apdu, _decode_ABRT_apdu } from "@wildboar/acse/src/lib/modules/ACSE-1/ABRT-apdu.ta";
 import { ABRT_source_acse_service_provider } from "@wildboar/acse/src/lib/modules/ACSE-1/ABRT-source.ta";
 import { ABRT_diagnostic_protocol_error } from "@wildboar/acse/src/lib/modules/ACSE-1/ABRT-diagnostic.ta";
 import {
@@ -171,6 +176,7 @@ function require_acse_user_data (user_data: OPTIONAL<User_data>): [ PDV_list, AS
     return [ pdv, pdv.presentation_data_values.single_ASN1_type ];
 }
 
+// FIXME: Is it appropriate for this to have no user data?
 function get_aru (c: PresentationConnection): ARU_PPDU {
     const acse_ber_context: Context_list_Item = [
         ...Array.from(c.contextSets.dcs_agreed_during_connection_establishment.values()),
@@ -385,9 +391,15 @@ function create_itot_stack (
             }
         },
         request_P_U_ABORT: (args: P_U_ABORT_Request) => {
+            const acse_ber_context = get_acse_ber_context(stack.presentation);
             const ppdu: ARU_PPDU = {
                 normal_mode_parameters: new ARU_PPDU_normal_mode_parameters(
-                    undefined,
+                    [
+                        new Presentation_context_identifier_list_Item(
+                            acse_ber_context.presentation_context_identifier,
+                            id_ber,
+                        ),
+                    ],
                     args.user_data,
                 ),
             };
@@ -535,6 +547,18 @@ function create_itot_stack (
             dispatch_S_RELind(stack.presentation, user_data);
         }
     });
+    stack.session.outgoingEvents.on("SUABind", (spdu) => {
+        if (spdu.userData) {
+            const el = new BERElement();
+            el.fromBytes(spdu.userData);
+            const ppdu = _decode_Abort_type(el);
+            if ("aru_ppdu" in ppdu) {
+                dispatch_ARU(stack.presentation, ppdu.aru_ppdu);
+            } else if ("arp_ppdu" in ppdu) {
+                dispatch_ARP(stack.presentation, ppdu.arp_ppdu);
+            }
+        } // Otherwise, do nothing so we don't cause an infinite loop of aborts.
+    });
     stack.session.outgoingEvents.on("SPERind", () => {
         dispatch_S_PERind(stack.presentation);
     });
@@ -591,6 +615,19 @@ function create_itot_stack (
     // stack.presentation.outgoingEvents.on("P-GTind", () => {});
     stack.presentation.outgoingEvents.on("P-PABind", () => {
         dispatch_P_PABind(stack.acse);
+    });
+    stack.presentation.outgoingEvents.on("P-UABind", (ppdu) => {
+        if (!("normal_mode_parameters" in ppdu)) {
+            return;
+        }
+        const pdv = require_acse_user_data(ppdu.normal_mode_parameters?.user_data);
+        if (pdv) {
+            const [ , value ] = pdv;
+            const abrt = _decode_ABRT_apdu(value);
+            dispatch_ABRT(stack.acse, abrt);
+        } else {
+            /* NOOP: To prevent infinite abort loop. */
+        }
     });
     // stack.presentation.outgoingEvents.on("P-PERind", () => {});
     stack.presentation.outgoingEvents.on("P-RELcnf+", (ppdu) => {

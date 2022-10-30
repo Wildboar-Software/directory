@@ -2,12 +2,14 @@ import { createConnection, createServer, Server } from "node:net";
 import { create_itot_stack, ISOTransportOverTCPStack } from "./itot";
 import {
     dispatch_P_DTreq,
+    get_acse_ber_context,
 } from "./presentation";
 import {
     dispatch_A_ASCreq,
     dispatch_A_ASCrsp_accept,
     dispatch_A_RLSreq,
     dispatch_A_RLSrsp_accept,
+    dispatch_A_ABRreq,
 } from "./acse";
 import {
     User_data,
@@ -47,6 +49,7 @@ import {
     _encode_RLRE_apdu,
 } from "@wildboar/acse/src/lib/modules/ACSE-1/RLRE-apdu.ta";
 import {
+    ABRT_apdu,
     _encode_ABRT_apdu,
 } from "@wildboar/acse/src/lib/modules/ACSE-1/ABRT-apdu.ta";
 import {
@@ -107,6 +110,13 @@ import {
 import {
     _encode_TheOsiBindRes,
 } from "@wildboar/x500/src/lib/modules/OSIProtocolSpecification/TheOsiBindRes.ta";
+import {
+    ABRT_source, ABRT_source_acse_service_provider, ABRT_source_acse_service_user,
+} from "@wildboar/acse/src/lib/modules/ACSE-1/ABRT-source.ta";
+import {
+    ABRT_diagnostic_authentication_required,
+} from "@wildboar/acse/src/lib/modules/ACSE-1/ABRT-diagnostic.ta";
+import { randomInt } from "node:crypto";
 
 const id_ber = new ObjectIdentifier([2, 1, 1]);
 const id_acse = new ObjectIdentifier([2, 2, 1, 0, 1]);
@@ -231,12 +241,14 @@ function configure_itot_for_directory(stack: ISOTransportOverTCPStack): void {
         });
     });
     stack.acse.outgoingEvents.on("ABRT", (apdu) => {
+        const acse_ber_context: Context_list_Item = get_acse_ber_context(stack.presentation);
         stack.acse.presentation.request_P_U_ABORT({
             user_data: {
                 fully_encoded_data: [
                     new PDV_list(
+                        // id_ber, // FIXME:
                         undefined,
-                        1, // FIXME: Use the correct PCI
+                        acse_ber_context.presentation_context_identifier,
                         {
                             single_ASN1_type: _encode_ABRT_apdu(apdu, BER),
                         },
@@ -246,12 +258,13 @@ function configure_itot_for_directory(stack: ISOTransportOverTCPStack): void {
         });
     });
     stack.acse.outgoingEvents.on("RLRQ", (apdu) => {
+        const acse_ber_context: Context_list_Item = get_acse_ber_context(stack.presentation);
         stack.acse.presentation.request_P_RELEASE({
             user_data: {
                 fully_encoded_data: [
                     new PDV_list(
                         undefined,
-                        1, // FIXME: Use the correct PCI
+                        acse_ber_context.presentation_context_identifier,
                         {
                             single_ASN1_type: _encode_RLRQ_apdu(apdu, BER),
                         },
@@ -261,12 +274,13 @@ function configure_itot_for_directory(stack: ISOTransportOverTCPStack): void {
         });
     });
     stack.acse.outgoingEvents.on("RLRE+", (apdu) => {
+        const acse_ber_context: Context_list_Item = get_acse_ber_context(stack.presentation);
         stack.acse.presentation.respond_P_RELEASE({
             user_data: {
                 fully_encoded_data: [
                     new PDV_list(
                         undefined,
-                        1, // FIXME: Use the correct PCI
+                        acse_ber_context.presentation_context_identifier,
                         {
                             single_ASN1_type: _encode_RLRE_apdu(apdu, BER),
                         },
@@ -276,12 +290,13 @@ function configure_itot_for_directory(stack: ISOTransportOverTCPStack): void {
         });
     });
     stack.acse.outgoingEvents.on("RLRE-", (apdu) => {
+        const acse_ber_context: Context_list_Item = get_acse_ber_context(stack.presentation);
         stack.acse.presentation.respond_P_RELEASE({
             user_data: {
                 fully_encoded_data: [
                     new PDV_list(
                         undefined,
-                        1, // FIXME: Use the correct PCI
+                        acse_ber_context.presentation_context_identifier,
                         {
                             single_ASN1_type: _encode_RLRE_apdu(apdu, BER),
                         },
@@ -520,4 +535,58 @@ describe("The OSI network stack", () => {
         );
         dispatch_A_ASCreq(stack1.acse, aarq);
     }));
+
+    test("association-layer abort works with create_itot_stack()", withSockets((socket1, socket2, server, done) => {
+        const stack1 = create_itot_stack(socket1, true, true);
+        const stack2 = create_itot_stack(socket2, false, false);
+        configure_itot_for_directory(stack1);
+        configure_itot_for_directory(stack2);
+        stack2.acse.outgoingEvents.on("A-ASCind", () => {
+            const abrt: ABRT_apdu = new ABRT_apdu(
+                ABRT_source_acse_service_user,
+                ABRT_diagnostic_authentication_required,
+                undefined,
+                undefined,
+                [],
+                undefined,
+            );
+            dispatch_A_ABRreq(stack2.acse, abrt);
+        });
+        stack1.acse.outgoingEvents.on("A-ABRind", () => {
+            socket1.destroy();
+            socket2.destroy();
+            done();
+        });
+
+        const aarq: AARQ_apdu = new AARQ_apdu(
+            undefined,
+            id_dap,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            [],
+            [
+                new External(
+                    id_ber,
+                    3,
+                    undefined,
+                    _encode_TheOsiBind(_encode_DirectoryBindArgument(new DirectoryBindArgument(undefined, undefined), BER), BER),
+                ),
+            ],
+        );
+        dispatch_A_ASCreq(stack1.acse, aarq);
+    }), 60000);
 });
