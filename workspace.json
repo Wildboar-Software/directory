@@ -84,40 +84,6 @@
             "tags": []
         },
         "itu-schema": "libs/itu-schema",
-        "itot": {
-            "root": "libs/itot",
-            "sourceRoot": "libs/itot/src",
-            "projectType": "library",
-            "targets": {
-                "build": {
-                    "executor": "@nrwl/node:package",
-                    "outputs": ["{options.outputPath}"],
-                    "options": {
-                        "outputPath": "dist/libs/itot",
-                        "tsConfig": "libs/itot/tsconfig.lib.json",
-                        "packageJson": "libs/itot/package.json",
-                        "main": "libs/itot/src/index.ts",
-                        "assets": ["libs/itot/*.md"]
-                    }
-                },
-                "lint": {
-                    "executor": "@nrwl/linter:eslint",
-                    "outputs": ["{options.outputFile}"],
-                    "options": {
-                        "lintFilePatterns": ["libs/itot/**/*.ts"]
-                    }
-                },
-                "test": {
-                    "executor": "@nrwl/jest:jest",
-                    "outputs": ["coverage/libs/itot"],
-                    "options": {
-                        "jestConfig": "libs/itot/jest.config.js",
-                        "passWithNoTests": true
-                    }
-                }
-            },
-            "tags": []
-        },
         "ldap-socket": {
             "$schema": "../../node_modules/nx/schemas/project-schema.json",
             "root": "libs/ldap-socket",
@@ -300,6 +266,40 @@
                     "outputs": ["coverage/libs/ocsp-client"],
                     "options": {
                         "jestConfig": "libs/ocsp-client/jest.config.ts",
+                        "passWithNoTests": true
+                    }
+                }
+            },
+            "tags": []
+        },
+        "osi-net": {
+            "root": "libs/osi-net",
+            "sourceRoot": "libs/osi-net/src",
+            "projectType": "library",
+            "targets": {
+                "build": {
+                    "executor": "@nrwl/js:tsc",
+                    "outputs": ["{options.outputPath}"],
+                    "options": {
+                        "outputPath": "dist/libs/osi-net",
+                        "tsConfig": "libs/osi-net/tsconfig.lib.json",
+                        "packageJson": "libs/osi-net/package.json",
+                        "main": "libs/osi-net/src/index.ts",
+                        "assets": ["libs/osi-net/*.md"]
+                    }
+                },
+                "lint": {
+                    "executor": "@nrwl/linter:eslint",
+                    "outputs": ["{options.outputFile}"],
+                    "options": {
+                        "lintFilePatterns": ["libs/osi-net/**/*.ts"]
+                    }
+                },
+                "test": {
+                    "executor": "@nrwl/jest:jest",
+                    "outputs": ["coverage/libs/osi-net"],
+                    "options": {
+                        "jestConfig": "libs/osi-net/jest.config.js",
                         "passWithNoTests": true
                     }
                 }
