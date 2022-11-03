@@ -962,10 +962,10 @@ export function dispatch_SUABreq(
         case TableA2SessionConnectionState.STA15B:
         case TableA2SessionConnectionState.STA15C: {
             if (!p02) {
-                const pr: PREPARE_SPDU = {
-                    prepareType: PREPARE_TYPE_ABORT,
-                };
-                const pr_tsdu = encode_PREPARE_SPDU(pr);
+                // const pr: PREPARE_SPDU = {
+                //     prepareType: PREPARE_TYPE_ABORT,
+                // };
+                // const pr_tsdu = encode_PREPARE_SPDU(pr);
                 state.TIM = setTimeout(() => {
                     state.outgoingEvents.emit('TDISreq');
                 }, state.timer_timeout);
@@ -1026,10 +1026,10 @@ export function dispatch_SUABreq(
                     transportDisconnect: TRANSPORT_DISCONNECT_KEPT,
                 });
             } else {
-                const pr: PREPARE_SPDU = {
-                    prepareType: PREPARE_TYPE_ABORT,
-                };
-                const pr_tsdu = encode_PREPARE_SPDU(pr);
+                // const pr: PREPARE_SPDU = {
+                //     prepareType: PREPARE_TYPE_ABORT,
+                // };
+                // const pr_tsdu = encode_PREPARE_SPDU(pr);
                 state.TIM = setTimeout(() => {
                     state.outgoingEvents.emit('TDISreq');
                 }, state.timer_timeout);

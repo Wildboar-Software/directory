@@ -67,7 +67,7 @@ export enum PresentationLayerState {
     STAac2,
 }
 
-export interface SessionLayerOutgoingEvents {
+export interface PresentationLayerOutgoingEvents {
     AC: () => unknown; // PPDU ALTER CONTEXT
     ACA: () => unknown; // PPDU ALTER CONTEXT ACKNOWLEDGE
     ARP: (ppdu: ARP_PPDU) => unknown; // PPDU PROVIDER ABORT
@@ -139,7 +139,7 @@ export interface SessionLayerOutgoingEvents {
     TTD: () => unknown; // PPDU P-TYPED DATA
 }
 
-export class SessionLayerOutgoingEventEmitter extends TypedEmitter<SessionLayerOutgoingEvents> {}
+export class PresentationLayerOutgoingEventEmitter extends TypedEmitter<PresentationLayerOutgoingEvents> {}
 
 export interface S_CONNECT_Request {
     session_connection_identifier?: Buffer;
@@ -226,7 +226,7 @@ export interface PresentationConnection {
     /**
      * Outgoing events.
      */
-    outgoingEvents: SessionLayerOutgoingEventEmitter;
+    outgoingEvents: PresentationLayerOutgoingEventEmitter;
 
     /**
      * Function for selecting presentation contexts.
@@ -303,7 +303,7 @@ export function createPresentationConnection(
     get_preferred_context: PresentationConnection['get_preferred_context'],
     max_contexts: number = 10
 ): PresentationConnection {
-    const outgoingEvents = new SessionLayerOutgoingEventEmitter();
+    const outgoingEvents = new PresentationLayerOutgoingEventEmitter();
     outgoingEvents.on('CP', (ppdu) => {
         const ssdu = Buffer.from(_encode_CP_type(ppdu, BER).toBytes());
         session.request_S_CONNECT({
@@ -385,12 +385,11 @@ export function createPresentationConnection(
  * @param c The presentation connection
  * @returns
  */
-export function handleInvalidSequence(
+export function handleInvalidSequence_P(
     c: PresentationConnection,
     provider_reason?: Abort_reason,
     event_identifier?: number
 ): void {
-    console.error('INVALID PRESENTATION STATE.');
     const ppdu: ARP_PPDU = {
         provider_reason,
         event_identifier,
@@ -607,7 +606,7 @@ export function dispatch_AC(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -617,7 +616,7 @@ export function dispatch_ACA(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -628,7 +627,7 @@ export function dispatch_ARP(c: PresentationConnection, ppdu: ARP_PPDU): void {
 
 export function dispatch_ARU(c: PresentationConnection, ppdu: ARU_PPDU): void {
     if (!c.cp) {
-        return handleInvalidSequence(c);
+        return handleInvalidSequence_P(c);
     }
     const p03: boolean =
         'normal_mode_parameters' in ppdu &&
@@ -749,42 +748,42 @@ export function dispatch_ARU(c: PresentationConnection, ppdu: ARU_PPDU): void {
     switch (c.state) {
         case PresentationLayerState.STAI1: {
             if (!(p03 && p21)) {
-                return handleInvalidSequence(c);
+                return handleInvalidSequence_P(c);
             }
             break;
         }
         case PresentationLayerState.STAI2: {
             if (!(p03 && p21 && p23)) {
-                return handleInvalidSequence(c);
+                return handleInvalidSequence_P(c);
             }
             break;
         }
         case PresentationLayerState.STAac0: {
             if (!(p21 && p24)) {
-                return handleInvalidSequence(c);
+                return handleInvalidSequence_P(c);
             }
             break;
         }
         case PresentationLayerState.STAac1: {
             if (!(p06 && p21)) {
-                return handleInvalidSequence(c);
+                return handleInvalidSequence_P(c);
             }
             break;
         }
         case PresentationLayerState.STAac2: {
             if (!(p21 && p25)) {
-                return handleInvalidSequence(c);
+                return handleInvalidSequence_P(c);
             }
             break;
         }
         case PresentationLayerState.STAt0: {
             if (!(p05 && p21)) {
-                return handleInvalidSequence(c);
+                return handleInvalidSequence_P(c);
             }
             break;
         }
         default:
-            return handleInvalidSequence(c);
+            return handleInvalidSequence_P(c);
     }
     c.state = PresentationLayerState.STAI0;
     c.outgoingEvents.emit('P-UABind', ppdu);
@@ -853,12 +852,12 @@ export function dispatch_CP(c: PresentationConnection, ppdu: CP_type): void {
                     return handleInvalidPPDU(c);
                 }
                 if (pcd.transfer_syntax_name_list.length === 0) {
-                    return handleInvalidSequence(c);
+                    return handleInvalidSequence_P(c);
                 }
                 const key = pcd.presentation_context_identifier.toString();
                 if (dcs.has(key)) {
                     // Duplicate presentation context identifiers.
-                    return handleInvalidSequence(c);
+                    return handleInvalidSequence_P(c);
                 }
                 dcs.set(key, pcd);
             }
@@ -960,19 +959,19 @@ export function dispatch_CP(c: PresentationConnection, ppdu: CP_type): void {
                 };
                 c.outgoingEvents.emit('CPR', cpr);
             } else {
-                return handleInvalidSequence(c);
+                return handleInvalidSequence_P(c);
             }
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
 export function dispatch_CPA(c: PresentationConnection, cpa: CPA_PPDU): void {
     const cp = c.cp;
     if (!cp) {
-        return handleInvalidSequence(c);
+        return handleInvalidSequence_P(c);
     }
     switch (c.state) {
         case PresentationLayerState.STAI1: {
@@ -1028,14 +1027,14 @@ export function dispatch_CPA(c: PresentationConnection, cpa: CPA_PPDU): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
 export function dispatch_CPR(c: PresentationConnection, cpr: CPR_PPDU): void {
     const cp = c.cp;
     if (!cp) {
-        return handleInvalidSequence(c);
+        return handleInvalidSequence_P(c);
     }
     switch (c.state) {
         case PresentationLayerState.STAI1: {
@@ -1073,7 +1072,7 @@ export function dispatch_CPR(c: PresentationConnection, cpr: CPR_PPDU): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1083,7 +1082,7 @@ export function dispatch_P_ACTDreq(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1093,7 +1092,7 @@ export function dispatch_P_ACTDrsp(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1103,7 +1102,7 @@ export function dispatch_P_ACTEreq(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1113,7 +1112,7 @@ export function dispatch_P_ACTErsp(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1123,7 +1122,7 @@ export function dispatch_P_ACTIreq(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1133,7 +1132,7 @@ export function dispatch_P_ACTIrsp(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1143,7 +1142,7 @@ export function dispatch_P_ACTRreq(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1153,7 +1152,7 @@ export function dispatch_P_ACTSreq(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1163,7 +1162,7 @@ export function dispatch_P_ALTERreq(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1173,7 +1172,7 @@ export function dispatch_P_ALTERrsp(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1211,7 +1210,7 @@ export function dispatch_P_CGreq(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1260,7 +1259,7 @@ export function dispatch_P_CONreq(
                         }
                     ));
             if (!p02 || !p03) {
-                return handleInvalidSequence(c);
+                return handleInvalidSequence_P(c);
             }
             // [4]: Regarding this, it is assumed that the P-CONNECT argument already contains the transfer syntaxes.
             // [5]: Again, it is assumed that the P-CONNECT argument already contains whatever default context the P-user wants.
@@ -1275,7 +1274,7 @@ export function dispatch_P_CONreq(
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1338,7 +1337,7 @@ export function dispatch_P_CONrsp_accept(
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1382,7 +1381,7 @@ export function dispatch_P_CONrsp_reject(
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1408,7 +1407,7 @@ export function dispatch_P_DTreq(
             if (p07) {
                 c.outgoingEvents.emit('TD', ppdu);
             } else {
-                return handleInvalidSequence(c);
+                return handleInvalidSequence_P(c);
             }
             break;
         }
@@ -1417,12 +1416,12 @@ export function dispatch_P_DTreq(
             if (p05) {
                 c.outgoingEvents.emit('TD', ppdu);
             } else {
-                return handleInvalidSequence(c);
+                return handleInvalidSequence_P(c);
             }
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1446,7 +1445,7 @@ export function dispatch_P_GTreq(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1456,7 +1455,7 @@ export function dispatch_P_PTreq(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1481,7 +1480,7 @@ export function dispatch_P_RELreq(
                 c.rl = true;
                 c.outgoingEvents.emit('S-RELreq', ppdu);
             } else {
-                return handleInvalidSequence(c);
+                return handleInvalidSequence_P(c);
             }
             break;
         }
@@ -1502,12 +1501,12 @@ export function dispatch_P_RELreq(
                 c.rl = true;
                 c.outgoingEvents.emit('S-RELreq', ppdu);
             } else {
-                return handleInvalidSequence(c);
+                return handleInvalidSequence_P(c);
             }
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1526,7 +1525,7 @@ export function dispatch_P_RELrsp_accept(
                 ppdu
             );
             if (!p07) {
-                return handleInvalidSequence(c);
+                return handleInvalidSequence_P(c);
             }
             const p08: boolean = c.cr;
             if (p08) {
@@ -1550,7 +1549,7 @@ export function dispatch_P_RELrsp_accept(
                 ppdu
             );
             if (!p05) {
-                return handleInvalidSequence(c);
+                return handleInvalidSequence_P(c);
             }
             const p08: boolean = c.cr;
             if (p08) {
@@ -1564,7 +1563,7 @@ export function dispatch_P_RELrsp_accept(
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1583,7 +1582,7 @@ export function dispatch_P_RELrsp_reject(
                 ppdu
             );
             if (!p07) {
-                return handleInvalidSequence(c);
+                return handleInvalidSequence_P(c);
             }
             c.cr = false;
             c.rl = false;
@@ -1601,7 +1600,7 @@ export function dispatch_P_RELrsp_reject(
                 ppdu
             );
             if (!p05) {
-                return handleInvalidSequence(c);
+                return handleInvalidSequence_P(c);
             }
             c.cr = false;
             c.rl = false;
@@ -1609,7 +1608,7 @@ export function dispatch_P_RELrsp_reject(
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1619,7 +1618,7 @@ export function dispatch_P_RSYNreq(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1629,7 +1628,7 @@ export function dispatch_P_RSYNrsp(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1639,7 +1638,7 @@ export function dispatch_P_SYNMreq(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1649,7 +1648,7 @@ export function dispatch_P_SYNMrsp(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1659,7 +1658,7 @@ export function dispatch_P_SYNmreq(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1669,7 +1668,7 @@ export function dispatch_P_SYNmrsp(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1715,12 +1714,12 @@ export function dispatch_P_UABreq(
                 c.state = PresentationLayerState.STAI0;
                 c.outgoingEvents.emit('ARU', ppdu);
             } else {
-                return handleInvalidSequence(c);
+                return handleInvalidSequence_P(c);
             }
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1730,7 +1729,7 @@ export function dispatch_P_UERreq(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1740,7 +1739,7 @@ export function dispatch_RS(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1750,7 +1749,7 @@ export function dispatch_RSA(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1760,7 +1759,7 @@ export function dispatch_S_ACTDcnf(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1770,7 +1769,7 @@ export function dispatch_S_ACTDind(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1780,7 +1779,7 @@ export function dispatch_S_ACTEcnf(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1790,7 +1789,7 @@ export function dispatch_S_ACTEind(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1800,7 +1799,7 @@ export function dispatch_S_ACTIcnf(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1810,7 +1809,7 @@ export function dispatch_S_ACTIind(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1820,7 +1819,7 @@ export function dispatch_S_ACTRind(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1830,7 +1829,7 @@ export function dispatch_S_ACTSind(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1840,7 +1839,7 @@ export function dispatch_S_CGind(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1855,7 +1854,7 @@ export function dispatch_S_CONcnf_reject(
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1865,7 +1864,7 @@ export function dispatch_S_GTind(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1883,7 +1882,7 @@ export function dispatch_S_PERind(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1893,7 +1892,7 @@ export function dispatch_S_PTind(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1913,7 +1912,7 @@ export function dispatch_S_RELcnf_accept(
                 ppdu
             );
             if (!p05) {
-                return handleInvalidSequence(c);
+                return handleInvalidSequence_P(c);
             }
             const p08: boolean = c.cr;
             if (p08) {
@@ -1935,7 +1934,7 @@ export function dispatch_S_RELcnf_accept(
                 ppdu
             );
             if (!p06) {
-                return handleInvalidSequence(c);
+                return handleInvalidSequence_P(c);
             }
             const p08: boolean = c.cr;
             if (p08) {
@@ -1949,7 +1948,7 @@ export function dispatch_S_RELcnf_accept(
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -1986,7 +1985,7 @@ export function dispatch_S_RELcnf_reject(
                 c.rl = false;
                 c.outgoingEvents.emit('P-RELcnf-', ppdu);
             } else {
-                return handleInvalidSequence(c);
+                return handleInvalidSequence_P(c);
             }
             break;
         }
@@ -2004,12 +2003,12 @@ export function dispatch_S_RELcnf_reject(
                 c.rl = false;
                 c.outgoingEvents.emit('P-RELcnf-', ppdu);
             } else {
-                return handleInvalidSequence(c);
+                return handleInvalidSequence_P(c);
             }
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -2035,7 +2034,7 @@ export function dispatch_S_RELind(
                 c.rl = true;
                 c.outgoingEvents.emit('P-RELind', ppdu);
             } else {
-                return handleInvalidSequence(c);
+                return handleInvalidSequence_P(c);
             }
             break;
         }
@@ -2055,12 +2054,12 @@ export function dispatch_S_RELind(
                 c.rl = true;
                 c.outgoingEvents.emit('P-RELind', ppdu);
             } else {
-                return handleInvalidSequence(c);
+                return handleInvalidSequence_P(c);
             }
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -2070,7 +2069,7 @@ export function dispatch_S_RSYNcnf(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -2080,7 +2079,7 @@ export function dispatch_S_RSYNind(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -2090,7 +2089,7 @@ export function dispatch_S_SYNMcnf(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -2100,7 +2099,7 @@ export function dispatch_S_SYNMind(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -2110,7 +2109,7 @@ export function dispatch_S_SYNmcnf(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -2120,7 +2119,7 @@ export function dispatch_S_SYNmind(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -2130,7 +2129,7 @@ export function dispatch_S_UERind(c: PresentationConnection): void {
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -2187,7 +2186,7 @@ export function dispatch_TD(c: PresentationConnection, ppdu: User_data): void {
             if (p05) {
                 c.outgoingEvents.emit('P-DTind', ppdu);
             } else {
-                return handleInvalidSequence(c);
+                return handleInvalidSequence_P(c);
             }
             break;
         }
@@ -2196,12 +2195,12 @@ export function dispatch_TD(c: PresentationConnection, ppdu: User_data): void {
             if (p06) {
                 c.outgoingEvents.emit('P-DTind', ppdu);
             } else {
-                return handleInvalidSequence(c);
+                return handleInvalidSequence_P(c);
             }
             break;
         }
         default:
-            handleInvalidSequence(c);
+            handleInvalidSequence_P(c);
     }
 }
 
@@ -2236,9 +2235,7 @@ export function dispatch_TD(c: PresentationConnection, ppdu: User_data): void {
 const id_ber = new ObjectIdentifier([2, 1, 1]);
 const id_acse = new ObjectIdentifier([2, 2, 1, 0, 1]);
 
-export function get_acse_ber_context(
-    c: PresentationConnection
-): Context_list_Item {
+export function get_acse_ber_context(c: PresentationConnection): Context_list_Item {
     const acse_ber_context: Context_list_Item =
         [
             ...Array.from(

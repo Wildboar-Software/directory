@@ -23,6 +23,7 @@
             "@wildboar/ocsp-client": ["libs/ocsp-client/src/index.ts"],
             "@wildboar/osi-net": ["libs/osi-net/src/index.ts"],
             "@wildboar/parity-schema/*": ["libs/parity-schema/*"],
+            "@wildboar/rose-transport": ["libs/rose-transport/src/index.ts"],
             "@wildboar/x500-cli-config": ["libs/x500-cli-config/src/index.ts"],
             "x500-functional-tests": ["libs/x500-functional-tests/src/index.ts"]
         }

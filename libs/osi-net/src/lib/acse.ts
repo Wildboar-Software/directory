@@ -145,7 +145,7 @@ export function canSupportAssociation(aarq: AARQ_apdu): boolean {
  *
  * @param state The association control protocol machine state
  */
-export function handleInvalidSequence(state: ACPMState): void {
+export function handleInvalidSequence_A(state: ACPMState): void {
     const abrt: ABRT_apdu = new ABRT_apdu(
         ABRT_source_acse_service_provider,
         ABRT_diagnostic_protocol_error,
@@ -161,7 +161,7 @@ export function handleInvalidSequence(state: ACPMState): void {
 // There is no defined way to handle invalid user input...
 // Maybe you could make the request dispatchers return a number indicating
 // success/failure?
-export function handle_invalid_user_input(state: ACPMState): void {
+export function handle_invalid_user_input(state: ACPMState): void { /* eslint-disable-line */
     /* eslint-disable-line */
     return;
 }
@@ -253,7 +253,7 @@ export function dispatch_AARQ(state: ACPMState, apdu: AARQ_apdu): void {
             break;
         }
         default:
-            return handleInvalidSequence(state);
+            return handleInvalidSequence_A(state);
     }
 }
 
@@ -362,7 +362,7 @@ export function dispatch_RLRQ(state: ACPMState, apdu: RLRQ_apdu): void {
             break;
         }
         default:
-            return handleInvalidSequence(state);
+            return handleInvalidSequence_A(state);
     }
 }
 
@@ -449,7 +449,7 @@ export function dispatch_P_PABind(state: ACPMState): void {
             break;
         }
         default:
-            return handleInvalidSequence(state);
+            return handleInvalidSequence_A(state);
     }
 }
 
@@ -461,7 +461,7 @@ export function dispatch_EXTRN_1(state: ACPMState): void {
             break;
         }
         default:
-            return handleInvalidSequence(state);
+            return handleInvalidSequence_A(state);
     }
 }
 
@@ -473,6 +473,6 @@ export function dispatch_EXTRN_2(state: ACPMState): void {
             break;
         }
         default:
-            return handleInvalidSequence(state);
+            return handleInvalidSequence_A(state);
     }
 }
