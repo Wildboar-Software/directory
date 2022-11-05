@@ -166,6 +166,7 @@ function rose_transport_from_idm_socket (idm: IDMConnection): ROSETransport {
     };
 
     rose.write_bind_result = (params) => {
+        rose.is_bound = true;
         idm.writeBindResult(
             params.protocol_id,
             params.parameter,
@@ -174,6 +175,7 @@ function rose_transport_from_idm_socket (idm: IDMConnection): ROSETransport {
     };
 
     rose.write_bind_error = (params) => {
+        rose.is_bound = false;
         idm.writeBindError(
             params.protocol_id,
             params.parameter,
@@ -226,6 +228,7 @@ function rose_transport_from_idm_socket (idm: IDMConnection): ROSETransport {
     };
 
     rose.write_unbind = () => {
+        rose.is_bound = false;
         idm.writeUnbind();
     };
 
@@ -234,6 +237,7 @@ function rose_transport_from_idm_socket (idm: IDMConnection): ROSETransport {
     rose.write_unbind_error = () => {};
 
     rose.write_abort = (params) => {
+        rose.is_bound = false;
         idm.writeAbort(
             rose_abort_to_idm_abort.get(params) ?? Abort_reasonNotSpecified,
         );

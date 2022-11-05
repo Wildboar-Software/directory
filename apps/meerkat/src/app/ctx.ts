@@ -817,6 +817,24 @@ const config: Configuration = {
             ? Number.parseInt(process.env.MEERKAT_IDMS_PORT, 10)
             : undefined,
     },
+    itot: {
+        port: process.env.MEERKAT_ITOT_PORT
+            ? Number.parseInt(process.env.MEERKAT_ITOT_PORT, 10)
+            : undefined,
+        abort_timeout_ms: process.env.MEERKAT_ITOT_ABORT_TIMEOUT_IN_SECONDS
+            ? Number.parseInt(process.env.MEERKAT_ITOT_ABORT_TIMEOUT_IN_SECONDS, 10)
+            : 3,
+        tsdu_buffer_size: process.env.MEERKAT_ITOT_TSDU_BUFFER_SIZE
+            ? Number.parseInt(process.env.MEERKAT_ITOT_TSDU_BUFFER_SIZE, 10)
+            : 10_000_000,
+        ssdu_buffer_size: process.env.MEERKAT_ITOT_SSDU_BUFFER_SIZE
+            ? Number.parseInt(process.env.MEERKAT_ITOT_SSDU_BUFFER_SIZE, 10)
+            : 10_000_000,
+        max_presentation_contexts: process.env.MEERKAT_ITOT_MAX_PRESENTATION_CONTEXTS
+            ? Number.parseInt(process.env.MEERKAT_ITOT_MAX_PRESENTATION_CONTEXTS, 10)
+            : 10,
+        acse_password: process.env.MEERKAT_ITOT_ACSE_PASSWORD,
+    },
     ldap: {
         port: process.env.MEERKAT_LDAP_PORT
             ? Number.parseInt(process.env.MEERKAT_LDAP_PORT, 10)

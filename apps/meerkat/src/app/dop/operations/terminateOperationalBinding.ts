@@ -158,7 +158,7 @@ async function terminateOperationalBinding (
                 return false;
             }
             const pa = _decode_PresentationAddress(address.inner);
-            return pa.nAddresses.some((naddr) => compareSocketToNSAP(assn.idm.s, naddr));
+            return pa.nAddresses.some((naddr) => compareSocketToNSAP(assn.rose.socket!, naddr));
         });
 
     if (obs.length === 0) {

@@ -46,6 +46,7 @@ export class ITOTSocket extends NetworkLayerOutgoingEventEmitter {
             i += 4 + length;
         }
         this.buffer = this.buffer.subarray(i);
+        // FIXME: Validate that NSDUs are of appropriate size.
         nsdus.forEach((nsdu) => this.emit('NSDU', nsdu));
     }
 

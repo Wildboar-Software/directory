@@ -1714,6 +1714,14 @@ interface Configuration {
 
     };
 
+    itot: NetworkService & {
+        abort_timeout_ms: number
+        tsdu_buffer_size: number;
+        ssdu_buffer_size: number;
+        max_presentation_contexts: number;
+        acse_password?: string;
+    };
+
     /**
      * Options for TLS-wrapped IDM.
      */

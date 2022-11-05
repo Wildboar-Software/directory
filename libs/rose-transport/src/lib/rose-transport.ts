@@ -134,6 +134,7 @@ interface ROSETransport {
     socket: Socket | TLSSocket | null;
     protocol?: OBJECT_IDENTIFIER;
     events: ROSETransportEventEmitter;
+    is_bound: boolean;
     write_bind: (params: BindParameters) => unknown;
     write_bind_result: (params: BindResultParameters) => unknown;
     write_bind_error: (params: BindErrorParameters) => unknown;
@@ -152,6 +153,7 @@ function new_rose_transport (socket?: Socket | TLSSocket): ROSETransport {
     return {
         socket: socket ?? null,
         events: new ROSETransportEventEmitter(),
+        is_bound: false,
         write_bind: () => {},
         write_bind_result: () => {},
         write_bind_error: () => {},

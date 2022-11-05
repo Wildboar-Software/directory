@@ -10,6 +10,9 @@ import {
     PresentationConnection,
     dispatch_A_ASCrsp_reject,
     dispatch_P_DTreq,
+    dispatch_AARE_reject,
+    dispatch_A_RLSrsp_accept,
+    dispatch_A_RLSrsp_reject,
 } from "@wildboar/osi-net";
 import { BER } from "asn1-ts/dist/node/functional";
 import {
@@ -40,6 +43,9 @@ import {
     _encode_RLRQ_apdu,
 } from '@wildboar/acse/src/lib/modules/ACSE-1/RLRQ-apdu.ta';
 import {
+    Release_response_reason_normal,
+    Release_response_reason_not_finished,
+    RLRE_apdu,
     _encode_RLRE_apdu,
 } from '@wildboar/acse/src/lib/modules/ACSE-1/RLRE-apdu.ta';
 import {
@@ -177,7 +183,20 @@ import { IndexableOID } from "@wildboar/meerkat-types";
 import {
     Associate_source_diagnostic_acse_service_user_null_,
     Associate_source_diagnostic_acse_service_user_no_reason_given,
+    Associate_source_diagnostic_acse_service_user_application_context_name_not_supported,
 } from "@wildboar/acse/src/lib/modules/ACSE-1/Associate-source-diagnostic-acse-service-user.ta";
+import {
+    dap_ip,
+} from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
+import {
+    dsp_ip,
+} from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dsp-ip.oa";
+import {
+    dop_ip,
+} from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
+// import {
+//     disp_ip,
+// } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/disp-ip.oa";
 
 const id_ber = new ObjectIdentifier([2, 1, 1]);
 const id_cer = new ObjectIdentifier([2, 1, 2, 0]);
@@ -186,6 +205,32 @@ const implementation_data: GeneralString = "Meerkat DSA";
 const default_reject: OsiRej_problem = {
     general: GeneralProblem_unrecognizedPDU,
 };
+
+const supported_contexts: OBJECT_IDENTIFIER[] = [
+    id_ac_directoryAccessAC,
+    id_ac_directorySystemAC,
+    id_ac_directoryOperationalBindingManagementAC,
+];
+
+const app_context_to_abstract_syntax_pci: Map<IndexableOID, number> = new Map([
+    [ id_ac_directoryAccessAC.toString(), 3 ],
+    [ id_ac_directorySystemAC.toString(), 5 ],
+    [ id_ac_directoryOperationalBindingManagementAC.toString(), 7 ],
+]);
+
+const protocol_id_to_app_context: Map<IndexableOID, OBJECT_IDENTIFIER> = new Map([
+    [ dap_ip["&id"]!.toString(), id_ac_directoryAccessAC ],
+    [ dsp_ip["&id"]!.toString(), id_ac_directorySystemAC ],
+    [ dop_ip["&id"]!.toString(), id_ac_directoryOperationalBindingManagementAC ],
+    // [ disp_ip["&id"]!.toString(), ], // I don't know how to map this one...
+    [ id_ac_directoryAccessAC.toString(), id_ac_directoryAccessAC ],
+    [ id_ac_directorySystemAC.toString(), id_ac_directorySystemAC ],
+    [ id_ac_directoryOperationalBindingManagementAC.toString(), id_ac_directoryOperationalBindingManagementAC ],
+    [ id_ac_shadowConsumerInitiatedAC.toString(), id_ac_shadowConsumerInitiatedAC ],
+    [ id_ac_shadowSupplierInitiatedAC.toString(), id_ac_shadowSupplierInitiatedAC ],
+    [ id_ac_shadowSupplierInitiatedAsynchronousAC.toString(), id_ac_shadowSupplierInitiatedAsynchronousAC ],
+    [ id_ac_shadowConsumerInitiatedAsynchronousAC.toString(), id_ac_shadowConsumerInitiatedAsynchronousAC ],
+]);
 
 const oid_to_codec = new Map<string, (() => typeof BERElement | typeof CERElement | typeof DERElement)>([
     [ id_ber.toString(), () => BERElement ],
@@ -248,6 +293,7 @@ const app_context_to_abstract_syntax: Map<IndexableOID, OBJECT_IDENTIFIER> = new
 function get_pc (
     itot: ISOTransportOverTCPStack,
     rose: ROSETransport,
+    from_bind: boolean = false
 ): Context_list_Item | undefined {
     if (!rose.protocol) {
         return;
@@ -256,11 +302,18 @@ function get_pc (
     if (!abstract_syntax) {
         return;
     }
-    return Array.from(itot
-        .presentation
-        .contextSets
-        .dcs_agreed_during_connection_establishment
-        .values())
+    const contexts = from_bind
+        ? itot
+            .presentation
+            .contextSets
+            .proposed_for_addition_initiated_remotely
+            .map(([c]) => c)
+        : Array.from(itot
+            .presentation
+            .contextSets
+            .dcs_agreed_during_connection_establishment
+            .values());
+    return contexts
         .find((dc) => (
             dc.abstract_syntax_name.isEqualTo(abstract_syntax)
             && dc.transfer_syntax_name_list.some((ts) => ts.isEqualTo(id_ber))
@@ -532,15 +585,22 @@ function abort (itot: ISOTransportOverTCPStack) {
 function asn1_value_from_external (
     itot: ISOTransportOverTCPStack,
     ext: External,
+    from_bind: boolean = false, // Before P-CONNECT response, there are no established contexts.
 ): ASN1Element | null {
     if (ext.indirectReference === undefined) {
-            return null;
+        return null;
     }
-    const pc = itot
-        .presentation
-        .contextSets
-        .dcs_agreed_during_connection_establishment
-        .get(ext.indirectReference.toString());
+    const contexts = from_bind
+        ? new Map(itot
+            .presentation
+            .contextSets
+            .proposed_for_addition_initiated_remotely
+            .map(([ c ]) => [ c.presentation_context_identifier.toString(), c ]))
+        : itot
+            .presentation
+            .contextSets
+            .dcs_agreed_during_connection_establishment;
+    const pc = contexts.get(ext.indirectReference.toString());
     if (!pc) {
         return null;
     }
@@ -713,12 +773,38 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
     });
 
     itot.acse.outgoingEvents.on("A-ASCind", (apdu) => {
+        if (!supported_contexts.some((sc) => sc.isEqualTo(apdu.aSO_context_name))) {
+            const aare = new AARE_apdu(
+                undefined,
+                apdu.aSO_context_name,
+                ACSEResult_user_rejection,
+                {
+                    acse_service_user: Associate_source_diagnostic_acse_service_user_application_context_name_not_supported,
+                },
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                "Meerkat DSA",
+                undefined,
+                undefined,
+                undefined,
+                [],
+                undefined,
+            );
+            dispatch_AARE_reject(itot.acse, aare);
+            return;
+        }
         if (apdu.user_information?.length !== 1) {
             abort(itot);
             return;
         }
         const external = apdu.user_information[0];
-        const value = asn1_value_from_external(itot, external);
+        const value = asn1_value_from_external(itot, external, true);
         if (!value) {
             abort(itot);
             return;
@@ -888,16 +974,19 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
     });
 
     rose.write_bind = (params) => {
-        rose.protocol = params.protocol_id;
-        const pc = get_pc(itot, rose);
-        if (!pc) {
+        rose.protocol = protocol_id_to_app_context.get(params.protocol_id.toString())
+            ?? params.protocol_id;
+        // This is needed because we haven't established presentation contexts
+        // yet, so we have to get the PCI that we _will_ define.
+        const pci = app_context_to_abstract_syntax_pci.get(params.protocol_id.toString());
+        if (!pci) {
             return;
         }
         const [ called_apt, called_aeq ] = break_down_ae_title(params.called_ae_title);
         const [ calling_apt, calling_aeq ] = break_down_ae_title(params.calling_ae_title);
         const aarq: AARQ_apdu = new AARQ_apdu(
             undefined,
-            params.protocol_id,
+            rose.protocol,
             called_apt,
             called_aeq,
             params.called_ap_invocation_identifier,
@@ -918,7 +1007,7 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
             [
                 new External(
                     id_ber,
-                    pc.presentation_context_identifier,
+                    pci,
                     undefined,
                     _encode_TheOsiBind(
                         params.parameter,
@@ -931,15 +1020,17 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
     };
 
     rose.write_bind_result = (params) => {
-        rose.protocol = params.protocol_id;
-        const pc = get_pc(itot, rose);
+        rose.is_bound = true;
+        rose.protocol = protocol_id_to_app_context.get(params.protocol_id.toString())
+            ?? params.protocol_id;
+        const pc = get_pc(itot, rose, true);
         if (!pc) {
             return;
         }
         const [ rapt, raeq ] = break_down_ae_title(params.responding_ae_title);
         const aare: AARE_apdu = new AARE_apdu(
             undefined,
-            params.protocol_id,
+            rose.protocol,
             ACSEResult_acceptance,
             {
                 acse_service_user: Associate_source_diagnostic_acse_service_user_null_,
@@ -973,15 +1064,17 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
     };
 
     rose.write_bind_error = (params) => {
-        rose.protocol = params.protocol_id;
-        const pc = get_pc(itot, rose);
+        rose.is_bound = false;
+        rose.protocol = protocol_id_to_app_context.get(params.protocol_id.toString())
+            ?? params.protocol_id;
+        const pc = get_pc(itot, rose, true);
         if (!pc) {
             return;
         }
         const [ rapt, raeq ] = break_down_ae_title(params.responding_ae_title);
         const aare: AARE_apdu = new AARE_apdu(
             undefined,
-            params.protocol_id,
+            rose.protocol,
             ACSEResult_user_rejection,
             {
                 acse_service_user: Associate_source_diagnostic_acse_service_user_no_reason_given,
@@ -1006,8 +1099,8 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
                     undefined,
                     _encode_TheOsiBindRes(
                         params.parameter,
-                        BER
-                    )
+                        BER,
+                    ),
                 ),
             ]
         );
@@ -1130,6 +1223,7 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
     };
 
     rose.write_unbind = () => {
+        rose.is_bound = false;
         const rlrq = new RLRQ_apdu(
             Release_request_reason_normal,
             undefined,
@@ -1140,11 +1234,31 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
         dispatch_A_RLSreq(itot.acse, rlrq);
     };
 
-    rose.write_unbind_result = () => {};
+    rose.write_unbind_result = () => {
+        rose.is_bound = false;
+        const rlre = new RLRE_apdu(
+            Release_response_reason_normal,
+            undefined,
+            undefined,
+            [],
+            undefined,
+        );
+        dispatch_A_RLSrsp_accept(itot.acse, rlre);
+    };
 
-    rose.write_unbind_error = () => {};
+    rose.write_unbind_error = () => {
+        const rlre = new RLRE_apdu(
+            Release_response_reason_not_finished,
+            undefined,
+            undefined,
+            [],
+            undefined,
+        );
+        dispatch_A_RLSrsp_reject(itot.acse, rlre);
+    };
 
     rose.write_abort = (reason) => {
+        rose.is_bound = false;
         const abrt: ABRT_apdu = new ABRT_apdu(
             ABRT_source_acse_service_user,
             rose_abort_to_osi_abort.get(reason)
