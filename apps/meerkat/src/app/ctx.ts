@@ -822,8 +822,8 @@ const config: Configuration = {
             ? Number.parseInt(process.env.MEERKAT_ITOT_PORT, 10)
             : undefined,
         abort_timeout_ms: process.env.MEERKAT_ITOT_ABORT_TIMEOUT_IN_SECONDS
-            ? Number.parseInt(process.env.MEERKAT_ITOT_ABORT_TIMEOUT_IN_SECONDS, 10)
-            : 3,
+            ? (Number.parseInt(process.env.MEERKAT_ITOT_ABORT_TIMEOUT_IN_SECONDS, 10) * 1000)
+            : 3000,
         tsdu_buffer_size: process.env.MEERKAT_ITOT_TSDU_BUFFER_SIZE
             ? Number.parseInt(process.env.MEERKAT_ITOT_TSDU_BUFFER_SIZE, 10)
             : 10_000_000,
