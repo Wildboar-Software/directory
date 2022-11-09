@@ -87,8 +87,9 @@ import { _encode_TheOsiBind } from '@wildboar/x500/src/lib/modules/OSIProtocolSp
 import { _encode_TheOsiBindRes } from '@wildboar/x500/src/lib/modules/OSIProtocolSpecification/TheOsiBindRes.ta';
 import { ABRT_source_acse_service_user } from '@wildboar/acse/src/lib/modules/ACSE-1/ABRT-source.ta';
 import { ABRT_diagnostic_authentication_required } from '@wildboar/acse/src/lib/modules/ACSE-1/ABRT-diagnostic.ta';
-import { randomInt } from 'node:crypto';
+import { randomBytes, randomInt } from 'node:crypto';
 import isDebugging from 'is-debugging';
+import { AttributeTypeAndValue } from '@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttributeTypeAndValue.ta';
 
 const id_ber = new ObjectIdentifier([2, 1, 1]);
 const id_acse = new ObjectIdentifier([2, 2, 1, 0, 1]);
@@ -106,6 +107,7 @@ function withSockets(
 ) {
     const server = createServer();
     const port: number = isDebugging ? DEFAULT_PORT : randomInt(44400, 44600);
+    // const port = DEFAULT_PORT;
     return function (done: jest.DoneCallback) {
         server.on('listening', () => {
             server.on('connection', (c) => {
@@ -346,9 +348,32 @@ describe('The OSI network stack', () => {
             });
             stack1.acse.outgoingEvents.on('A-ASCcnf+', () => {
                 const read_arg: ReadArgument = {
-                    unsigned: new ReadArgumentData({
-                        rdnSequence: [],
-                    }),
+                    unsigned: new ReadArgumentData(
+                        {
+                            rdnSequence: [],
+                        },
+                        undefined,
+                        undefined,
+                        [],
+                        undefined,
+                        undefined,
+                        [
+                            [
+                                /**
+                                 * This exists so we can test session-layer
+                                 * segmentation of data. This attribute value is
+                                 * purposefully gigantic so that it has to get
+                                 * segmented.
+                                 */
+                                new AttributeTypeAndValue(
+                                    commonName["&id"],
+                                    commonName.encoderFor["&Type"]!({
+                                        uTF8String: randomBytes(35000).toString("hex"),
+                                    }, BER),
+                                ),
+                            ],
+                        ],
+                    ),
                 };
                 const user_data: User_data = {
                     fully_encoded_data: [
@@ -498,8 +523,10 @@ describe('The OSI network stack', () => {
                                 0,
                                 undefined,
                                 undefined,
-                                [],
-                                undefined
+                                [
+                                    // _encodeOctetString(randomBytes(70000), BER),
+                                ],
+                                undefined,
                             );
                             dispatch_A_RLSreq(stack1.acse, rlrq);
                         } else {
@@ -534,6 +561,20 @@ describe('The OSI network stack', () => {
                 undefined,
                 id_dap,
                 undefined,
+                // {
+                //     ap_title_form1: {
+                //         rdnSequence: [
+                //             [
+                //                 new AttributeTypeAndValue(
+                //                     commonName["&id"],
+                //                     commonName.encoderFor["&Type"]!({
+                //                         uTF8String: randomBytes(35000).toString("hex"),
+                //                     }, BER),
+                //                 ),
+                //             ],
+                //         ],
+                //     },
+                // },
                 undefined,
                 undefined,
                 undefined,
@@ -566,7 +607,7 @@ describe('The OSI network stack', () => {
                 ]
             );
             dispatch_A_ASCreq(stack1.acse, aarq);
-        })
+        }),
     );
 
     test(

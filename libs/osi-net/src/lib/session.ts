@@ -2,6 +2,15 @@ import { TypedEmitter } from 'tiny-typed-emitter';
 
 type SerialNumber = number;
 
+export const DEFAULT_MAX_SSDU_SIZE: number = 10_000_000;
+/**
+ * There is technically no limit on TSDU size if none is specified, but still,
+ * I believe ITOT and the full OSI protocol stack only support up to 64K-ish
+ * bytes per TSDU, so this implementation will use an implicit default of
+ * 64K (minus a few bytes to avoid bugs).
+ */
+export const DEFAULT_MAX_TSDU_SIZE: number = 65500;
+
 // #region protocol_version
 
 export const SESSION_PROTOCOL_VERSION_1: number = 1;
@@ -63,6 +72,7 @@ export const ERR_MISSING_REQ_PARAM: number = -8;
 export const ERR_MALFORMED_PARAM: number = -9;
 export const ERR_UNSUPPORTED_SPDU: number = -10;
 export const ERR_UNSUPPORTED_PREPARE_TYPE: number = -11;
+export const ERR_SSDU_TOO_LARGE: number = -12;
 
 // #endregion error_code
 
@@ -372,7 +382,7 @@ export interface SessionLayerOutgoingEvents {
     SCONind: (cn: CONNECT_SPDU) => unknown;
     SCONcnf_accept: (spdu: ACCEPT_SPDU) => unknown;
     SCONcnf_reject: (spdu: REFUSE_SPDU) => unknown;
-    SDTind: (spdu: DATA_TRANSFER_SPDU) => unknown;
+    SDTind: (ssdu: Buffer) => unknown;
     SEXind: () => unknown;
     SGTind: () => unknown;
     SPABind: (spdu?: ABORT_SPDU) => unknown;
@@ -438,6 +448,9 @@ export interface SessionLayerOutgoingEvents {
     RS_r: () => unknown;
     RS_s: () => unknown;
     TD: () => unknown;
+
+    // Events not specified in ITU X.225
+    received_DT: (spdu: DATA_TRANSFER_SPDU) => unknown;
 }
 
 export class SessionLayerOutgoingEventEmitter extends TypedEmitter<SessionLayerOutgoingEvents> {}
@@ -501,6 +514,51 @@ export function dispatch_SCONreq(
     state: SessionServiceConnectionState,
     cn: CONNECT_SPDU
 ): SessionServiceConnectionState {
+    if (cn.userData && cn.extendedUserData) {
+        return handleInvalidSPDU(state);
+    }
+    const user_data = cn.userData ?? cn.extendedUserData;
+    // This if block is not part of the specification.
+    if (user_data) {
+        if (user_data.length < 512) {
+            cn.userData = user_data;
+            cn.extendedUserData = undefined;
+            cn.dataOverflow = undefined;
+        } else if (user_data.length < 10240) {
+            cn.userData = undefined;
+            cn.extendedUserData = user_data;
+            cn.dataOverflow = undefined;
+        } else {
+            cn.userData = undefined;
+            cn.extendedUserData = user_data.subarray(0, 10240);
+            cn.dataOverflow = 1; // Yes, there is overflow.
+            state.connectData = user_data;
+        }
+        if (user_data.length > 512) {
+            if (!cn.connectAcceptItem) {
+                cn.connectAcceptItem = {
+                    versionNumber: 2,
+                    protocolOptions: 0,
+                };
+            }
+            if (
+                (cn.connectAcceptItem.versionNumber === undefined)
+                || (cn.connectAcceptItem.versionNumber % 2)
+            ) {
+                cn.connectAcceptItem.versionNumber = 2;
+            }
+        }
+    }
+    if (!cn.connectAcceptItem) {
+        cn.connectAcceptItem = {
+            protocolOptions: 0,
+            versionNumber: 0b0000_0011,
+            tsduMaximumSize: {
+                initiator_to_responder: DEFAULT_MAX_TSDU_SIZE,
+                responder_to_initiator: DEFAULT_MAX_TSDU_SIZE,
+            },
+        };
+    }
     state.cn = cn;
     switch (state.state) {
         case TableA2SessionConnectionState.STA01: {
@@ -647,13 +705,7 @@ export function dispatch_SDTreq(
         case TableA2SessionConnectionState.STA09: {
             const p04: boolean = (state.FU & SUR_DUPLEX) > 0 && !state.Vcoll;
             if (p04) {
-                const tsdu = encode_DATA_TRANSFER_SPDU(dt);
-                state.transport.writeTSDU(
-                    Buffer.concat([
-                        Buffer.from([1, 0]), // GIVE TOKENS (GT) SPDU
-                        tsdu,
-                    ])
-                );
+                state.outgoingEvents.emit("DT", dt);
             } else {
                 return handleInvalidSequence(state);
             }
@@ -666,13 +718,7 @@ export function dispatch_SDTreq(
                 !(state.FU & SUR_HALF_DUPLEX) ||
                 state.dataToken === SessionServiceTokenPossession.local;
             if (p03) {
-                const tsdu = encode_DATA_TRANSFER_SPDU(dt);
-                state.transport.writeTSDU(
-                    Buffer.concat([
-                        Buffer.from([1, 0]), // GIVE TOKENS (GT) SPDU
-                        tsdu,
-                    ])
-                );
+                state.outgoingEvents.emit("DT", dt);
             } else {
                 return handleInvalidSequence(state);
             }
@@ -695,13 +741,7 @@ export function dispatch_SDTreq(
             const p70: boolean = (state.FU & SUR_DUPLEX) > 0;
             if (p70) {
                 state.state = TableA2SessionConnectionState.STA18;
-                const tsdu = encode_DATA_TRANSFER_SPDU(dt);
-                state.transport.writeTSDU(
-                    Buffer.concat([
-                        Buffer.from([1, 0]), // GIVE TOKENS (GT) SPDU
-                        tsdu,
-                    ])
-                );
+                state.outgoingEvents.emit("DT", dt);
             } else {
                 return handleInvalidSequence(state);
             }
@@ -1382,6 +1422,30 @@ export function dispatch_AC(
         (spdu.connectAcceptItem?.versionNumber ?? 0b0000_0001) & 0b0000_0010
             ? 2
             : 1;
+
+    if (spdu.connectAcceptItem?.tsduMaximumSize) {
+        const tsduMaximumSize = spdu.connectAcceptItem?.tsduMaximumSize;
+        if (state.caller) {
+            state.inbound_max_tsdu_size = Math.min(
+                state.inbound_max_tsdu_size,
+                tsduMaximumSize.responder_to_initiator,
+            );
+            state.outbound_max_tsdu_size = Math.min(
+                state.outbound_max_tsdu_size,
+                tsduMaximumSize.initiator_to_responder,
+            );
+        } else {
+            state.inbound_max_tsdu_size = Math.min(
+                state.inbound_max_tsdu_size,
+                tsduMaximumSize.initiator_to_responder,
+            );
+            state.outbound_max_tsdu_size = Math.min(
+                state.outbound_max_tsdu_size,
+                tsduMaximumSize.responder_to_initiator,
+            );
+        }
+    }
+
     switch (state.state) {
         case TableA2SessionConnectionState.STA01A: {
             // NOOP.
@@ -1520,6 +1584,9 @@ export function dispatch_CDO(
             const p202: boolean = (spdu.enclosureItem & 0b10) > 0; // End of user data.
             // [50: Preserve user data for subsequent SCONind]
             if (spdu.userData) {
+                if ((state.userDataBuffer.length + spdu.userData.length) > state.max_ssdu_size) {
+                    return handle_too_large_ssdu(state);
+                }
                 state.userDataBuffer = Buffer.concat([
                     state.userDataBuffer,
                     spdu.userData,
@@ -1527,7 +1594,14 @@ export function dispatch_CDO(
             }
             if (p202) {
                 state.state = TableA2SessionConnectionState.STA08;
-                state.outgoingEvents.emit('SCONind', cn);
+                const oldBuffer = state.userDataBuffer;
+                state.userDataBuffer = Buffer.alloc(0);
+                state.outgoingEvents.emit('SCONind', {
+                    ...cn,
+                    userData: oldBuffer,
+                    extendedUserData: undefined,
+                    dataOverflow: 1,
+                });
             } // The else condition is effectively a NOOP.
             break;
         }
@@ -1546,6 +1620,11 @@ export function dispatch_CN(
     state: SessionServiceConnectionState,
     spdu: CONNECT_SPDU
 ): SessionServiceConnectionState {
+    /* ITU Recommendation X.225 (1995), Section 8.3.1.21. Only one or the other
+    may be present. */
+    if (spdu.userData && spdu.extendedUserData) {
+        return handleInvalidSPDU(state);
+    }
     state.cn = spdu;
     switch (state.state) {
         case TableA2SessionConnectionState.STA01A: {
@@ -1580,17 +1659,22 @@ export function dispatch_CN(
             // If this SPM did not initiate the transport, and there is no problem with the CN SPDU.
             if (!p76) {
                 if (p204) {
-                    // ...and there is more than 10240 octets to transfer.
-                    state.outgoingEvents.emit('OA', {
-                        versionNumber: 0b0000_0010,
-                        tsduMaximumSize: state.tsduMaximumSize,
-                    });
                     // [50]: Preserve user data for subsequent SCONind
                     state.userDataBuffer =
                         spdu.extendedUserData ??
                         spdu.userData ??
                         Buffer.alloc(0);
+                    if (state.userDataBuffer.length > state.max_ssdu_size) {
+                        return handle_too_large_ssdu(state);
+                    }
                     state.state = TableA2SessionConnectionState.STA01D;
+                    state.outgoingEvents.emit('OA', {
+                        versionNumber: 0b0000_0010,
+                        tsduMaximumSize: {
+                            initiator_to_responder: state.inbound_max_tsdu_size,
+                            responder_to_initiator: state.outbound_max_tsdu_size,
+                        },
+                    });
                 } else {
                     state.state = TableA2SessionConnectionState.STA08;
                     state.outgoingEvents.emit('SCONind', spdu);
@@ -1719,7 +1803,7 @@ export function dispatch_DT(
         case TableA2SessionConnectionState.STA03: {
             const p10: boolean = !state.Vcoll;
             if (p05 && p10) {
-                state.outgoingEvents.emit('SDTind', spdu);
+                state.outgoingEvents.emit('received_DT', spdu);
             } else {
                 return handleInvalidSequence(state);
             }
@@ -1730,7 +1814,7 @@ export function dispatch_DT(
         case TableA2SessionConnectionState.STA15A:
         case TableA2SessionConnectionState.STA713: {
             if (p05) {
-                state.outgoingEvents.emit('SDTind', spdu);
+                state.outgoingEvents.emit('received_DT', spdu);
             } else {
                 return handleInvalidSequence(state);
             }
@@ -1744,7 +1828,7 @@ export function dispatch_DT(
                 if (p185) {
                     // NOOP
                 } else {
-                    state.outgoingEvents.emit('SDTind', spdu);
+                    state.outgoingEvents.emit('received_DT', spdu);
                 }
             } else {
                 return handleInvalidSequence(state);
@@ -1763,7 +1847,7 @@ export function dispatch_DT(
         }
         case TableA2SessionConnectionState.STA11A: {
             if (p05 && !p185) {
-                state.outgoingEvents.emit('SDTind', spdu);
+                state.outgoingEvents.emit('received_DT', spdu);
             } else {
                 return handleInvalidSequence(state);
             }
@@ -1781,7 +1865,7 @@ export function dispatch_DT(
         case TableA2SessionConnectionState.STA21: {
             const p70: boolean = (state.FU & SUR_DUPLEX) > 0;
             if (p70) {
-                state.outgoingEvents.emit('SDTind', spdu);
+                state.outgoingEvents.emit('received_DT', spdu);
             } else {
                 return handleInvalidSequence(state);
             }
@@ -2227,24 +2311,47 @@ export function dispatch_OA(
             break;
         }
         case TableA2SessionConnectionState.STA02B: {
-            const tsduMaximumSize = state.tsduMaximumSize ?? 65500;
-            let octetsSent: number = 10240;
-            let p201: boolean = octetsSent < userData.length;
-            let first: boolean = true;
+            if (spdu.tsduMaximumSize) {
+                if (state.caller) {
+                    state.inbound_max_tsdu_size = Math.min(
+                        state.inbound_max_tsdu_size,
+                        spdu.tsduMaximumSize.responder_to_initiator,
+                    );
+                    state.outbound_max_tsdu_size = Math.min(
+                        state.outbound_max_tsdu_size,
+                        spdu.tsduMaximumSize.initiator_to_responder,
+                    );
+                } else {
+                    state.inbound_max_tsdu_size = Math.min(
+                        state.inbound_max_tsdu_size,
+                        spdu.tsduMaximumSize.initiator_to_responder,
+                    );
+                    state.outbound_max_tsdu_size = Math.min(
+                        state.outbound_max_tsdu_size,
+                        spdu.tsduMaximumSize.responder_to_initiator,
+                    );
+                }
+            }
             state.state = TableA2SessionConnectionState.STA02A;
-            while (p201) {
-                const nextSegment = userData.subarray(
-                    octetsSent,
-                    octetsSent + tsduMaximumSize
-                );
-                octetsSent += tsduMaximumSize;
-                p201 = octetsSent < userData.length;
-                const tsdu = encode_CONNECT_DATA_OVERFLOW_SPDU({
-                    enclosureItem: (!p201 ? 0b10 : 0b00) | (first ? 0b1 : 0b0),
-                    userData: nextSegment,
+            const size_without_user_data = encode_CONNECT_DATA_OVERFLOW_SPDU({
+                enclosureItem: 1, // The value doesn't matter. This is just for calculating SPDU size.
+                userData: undefined,
+            }).length + 2; // +2 to account for change to long-form LI, plus a little error margin.
+            const max_tsdu_size = state.outbound_max_tsdu_size ?? DEFAULT_MAX_TSDU_SIZE;
+            const space_left_for_user_data = max_tsdu_size - size_without_user_data;
+            if (space_left_for_user_data <= 0) {
+                return handleInvalidSPDU(state); // FIXME: Abort, or something else.
+            }
+            let i = 10240;
+            while (i < userData.length) {
+                const final = (i + space_left_for_user_data) >= userData.length;
+                const encoded = encode_CONNECT_DATA_OVERFLOW_SPDU({
+                    ...spdu,
+                    enclosureItem: (final ? 0b10 : 0b00), // Never going to be first in SSDU, which was sent in CN SPDU.
+                    userData: userData.subarray(i, i + space_left_for_user_data),
                 });
-                state.transport.writeTSDU(tsdu);
-                first = false;
+                state.transport.writeTSDU(encoded);
+                i += space_left_for_user_data;
             }
             break;
         }
@@ -2437,9 +2544,14 @@ export interface ConnectionIdentifier {
     additionalReferenceInformation?: Buffer; // 4 octets maximum.
 }
 
+export interface TSDUMaximumSize {
+    initiator_to_responder: number;
+    responder_to_initiator: number;
+}
+
 export interface ConnectAcceptItem {
     protocolOptions: number; // bit field
-    tsduMaximumSize?: number; // limited to 2^32-1.
+    tsduMaximumSize?: TSDUMaximumSize; // limited to 2^32-1.
     versionNumber: number;
     initialSerialNumber?: number; // limited to 2^48-1.
     tokenSettingItem?: number; // bit field
@@ -2461,7 +2573,7 @@ export interface CONNECT_SPDU {
 }
 
 export interface OVERFLOW_ACCEPT_SPDU {
-    tsduMaximumSize?: number; // 4 octets
+    tsduMaximumSize?: TSDUMaximumSize;
     versionNumber: number;
 }
 
@@ -2753,7 +2865,9 @@ export interface SessionServiceConnectionState
     synchronizeMinorToken?: SessionServiceTokenPossession;
     majorActivityToken?: SessionServiceTokenPossession;
     transport: TransportLayer;
-    tsduMaximumSize?: number;
+    inbound_max_tsdu_size: number;
+    outbound_max_tsdu_size: number;
+
     timer_timeout: number;
     cn?: CONNECT_SPDU;
 
@@ -2764,62 +2878,51 @@ export interface SessionServiceConnectionState
      */
     TIM?: NodeJS.Timeout;
 
+    /**
+     * Used for buffering connect data both inbound and outbound.
+     */
     connectData: Buffer;
     userDataBuffer: Buffer;
     outgoingEvents: SessionLayerOutgoingEventEmitter;
+    max_ssdu_size: number;
+
+    /**
+     * This field exists because, according to
+     * [ITU Recommendation X.225 (1995)](https://www.itu.int/rec/T-REC-X.225/en),
+     * Section 7.37.1:
+     *
+     * > Where an SSDU is segmented, the first SPDU contains all the parameters
+     * > which would have been present in the SPDU if the SSDU had not been
+     * > segmented...
+     *
+     * To handle the above requirement, this implementation preserves the first
+     * received SPDU when the Enclosure Item parameter indicates that an SPDU
+     * is the first of multiple segments.
+     */
+    in_progress_spdu?: { cn: CONNECT_SPDU }
+        | { oa: OVERFLOW_ACCEPT_SPDU }
+        | { cdo: CONNECT_DATA_OVERFLOW_SPDU }
+        | { ac: ACCEPT_SPDU }
+        | { rf: REFUSE_SPDU }
+        | { fn: FINISH_SPDU }
+        | { nf: NOT_FINISHED_SPDU }
+        | { dn: DISCONNECT_SPDU }
+        | { dt: DATA_TRANSFER_SPDU }
+        | { ab: ABORT_SPDU }
+        | { aa: ABORT_ACCEPT_SPDU }
+        ;
 }
 
 export function newSessionConnection(
     transport: TransportLayer,
     caller: boolean = true,
     transportCaller: boolean = false,
-    timer_timeout_in_ms: number = 3000
+    timer_timeout_in_ms: number = 3000,
+    max_ssdu_size: number = DEFAULT_MAX_SSDU_SIZE,
 ): SessionServiceConnectionState {
     const outgoingEvents = new SessionLayerOutgoingEventEmitter();
-    outgoingEvents.on('CN', (spdu) =>
-        transport.writeTSDU(encode_CONNECT_SPDU(spdu))
-    );
-    outgoingEvents.on('CDO', (spdu) =>
-        transport.writeTSDU(encode_CONNECT_DATA_OVERFLOW_SPDU(spdu))
-    );
-    outgoingEvents.on('OA', (spdu) =>
-        transport.writeTSDU(encode_OVERFLOW_ACCEPT_SPDU(spdu))
-    );
-    outgoingEvents.on('AC', (spdu) =>
-        transport.writeTSDU(encode_ACCEPT_SPDU(spdu))
-    );
-    outgoingEvents.on('RF_nr', (spdu) =>
-        transport.writeTSDU(encode_REFUSE_SPDU(spdu))
-    );
-    outgoingEvents.on('RF_r', (spdu) =>
-        transport.writeTSDU(encode_REFUSE_SPDU(spdu))
-    );
-    outgoingEvents.on('FN_nr', (spdu) =>
-        transport.writeTSDU(encode_FINISH_SPDU(spdu))
-    );
-    outgoingEvents.on('FN_r', (spdu) =>
-        transport.writeTSDU(encode_FINISH_SPDU(spdu))
-    );
-    outgoingEvents.on('AB_nr', (spdu) => {
-        transport.writeTSDU(encode_ABORT_SPDU(spdu));
-    });
-    outgoingEvents.on('AB_r', (spdu) => {
-        transport.writeTSDU(encode_ABORT_SPDU(spdu));
-    });
-    outgoingEvents.on('DT', (spdu) =>
-        transport.writeTSDU(encode_DATA_TRANSFER_SPDU(spdu))
-    );
-    outgoingEvents.on('DN', (spdu) =>
-        transport.writeTSDU(encode_DISCONNECT_SPDU(spdu))
-    );
-    outgoingEvents.on('AA', () =>
-        transport.writeTSDU(Buffer.from([SI_AA_SPDU, 0]))
-    );
-    outgoingEvents.on('NF', (spdu) =>
-        transport.writeTSDU(encode_NOT_FINISHED_SPDU(spdu))
-    );
-    return {
-        version: SESSION_PROTOCOL_VERSION_1, // Default, per ITU Rec. X.225 (1995), Section 8.3.1.9.
+    const ret: SessionServiceConnectionState = {
+        version: SESSION_PROTOCOL_VERSION_2, // Default, per ITU Rec. X.225 (1995), Section 8.3.1.9.
         buffer: Buffer.alloc(0),
         bufferIndex: 0,
         caller,
@@ -2861,7 +2964,120 @@ export function newSessionConnection(
         userDataBuffer: Buffer.alloc(0),
         outgoingEvents,
         timer_timeout: timer_timeout_in_ms,
+        max_ssdu_size,
+        inbound_max_tsdu_size: DEFAULT_MAX_TSDU_SIZE,
+        outbound_max_tsdu_size: DEFAULT_MAX_TSDU_SIZE,
     };
+    const emit_fn = (spdu: FINISH_SPDU): void => {
+        if (!spdu.userData) {
+            transport.writeTSDU(encode_FINISH_SPDU(spdu));
+            return;
+        }
+        const size_without_user_data = encode_FINISH_SPDU({
+            ...spdu,
+            enclosureItem: 1, // Value doesn't matter. We just want to make sure this is defined.
+            userData: undefined,
+        }).length + 2; // +2 to account for change to long-form LI, plus a little error margin.
+        const max_tsdu_size = ret.outbound_max_tsdu_size ?? DEFAULT_MAX_TSDU_SIZE;
+        const space_left_for_user_data = max_tsdu_size - size_without_user_data;
+        if (space_left_for_user_data <= 0) {
+            return; // FIXME: Abort, or something else.
+        }
+        let i = 0;
+        let first: boolean = true;
+        while (i < spdu.userData.length) {
+            const final = (i + space_left_for_user_data) >= spdu.userData.length;
+            const encoded = encode_FINISH_SPDU({
+                ...spdu,
+                enclosureItem: (final ? 0b10 : 0b00) | (first ? 0b1 : 0b0),
+                userData: spdu.userData.subarray(i, i + space_left_for_user_data),
+            });
+            transport.writeTSDU(encoded);
+            first = false;
+            i += space_left_for_user_data;
+        }
+    };
+    const emit_dt = (spdu: DATA_TRANSFER_SPDU): void => {
+        const size_without_user_data = 7; // 2 for GT, 2 for DT, 3 for enclosure item.
+        const max_tsdu_size = ret.outbound_max_tsdu_size ?? DEFAULT_MAX_TSDU_SIZE;
+        const space_left_for_user_data = max_tsdu_size - size_without_user_data;
+        if (space_left_for_user_data <= 0) {
+            return; // FIXME: Abort, or something else.
+        }
+        let i = 0;
+        let first: boolean = true;
+        while (i < spdu.userInformation.length) {
+            const final = (i + space_left_for_user_data) >= spdu.userInformation.length;
+            const encoded = encode_DATA_TRANSFER_SPDU({
+                ...spdu,
+                enclosureItem: (final ? 0b10 : 0b00) | (first ? 0b1 : 0b0),
+                userInformation: spdu.userInformation.subarray(i, i + space_left_for_user_data),
+            });
+            transport.writeTSDU(Buffer.concat([
+                Buffer.from([ 1, 0 ]), // GIVE TOKENS SPDU
+                encoded,
+            ]));
+            first = false;
+            i += space_left_for_user_data;
+        }
+    };
+    outgoingEvents.on('CN', (spdu) =>
+        transport.writeTSDU(encode_CONNECT_SPDU(spdu))
+    );
+    outgoingEvents.on('CDO', (spdu) =>
+        transport.writeTSDU(encode_CONNECT_DATA_OVERFLOW_SPDU(spdu))
+    );
+    outgoingEvents.on('OA', (spdu) =>
+        transport.writeTSDU(encode_OVERFLOW_ACCEPT_SPDU(spdu))
+    );
+    outgoingEvents.on('AC', (spdu) =>
+        transport.writeTSDU(encode_ACCEPT_SPDU(spdu))
+    );
+    outgoingEvents.on('RF_nr', (spdu) =>
+        transport.writeTSDU(encode_REFUSE_SPDU(spdu))
+    );
+    outgoingEvents.on('RF_r', (spdu) =>
+        transport.writeTSDU(encode_REFUSE_SPDU(spdu))
+    );
+    outgoingEvents.on('FN_nr', emit_fn);
+    outgoingEvents.on('FN_r', emit_fn);
+    outgoingEvents.on('AB_nr', (spdu) => {
+        transport.writeTSDU(encode_ABORT_SPDU(spdu));
+    });
+    outgoingEvents.on('AB_r', (spdu) => {
+        transport.writeTSDU(encode_ABORT_SPDU(spdu));
+    });
+    outgoingEvents.on('DT', emit_dt);
+    outgoingEvents.on('DN', (spdu) =>
+        transport.writeTSDU(encode_DISCONNECT_SPDU(spdu))
+    );
+    outgoingEvents.on('AA', () =>
+        transport.writeTSDU(Buffer.from([SI_AA_SPDU, 0]))
+    );
+    outgoingEvents.on('NF', (spdu) =>
+        transport.writeTSDU(encode_NOT_FINISHED_SPDU(spdu))
+    );
+    outgoingEvents.on("received_DT", (spdu) => {
+        if ((ret.userDataBuffer.length + spdu.userInformation.length) > ret.max_ssdu_size) {
+            handle_too_large_ssdu(ret);
+            return;
+        }
+        ret.userDataBuffer = ret.userDataBuffer.length === 0
+            ? spdu.userInformation
+            : Buffer.concat([
+                ret.userDataBuffer,
+                spdu.userInformation,
+            ]);
+        if (
+            (spdu.enclosureItem === undefined)
+            || (spdu.enclosureItem & 0b0000_0010) // End of SSDU
+        ) {
+            const oldBuffer = ret.userDataBuffer;
+            ret.userDataBuffer = Buffer.alloc(0);
+            ret.outgoingEvents.emit("SDTind", oldBuffer);
+        }
+    });
+    return ret;
 }
 
 // #region encoders
@@ -3002,9 +3218,10 @@ function encodeConnectAcceptItem(
             value: Buffer.from([cai.protocolOptions]),
         });
     }
-    if (cai.tsduMaximumSize !== undefined) {
+    if (cai.tsduMaximumSize) {
         const value = Buffer.allocUnsafe(4);
-        value.writeUint32BE(cai.tsduMaximumSize);
+        value.writeUint16BE(cai.tsduMaximumSize.initiator_to_responder);
+        value.writeUint16BE(cai.tsduMaximumSize.responder_to_initiator);
         ret.parameters.push({
             pi: PI_TSDU_MAX_SIZE,
             value,
@@ -3227,14 +3444,31 @@ export function encode_CONNECT_DATA_OVERFLOW_SPDU(
         });
     }
     if (pdu.userData !== undefined) {
+        /**
+         * I believe this was a result of an error in the specification. I
+         * cannot find confirmation of this anywhere, but I have some evidence
+         * that it is an error:
+         *
+         * 1. Wireshark decodes CDO incorrectly if you use the following.
+         * 2. Every other SPDU uses PGI/PI 193 as a value-only parameter.
+         * 3. There is not an n/nm in the box in the spec next to the 22.
+         *
+         * Unfortunately, ISODE does not seem to support CDO, so I could not
+         * test with that. There is also not a technicall corrigendum that
+         * addresses this.
+         */
+        // ret.parameters.push({
+        //     pgi: PGI_USER_DATA,
+        //     parameters: [
+        //         {
+        //             pi: PI_USER_DATA,
+        //             value: pdu.userData,
+        //         },
+        //     ],
+        // });
         ret.parameters.push({
-            pgi: PGI_USER_DATA,
-            parameters: [
-                {
-                    pi: PI_USER_DATA,
-                    value: pdu.userData,
-                },
-            ],
+            pi: PGI_USER_DATA,
+            value: pdu.userData,
         });
     }
     return encodeSPDU(ret);
@@ -3245,9 +3479,10 @@ export function encode_OVERFLOW_ACCEPT_SPDU(pdu: OVERFLOW_ACCEPT_SPDU): Buffer {
         si: SI_OA_SPDU,
         parameters: [],
     };
-    if (pdu.tsduMaximumSize !== undefined) {
+    if (pdu.tsduMaximumSize) {
         const value = Buffer.allocUnsafe(4);
-        value.writeUint32BE(pdu.tsduMaximumSize);
+        value.writeUint16BE(pdu.tsduMaximumSize.initiator_to_responder, 0);
+        value.writeUint16BE(pdu.tsduMaximumSize.responder_to_initiator, 2);
         ret.parameters.push({
             pi: PI_TSDU_MAX_SIZE,
             value,
@@ -3496,7 +3731,12 @@ export function parseConnectAcceptItem(
                 if (param.value.length !== 4) {
                     return ERR_PI_LENGTH;
                 }
-                cai.tsduMaximumSize = param.value.readUint32BE();
+                const initiator_to_responder = param.value.readUint16BE(0);
+                const responder_to_initiator = param.value.readUint16BE(2);
+                cai.tsduMaximumSize = {
+                    initiator_to_responder,
+                    responder_to_initiator,
+                };
                 break;
             }
             case PI_VERSION_NUMBER: {
@@ -3563,7 +3803,7 @@ export function parseConnectAcceptItem(
     if (!cai.versionNumber) {
         return ERR_MISSING_REQ_PARAM;
     }
-    if (!cai.protocolOptions) {
+    if (cai.protocolOptions === undefined) {
         return ERR_MISSING_REQ_PARAM;
     }
     const ret: ConnectAcceptItem = {
@@ -3734,7 +3974,13 @@ export function parse_OA_SPDU(spdu: SPDU): OVERFLOW_ACCEPT_SPDU | number {
                     if (p.value.length !== 4) {
                         return ERR_PI_LENGTH;
                     }
-                    ret.tsduMaximumSize = p.value.readUint32BE();
+                    // ret.tsduMaximumSize = p.value.readUint32BE();
+                    const initiator_to_responder = p.value.readUint16BE(0);
+                    const responder_to_initiator = p.value.readUint16BE(2);
+                    ret.tsduMaximumSize = {
+                        initiator_to_responder,
+                        responder_to_initiator,
+                    };
                     break;
                 }
                 case PI_VERSION_NUMBER: {
@@ -4064,7 +4310,6 @@ export function parse_PR_SPDU(spdu: SPDU): PREPARE_SPDU | number {
 export function handleInvalidSequence(
     state: SessionServiceConnectionState
 ): SessionServiceConnectionState {
-    console.error('INVALID SEQUENCE ', state);
     if (!state.transport.connected()) {
         return state;
     }
@@ -4081,7 +4326,6 @@ export function handleInvalidSequence(
 export function handleInvalidSPDU(
     state: SessionServiceConnectionState
 ): SessionServiceConnectionState {
-    console.error('INVALID SPDU ', state);
     if (!state.transport.connected()) {
         return state;
     }
@@ -4093,6 +4337,26 @@ export function handleInvalidSPDU(
         state.timer_timeout
     );
     return state;
+}
+
+export function handle_too_large_ssdu(
+    state: SessionServiceConnectionState
+): SessionServiceConnectionState {
+    if (!state.transport.connected()) {
+        return state;
+    }
+    // Section A.4.1.1 is unhandled.
+    const response: ABORT_SPDU = {};
+    state.outgoingEvents.emit('AB_nr', response);
+    state.TIM = setTimeout(
+        () => state.outgoingEvents.emit('TDISreq'),
+        state.timer_timeout
+    );
+    return state;
+}
+
+function spdu_is_complete (enclosure: ACCEPT_SPDU["enclosureItem"]): boolean {
+    return (enclosure === undefined) || ((enclosure & 0b10) > 0);
 }
 
 export function handleSPDU(
@@ -4129,12 +4393,33 @@ export function handleSPDU(
             return [newState];
         }
         case SI_AC_SPDU: {
+            if (state.in_progress_spdu && !("ac" in state.in_progress_spdu)) {
+                return [state, ERR_INVALID_SEQ];
+            }
             const ac = parse_AC_SPDU(spdu);
             if (typeof ac === 'number') {
                 return [state, ac];
             }
-            const newState = dispatch_AC(state, ac);
-            return [newState];
+            if (state.in_progress_spdu) {
+                const buffer = state.in_progress_spdu.ac.userData ?? Buffer.alloc(0);
+                const chunk = ac.userData ?? Buffer.alloc(0);
+                if (buffer.length + chunk.length > state.max_ssdu_size) {
+                    return [state, ERR_SSDU_TOO_LARGE];
+                }
+                state.in_progress_spdu.ac.userData = Buffer.concat([
+                    state.in_progress_spdu.ac.userData ?? Buffer.alloc(0),
+                    ac.userData ?? Buffer.alloc(0),
+                ]);
+            } else {
+                state.in_progress_spdu = { ac };
+            }
+            if (spdu_is_complete(ac.enclosureItem)) {
+                const spdu = state.in_progress_spdu.ac;
+                state.in_progress_spdu = undefined;
+                const newState = dispatch_AC(state, spdu);
+                return [newState];
+            }
+            return [state];
         }
         case SI_RF_SPDU: {
             const rf = parse_RF_SPDU(spdu);
@@ -4152,19 +4437,39 @@ export function handleSPDU(
             }
         }
         case SI_FN_SPDU: {
+            if (state.in_progress_spdu && !("fn" in state.in_progress_spdu)) {
+                return [state, ERR_INVALID_SEQ];
+            }
             const fn = parse_FN_SPDU(spdu);
             if (typeof fn === 'number') {
                 return [state, fn];
             }
-            const r: boolean =
-                fn.transportDisconnect === TRANSPORT_DISCONNECT_KEPT;
-            if (r) {
-                const newState = dispatch_FN_r(state, fn);
-                return [newState];
+            if (state.in_progress_spdu) {
+                const buffer = state.in_progress_spdu.fn.userData ?? Buffer.alloc(0);
+                const chunk = fn.userData ?? Buffer.alloc(0);
+                if (buffer.length + chunk.length > state.max_ssdu_size) {
+                    return [state, ERR_SSDU_TOO_LARGE];
+                }
+                state.in_progress_spdu.fn.userData = Buffer.concat([ buffer, chunk ]);
             } else {
-                const newState = dispatch_FN_nr(state, fn);
-                return [newState];
+                state.in_progress_spdu = { fn };
             }
+            if (spdu_is_complete(fn.enclosureItem)) {
+                const spdu: FINISH_SPDU = {
+                    ...state.in_progress_spdu.fn,
+                    enclosureItem: 0b11,
+                };
+                state.in_progress_spdu = undefined;
+                const r: boolean = fn.transportDisconnect === TRANSPORT_DISCONNECT_KEPT;
+                if (r) {
+                    const newState = dispatch_FN_r(state, spdu);
+                    return [newState];
+                } else {
+                    const newState = dispatch_FN_nr(state, spdu);
+                    return [newState];
+                }
+            }
+            return [state];
         }
         case SI_DN_SPDU: {
             const dn = parse_DN_SPDU(spdu);
@@ -4208,9 +4513,13 @@ export function handleSPDU(
         }
         case SI_DT_SPDU: {
             1 + 1; // To avoid some weird typescript parsing issue.
-            if (!spdu.userInformation?.length) {
-                return [state];
-            }
+            // const is_data_transfer: boolean = (
+            //     !!spdu.userInformation?.length
+            //     || spdu.parameters.some((p) => ("pi" in p) && p.pi === PI_ENCLOSURE_ITEM)
+            // );
+            // if (!is_data_transfer) { // This can happen if it is a GIVE TOKENS SPDU.
+            //     return [state];
+            // }
             const dt = parse_DT_SPDU(spdu);
             if (typeof dt === 'number') {
                 return [state, dt];
@@ -4327,15 +4636,12 @@ export function parsePI(
     if (state.bufferIndex + bytesRead + li > state.buffer.length) {
         return [state, null];
     }
-    const newState: SessionServiceConnectionState = {
-        ...state,
-        bufferIndex: state.bufferIndex + bytesRead + li,
-    };
     const value: Buffer = state.buffer.subarray(
         state.bufferIndex + bytesRead,
         state.bufferIndex + bytesRead + li
     );
-    return [newState, { pi, value }];
+    state.bufferIndex = state.bufferIndex + bytesRead + li;
+    return [state, { pi, value }];
 }
 
 export function parsePGIorPI(
@@ -4357,16 +4663,12 @@ export function parsePGIorPI(
         if (state.bufferIndex + 4 > state.buffer.length) {
             return [state, null];
         }
-        li = state.buffer.readUint16BE(2);
+        li = state.buffer.readUint16BE(state.bufferIndex + 2);
         bytesRead += 2;
     }
     if (state.bufferIndex + bytesRead + li > state.buffer.length) {
         return [state, null];
     }
-    const newState: SessionServiceConnectionState = {
-        ...state,
-        bufferIndex: state.bufferIndex + bytesRead + li,
-    };
     if (depth === 0 && pgis.has(pi)) {
         const paramGroup: SessionParameterGroup = {
             pgi: pi,
@@ -4377,7 +4679,8 @@ export function parsePGIorPI(
                 state.bufferIndex + bytesRead,
                 state.bufferIndex + bytesRead + li
             );
-            return [newState, paramGroup];
+            state.bufferIndex = state.bufferIndex + bytesRead + li;
+            return [state, paramGroup];
         }
         const startOfValue: number = state.bufferIndex + bytesRead;
         let currentState: SessionServiceConnectionState = {
@@ -4399,13 +4702,15 @@ export function parsePGIorPI(
             }
             encounteredParams.add(id);
         }
-        return [newState, paramGroup];
+        state.bufferIndex = currentState.bufferIndex;
+        return [state, paramGroup];
     } else {
         const value: Buffer = state.buffer.subarray(
             state.bufferIndex + bytesRead,
             state.bufferIndex + bytesRead + li
         );
-        return [newState, { pi, value }];
+        state.bufferIndex = state.bufferIndex + bytesRead + li;
+        return [state, { pi, value }];
     }
 }
 
@@ -4454,7 +4759,7 @@ export function parseSPDU(
         }
         encounteredParams.add(id);
     }
-    state.bufferIndex = state.bufferIndex + li;
+    // TODO: Check that originalIndex + li === state.bufferIndex (or something like that)
     if (
         prior_spdus.length === 1 &&
         prior_spdus[0].si === SI_GT_SPDU &&
@@ -4497,8 +4802,16 @@ export function receiveTSDU(
     if (spdus.length === 1 && category_2_spdus.has(spdus[0].si)) {
         return ERR_SINGLE_SPDU_IN_TSDU;
     }
+    // if (spdus.length === 1 && category_2_spdus.has(spdus[0].si)) {
+    //     return ERR_SINGLE_SPDU_IN_TSDU;
+    // }
     state.buffer = state.buffer.subarray(state.bufferIndex);
     state.bufferIndex = 0;
+
+    if ((spdus.length > 1) && (spdus[0].si === SI_GT_SPDU)) {
+        spdus.shift();
+    }
+
     for (const spdu of spdus) {
         const [newConnState, errCode] = handleSPDU(state, spdu);
         if (errCode !== undefined) {

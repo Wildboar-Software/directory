@@ -229,19 +229,19 @@ export function create_itot_stack(
     socket: Socket,
     sessionCaller: boolean = true,
     transportCaller: boolean = true,
-    max_nsdu_size: number = 10_000_000,
+    max_tsdu_size?: number,
     abort_timeout_ms?: number
 ): ISOTransportOverTCPStack {
     const tpkt = new ITOTSocket(socket);
     socket.on('data', (data) => tpkt.receiveData(data));
     const transport = createTransportConnection({
         available: () => socket.writable && socket.readable,
-        max_nsdu_size: () => max_nsdu_size,
+        max_nsdu_size: () => 65531, // See IETF RFC 1006, Section 6.
         open: () => socket.writable,
         openInProgress: () => socket.connecting,
         transportConnectionsServed: () => 1,
         write_nsdu: (nsdu: Buffer) => tpkt.writeNSDU(nsdu),
-    });
+    }, max_tsdu_size);
     const session = newSessionConnection(
         {
             connected: () =>
@@ -272,6 +272,10 @@ export function create_itot_stack(
             request_S_CONNECT: (req) => {
                 const spdu: CONNECT_SPDU = {
                     userData: req.user_data,
+                    connectAcceptItem: {
+                        protocolOptions: 0,
+                        versionNumber: 2,
+                    },
                 };
                 stack.session = dispatch_SCONreq(stack.session, spdu);
             },
@@ -467,9 +471,10 @@ export function create_itot_stack(
     // even get the network address unless it is passed in from the upper layers?
     // stack.transport.outgoingEvents.on("NCONreq", () => {});
     stack.session.outgoingEvents.on('SCONind', (cn) => {
-        if (cn.userData) {
+        const user_data = cn.extendedUserData ?? cn.userData;
+        if (user_data) {
             const el = new BERElement();
-            el.fromBytes(cn.userData);
+            el.fromBytes(user_data);
             const ppdu = _decode_CP_type(el);
             dispatch_CP(stack.presentation, ppdu);
         } else {
@@ -477,9 +482,9 @@ export function create_itot_stack(
             stack.session = dispatch_SCONrsp_accept(stack.session, ac);
         }
     });
-    stack.session.outgoingEvents.on('SDTind', (spdu) => {
+    stack.session.outgoingEvents.on('SDTind', (ssdu: Buffer) => {
         const el = new BERElement();
-        el.fromBytes(spdu.userInformation);
+        el.fromBytes(ssdu);
         const ppdu = _decode_User_data(el);
         dispatch_TD(stack.presentation, ppdu);
     });
