@@ -186,7 +186,6 @@ export enum TransportConnectionState {
 }
 
 export interface TransportConnection {
-    id?: string;
     state: TransportConnectionState;
     network: NetworkLayerService;
     outgoingEvents: TransportLayerOutgoingEventEmitter;
@@ -199,7 +198,7 @@ export interface TransportConnection {
 
 export function createTransportConnection(
     network: NetworkLayerService,
-    id?: string
+    max_tsdu_size: number = DEFAULT_MAX_TSDU_SIZE,
 ): TransportConnection {
     const outgoingEvents = new TransportLayerOutgoingEventEmitter();
     outgoingEvents.on('CR', (tpdu) => network.write_nsdu(encode_CR(tpdu)));
@@ -213,7 +212,6 @@ export function createTransportConnection(
     // outgoingEvents.on("RJ", (tpdu) => network.write_nsdu(encode_RJ(tpdu)));
     outgoingEvents.on('ER', (tpdu) => network.write_nsdu(encode_ER(tpdu)));
     return {
-        id,
         // This seems to be the expected default state, but I cannot find confirmation.
         state: TransportConnectionState.CLOSED,
         network,
@@ -221,7 +219,7 @@ export function createTransportConnection(
         dataBuffer: Buffer.alloc(0),
         src_ref: 0,
         dst_ref: 0,
-        max_tsdu_size: DEFAULT_MAX_TSDU_SIZE,
+        max_tsdu_size,
     };
 }
 
@@ -1233,6 +1231,12 @@ export function handle_invalid_ref(
     return implicitNormalRelease(c);
 }
 
+export function handle_too_large_tsdu (
+    c: TransportConnection,
+): TransportConnection {
+    return implicitNormalRelease(c);
+}
+
 // #region Incoming Events
 
 export function dispatch_TCONreq(
@@ -1681,6 +1685,9 @@ export function dispatch_DT(
     // }
     switch (c.state) {
         case TransportConnectionState.OPEN: {
+            if (c.dataBuffer.length + tpdu.user_data.length > c.max_tsdu_size) {
+                return handle_too_large_tsdu(c);
+            }
             c.dataBuffer = Buffer.concat([c.dataBuffer, tpdu.user_data]);
             if (tpdu.eot) {
                 const oldBuf = c.dataBuffer;
