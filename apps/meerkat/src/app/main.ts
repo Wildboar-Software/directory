@@ -954,7 +954,12 @@ function attachUnboundEventListenersToITOTConnection (
         });
 
         try {
-            const itot = create_itot_stack(c, false, false);
+            const itot = create_itot_stack(
+                c,
+                false,
+                false,
+                ctx.config.itot.abort_timeout_ms,
+            );
             attachUnboundEventListenersToITOTConnection(ctx, c, source, itot, startTimes);
         } catch (e) {
             ctx.log.error(ctx.i18n.t("log:unhandled_exception", {
