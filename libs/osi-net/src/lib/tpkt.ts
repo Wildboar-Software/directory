@@ -35,15 +35,15 @@ export class ITOTSocket extends NetworkLayerOutgoingEventEmitter {
         const nsdus: Buffer[] = [];
         while (i < this.buffer.length) {
             if (this.buffer.length < i + 4) {
-                return;
+                break;
             }
             const length = this.buffer.readUint16BE(i + 2);
             if (this.buffer.length < i + length) {
-                return;
+                break;
             }
-            const nsdu = this.buffer.subarray(i + 4, i + 4 + length);
+            const nsdu = this.buffer.subarray(i + 4, i + length);
             nsdus.push(nsdu);
-            i += 4 + length;
+            i += length;
         }
         this.buffer = this.buffer.subarray(i);
         // FIXME: Validate that NSDUs are of appropriate size.
