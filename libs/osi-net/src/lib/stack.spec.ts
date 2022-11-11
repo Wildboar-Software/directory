@@ -4,9 +4,11 @@ import { dispatch_P_DTreq, get_acse_ber_context } from './presentation';
 import {
     dispatch_A_ASCreq,
     dispatch_A_ASCrsp_accept,
+    dispatch_A_ASCrsp_reject,
     dispatch_A_RLSreq,
     dispatch_A_RLSrsp_accept,
     dispatch_A_ABRreq,
+    dispatch_A_RLSrsp_reject,
 } from './acse';
 import { User_data } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/User-data.ta';
 import { PDV_list } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/PDV-list.ta';
@@ -17,10 +19,13 @@ import {
     Result_provider_rejection,
     Result_user_rejection,
 } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Result.ta';
-import { Result_acceptance as ACSEResult_acceptance } from '@wildboar/acse/src/lib/modules/ACSE-1/Result.ta';
+import {
+    Result_acceptance as ACSEResult_acceptance,
+    Result_provider_rejection as ACSEResult_provider_rejection,
+} from '@wildboar/acse/src/lib/modules/ACSE-1/Result.ta';
 import { ObjectIdentifier, External, INTEGER } from 'asn1-ts';
 import { Socket } from 'node:net';
-import { BER } from 'asn1-ts/dist/node/functional';
+import { BER, _encodeOctetString } from 'asn1-ts/dist/node/functional';
 import {
     AARQ_apdu,
     _encode_AARQ_apdu,
@@ -34,6 +39,7 @@ import {
     _encode_RLRQ_apdu,
 } from '@wildboar/acse/src/lib/modules/ACSE-1/RLRQ-apdu.ta';
 import {
+    Release_response_reason_not_finished,
     RLRE_apdu,
     _encode_RLRE_apdu,
 } from '@wildboar/acse/src/lib/modules/ACSE-1/RLRE-apdu.ta';
@@ -49,6 +55,9 @@ import {
     DirectoryBindResult,
     _encode_DirectoryBindResult,
 } from '@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindResult.ta';
+import {
+    directoryBindError, DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1,
+} from '@wildboar/x500/src/lib/modules/DirectoryAbstractService/directoryBindError.oa';
 import {
     ReadArgument,
     ReadArgumentData,
@@ -85,11 +94,13 @@ import {
 } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Result-list-Item-provider-reason.ta';
 import { _encode_TheOsiBind } from '@wildboar/x500/src/lib/modules/OSIProtocolSpecification/TheOsiBind.ta';
 import { _encode_TheOsiBindRes } from '@wildboar/x500/src/lib/modules/OSIProtocolSpecification/TheOsiBindRes.ta';
+import { _encode_TheOsiBindErr } from '@wildboar/x500/src/lib/modules/OSIProtocolSpecification/TheOsiBindErr.ta';
 import { ABRT_source_acse_service_user } from '@wildboar/acse/src/lib/modules/ACSE-1/ABRT-source.ta';
 import { ABRT_diagnostic_authentication_required } from '@wildboar/acse/src/lib/modules/ACSE-1/ABRT-diagnostic.ta';
 import { randomBytes, randomInt } from 'node:crypto';
 import isDebugging from 'is-debugging';
 import { AttributeTypeAndValue } from '@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttributeTypeAndValue.ta';
+import { Provider_reason_user_data_not_readable } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Provider-reason.ta';
 
 const id_ber = new ObjectIdentifier([2, 1, 1]);
 const id_acse = new ObjectIdentifier([2, 2, 1, 0, 1]);
@@ -106,8 +117,8 @@ function withSockets(
     ) => void
 ) {
     const server = createServer();
-    const port: number = isDebugging ? DEFAULT_PORT : randomInt(44400, 44600);
-    // const port = DEFAULT_PORT;
+    // const port: number = isDebugging ? DEFAULT_PORT : randomInt(44400, 44600);
+    const port = DEFAULT_PORT;
     return function (done: jest.DoneCallback) {
         server.on('listening', () => {
             server.on('connection', (c) => {
@@ -212,6 +223,7 @@ function configure_itot_for_directory(stack: ISOTransportOverTCPStack): void {
             stack.presentation
         );
         stack.acse.presentation.respond_P_CONNECT({
+            provider_reason: Provider_reason_user_data_not_readable,
             user_data: {
                 fully_encoded_data: [
                     new PDV_list(
@@ -284,6 +296,7 @@ function configure_itot_for_directory(stack: ISOTransportOverTCPStack): void {
             stack.presentation
         );
         stack.acse.presentation.respond_P_RELEASE({
+            reject: true,
             user_data: {
                 fully_encoded_data: [
                     new PDV_list(
@@ -299,9 +312,9 @@ function configure_itot_for_directory(stack: ISOTransportOverTCPStack): void {
     });
 }
 
-describe('The OSI network stack', () => {
-    test(
-        'it works with create_itot_stack()',
+describe('The OSI network stack created with create_itot_stack()', () => {
+    it(
+        'can bind, handle a request, and unbind',
         withSockets((socket1, socket2, server, done) => {
             const test_str: string = 'Big Chungus';
             const stack1 = create_itot_stack(socket1, true, true);
@@ -610,8 +623,8 @@ describe('The OSI network stack', () => {
         }),
     );
 
-    test(
-        'association-layer abort works with create_itot_stack()',
+    it(
+        'can relay an association-layer abort',
         withSockets((socket1, socket2, server, done) => {
             const stack1 = create_itot_stack(socket1, true, true);
             const stack2 = create_itot_stack(socket2, false, false);
@@ -675,4 +688,687 @@ describe('The OSI network stack', () => {
             dispatch_A_ASCreq(stack1.acse, aarq);
         })
     );
+
+    it(
+        'can handle a large CONNECT SSDU',
+        withSockets((socket1, socket2, server, done) => {
+            const stack1 = create_itot_stack(socket1, true, true);
+            const stack2 = create_itot_stack(socket2, false, false);
+            configure_itot_for_directory(stack1);
+            configure_itot_for_directory(stack2);
+            stack2.acse.outgoingEvents.on('A-ASCind', done);
+            let acse_abort_received: boolean = false;
+            stack1.acse.outgoingEvents.on('A-ABRind', () => {
+                acse_abort_received = true;
+            });
+            stack2.network.socket.on('close', () => {
+                expect(acse_abort_received).toBe(true);
+                done();
+            });
+
+            const aarq: AARQ_apdu = new AARQ_apdu(
+                undefined,
+                id_dap,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                [
+                    _encodeOctetString(randomBytes(70000), BER),
+                ],
+                [
+                    new External(
+                        id_ber,
+                        3,
+                        undefined,
+                        _encode_TheOsiBind(
+                            _encode_DirectoryBindArgument(
+                                new DirectoryBindArgument(undefined, undefined),
+                                BER
+                            ),
+                            BER
+                        )
+                    ),
+                ]
+            );
+            dispatch_A_ASCreq(stack1.acse, aarq);
+        })
+    );
+
+    it(
+        'can handle a large FINISH SSDU',
+        withSockets((socket1, socket2, server, done) => {
+            const stack1 = create_itot_stack(socket1, true, true);
+            const stack2 = create_itot_stack(socket2, false, false);
+            configure_itot_for_directory(stack1);
+            configure_itot_for_directory(stack2);
+            stack2.acse.outgoingEvents.on('A-ASCind', () => {
+                const aare: AARE_apdu = new AARE_apdu(
+                    undefined,
+                    id_dap,
+                    ACSEResult_acceptance,
+                    {
+                        acse_service_provider: 0,
+                    },
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    [],
+                    [
+                        new External(
+                            id_ber,
+                            3,
+                            undefined,
+                            _encode_TheOsiBindRes(
+                                _encode_DirectoryBindResult(
+                                    new DirectoryBindResult(),
+                                    BER
+                                ),
+                                BER
+                            )
+                        ),
+                    ]
+                );
+                dispatch_A_ASCrsp_accept(stack2.acse, aare);
+            });
+            stack1.acse.outgoingEvents.on('A-ASCcnf+', () => {
+                const rlrq = new RLRQ_apdu(
+                    0,
+                    undefined,
+                    undefined,
+                    [
+                        _encodeOctetString(randomBytes(70000), BER),
+                    ],
+                    undefined,
+                );
+                dispatch_A_RLSreq(stack1.acse, rlrq);
+            });
+            stack2.acse.outgoingEvents.on('A-RLSind', () => {
+                const rlre = new RLRE_apdu(
+                    0,
+                    undefined,
+                    undefined,
+                    [],
+                    undefined
+                );
+                dispatch_A_RLSrsp_accept(stack2.acse, rlre);
+            });
+
+            stack1.acse.outgoingEvents.on('A-RLScnf+', () => {
+                socket1.destroy();
+                socket2.destroy();
+                done();
+                // server.close(done);
+            });
+
+            const aarq: AARQ_apdu = new AARQ_apdu(
+                undefined,
+                id_dap,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                [],
+                [
+                    new External(
+                        id_ber,
+                        3,
+                        undefined,
+                        _encode_TheOsiBind(
+                            _encode_DirectoryBindArgument(
+                                new DirectoryBindArgument(undefined, undefined),
+                                BER
+                            ),
+                            BER
+                        )
+                    ),
+                ]
+            );
+            dispatch_A_ASCreq(stack1.acse, aarq);
+        }),
+    );
+
+    it(
+        'can handle a large ACCEPT SSDU',
+        withSockets((socket1, socket2, server, done) => {
+            const stack1 = create_itot_stack(socket1, true, true);
+            const stack2 = create_itot_stack(socket2, false, false);
+            configure_itot_for_directory(stack1);
+            configure_itot_for_directory(stack2);
+            stack2.acse.outgoingEvents.on('A-ASCind', () => {
+                const aare: AARE_apdu = new AARE_apdu(
+                    undefined,
+                    id_dap,
+                    ACSEResult_acceptance,
+                    {
+                        acse_service_provider: 0,
+                    },
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    [
+                        _encodeOctetString(randomBytes(70000), BER),
+                    ],
+                    [
+                        new External(
+                            id_ber,
+                            3,
+                            undefined,
+                            _encode_TheOsiBindRes(
+                                _encode_DirectoryBindResult(
+                                    new DirectoryBindResult(),
+                                    BER
+                                ),
+                                BER
+                            )
+                        ),
+                    ]
+                );
+                dispatch_A_ASCrsp_accept(stack2.acse, aare);
+            });
+            stack1.acse.outgoingEvents.on('A-ASCcnf+', () => {
+                const rlrq = new RLRQ_apdu(
+                    0,
+                    undefined,
+                    undefined,
+                    [],
+                    undefined,
+                );
+                dispatch_A_RLSreq(stack1.acse, rlrq);
+            });
+            stack2.acse.outgoingEvents.on('A-RLSind', () => {
+                const rlre = new RLRE_apdu(
+                    0,
+                    undefined,
+                    undefined,
+                    [],
+                    undefined
+                );
+                dispatch_A_RLSrsp_accept(stack2.acse, rlre);
+            });
+
+            stack1.acse.outgoingEvents.on('A-RLScnf+', () => {
+                socket1.destroy();
+                socket2.destroy();
+                done();
+                // server.close(done);
+            });
+
+            const aarq: AARQ_apdu = new AARQ_apdu(
+                undefined,
+                id_dap,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                [],
+                [
+                    new External(
+                        id_ber,
+                        3,
+                        undefined,
+                        _encode_TheOsiBind(
+                            _encode_DirectoryBindArgument(
+                                new DirectoryBindArgument(undefined, undefined),
+                                BER
+                            ),
+                            BER
+                        )
+                    ),
+                ]
+            );
+            dispatch_A_ASCreq(stack1.acse, aarq);
+        }),
+    );
+
+    it(
+        'can handle a large REFUSE SSDU',
+        withSockets((socket1, socket2, server, done) => {
+            const stack1 = create_itot_stack(socket1, true, true);
+            const stack2 = create_itot_stack(socket2, false, false);
+            configure_itot_for_directory(stack1);
+            configure_itot_for_directory(stack2);
+            stack2.acse.outgoingEvents.on('A-ASCind', () => {
+                const aare: AARE_apdu = new AARE_apdu(
+                    undefined,
+                    id_dap,
+                    ACSEResult_provider_rejection,
+                    {
+                        acse_service_provider: 1,
+                    },
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    [
+                        _encodeOctetString(randomBytes(70000), BER),
+                    ],
+                    [
+                        new External(
+                            id_ber,
+                            3,
+                            undefined,
+                            _encode_TheOsiBindErr(
+                                directoryBindError.encoderFor["&ParameterType"]!({
+                                    unsigned: new DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1(
+                                        undefined,
+                                        {
+                                            serviceError: 1,
+                                        },
+                                        undefined,
+                                    ),
+                                }, BER),
+                                BER
+                            ),
+                        ),
+                    ]
+                );
+                dispatch_A_ASCrsp_reject(stack2.acse, aare);
+            });
+            stack1.acse.outgoingEvents.on('A-ASCcnf-', () => {
+                socket1.destroy();
+                socket2.destroy();
+                done();
+            });
+            const aarq: AARQ_apdu = new AARQ_apdu(
+                undefined,
+                id_dap,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                [],
+                [
+                    new External(
+                        id_ber,
+                        3,
+                        undefined,
+                        _encode_TheOsiBind(
+                            _encode_DirectoryBindArgument(
+                                new DirectoryBindArgument(undefined, undefined),
+                                BER
+                            ),
+                            BER
+                        ),
+                    ),
+                ]
+            );
+            dispatch_A_ASCreq(stack1.acse, aarq);
+        }),
+    );
+
+    it(
+        'can handle a large DISCONNECT SSDU',
+        withSockets((socket1, socket2, server, done) => {
+            const stack1 = create_itot_stack(socket1, true, true);
+            const stack2 = create_itot_stack(socket2, false, false);
+            configure_itot_for_directory(stack1);
+            configure_itot_for_directory(stack2);
+            stack2.acse.outgoingEvents.on('A-ASCind', () => {
+                const aare: AARE_apdu = new AARE_apdu(
+                    undefined,
+                    id_dap,
+                    ACSEResult_acceptance,
+                    {
+                        acse_service_provider: 0,
+                    },
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    [],
+                    [
+                        new External(
+                            id_ber,
+                            3,
+                            undefined,
+                            _encode_TheOsiBindRes(
+                                _encode_DirectoryBindResult(
+                                    new DirectoryBindResult(),
+                                    BER
+                                ),
+                                BER
+                            )
+                        ),
+                    ]
+                );
+                dispatch_A_ASCrsp_accept(stack2.acse, aare);
+            });
+            stack1.acse.outgoingEvents.on('A-ASCcnf+', () => {
+                const rlrq = new RLRQ_apdu(
+                    0,
+                    undefined,
+                    undefined,
+                    [],
+                    undefined,
+                );
+                dispatch_A_RLSreq(stack1.acse, rlrq);
+            });
+            stack2.acse.outgoingEvents.on('A-RLSind', () => {
+                const rlre = new RLRE_apdu(
+                    0,
+                    undefined,
+                    undefined,
+                    [
+                        _encodeOctetString(randomBytes(70000), BER),
+                    ],
+                    undefined
+                );
+                dispatch_A_RLSrsp_accept(stack2.acse, rlre);
+            });
+
+            stack1.acse.outgoingEvents.on('A-RLScnf+', () => {
+                socket1.destroy();
+                socket2.destroy();
+                done();
+                // server.close(done);
+            });
+
+            const aarq: AARQ_apdu = new AARQ_apdu(
+                undefined,
+                id_dap,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                [],
+                [
+                    new External(
+                        id_ber,
+                        3,
+                        undefined,
+                        _encode_TheOsiBind(
+                            _encode_DirectoryBindArgument(
+                                new DirectoryBindArgument(undefined, undefined),
+                                BER
+                            ),
+                            BER
+                        )
+                    ),
+                ]
+            );
+            dispatch_A_ASCreq(stack1.acse, aarq);
+        }),
+    );
+
+    it(
+        'can handle a large ABORT SSDU',
+        withSockets((socket1, socket2, server, done) => {
+            const stack1 = create_itot_stack(socket1, true, true);
+            const stack2 = create_itot_stack(socket2, false, false);
+            configure_itot_for_directory(stack1);
+            configure_itot_for_directory(stack2);
+            stack2.acse.outgoingEvents.on('A-ASCind', () => {
+                const abrt: ABRT_apdu = new ABRT_apdu(
+                    ABRT_source_acse_service_user,
+                    ABRT_diagnostic_authentication_required,
+                    undefined,
+                    undefined,
+                    [
+                        _encodeOctetString(randomBytes(70000), BER),
+                    ],
+                    undefined
+                );
+                dispatch_A_ABRreq(stack2.acse, abrt);
+            });
+            let acse_abort_received: boolean = false;
+            stack1.acse.outgoingEvents.on('A-ABRind', () => {
+                acse_abort_received = true;
+            });
+            stack2.network.socket.on('close', () => {
+                expect(acse_abort_received).toBe(true);
+                done();
+            });
+
+            const aarq: AARQ_apdu = new AARQ_apdu(
+                undefined,
+                id_dap,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                [],
+                [
+                    new External(
+                        id_ber,
+                        3,
+                        undefined,
+                        _encode_TheOsiBind(
+                            _encode_DirectoryBindArgument(
+                                new DirectoryBindArgument(undefined, undefined),
+                                BER
+                            ),
+                            BER
+                        )
+                    ),
+                ]
+            );
+            dispatch_A_ASCreq(stack1.acse, aarq);
+        })
+    );
+
+    // This test will not pass because the Negotiated Release functional unit
+    // is not enabled in the session layer. Perhaps in a future release...
+    it.skip(
+        'can handle a large NOT FINISHED SSDU',
+        withSockets((socket1, socket2, server, done) => {
+            const stack1 = create_itot_stack(socket1, true, true);
+            const stack2 = create_itot_stack(socket2, false, false);
+            configure_itot_for_directory(stack1);
+            configure_itot_for_directory(stack2);
+            stack2.acse.outgoingEvents.on('A-ASCind', () => {
+                const aare: AARE_apdu = new AARE_apdu(
+                    undefined,
+                    id_dap,
+                    ACSEResult_acceptance,
+                    {
+                        acse_service_provider: 0,
+                    },
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    [],
+                    [
+                        new External(
+                            id_ber,
+                            3,
+                            undefined,
+                            _encode_TheOsiBindRes(
+                                _encode_DirectoryBindResult(
+                                    new DirectoryBindResult(),
+                                    BER
+                                ),
+                                BER
+                            )
+                        ),
+                    ]
+                );
+                dispatch_A_ASCrsp_accept(stack2.acse, aare);
+            });
+            stack1.acse.outgoingEvents.on('A-ASCcnf+', () => {
+                const rlrq = new RLRQ_apdu(
+                    0,
+                    undefined,
+                    undefined,
+                    [],
+                    undefined,
+                );
+                dispatch_A_RLSreq(stack1.acse, rlrq);
+            });
+            stack2.acse.outgoingEvents.on('A-RLSind', () => {
+                const rlre = new RLRE_apdu(
+                    Release_response_reason_not_finished,
+                    undefined,
+                    undefined,
+                    [
+                        _encodeOctetString(randomBytes(70000), BER),
+                    ],
+                    undefined
+                );
+                dispatch_A_RLSrsp_reject(stack2.acse, rlre);
+            });
+
+            stack1.acse.outgoingEvents.on('A-RLScnf-', () => {
+                socket1.destroy();
+                socket2.destroy();
+                done();
+                // server.close(done);
+            });
+
+            const aarq: AARQ_apdu = new AARQ_apdu(
+                undefined,
+                id_dap,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                [],
+                [
+                    new External(
+                        id_ber,
+                        3,
+                        undefined,
+                        _encode_TheOsiBind(
+                            _encode_DirectoryBindArgument(
+                                new DirectoryBindArgument(undefined, undefined),
+                                BER
+                            ),
+                            BER
+                        )
+                    ),
+                ]
+            );
+            dispatch_A_ASCreq(stack1.acse, aarq);
+        }),
+    );
+
+    // TODO: DATA TRANSFER SSDU
+
 });

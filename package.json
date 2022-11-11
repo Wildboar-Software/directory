@@ -56,7 +56,7 @@
     "@wildboar/x700": "^1.0.3",
     "applicationinsights": "^2.3.4",
     "applicationinsights-native-metrics": "^0.0.7",
-    "asn1-ts": "^7.0.12",
+    "asn1-ts": "^7.0.13",
     "basic-ftp": "^5.0.1",
     "bluebird": "^3.7.2",
     "chalk": "^5.0.1",

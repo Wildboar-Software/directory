@@ -194,6 +194,7 @@ import {
 import {
     dop_ip,
 } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
+import { Provider_reason_reason_not_specified } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Provider-reason.ta";
 // import {
 //     disp_ip,
 // } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/disp-ip.oa";
@@ -694,6 +695,7 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
     itot.acse.outgoingEvents.on('AARE-', (apdu) => {
         const acse_ber_context = get_acse_ber_context(itot.presentation);
         itot.acse.presentation.respond_P_CONNECT({
+            provider_reason: Provider_reason_reason_not_specified,
             user_data: {
                 fully_encoded_data: [
                     new PDV_list(
@@ -758,6 +760,7 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
     itot.acse.outgoingEvents.on('RLRE-', (apdu) => {
         const acse_ber_context = get_acse_ber_context(itot.presentation);
         itot.acse.presentation.respond_P_RELEASE({
+            reject: true,
             user_data: {
                 fully_encoded_data: [
                     new PDV_list(

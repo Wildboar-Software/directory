@@ -50,6 +50,7 @@ import {
     dispatch_P_CONreq,
     dispatch_P_RELreq,
     dispatch_P_RELrsp_accept,
+    dispatch_P_RELrsp_reject,
     dispatch_P_UABreq,
     dispatch_S_PABind,
     dispatch_S_CONcnf_reject,
@@ -290,7 +291,7 @@ export function create_itot_stack(
                     );
                 } else {
                     const spdu: REFUSE_SPDU = {
-                        userData: res.user_data,
+                        reasonData: res.user_data,
                         reasonCode: res.refuse_reason,
                     };
                     stack.session = dispatch_SCONrsp_reject(
@@ -392,12 +393,13 @@ export function create_itot_stack(
             }
         },
         respond_P_RELEASE: (args: P_RELEASE_Response) => {
-            if (args.user_data) {
-                dispatch_P_RELrsp_accept(stack.presentation, args.user_data);
+            // FIXME: Can you just make this optional?
+            const user_data: User_data = args.user_data ?? {
+                simply_encoded_data: new Uint8Array(),
+            };
+            if (args.reject) {
+                dispatch_P_RELrsp_reject(stack.presentation, user_data);
             } else {
-                const user_data: User_data = {
-                    simply_encoded_data: new Uint8Array(),
-                };
                 dispatch_P_RELrsp_accept(stack.presentation, user_data);
             }
         },
@@ -688,13 +690,17 @@ export function create_itot_stack(
     });
     stack.presentation.outgoingEvents.on('S-RELrsp+', (ppdu) => {
         const spdu: DISCONNECT_SPDU = {
-            userData: Buffer.from(_encode_User_data(ppdu, BER).toBytes()),
+            userData: ppdu
+                ? Buffer.from(_encode_User_data(ppdu, BER).toBytes())
+                : undefined,
         };
         dispatch_SRELrsp_accept(stack.session, spdu);
     });
     stack.presentation.outgoingEvents.on('S-RELrsp-', (ppdu) => {
         const spdu: NOT_FINISHED_SPDU = {
-            userData: Buffer.from(_encode_User_data(ppdu, BER).toBytes()),
+            userData: ppdu
+                ? Buffer.from(_encode_User_data(ppdu, BER).toBytes())
+                : undefined,
         };
         dispatch_SRELrsp_reject(stack.session, spdu);
     });

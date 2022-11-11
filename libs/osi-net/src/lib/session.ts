@@ -922,7 +922,8 @@ export function dispatch_SRELrsp_reject(
                 state.state = TableA2SessionConnectionState.STA713;
                 state.outgoingEvents.emit('NF', nf);
             } else {
-                return handleInvalidSequence(state);
+                // If Negotiated Release is not available, we just accept the release.
+                return dispatch_SRELrsp_accept(state, {});
             }
             break;
         }
@@ -2601,7 +2602,6 @@ export interface REFUSE_SPDU {
     enclosureItem?: number;
     reasonCode?: number;
     reasonData?: Buffer;
-    userData?: Buffer; // Can follow in certain circumstances.
 }
 
 export interface FINISH_SPDU {
@@ -2968,6 +2968,66 @@ export function newSessionConnection(
         inbound_max_tsdu_size: DEFAULT_MAX_TSDU_SIZE,
         outbound_max_tsdu_size: DEFAULT_MAX_TSDU_SIZE,
     };
+    // TODO: ACCEPT SPDU
+    const emit_ac = (spdu: ACCEPT_SPDU): void => {
+        const size_without_user_data = encode_ACCEPT_SPDU({
+            ...spdu,
+            enclosureItem: 1,
+            userData: undefined,
+        }).length + 2; // +2 to account for change to long-form LI, plus a little error margin.
+        if (!spdu.userData) {
+            transport.writeTSDU(encode_ACCEPT_SPDU(spdu));
+            return;
+        }
+        const max_tsdu_size = ret.outbound_max_tsdu_size ?? DEFAULT_MAX_TSDU_SIZE;
+        const space_left_for_user_data = max_tsdu_size - size_without_user_data;
+        if (space_left_for_user_data <= 0) {
+            return; // FIXME: Abort, or something else.
+        }
+        let i = 0;
+        let first: boolean = true;
+        while (i < spdu.userData.length) {
+            const final = (i + space_left_for_user_data) >= spdu.userData.length;
+            const encoded = encode_ACCEPT_SPDU({
+                ...spdu,
+                enclosureItem: (final ? 0b10 : 0b00) | (first ? 0b1 : 0b0),
+                userData: spdu.userData.subarray(i, i + space_left_for_user_data),
+            });
+            transport.writeTSDU(encoded);
+            first = false;
+            i += space_left_for_user_data;
+        }
+    };
+    // TODO: Test REFUSED SPDU
+    const emit_rf = (spdu: REFUSE_SPDU): void => {
+        const size_without_user_data = encode_REFUSE_SPDU({
+            ...spdu,
+            enclosureItem: 1,
+            reasonData: undefined,
+        }).length + 2; // +2 to account for change to long-form LI, plus a little error margin.
+        if (!spdu.reasonData) {
+            transport.writeTSDU(encode_REFUSE_SPDU(spdu));
+            return;
+        }
+        const max_tsdu_size = ret.outbound_max_tsdu_size ?? DEFAULT_MAX_TSDU_SIZE;
+        const space_left_for_user_data = max_tsdu_size - size_without_user_data;
+        if (space_left_for_user_data <= 0) {
+            return; // FIXME: Abort, or something else.
+        }
+        let i = 0;
+        let first: boolean = true;
+        while (i < spdu.reasonData.length) {
+            const final = (i + space_left_for_user_data) >= spdu.reasonData.length;
+            const encoded = encode_REFUSE_SPDU({
+                ...spdu,
+                enclosureItem: (final ? 0b10 : 0b00) | (first ? 0b1 : 0b0),
+                reasonData: spdu.reasonData.subarray(i, i + space_left_for_user_data),
+            });
+            transport.writeTSDU(encoded);
+            first = false;
+            i += space_left_for_user_data;
+        }
+    };
     const emit_fn = (spdu: FINISH_SPDU): void => {
         if (!spdu.userData) {
             transport.writeTSDU(encode_FINISH_SPDU(spdu));
@@ -3021,6 +3081,92 @@ export function newSessionConnection(
             i += space_left_for_user_data;
         }
     };
+    // TODO: Test large DISCONNECT
+    const emit_dn = (spdu: DISCONNECT_SPDU): void => {
+        const size_without_user_data = encode_DISCONNECT_SPDU({
+            enclosureItem: 1,
+        }).length + 2; // +2 to account for change to long-form LI, plus a little error margin.
+        if (!spdu.userData) {
+            transport.writeTSDU(encode_DISCONNECT_SPDU(spdu));
+            return;
+        }
+        const max_tsdu_size = ret.outbound_max_tsdu_size ?? DEFAULT_MAX_TSDU_SIZE;
+        const space_left_for_user_data = max_tsdu_size - size_without_user_data;
+        if (space_left_for_user_data <= 0) {
+            return; // FIXME: Abort, or something else.
+        }
+        let i = 0;
+        let first: boolean = true;
+        while (i < spdu.userData.length) {
+            const final = (i + space_left_for_user_data) >= spdu.userData.length;
+            const encoded = encode_DISCONNECT_SPDU({
+                ...spdu,
+                enclosureItem: (final ? 0b10 : 0b00) | (first ? 0b1 : 0b0),
+                userData: spdu.userData.subarray(i, i + space_left_for_user_data),
+            });
+            transport.writeTSDU(encoded);
+            first = false;
+            i += space_left_for_user_data;
+        }
+    };
+    // TODO: Test large NOT-FINISHED
+    const emit_nf = (spdu: NOT_FINISHED_SPDU): void => {
+        const size_without_user_data = encode_NOT_FINISHED_SPDU({
+            enclosureItem: 1,
+        }).length + 2; // +2 to account for change to long-form LI, plus a little error margin.
+        if (!spdu.userData) {
+            transport.writeTSDU(encode_NOT_FINISHED_SPDU(spdu));
+            return;
+        }
+        const max_tsdu_size = ret.outbound_max_tsdu_size ?? DEFAULT_MAX_TSDU_SIZE;
+        const space_left_for_user_data = max_tsdu_size - size_without_user_data;
+        if (space_left_for_user_data <= 0) {
+            return; // FIXME: Abort, or something else.
+        }
+        let i = 0;
+        let first: boolean = true;
+        while (i < spdu.userData.length) {
+            const final = (i + space_left_for_user_data) >= spdu.userData.length;
+            const encoded = encode_NOT_FINISHED_SPDU({
+                ...spdu,
+                enclosureItem: (final ? 0b10 : 0b00) | (first ? 0b1 : 0b0),
+                userData: spdu.userData.subarray(i, i + space_left_for_user_data),
+            });
+            transport.writeTSDU(encoded);
+            first = false;
+            i += space_left_for_user_data;
+        }
+    };
+    // TODO: Test large abort
+    const emit_ab = (spdu: ABORT_SPDU): void => {
+        const size_without_user_data = encode_ABORT_SPDU({
+            ...spdu,
+            enclosureItem: 1,
+            userData: undefined,
+        }).length + 2; // +2 to account for change to long-form LI, plus a little error margin.
+        if (!spdu.userData) {
+            transport.writeTSDU(encode_ABORT_SPDU(spdu));
+            return;
+        }
+        const max_tsdu_size = ret.outbound_max_tsdu_size ?? DEFAULT_MAX_TSDU_SIZE;
+        const space_left_for_user_data = max_tsdu_size - size_without_user_data;
+        if (space_left_for_user_data <= 0) {
+            return; // FIXME: Abort, or something else.
+        }
+        let i = 0;
+        let first: boolean = true;
+        while (i < spdu.userData.length) {
+            const final = (i + space_left_for_user_data) >= spdu.userData.length;
+            const encoded = encode_ABORT_SPDU({
+                ...spdu,
+                enclosureItem: (final ? 0b10 : 0b00) | (first ? 0b1 : 0b0),
+                userData: spdu.userData.subarray(i, i + space_left_for_user_data),
+            });
+            transport.writeTSDU(encoded);
+            first = false;
+            i += space_left_for_user_data;
+        }
+    };
     outgoingEvents.on('CN', (spdu) =>
         transport.writeTSDU(encode_CONNECT_SPDU(spdu))
     );
@@ -3030,33 +3176,17 @@ export function newSessionConnection(
     outgoingEvents.on('OA', (spdu) =>
         transport.writeTSDU(encode_OVERFLOW_ACCEPT_SPDU(spdu))
     );
-    outgoingEvents.on('AC', (spdu) =>
-        transport.writeTSDU(encode_ACCEPT_SPDU(spdu))
-    );
-    outgoingEvents.on('RF_nr', (spdu) =>
-        transport.writeTSDU(encode_REFUSE_SPDU(spdu))
-    );
-    outgoingEvents.on('RF_r', (spdu) =>
-        transport.writeTSDU(encode_REFUSE_SPDU(spdu))
-    );
+    outgoingEvents.on('AC', emit_ac);
+    outgoingEvents.on('RF_nr', emit_rf);
+    outgoingEvents.on('RF_r', emit_rf);
     outgoingEvents.on('FN_nr', emit_fn);
     outgoingEvents.on('FN_r', emit_fn);
-    outgoingEvents.on('AB_nr', (spdu) => {
-        transport.writeTSDU(encode_ABORT_SPDU(spdu));
-    });
-    outgoingEvents.on('AB_r', (spdu) => {
-        transport.writeTSDU(encode_ABORT_SPDU(spdu));
-    });
+    outgoingEvents.on('AB_nr', emit_ab);
+    outgoingEvents.on('AB_r', emit_ab);
     outgoingEvents.on('DT', emit_dt);
-    outgoingEvents.on('DN', (spdu) =>
-        transport.writeTSDU(encode_DISCONNECT_SPDU(spdu))
-    );
-    outgoingEvents.on('AA', () =>
-        transport.writeTSDU(Buffer.from([SI_AA_SPDU, 0]))
-    );
-    outgoingEvents.on('NF', (spdu) =>
-        transport.writeTSDU(encode_NOT_FINISHED_SPDU(spdu))
-    );
+    outgoingEvents.on('DN', emit_dn);
+    outgoingEvents.on('AA', () => transport.writeTSDU(Buffer.from([SI_AA_SPDU, 0])));
+    outgoingEvents.on('NF', emit_nf);
     outgoingEvents.on("received_DT", (spdu) => {
         if ((ret.userDataBuffer.length + spdu.userInformation.length) > ret.max_ssdu_size) {
             handle_too_large_ssdu(ret);
@@ -3422,10 +3552,20 @@ export function encode_REFUSE_SPDU(pdu: REFUSE_SPDU): Buffer {
         });
     }
     if (pdu.reasonCode !== undefined) {
-        ret.parameters.push({
-            pi: PI_REASON_CODE,
-            value: Buffer.from([pdu.reasonCode]),
-        });
+        if (pdu.reasonData) {
+            ret.parameters.push({
+                pi: PI_REASON_CODE,
+                value: Buffer.concat([
+                    Buffer.from([pdu.reasonCode]),
+                    pdu.reasonData,
+                ]),
+            });
+        } else {
+            ret.parameters.push({
+                pi: PI_REASON_CODE,
+                value: Buffer.from([pdu.reasonCode]),
+            });
+        }
     }
     return encodeSPDU(ret);
 }
@@ -4422,19 +4562,39 @@ export function handleSPDU(
             return [state];
         }
         case SI_RF_SPDU: {
+            if (state.in_progress_spdu && !("rf" in state.in_progress_spdu)) {
+                return [state, ERR_INVALID_SEQ];
+            }
             const rf = parse_RF_SPDU(spdu);
             if (typeof rf === 'number') {
                 return [state, rf];
             }
-            const r: boolean =
-                rf.transportDisconnect === TRANSPORT_DISCONNECT_KEPT;
-            if (r) {
-                const newState = dispatch_RF_r(state, rf);
-                return [newState];
+            if (state.in_progress_spdu) {
+                const buffer = state.in_progress_spdu.rf.reasonData ?? Buffer.alloc(0);
+                const chunk = rf.reasonData ?? Buffer.alloc(0);
+                if (buffer.length + chunk.length > state.max_ssdu_size) {
+                    return [state, ERR_SSDU_TOO_LARGE];
+                }
+                state.in_progress_spdu.rf.reasonData = Buffer.concat([
+                    state.in_progress_spdu.rf.reasonData ?? Buffer.alloc(0),
+                    rf.reasonData ?? Buffer.alloc(0),
+                ]);
             } else {
-                const newState = dispatch_RF_nr(state, rf);
-                return [newState];
+                state.in_progress_spdu = { rf };
             }
+            if (spdu_is_complete(rf.enclosureItem)) {
+                const spdu = state.in_progress_spdu.rf;
+                state.in_progress_spdu = undefined;
+                const r: boolean = rf.transportDisconnect === TRANSPORT_DISCONNECT_KEPT;
+                if (r) {
+                    const newState = dispatch_RF_r(state, spdu);
+                    return [newState];
+                } else {
+                    const newState = dispatch_RF_nr(state, spdu);
+                    return [newState];
+                }
+            }
+            return [state];
         }
         case SI_FN_SPDU: {
             if (state.in_progress_spdu && !("fn" in state.in_progress_spdu)) {
@@ -4472,35 +4632,98 @@ export function handleSPDU(
             return [state];
         }
         case SI_DN_SPDU: {
+            if (state.in_progress_spdu && !("dn" in state.in_progress_spdu)) {
+                return [state, ERR_INVALID_SEQ];
+            }
             const dn = parse_DN_SPDU(spdu);
             if (typeof dn === 'number') {
                 return [state, dn];
             }
-            const newState = dispatch_DN(state, dn);
-            return [newState];
+            if (state.in_progress_spdu) {
+                const buffer = state.in_progress_spdu.dn.userData ?? Buffer.alloc(0);
+                const chunk = dn.userData ?? Buffer.alloc(0);
+                if (buffer.length + chunk.length > state.max_ssdu_size) {
+                    return [state, ERR_SSDU_TOO_LARGE];
+                }
+                state.in_progress_spdu.dn.userData = Buffer.concat([ buffer, chunk ]);
+            } else {
+                state.in_progress_spdu = { dn };
+            }
+            if (spdu_is_complete(dn.enclosureItem)) {
+                const spdu: DISCONNECT_SPDU = {
+                    ...state.in_progress_spdu.dn,
+                    enclosureItem: 0b11,
+                };
+                state.in_progress_spdu = undefined;
+                const newState = dispatch_DN(state, spdu);
+                return [newState];
+            }
+            return [state];
         }
         case SI_NF_SPDU: {
+            if (state.in_progress_spdu && !("nf" in state.in_progress_spdu)) {
+                return [state, ERR_INVALID_SEQ];
+            }
             const nf = parse_NF_SPDU(spdu);
             if (typeof nf === 'number') {
                 return [state, nf];
             }
-            const newState = dispatch_NF(state, nf);
-            return [newState];
+            if (state.in_progress_spdu) {
+                const buffer = state.in_progress_spdu.nf.userData ?? Buffer.alloc(0);
+                const chunk = nf.userData ?? Buffer.alloc(0);
+                if (buffer.length + chunk.length > state.max_ssdu_size) {
+                    return [state, ERR_SSDU_TOO_LARGE];
+                }
+                state.in_progress_spdu.nf.userData = Buffer.concat([ buffer, chunk ]);
+            } else {
+                state.in_progress_spdu = { nf };
+            }
+            if (spdu_is_complete(nf.enclosureItem)) {
+                const spdu: NOT_FINISHED_SPDU = {
+                    ...state.in_progress_spdu.nf,
+                    enclosureItem: 0b11,
+                };
+                state.in_progress_spdu = undefined;
+                const newState = dispatch_NF(state, spdu);
+                return [newState];
+            }
+            return [state];
         }
         case SI_AB_SPDU: {
+            if (state.in_progress_spdu && !("ab" in state.in_progress_spdu)) {
+                return [state, ERR_INVALID_SEQ];
+            }
             const ab = parse_AB_SPDU(spdu);
             if (typeof ab === 'number') {
                 return [state, ab];
             }
-            const r: boolean =
-                ab.transportDisconnect === TRANSPORT_DISCONNECT_KEPT;
-            if (r) {
-                const newState = dispatch_AB_r(state, ab);
-                return [newState];
+            if (state.in_progress_spdu) {
+                const buffer = state.in_progress_spdu.ab.userData ?? Buffer.alloc(0);
+                const chunk = ab.userData ?? Buffer.alloc(0);
+                if (buffer.length + chunk.length > state.max_ssdu_size) {
+                    return [state, ERR_SSDU_TOO_LARGE];
+                }
+                state.in_progress_spdu.ab.userData = Buffer.concat([ buffer, chunk ]);
             } else {
-                const newState = dispatch_AB_nr(state, ab);
-                return [newState];
+                state.in_progress_spdu = { ab };
             }
+            if (spdu_is_complete(ab.enclosureItem)) {
+                const spdu: ABORT_SPDU = {
+                    ...state.in_progress_spdu.ab,
+                    enclosureItem: 0b11,
+                };
+                state.in_progress_spdu = undefined;
+                const r: boolean = ab.transportDisconnect === TRANSPORT_DISCONNECT_KEPT;
+                if (r) {
+                    const newState = dispatch_AB_r(state, spdu);
+                    return [newState];
+                } else {
+                    const newState = dispatch_AB_nr(state, spdu);
+                    return [newState];
+                }
+            }
+            return [state];
+
         }
         case SI_AA_SPDU: {
             const aa = parse_AA_SPDU(spdu);

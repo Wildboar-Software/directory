@@ -123,8 +123,8 @@ export interface PresentationLayerOutgoingEvents {
     'S-GTreq': () => unknown; // SS primitive S-TOKEN-GIVE request
     'S-PTreq': () => unknown; // SS primitive S-TOKEN-PLEASE request
     'S-RELreq': (ppdu: User_data) => unknown; // SS primitive S-RELEASE request
-    'S-RELrsp+': (ppdu: User_data) => unknown; // SS primitive S-RELEASE response accept
-    'S-RELrsp-': (ppdu: User_data) => unknown; // SS primitive S-RELEASE response reject
+    'S-RELrsp+': (ppdu?: User_data) => unknown; // SS primitive S-RELEASE response accept
+    'S-RELrsp-': (ppdu?: User_data) => unknown; // SS primitive S-RELEASE response reject
     'S-RSYNreq': () => unknown; // SS primitive S-RESYNCHRONIZE request
     'S-RSYNrsp': () => unknown; // SS primitive S-RESYNCHRONIZE response
     'S-SYNMreq': () => unknown; // SS primitive S-SYNCHRONIZE-MAJOR request
@@ -438,6 +438,9 @@ export function getDCS(
     // Remove non-accepted contexts from the DCS.
     for (let i = 0; i < proposed.length; i++) {
         const result = results[i];
+        if (!result) {
+            return null;
+        }
         if (result.result === Result_acceptance) {
             const accepted_context = dcs.get(
                 proposed[i].presentation_context_identifier.toString()
@@ -1359,19 +1362,18 @@ export function dispatch_P_CONrsp_reject(
                 return handleInvalidPPDU(c);
             }
             const dcs = getDCS(c, results, false);
-            if (!dcs) {
-                return handleInvalidPPDU(c);
-            }
             const default_context = c.contextSets.default_context;
-            const p04: boolean =
-                'normal_mode_parameters' in cpr &&
-                cpr.normal_mode_parameters?.user_data
-                    ? data_is_from_dcs(
-                          default_context,
-                          dcs,
-                          cpr.normal_mode_parameters.user_data
-                      )
-                    : true;
+            const p04: boolean = (
+                'normal_mode_parameters' in cpr
+                && dcs
+                && cpr.normal_mode_parameters?.user_data
+            )
+                ? data_is_from_dcs(
+                        default_context,
+                        dcs,
+                        cpr.normal_mode_parameters.user_data
+                    )
+                : true;
             if (!p04) {
                 return handleInvalidPPDU(c);
             }
@@ -1569,18 +1571,20 @@ export function dispatch_P_RELrsp_accept(
 
 export function dispatch_P_RELrsp_reject(
     c: PresentationConnection,
-    ppdu: User_data
+    ppdu?: User_data
 ): void {
     switch (c.state) {
         case PresentationLayerState.STAac0:
         case PresentationLayerState.STAac2: {
             // Each presentation data value is from presentation contexts of the DCS not proposed for deletion from the DCS by the local PPM.
             const p07_dcs = get_dcs_not_proposed_for_deletion(c);
-            const p07: boolean = data_is_from_dcs(
-                c.contextSets.default_context,
-                p07_dcs,
-                ppdu
-            );
+            const p07: boolean = ppdu
+                ? data_is_from_dcs(
+                    c.contextSets.default_context,
+                    p07_dcs,
+                    ppdu
+                )
+                : true;
             if (!p07) {
                 return handleInvalidSequence_P(c);
             }
@@ -1594,11 +1598,13 @@ export function dispatch_P_RELrsp_reject(
             // Each presentation data value is from presentation contexts of the DCS, or from the default context if the DCS is empty.
             const dcs =
                 c.contextSets.dcs_agreed_during_connection_establishment;
-            const p05: boolean = data_is_from_dcs(
-                c.contextSets.default_context,
-                dcs,
-                ppdu
-            );
+            const p05: boolean = ppdu
+                ? data_is_from_dcs(
+                    c.contextSets.default_context,
+                    dcs,
+                    ppdu
+                )
+                : true;
             if (!p05) {
                 return handleInvalidSequence_P(c);
             }

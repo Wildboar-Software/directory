@@ -33,7 +33,7 @@ export interface P_RELEASE_Request {
 }
 
 export interface P_RELEASE_Response {
-    result?: number;
+    reject?: boolean;
     user_data?: User_data;
 }
 
