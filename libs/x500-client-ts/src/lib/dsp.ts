@@ -117,17 +117,8 @@ import {
     Name,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
 import {
-    DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import {
     EntryInformationSelection,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
-import {
-    ContextSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ContextSelection.ta";
-import {
-    FamilyGrouping,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
 import {
     ASN1Element,
     BIT_STRING,
@@ -157,7 +148,19 @@ import { AccessPoint } from "@wildboar/x500/src/lib/modules/DistributedOperation
 import { EntryModification } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryModification.ta";
 import { RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
 import { BER, DER } from "asn1-ts/dist/node/functional";
-import { destringifyDN, generateSIGNED } from "./utils";
+import {
+    destringifyDN,
+    generateSIGNED,
+    CommonArguments,
+    BitStringOption,
+    OIDOption,
+    CertPathOption,
+    DirectoryName,
+    SecurityOptions,
+    ServiceOptions,
+    TargetsObject,
+    ref_type_from,
+} from "./utils";
 import { ServiceControls } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
 import {
     ServiceControlOptions_preferChaining,
@@ -188,7 +191,6 @@ import {
 import {
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
-import { PkiPath } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/PkiPath.ta";
 import { KeyObject, randomBytes } from "node:crypto";
 import { UserPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
 import { strict as assert } from "node:assert";
@@ -234,7 +236,7 @@ import { PEMObject } from "pem-ts";
 import {
     ChainingArguments,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
-import { differenceInSeconds, addSeconds } from "date-fns";
+import { differenceInSeconds } from "date-fns";
 import {
     Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1, _encode_Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
@@ -262,66 +264,6 @@ export type BindArgument = typeof directoryBind["&ArgumentType"];
 export type BindResult = typeof directoryBind["&ResultType"];
 export type DSPBindParameters = BindParameters<BindArgument>;
 export type DSPBindOutcome = BindOutcome<BindResult>;
-export type DirectoryName = string | Name | DistinguishedName;
-export type BitStringOption = string | BIT_STRING;
-export type OIDOption = string | OBJECT_IDENTIFIER;
-export type CertPathOption =
-    | CertificationPath
-    | PkiPath
-    | string // File path string
-    ;
-
-export
-interface ServiceOptions {
-    preferChaining?: boolean;
-    chainingProhibited?: boolean;
-    localScope?: boolean;
-    dontUseCopy?: boolean;
-    dontDereferenceAliases?: boolean;
-    subentries?: boolean;
-    copyShallDo?: boolean;
-    partialNameResolution?: boolean;
-    manageDSAIT?: boolean;
-    noSubtypeMatch?: boolean;
-    noSubtypeSelection?: boolean;
-    countFamily?: boolean;
-    dontSelectFriends?: boolean;
-    dontMatchFriends?: boolean;
-    allowWriteableCopy?: boolean;
-    priority?: number;
-    timeLimit?: number | Date;
-    sizeLimit?: number;
-    scopeOfReferral?: number;
-    attributeSizeLimit?: number;
-    manageDSAITPlaneRef?: {
-        dsaName: DirectoryName;
-        agreementID: {
-            identifier: number;
-            version: number;
-        };
-    };
-    serviceType?: OIDOption;
-    userClass?: number;
-}
-
-export
-interface SecurityOptions {
-    certification_path?: CertPathOption;
-    requestSignedResult?: boolean;
-    requestSignedError?: boolean;
-}
-
-export
-interface CommonArguments extends ServiceOptions, SecurityOptions {
-    criticalExtensions?: BitStringOption;
-    operationContexts?: ContextSelection;
-    familyGrouping?: FamilyGrouping;
-}
-
-export
-interface TargetsObject {
-    object: DirectoryName;
-}
 
 export
 interface SelectionOptions extends EntryInformationSelection {
@@ -369,34 +311,44 @@ interface HierarchySelectionOptions {
 }
 
 export
-interface ChainingOptions extends Omit<ChainingArguments, "timeLimit"> {
-    timeLimit?: CommonArguments["timeLimit"];
+interface ChainingOptions extends ChainingArguments {
+
 }
 
 export
-interface ReadOptions extends CommonArguments, DSPOperationOptions, TargetsObject, ChainingOptions {
+interface WithChainingOptions {
+    chaining: ChainingOptions;
+}
+
+export
+interface ReadOptions
+extends CommonArguments, DSPOperationOptions, TargetsObject, WithChainingOptions {
     selection?: SelectionOptions;
     modifyRightsRequest?: boolean;
 }
 
 export
-interface CompareOptions extends CommonArguments, DSPOperationOptions, TargetsObject, ChainingOptions {
+interface CompareOptions
+extends CommonArguments, DSPOperationOptions, TargetsObject, WithChainingOptions {
     purported: AttributeValueAssertion;
 }
 
 export
-interface AbandonOptions extends DSPOperationOptions {
+interface AbandonOptions
+extends DSPOperationOptions {
     invoke_id: number;
 }
 
 export
-interface ListOptions extends CommonArguments, DSPOperationOptions, TargetsObject, ChainingOptions {
+interface ListOptions
+extends CommonArguments, DSPOperationOptions, TargetsObject, WithChainingOptions {
     pagination?: PagedResultsRequest;
     listFamily?: boolean;
 }
 
 export
-interface SearchOptions extends CommonArguments, DSPOperationOptions, TargetsObject, ChainingOptions {
+interface SearchOptions
+extends CommonArguments, DSPOperationOptions, TargetsObject, WithChainingOptions {
     subset?: "base" | "level" | "subtree" | 0 | 1 | 2,
     filter?: Filter;
     searchAliases?: boolean;
@@ -414,48 +366,56 @@ interface SearchOptions extends CommonArguments, DSPOperationOptions, TargetsObj
 }
 
 export
-interface AddEntryOptions extends CommonArguments, DSPOperationOptions, TargetsObject, ChainingOptions {
+interface AddEntryOptions
+extends CommonArguments, DSPOperationOptions, TargetsObject, WithChainingOptions {
     entry: Attribute[];
     targetSystem?: AccessPoint;
 }
 
 export
-interface RemoveEntryOptions extends CommonArguments, DSPOperationOptions, TargetsObject, ChainingOptions {
+interface RemoveEntryOptions
+extends CommonArguments, DSPOperationOptions, TargetsObject, WithChainingOptions {
 
 }
 
 export
-interface ModifyEntryOptions extends CommonArguments, DSPOperationOptions, TargetsObject, ChainingOptions {
+interface ModifyEntryOptions
+extends CommonArguments, DSPOperationOptions, TargetsObject, WithChainingOptions {
     changes: EntryModification[];
     selection?: SelectionOptions;
 }
 
 export
-interface ModifyDNOptions extends CommonArguments, DSPOperationOptions, TargetsObject, ChainingOptions {
+interface ModifyDNOptions
+extends CommonArguments, DSPOperationOptions, TargetsObject, WithChainingOptions {
     newRDN?: string | RelativeDistinguishedName;
     deleteOldRDN?: boolean;
     newSuperior?: DirectoryName;
 }
 
 export
-interface ChangePasswordOptions extends DSPOperationOptions, TargetsObject, ChainingOptions {
+interface ChangePasswordOptions
+extends DSPOperationOptions, TargetsObject, WithChainingOptions {
     oldPassword: string | UserPwd;
     newPassword: string | UserPwd;
 }
 
 export
-interface AdministerPasswordOptions extends DSPOperationOptions, TargetsObject, ChainingOptions {
+interface AdministerPasswordOptions
+extends DSPOperationOptions, TargetsObject, WithChainingOptions {
     newPassword: string | UserPwd;
 }
 
 export
-interface LDAPTransportOptions extends CommonArguments, DSPOperationOptions, TargetsObject, ChainingOptions {
+interface LDAPTransportOptions
+extends CommonArguments, DSPOperationOptions, TargetsObject, WithChainingOptions {
     ldapMessage: LDAPMessage;
     linkId?: LinkId;
 }
 
 export
-interface LinkedLDAPOptions  extends CommonArguments, DSPOperationOptions, TargetsObject, ChainingOptions {
+interface LinkedLDAPOptions
+extends CommonArguments, DSPOperationOptions, TargetsObject, WithChainingOptions {
     ldapMessage: LDAPMessage;
     linkId: LinkId;
     returnToClient?: BOOLEAN;
@@ -679,15 +639,7 @@ function chaining_arguments_from (ca: ChainingOptions): ChainingArguments {
         ca.returnCrossRefs,
         ca.referenceType,
         ca.info,
-        ca.timeLimit
-            ? ((typeof ca.timeLimit === "object")
-                ? {
-                    generalizedTime: ca.timeLimit,
-                }
-                : {
-                    generalizedTime: addSeconds(new Date(), ca.timeLimit),
-                })
-            : undefined,
+        ca.timeLimit,
         ca.securityParameters,
         ca.entryOnly,
         ca.uniqueIdentifier,
@@ -748,14 +700,14 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 [],
                 svc,
                 sec,
-                undefined,
-                undefined,
-                undefined,
+                params.requestor,
+                params.operationProgress,
+                params.aliasedRDNs,
                 critex_from(params.criticalExtensions),
-                undefined,
-                undefined,
-                undefined,
-                undefined,
+                ref_type_from(params.referenceType),
+                params.entryOnly,
+                params.exclusions,
+                params.nameResolveOnMaster,
                 params.operationContexts,
                 params.familyGrouping,
             );
@@ -766,7 +718,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 : {
                     unsigned: data,
                 };
-            const chaining: ChainingArguments = chaining_arguments_from(params);
+            const chaining: ChainingArguments = chaining_arguments_from(params.chaining);
             const chained = new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
                 chaining,
                 read.encoderFor["&ArgumentType"]!(arg, DER),
@@ -816,14 +768,14 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 [],
                 svc,
                 sec,
-                undefined,
-                undefined,
-                undefined,
+                params.requestor,
+                params.operationProgress,
+                params.aliasedRDNs,
                 critex_from(params.criticalExtensions),
-                undefined,
-                undefined,
-                undefined,
-                undefined,
+                ref_type_from(params.referenceType),
+                params.entryOnly,
+                params.exclusions,
+                params.nameResolveOnMaster,
                 params.operationContexts,
                 params.familyGrouping,
             );
@@ -834,7 +786,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 : {
                     unsigned: data,
                 };
-            const chaining: ChainingArguments = chaining_arguments_from(params);
+            const chaining: ChainingArguments = chaining_arguments_from(params.chaining);
             const chained = new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
                 chaining,
                 compare.encoderFor["&ArgumentType"]!(arg, DER),
@@ -921,14 +873,14 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 [],
                 svc,
                 sec,
-                undefined,
-                undefined,
-                undefined,
+                params.requestor,
+                params.operationProgress,
+                params.aliasedRDNs,
                 critex_from(params.criticalExtensions),
-                undefined,
-                undefined,
-                undefined,
-                undefined,
+                ref_type_from(params.referenceType),
+                params.entryOnly,
+                params.exclusions,
+                params.nameResolveOnMaster,
                 params.operationContexts,
                 params.familyGrouping,
             );
@@ -939,7 +891,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 : {
                     unsigned: data,
                 };
-            const chaining: ChainingArguments = chaining_arguments_from(params);
+            const chaining: ChainingArguments = chaining_arguments_from(params.chaining);
             const chained = new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
                 chaining,
                 list.encoderFor["&ArgumentType"]!(arg, DER),
@@ -1051,14 +1003,14 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 [],
                 svc,
                 sec,
-                undefined,
-                undefined,
-                undefined,
+                params.requestor,
+                params.operationProgress,
+                params.aliasedRDNs,
                 critex_from(params.criticalExtensions),
-                undefined,
-                undefined,
-                undefined,
-                undefined,
+                ref_type_from(params.referenceType),
+                params.entryOnly,
+                params.exclusions,
+                params.nameResolveOnMaster,
                 params.operationContexts,
                 params.familyGrouping,
             );
@@ -1069,7 +1021,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 : {
                     unsigned: data,
                 };
-            const chaining: ChainingArguments = chaining_arguments_from(params);
+            const chaining: ChainingArguments = chaining_arguments_from(params.chaining);
             const chained = new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
                 chaining,
                 search.encoderFor["&ArgumentType"]!(arg, DER),
@@ -1120,14 +1072,14 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 [],
                 svc,
                 sec,
-                undefined, // requestor
-                undefined,
-                undefined,
+                params.requestor,
+                params.operationProgress,
+                params.aliasedRDNs,
                 critex_from(params.criticalExtensions),
-                undefined,
-                undefined,
-                undefined,
-                undefined,
+                ref_type_from(params.referenceType),
+                params.entryOnly,
+                params.exclusions,
+                params.nameResolveOnMaster,
                 params.operationContexts,
                 params.familyGrouping,
             );
@@ -1138,7 +1090,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 : {
                     unsigned: data,
                 };
-            const chaining: ChainingArguments = chaining_arguments_from(params);
+            const chaining: ChainingArguments = chaining_arguments_from(params.chaining);
             const chained = new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
                 chaining,
                 addEntry.encoderFor["&ArgumentType"]!(arg, DER),
@@ -1187,14 +1139,14 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 [],
                 svc,
                 sec,
-                undefined, // requestor
-                undefined,
-                undefined,
+                params.requestor,
+                params.operationProgress,
+                params.aliasedRDNs,
                 critex_from(params.criticalExtensions),
-                undefined,
-                undefined,
-                undefined,
-                undefined,
+                ref_type_from(params.referenceType),
+                params.entryOnly,
+                params.exclusions,
+                params.nameResolveOnMaster,
                 params.operationContexts,
                 params.familyGrouping,
             );
@@ -1205,7 +1157,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 : {
                     unsigned: data,
                 };
-            const chaining: ChainingArguments = chaining_arguments_from(params);
+            const chaining: ChainingArguments = chaining_arguments_from(params.chaining);
             const chained = new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
                 chaining,
                 removeEntry.encoderFor["&ArgumentType"]!(arg, DER),
@@ -1256,14 +1208,14 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 [],
                 svc,
                 sec,
-                undefined, // requestor
-                undefined,
-                undefined,
+                params.requestor,
+                params.operationProgress,
+                params.aliasedRDNs,
                 critex_from(params.criticalExtensions),
-                undefined,
-                undefined,
-                undefined,
-                undefined,
+                ref_type_from(params.referenceType),
+                params.entryOnly,
+                params.exclusions,
+                params.nameResolveOnMaster,
                 params.operationContexts,
                 params.familyGrouping,
             );
@@ -1274,7 +1226,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 : {
                     unsigned: data,
                 };
-            const chaining: ChainingArguments = chaining_arguments_from(params);
+            const chaining: ChainingArguments = chaining_arguments_from(params.chaining);
             const chained = new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
                 chaining,
                 modifyEntry.encoderFor["&ArgumentType"]!(arg, DER),
@@ -1348,14 +1300,14 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 [],
                 svc,
                 sec,
-                undefined, // requestor
-                undefined,
-                undefined,
+                params.requestor,
+                params.operationProgress,
+                params.aliasedRDNs,
                 critex_from(params.criticalExtensions),
-                undefined,
-                undefined,
-                undefined,
-                undefined,
+                ref_type_from(params.referenceType),
+                params.entryOnly,
+                params.exclusions,
+                params.nameResolveOnMaster,
                 params.operationContexts,
                 params.familyGrouping,
             );
@@ -1366,7 +1318,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 : {
                     unsigned: data,
                 };
-            const chaining: ChainingArguments = chaining_arguments_from(params);
+            const chaining: ChainingArguments = chaining_arguments_from(params.chaining);
             const chained = new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
                 chaining,
                 modifyDN.encoderFor["&ArgumentType"]!(arg, DER),
@@ -1428,7 +1380,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 : {
                     unsigned: data,
                 };
-            const chaining: ChainingArguments = chaining_arguments_from(params);
+            const chaining: ChainingArguments = chaining_arguments_from(params.chaining);
             const chained = new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
                 chaining,
                 changePassword.encoderFor["&ArgumentType"]!(arg, DER),
@@ -1485,7 +1437,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 : {
                     unsigned: data,
                 };
-            const chaining: ChainingArguments = chaining_arguments_from(params);
+            const chaining: ChainingArguments = chaining_arguments_from(params.chaining);
             const chained = new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
                 chaining,
                 administerPassword.encoderFor["&ArgumentType"]!(arg, DER),
@@ -1536,14 +1488,14 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 [],
                 svc,
                 sec,
-                undefined,
-                undefined,
-                undefined,
+                params.requestor,
+                params.operationProgress,
+                params.aliasedRDNs,
                 critex_from(params.criticalExtensions),
-                undefined,
-                undefined, // TODO: Fill in DAP arguments from DSP arguments.
-                undefined,
-                undefined,
+                ref_type_from(params.referenceType),
+                params.entryOnly,
+                params.exclusions,
+                params.nameResolveOnMaster,
                 params.operationContexts,
                 params.familyGrouping,
             );
@@ -1554,7 +1506,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 : {
                     unsigned: data,
                 };
-            const chaining: ChainingArguments = chaining_arguments_from(params);
+            const chaining: ChainingArguments = chaining_arguments_from(params.chaining);
             const chained = new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
                 chaining,
                 ldapTransport.encoderFor["&ArgumentType"]!(arg, DER),
@@ -1606,14 +1558,14 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 [],
                 svc,
                 sec,
-                undefined,
-                undefined,
-                undefined,
+                params.requestor,
+                params.operationProgress,
+                params.aliasedRDNs,
                 critex_from(params.criticalExtensions),
-                undefined,
-                undefined,
-                undefined,
-                undefined,
+                ref_type_from(params.referenceType),
+                params.entryOnly,
+                params.exclusions,
+                params.nameResolveOnMaster,
                 params.operationContexts,
                 params.familyGrouping,
             );
@@ -1624,7 +1576,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 : {
                     unsigned: data,
                 };
-            const chaining: ChainingArguments = chaining_arguments_from(params);
+            const chaining: ChainingArguments = chaining_arguments_from(params.chaining);
             const chained = new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
                 chaining,
                 linkedLDAP.encoderFor["&ArgumentType"]!(arg, DER),

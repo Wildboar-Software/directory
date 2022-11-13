@@ -113,17 +113,8 @@ import {
     Name,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
 import {
-    DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import {
     EntryInformationSelection,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
-import {
-    ContextSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ContextSelection.ta";
-import {
-    FamilyGrouping,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
 import {
     ASN1Element,
     BIT_STRING,
@@ -152,7 +143,19 @@ import { AccessPoint } from "@wildboar/x500/src/lib/modules/DistributedOperation
 import { EntryModification } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryModification.ta";
 import { RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
 import { BER, DER } from "asn1-ts/dist/node/functional";
-import { destringifyDN, generateSIGNED } from "./utils";
+import {
+    destringifyDN,
+    generateSIGNED,
+    ref_type_from,
+    CommonArguments,
+    BitStringOption,
+    OIDOption,
+    CertPathOption,
+    DirectoryName,
+    SecurityOptions,
+    ServiceOptions,
+    TargetsObject,
+} from "./utils";
 import { ServiceControls } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
 import {
     ServiceControlOptions_preferChaining,
@@ -183,7 +186,6 @@ import {
 import {
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
-import { PkiPath } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/PkiPath.ta";
 import { KeyObject, randomBytes } from "node:crypto";
 import { UserPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
 import { strict as assert } from "node:assert";
@@ -231,66 +233,7 @@ export type BindArgument = typeof directoryBind["&ArgumentType"];
 export type BindResult = typeof directoryBind["&ResultType"];
 export type DAPBindParameters = BindParameters<BindArgument>;
 export type DAPBindOutcome = BindOutcome<BindResult>;
-export type DirectoryName = string | Name | DistinguishedName;
-export type BitStringOption = string | BIT_STRING;
-export type OIDOption = string | OBJECT_IDENTIFIER;
-export type CertPathOption =
-    | CertificationPath
-    | PkiPath
-    | string // File path string
-    ;
 
-export
-interface ServiceOptions {
-    preferChaining?: boolean;
-    chainingProhibited?: boolean;
-    localScope?: boolean;
-    dontUseCopy?: boolean;
-    dontDereferenceAliases?: boolean;
-    subentries?: boolean;
-    copyShallDo?: boolean;
-    partialNameResolution?: boolean;
-    manageDSAIT?: boolean;
-    noSubtypeMatch?: boolean;
-    noSubtypeSelection?: boolean;
-    countFamily?: boolean;
-    dontSelectFriends?: boolean;
-    dontMatchFriends?: boolean;
-    allowWriteableCopy?: boolean;
-    priority?: number;
-    timeLimit?: number;
-    sizeLimit?: number;
-    scopeOfReferral?: number;
-    attributeSizeLimit?: number;
-    manageDSAITPlaneRef?: {
-        dsaName: DirectoryName;
-        agreementID: {
-            identifier: number;
-            version: number;
-        };
-    };
-    serviceType?: OIDOption;
-    userClass?: number;
-}
-
-export
-interface SecurityOptions {
-    certification_path?: CertPathOption;
-    requestSignedResult?: boolean;
-    requestSignedError?: boolean;
-}
-
-export
-interface CommonArguments extends ServiceOptions, SecurityOptions {
-    criticalExtensions?: BitStringOption;
-    operationContexts?: ContextSelection;
-    familyGrouping?: FamilyGrouping;
-}
-
-export
-interface TargetsObject {
-    object: DirectoryName;
-}
 
 export
 interface SelectionOptions extends EntryInformationSelection {
@@ -654,14 +597,14 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                 [],
                 svc,
                 sec,
-                undefined,
-                undefined,
-                undefined,
+                params.requestor,
+                params.operationProgress,
+                params.aliasedRDNs,
                 critex_from(params.criticalExtensions),
-                undefined,
-                undefined,
-                undefined,
-                undefined,
+                ref_type_from(params.referenceType),
+                params.entryOnly,
+                params.exclusions,
+                params.nameResolveOnMaster,
                 params.operationContexts,
                 params.familyGrouping,
             );
@@ -712,14 +655,14 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                 [],
                 svc,
                 sec,
-                undefined,
-                undefined,
-                undefined,
+                params.requestor,
+                params.operationProgress,
+                params.aliasedRDNs,
                 critex_from(params.criticalExtensions),
-                undefined,
-                undefined,
-                undefined,
-                undefined,
+                ref_type_from(params.referenceType),
+                params.entryOnly,
+                params.exclusions,
+                params.nameResolveOnMaster,
                 params.operationContexts,
                 params.familyGrouping,
             );
@@ -807,14 +750,14 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                 [],
                 svc,
                 sec,
-                undefined,
-                undefined,
-                undefined,
+                params.requestor,
+                params.operationProgress,
+                params.aliasedRDNs,
                 critex_from(params.criticalExtensions),
-                undefined,
-                undefined,
-                undefined,
-                undefined,
+                ref_type_from(params.referenceType),
+                params.entryOnly,
+                params.exclusions,
+                params.nameResolveOnMaster,
                 params.operationContexts,
                 params.familyGrouping,
             );
@@ -927,14 +870,14 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                 [],
                 svc,
                 sec,
-                undefined,
-                undefined,
-                undefined,
+                params.requestor,
+                params.operationProgress,
+                params.aliasedRDNs,
                 critex_from(params.criticalExtensions),
-                undefined,
-                undefined,
-                undefined,
-                undefined,
+                ref_type_from(params.referenceType),
+                params.entryOnly,
+                params.exclusions,
+                params.nameResolveOnMaster,
                 params.operationContexts,
                 params.familyGrouping,
             );
@@ -986,14 +929,14 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                 [],
                 svc,
                 sec,
-                undefined, // requestor
-                undefined,
-                undefined,
+                params.requestor,
+                params.operationProgress,
+                params.aliasedRDNs,
                 critex_from(params.criticalExtensions),
-                undefined,
-                undefined,
-                undefined,
-                undefined,
+                ref_type_from(params.referenceType),
+                params.entryOnly,
+                params.exclusions,
+                params.nameResolveOnMaster,
                 params.operationContexts,
                 params.familyGrouping,
             );
@@ -1043,14 +986,14 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                 [],
                 svc,
                 sec,
-                undefined, // requestor
-                undefined,
-                undefined,
+                params.requestor,
+                params.operationProgress,
+                params.aliasedRDNs,
                 critex_from(params.criticalExtensions),
-                undefined,
-                undefined,
-                undefined,
-                undefined,
+                ref_type_from(params.referenceType),
+                params.entryOnly,
+                params.exclusions,
+                params.nameResolveOnMaster,
                 params.operationContexts,
                 params.familyGrouping,
             );
@@ -1102,14 +1045,14 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                 [],
                 svc,
                 sec,
-                undefined, // requestor
-                undefined,
-                undefined,
+                params.requestor,
+                params.operationProgress,
+                params.aliasedRDNs,
                 critex_from(params.criticalExtensions),
-                undefined,
-                undefined,
-                undefined,
-                undefined,
+                ref_type_from(params.referenceType),
+                params.entryOnly,
+                params.exclusions,
+                params.nameResolveOnMaster,
                 params.operationContexts,
                 params.familyGrouping,
             );
@@ -1184,14 +1127,14 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                 [],
                 svc,
                 sec,
-                undefined, // requestor
-                undefined,
-                undefined,
+                params.requestor,
+                params.operationProgress,
+                params.aliasedRDNs,
                 critex_from(params.criticalExtensions),
-                undefined,
-                undefined,
-                undefined,
-                undefined,
+                ref_type_from(params.referenceType),
+                params.entryOnly,
+                params.exclusions,
+                params.nameResolveOnMaster,
                 params.operationContexts,
                 params.familyGrouping,
             );

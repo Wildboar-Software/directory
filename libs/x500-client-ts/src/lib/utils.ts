@@ -1,4 +1,4 @@
-import { ASN1Element, ObjectIdentifier, OBJECT_IDENTIFIER, unpackBits } from "asn1-ts";
+import { ASN1Element, ENUMERATED, BIT_STRING, ObjectIdentifier, OBJECT_IDENTIFIER, unpackBits } from "asn1-ts";
 import destringifyLDAPDN from "@wildboar/ldap/src/lib/destringifiers/RDNSequence";
 import type {
     DistinguishedName,
@@ -67,6 +67,33 @@ import {
 import {
     id_dsa_with_sha256,
 } from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-dsa-with-sha256.va";
+import {
+    ReferenceType_superior,
+    ReferenceType_subordinate,
+    ReferenceType_cross,
+    ReferenceType_nonSpecificSubordinate,
+    ReferenceType_supplier,
+    ReferenceType_master,
+    ReferenceType_immediateSuperior,
+    ReferenceType_self,
+    ReferenceType_ditBridge,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
+import type {
+    CommonArgumentsSeq,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArgumentsSeq.ta";
+import { PkiPath } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/PkiPath.ta";
+import {
+    ContextSelection,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ContextSelection.ta";
+import {
+    FamilyGrouping,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
+import {
+    CertificationPath,
+} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
+import {
+    Name,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
 
 /**
  * @summary A mapping of NodeJS hash name strings to their equivalent algorithm object identifiers
@@ -269,3 +296,128 @@ function generateSIGNED <T> (
     };
 }
 
+export type ReferenceType =
+    | "superior"
+    | "supr"
+    | "subordinate"
+    | "subr"
+    | "cross"
+    | "xr"
+    | "nonSpecificSubordinate"
+    | "nssr"
+    | "supplier"
+    | "master"
+    | "immediateSuperior"
+    | "immSupr"
+    | "self"
+    | "ditBridge"
+    | 1
+    | 2
+    | 3
+    | 4
+    | 5
+    | 6
+    | 7
+    | 8
+    | 9
+    ;
+
+export
+function ref_type_from (rt?: ReferenceType): ENUMERATED | undefined {
+    if (!rt) {
+        return undefined;
+    }
+    return ({
+        "superior": ReferenceType_superior,
+        "supr": ReferenceType_superior,
+        "subordinate": ReferenceType_subordinate,
+        "subr": ReferenceType_subordinate,
+        "cross": ReferenceType_cross,
+        "xr": ReferenceType_cross,
+        "nonSpecificSubordinate": ReferenceType_nonSpecificSubordinate,
+        "nssr": ReferenceType_nonSpecificSubordinate,
+        "supplier": ReferenceType_supplier,
+        "master": ReferenceType_master,
+        "immediateSuperior": ReferenceType_immediateSuperior,
+        "immSupr": ReferenceType_immediateSuperior,
+        "self": ReferenceType_self,
+        "ditBridge": ReferenceType_ditBridge,
+        1: ReferenceType_superior,
+        2: ReferenceType_subordinate,
+        3: ReferenceType_cross,
+        4: ReferenceType_nonSpecificSubordinate,
+        5: ReferenceType_supplier,
+        6: ReferenceType_master,
+        7: ReferenceType_immediateSuperior,
+        8: ReferenceType_self,
+        9: ReferenceType_ditBridge,
+    })[rt];
+}
+
+export
+interface ServiceOptions {
+    preferChaining?: boolean;
+    chainingProhibited?: boolean;
+    localScope?: boolean;
+    dontUseCopy?: boolean;
+    dontDereferenceAliases?: boolean;
+    subentries?: boolean;
+    copyShallDo?: boolean;
+    partialNameResolution?: boolean;
+    manageDSAIT?: boolean;
+    noSubtypeMatch?: boolean;
+    noSubtypeSelection?: boolean;
+    countFamily?: boolean;
+    dontSelectFriends?: boolean;
+    dontMatchFriends?: boolean;
+    allowWriteableCopy?: boolean;
+    priority?: number;
+    timeLimit?: number;
+    sizeLimit?: number;
+    scopeOfReferral?: number;
+    attributeSizeLimit?: number;
+    manageDSAITPlaneRef?: {
+        dsaName: DirectoryName;
+        agreementID: {
+            identifier: number;
+            version: number;
+        };
+    };
+    serviceType?: OIDOption;
+    userClass?: number;
+}
+
+export
+interface SecurityOptions {
+    certification_path?: CertPathOption;
+    requestSignedResult?: boolean;
+    requestSignedError?: boolean;
+}
+
+export
+interface CommonArguments extends ServiceOptions, SecurityOptions {
+    criticalExtensions?: BitStringOption;
+    operationContexts?: ContextSelection;
+    familyGrouping?: FamilyGrouping;
+    requestor?: CommonArgumentsSeq["requestor"];
+    operationProgress?: CommonArgumentsSeq["operationProgress"];
+    aliasedRDNs?: CommonArgumentsSeq["aliasedRDNs"];
+    referenceType?: ReferenceType;
+    entryOnly?: CommonArgumentsSeq["entryOnly"];
+    exclusions?: CommonArgumentsSeq["exclusions"];
+    nameResolveOnMaster?: CommonArgumentsSeq["nameResolveOnMaster"];
+}
+
+export
+interface TargetsObject {
+    object: DirectoryName;
+}
+
+export type DirectoryName = string | Name | DistinguishedName;
+export type BitStringOption = string | BIT_STRING;
+export type OIDOption = string | OBJECT_IDENTIFIER;
+export type CertPathOption =
+    | CertificationPath
+    | PkiPath
+    | string // File path string
+    ;
