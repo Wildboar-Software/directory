@@ -398,6 +398,7 @@
             },
             "tags": []
         },
+        "x500-client-ts": "libs/x500-client-ts",
         "x500-functional-tests": {
             "$schema": "../../node_modules/nx/schemas/project-schema.json",
             "root": "libs/x500-functional-tests",

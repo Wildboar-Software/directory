@@ -55,9 +55,9 @@ enum RejectReason {
 }
 
 export
-interface BindParameters {
+interface BindParameters <ParameterType = ASN1Element> {
     protocol_id: OBJECT_IDENTIFIER,
-    parameter: ASN1Element,
+    parameter: ParameterType,
     calling_ae_title?: GeneralName,
     calling_ap_invocation_identifier?: INTEGER,
     calling_ae_invocation_identifier?: INTEGER,
@@ -68,38 +68,39 @@ interface BindParameters {
 }
 
 export
-interface BindResultParameters {
+interface BindResultParameters <ParameterType = ASN1Element> {
     protocol_id: OBJECT_IDENTIFIER,
-    parameter: ASN1Element,
+    parameter: ParameterType,
     responding_ae_title?: GeneralName,
     responding_ap_invocation_identifier?: INTEGER,
     responding_ae_invocation_identifier?: INTEGER,
 }
 
 export
-interface BindErrorParameters extends BindResultParameters {
+interface BindErrorParameters <ParameterType = ASN1Element>
+    extends BindResultParameters<ParameterType> {
 
 }
 
 export
-interface OperationAtom {
+interface OperationAtom <ParameterType = ASN1Element> {
     invoke_id: InvokeId,
     code: Code,
-    parameter: ASN1Element,
+    parameter: ParameterType,
 }
 
 export
-interface RequestParameters extends OperationAtom {
+interface RequestParameters <ParameterType = ASN1Element> extends OperationAtom<ParameterType> {
     linked_id?: InvokeId,
 }
 
 export
-interface ResultParameters extends OperationAtom {
+interface ResultParameters <ParameterType = ASN1Element> extends OperationAtom<ParameterType> {
 
 }
 
 export
-interface ErrorParameters extends OperationAtom {
+interface ErrorParameters <ParameterType = ASN1Element> extends OperationAtom<ParameterType> {
 
 }
 
@@ -130,11 +131,88 @@ class ROSETransportEventEmitter extends TypedEmitter<ROSETransportEvents> {
 }
 
 export
-interface ROSETransport {
+interface ROSEInvocationEvents {
+    [invoke_id: string]: (outcome: OperationOutcome) => unknown;
+}
+
+export
+class ROSEInvocationEventEmitter extends TypedEmitter<ROSEInvocationEvents> {
+
+}
+
+export
+type UniversalOutcome =
+    | {
+        abort: AbortReason;
+    }
+    | {
+        timeout: true;
+    }
+    | {
+        other: Record<string, unknown>;
+    }
+    ;
+
+export
+type BindOutcome <BindResultType = ASN1Element>
+ =
+    | {
+        result: BindResultParameters<BindResultType>;
+    }
+    | {
+        error: BindErrorParameters;
+    }
+    | UniversalOutcome
+    ;
+
+export
+type OperationOutcome <ResultType = ASN1Element> =
+    | {
+        result: ResultParameters<ResultType>;
+    }
+    | {
+        error: ErrorParameters;
+    }
+    | {
+        reject: RejectParameters;
+    }
+    | UniversalOutcome
+    ;
+
+export
+type UnbindOutcome =
+    | {
+        result: ASN1Element | null,
+    }
+    | {
+        error: ASN1Element | null,
+    }
+    | UniversalOutcome
+    ;
+
+export
+interface ROSETransportOptions {
+    operation_timeout_ms?: number;
+};
+
+export
+interface AsyncROSEClient <BindArgumentType = ASN1Element, BindResultType = ASN1Element> {
+    // Async/Await Client API
+    bind: (params: BindParameters<BindArgumentType>, ...args: any[]) => Promise<BindOutcome<BindResultType>>;
+    request: (params: RequestParameters) => Promise<OperationOutcome>;
+    unbind: (param?: ASN1Element) => Promise<UnbindOutcome>;
+}
+
+export
+interface ROSETransport extends AsyncROSEClient {
     socket: Socket | TLSSocket | null;
     protocol?: OBJECT_IDENTIFIER;
     events: ROSETransportEventEmitter;
+    invocation_events: ROSEInvocationEventEmitter;
     is_bound: boolean;
+    options?: ROSETransportOptions;
+
+    // Low-Level API
     write_bind: (params: BindParameters) => unknown;
     write_bind_result: (params: BindResultParameters) => unknown;
     write_bind_error: (params: BindErrorParameters) => unknown;
@@ -150,9 +228,10 @@ interface ROSETransport {
 
 export
 function new_rose_transport (socket?: Socket | TLSSocket): ROSETransport {
-    return {
+    const rose: ROSETransport = {
         socket: socket ?? null,
         events: new ROSETransportEventEmitter(),
+        invocation_events: new ROSEInvocationEventEmitter(),
         is_bound: false,
         write_bind: () => {},
         write_bind_result: () => {},
@@ -165,5 +244,84 @@ function new_rose_transport (socket?: Socket | TLSSocket): ROSETransport {
         write_unbind_result: () => {},
         write_unbind_error: () => {},
         write_abort: () => {},
+        bind: (params) => new Promise((resolve) => {
+            const done = (): void => {
+                rose.events.off("bind_result", result_handler);
+                rose.events.off("bind_error", error_handler)
+                rose.events.off("abort", abort_handler);
+                if (timeout) {
+                    clearTimeout(timeout);
+                    timeout = undefined;
+                }
+            };
+            const result_handler = (result: BindResultParameters) => (done(), resolve({ result }));
+            const error_handler = (error: BindErrorParameters) => (done(), resolve({ error }));
+            const abort_handler = (reason: AbortReason) => (done(), resolve({ abort: reason }));
+            let timeout: NodeJS.Timeout | undefined;
+            rose.events.once("bind_result", result_handler);
+            rose.events.once("bind_error", error_handler);
+            rose.events.once("abort", abort_handler);
+            if (rose.options?.operation_timeout_ms) {
+                timeout = setTimeout(
+                    () => (done(), resolve({ timeout: true })),
+                    rose.options.operation_timeout_ms,
+                );
+            }
+            rose.write_bind(params);
+        }),
+        request: async (params) => new Promise((resolve) => {
+            const done = (): void => {
+                rose.invocation_events.off(params.invoke_id.toString(), outcome_handler);
+                rose.events.off("abort", abort_handler);
+                if (timeout) {
+                    clearTimeout(timeout);
+                    timeout = undefined;
+                }
+            };
+            const outcome_handler = (outcome: OperationOutcome) => (done(), resolve(outcome));
+            const abort_handler = (reason: AbortReason) => (done(), resolve({ abort: reason }));
+            let timeout: NodeJS.Timeout | undefined;
+            rose.invocation_events.once(params.invoke_id.toString(), outcome_handler);
+            rose.events.once("abort", abort_handler);
+            if (rose.options?.operation_timeout_ms) {
+                timeout = setTimeout(
+                    () => (done(), resolve({ timeout: true })),
+                    rose.options.operation_timeout_ms,
+                );
+            }
+            rose.write_request(params);
+        }),
+        unbind: async (param) => new Promise((resolve) => {
+            const done = (): void => {
+                rose.events.off("unbind_result", result_handler);
+                rose.events.off("unbind_error", error_handler)
+                rose.events.off("abort", abort_handler);
+                if (timeout) {
+                    clearTimeout(timeout);
+                    timeout = undefined;
+                }
+            };
+            const result_handler = (result?: ASN1Element) => (done(), resolve({ result: result ?? null }));
+            const error_handler = (error?: ASN1Element) => (done(), resolve({ error: error ?? null }));
+            const abort_handler = (reason: AbortReason) => (done(), resolve({ abort: reason }));
+            let timeout: NodeJS.Timeout | undefined;
+            rose.events.once("unbind_result", result_handler);
+            rose.events.once("unbind_error", error_handler);
+            rose.events.once("abort", abort_handler);
+            if (rose.options?.operation_timeout_ms) {
+                timeout = setTimeout(
+                    () => (done(), resolve({ timeout: true })),
+                    rose.options.operation_timeout_ms,
+                );
+            }
+            rose.write_unbind(param);
+        }),
     };
+    rose.events.on("result", (result) => rose
+        .invocation_events.emit(result.invoke_id.toString(), { result }));
+    rose.events.on("error_", (error) => rose
+        .invocation_events.emit(error.invoke_id.toString(), { error }));
+    rose.events.on("reject", (reject) => rose
+        .invocation_events.emit(reject.invoke_id.toString(), { reject }));
+    return rose;
 }
