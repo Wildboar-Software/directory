@@ -94,6 +94,14 @@ import {
 import {
     Name,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
+import { ROSETransport } from "@wildboar/rose-transport";
+import { createConnection } from "node:net";
+import { TLSSocket } from "node:tls";
+import { IDMConnection } from "@wildboar/idm";
+import { rose_transport_from_idm_socket } from "./idm";
+import { rose_transport_from_itot_stack } from "./itot";
+import { create_itot_stack } from "@wildboar/osi-net";
+import { TLSSocketOptions } from "tls";
 
 /**
  * @summary A mapping of NodeJS hash name strings to their equivalent algorithm object identifiers
@@ -421,3 +429,57 @@ export type CertPathOption =
     | PkiPath
     | string // File path string
     ;
+
+export
+function rose_from_url (
+    url: string | URL,
+    tlsOptions?: TLSSocketOptions,
+): ROSETransport | null {
+    const u: URL = (typeof url === "string")
+        ? new URL(url)
+        : url;
+    const protocol = u.protocol.replace(/:/g, "").replace(/\//g, "").toLowerCase();
+    const host = u.host;
+    const port = Number.parseInt(u.port);
+    if (!Number.isSafeInteger(port) || (port < 0 )|| (port > 65535)) {
+        return null;
+    }
+    switch (protocol) {
+        case ("idm"): {
+            const socket = createConnection({
+                host,
+                port,
+            });
+            const idm = new IDMConnection(socket, tlsOptions);
+            return rose_transport_from_idm_socket(idm);
+        }
+        case ("idms"): {
+            const socket = createConnection({
+                host,
+                port,
+            });
+            const tlsSocket = new TLSSocket(socket, tlsOptions);
+            const idm = new IDMConnection(tlsSocket, tlsOptions);
+            return rose_transport_from_idm_socket(idm);
+        }
+        case ("itot"): {
+            const socket = createConnection({
+                host,
+                port,
+            });
+            const itot = create_itot_stack(socket, true, true);
+            return rose_transport_from_itot_stack(itot);
+        }
+        case ("itots"): {
+            const socket = createConnection({
+                host,
+                port,
+            });
+            const tlsSocket = new TLSSocket(socket, tlsOptions);
+            const itot = create_itot_stack(tlsSocket, true, true);
+            return rose_transport_from_itot_stack(itot);
+        }
+        default: return null;
+    }
+
+}

@@ -258,10 +258,13 @@ import { LinkId } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/
 import { LdapArgumentData, _encode_LdapArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LdapArgumentData.ta";
 import { LdapArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LdapArgument.ta";
 import { LinkedArgumentData, _encode_LinkedArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LinkedArgumentData.ta";
+import {
+    dSABind,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/dSABind.oa";
 
 export type ChainedArg = typeof chainedRead["&ArgumentType"];
-export type BindArgument = typeof directoryBind["&ArgumentType"];
-export type BindResult = typeof directoryBind["&ResultType"];
+export type BindArgument = typeof dSABind["&ArgumentType"];
+export type BindResult = typeof dSABind["&ResultType"];
 export type DSPBindParameters = BindParameters<BindArgument>;
 export type DSPBindOutcome = BindOutcome<BindResult>;
 
@@ -438,7 +441,7 @@ interface DSPClient extends AsyncROSEClient<BindArgument, BindResult>, DSPOption
     rose: ROSETransport;
 
     // From AsyncROSEClient
-    bind: (params: DSPBindParameters, options?: DSPOperationOptions) => Promise<DSPBindOutcome>;
+    bind: (params: DSPBindParameters) => Promise<DSPBindOutcome>;
     request: (params: RequestParameters) => Promise<OperationOutcome>;
     unbind: () => Promise<UnbindOutcome>;
 

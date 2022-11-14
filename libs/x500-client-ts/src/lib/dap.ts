@@ -371,7 +371,7 @@ interface DAPClient extends AsyncROSEClient<BindArgument, BindResult>, DAPOption
     rose: ROSETransport;
 
     // From AsyncROSEClient
-    bind: (params: DAPBindParameters, options?: DAPOperationOptions) => Promise<DAPBindOutcome>;
+    bind: (params: DAPBindParameters) => Promise<DAPBindOutcome>;
     request: (params: RequestParameters) => Promise<OperationOutcome>;
     unbind: () => Promise<UnbindOutcome>;
 
