@@ -956,9 +956,11 @@ function attachUnboundEventListenersToITOTConnection (
         try {
             const itot = create_itot_stack(
                 c,
-                false,
-                false,
-                ctx.config.itot.abort_timeout_ms,
+                {
+                    sessionCaller: false,
+                    transportCaller: false,
+                    abort_timeout_ms: ctx.config.itot.abort_timeout_ms,
+                },
             );
             attachUnboundEventListenersToITOTConnection(ctx, c, source, itot, startTimes);
         } catch (e) {

@@ -1,6 +1,6 @@
 import { TypedEmitter } from 'tiny-typed-emitter';
 import type { Socket } from "node:net";
-import type { TLSSocket } from "node:tls";
+import { TLSSocket } from "node:tls";
 import type { ASN1Element, OBJECT_IDENTIFIER, INTEGER } from "asn1-ts";
 import type {
     GeneralName,
@@ -123,6 +123,8 @@ interface ROSETransportEvents {
     "unbind_result": (param?: ASN1Element) => unknown;
     "unbind_error": (param?: ASN1Element) => unknown;
     "abort": (param: AbortReason) => unknown;
+    "start_tls": () => unknown;
+    "start_tls_response": (code: number) => unknown; // Code is taken from IDM's `TLSResponse`.
 }
 
 export
@@ -191,6 +193,20 @@ type UnbindOutcome =
     ;
 
 export
+type StartTLSOutcome =
+    | {
+        response: number;
+    }
+    | {
+        not_supported_locally: null;
+    }
+    | {
+        already_in_use: null;
+    }
+    | UniversalOutcome
+    ;
+
+export
 interface ROSETransportOptions {
     operation_timeout_ms?: number;
 };
@@ -201,6 +217,7 @@ interface AsyncROSEClient <BindArgumentType = ASN1Element, BindResultType = ASN1
     bind: (params: BindParameters<BindArgumentType>, ...args: any[]) => Promise<BindOutcome<BindResultType>>;
     request: (params: RequestParameters) => Promise<OperationOutcome>;
     unbind: (param?: ASN1Element) => Promise<UnbindOutcome>;
+    startTLS?: () => Promise<StartTLSOutcome>;
 }
 
 export
@@ -224,6 +241,9 @@ interface ROSETransport extends AsyncROSEClient {
     write_unbind_result: (param?: ASN1Element) => unknown;
     write_unbind_error: (param?: ASN1Element) => unknown;
     write_abort: (reason: AbortReason) => unknown;
+
+    write_start_tls?: () => unknown;
+    write_tls_response?: () => unknown;
 }
 
 export
@@ -247,7 +267,7 @@ function new_rose_transport (socket?: Socket | TLSSocket): ROSETransport {
         bind: (params) => new Promise((resolve) => {
             const done = (): void => {
                 rose.events.off("bind_result", result_handler);
-                rose.events.off("bind_error", error_handler)
+                rose.events.off("bind_error", error_handler);
                 rose.events.off("abort", abort_handler);
                 if (timeout) {
                     clearTimeout(timeout);
@@ -294,7 +314,7 @@ function new_rose_transport (socket?: Socket | TLSSocket): ROSETransport {
         unbind: async (param) => new Promise((resolve) => {
             const done = (): void => {
                 rose.events.off("unbind_result", result_handler);
-                rose.events.off("unbind_error", error_handler)
+                rose.events.off("unbind_error", error_handler);
                 rose.events.off("abort", abort_handler);
                 if (timeout) {
                     clearTimeout(timeout);
@@ -315,6 +335,36 @@ function new_rose_transport (socket?: Socket | TLSSocket): ROSETransport {
                 );
             }
             rose.write_unbind(param);
+        }),
+        startTLS: async (): Promise<StartTLSOutcome> => new Promise((resolve) => {
+            if (!rose.write_start_tls) {
+                resolve({ not_supported_locally: null });
+                return;
+            }
+            if (rose.socket instanceof TLSSocket) {
+                resolve({ already_in_use: null });
+                return;
+            }
+            const done = (): void => {
+                rose.events.off("start_tls_response", response_handler);
+                rose.events.off("abort", abort_handler);
+                if (timeout) {
+                    clearTimeout(timeout);
+                    timeout = undefined;
+                }
+            };
+            let timeout: NodeJS.Timeout | undefined;
+            const response_handler = (code: number) => (done(), resolve({ response: code }));
+            const abort_handler = (reason: AbortReason) => (done(), resolve({ abort: reason }));
+            if (rose.options?.operation_timeout_ms) {
+                timeout = setTimeout(
+                    () => (done(), resolve({ timeout: true })),
+                    rose.options.operation_timeout_ms,
+                );
+            }
+            rose.events.once("start_tls_response", response_handler);
+            rose.events.once("abort", abort_handler);
+            rose.write_start_tls();
         }),
     };
     rose.events.on("result", (result) => rose

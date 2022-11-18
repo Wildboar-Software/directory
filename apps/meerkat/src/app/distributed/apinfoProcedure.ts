@@ -7,8 +7,6 @@ import { ChainingArguments } from "@wildboar/x500/src/lib/modules/DistributedOpe
 import type {
     Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import connect from "../net/connect";
-import { dsp_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dsp-ip.oa";
 import {
     chainedAbandon,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedAbandon.oa";
@@ -27,7 +25,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
 import type { ChainedRequest } from "@wildboar/x500/src/lib/types/ChainedRequest";
-import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import type { Chained } from "@wildboar/x500/src/lib/types/Chained";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import {
@@ -72,6 +69,9 @@ import { signChainedArgument } from "../pki/signChainedArgument";
 import { strict as assert } from "assert";
 import { verifySIGNED } from "../pki/verifySIGNED";
 import stringifyDN from "../x500/stringifyDN";
+import { bindForChaining } from "../net/bindToOtherDSA";
+import { randomUint } from "../utils/randomUint";
+import { OperationOutcome } from "@wildboar/rose-transport";
 
 /**
  * @summary The Access Point Information Procedure, as defined in ITU Recommendation X.518.
@@ -101,7 +101,7 @@ async function apinfoProcedure (
     state: OperationDispatcherState,
     signErrors: boolean,
     chainingProhibited: boolean,
-): Promise<ResultOrError | null> {
+): Promise<OperationOutcome | null> {
     const op = ("present" in state.invokeId)
         ? assn?.invocations.get(Number(state.invokeId.present))
         : undefined;
@@ -202,11 +202,8 @@ async function apinfoProcedure (
         }
         let connected: boolean = false;
         try {
-            const connection = await connect(ctx, ap, dsp_ip["&id"]!, {
-                tlsOptional: ctx.config.chaining.tlsOptional,
-                signErrors,
-            });
-            if (!connection) {
+            const dsp_client = await bindForChaining(ctx, assn, op, ap, false, signErrors);
+            if (!dsp_client) {
                 ctx.log.warn(ctx.i18n.t("log:could_not_establish_connection", {
                     ae: stringifyDN(ctx, ap.ae_title.rdnSequence),
                     iid: "present" in req.invokeId
@@ -225,12 +222,16 @@ async function apinfoProcedure (
             const payload: Chained = ctx.config.chaining.signChainedRequests
                 ? signChainedArgument(ctx, argument)
                 : argument;
-            const result = await connection.writeOperation({
-                opCode: req.opCode,
-                argument: chainedRead.encoderFor["&ArgumentType"]!(payload, DER),
+            const response = await dsp_client.rose.request({
+                invoke_id: {
+                    present: randomUint(),
+                },
+                code: req.opCode,
+                parameter: chainedRead.encoderFor["&ArgumentType"]!(payload, DER),
             });
-            if ("error" in result) {
-                const errcode: Code = result.errcode ?? { local: -1 };
+
+            if ("error" in response) {
+                const errcode: Code = response.error.code ?? { local: -1 };
                 if (compareCode(errcode, referral["&errorCode"]!)) {
                     /**
                      * Effectively, this means that the local policy is to
@@ -245,9 +246,9 @@ async function apinfoProcedure (
                      * This also means we do not need to pass in the CR, which
                      * has the returnToDUA setting.
                      */
-                    return result;
+                    return response;
                 } else if (compareCode(errcode, serviceError["&errorCode"]!)) {
-                    const param = serviceError.decoderFor["&ParameterType"]!(result.error!);
+                    const param = serviceError.decoderFor["&ParameterType"]!(response.error.parameter);
                     const errorData = getOptionallyProtectedValue(param);
                     if (
                         (errorData.problem === ServiceProblem_busy)
@@ -257,33 +258,20 @@ async function apinfoProcedure (
                     ) {
                         continue; // Always try another.
                     } else {
-                        return result;
+                        return response;
                     }
                 } else {
-                    return result;
+                    return response;
                 }
-            } else {
-                if (!result.opCode) {
-                    ctx.log.warn(ctx.i18n.t("log:dsa_returned_no_opcode", {
-                        ae: stringifyDN(ctx, api.ae_title.rdnSequence),
-                    }), {
-                        remoteFamily: assn?.socket.remoteFamily,
-                        remoteAddress: assn?.socket.remoteAddress,
-                        remotePort: assn?.socket.remotePort,
-                        association_id: assn?.id,
-                        invokeID: printInvokeId(state.invokeId),
-                    });
-                    continue;
-                }
+            } else if ("result" in response) {
                 assert(chainedAbandon["&operationCode"]);
                 assert("local" in chainedAbandon["&operationCode"]);
                 if (
                     ctx.config.chaining.checkSignaturesOnResponses
-                    && ("local" in result.opCode)
-                    && (result.opCode.local !== chainedAbandon["&operationCode"]!.local)
-                    && result.result
+                    && ("local" in response.result.code)
+                    && (response.result.code.local !== chainedAbandon["&operationCode"]!.local)
                 ) {
-                    const decoded = chainedRead.decoderFor["&ResultType"]!(result.result);
+                    const decoded = chainedRead.decoderFor["&ResultType"]!(response.result.parameter);
                     const resultData = getOptionallyProtectedValue(decoded);
                     if ("signed" in decoded) {
                         const certPath = resultData.chainedResult.securityParameters?.certification_path;
@@ -300,11 +288,7 @@ async function apinfoProcedure (
                         );
                     }
                 }
-                return {
-                    invokeId: result.invokeId,
-                    opCode: result.opCode,
-                    result: result.result,
-                };
+                return response;
             }
         } catch (e) {
             if (connected) {

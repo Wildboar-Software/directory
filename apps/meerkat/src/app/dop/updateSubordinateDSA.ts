@@ -1,12 +1,11 @@
 import { Vertex, ServiceError } from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
-import { DER } from "asn1-ts/dist/node/functional";
 import type {
     AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
-import { connect, ConnectOptions } from "../net/connect";
+import { bindForOBM } from "../net/bindToOtherDSA";
+import { ConnectOptions } from "../net/connect";
 import type {
-    Connection,
     WriteOperationOptions,
 } from "../net/Connection";
 import {
@@ -16,26 +15,13 @@ import {
     modifyOperationalBinding,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/modifyOperationalBinding.oa";
 import {
-    ModifyOperationalBindingArgument,
-    _encode_ModifyOperationalBindingArgument,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingArgument.ta";
-import {
-    ModifyOperationalBindingArgumentData,
-    _encode_ModifyOperationalBindingArgumentData,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingArgumentData.ta";
-import {
-    id_op_binding_hierarchical,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
-import {
     OperationalBindingID,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
 import {
     SuperiorToSubordinate as SuperiorToSubordinateModification,
-    _encode_SuperiorToSubordinate as _encode_SuperiorToSubordinateModification,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinate.ta";
 import {
     HierarchicalAgreement,
-    _encode_HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
 import {
     Attribute,
@@ -49,12 +35,10 @@ import {
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubentryInfo.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import readSubordinates from "../dit/readSubordinates";
-import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
-import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import readAttributes from "../database/entry/readAttributes";
 import admPointEIS from "./admPointEIS";
 import subentryEIS from "./subentryEIS";
-import { addMilliseconds, differenceInMilliseconds } from "date-fns";
+import { addMilliseconds } from "date-fns";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     ServiceErrorData,
@@ -65,7 +49,7 @@ import {
 import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
-import { generateSIGNED } from "../pki/generateSIGNED";
+import { OperationOutcome } from "@wildboar/rose-transport";
 
 // dSAOperationalBindingManagementBind OPERATION ::= dSABind
 
@@ -202,6 +186,11 @@ interface UpdateSubordinateOptions extends ConnectOptions, WriteOperationOptions
     endTime?: Date;
 }
 
+export
+interface UpdateSubordinateDSAReturn {
+
+}
+
 /**
  * @summary Updates a subordinate DSA of changes that may affect a hierarchical operational binding
  * @description
@@ -234,17 +223,18 @@ async function updateSubordinateDSA (
     aliasDereferenced?: boolean,
     options?: UpdateSubordinateOptions,
     signErrors: boolean = false,
-): Promise<ResultOrError> {
+): Promise<OperationOutcome<typeof modifyOperationalBinding["&ResultType"]>> {
     const connectionTimeout: number | undefined = options?.timeLimitInMilliseconds;
     const startTime = new Date();
     const timeoutTime: Date | undefined = connectionTimeout
         ? addMilliseconds(startTime, connectionTimeout)
         : undefined;
-    const assn: Connection | null = await connect(ctx, targetSystem, dop_ip["&id"]!, {
-        timeLimitInMilliseconds: options?.timeLimitInMilliseconds,
-        tlsOptional: ctx.config.chaining.tlsOptional,
-        signErrors,
-    });
+    const assn = await bindForOBM(ctx, undefined, undefined, targetSystem, aliasDereferenced, signErrors);
+    // const assn: Connection | null = await connect(ctx, targetSystem, dop_ip["&id"]!, {
+    //     timeLimitInMilliseconds: options?.timeLimitInMilliseconds,
+    //     tlsOptional: ctx.config.chaining.tlsOptional,
+    //     signErrors,
+    // });
     if (!assn) {
         throw new ServiceError(
             ctx.i18n.t("err:could_not_connect"),
@@ -337,50 +327,23 @@ async function updateSubordinateDSA (
         getDistinguishedName(immediateSuperior),
     );
 
-    const newBindingID = new OperationalBindingID(
-        currentBindingID.identifier,
-        Number(currentBindingID.version) + 1,
-    );
-
-    const argData = new ModifyOperationalBindingArgumentData(
-        id_op_binding_hierarchical,
-        currentBindingID,
-        ctx.dsa.accessPoint,
-        {
-            roleA_initiates: _encode_SuperiorToSubordinateModification(sup2sub, DER),
-        },
-        newBindingID,
-        _encode_HierarchicalAgreement(agreement, DER),
-        undefined, // Validity remains the same.
-        createSecurityParameters(
+    return assn.modifyHOBWithSubordinate({
+        bindingID: currentBindingID,
+        accessPoint: ctx.dsa.accessPoint,
+        initiator: sup2sub,
+        securityParameters: createSecurityParameters(
             ctx,
             true,
             targetSystem.ae_title.rdnSequence,
             modifyOperationalBinding["&operationCode"],
         ),
-    );
-    const unsignedArg: ModifyOperationalBindingArgument = {
-        unsigned: argData,
-    };
-    const signArgument: boolean = true; // TODO: Make configurable.
-    const timeRemainingForOperation: number | undefined = timeoutTime
-        ? differenceInMilliseconds(timeoutTime, new Date())
-        : undefined;
-    if (!signArgument) {
-        return assn.writeOperation({
-            opCode: modifyOperationalBinding["&operationCode"]!,
-            argument: _encode_ModifyOperationalBindingArgument(unsignedArg, DER),
-        }, {
-            timeLimitInMilliseconds: timeRemainingForOperation,
-        });
-    }
-    const arg = generateSIGNED(ctx, argData, _encode_ModifyOperationalBindingArgumentData);
-    return assn.writeOperation({
-        opCode: modifyOperationalBinding["&operationCode"]!,
-        argument: _encode_ModifyOperationalBindingArgument(arg, DER),
-    }, {
-        timeLimitInMilliseconds: timeRemainingForOperation,
+        newAgreement: agreement,
+        cert_path: ctx.config.signing.certPath,
+        key: ctx.config.signing.key,
     });
+    // const timeRemainingForOperation: number | undefined = timeoutTime
+    //     ? differenceInMilliseconds(timeoutTime, new Date())
+    //     : undefined;
 }
 
 export default updateSubordinateDSA;

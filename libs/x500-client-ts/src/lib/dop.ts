@@ -11,7 +11,7 @@ import {
     dSABind,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/dSABind.oa";
 import { KeyObject, randomBytes } from "node:crypto";
-import { CertPathOption, generateSIGNED } from "./utils";
+import { CertPathOption, generateSIGNED, DirectoryVersioned } from "./utils";
 import {
     establishOperationalBinding, EstablishOperationalBindingArgument,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/establishOperationalBinding.oa";
@@ -40,7 +40,7 @@ import {
 import {
     ModifyOperationalBindingArgumentData_initiator,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingArgumentData-initiator.ta";
-import { ASN1Element } from "asn1-ts";
+import { ASN1Element, TRUE_BIT } from "asn1-ts";
 import {
     SuperiorToSubordinate, _encode_SuperiorToSubordinate,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinate.ta";
@@ -80,13 +80,15 @@ import {
 import {
     id_op_binding_shadow,
 } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
+import {
+    Versions_v1,
+    Versions_v2,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";
 
-export type BindArgument = typeof dSABind["&ArgumentType"];
-export type BindResult = typeof dSABind["&ResultType"];
+type BindArgument = typeof dSABind["&ArgumentType"];
+type BindResult = typeof dSABind["&ResultType"];
 export type DOPBindParameters = BindParameters<BindArgument>;
 export type DOPBindOutcome = BindOutcome<BindResult>;
-
-
 
 export
 interface EstablishOBOptions extends EstablishOperationalBindingArgumentData, DOPOperationOptions {
@@ -143,7 +145,7 @@ interface DOPOptions extends DOPOperationOptions {
 }
 
 export
-interface DOPClient extends AsyncROSEClient<BindArgument, BindResult>, DOPOptions {
+interface DOPClient extends AsyncROSEClient<BindArgument, BindResult>, DOPOptions, DirectoryVersioned {
     rose: ROSETransport;
 
     // From AsyncROSEClient
@@ -185,7 +187,7 @@ function create_dop_client (rose: ROSETransport): DOPClient {
         );
         const key = params.key ?? ret.key;
         const cert_path = params.cert_path ?? ret.cert_path;
-        const arg: EstablishOperationalBindingArgument = (key && cert_path)
+        const arg: EstablishOperationalBindingArgument = (key && cert_path && (ret.directoryVersion === 2))
             ? generateSIGNED(key, data, _encode_EstablishOperationalBindingArgumentData)
             : {
                 unsigned: data,
@@ -226,7 +228,7 @@ function create_dop_client (rose: ROSETransport): DOPClient {
         );
         const key = params.key ?? ret.key;
         const cert_path = params.cert_path ?? ret.cert_path;
-        const arg: ModifyOperationalBindingArgument = (key && cert_path)
+        const arg: ModifyOperationalBindingArgument = (key && cert_path && (ret.directoryVersion === 2))
             ? generateSIGNED(key, data, _encode_ModifyOperationalBindingArgumentData)
             : {
                 unsigned: data,
@@ -264,12 +266,12 @@ function create_dop_client (rose: ROSETransport): DOPClient {
         );
         const key = params.key ?? ret.key;
         const cert_path = params.cert_path ?? ret.cert_path;
-        const arg: TerminateOperationalBindingArgument = (key && cert_path)
+        const arg: TerminateOperationalBindingArgument = (key && cert_path && (ret.directoryVersion === 2))
             ? generateSIGNED(key, data, _encode_TerminateOperationalBindingArgumentData)
             : {
                 unsigned: data,
             };
-        const invoke_id: number = randomBytes(4).readUint32BE();
+        const invoke_id: number = randomBytes(4).readUint32BE(); // TODO: Replace with randomUint().
         const outcome = await rose.request({
             code: terminateOperationalBinding["&operationCode"]!,
             invoke_id: {
@@ -479,6 +481,7 @@ function create_dop_client (rose: ROSETransport): DOPClient {
     };
     const ret: DOPClient = {
         rose,
+        directoryVersion: 1,
         bind: async (params: DOPBindParameters): Promise<DOPBindOutcome> => {
             const parameter = dSABind.encoderFor["&ArgumentType"]!(params.parameter, BER);
             const outcome = await rose.bind({
@@ -487,6 +490,13 @@ function create_dop_client (rose: ROSETransport): DOPClient {
             });
             if ("result" in outcome) {
                 const parameter = dSABind.decoderFor["&ResultType"]!(outcome.result.parameter);
+                if (parameter.versions?.[Versions_v2] === TRUE_BIT) {
+                    ret.directoryVersion = 2;
+                } else if (parameter.versions?.[Versions_v1] === TRUE_BIT) {
+                    ret.directoryVersion = 1;
+                } else {
+                    ret.directoryVersion = 0;
+                }
                 return {
                     result: {
                         ...outcome.result,

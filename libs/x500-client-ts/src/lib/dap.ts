@@ -110,29 +110,9 @@ import {
     AdministerPasswordArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordArgument.ta";
 import {
-    Name,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
-import {
-    EntryInformationSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
-import {
-    ASN1Element,
-    BIT_STRING,
     FALSE_BIT,
-    ObjectIdentifier,
-    OBJECT_IDENTIFIER,
     TRUE_BIT,
-    unpackBits,
-    BERElement,
 } from "asn1-ts";
-import {
-    CertificatePair,
-    CertificationPath,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
-import {
-    Certificate,
-    _decode_Certificate,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
 import { AttributeValueAssertion } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
 import { PagedResultsRequest } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest.ta";
 import { Filter } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Filter.ta";
@@ -144,48 +124,20 @@ import { EntryModification } from "@wildboar/x500/src/lib/modules/DirectoryAbstr
 import { RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
 import { BER, DER } from "asn1-ts/dist/node/functional";
 import {
-    destringifyDN,
     generateSIGNED,
     ref_type_from,
     CommonArguments,
-    BitStringOption,
-    OIDOption,
     CertPathOption,
     DirectoryName,
-    SecurityOptions,
-    ServiceOptions,
     TargetsObject,
+    SelectionOptions,
+    name_option_to_name,
+    critex_from,
+    security_params_from,
+    selection_option_to_selection,
+    service_option_to,
+    DirectoryVersioned,
 } from "./utils";
-import { ServiceControls } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
-import {
-    ServiceControlOptions_preferChaining,
-    ServiceControlOptions_chainingProhibited,
-    ServiceControlOptions_localScope,
-    ServiceControlOptions_dontUseCopy,
-    ServiceControlOptions_dontDereferenceAliases,
-    ServiceControlOptions_subentries,
-    ServiceControlOptions_copyShallDo,
-    ServiceControlOptions_partialNameResolution,
-    ServiceControlOptions_manageDSAIT,
-    ServiceControlOptions_noSubtypeMatch,
-    ServiceControlOptions_noSubtypeSelection,
-    ServiceControlOptions_countFamily,
-    ServiceControlOptions_dontSelectFriends,
-    ServiceControlOptions_dontMatchFriends,
-    ServiceControlOptions_allowWriteableCopy,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
-import {
-    ServiceControls_manageDSAITPlaneRef,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls-manageDSAITPlaneRef.ta";
-import { OperationalBindingID } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
-import { SecurityParameters } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
-import { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import {
-    ProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
-import {
-    ErrorProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
 import { KeyObject, randomBytes } from "node:crypto";
 import { UserPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
 import { strict as assert } from "node:assert";
@@ -226,19 +178,15 @@ import {
     SearchArgumentData_joinType_leftOuterJoin,
     SearchArgumentData_joinType_fullOuterJoin,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-joinType.ta";
-import { readFileSync } from "node:fs";
-import { PEMObject } from "pem-ts";
+import {
+    Versions_v1,
+    Versions_v2,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";
 
 export type BindArgument = typeof directoryBind["&ArgumentType"];
 export type BindResult = typeof directoryBind["&ResultType"];
 export type DAPBindParameters = BindParameters<BindArgument>;
 export type DAPBindOutcome = BindOutcome<BindResult>;
-
-
-export
-interface SelectionOptions extends EntryInformationSelection {
-
-}
 
 export
 interface RelaxationOptions extends RelaxationPolicy {
@@ -367,7 +315,7 @@ interface DAPOptions extends DAPOperationOptions {
 }
 
 export
-interface DAPClient extends AsyncROSEClient<BindArgument, BindResult>, DAPOptions {
+interface DAPClient extends AsyncROSEClient<BindArgument, BindResult>, DAPOptions, DirectoryVersioned {
     rose: ROSETransport;
 
     // From AsyncROSEClient
@@ -389,175 +337,10 @@ interface DAPClient extends AsyncROSEClient<BindArgument, BindResult>, DAPOption
 }
 
 export
-function name_option_to_name (
-    name: DirectoryName,
-    nameToOID?: (name: string) => OBJECT_IDENTIFIER | undefined | null,
-    valueParser?: (str: string) => ASN1Element,
-): Name | null {
-    if (Array.isArray(name)) {
-        return {
-            rdnSequence: name,
-        };
-    } else if (typeof name === "object") {
-        return name;
-    } else {
-        if (!nameToOID || !valueParser) {
-            return null;
-        }
-        return {
-            rdnSequence: destringifyDN(name, nameToOID, valueParser),
-        };
-    }
-}
-
-export
-function selection_option_to_selection (sel?: SelectionOptions): EntryInformationSelection | undefined {
-    if (!sel) {
-        return undefined;
-    }
-    return new EntryInformationSelection(
-        sel.attributes,
-        sel.infoTypes,
-        sel.extraAttributes,
-        sel.contextSelection,
-        sel.returnContexts,
-        sel.familyReturn,
-    );
-}
-
-export
-function oid_option_to_oid (oid: OIDOption): OBJECT_IDENTIFIER {
-    if (typeof oid === "string") {
-        return ObjectIdentifier.fromString(oid);
-    } else {
-        return oid;
-    }
-}
-
-export
-function service_option_to (so: ServiceOptions): ServiceControls {
-    const opts = new Uint8ClampedArray(15);
-    opts[ServiceControlOptions_preferChaining] = so.preferChaining ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_chainingProhibited] = so.chainingProhibited ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_localScope] = so.localScope ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_dontUseCopy] = so.dontUseCopy ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_dontDereferenceAliases] = so.dontDereferenceAliases ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_subentries] = so.subentries ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_copyShallDo] = so.copyShallDo ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_partialNameResolution] = so.partialNameResolution ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_manageDSAIT] = so.manageDSAIT ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_noSubtypeMatch] = so.noSubtypeMatch ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_noSubtypeSelection] = so.noSubtypeSelection ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_countFamily] = so.countFamily ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_dontSelectFriends] = so.dontSelectFriends ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_dontMatchFriends] = so.dontMatchFriends ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_allowWriteableCopy] = so.allowWriteableCopy ? TRUE_BIT : FALSE_BIT;
-    const mdsaitPlaneName = so.manageDSAITPlaneRef?.dsaName
-        ? name_option_to_name(so.manageDSAITPlaneRef.dsaName)
-        : undefined;
-    return new ServiceControls(
-        opts,
-        so.priority,
-        so.timeLimit,
-        so.sizeLimit,
-        so.scopeOfReferral,
-        so.attributeSizeLimit,
-        mdsaitPlaneName
-            ? new ServiceControls_manageDSAITPlaneRef(
-                mdsaitPlaneName,
-                new OperationalBindingID(
-                    so.manageDSAITPlaneRef!.agreementID.identifier,
-                    so.manageDSAITPlaneRef!.agreementID.version,
-                ),
-            )
-            : undefined,
-        so.serviceType
-            ? oid_option_to_oid(so.serviceType)
-            : undefined,
-        so.userClass,
-        [],
-    );
-}
-
-export
-function cert_path_from_option (cp?: CertPathOption): CertificationPath | undefined {
-    if (!cp) {
-        return undefined;
-    }
-    if (cp instanceof CertificationPath) {
-        return cp;
-    } else if (Array.isArray(cp) && (cp.length > 0)) {
-        const userCert = cp[cp.length - 1] as Certificate;
-        return new CertificationPath(
-            userCert,
-            (cp as Certificate[])
-                .slice(0, -1)
-                .reverse()
-                .map((c: Certificate) => new CertificatePair(c, undefined)),
-        );
-    } else if (typeof cp === "string") {
-        const certFile = readFileSync(cp, { encoding: "utf-8" });
-        const certPems = PEMObject.parse(certFile);
-        const certs = certPems.map((certPem) => {
-            const el = new BERElement();
-            el.fromBytes(certPem.data);
-            return _decode_Certificate(el);
-        });
-        return cert_path_from_option(certs.reverse());
-    } else {
-        return undefined;
-    }
-}
-
-export
-function security_params_from (p: SecurityOptions, opCode: Code): SecurityParameters | undefined {
-    if (!p.certification_path && !p.requestSignedResult && !p.requestSignedError) {
-        return undefined;
-    }
-    const cert_path = cert_path_from_option(p.certification_path);
-    return new SecurityParameters(
-        cert_path,
-        undefined, // Name
-        cert_path
-            ? {
-                generalizedTime: new Date((new Date()).valueOf() + 60000),
-            }
-            : undefined,
-        cert_path
-            ? unpackBits(randomBytes(4))
-            : undefined,
-        p.requestSignedResult
-            ? ProtectionRequest_signed
-            : undefined,
-        opCode,
-        p.requestSignedError
-            ? ErrorProtectionRequest_signed
-            : undefined,
-        undefined,
-        undefined,
-    );
-}
-
-export
-function critex_from (bits?: BitStringOption): BIT_STRING | undefined {
-    if (!bits) {
-        return undefined;
-    }
-    if (bits instanceof Uint8ClampedArray) {
-        return bits;
-    } else {
-        return new Uint8ClampedArray(
-            Array
-                .from(bits)
-                .map((char) => (char === "1") ? TRUE_BIT : FALSE_BIT),
-        );
-    }
-}
-
-export
 function create_dap_client (rose: ROSETransport): DAPClient {
     const dap: DAPClient = {
         rose,
+        directoryVersion: 1,
         bind: async (params: DAPBindParameters): Promise<DAPBindOutcome> => {
             const parameter = directoryBind.encoderFor["&ArgumentType"]!(params.parameter, BER);
             const outcome = await rose.bind({
@@ -566,6 +349,13 @@ function create_dap_client (rose: ROSETransport): DAPClient {
             });
             if ("result" in outcome) {
                 const parameter = directoryBind.decoderFor["&ResultType"]!(outcome.result.parameter);
+                if (parameter.versions?.[Versions_v2] === TRUE_BIT) {
+                    dap.directoryVersion = 2;
+                } else if (parameter.versions?.[Versions_v1] === TRUE_BIT) {
+                    dap.directoryVersion = 1;
+                } else {
+                    dap.directoryVersion = 0;
+                }
                 return {
                     result: {
                         ...outcome.result,
@@ -610,7 +400,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
             );
             const key = params.key ?? dap.key;
             const cert_path = params.cert_path ?? dap.cert_path;
-            const arg: ReadArgument = (key && cert_path)
+            const arg: ReadArgument = (key && cert_path && (dap.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_ReadArgumentData)
                 : {
                     unsigned: data,
@@ -668,7 +458,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
             );
             const key = params.key ?? dap.key;
             const cert_path = params.cert_path ?? dap.cert_path;
-            const arg: CompareArgument = (key && cert_path)
+            const arg: CompareArgument = (key && cert_path && (dap.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_CompareArgumentData)
                 : {
                     unsigned: data,
@@ -704,7 +494,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
             );
             const key = params.key ?? dap.key;
             const cert_path = params.cert_path ?? dap.cert_path;
-            const arg: AbandonArgument = (key && cert_path)
+            const arg: AbandonArgument = (key && cert_path && (dap.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_AbandonArgumentData)
                 : {
                     unsigned: data,
@@ -763,7 +553,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
             );
             const key = params.key ?? dap.key;
             const cert_path = params.cert_path ?? dap.cert_path;
-            const arg: ListArgument = (key && cert_path)
+            const arg: ListArgument = (key && cert_path && (dap.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_ListArgumentData)
                 : {
                     unsigned: data,
@@ -883,7 +673,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
             );
             const key = params.key ?? dap.key;
             const cert_path = params.cert_path ?? dap.cert_path;
-            const arg: SearchArgument = (key && cert_path)
+            const arg: SearchArgument = (key && cert_path && (dap.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_SearchArgumentData)
                 : {
                     unsigned: data,
@@ -942,7 +732,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
             );
             const key = params.key ?? dap.key;
             const cert_path = params.cert_path ?? dap.cert_path;
-            const arg: AddEntryArgument = (key && cert_path)
+            const arg: AddEntryArgument = (key && cert_path && (dap.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_AddEntryArgumentData)
                 : {
                     unsigned: data,
@@ -999,7 +789,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
             );
             const key = params.key ?? dap.key;
             const cert_path = params.cert_path ?? dap.cert_path;
-            const arg: RemoveEntryArgument = (key && cert_path)
+            const arg: RemoveEntryArgument = (key && cert_path && (dap.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_RemoveEntryArgumentData)
                 : {
                     unsigned: data,
@@ -1058,7 +848,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
             );
             const key = params.key ?? dap.key;
             const cert_path = params.cert_path ?? dap.cert_path;
-            const arg: ModifyEntryArgument = (key && cert_path)
+            const arg: ModifyEntryArgument = (key && cert_path && (dap.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_ModifyEntryArgumentData)
                 : {
                     unsigned: data,
@@ -1140,7 +930,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
             );
             const key = params.key ?? dap.key;
             const cert_path = params.cert_path ?? dap.cert_path;
-            const arg: ModifyDNArgument = (key && cert_path)
+            const arg: ModifyDNArgument = (key && cert_path && (dap.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_ModifyDNArgumentData)
                 : {
                     unsigned: data,
@@ -1192,7 +982,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
             );
             const key = params.key ?? dap.key;
             const cert_path = params.cert_path ?? dap.cert_path;
-            const arg: ChangePasswordArgument = (key && cert_path)
+            const arg: ChangePasswordArgument = (key && cert_path && (dap.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_ChangePasswordArgumentData)
                 : {
                     unsigned: data,
@@ -1239,7 +1029,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
             );
             const key = params.key ?? dap.key;
             const cert_path = params.cert_path ?? dap.cert_path;
-            const arg: AdministerPasswordArgument = (key && cert_path)
+            const arg: AdministerPasswordArgument = (key && cert_path && (dap.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_AdministerPasswordArgumentData)
                 : {
                     unsigned: data,

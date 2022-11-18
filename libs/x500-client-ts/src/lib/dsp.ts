@@ -114,34 +114,13 @@ import {
     AdministerPasswordArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordArgument.ta";
 import {
-    Name,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
-import {
-    EntryInformationSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
-import {
-    ASN1Element,
-    BIT_STRING,
     FALSE_BIT,
-    ObjectIdentifier,
-    OBJECT_IDENTIFIER,
     TRUE_BIT,
-    unpackBits,
-    BERElement,
     BOOLEAN,
 } from "asn1-ts";
-import {
-    CertificatePair,
-    CertificationPath,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
-import {
-    Certificate,
-    _decode_Certificate,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
 import { AttributeValueAssertion } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
 import { PagedResultsRequest } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest.ta";
 import { Filter } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Filter.ta";
-import { RelaxationPolicy } from "@wildboar/x500/src/lib/modules/ServiceAdministration/RelaxationPolicy.ta";
 import { JoinArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/JoinArgument.ta";
 import { Attribute } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Attribute.ta";
 import { AccessPoint } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
@@ -149,48 +128,20 @@ import { EntryModification } from "@wildboar/x500/src/lib/modules/DirectoryAbstr
 import { RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
 import { BER, DER } from "asn1-ts/dist/node/functional";
 import {
-    destringifyDN,
     generateSIGNED,
     CommonArguments,
-    BitStringOption,
-    OIDOption,
     CertPathOption,
     DirectoryName,
-    SecurityOptions,
-    ServiceOptions,
     TargetsObject,
     ref_type_from,
+    SelectionOptions,
+    critex_from,
+    name_option_to_name,
+    security_params_from,
+    selection_option_to_selection,
+    service_option_to,
+    DirectoryVersioned,
 } from "./utils";
-import { ServiceControls } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
-import {
-    ServiceControlOptions_preferChaining,
-    ServiceControlOptions_chainingProhibited,
-    ServiceControlOptions_localScope,
-    ServiceControlOptions_dontUseCopy,
-    ServiceControlOptions_dontDereferenceAliases,
-    ServiceControlOptions_subentries,
-    ServiceControlOptions_copyShallDo,
-    ServiceControlOptions_partialNameResolution,
-    ServiceControlOptions_manageDSAIT,
-    ServiceControlOptions_noSubtypeMatch,
-    ServiceControlOptions_noSubtypeSelection,
-    ServiceControlOptions_countFamily,
-    ServiceControlOptions_dontSelectFriends,
-    ServiceControlOptions_dontMatchFriends,
-    ServiceControlOptions_allowWriteableCopy,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
-import {
-    ServiceControls_manageDSAITPlaneRef,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls-manageDSAITPlaneRef.ta";
-import { OperationalBindingID } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
-import { SecurityParameters } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
-import { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import {
-    ProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
-import {
-    ErrorProtectionRequest_signed,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
 import { KeyObject, randomBytes } from "node:crypto";
 import { UserPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
 import { strict as assert } from "node:assert";
@@ -231,12 +182,9 @@ import {
     SearchArgumentData_joinType_leftOuterJoin,
     SearchArgumentData_joinType_fullOuterJoin,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-joinType.ta";
-import { readFileSync } from "node:fs";
-import { PEMObject } from "pem-ts";
 import {
     ChainingArguments,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
-import { differenceInSeconds } from "date-fns";
 import {
     Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1, _encode_Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
@@ -261,57 +209,22 @@ import { LinkedArgumentData, _encode_LinkedArgumentData } from "@wildboar/x500/s
 import {
     dSABind,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/dSABind.oa";
+import {
+    SearchControls,
+    HierarchySelectionOptions,
+    RelaxationOptions,
+    JoinArgumentOptions,
+} from "./dap";
+import {
+    Versions_v1,
+    Versions_v2,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";
 
-export type ChainedArg = typeof chainedRead["&ArgumentType"];
-export type BindArgument = typeof dSABind["&ArgumentType"];
-export type BindResult = typeof dSABind["&ResultType"];
+type ChainedArg = typeof chainedRead["&ArgumentType"];
+type BindArgument = typeof dSABind["&ArgumentType"];
+type BindResult = typeof dSABind["&ResultType"];
 export type DSPBindParameters = BindParameters<BindArgument>;
 export type DSPBindOutcome = BindOutcome<BindResult>;
-
-export
-interface SelectionOptions extends EntryInformationSelection {
-
-}
-
-export
-interface RelaxationOptions extends RelaxationPolicy {
-
-}
-
-export
-interface JoinArgumentOptions extends JoinArgument {
-
-}
-
-export
-interface SearchControls {
-    searchAliases?: boolean;
-    matchedValuesOnly?: boolean;
-    checkOverspecified?: boolean;
-    performExactly?: boolean;
-    includeAllAreas?: boolean;
-    noSystemRelaxation?: boolean;
-    dnAttribute?: boolean;
-    matchOnResidualName?: boolean;
-    entryCount?: boolean;
-    useSubset?: boolean;
-    separateFamilyMembers?: boolean;
-    searchFamily?: boolean;
-}
-
-export
-interface HierarchySelectionOptions {
-    self?: boolean;
-    children?: boolean;
-    parent?: boolean;
-    hierarchy?: boolean;
-    top?: boolean;
-    subtree?: boolean;
-    siblings?: boolean;
-    siblingChildren?: boolean;
-    siblingSubtree?: boolean;
-    all?: boolean;
-}
 
 export
 interface ChainingOptions extends ChainingArguments {
@@ -324,33 +237,33 @@ interface WithChainingOptions {
 }
 
 export
-interface ReadOptions
+interface DSPReadOptions
 extends CommonArguments, DSPOperationOptions, TargetsObject, WithChainingOptions {
     selection?: SelectionOptions;
     modifyRightsRequest?: boolean;
 }
 
 export
-interface CompareOptions
+interface DSPCompareOptions
 extends CommonArguments, DSPOperationOptions, TargetsObject, WithChainingOptions {
     purported: AttributeValueAssertion;
 }
 
 export
-interface AbandonOptions
+interface DSPAbandonOptions
 extends DSPOperationOptions {
     invoke_id: number;
 }
 
 export
-interface ListOptions
+interface DSPListOptions
 extends CommonArguments, DSPOperationOptions, TargetsObject, WithChainingOptions {
     pagination?: PagedResultsRequest;
     listFamily?: boolean;
 }
 
 export
-interface SearchOptions
+interface DSPSearchOptions
 extends CommonArguments, DSPOperationOptions, TargetsObject, WithChainingOptions {
     subset?: "base" | "level" | "subtree" | 0 | 1 | 2,
     filter?: Filter;
@@ -369,27 +282,27 @@ extends CommonArguments, DSPOperationOptions, TargetsObject, WithChainingOptions
 }
 
 export
-interface AddEntryOptions
+interface DSPAddEntryOptions
 extends CommonArguments, DSPOperationOptions, TargetsObject, WithChainingOptions {
     entry: Attribute[];
     targetSystem?: AccessPoint;
 }
 
 export
-interface RemoveEntryOptions
+interface DSPRemoveEntryOptions
 extends CommonArguments, DSPOperationOptions, TargetsObject, WithChainingOptions {
 
 }
 
 export
-interface ModifyEntryOptions
+interface DSPModifyEntryOptions
 extends CommonArguments, DSPOperationOptions, TargetsObject, WithChainingOptions {
     changes: EntryModification[];
     selection?: SelectionOptions;
 }
 
 export
-interface ModifyDNOptions
+interface DSPModifyDNOptions
 extends CommonArguments, DSPOperationOptions, TargetsObject, WithChainingOptions {
     newRDN?: string | RelativeDistinguishedName;
     deleteOldRDN?: boolean;
@@ -397,14 +310,14 @@ extends CommonArguments, DSPOperationOptions, TargetsObject, WithChainingOptions
 }
 
 export
-interface ChangePasswordOptions
+interface DSPChangePasswordOptions
 extends DSPOperationOptions, TargetsObject, WithChainingOptions {
     oldPassword: string | UserPwd;
     newPassword: string | UserPwd;
 }
 
 export
-interface AdministerPasswordOptions
+interface DSPAdministerPasswordOptions
 extends DSPOperationOptions, TargetsObject, WithChainingOptions {
     newPassword: string | UserPwd;
 }
@@ -437,7 +350,7 @@ interface DSPOptions extends DSPOperationOptions {
 }
 
 export
-interface DSPClient extends AsyncROSEClient<BindArgument, BindResult>, DSPOptions {
+interface DSPClient extends AsyncROSEClient<BindArgument, BindResult>, DSPOptions, DirectoryVersioned {
     rose: ROSETransport;
 
     // From AsyncROSEClient
@@ -445,189 +358,19 @@ interface DSPClient extends AsyncROSEClient<BindArgument, BindResult>, DSPOption
     request: (params: RequestParameters) => Promise<OperationOutcome>;
     unbind: () => Promise<UnbindOutcome>;
 
-    read: (arg: ReadOptions) => Promise<OperationOutcome<typeof chainedRead["&ResultType"]>>;
-    compare: (arg: CompareOptions) => Promise<OperationOutcome<typeof chainedCompare["&ResultType"]>>;
-    abandon: (arg: AbandonOptions) => Promise<OperationOutcome<typeof chainedAbandon["&ResultType"]>>;
-    list: (arg: ListOptions) => Promise<OperationOutcome<typeof chainedList["&ResultType"]>>;
-    search: (arg: SearchOptions) => Promise<OperationOutcome<typeof chainedSearch["&ResultType"]>>;
-    addEntry: (arg: AddEntryOptions) => Promise<OperationOutcome<typeof chainedAddEntry["&ResultType"]>>;
-    removeEntry: (arg: RemoveEntryOptions) => Promise<OperationOutcome<typeof chainedRemoveEntry["&ResultType"]>>;
-    modifyEntry: (arg: ModifyEntryOptions) => Promise<OperationOutcome<typeof chainedModifyEntry["&ResultType"]>>;
-    modifyDN: (arg: ModifyDNOptions) => Promise<OperationOutcome<typeof chainedModifyDN["&ResultType"]>>;
-    changePassword: (arg: ChangePasswordOptions) => Promise<OperationOutcome<typeof chainedChangePassword["&ResultType"]>>;
-    administerPassword: (arg: AdministerPasswordOptions) => Promise<OperationOutcome<typeof chainedAdministerPassword["&ResultType"]>>;
+    read: (arg: DSPReadOptions) => Promise<OperationOutcome<typeof chainedRead["&ResultType"]>>;
+    compare: (arg: DSPCompareOptions) => Promise<OperationOutcome<typeof chainedCompare["&ResultType"]>>;
+    abandon: (arg: DSPAbandonOptions) => Promise<OperationOutcome<typeof chainedAbandon["&ResultType"]>>;
+    list: (arg: DSPListOptions) => Promise<OperationOutcome<typeof chainedList["&ResultType"]>>;
+    search: (arg: DSPSearchOptions) => Promise<OperationOutcome<typeof chainedSearch["&ResultType"]>>;
+    addEntry: (arg: DSPAddEntryOptions) => Promise<OperationOutcome<typeof chainedAddEntry["&ResultType"]>>;
+    removeEntry: (arg: DSPRemoveEntryOptions) => Promise<OperationOutcome<typeof chainedRemoveEntry["&ResultType"]>>;
+    modifyEntry: (arg: DSPModifyEntryOptions) => Promise<OperationOutcome<typeof chainedModifyEntry["&ResultType"]>>;
+    modifyDN: (arg: DSPModifyDNOptions) => Promise<OperationOutcome<typeof chainedModifyDN["&ResultType"]>>;
+    changePassword: (arg: DSPChangePasswordOptions) => Promise<OperationOutcome<typeof chainedChangePassword["&ResultType"]>>;
+    administerPassword: (arg: DSPAdministerPasswordOptions) => Promise<OperationOutcome<typeof chainedAdministerPassword["&ResultType"]>>;
     ldapTransport: (arg: LDAPTransportOptions) => Promise<OperationOutcome<typeof chainedLdapTransport["&ResultType"]>>;
     linkedLDAP: (arg: LinkedLDAPOptions) => Promise<OperationOutcome<typeof chainedLinkedLDAP["&ResultType"]>>;
-}
-
-export
-function name_option_to_name (
-    name: DirectoryName,
-    nameToOID?: (name: string) => OBJECT_IDENTIFIER | undefined | null,
-    valueParser?: (str: string) => ASN1Element,
-): Name | null {
-    if (Array.isArray(name)) {
-        return {
-            rdnSequence: name,
-        };
-    } else if (typeof name === "object") {
-        return name;
-    } else {
-        if (!nameToOID || !valueParser) {
-            return null;
-        }
-        return {
-            rdnSequence: destringifyDN(name, nameToOID, valueParser),
-        };
-    }
-}
-
-export
-function selection_option_to_selection (sel?: SelectionOptions): EntryInformationSelection | undefined {
-    if (!sel) {
-        return undefined;
-    }
-    return new EntryInformationSelection(
-        sel.attributes,
-        sel.infoTypes,
-        sel.extraAttributes,
-        sel.contextSelection,
-        sel.returnContexts,
-        sel.familyReturn,
-    );
-}
-
-export
-function oid_option_to_oid (oid: OIDOption): OBJECT_IDENTIFIER {
-    if (typeof oid === "string") {
-        return ObjectIdentifier.fromString(oid);
-    } else {
-        return oid;
-    }
-}
-
-export
-function service_option_to (so: ServiceOptions): ServiceControls {
-    const opts = new Uint8ClampedArray(15);
-    opts[ServiceControlOptions_preferChaining] = so.preferChaining ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_chainingProhibited] = so.chainingProhibited ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_localScope] = so.localScope ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_dontUseCopy] = so.dontUseCopy ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_dontDereferenceAliases] = so.dontDereferenceAliases ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_subentries] = so.subentries ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_copyShallDo] = so.copyShallDo ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_partialNameResolution] = so.partialNameResolution ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_manageDSAIT] = so.manageDSAIT ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_noSubtypeMatch] = so.noSubtypeMatch ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_noSubtypeSelection] = so.noSubtypeSelection ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_countFamily] = so.countFamily ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_dontSelectFriends] = so.dontSelectFriends ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_dontMatchFriends] = so.dontMatchFriends ? TRUE_BIT : FALSE_BIT;
-    opts[ServiceControlOptions_allowWriteableCopy] = so.allowWriteableCopy ? TRUE_BIT : FALSE_BIT;
-    const mdsaitPlaneName = so.manageDSAITPlaneRef?.dsaName
-        ? name_option_to_name(so.manageDSAITPlaneRef.dsaName)
-        : undefined;
-    return new ServiceControls(
-        opts,
-        so.priority,
-        so.timeLimit
-            ? ((typeof so.timeLimit === "object")
-                ? Math.abs(differenceInSeconds(so.timeLimit, new Date()))
-                : so.timeLimit)
-            : undefined,
-        so.sizeLimit,
-        so.scopeOfReferral,
-        so.attributeSizeLimit,
-        mdsaitPlaneName
-            ? new ServiceControls_manageDSAITPlaneRef(
-                mdsaitPlaneName,
-                new OperationalBindingID(
-                    so.manageDSAITPlaneRef!.agreementID.identifier,
-                    so.manageDSAITPlaneRef!.agreementID.version,
-                ),
-            )
-            : undefined,
-        so.serviceType
-            ? oid_option_to_oid(so.serviceType)
-            : undefined,
-        so.userClass,
-        [],
-    );
-}
-
-export
-function cert_path_from_option (cp?: CertPathOption): CertificationPath | undefined {
-    if (!cp) {
-        return undefined;
-    }
-    if (cp instanceof CertificationPath) {
-        return cp;
-    } else if (Array.isArray(cp) && (cp.length > 0)) {
-        const userCert = cp[cp.length - 1] as Certificate;
-        return new CertificationPath(
-            userCert,
-            (cp as Certificate[])
-                .slice(0, -1)
-                .reverse()
-                .map((c: Certificate) => new CertificatePair(c, undefined)),
-        );
-    } else if (typeof cp === "string") {
-        const certFile = readFileSync(cp, { encoding: "utf-8" });
-        const certPems = PEMObject.parse(certFile);
-        const certs = certPems.map((certPem) => {
-            const el = new BERElement();
-            el.fromBytes(certPem.data);
-            return _decode_Certificate(el);
-        });
-        return cert_path_from_option(certs.reverse());
-    } else {
-        return undefined;
-    }
-}
-
-export
-function security_params_from (p: SecurityOptions, opCode: Code): SecurityParameters | undefined {
-    if (!p.certification_path && !p.requestSignedResult && !p.requestSignedError) {
-        return undefined;
-    }
-    const cert_path = cert_path_from_option(p.certification_path);
-    return new SecurityParameters(
-        cert_path,
-        undefined, // Name
-        cert_path
-            ? {
-                generalizedTime: new Date((new Date()).valueOf() + 60000),
-            }
-            : undefined,
-        cert_path
-            ? unpackBits(randomBytes(4))
-            : undefined,
-        p.requestSignedResult
-            ? ProtectionRequest_signed
-            : undefined,
-        opCode,
-        p.requestSignedError
-            ? ErrorProtectionRequest_signed
-            : undefined,
-        undefined,
-        undefined,
-    );
-}
-
-export
-function critex_from (bits?: BitStringOption): BIT_STRING | undefined {
-    if (!bits) {
-        return undefined;
-    }
-    if (bits instanceof Uint8ClampedArray) {
-        return bits;
-    } else {
-        return new Uint8ClampedArray(
-            Array
-                .from(bits)
-                .map((char) => (char === "1") ? TRUE_BIT : FALSE_BIT),
-        );
-    }
 }
 
 export
@@ -664,6 +407,7 @@ export
 function create_dsp_client (rose: ROSETransport): DSPClient {
     const dsp: DSPClient = {
         rose,
+        directoryVersion: 1,
         bind: async (params: DSPBindParameters): Promise<DSPBindOutcome> => {
             const parameter = directoryBind.encoderFor["&ArgumentType"]!(params.parameter, BER);
             const outcome = await rose.bind({
@@ -672,6 +416,13 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
             });
             if ("result" in outcome) {
                 const parameter = directoryBind.decoderFor["&ResultType"]!(outcome.result.parameter);
+                if (parameter.versions?.[Versions_v2] === TRUE_BIT) {
+                    dsp.directoryVersion = 2;
+                } else if (parameter.versions?.[Versions_v1] === TRUE_BIT) {
+                    dsp.directoryVersion = 1;
+                } else {
+                    dsp.directoryVersion = 0;
+                }
                 return {
                     result: {
                         ...outcome.result,
@@ -685,7 +436,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
         request: async (params: RequestParameters): Promise<OperationOutcome> => rose.request(params),
         unbind: async (): Promise<UnbindOutcome> => rose.unbind(),
 
-        read: async (params: ReadOptions): Promise<OperationOutcome<typeof chainedRead["&ResultType"]>> => {
+        read: async (params: DSPReadOptions): Promise<OperationOutcome<typeof chainedRead["&ResultType"]>> => {
             const name = name_option_to_name(params.object);
             if (!name) {
                 return {
@@ -716,7 +467,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
             );
             const key = params.key ?? dsp.key;
             const cert_path = params.cert_path ?? dsp.cert_path;
-            const arg: ReadArgument = (key && cert_path && params.sign_inner_dap)
+            const arg: ReadArgument = (key && cert_path && params.sign_inner_dap && (dsp.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_ReadArgumentData)
                 : {
                     unsigned: data,
@@ -754,7 +505,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 return outcome;
             }
         },
-        compare: async (params: CompareOptions): Promise<OperationOutcome<typeof chainedCompare["&ResultType"]>> => {
+        compare: async (params: DSPCompareOptions): Promise<OperationOutcome<typeof chainedCompare["&ResultType"]>> => {
             const name = name_option_to_name(params.object);
             if (!name) {
                 return {
@@ -784,7 +535,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
             );
             const key = params.key ?? dsp.key;
             const cert_path = params.cert_path ?? dsp.cert_path;
-            const arg: CompareArgument = (key && cert_path && params.sign_inner_dap)
+            const arg: CompareArgument = (key && cert_path && params.sign_inner_dap && (dsp.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_CompareArgumentData)
                 : {
                     unsigned: data,
@@ -822,7 +573,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 return outcome;
             }
         },
-        abandon: async (params: AbandonOptions): Promise<OperationOutcome<typeof chainedAbandon["&ResultType"]>> => {
+        abandon: async (params: DSPAbandonOptions): Promise<OperationOutcome<typeof chainedAbandon["&ResultType"]>> => {
             const data = new AbandonArgumentData(
                 {
                     present: params.invoke_id,
@@ -830,7 +581,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
             );
             const key = params.key ?? dsp.key;
             const cert_path = params.cert_path ?? dsp.cert_path;
-            const arg: AbandonArgument = (key && cert_path && params.sign_inner_dap)
+            const arg: AbandonArgument = (key && cert_path && params.sign_inner_dap && (dsp.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_AbandonArgumentData)
                 : {
                     unsigned: data,
@@ -858,7 +609,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 return outcome;
             }
         },
-        list: async (params: ListOptions): Promise<OperationOutcome<typeof chainedList["&ResultType"]>> => {
+        list: async (params: DSPListOptions): Promise<OperationOutcome<typeof chainedList["&ResultType"]>> => {
             const name = name_option_to_name(params.object);
             if (!name) {
                 return {
@@ -889,7 +640,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
             );
             const key = params.key ?? dsp.key;
             const cert_path = params.cert_path ?? dsp.cert_path;
-            const arg: ListArgument = (key && cert_path && params.sign_inner_dap)
+            const arg: ListArgument = (key && cert_path && params.sign_inner_dap && (dsp.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_ListArgumentData)
                 : {
                     unsigned: data,
@@ -927,7 +678,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 return outcome;
             }
         },
-        search: async (params: SearchOptions): Promise<OperationOutcome<typeof chainedSearch["&ResultType"]>> => {
+        search: async (params: DSPSearchOptions): Promise<OperationOutcome<typeof chainedSearch["&ResultType"]>> => {
             const name = name_option_to_name(params.object);
             if (!name) {
                 return {
@@ -1019,7 +770,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
             );
             const key = params.key ?? dsp.key;
             const cert_path = params.cert_path ?? dsp.cert_path;
-            const arg: SearchArgument = (key && cert_path && params.sign_inner_dap)
+            const arg: SearchArgument = (key && cert_path && params.sign_inner_dap && (dsp.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_SearchArgumentData)
                 : {
                     unsigned: data,
@@ -1057,7 +808,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 return outcome;
             }
         },
-        addEntry: async (params: AddEntryOptions): Promise<OperationOutcome<typeof chainedAddEntry["&ResultType"]>> => {
+        addEntry: async (params: DSPAddEntryOptions): Promise<OperationOutcome<typeof chainedAddEntry["&ResultType"]>> => {
             const name = name_option_to_name(params.object);
             if (!name) {
                 return {
@@ -1088,7 +839,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
             );
             const key = params.key ?? dsp.key;
             const cert_path = params.cert_path ?? dsp.cert_path;
-            const arg: AddEntryArgument = (key && cert_path && params.sign_inner_dap)
+            const arg: AddEntryArgument = (key && cert_path && params.sign_inner_dap && (dsp.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_AddEntryArgumentData)
                 : {
                     unsigned: data,
@@ -1126,7 +877,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 return outcome;
             }
         },
-        removeEntry: async (params: RemoveEntryOptions): Promise<OperationOutcome<typeof chainedRemoveEntry["&ResultType"]>> => {
+        removeEntry: async (params: DSPRemoveEntryOptions): Promise<OperationOutcome<typeof chainedRemoveEntry["&ResultType"]>> => {
             const name = name_option_to_name(params.object);
             if (!name) {
                 return {
@@ -1155,7 +906,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
             );
             const key = params.key ?? dsp.key;
             const cert_path = params.cert_path ?? dsp.cert_path;
-            const arg: RemoveEntryArgument = (key && cert_path && params.sign_inner_dap)
+            const arg: RemoveEntryArgument = (key && cert_path && params.sign_inner_dap && (dsp.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_RemoveEntryArgumentData)
                 : {
                     unsigned: data,
@@ -1193,7 +944,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 return outcome;
             }
         },
-        modifyEntry: async (params: ModifyEntryOptions): Promise<OperationOutcome<typeof chainedModifyEntry["&ResultType"]>> => {
+        modifyEntry: async (params: DSPModifyEntryOptions): Promise<OperationOutcome<typeof chainedModifyEntry["&ResultType"]>> => {
             const name = name_option_to_name(params.object);
             if (!name) {
                 return {
@@ -1224,7 +975,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
             );
             const key = params.key ?? dsp.key;
             const cert_path = params.cert_path ?? dsp.cert_path;
-            const arg: ModifyEntryArgument = (key && cert_path && params.sign_inner_dap)
+            const arg: ModifyEntryArgument = (key && cert_path && params.sign_inner_dap && (dsp.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_ModifyEntryArgumentData)
                 : {
                     unsigned: data,
@@ -1262,7 +1013,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 return outcome;
             }
         },
-        modifyDN: async (params: ModifyDNOptions): Promise<OperationOutcome<typeof chainedModifyDN["&ResultType"]>> => {
+        modifyDN: async (params: DSPModifyDNOptions): Promise<OperationOutcome<typeof chainedModifyDN["&ResultType"]>> => {
             const name = name_option_to_name(params.object);
             if (!name) {
                 return {
@@ -1316,7 +1067,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
             );
             const key = params.key ?? dsp.key;
             const cert_path = params.cert_path ?? dsp.cert_path;
-            const arg: ModifyDNArgument = (key && cert_path && params.sign_inner_dap)
+            const arg: ModifyDNArgument = (key && cert_path && params.sign_inner_dap && (dsp.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_ModifyDNArgumentData)
                 : {
                     unsigned: data,
@@ -1354,7 +1105,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 return outcome;
             }
         },
-        changePassword: async (params: ChangePasswordOptions): Promise<OperationOutcome<typeof chainedChangePassword["&ResultType"]>> => {
+        changePassword: async (params: DSPChangePasswordOptions): Promise<OperationOutcome<typeof chainedChangePassword["&ResultType"]>> => {
             const name = name_option_to_name(params.object);
             if (!name) {
                 return {
@@ -1378,7 +1129,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
             );
             const key = params.key ?? dsp.key;
             const cert_path = params.cert_path ?? dsp.cert_path;
-            const arg: ChangePasswordArgument = (key && cert_path && params.sign_inner_dap)
+            const arg: ChangePasswordArgument = (key && cert_path && params.sign_inner_dap && (dsp.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_ChangePasswordArgumentData)
                 : {
                     unsigned: data,
@@ -1416,7 +1167,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 return outcome;
             }
         },
-        administerPassword: async (params: AdministerPasswordOptions): Promise<OperationOutcome<typeof chainedAdministerPassword["&ResultType"]>> => {
+        administerPassword: async (params: DSPAdministerPasswordOptions): Promise<OperationOutcome<typeof chainedAdministerPassword["&ResultType"]>> => {
             const name = name_option_to_name(params.object);
             if (!name) {
                 return {
@@ -1435,7 +1186,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
             );
             const key = params.key ?? dsp.key;
             const cert_path = params.cert_path ?? dsp.cert_path;
-            const arg: AdministerPasswordArgument = (key && cert_path && params.sign_inner_dap)
+            const arg: AdministerPasswordArgument = (key && cert_path && params.sign_inner_dap && (dsp.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_AdministerPasswordArgumentData)
                 : {
                     unsigned: data,
@@ -1504,7 +1255,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
             );
             const key = params.key ?? dsp.key;
             const cert_path = params.cert_path ?? dsp.cert_path;
-            const arg: LdapArgument = (key && cert_path && params.sign_inner_dap)
+            const arg: LdapArgument = (key && cert_path && params.sign_inner_dap && (dsp.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_LdapArgumentData)
                 : {
                     unsigned: data,
@@ -1574,7 +1325,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
             );
             const key = params.key ?? dsp.key;
             const cert_path = params.cert_path ?? dsp.cert_path;
-            const arg: LinkedArgument = (key && cert_path && params.sign_inner_dap)
+            const arg: LinkedArgument = (key && cert_path && params.sign_inner_dap && (dsp.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_LinkedArgumentData)
                 : {
                     unsigned: data,

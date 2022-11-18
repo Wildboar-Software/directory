@@ -1,4 +1,5 @@
 import { ITOTSocket } from './tpkt';
+import { OSINetworkingOptions, WithOSINetworkingOptions } from "../index";
 import {
     TransportConnection,
     createTransportConnection,
@@ -130,7 +131,7 @@ const id_acse = new ObjectIdentifier([2, 2, 1, 0, 1]);
 
 export const TIMER_TIME_IN_MS: number = 3000;
 
-export interface ISOTransportOverTCPStack {
+export interface ISOTransportOverTCPStack extends WithOSINetworkingOptions {
     network: ITOTSocket;
     transport: TransportConnection;
     session: SessionServiceConnectionState;
@@ -228,10 +229,7 @@ function get_aru(c: PresentationConnection): ARU_PPDU {
 
 export function create_itot_stack(
     socket: Socket,
-    sessionCaller: boolean = true,
-    transportCaller: boolean = true,
-    max_tsdu_size?: number,
-    abort_timeout_ms?: number
+    options?: OSINetworkingOptions,
 ): ISOTransportOverTCPStack {
     const tpkt = new ITOTSocket(socket);
     socket.on('data', (data) => tpkt.receiveData(data));
@@ -242,7 +240,7 @@ export function create_itot_stack(
         openInProgress: () => socket.connecting,
         transportConnectionsServed: () => 1,
         write_nsdu: (nsdu: Buffer) => tpkt.writeNSDU(nsdu),
-    }, max_tsdu_size);
+    }, options?.max_tsdu_size);
     const session = newSessionConnection(
         {
             connected: () =>
@@ -265,8 +263,8 @@ export function create_itot_stack(
                 stack.transport = dispatch_TDTreq(stack.transport, tsdu);
             },
         },
-        sessionCaller,
-        transportCaller
+        options?.sessionCaller ?? true,
+        options?.transportCaller ?? true,
     );
     const presentation = createPresentationConnection(
         {
@@ -420,6 +418,7 @@ export function create_itot_stack(
         },
     });
     const stack: ISOTransportOverTCPStack = {
+        options,
         network: tpkt,
         transport,
         session,
@@ -455,7 +454,7 @@ export function create_itot_stack(
             stack.session.outgoingEvents.emit('AB_nr', response);
             stack.session.TIM = setTimeout(
                 () => stack.session.outgoingEvents.emit('TDISreq'),
-                abort_timeout_ms ?? TIMER_TIME_IN_MS
+                options?.abort_timeout_ms ?? TIMER_TIME_IN_MS
             );
         }
     });

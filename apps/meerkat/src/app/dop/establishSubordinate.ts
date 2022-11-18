@@ -1,36 +1,21 @@
 import { Vertex, ServiceError } from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
-import { unpackBits } from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
 import type {
     AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
-import { connect, ConnectOptions } from "../net/connect";
+import { ConnectOptions } from "../net/connect";
+import { bindForOBM } from "../net/bindToOtherDSA";
 import type {
-    Connection,
     WriteOperationOptions,
 } from "../net/Connection";
 import {
     establishOperationalBinding,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/establishOperationalBinding.oa";
 import {
-    EstablishOperationalBindingArgument,
-    _encode_EstablishOperationalBindingArgument,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgument.ta";
-import {
-    EstablishOperationalBindingArgumentData,
-    _encode_EstablishOperationalBindingArgumentData,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgumentData.ta";
-import {
-    id_op_binding_hierarchical,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
-import {
     SuperiorToSubordinate,
-    _encode_SuperiorToSubordinate,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinate.ta";
 import {
     HierarchicalAgreement,
-    _encode_HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
 import {
     Validity,
@@ -50,12 +35,10 @@ import {
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubentryInfo.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import readSubordinates from "../dit/readSubordinates";
-import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
-import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import admPointEIS from "./admPointEIS";
 import subentryEIS from "./subentryEIS";
 import readAttributes from "../database/entry/readAttributes";
-import { addMilliseconds, differenceInMilliseconds } from "date-fns";
+import { addMilliseconds } from "date-fns";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     ServiceErrorData,
@@ -66,13 +49,16 @@ import {
 import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
-import { generateSignature } from "../pki/generateSignature";
-import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import { verifySIGNED } from "../pki/verifySIGNED";
 import {
     _encode_EstablishOperationalBindingResultData,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingResultData.ta";
+import {
+    EstablishOperationalBindingResult,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingResult.ta";
+import { OperationOutcome } from "@wildboar/rose-transport";
+import { CommonEstablishOptions } from "@wildboar/x500-client-ts";
 
 // dSAOperationalBindingManagementBind OPERATION ::= dSABind
 
@@ -177,6 +163,12 @@ interface EstablishSubordinateOptions extends ConnectOptions, WriteOperationOpti
     endTime?: Date;
 }
 
+export
+interface EstablishSubordinateReturn {
+    arg: CommonEstablishOptions<HierarchicalAgreement, SuperiorToSubordinate>;
+    response: OperationOutcome<EstablishOperationalBindingResult>;
+}
+
 /**
  * @summary Make an outbound DOP request to establish another DSA as a subordinate DSA in a HOB.
  * @description
@@ -210,7 +202,7 @@ async function establishSubordinate (
     signErrors: boolean,
     aliasDereferenced?: boolean,
     options?: EstablishSubordinateOptions,
-): Promise<{ arg: EstablishOperationalBindingArgument, response: ResultOrError }> {
+): Promise<EstablishSubordinateReturn> {
     const connectionTimeout: number | undefined = options?.timeLimitInMilliseconds;
     const startTime = new Date();
     const timeoutTime: Date | undefined = connectionTimeout
@@ -219,11 +211,12 @@ async function establishSubordinate (
     ctx.log.info(ctx.i18n.t("log:establishing_hob_via_add_entry", {
         uuid: immediateSuperior.dse.uuid,
     }));
-    const assn: Connection | null = await connect(ctx, targetSystem, dop_ip["&id"]!, {
-        timeLimitInMilliseconds: options?.timeLimitInMilliseconds,
-        tlsOptional: ctx.config.chaining.tlsOptional,
-        signErrors,
-    });
+    const assn = await bindForOBM(ctx, undefined, undefined, targetSystem, aliasDereferenced, signErrors);
+    // const assn: Connection | null = await connect(ctx, targetSystem, dop_ip["&id"]!, {
+    //     timeLimitInMilliseconds: options?.timeLimitInMilliseconds,
+    //     tlsOptional: ctx.config.chaining.tlsOptional,
+    //     signErrors,
+    // });
     if (!assn) {
         throw new ServiceError(
             ctx.i18n.t("err:could_not_connect"),
@@ -316,72 +309,40 @@ async function establishSubordinate (
         getDistinguishedName(immediateSuperior),
     );
 
-    const data = new EstablishOperationalBindingArgumentData(
-        id_op_binding_hierarchical,
-        undefined, // Let the subordinate DSA determine the ID.
-        ctx.dsa.accessPoint,
-        {
-            roleA_initiates: _encode_SuperiorToSubordinate(sup2sub, DER),
-        },
-        _encode_HierarchicalAgreement(agreement, DER),
-        options?.endTime
-            ? new Validity(
-                {
-                    now: null,
-                },
-                {
-                    time: {
-                        generalizedTime: options.endTime,
-                    },
-                },
-            )
-            : undefined,
-        createSecurityParameters(
-            ctx,
-            true,
-            targetSystem.ae_title.rdnSequence,
-            establishOperationalBinding["&operationCode"],
-        ),
-    );
-    const tbsBytes = _encode_EstablishOperationalBindingArgumentData(data, DER).toBytes();
-    const arg: EstablishOperationalBindingArgument = (() => {
-        const key = ctx.config.signing?.key;
-        if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
-            return {
-                unsigned: data,
-            };
-        }
-        const signingResult = generateSignature(key, tbsBytes);
-        if (!signingResult) {
-            return {
-                unsigned: data,
-            };
-        }
-        const [ sigAlg, sigValue ] = signingResult;
-        return {
-            signed: new SIGNED(
-                data,
-                sigAlg,
-                unpackBits(sigValue),
-                undefined,
-                undefined,
-            ),
-        };
-    })();
-    const timeRemainingForOperation: number | undefined = timeoutTime
-        ? differenceInMilliseconds(timeoutTime, new Date())
-        : undefined;
+    // const timeRemainingForOperation: number | undefined = timeoutTime
+    //     ? differenceInMilliseconds(timeoutTime, new Date())
+    //     : undefined;
 
     try {
-        const response = await assn.writeOperation({
-            opCode: establishOperationalBinding["&operationCode"]!,
-            argument: _encode_EstablishOperationalBindingArgument(arg, DER),
-        }, {
-            timeLimitInMilliseconds: timeRemainingForOperation,
-        });
-        assn.close(); // INTENTIONAL_NO_AWAIT
+        const opts: CommonEstablishOptions<HierarchicalAgreement, SuperiorToSubordinate> = {
+            accessPoint: ctx.dsa.accessPoint,
+            initiator: sup2sub,
+            agreement,
+            valid: options?.endTime
+                ? new Validity(
+                    {
+                        now: null,
+                    },
+                    {
+                        time: {
+                            generalizedTime: options.endTime,
+                        },
+                    },
+                )
+                : undefined,
+            securityParameters: createSecurityParameters(
+                ctx,
+                true,
+                targetSystem.ae_title.rdnSequence,
+                establishOperationalBinding["&operationCode"],
+            ),
+            cert_path: ctx.config.signing.certPath,
+            key: ctx.config.signing.key,
+        };
+        const response = await assn.establishHOBWithSubordinate(opts);
+        assn.unbind().then().catch(); // INTENTIONAL_NO_AWAIT
         if ("result" in response && response.result) {
-            const result = establishOperationalBinding.decoderFor["&ResultType"]!(response.result);
+            const result = response.result.parameter;
             if ("signed" in result) {
                 const resultData = getOptionallyProtectedValue(result);
                 const certPath = resultData.securityParameters?.certification_path;
@@ -389,7 +350,7 @@ async function establishSubordinate (
                     ctx,
                     undefined,
                     certPath,
-                    response.invokeId,
+                    response.result.invoke_id,
                     aliasDereferenced,
                     result.signed,
                     _encode_EstablishOperationalBindingResultData,
@@ -399,7 +360,7 @@ async function establishSubordinate (
             }
         }
         return {
-            arg,
+            arg: opts,
             response,
         };
     } catch (e) {

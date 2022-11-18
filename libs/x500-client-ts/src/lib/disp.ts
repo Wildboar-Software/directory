@@ -11,7 +11,7 @@ import {
     dSABind,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/dSABind.oa";
 import { KeyObject, randomBytes } from "node:crypto";
-import { CertPathOption, generateSIGNED } from "./utils";
+import { CertPathOption, generateSIGNED, DirectoryVersioned } from "./utils";
 import {
     requestShadowUpdate,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/requestShadowUpdate.oa";
@@ -34,12 +34,16 @@ import {
     _encode_UpdateShadowArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/UpdateShadowArgumentData.ta";
 import { BER, DER } from "asn1-ts/dist/node/functional";
+import { TRUE_BIT } from "asn1-ts";
 import { strict as assert } from "node:assert";
 import { compareCode } from "@wildboar/x500";
+import {
+    Versions_v1,
+    Versions_v2,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";
 
-
-export type BindArgument = typeof dSABind["&ArgumentType"];
-export type BindResult = typeof dSABind["&ResultType"];
+type BindArgument = typeof dSABind["&ArgumentType"];
+type BindResult = typeof dSABind["&ResultType"];
 export type DISPBindParameters = BindParameters<BindArgument>;
 export type DISPBindOutcome = BindOutcome<BindResult>;
 
@@ -70,7 +74,7 @@ interface DISPOptions extends DISPOperationOptions {
 }
 
 export
-interface DISPClient extends AsyncROSEClient<BindArgument, BindResult>, DISPOptions {
+interface DISPClient extends AsyncROSEClient<BindArgument, BindResult>, DISPOptions, DirectoryVersioned {
     rose: ROSETransport;
 
     // From AsyncROSEClient
@@ -88,6 +92,7 @@ export
 function create_disp_client (rose: ROSETransport): DISPClient {
     const ret: DISPClient = {
         rose,
+        directoryVersion: 1,
         bind: async (params: DISPBindParameters): Promise<DISPBindOutcome> => {
             const parameter = dSABind.encoderFor["&ArgumentType"]!(params.parameter, BER);
             const outcome = await rose.bind({
@@ -96,6 +101,13 @@ function create_disp_client (rose: ROSETransport): DISPClient {
             });
             if ("result" in outcome) {
                 const parameter = dSABind.decoderFor["&ResultType"]!(outcome.result.parameter);
+                if (parameter.versions?.[Versions_v2] === TRUE_BIT) {
+                    ret.directoryVersion = 2;
+                } else if (parameter.versions?.[Versions_v1] === TRUE_BIT) {
+                    ret.directoryVersion = 1;
+                } else {
+                    ret.directoryVersion = 0;
+                }
                 return {
                     result: {
                         ...outcome.result,
@@ -118,7 +130,7 @@ function create_disp_client (rose: ROSETransport): DISPClient {
             );
             const key = params.key ?? ret.key;
             const cert_path = params.cert_path ?? ret.cert_path;
-            const arg: typeof requestShadowUpdate["&ArgumentType"] = (key && cert_path)
+            const arg: typeof requestShadowUpdate["&ArgumentType"] = (key && cert_path && (ret.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_RequestShadowUpdateArgumentData)
                 : {
                     unsigned: data,
@@ -156,7 +168,7 @@ function create_disp_client (rose: ROSETransport): DISPClient {
             );
             const key = params.key ?? ret.key;
             const cert_path = params.cert_path ?? ret.cert_path;
-            const arg: typeof updateShadow["&ArgumentType"] = (key && cert_path)
+            const arg: typeof updateShadow["&ArgumentType"] = (key && cert_path && (ret.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_UpdateShadowArgumentData)
                 : {
                     unsigned: data,
@@ -193,7 +205,7 @@ function create_disp_client (rose: ROSETransport): DISPClient {
             );
             const key = params.key ?? ret.key;
             const cert_path = params.cert_path ?? ret.cert_path;
-            const arg: typeof coordinateShadowUpdate["&ArgumentType"] = (key && cert_path)
+            const arg: typeof coordinateShadowUpdate["&ArgumentType"] = (key && cert_path && (ret.directoryVersion === 2))
                 ? generateSIGNED(key, data, _encode_CoordinateShadowUpdateArgumentData)
                 : {
                     unsigned: data,
