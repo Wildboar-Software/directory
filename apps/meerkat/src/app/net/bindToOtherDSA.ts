@@ -36,6 +36,10 @@ import {
     abandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 import { ROSETransport, AsyncROSEClient } from "@wildboar/rose-transport";
+import { createStrongCredentials } from "../authn/createStrongCredentials";
+import getCredentialsForNSAP from "./getCredentialsForNSAP";
+import { DSACredentials } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSACredentials.ta";
+import { getOnOCSPResponseCallback } from "../pki/getOnOCSPResponseCallback";
 
 
 async function dsa_bind <ClientType extends AsyncROSEClient> (
@@ -70,34 +74,66 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
                 signErrors,
             );
         }
+        const uri = naddrToURI(naddr);
         const paddr = new PresentationAddress(
             accessPoint.address.pSelector,
             accessPoint.address.sSelector,
             accessPoint.address.tSelector,
             [naddr],
         );
-        const rose = rose_from_presentation_address(paddr, ctx.config.tls);
+        const rose = rose_from_presentation_address(paddr, {
+            ...ctx.config.tls,
+            rejectUnauthorized: ctx.config.tls.rejectUnauthorizedServers,
+        });
         if (!rose) {
             continue;
         }
+        rose.socket!.once("OCSPResponse", getOnOCSPResponseCallback(ctx, (valid) => {
+            // TODO: Log information with code parameter.
+            if (!valid) {
+                rose.socket!.end();
+            }
+        }));
         const c = client_getter(rose);
-        const bind_response = await c.bind({
-            protocol_id,
-            parameter: _encode_DSABindArgument(new DSABindArgument(
-                undefined,
-                versions,
-            ), DER),
-            calling_ae_title: {
-                directoryName: ctx.dsa.accessPoint.ae_title,
-            },
-            calling_ap_invocation_identifier: process.pid,
-            called_ae_title: {
-                directoryName: accessPoint.ae_title,
-            },
-            implementation_information: "Meerkat DSA",
-        });
-        if (!("result" in bind_response)) {
-            // TODO: Actual handle other outcomes. (Maybe just logging is needed.)
+        const strongCredData = createStrongCredentials(ctx, accessPoint.ae_title.rdnSequence);
+        const extraCredentials: DSACredentials[] = uri
+            ? await getCredentialsForNSAP(ctx, uri.toString())
+            : [];
+        const otherCreds: (DSACredentials | undefined)[] = [
+            ...extraCredentials,
+            // By adding `undefined` to the end of this array, we try one time without authentication.
+            undefined,
+        ];
+        const credentials: (DSACredentials | undefined)[] = strongCredData
+            ? [
+                {
+                    strong: strongCredData,
+                },
+                ...otherCreds,
+            ]
+            : otherCreds;
+        for (const cred of credentials) {
+            const bind_response = await c.bind({
+                protocol_id,
+                parameter: _encode_DSABindArgument(new DSABindArgument(
+                    cred,
+                    versions,
+                ), DER),
+                calling_ae_title: {
+                    directoryName: ctx.dsa.accessPoint.ae_title,
+                },
+                calling_ap_invocation_identifier: process.pid,
+                called_ae_title: {
+                    directoryName: accessPoint.ae_title,
+                },
+                implementation_information: "Meerkat DSA",
+            });
+            if ("result" in bind_response) {
+                // TODO: Actual handle other outcomes. (Maybe just logging is needed.)
+                break;
+            }
+        }
+        if (!rose.is_bound) {
             continue;
         }
         let tls_in_use: boolean = !!rose.socket && (rose.socket instanceof TLSSocket);
@@ -120,7 +156,6 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
         }
 
         if (!tls_in_use) {
-            const uri = naddrToURI(naddr);
             if (!ctx.config.chaining.tlsOptional) {
                 ctx.log.debug(ctx.i18n.t("log:starttls_error", {
                     uri,
