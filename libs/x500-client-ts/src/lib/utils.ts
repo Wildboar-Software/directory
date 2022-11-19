@@ -497,6 +497,7 @@ function rose_from_url (
     url: string | URL,
     address?: PresentationAddress,
     tlsOptions?: TLSSocketOptions,
+    socket_timeout: number = 60_000,
 ): ROSETransport | null {
     const u: URL = (typeof url === "string")
         ? new URL(url)
@@ -512,6 +513,7 @@ function rose_from_url (
             const socket = createConnection({
                 host,
                 port,
+                timeout: socket_timeout,
             });
             const idm = new IDMConnection(socket, tlsOptions);
             return rose_transport_from_idm_socket(idm);
@@ -520,6 +522,7 @@ function rose_from_url (
             const socket = createConnection({
                 host,
                 port,
+                timeout: socket_timeout,
             });
             const tlsSocket = new TLSSocket(socket, tlsOptions);
             const idm = new IDMConnection(tlsSocket, tlsOptions);
@@ -529,6 +532,7 @@ function rose_from_url (
             const socket = createConnection({
                 host,
                 port,
+                timeout: socket_timeout,
             });
             const itot = create_itot_stack(socket, {
                 address,
@@ -541,6 +545,7 @@ function rose_from_url (
             const socket = createConnection({
                 host,
                 port,
+                timeout: socket_timeout,
             });
             const tlsSocket = new TLSSocket(socket, tlsOptions);
             const itot = create_itot_stack(tlsSocket, {
@@ -560,6 +565,7 @@ export
 function rose_from_presentation_address (
     address: PresentationAddress,
     tlsOptions?: TLSSocketOptions,
+    socket_timeout: number = 60_000,
 ): ROSETransport | null {
     if (!address.nAddresses?.length) {
         return null;
@@ -570,7 +576,7 @@ function rose_from_presentation_address (
         return null;
     }
     const u = new URL(url);
-    return rose_from_url(u, address, tlsOptions);
+    return rose_from_url(u, address, tlsOptions, socket_timeout);
 }
 
 export

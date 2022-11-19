@@ -40,7 +40,9 @@ import { createStrongCredentials } from "../authn/createStrongCredentials";
 import getCredentialsForNSAP from "./getCredentialsForNSAP";
 import { DSACredentials } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSACredentials.ta";
 import { getOnOCSPResponseCallback } from "../pki/getOnOCSPResponseCallback";
+import { addMilliseconds, differenceInMilliseconds } from "date-fns";
 
+const DEFAULT_CONNECTION_TIMEOUT_IN_MS: number = 15 * 1000;
 
 async function dsa_bind <ClientType extends AsyncROSEClient> (
     ctx: MeerkatContext,
@@ -51,7 +53,13 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
     accessPoint: AccessPoint,
     aliasDereferenced?: BOOLEAN,
     signErrors: boolean = false,
+    timeLimit: number | Date = 30_000,
 ): Promise<ClientType | null> {
+    const startTime = new Date();
+    const timeoutTime: Date = (timeLimit instanceof Date)
+        ? timeLimit
+        : addMilliseconds(startTime, Math.max(timeLimit ?? DEFAULT_CONNECTION_TIMEOUT_IN_MS, 500));
+    let timeRemaining: number = Math.abs(differenceInMilliseconds(new Date(), timeoutTime));
     for (const naddr of accessPoint.address.nAddresses) {
         if (op?.abandonTime) {
             op.events.emit("abandon");
@@ -75,6 +83,11 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
             );
         }
         const uri = naddrToURI(naddr);
+        ctx.log.debug(ctx.i18n.t("log:trying_naddr", {
+            uri,
+        }), {
+            dest: uri,
+        });
         const paddr = new PresentationAddress(
             accessPoint.address.pSelector,
             accessPoint.address.sSelector,
@@ -94,7 +107,71 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
                 rose.socket!.end();
             }
         }));
-        const c = client_getter(rose);
+
+        let tls_in_use: boolean = !!rose.socket && (rose.socket instanceof TLSSocket);
+        if (!tls_in_use) {
+            ctx.log.debug(ctx.i18n.t("log:attempting_starttls", {
+                uri,
+            }), {
+                dest: uri,
+            });
+            timeRemaining = Math.abs(differenceInMilliseconds(new Date(), timeoutTime));
+            const tls_response = await rose.startTLS?.({
+                timeout: timeRemaining,
+            });
+            if (tls_response) {
+                if ("response" in tls_response) {
+                    if (tls_response.response === 0) {
+                        tls_in_use = true;
+                        ctx.log.debug(ctx.i18n.t("log:established_starttls", {
+                            uri,
+                        }), {
+                            dest: uri,
+                        });
+                    }
+                } else if ("not_supported_locally" in tls_response) {
+                    // Do not log a message, since this can be inferred from the URL.
+                } else if ("already_in_use" in tls_response) {
+                    // Do not log a message, since this can be inferred from the URL.
+                } else if ("abort" in tls_response) {
+                    // tls_response.abort
+                    // TODO: Log abort
+                } else if ("timeout" in tls_response) {
+                    ctx.log.debug(ctx.i18n.t("log:timed_out_connecting_to_naddr", {
+                        uri,
+                    }), {
+                        dest: uri,
+                    });
+                    return null;
+                    // TODO: Log
+                } else {
+                    // TODO: Log other error.
+                }
+            }
+        }
+
+        if (!tls_in_use && !ctx.config.chaining.tlsOptional) {
+            if (!ctx.config.chaining.tlsOptional) {
+                ctx.log.debug(ctx.i18n.t("log:starttls_error", {
+                    uri,
+                    context: "tls_required",
+                }), {
+                    dest: uri,
+                });
+                continue;
+            }
+        } else if (!(rose.socket instanceof TLSSocket)) {
+            // We can use non-null assertion here, because Meerkat does
+            // not support any ROSE transport that does not involve a
+            // TCP or TLS socket.
+            const tls_socket = new TLSSocket(rose.socket!, {
+                ...ctx.config.tls,
+                rejectUnauthorized: ctx.config.tls.rejectUnauthorizedServers,
+            });
+            rose.socket = tls_socket;
+        }
+
+        const c: ClientType = client_getter(rose);
         const strongCredData = createStrongCredentials(ctx, accessPoint.ae_title.rdnSequence);
         const extraCredentials: DSACredentials[] = uri
             ? await getCredentialsForNSAP(ctx, uri.toString())
@@ -113,6 +190,7 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
             ]
             : otherCreds;
         for (const cred of credentials) {
+            timeRemaining = Math.abs(differenceInMilliseconds(new Date(), timeoutTime));
             const bind_response = await c.bind({
                 protocol_id,
                 parameter: _encode_DSABindArgument(new DSABindArgument(
@@ -127,59 +205,29 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
                     directoryName: accessPoint.ae_title,
                 },
                 implementation_information: "Meerkat DSA",
+                timeout: timeRemaining,
             });
             if ("result" in bind_response) {
                 // TODO: Actual handle other outcomes. (Maybe just logging is needed.)
                 break;
+            } else if ("timeout" in bind_response) {
+                // TODO: Add context to inform whether this was because of StartTLS or Bind
+                ctx.log.debug(ctx.i18n.t("log:timed_out_connecting_to_naddr", {
+                    uri,
+                }), {
+                    dest: uri,
+                });
+                return null;
             }
         }
         if (!rose.is_bound) {
             continue;
         }
-        let tls_in_use: boolean = !!rose.socket && (rose.socket instanceof TLSSocket);
-        const tls_response = await rose.startTLS?.();
-        if (tls_response) {
-            if ("response" in tls_response) {
-                if (tls_response.response === 0) {
-                    tls_in_use = true;
-                }
-            } else if ("not_supported_locally" in tls_response) {
-                // Do not log a message, since this can be inferred from the URL.
-            } else if ("already_in_use" in tls_response) {
-                // Do not log a message, since this can be inferred from the URL.
-            } else if ("abort" in tls_response) {
-                // tls_response.abort
-                // TODO: Log abort
-            } else {
-                // TODO: Log other error.
-            }
-        }
-
-        if (!tls_in_use) {
-            if (!ctx.config.chaining.tlsOptional) {
-                ctx.log.debug(ctx.i18n.t("log:starttls_error", {
-                    uri,
-                    context: "tls_required",
-                }), {
-                    dest: uri,
-                });
-                continue;
-            } else {
-                ctx.log.debug(ctx.i18n.t("log:starttls_error", {
-                    uri,
-                    context: "tls_optional",
-                }));
-            }
-        } else if (!(rose.socket instanceof TLSSocket)) {
-            // We can use non-null assertion here, because Meerkat does
-            // not support any ROSE transport that does not involve a
-            // TCP or TLS socket.
-            const tls_socket = new TLSSocket(rose.socket!, {
-                ...ctx.config.tls,
-                rejectUnauthorized: ctx.config.tls.rejectUnauthorizedServers,
-            });
-            rose.socket = tls_socket;
-        }
+        ctx.log.info(ctx.i18n.t("log:bound_to_naddr", {
+            uri,
+        }), {
+            dest: uri,
+        });
         return c;
     }
     return null;

@@ -63,7 +63,7 @@ import {
 import {
     _encode_TerminateOperationalBindingResult,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingResult.ta";
-import versions from "./versions";
+import versions from "../versions";
 import { bind as doBind } from "../authn/dsaBind";
 import {
     directoryBindError,

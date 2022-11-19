@@ -10,7 +10,7 @@ import * as errors from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
 import { ASN1Element } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
-import versions from "./versions";
+import versions from "../versions";
 import {
     DSABindArgument,
     _decode_DSABindArgument,

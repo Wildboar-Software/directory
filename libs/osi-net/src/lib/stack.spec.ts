@@ -317,8 +317,14 @@ describe('The OSI network stack created with create_itot_stack()', () => {
         'can bind, handle a request, and unbind',
         withSockets((socket1, socket2, server, done) => {
             const test_str: string = 'Big Chungus';
-            const stack1 = create_itot_stack(socket1, true, true);
-            const stack2 = create_itot_stack(socket2, false, false);
+            const stack1 = create_itot_stack(socket1, {
+                sessionCaller: true,
+                transportCaller: true,
+            });
+            const stack2 = create_itot_stack(socket2, {
+                sessionCaller: false,
+                transportCaller: false,
+            });
             configure_itot_for_directory(stack1);
             configure_itot_for_directory(stack2);
             stack2.acse.outgoingEvents.on('A-ASCind', () => {
@@ -626,8 +632,14 @@ describe('The OSI network stack created with create_itot_stack()', () => {
     it(
         'can relay an association-layer abort',
         withSockets((socket1, socket2, server, done) => {
-            const stack1 = create_itot_stack(socket1, true, true);
-            const stack2 = create_itot_stack(socket2, false, false);
+            const stack1 = create_itot_stack(socket1, {
+                sessionCaller: true,
+                transportCaller: true,
+            });
+            const stack2 = create_itot_stack(socket2, {
+                sessionCaller: false,
+                transportCaller: false,
+            });
             configure_itot_for_directory(stack1);
             configure_itot_for_directory(stack2);
             stack2.acse.outgoingEvents.on('A-ASCind', () => {
@@ -692,8 +704,14 @@ describe('The OSI network stack created with create_itot_stack()', () => {
     it(
         'can handle a large CONNECT SSDU',
         withSockets((socket1, socket2, server, done) => {
-            const stack1 = create_itot_stack(socket1, true, true);
-            const stack2 = create_itot_stack(socket2, false, false);
+            const stack1 = create_itot_stack(socket1, {
+                sessionCaller: true,
+                transportCaller: true,
+            });
+            const stack2 = create_itot_stack(socket2, {
+                sessionCaller: false,
+                transportCaller: false,
+            });
             configure_itot_for_directory(stack1);
             configure_itot_for_directory(stack2);
             stack2.acse.outgoingEvents.on('A-ASCind', done);
@@ -750,8 +768,14 @@ describe('The OSI network stack created with create_itot_stack()', () => {
     it(
         'can handle a large FINISH SSDU',
         withSockets((socket1, socket2, server, done) => {
-            const stack1 = create_itot_stack(socket1, true, true);
-            const stack2 = create_itot_stack(socket2, false, false);
+            const stack1 = create_itot_stack(socket1, {
+                sessionCaller: true,
+                transportCaller: true,
+            });
+            const stack2 = create_itot_stack(socket2, {
+                sessionCaller: false,
+                transportCaller: false,
+            });
             configure_itot_for_directory(stack1);
             configure_itot_for_directory(stack2);
             stack2.acse.outgoingEvents.on('A-ASCind', () => {
@@ -864,8 +888,14 @@ describe('The OSI network stack created with create_itot_stack()', () => {
     it(
         'can handle a large ACCEPT SSDU',
         withSockets((socket1, socket2, server, done) => {
-            const stack1 = create_itot_stack(socket1, true, true);
-            const stack2 = create_itot_stack(socket2, false, false);
+            const stack1 = create_itot_stack(socket1, {
+                sessionCaller: true,
+                transportCaller: true,
+            });
+            const stack2 = create_itot_stack(socket2, {
+                sessionCaller: false,
+                transportCaller : false,
+            });
             configure_itot_for_directory(stack1);
             configure_itot_for_directory(stack2);
             stack2.acse.outgoingEvents.on('A-ASCind', () => {
@@ -978,8 +1008,14 @@ describe('The OSI network stack created with create_itot_stack()', () => {
     it(
         'can handle a large REFUSE SSDU',
         withSockets((socket1, socket2, server, done) => {
-            const stack1 = create_itot_stack(socket1, true, true);
-            const stack2 = create_itot_stack(socket2, false, false);
+            const stack1 = create_itot_stack(socket1, {
+                sessionCaller: true,
+                transportCaller: true,
+            });
+            const stack2 = create_itot_stack(socket2, {
+                sessionCaller: false,
+                transportCaller: false,
+            });
             configure_itot_for_directory(stack1);
             configure_itot_for_directory(stack2);
             stack2.acse.outgoingEvents.on('A-ASCind', () => {
@@ -1074,8 +1110,14 @@ describe('The OSI network stack created with create_itot_stack()', () => {
     it(
         'can handle a large DISCONNECT SSDU',
         withSockets((socket1, socket2, server, done) => {
-            const stack1 = create_itot_stack(socket1, true, true);
-            const stack2 = create_itot_stack(socket2, false, false);
+            const stack1 = create_itot_stack(socket1, {
+                sessionCaller: true,
+                transportCaller: true,
+            });
+            const stack2 = create_itot_stack(socket2, {
+                sessionCaller: false,
+                transportCaller: false,
+            });
             configure_itot_for_directory(stack1);
             configure_itot_for_directory(stack2);
             stack2.acse.outgoingEvents.on('A-ASCind', () => {
@@ -1188,8 +1230,14 @@ describe('The OSI network stack created with create_itot_stack()', () => {
     it(
         'can handle a large ABORT SSDU',
         withSockets((socket1, socket2, server, done) => {
-            const stack1 = create_itot_stack(socket1, true, true);
-            const stack2 = create_itot_stack(socket2, false, false);
+            const stack1 = create_itot_stack(socket1, {
+                sessionCaller: true,
+                transportCaller: true,
+            });
+            const stack2 = create_itot_stack(socket2, {
+                sessionCaller: false,
+                transportCaller: false,
+            });
             configure_itot_for_directory(stack1);
             configure_itot_for_directory(stack2);
             stack2.acse.outgoingEvents.on('A-ASCind', () => {
@@ -1258,8 +1306,14 @@ describe('The OSI network stack created with create_itot_stack()', () => {
     it.skip(
         'can handle a large NOT FINISHED SSDU',
         withSockets((socket1, socket2, server, done) => {
-            const stack1 = create_itot_stack(socket1, true, true);
-            const stack2 = create_itot_stack(socket2, false, false);
+            const stack1 = create_itot_stack(socket1, {
+                sessionCaller: true,
+                transportCaller: true,
+            });
+            const stack2 = create_itot_stack(socket2, {
+                sessionCaller: false,
+                transportCaller: false,
+            });
             configure_itot_for_directory(stack1);
             configure_itot_for_directory(stack2);
             stack2.acse.outgoingEvents.on('A-ASCind', () => {

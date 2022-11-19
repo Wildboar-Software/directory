@@ -4,10 +4,6 @@ import type {
     AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 import { bindForOBM } from "../net/bindToOtherDSA";
-import { ConnectOptions } from "../net/connect";
-import type {
-    WriteOperationOptions,
-} from "../net/Connection";
 import {
     RelativeDistinguishedName as RDN,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
@@ -182,7 +178,8 @@ import { OperationOutcome } from "@wildboar/rose-transport";
 //     ... }
 
 export
-interface UpdateSubordinateOptions extends ConnectOptions, WriteOperationOptions {
+interface UpdateSubordinateOptions {
+    timeLimitInMilliseconds?: number;
     endTime?: Date;
 }
 

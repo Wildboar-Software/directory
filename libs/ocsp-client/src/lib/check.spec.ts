@@ -1,4 +1,4 @@
-import { check } from "./check";
+import { getOCSPResponse as check } from "./check";
 import { URL } from "url";
 import { PEMObject } from "pem-ts";
 import { BERElement } from "asn1-ts";
@@ -64,9 +64,9 @@ describe("check", () => {
         certEl.fromBytes(certPem.data);
         const cert = _decode_Certificate(certEl);
         const url = new URL(PUBLIC_OCSP_RESPONDER_URL);
-        const {
-            res: result,
-        } = await check(url, cert, undefined, 5000);
+        const resp = await check(url, cert, undefined, 5000);
+        assert(resp);
+        const { res: result } = resp;
         expect(result.responseStatus).toBe(OCSPResponseStatus_successful);
         assert(result.responseBytes);
         expect(result.responseBytes.responseType.isEqualTo(id_pkix_ocsp_basic)).toBe(true);

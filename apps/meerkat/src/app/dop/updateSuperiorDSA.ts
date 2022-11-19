@@ -10,11 +10,7 @@ import {
     packBits,
 } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
-import { ConnectOptions } from "../net/connect";
 import { bindForOBM } from "../net/bindToOtherDSA";
-import type {
-    WriteOperationOptions,
-} from "../net/Connection";
 import dnToVertex from "../dit/dnToVertex";
 import getRelevantOperationalBindings from "./getRelevantOperationalBindings";
 import {
@@ -130,7 +126,8 @@ function codeToString (code?: Code): string | undefined {
 const updateTimingBackoffInSeconds: number[] = [ 1, 2 ];
 
 export
-interface UpdateSuperiorOptions extends ConnectOptions, WriteOperationOptions {
+interface UpdateSuperiorOptions {
+    timeLimitInMilliseconds?: number;
     endTime?: Date;
 }
 

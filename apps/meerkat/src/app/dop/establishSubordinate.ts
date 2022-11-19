@@ -3,11 +3,7 @@ import type { MeerkatContext } from "../ctx";
 import type {
     AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
-import { ConnectOptions } from "../net/connect";
 import { bindForOBM } from "../net/bindToOtherDSA";
-import type {
-    WriteOperationOptions,
-} from "../net/Connection";
 import {
     establishOperationalBinding,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/establishOperationalBinding.oa";
@@ -159,7 +155,8 @@ import { CommonEstablishOptions } from "@wildboar/x500-client-ts";
 //     ... }
 
 export
-interface EstablishSubordinateOptions extends ConnectOptions, WriteOperationOptions {
+interface EstablishSubordinateOptions {
+    timeLimitInMilliseconds?: number;
     endTime?: Date;
 }
 

@@ -14,7 +14,7 @@ import {
 } from "@wildboar/rose-transport";
 import type { MeerkatContext } from "../ctx";
 import * as errors from "@wildboar/meerkat-types";
-import versions from "./versions";
+import versions from "../versions";
 import {
     DirectoryBindResult,
     _encode_DirectoryBindResult,

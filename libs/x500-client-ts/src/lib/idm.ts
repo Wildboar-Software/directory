@@ -156,7 +156,7 @@ function rose_transport_from_idm_socket (idm: IDMConnection): ROSETransport {
     idm.events.on("abort", (params) => rose.events
         .emit("abort", (idm_abort_to_rose_abort.get(params) ?? AbortReason.other)));
     idm.events.on("tLSResponse", (code) => {
-        rose.events.emit("start_tls_response", code);
+        rose.events.emit("start_tls_response", { code });
     });
 
     rose.write_bind = (params) => {
@@ -246,10 +246,12 @@ function rose_transport_from_idm_socket (idm: IDMConnection): ROSETransport {
         );
     };
 
-    // FIXME: StartTLS
-
     rose.write_start_tls = () => {
         idm.writeStartTLS();
+    };
+
+    rose.write_tls_response = (params) => {
+        idm.writeTLSResponse(params?.code ?? 0);
     };
 
     return rose;
