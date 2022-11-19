@@ -448,9 +448,6 @@ export interface SessionLayerOutgoingEvents {
     RS_r: () => unknown;
     RS_s: () => unknown;
     TD: () => unknown;
-
-    // Events not specified in ITU X.225
-    received_DT: (spdu: DATA_TRANSFER_SPDU) => unknown;
 }
 
 export class SessionLayerOutgoingEventEmitter extends TypedEmitter<SessionLayerOutgoingEvents> {}
@@ -1804,7 +1801,7 @@ export function dispatch_DT(
         case TableA2SessionConnectionState.STA03: {
             const p10: boolean = !state.Vcoll;
             if (p05 && p10) {
-                state.outgoingEvents.emit('received_DT', spdu);
+                state.outgoingEvents.emit('SDTind', spdu.userInformation);
             } else {
                 return handleInvalidSequence(state);
             }
@@ -1815,7 +1812,7 @@ export function dispatch_DT(
         case TableA2SessionConnectionState.STA15A:
         case TableA2SessionConnectionState.STA713: {
             if (p05) {
-                state.outgoingEvents.emit('received_DT', spdu);
+                state.outgoingEvents.emit('SDTind', spdu.userInformation);
             } else {
                 return handleInvalidSequence(state);
             }
@@ -1829,7 +1826,7 @@ export function dispatch_DT(
                 if (p185) {
                     // NOOP
                 } else {
-                    state.outgoingEvents.emit('received_DT', spdu);
+                    state.outgoingEvents.emit('SDTind', spdu.userInformation);
                 }
             } else {
                 return handleInvalidSequence(state);
@@ -1848,7 +1845,7 @@ export function dispatch_DT(
         }
         case TableA2SessionConnectionState.STA11A: {
             if (p05 && !p185) {
-                state.outgoingEvents.emit('received_DT', spdu);
+                state.outgoingEvents.emit('SDTind', spdu.userInformation);
             } else {
                 return handleInvalidSequence(state);
             }
@@ -1866,7 +1863,7 @@ export function dispatch_DT(
         case TableA2SessionConnectionState.STA21: {
             const p70: boolean = (state.FU & SUR_DUPLEX) > 0;
             if (p70) {
-                state.outgoingEvents.emit('received_DT', spdu);
+                state.outgoingEvents.emit('SDTind', spdu.userInformation);
             } else {
                 return handleInvalidSequence(state);
             }
@@ -3187,26 +3184,6 @@ export function newSessionConnection(
     outgoingEvents.on('DN', emit_dn);
     outgoingEvents.on('AA', () => transport.writeTSDU(Buffer.from([SI_AA_SPDU, 0])));
     outgoingEvents.on('NF', emit_nf);
-    outgoingEvents.on("received_DT", (spdu) => {
-        if ((ret.userDataBuffer.length + spdu.userInformation.length) > ret.max_ssdu_size) {
-            handle_too_large_ssdu(ret);
-            return;
-        }
-        ret.userDataBuffer = ret.userDataBuffer.length === 0
-            ? spdu.userInformation
-            : Buffer.concat([
-                ret.userDataBuffer,
-                spdu.userInformation,
-            ]);
-        if (
-            (spdu.enclosureItem === undefined)
-            || (spdu.enclosureItem & 0b0000_0010) // End of SSDU
-        ) {
-            const oldBuffer = ret.userDataBuffer;
-            ret.userDataBuffer = Buffer.alloc(0);
-            ret.outgoingEvents.emit("SDTind", oldBuffer);
-        }
-    });
     return ret;
 }
 
@@ -4735,20 +4712,34 @@ export function handleSPDU(
             return [newState];
         }
         case SI_DT_SPDU: {
-            1 + 1; // To avoid some weird typescript parsing issue.
-            // const is_data_transfer: boolean = (
-            //     !!spdu.userInformation?.length
-            //     || spdu.parameters.some((p) => ("pi" in p) && p.pi === PI_ENCLOSURE_ITEM)
-            // );
-            // if (!is_data_transfer) { // This can happen if it is a GIVE TOKENS SPDU.
-            //     return [state];
-            // }
+            if (state.in_progress_spdu && !("dt" in state.in_progress_spdu)) {
+                return [state, ERR_INVALID_SEQ];
+            }
             const dt = parse_DT_SPDU(spdu);
             if (typeof dt === 'number') {
                 return [state, dt];
             }
-            const newState = dispatch_DT(state, dt);
-            return [newState];
+            if (state.in_progress_spdu) {
+                const buffer = state.in_progress_spdu.dt.userInformation ?? Buffer.alloc(0);
+                const chunk = dt.userInformation ?? Buffer.alloc(0);
+                if (buffer.length + chunk.length > state.max_ssdu_size) {
+                    return [state, ERR_SSDU_TOO_LARGE];
+                }
+                state.in_progress_spdu.dt.userInformation = Buffer.concat([ buffer, chunk ]);
+            } else {
+                state.in_progress_spdu = { dt };
+            }
+            if (spdu_is_complete(dt.enclosureItem)) {
+                const spdu: DATA_TRANSFER_SPDU = {
+                    ...state.in_progress_spdu.dt,
+                    enclosureItem: 0b11,
+                };
+                state.in_progress_spdu = undefined;
+                const newState = dispatch_DT(state, spdu);
+                return [newState];
+            }
+            // const newState = dispatch_DT(state, dt);
+            return [state];
         }
         // case (SI_EX_SPDU): {
         //     break;

@@ -387,7 +387,7 @@ describe('The OSI network stack created with create_itot_stack()', () => {
                                 new AttributeTypeAndValue(
                                     commonName["&id"],
                                     commonName.encoderFor["&Type"]!({
-                                        uTF8String: randomBytes(35000).toString("hex"),
+                                        uTF8String: randomBytes(10).toString("hex"),
                                     }, BER),
                                 ),
                             ],
@@ -1423,6 +1423,307 @@ describe('The OSI network stack created with create_itot_stack()', () => {
         }),
     );
 
-    // TODO: DATA TRANSFER SSDU
+
+    it(
+        'can handle a large DATA TRANSFER SSDU',
+        withSockets((socket1, socket2, server, done) => {
+            const test_str: string = 'Big Chungus';
+            const stack1 = create_itot_stack(socket1, {
+                sessionCaller: true,
+                transportCaller: true,
+            });
+            const stack2 = create_itot_stack(socket2, {
+                sessionCaller: false,
+                transportCaller: false,
+            });
+            configure_itot_for_directory(stack1);
+            configure_itot_for_directory(stack2);
+            stack2.acse.outgoingEvents.on('A-ASCind', () => {
+                const aare: AARE_apdu = new AARE_apdu(
+                    undefined,
+                    id_dap,
+                    ACSEResult_acceptance,
+                    {
+                        acse_service_provider: 0,
+                    },
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    [],
+                    [
+                        new External(
+                            id_ber,
+                            3,
+                            undefined,
+                            _encode_TheOsiBindRes(
+                                _encode_DirectoryBindResult(
+                                    new DirectoryBindResult(),
+                                    BER
+                                ),
+                                BER
+                            )
+                        ),
+                    ]
+                );
+                dispatch_A_ASCrsp_accept(stack2.acse, aare);
+            });
+            stack1.acse.outgoingEvents.on('A-ASCcnf+', () => {
+                const read_arg: ReadArgument = {
+                    unsigned: new ReadArgumentData(
+                        {
+                            rdnSequence: [],
+                        },
+                        undefined,
+                        undefined,
+                        [],
+                        undefined,
+                        undefined,
+                        [
+                            [
+                                /**
+                                 * This exists so we can test session-layer
+                                 * segmentation of data. This attribute value is
+                                 * purposefully gigantic so that it has to get
+                                 * segmented.
+                                 */
+                                new AttributeTypeAndValue(
+                                    commonName["&id"],
+                                    commonName.encoderFor["&Type"]!({
+                                        uTF8String: randomBytes(70000).toString("hex"),
+                                    }, BER),
+                                ),
+                            ],
+                        ],
+                    ),
+                };
+                const user_data: User_data = {
+                    fully_encoded_data: [
+                        new PDV_list(undefined, 3, {
+                            single_ASN1_type: _encode_OsiDirectoryOperation(
+                                {
+                                    request: new OsiReq(
+                                        {
+                                            present: 1,
+                                        },
+                                        id_opcode_read,
+                                        _encode_ReadArgument(read_arg, BER)
+                                    ),
+                                },
+                                BER
+                            ),
+                        }),
+                    ],
+                };
+                dispatch_P_DTreq(stack1.presentation, user_data);
+            });
+            stack2.presentation.outgoingEvents.on('P-DTind', (ppdu) => {
+                if ('fully_encoded_data' in ppdu) {
+                    if (ppdu.fully_encoded_data.length !== 1) {
+                        assert(false);
+                    }
+                    const pdv = ppdu.fully_encoded_data[0];
+                    if (pdv.presentation_context_identifier !== 3) {
+                        assert(false);
+                    }
+                    if ('single_ASN1_type' in pdv.presentation_data_values) {
+                        const op = _decode_OsiDirectoryOperation(
+                            pdv.presentation_data_values.single_ASN1_type
+                        );
+                        if ('request' in op) {
+                            expect(
+                                compareCode(op.request.opcode, id_opcode_read)
+                            ).toBe(true);
+                            const arg = _decode_ReadArgument(
+                                op.request.argument
+                            );
+                            const arg_data = getOptionallyProtectedValue(arg);
+                            expect(arg_data.object.rdnSequence).toHaveLength(0);
+                            const read_response: ReadResult = {
+                                unsigned: new ReadResultData(
+                                    new EntryInformation(
+                                        {
+                                            rdnSequence: [],
+                                        },
+                                        true,
+                                        [
+                                            {
+                                                attribute: new Attribute(
+                                                    commonName['&id'],
+                                                    [
+                                                        commonName.encoderFor[
+                                                            '&Type'
+                                                        ]!(
+                                                            {
+                                                                uTF8String:
+                                                                    test_str,
+                                                            },
+                                                            BER
+                                                        ),
+                                                    ]
+                                                ),
+                                            },
+                                        ]
+                                    )
+                                ),
+                            };
+                            const user_data: User_data = {
+                                fully_encoded_data: [
+                                    new PDV_list(undefined, 3, {
+                                        single_ASN1_type:
+                                            _encode_OsiDirectoryOperation(
+                                                {
+                                                    result: new OsiRes(
+                                                        {
+                                                            present: 1,
+                                                        },
+                                                        new OsiRes_result(
+                                                            id_opcode_read,
+                                                            _encode_ReadResult(
+                                                                read_response,
+                                                                BER
+                                                            )
+                                                        )
+                                                    ),
+                                                },
+                                                BER
+                                            ),
+                                    }),
+                                ],
+                            };
+                            dispatch_P_DTreq(stack2.presentation, user_data);
+                        } else {
+                            assert(false);
+                        }
+                    } else {
+                        assert(false);
+                    }
+                } else {
+                    assert(false);
+                }
+            });
+            stack1.presentation.outgoingEvents.on('P-DTind', (ppdu) => {
+                if ('fully_encoded_data' in ppdu) {
+                    if (ppdu.fully_encoded_data.length !== 1) {
+                        assert(false);
+                    }
+                    const pdv = ppdu.fully_encoded_data[0];
+                    if (pdv.presentation_context_identifier !== 3) {
+                        assert(false);
+                    }
+                    if ('single_ASN1_type' in pdv.presentation_data_values) {
+                        const op = _decode_OsiDirectoryOperation(
+                            pdv.presentation_data_values.single_ASN1_type
+                        );
+                        if ('result' in op) {
+                            expect(
+                                compareCode(
+                                    op.result.result.opcode,
+                                    id_opcode_read
+                                )
+                            ).toBe(true);
+                            const res = _decode_ReadResult(
+                                op.result.result.result
+                            );
+                            const res_data = getOptionallyProtectedValue(res);
+                            assert(res_data.entry.information);
+                            expect(res_data.entry.information).toHaveLength(1);
+                            const info1 = res_data.entry.information[0];
+                            assert('attribute' in info1);
+                            expect(
+                                info1.attribute.type_.isEqualTo(
+                                    commonName['&id']
+                                )
+                            ).toBe(true);
+                            expect(info1.attribute.values).toHaveLength(1);
+                            const value1 = info1.attribute.values[0];
+                            const str1 = directoryStringToString(
+                                commonName.decoderFor['&Type']!(value1)
+                            );
+                            expect(str1).toBe(test_str);
+                            const rlrq = new RLRQ_apdu(
+                                0,
+                                undefined,
+                                undefined,
+                                [
+                                    // _encodeOctetString(randomBytes(70000), BER),
+                                ],
+                                undefined,
+                            );
+                            dispatch_A_RLSreq(stack1.acse, rlrq);
+                        } else {
+                            assert(false);
+                        }
+                    } else {
+                        assert(false);
+                    }
+                } else {
+                    assert(false);
+                }
+            });
+            stack2.acse.outgoingEvents.on('A-RLSind', () => {
+                const rlre = new RLRE_apdu(
+                    0,
+                    undefined,
+                    undefined,
+                    [],
+                    undefined
+                );
+                dispatch_A_RLSrsp_accept(stack2.acse, rlre);
+            });
+
+            stack1.acse.outgoingEvents.on('A-RLScnf+', () => {
+                socket1.destroy();
+                socket2.destroy();
+                done();
+                // server.close(done);
+            });
+
+            const aarq: AARQ_apdu = new AARQ_apdu(
+                undefined,
+                id_dap,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                [],
+                [
+                    new External(
+                        id_ber,
+                        3,
+                        undefined,
+                        _encode_TheOsiBind(
+                            _encode_DirectoryBindArgument(
+                                new DirectoryBindArgument(undefined, undefined),
+                                BER
+                            ),
+                            BER
+                        )
+                    ),
+                ]
+            );
+            dispatch_A_ASCreq(stack1.acse, aarq);
+        }),
+    );
 
 });
