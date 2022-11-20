@@ -99,6 +99,7 @@ export const TPDU_VALIDATION_RC_OK: number = 0;
 // Positive numbers are for errors are for negotiation failures.
 export const TPDU_VALIDATION_CR_UNACCEPTABLE: number = 1;
 export const TPDU_VALIDATION_CR_CANNOT_MEET_CLASS_DEMANDED: number = 2;
+export const TPDU_VALIDATION_SELECTOR_NOT_RECOGNIZED: number = 3;
 // Negative numbers are for protocol errors / malformed PDUs or fields.
 export const TPDU_VALIDATION_CR_UNRECOGNIZED_VERSION: number = -1;
 export const TPDU_VALIDATION_CR_UNRECOGNIZED_CLASS: number = -2;
@@ -351,6 +352,9 @@ export function validate_CR(tpdu: CR_TPDU): number {
         !tpdu.alternative_protocol_classes?.some((apc) => !(apc & 0b1111_0000))
     ) {
         return TPDU_VALIDATION_CR_CANNOT_MEET_CLASS_DEMANDED;
+    }
+    if (tpdu.called_or_responding_transport_selector) {
+        return TPDU_VALIDATION_SELECTOR_NOT_RECOGNIZED;
     }
     return TPDU_VALIDATION_RC_OK;
 }
@@ -1534,7 +1538,7 @@ export function dispatch_CR(
                     const dr: DR_TPDU = {
                         dstRef: tpdu.dstRef,
                         srcRef: tpdu.srcRef,
-                        reason: DR_REASON_NEGOTIATION_FAILED,
+                        reason: DR_REASON_NOT_SPECIFIED, // One of only four options available in TP0.
                         user_data: Buffer.alloc(0),
                     };
                     c.outgoingEvents.emit('DR', dr);

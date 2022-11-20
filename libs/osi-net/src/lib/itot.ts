@@ -267,7 +267,7 @@ export function create_itot_stack(
                     user_data: Buffer.alloc(0),
                     calling_transport_selector: options?.localAddress?.tSelector
                         ? Buffer.from(options.localAddress.tSelector)
-                        : (stack.transport.local_t_selector ?? randomBytes(UUID_LENGTH_BYTES)),
+                        : stack.transport.local_t_selector,
                     called_or_responding_transport_selector: options?.remoteAddress?.tSelector
                         ? Buffer.from(options.remoteAddress.tSelector)
                         : undefined,
@@ -301,7 +301,7 @@ export function create_itot_stack(
                         : stack.session.remote_selector,
                     callingSessionSelector: options?.localAddress?.sSelector
                         ? Buffer.from(options.localAddress.sSelector)
-                        : (stack.session.local_selector ?? randomBytes(UUID_LENGTH_BYTES)),
+                        : stack.session.local_selector,
                     sessionUserRequirements: 0,
                 };
                 stack.session = dispatch_SCONreq(stack.session, spdu);
@@ -315,7 +315,7 @@ export function create_itot_stack(
                             : undefined,
                         respondingSessionSelector: options?.localAddress?.sSelector
                             ? Buffer.from(options.localAddress.sSelector)
-                            : (stack.session.local_selector ?? randomBytes(UUID_LENGTH_BYTES)),
+                            : stack.session.local_selector,
                         connectAcceptItem: {
                             protocolOptions: 0,
                             versionNumber: 2,
@@ -383,8 +383,7 @@ export function create_itot_stack(
                     args.protocol_version,
                     args.calling_presentation_selector
                         ?? options?.localAddress?.pSelector
-                        ?? stack.presentation.local_selector
-                        ?? randomBytes(UUID_LENGTH_BYTES),
+                        ?? stack.presentation.local_selector,
                     args.called_presentation_selector ?? options?.remoteAddress?.pSelector,
                     args.presentation_context_definition_list,
                     args.default_context_name,
@@ -409,8 +408,7 @@ export function create_itot_stack(
                         args.protocol_version,
                         args.responding_presentation_selector
                             ?? options?.localAddress?.pSelector
-                            ?? stack.presentation.local_selector
-                            ?? randomBytes(UUID_LENGTH_BYTES),
+                            ?? stack.presentation.local_selector,
                         args.presentation_context_definition_result_list,
                         args.presentation_requirements,
                         args.user_session_requirements,
@@ -426,8 +424,7 @@ export function create_itot_stack(
                         args.protocol_version,
                         args.responding_presentation_selector
                             ?? options?.localAddress?.pSelector
-                            ?? stack.presentation.local_selector
-                            ?? randomBytes(UUID_LENGTH_BYTES),
+                            ?? stack.presentation.local_selector,
                         args.presentation_context_definition_result_list,
                         undefined,
                         args.provider_reason,
@@ -495,7 +492,7 @@ export function create_itot_stack(
             user_data: Buffer.alloc(0),
             called_or_responding_transport_selector: options?.localAddress?.tSelector
                 ? Buffer.from(options.localAddress.tSelector)
-                : randomBytes(UUID_LENGTH_BYTES),
+                : undefined,
             calling_transport_selector: stack.transport.remote_t_selector,
             tpdu_size: undefined, // Intentionally omitted.
             preferred_max_tpdu_size: Math.floor(stack.transport.max_tpdu_size / 128) * 128,
@@ -546,7 +543,7 @@ export function create_itot_stack(
                 callingSessionSelector: cn.callingSessionSelector?.subarray(0, 16),
                 respondingSessionSelector: options?.localAddress?.sSelector
                     ? Buffer.from(options.localAddress.sSelector)
-                    : randomBytes(UUID_LENGTH_BYTES),
+                    : undefined,
                 connectAcceptItem: {
                     tsduMaximumSize: options?.max_tsdu_size
                         ? {

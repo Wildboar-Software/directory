@@ -1653,11 +1653,9 @@ export function dispatch_CN(
             const p76: boolean =
                 p76_temporary_congestion
                 || p76_version_not_supported
-                // || !!spdu.calledSessionSelector // Any session selector is unrecognized.
+                || !!spdu.calledSessionSelector // Any session selector is unrecognized.
                 ;
-            // TODO: Configurable temporary congestion.
             const p204: boolean = spdu.dataOverflow !== undefined; // More than 10 240 octets of SS-user data to be transferred
-
             if (p01) {
                 // If this SPM initiated this transport.
                 state.state = TableA2SessionConnectionState.STA01;

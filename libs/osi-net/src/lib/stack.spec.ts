@@ -117,8 +117,8 @@ function withSockets(
     ) => void
 ) {
     const server = createServer();
-    // const port: number = isDebugging ? DEFAULT_PORT : randomInt(44400, 44600);
-    const port = DEFAULT_PORT;
+    const port: number = isDebugging ? DEFAULT_PORT : randomInt(44400, 44600);
+    // const port = DEFAULT_PORT;
     return function (done: jest.DoneCallback) {
         server.on('listening', () => {
             server.on('connection', (c) => {
@@ -324,9 +324,9 @@ describe('The OSI network stack created with create_itot_stack()', () => {
                     nAddresses: [
                         randomBytes(10),
                     ],
-                    pSelector: randomBytes(4),
-                    sSelector: randomBytes(6),
-                    tSelector: randomBytes(8),
+                    pSelector: undefined,
+                    sSelector: undefined,
+                    tSelector: undefined,
                 },
             });
             const stack2 = create_itot_stack(socket2, {

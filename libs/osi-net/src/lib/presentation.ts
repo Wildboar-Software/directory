@@ -803,6 +803,10 @@ export function cp_is_acceptable(
     if (ppdu.x410_mode_parameters) {
         return false;
     }
+    // Currently, selectors are totally unrecognized.
+    if (ppdu.normal_mode_parameters?.called_presentation_selector) {
+        return false;
+    }
     if (
         ppdu.mode_selector.mode_value !== Mode_selector_mode_value_normal_mode
     ) {
