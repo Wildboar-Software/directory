@@ -561,7 +561,7 @@ export function dispatch_SCONreq(
         case TableA2SessionConnectionState.STA01: {
             state.Vtca = false;
             state.state = TableA2SessionConnectionState.STA01B;
-            state.transport.connect();
+            state.transport.connect(); // FIXME: Get rid of this method entirely.
             state.outgoingEvents.emit('TCONreq');
             break;
         }
@@ -3509,7 +3509,7 @@ export function encode_REFUSE_SPDU(pdu: REFUSE_SPDU): Buffer {
         });
     }
     if (pdu.sessionUserRequirements !== undefined) {
-        const value = Buffer.allocUnsafe(0);
+        const value = Buffer.allocUnsafe(2);
         value.writeUint16BE(pdu.sessionUserRequirements);
         ret.parameters.push({
             pi: PI_SESSION_USER_REQUIREMENTS,

@@ -535,7 +535,7 @@ function rose_from_url (
                 timeout: socket_timeout,
             });
             const itot = create_itot_stack(socket, {
-                address,
+                remoteAddress: address,
                 sessionCaller: true,
                 transportCaller: true,
             });
@@ -549,7 +549,7 @@ function rose_from_url (
             });
             const tlsSocket = new TLSSocket(socket, tlsOptions);
             const itot = create_itot_stack(tlsSocket, {
-                address,
+                remoteAddress: address,
                 sessionCaller: true,
                 transportCaller: true,
             });

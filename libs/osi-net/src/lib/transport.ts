@@ -39,7 +39,9 @@ export const ER_TPDU_FIXED_HEADER_LENGTH: number = 5;
 // #region TPDU parameter codes
 export const PC_CHECKSUM: number = 0b1100_0011;
 export const DR_TPDU_PC_ADDITIONAL_INFO: number = 0b1110_0000;
-export const PC_TRANSPORT_SELECTOR: number = 0b1100_0001;
+export const PC_CALLING_TRANSPORT_SELECTOR: number = 0b1100_0001;
+export const PC_CALLED_TRANSPORT_SELECTOR: number = 0b1100_0010;
+export const PC_RESPONDING_TRANSPORT_SELECTOR: number = PC_CALLED_TRANSPORT_SELECTOR;
 export const PC_TPDU_SIZE: number = 0b1100_0000;
 export const PC_TPDU_PREF_MAX_TPDU_SIZE: number = 0b1111_0000;
 export const PC_TPDU_VERSION_NUMBER: number = 0b1100_0100;
@@ -193,7 +195,8 @@ export interface TransportConnection {
     dataBuffer: Buffer;
     src_ref: number;
     dst_ref: number;
-    t_selector?: Buffer;
+    local_t_selector?: Buffer;
+    remote_t_selector?: Buffer;
     max_tpdu_size: number;
     max_tsdu_size: number;
 }
@@ -276,7 +279,7 @@ export interface CR_TPDU extends WithChecksum, WithUserData {
     dstRef: number;
     srcRef: number;
     class_option: number;
-    transport_selector?: Buffer;
+    calling_transport_selector?: Buffer;
     tpdu_size?: number;
     preferred_max_tpdu_size?: number;
     version_number?: number;
@@ -291,6 +294,7 @@ export interface CR_TPDU extends WithChecksum, WithUserData {
     transit_delay?: TransitDelay;
     reassignment_time?: number;
     inactivity_timer?: number;
+    called_or_responding_transport_selector?: Buffer;
 }
 
 export interface DR_TPDU extends WithChecksum, WithUserData {
@@ -409,7 +413,7 @@ export function decode_DT(
         if (typeof param === 'number') {
             return param;
         }
-        i += param[0];
+        i = param[0];
         if (encountered_params.has(param[1].code)) {
             return TPDU_PARSE_DUPLICATE_PARAMETER;
         }
@@ -452,7 +456,7 @@ export function decode_DR(
         if (typeof param === 'number') {
             return param;
         }
-        i += param[0];
+        i = param[0];
         if (encountered_params.has(param[1].code)) {
             return TPDU_PARSE_DUPLICATE_PARAMETER;
         }
@@ -507,7 +511,7 @@ export function decode_DC(
         if (typeof param === 'number') {
             return param;
         }
-        i += param[0];
+        i = param[0];
         if (encountered_params.has(param[1].code)) {
             return TPDU_PARSE_DUPLICATE_PARAMETER;
         }
@@ -561,14 +565,18 @@ export function decode_CR(
         if (typeof param === 'number') {
             return param;
         }
-        i += param[0];
+        i = param[0];
         if (encountered_params.has(param[1].code)) {
             return TPDU_PARSE_DUPLICATE_PARAMETER;
         }
         encountered_params.add(param[1].code);
         switch (param[1].code) {
-            case PC_TRANSPORT_SELECTOR: {
-                ret.transport_selector = param[1].value;
+            case PC_CALLING_TRANSPORT_SELECTOR: {
+                ret.calling_transport_selector = param[1].value;
+                break;
+            }
+            case PC_CALLED_TRANSPORT_SELECTOR: {
+                ret.called_or_responding_transport_selector = param[1].value;
                 break;
             }
             case PC_TPDU_SIZE: {
@@ -790,14 +798,18 @@ export function decode_CC(
         if (typeof param === 'number') {
             return param;
         }
-        i += param[0];
+        i = param[0];
         if (encountered_params.has(param[1].code)) {
             return TPDU_PARSE_DUPLICATE_PARAMETER;
         }
         encountered_params.add(param[1].code);
         switch (param[1].code) {
-            case PC_TRANSPORT_SELECTOR: {
-                ret.transport_selector = param[1].value;
+            case PC_CALLING_TRANSPORT_SELECTOR: {
+                ret.calling_transport_selector = param[1].value;
+                break;
+            }
+            case PC_CALLED_TRANSPORT_SELECTOR: {
+                ret.called_or_responding_transport_selector = param[1].value;
                 break;
             }
             case PC_TPDU_SIZE: {
@@ -1015,7 +1027,7 @@ export function decode_ER(
         if (typeof param === 'number') {
             return param;
         }
-        i += param[0];
+        i = param[0];
         if (encountered_params.has(param[1].code)) {
             return TPDU_PARSE_DUPLICATE_PARAMETER;
         }
@@ -1103,12 +1115,20 @@ export function encode_CR(tpdu: CR_TPDU): Buffer {
     header.writeUint16BE(tpdu.dstRef, 2);
     header.writeUint16BE(tpdu.srcRef, 4);
     const parameters: Buffer[] = [];
-    if (tpdu.transport_selector) {
+    if (tpdu.calling_transport_selector) {
         parameters.push(
             Buffer.concat([
-                Buffer.from([0b1100_0001, tpdu.transport_selector.length]),
-                tpdu.transport_selector,
-            ])
+                Buffer.from([0b1100_0001, tpdu.calling_transport_selector.length]),
+                tpdu.calling_transport_selector,
+            ]),
+        );
+    }
+    if (tpdu.called_or_responding_transport_selector) {
+        parameters.push(
+            Buffer.concat([
+                Buffer.from([0b1100_0010, tpdu.called_or_responding_transport_selector.length]),
+                tpdu.called_or_responding_transport_selector,
+            ]),
         );
     }
     if (tpdu.tpdu_size) {
@@ -1306,6 +1326,16 @@ export function dispatch_TCONresp(
                 c.max_tpdu_size = tpdu.preferred_max_tpdu_size;
             } else if (tpdu.tpdu_size) {
                 c.max_tpdu_size = tpdu.tpdu_size;
+            } else if (c.max_tpdu_size) {
+                tpdu.preferred_max_tpdu_size = Math.floor(c.max_tpdu_size / 128) * 128;
+            }
+            if (tpdu.called_or_responding_transport_selector) {
+                c.local_t_selector = tpdu.called_or_responding_transport_selector;
+            }
+            if (tpdu.calling_transport_selector) {
+                c.remote_t_selector = tpdu.calling_transport_selector;
+            } else if (c.remote_t_selector) {
+                tpdu.calling_transport_selector = c.remote_t_selector;
             }
             c.state = TransportConnectionState.OPEN;
             c.outgoingEvents.emit('CC', tpdu);

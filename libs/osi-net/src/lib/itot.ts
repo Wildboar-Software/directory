@@ -13,6 +13,7 @@ import {
     dispatch_TDISreq,
     DR_REASON_NOT_SPECIFIED,
     dispatch_NDISind,
+    DEFAULT_MAX_TSDU_SIZE_FOR_ITOT,
 } from './transport';
 import {
     SessionServiceConnectionState,
@@ -37,6 +38,7 @@ import {
     dispatch_SCONrsp_reject,
     dispatch_SRELrsp_reject,
     NOT_FINISHED_SPDU,
+    TRANSPORT_DISCONNECT_RELEASED,
 } from './session';
 import {
     createPresentationConnection,
@@ -130,6 +132,7 @@ const id_ber = new ObjectIdentifier([2, 1, 1]);
 const id_acse = new ObjectIdentifier([2, 2, 1, 0, 1]);
 
 export const TIMER_TIME_IN_MS: number = 3000;
+export const UUID_LENGTH_BYTES: number = 16;
 
 export interface ISOTransportOverTCPStack extends WithOSINetworkingOptions {
     network: ITOTSocket;
@@ -233,14 +236,20 @@ export function create_itot_stack(
 ): ISOTransportOverTCPStack {
     const tpkt = new ITOTSocket(socket);
     socket.on('data', (data) => tpkt.receiveData(data));
-    const transport = createTransportConnection({
-        available: () => socket.writable && socket.readable,
-        max_nsdu_size: () => 65531, // See IETF RFC 1006, Section 6.
-        open: () => socket.writable,
-        openInProgress: () => socket.connecting,
-        transportConnectionsServed: () => 1,
-        write_nsdu: (nsdu: Buffer) => tpkt.writeNSDU(nsdu),
-    }, options?.max_tsdu_size);
+    const transport = createTransportConnection(
+        {
+            available: () => socket.writable && socket.readable,
+            max_nsdu_size: () => 65531, // See IETF RFC 1006, Section 6.
+            open: () => socket.writable,
+            openInProgress: () => socket.connecting,
+            transportConnectionsServed: () => 1,
+            write_nsdu: (nsdu: Buffer) => tpkt.writeNSDU(nsdu),
+        },
+        options?.max_tsdu_size ?? DEFAULT_MAX_TSDU_SIZE_FOR_ITOT,
+        options?.max_tpdu_size
+            ? Math.min(options.max_tpdu_size, 65531)
+            : 65530,
+    );
     const session = newSessionConnection(
         {
             connected: () =>
@@ -256,6 +265,12 @@ export function create_itot_stack(
                     dstRef: 0,
                     srcRef: randomBytes(2).readUint16BE(),
                     user_data: Buffer.alloc(0),
+                    calling_transport_selector: options?.localAddress?.tSelector
+                        ? Buffer.from(options.localAddress.tSelector)
+                        : randomBytes(UUID_LENGTH_BYTES),
+                    called_or_responding_transport_selector: options?.remoteAddress?.tSelector
+                        ? Buffer.from(options.remoteAddress.tSelector)
+                        : undefined,
                 };
                 stack.transport = dispatch_TCONreq(stack.transport, tpdu);
             },
@@ -274,7 +289,20 @@ export function create_itot_stack(
                     connectAcceptItem: {
                         protocolOptions: 0,
                         versionNumber: 2,
+                        tsduMaximumSize: options?.max_tsdu_size
+                            ? {
+                                responder_to_initiator: options.max_tsdu_size,
+                                initiator_to_responder: options.max_tsdu_size,
+                            }
+                            : undefined,
                     },
+                    calledSessionSelector: options?.remoteAddress?.sSelector
+                        ? Buffer.from(options.remoteAddress.sSelector)
+                        : undefined,
+                    callingSessionSelector: options?.localAddress?.sSelector
+                        ? Buffer.from(options.localAddress.sSelector)
+                        : undefined,
+                    sessionUserRequirements: 0,
                 };
                 stack.session = dispatch_SCONreq(stack.session, spdu);
             },
@@ -282,6 +310,23 @@ export function create_itot_stack(
                 if (res.refuse_reason === undefined) {
                     const spdu: ACCEPT_SPDU = {
                         userData: res.user_data,
+                        callingSessionSelector: options?.remoteAddress?.sSelector
+                            ? Buffer.from(options.remoteAddress.sSelector)
+                            : undefined,
+                        respondingSessionSelector: options?.localAddress?.sSelector
+                            ? Buffer.from(options.localAddress.sSelector)
+                            : undefined,
+                        connectAcceptItem: {
+                            protocolOptions: 0,
+                            versionNumber: 2,
+                            tsduMaximumSize: options?.max_tsdu_size
+                                ? {
+                                    responder_to_initiator: options.max_tsdu_size,
+                                    initiator_to_responder: options.max_tsdu_size,
+                                }
+                                : undefined,
+                        },
+                        sessionUserRequirements: 0,
                     };
                     stack.session = dispatch_SCONrsp_accept(
                         stack.session,
@@ -291,6 +336,9 @@ export function create_itot_stack(
                     const spdu: REFUSE_SPDU = {
                         reasonData: res.user_data,
                         reasonCode: res.refuse_reason,
+                        sessionUserRequirements: 0,
+                        transportDisconnect: TRANSPORT_DISCONNECT_RELEASED,
+                        versionNumber: 2,
                     };
                     stack.session = dispatch_SCONrsp_reject(
                         stack.session,
@@ -333,8 +381,8 @@ export function create_itot_stack(
                 undefined,
                 new CP_type_normal_mode_parameters(
                     args.protocol_version,
-                    args.calling_presentation_selector,
-                    args.called_presentation_selector,
+                    args.calling_presentation_selector ?? options?.localAddress?.pSelector,
+                    args.called_presentation_selector ?? options?.remoteAddress?.pSelector,
                     args.presentation_context_definition_list,
                     args.default_context_name,
                     args.presentation_requirements,
@@ -356,7 +404,7 @@ export function create_itot_stack(
                     undefined,
                     new CPA_PPDU_normal_mode_parameters(
                         args.protocol_version,
-                        args.responding_presentation_selector,
+                        args.responding_presentation_selector ?? options?.localAddress?.pSelector,
                         args.presentation_context_definition_result_list,
                         args.presentation_requirements,
                         args.user_session_requirements,
@@ -370,7 +418,7 @@ export function create_itot_stack(
                 const ppdu: CPR_PPDU = {
                     normal_mode_parameters: new CPR_PPDU_normal_mode_parameters(
                         args.protocol_version,
-                        args.responding_presentation_selector,
+                        args.responding_presentation_selector ?? options?.localAddress?.pSelector,
                         args.presentation_context_definition_result_list,
                         undefined,
                         args.provider_reason,
@@ -436,6 +484,12 @@ export function create_itot_stack(
             dstRef: stack.transport.dst_ref,
             srcRef: stack.transport.src_ref,
             user_data: Buffer.alloc(0),
+            called_or_responding_transport_selector: options?.localAddress?.tSelector
+                ? Buffer.from(options.localAddress.tSelector)
+                : undefined,
+            calling_transport_selector: stack.transport.remote_t_selector,
+            tpdu_size: undefined, // Intentionally omitted.
+            preferred_max_tpdu_size: Math.floor(stack.transport.max_tpdu_size / 128) * 128,
         };
         stack.transport = dispatch_TCONresp(stack.transport, cc);
     });
@@ -508,7 +562,7 @@ export function create_itot_stack(
         const ppdu: CPR_PPDU = {
             normal_mode_parameters: new CPR_PPDU_normal_mode_parameters(
                 undefined,
-                undefined,
+                options?.localAddress?.pSelector,
                 undefined,
                 undefined,
                 undefined,

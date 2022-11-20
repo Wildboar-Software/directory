@@ -320,6 +320,14 @@ describe('The OSI network stack created with create_itot_stack()', () => {
             const stack1 = create_itot_stack(socket1, {
                 sessionCaller: true,
                 transportCaller: true,
+                remoteAddress: {
+                    nAddresses: [
+                        randomBytes(10),
+                    ],
+                    pSelector: randomBytes(4),
+                    sSelector: randomBytes(6),
+                    tSelector: randomBytes(8),
+                },
             });
             const stack2 = create_itot_stack(socket2, {
                 sessionCaller: false,
