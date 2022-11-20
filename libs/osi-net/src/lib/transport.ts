@@ -1287,6 +1287,12 @@ export function dispatch_TCONreq(
     } else {
         c.max_tpdu_size = tpdu.preferred_max_tpdu_size;
     }
+    if (tpdu.calling_transport_selector) {
+        c.local_t_selector = tpdu.calling_transport_selector;
+    }
+    if (tpdu.called_or_responding_transport_selector) {
+        c.remote_t_selector = tpdu.called_or_responding_transport_selector;
+    }
     switch (c.state) {
         case TransportConnectionState.CLOSED: {
             const p0: boolean = false; // T-CONNECT request unacceptable
@@ -1331,6 +1337,8 @@ export function dispatch_TCONresp(
             }
             if (tpdu.called_or_responding_transport_selector) {
                 c.local_t_selector = tpdu.called_or_responding_transport_selector;
+            } else if (c.local_t_selector) {
+                tpdu.called_or_responding_transport_selector = c.local_t_selector;
             }
             if (tpdu.calling_transport_selector) {
                 c.remote_t_selector = tpdu.calling_transport_selector;
@@ -1544,6 +1552,9 @@ export function dispatch_CR(
                 c.dst_ref = randomBytes(2).readUint16BE();
                 // These are already decoded to proper values in decode_CR().
                 c.max_tpdu_size = tpdu.preferred_max_tpdu_size ?? tpdu.tpdu_size ?? DEFAULT_MAX_TPDU_SIZE;
+                if (tpdu.calling_transport_selector) {
+                    c.remote_t_selector = tpdu.calling_transport_selector;
+                }
                 c.outgoingEvents.emit('TCONind', tpdu);
             }
             return c;
@@ -1624,6 +1635,9 @@ export function dispatch_CC(
                 c.dst_ref = tpdu.dstRef;
                 // These are already decoded to proper values in decode_CC().
                 c.max_tpdu_size = tpdu.preferred_max_tpdu_size ?? tpdu.tpdu_size ?? DEFAULT_MAX_TPDU_SIZE;
+                if (tpdu.called_or_responding_transport_selector) {
+                    c.remote_t_selector = tpdu.called_or_responding_transport_selector;
+                }
                 c.outgoingEvents.emit('TCONconf', tpdu);
             } else if (p6 && p5) {
                 c.state = TransportConnectionState.CLOSED;

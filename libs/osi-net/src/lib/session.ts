@@ -574,6 +574,9 @@ export function dispatch_SCONreq(
                 } else {
                     state.state = TableA2SessionConnectionState.STA02A; // Await AC
                 }
+                if (cn.callingSessionSelector) {
+                    state.local_selector = cn.calledSessionSelector;
+                }
                 state.outgoingEvents.emit('CN', cn);
             } else {
                 return handleInvalidSequence(state);
@@ -640,6 +643,12 @@ export function dispatch_SCONrsp_accept(
                 state.releaseToken = SessionServiceTokenPossession.remote;
             }
             state.state = TableA2SessionConnectionState.STA713;
+            if (!spdu.callingSessionSelector && state.remote_selector) {
+                spdu.callingSessionSelector = state.remote_selector;
+            }
+            if (spdu.respondingSessionSelector) {
+                state.local_selector = spdu.respondingSessionSelector;
+            }
             state.outgoingEvents.emit('AC', spdu);
             break;
         }
@@ -1642,9 +1651,11 @@ export function dispatch_CN(
             const p01: boolean = !state.Vtca;
             const p02: boolean = p02_local_choice && !state.TEXP;
             const p76: boolean =
-                p76_temporary_congestion || p76_version_not_supported;
+                p76_temporary_congestion
+                || p76_version_not_supported
+                // || !!spdu.calledSessionSelector // Any session selector is unrecognized.
+                ;
             // TODO: Configurable temporary congestion.
-            // TODO: Session selector unknown?
             const p204: boolean = spdu.dataOverflow !== undefined; // More than 10 240 octets of SS-user data to be transferred
 
             if (p01) {
@@ -1675,12 +1686,23 @@ export function dispatch_CN(
                     });
                 } else {
                     state.state = TableA2SessionConnectionState.STA08;
+                    if (spdu.callingSessionSelector) {
+                        state.remote_selector = spdu.callingSessionSelector;
+                    }
                     state.outgoingEvents.emit('SCONind', spdu);
                 }
-            } else {
-                // There was a problem.
+            } else { // There was a problem.
+                const reasonCode: number = (
+                    (spdu.calledSessionSelector
+                        ? RC_SESSION_SELECTOR_UNKNOWN
+                        : p76_version_not_supported
+                            ? RC_PROPOSED_PROTOCOL_VERSIONS_NOT_SUPPORTED
+                            : p76_temporary_congestion
+                                ? RC_TEMPORARY_CONGESTION
+                                : RC_NO_REASON)
+                )
                 const rf: REFUSE_SPDU = {
-                    reasonCode: 0, // Reason not specified.
+                    reasonCode,
                 };
                 if (!p02) {
                     // ...and we are using expedited transport...
@@ -2864,6 +2886,8 @@ export interface SessionServiceConnectionState
     transport: TransportLayer;
     inbound_max_tsdu_size: number;
     outbound_max_tsdu_size: number;
+    local_selector?: Buffer;
+    remote_selector?: Buffer;
 
     timer_timeout: number;
     cn?: CONNECT_SPDU;
@@ -2965,7 +2989,6 @@ export function newSessionConnection(
         inbound_max_tsdu_size: DEFAULT_MAX_TSDU_SIZE,
         outbound_max_tsdu_size: DEFAULT_MAX_TSDU_SIZE,
     };
-    // TODO: ACCEPT SPDU
     const emit_ac = (spdu: ACCEPT_SPDU): void => {
         const size_without_user_data = encode_ACCEPT_SPDU({
             ...spdu,
@@ -2995,7 +3018,6 @@ export function newSessionConnection(
             i += space_left_for_user_data;
         }
     };
-    // TODO: Test REFUSED SPDU
     const emit_rf = (spdu: REFUSE_SPDU): void => {
         const size_without_user_data = encode_REFUSE_SPDU({
             ...spdu,
@@ -3078,7 +3100,6 @@ export function newSessionConnection(
             i += space_left_for_user_data;
         }
     };
-    // TODO: Test large DISCONNECT
     const emit_dn = (spdu: DISCONNECT_SPDU): void => {
         const size_without_user_data = encode_DISCONNECT_SPDU({
             enclosureItem: 1,
@@ -3106,7 +3127,6 @@ export function newSessionConnection(
             i += space_left_for_user_data;
         }
     };
-    // TODO: Test large NOT-FINISHED
     const emit_nf = (spdu: NOT_FINISHED_SPDU): void => {
         const size_without_user_data = encode_NOT_FINISHED_SPDU({
             enclosureItem: 1,
@@ -3134,7 +3154,6 @@ export function newSessionConnection(
             i += space_left_for_user_data;
         }
     };
-    // TODO: Test large abort
     const emit_ab = (spdu: ABORT_SPDU): void => {
         const size_without_user_data = encode_ABORT_SPDU({
             ...spdu,

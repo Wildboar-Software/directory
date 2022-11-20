@@ -295,6 +295,10 @@ export interface PresentationConnection {
      * list, or which may exist in total for this presentation connection.
      */
     max_contexts: number;
+
+    local_selector?: Buffer;
+
+    remote_selector?: Buffer;
 }
 
 export function createPresentationConnection(
@@ -938,6 +942,9 @@ export function dispatch_CP(c: PresentationConnection, ppdu: CP_type): void {
                 c.cr = false;
                 c.rl = false;
                 c.aep = false;
+                if (ppdu.normal_mode_parameters?.calling_presentation_selector) {
+                    c.remote_selector = Buffer.from(ppdu.normal_mode_parameters.calling_presentation_selector);
+                }
                 c.outgoingEvents.emit('P-CONind', ppdu);
             } else if (!p01 || !p02 || !p22) {
                 c.state = PresentationLayerState.STAI0;
@@ -1026,6 +1033,9 @@ export function dispatch_CPA(c: PresentationConnection, cpa: CPA_PPDU): void {
                 )
             );
             c.state = PresentationLayerState.STAt0;
+            if (cpa.normal_mode_parameters?.responding_presentation_selector) {
+                c.remote_selector = Buffer.from(cpa.normal_mode_parameters.responding_presentation_selector);
+            }
             c.outgoingEvents.emit('P-CONcnf+', cpa);
             break;
         }
@@ -1071,6 +1081,9 @@ export function dispatch_CPR(c: PresentationConnection, cpr: CPR_PPDU): void {
                 return handleInvalidPPDU(c);
             }
             c.state = PresentationLayerState.STAI0;
+            if (('normal_mode_parameters' in cpr) && cpr.normal_mode_parameters?.responding_presentation_selector) {
+                c.remote_selector = Buffer.from(cpr.normal_mode_parameters.responding_presentation_selector);
+            }
             c.outgoingEvents.emit('P-CONcnf-', cpr);
             break;
         }
@@ -1273,6 +1286,12 @@ export function dispatch_P_CONreq(
                 ppdu.normal_mode_parameters
                     ?.presentation_context_definition_list ?? [];
             c.state = PresentationLayerState.STAI1;
+            if (ppdu.normal_mode_parameters?.calling_presentation_selector) {
+                c.local_selector = Buffer.from(ppdu.normal_mode_parameters.calling_presentation_selector);
+            }
+            if (ppdu.normal_mode_parameters?.called_presentation_selector) {
+                c.remote_selector = Buffer.from(ppdu.normal_mode_parameters.called_presentation_selector);
+            }
             c.outgoingEvents.emit('CP', ppdu);
             break;
         }
@@ -1336,6 +1355,9 @@ export function dispatch_P_CONrsp_accept(
             // This step is not in the spec, but required.
             c.contextSets.dcs_agreed_during_connection_establishment = dcs;
             c.state = PresentationLayerState.STAt0;
+            if (cpa.normal_mode_parameters?.responding_presentation_selector) {
+                c.local_selector = Buffer.from(cpa.normal_mode_parameters.responding_presentation_selector);
+            }
             c.outgoingEvents.emit('CPA', cpa);
             break;
         }
@@ -1379,6 +1401,9 @@ export function dispatch_P_CONrsp_reject(
             }
             // [6]: It is assumed that the P-CONNECT argument already contains the selected transfer syntaxes.
             c.state = PresentationLayerState.STAI0;
+            if (("normal_mode_parameters" in cpr) && cpr.normal_mode_parameters?.responding_presentation_selector) {
+                c.local_selector = Buffer.from(cpr.normal_mode_parameters.responding_presentation_selector);
+            }
             c.outgoingEvents.emit('CPR', cpr);
             break;
         }

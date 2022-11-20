@@ -267,7 +267,7 @@ export function create_itot_stack(
                     user_data: Buffer.alloc(0),
                     calling_transport_selector: options?.localAddress?.tSelector
                         ? Buffer.from(options.localAddress.tSelector)
-                        : randomBytes(UUID_LENGTH_BYTES),
+                        : (stack.transport.local_t_selector ?? randomBytes(UUID_LENGTH_BYTES)),
                     called_or_responding_transport_selector: options?.remoteAddress?.tSelector
                         ? Buffer.from(options.remoteAddress.tSelector)
                         : undefined,
@@ -298,10 +298,10 @@ export function create_itot_stack(
                     },
                     calledSessionSelector: options?.remoteAddress?.sSelector
                         ? Buffer.from(options.remoteAddress.sSelector)
-                        : undefined,
+                        : stack.session.remote_selector,
                     callingSessionSelector: options?.localAddress?.sSelector
                         ? Buffer.from(options.localAddress.sSelector)
-                        : undefined,
+                        : (stack.session.local_selector ?? randomBytes(UUID_LENGTH_BYTES)),
                     sessionUserRequirements: 0,
                 };
                 stack.session = dispatch_SCONreq(stack.session, spdu);
@@ -315,7 +315,7 @@ export function create_itot_stack(
                             : undefined,
                         respondingSessionSelector: options?.localAddress?.sSelector
                             ? Buffer.from(options.localAddress.sSelector)
-                            : undefined,
+                            : (stack.session.local_selector ?? randomBytes(UUID_LENGTH_BYTES)),
                         connectAcceptItem: {
                             protocolOptions: 0,
                             versionNumber: 2,
@@ -381,7 +381,10 @@ export function create_itot_stack(
                 undefined,
                 new CP_type_normal_mode_parameters(
                     args.protocol_version,
-                    args.calling_presentation_selector ?? options?.localAddress?.pSelector,
+                    args.calling_presentation_selector
+                        ?? options?.localAddress?.pSelector
+                        ?? stack.presentation.local_selector
+                        ?? randomBytes(UUID_LENGTH_BYTES),
                     args.called_presentation_selector ?? options?.remoteAddress?.pSelector,
                     args.presentation_context_definition_list,
                     args.default_context_name,
@@ -404,7 +407,10 @@ export function create_itot_stack(
                     undefined,
                     new CPA_PPDU_normal_mode_parameters(
                         args.protocol_version,
-                        args.responding_presentation_selector ?? options?.localAddress?.pSelector,
+                        args.responding_presentation_selector
+                            ?? options?.localAddress?.pSelector
+                            ?? stack.presentation.local_selector
+                            ?? randomBytes(UUID_LENGTH_BYTES),
                         args.presentation_context_definition_result_list,
                         args.presentation_requirements,
                         args.user_session_requirements,
@@ -418,7 +424,10 @@ export function create_itot_stack(
                 const ppdu: CPR_PPDU = {
                     normal_mode_parameters: new CPR_PPDU_normal_mode_parameters(
                         args.protocol_version,
-                        args.responding_presentation_selector ?? options?.localAddress?.pSelector,
+                        args.responding_presentation_selector
+                            ?? options?.localAddress?.pSelector
+                            ?? stack.presentation.local_selector
+                            ?? randomBytes(UUID_LENGTH_BYTES),
                         args.presentation_context_definition_result_list,
                         undefined,
                         args.provider_reason,
@@ -486,7 +495,7 @@ export function create_itot_stack(
             user_data: Buffer.alloc(0),
             called_or_responding_transport_selector: options?.localAddress?.tSelector
                 ? Buffer.from(options.localAddress.tSelector)
-                : undefined,
+                : randomBytes(UUID_LENGTH_BYTES),
             calling_transport_selector: stack.transport.remote_t_selector,
             tpdu_size: undefined, // Intentionally omitted.
             preferred_max_tpdu_size: Math.floor(stack.transport.max_tpdu_size / 128) * 128,
@@ -533,7 +542,23 @@ export function create_itot_stack(
             const ppdu = _decode_CP_type(el);
             dispatch_CP(stack.presentation, ppdu);
         } else {
-            const ac: ACCEPT_SPDU = {};
+            const ac: ACCEPT_SPDU = {
+                callingSessionSelector: cn.callingSessionSelector?.subarray(0, 16),
+                respondingSessionSelector: options?.localAddress?.sSelector
+                    ? Buffer.from(options.localAddress.sSelector)
+                    : randomBytes(UUID_LENGTH_BYTES),
+                connectAcceptItem: {
+                    tsduMaximumSize: options?.max_tsdu_size
+                        ? {
+                            initiator_to_responder: options.max_tsdu_size,
+                            responder_to_initiator: options.max_tsdu_size,
+                        }
+                        : undefined,
+                    versionNumber: 2,
+                    protocolOptions: 0,
+                },
+                sessionUserRequirements: 0,
+            };
             stack.session = dispatch_SCONrsp_accept(stack.session, ac);
         }
     });
@@ -554,8 +579,8 @@ export function create_itot_stack(
             const ppdu = _decode_CPA_PPDU(el);
             dispatch_CPA(stack.presentation, ppdu);
         } else {
-            const ac: ACCEPT_SPDU = {};
-            stack.session = dispatch_SCONrsp_accept(stack.session, ac);
+            const ab: ABORT_SPDU = {};
+            stack.session = dispatch_SUABreq(stack.session, ab);
         }
     });
     stack.session.outgoingEvents.on('SCONcnf_reject', () => {
