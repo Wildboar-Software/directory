@@ -16,6 +16,7 @@ export const DEFAULT_MAX_TSDU_SIZE_FOR_OSI: number = 128;
  */
 export const DEFAULT_MAX_TSDU_SIZE_FOR_ITOT: number = 65531;
 export const DEFAULT_MAX_TSDU_SIZE: number = DEFAULT_MAX_TSDU_SIZE_FOR_ITOT;
+export const DEFAULT_MAX_TPDU_SIZE: number = 128;
 
 // #region TPDU codes
 // export const TPDU_CODE_CR: number = 7;
@@ -193,12 +194,14 @@ export interface TransportConnection {
     src_ref: number;
     dst_ref: number;
     t_selector?: Buffer;
+    max_tpdu_size: number;
     max_tsdu_size: number;
 }
 
 export function createTransportConnection(
     network: NetworkLayerService,
     max_tsdu_size: number = DEFAULT_MAX_TSDU_SIZE,
+    max_tpdu_size: number = DEFAULT_MAX_TPDU_SIZE,
 ): TransportConnection {
     const outgoingEvents = new TransportLayerOutgoingEventEmitter();
     outgoingEvents.on('CR', (tpdu) => network.write_nsdu(encode_CR(tpdu)));
@@ -219,6 +222,7 @@ export function createTransportConnection(
         dataBuffer: Buffer.alloc(0),
         src_ref: 0,
         dst_ref: 0,
+        max_tpdu_size,
         max_tsdu_size,
     };
 }
@@ -1108,7 +1112,16 @@ export function encode_CR(tpdu: CR_TPDU): Buffer {
         );
     }
     if (tpdu.tpdu_size) {
-        parameters.push(Buffer.from([0b1100_0000, 1, tpdu.tpdu_size]));
+        const size = {
+            [8192]: 0b0000_1101,
+            [4096]: 0b0000_1100,
+            [2048]: 0b0000_1011,
+            [1024]: 0b0000_1010,
+            [512]: 0b0000_1001,
+            [256]: 0b0000_1000,
+            [128]: 0b0000_0111,
+        }[tpdu.tpdu_size] ?? 128;
+        parameters.push(Buffer.from([0b1100_0000, 1, size]));
     }
     if (tpdu.preferred_max_tpdu_size) {
         const encodedInt = encodeUnsignedBigEndianInteger(
@@ -1244,6 +1257,16 @@ export function dispatch_TCONreq(
     tpdu: CR_TPDU
 ): TransportConnection {
     c.src_ref = tpdu.srcRef;
+    if (!tpdu.tpdu_size) {
+        tpdu.tpdu_size = 2048; // The max for class 0.
+    } else {
+        c.max_tpdu_size = tpdu.tpdu_size;
+    }
+    if (!tpdu.preferred_max_tpdu_size) {
+        tpdu.preferred_max_tpdu_size = Math.floor(c.max_tpdu_size / 128) * 128;
+    } else {
+        c.max_tpdu_size = tpdu.preferred_max_tpdu_size;
+    }
     switch (c.state) {
         case TransportConnectionState.CLOSED: {
             const p0: boolean = false; // T-CONNECT request unacceptable
@@ -1279,6 +1302,11 @@ export function dispatch_TCONresp(
     c.dst_ref = tpdu.dstRef;
     switch (c.state) {
         case TransportConnectionState.WFTRESP: {
+            if (tpdu.preferred_max_tpdu_size) {
+                c.max_tpdu_size = tpdu.preferred_max_tpdu_size;
+            } else if (tpdu.tpdu_size) {
+                c.max_tpdu_size = tpdu.tpdu_size;
+            }
             c.state = TransportConnectionState.OPEN;
             c.outgoingEvents.emit('CC', tpdu);
             return c;
@@ -1299,7 +1327,8 @@ export function dispatch_TDTreq(
             // None are defined for use in the class 0 DT TPDU, so we're fine here.
             const chunk_length: number = Math.min(
                 c.max_tsdu_size,
-                max_nsdu_size - DT_TPDU_FIXED_HEADER_LENGTH
+                max_nsdu_size - DT_TPDU_FIXED_HEADER_LENGTH,
+                c.max_tpdu_size - DT_TPDU_FIXED_HEADER_LENGTH,
             );
             let i = 0;
             while (i < user_data.length) {
@@ -1483,6 +1512,8 @@ export function dispatch_CR(
                 c.state = TransportConnectionState.WFTRESP;
                 c.src_ref = tpdu.srcRef;
                 c.dst_ref = randomBytes(2).readUint16BE();
+                // These are already decoded to proper values in decode_CR().
+                c.max_tpdu_size = tpdu.preferred_max_tpdu_size ?? tpdu.tpdu_size ?? DEFAULT_MAX_TPDU_SIZE;
                 c.outgoingEvents.emit('TCONind', tpdu);
             }
             return c;
@@ -1561,6 +1592,8 @@ export function dispatch_CC(
             if (p8) {
                 c.state = TransportConnectionState.OPEN;
                 c.dst_ref = tpdu.dstRef;
+                // These are already decoded to proper values in decode_CC().
+                c.max_tpdu_size = tpdu.preferred_max_tpdu_size ?? tpdu.tpdu_size ?? DEFAULT_MAX_TPDU_SIZE;
                 c.outgoingEvents.emit('TCONconf', tpdu);
             } else if (p6 && p5) {
                 c.state = TransportConnectionState.CLOSED;
