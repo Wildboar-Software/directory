@@ -96,6 +96,13 @@ import {
     AbortReason,
     RequestParameters,
 } from "@wildboar/rose-transport";
+import { compareCode } from "@wildboar/x500";
+import {
+    administerPassword,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
+import {
+    changePassword,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
 
 /**
  * @summary The handles a request, but not errors
@@ -232,9 +239,13 @@ async function handleRequestAndErrors (
         events: new EventEmitter(),
     };
     assn.invocations.set(invoke_id, info);
+    const isSensitiveOperation: boolean = (
+        compareCode(request.code, administerPassword["&operationCode"]!)
+        || compareCode(request.code, changePassword["&operationCode"]!)
+    );
     try {
         await handleRequest(ctx, assn, request, stats);
-        ctx.telemetry.trackRequest({
+        !isSensitiveOperation && ctx.telemetry.trackRequest({
             name: codeToString(request.code),
             url: ctx.config.myAccessPointNSAPs?.map(naddrToURI).find((uri) => !!uri)
                 ?? `idm://meerkat.invalid:${ctx.config.idm.port}`,
@@ -252,7 +263,7 @@ async function handleRequestAndErrors (
             },
         });
     } catch (e) {
-        ctx.telemetry.trackRequest({
+        !isSensitiveOperation && ctx.telemetry.trackRequest({
             name: codeToString(request.code),
             url: ctx.config.myAccessPointNSAPs?.map(naddrToURI).find((uri) => !!uri)
                 ?? `idm://meerkat.invalid:${ctx.config.idm.port}`,
@@ -477,7 +488,7 @@ async function handleRequestAndErrors (
         } else {
             assn.rose.write_abort(AbortReason.reason_not_specified);
         }
-        ctx.telemetry.trackException({
+        !isSensitiveOperation && ctx.telemetry.trackException({
             exception: e,
             properties: {
                 ...flatten(stats),
