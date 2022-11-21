@@ -260,22 +260,6 @@ export function create_itot_stack(
                     TransportConnectionState.OPEN_R,
                     TransportConnectionState.OPEN_WR,
                 ].includes(transport.state),
-            connect: () => {
-                const tpdu: CR_TPDU = {
-                    cdt: 0,
-                    class_option: 0,
-                    dstRef: 0,
-                    srcRef: randomBytes(2).readUint16BE(),
-                    user_data: Buffer.alloc(0),
-                    calling_transport_selector: options?.localAddress?.tSelector
-                        ? Buffer.from(options.localAddress.tSelector)
-                        : stack.transport.local_t_selector,
-                    called_or_responding_transport_selector: options?.remoteAddress?.tSelector
-                        ? Buffer.from(options.remoteAddress.tSelector)
-                        : undefined,
-                };
-                stack.transport = dispatch_TCONreq(stack.transport, tpdu);
-            },
             writeTSDU: (tsdu: Buffer) => {
                 stack.transport = dispatch_TDTreq(stack.transport, tsdu);
             },
@@ -486,6 +470,22 @@ export function create_itot_stack(
     stack.network.on('NSDU', (nsdu) => dispatch_NSDU(stack.transport, nsdu));
     stack.transport.outgoingEvents.on('TCONind', () => {
         stack.session = dispatch_TCONind(stack.session);
+    });
+    stack.session.outgoingEvents.on('TCONreq', () => {
+        const tpdu: CR_TPDU = {
+            cdt: 0,
+            class_option: 0,
+            dstRef: 0,
+            srcRef: randomBytes(2).readUint16BE(),
+            user_data: Buffer.alloc(0),
+            calling_transport_selector: options?.localAddress?.tSelector
+                ? Buffer.from(options.localAddress.tSelector)
+                : stack.transport.local_t_selector,
+            called_or_responding_transport_selector: options?.remoteAddress?.tSelector
+                ? Buffer.from(options.remoteAddress.tSelector)
+                : undefined,
+        };
+        stack.transport = dispatch_TCONreq(stack.transport, tpdu);
     });
     stack.session.outgoingEvents.on('TCONrsp', () => {
         const cc: CC_TPDU = {

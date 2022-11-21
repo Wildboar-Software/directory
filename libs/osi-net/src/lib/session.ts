@@ -561,7 +561,6 @@ export function dispatch_SCONreq(
         case TableA2SessionConnectionState.STA01: {
             state.Vtca = false;
             state.state = TableA2SessionConnectionState.STA01B;
-            state.transport.connect(); // FIXME: Get rid of this method entirely.
             state.outgoingEvents.emit('TCONreq');
             break;
         }
@@ -2866,7 +2865,6 @@ export interface AnnexASessionState {
 export interface TransportLayer {
     connected: () => boolean;
     writeTSDU: (tsdu: Buffer) => unknown;
-    connect: () => unknown;
 }
 
 export interface SessionServiceConnectionState
