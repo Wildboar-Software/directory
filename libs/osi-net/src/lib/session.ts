@@ -453,64 +453,64 @@ export interface SessionLayerOutgoingEvents {
 export class SessionLayerOutgoingEventEmitter extends TypedEmitter<SessionLayerOutgoingEvents> {}
 
 // export
-// function dispatch_SACTDreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_SACTDreq (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_SACTDrsp (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_SACTDrsp (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_SACTEreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_SACTEreq (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_SACTErsp (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_SACTErsp (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_SACTIreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_SACTIreq (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_SACTIrsp (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_SACTIrsp (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_SACTRreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_SACTRreq (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_SACTSreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_SACTSreq (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_SCDreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_SCDreq (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_SCDrsp (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_SCDrsp (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_SCGreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_SCGreq (state: SessionServiceConnectionState): void {
 
 // }
 
 export function dispatch_SCONreq(
     state: SessionServiceConnectionState,
     cn: CONNECT_SPDU
-): SessionServiceConnectionState {
+): void {
     if (cn.userData && cn.extendedUserData) {
         return handleInvalidSPDU(state);
     }
@@ -586,15 +586,14 @@ export function dispatch_SCONreq(
             return handleInvalidSequence(state);
         }
     }
-    return state;
 }
 
 export function dispatch_SCONrsp_accept(
     state: SessionServiceConnectionState,
     spdu: ACCEPT_SPDU
-): SessionServiceConnectionState {
+): void {
     if (!state.cn) {
-        return state;
+        return;
     }
     switch (state.state) {
         case TableA2SessionConnectionState.STA08: {
@@ -659,13 +658,12 @@ export function dispatch_SCONrsp_accept(
             return handleInvalidSequence(state);
         }
     }
-    return state;
 }
 
 export function dispatch_SCONrsp_reject(
     state: SessionServiceConnectionState,
     spdu: REFUSE_SPDU
-): SessionServiceConnectionState {
+): void {
     switch (state.state) {
         case TableA2SessionConnectionState.STA08: {
             const p02_local_choice: boolean = false;
@@ -686,14 +684,14 @@ export function dispatch_SCONrsp_reject(
                     transportDisconnect: TRANSPORT_DISCONNECT_RELEASED,
                 });
             }
-            return state;
+            return;
         }
         case TableA2SessionConnectionState.STA15D: {
             state.TIM = setTimeout(() => {
                 state.outgoingEvents.emit('TDISreq');
             }, state.timer_timeout);
             state.state = TableA2SessionConnectionState.STA16;
-            return state;
+            return;
         }
         default: {
             return handleInvalidSequence(state);
@@ -705,7 +703,7 @@ export function dispatch_SCONrsp_reject(
 export function dispatch_SDTreq(
     state: SessionServiceConnectionState,
     dt: DATA_TRANSFER_SPDU
-): SessionServiceConnectionState {
+): void {
     switch (state.state) {
         case TableA2SessionConnectionState.STA09: {
             const p04: boolean = (state.FU & SUR_DUPLEX) > 0 && !state.Vcoll;
@@ -756,28 +754,27 @@ export function dispatch_SDTreq(
             return handleInvalidSequence(state);
         }
     }
-    return state;
 }
 
 // export
-// function dispatch_SEXreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_SEXreq (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_SGTreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_SGTreq (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_SPTreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_SPTreq (state: SessionServiceConnectionState): void {
 
 // }
 
 export function dispatch_SRELreq(
     state: SessionServiceConnectionState,
     fn: FINISH_SPDU
-): SessionServiceConnectionState {
+): void {
     switch (state.state) {
         case TableA2SessionConnectionState.STA09: {
             const p65: boolean =
@@ -872,13 +869,12 @@ export function dispatch_SRELreq(
             return handleInvalidSequence(state);
         }
     }
-    return state;
 }
 
 export function dispatch_SRELrsp_accept(
     state: SessionServiceConnectionState,
     dn: DISCONNECT_SPDU
-): SessionServiceConnectionState {
+): void {
     switch (state.state) {
         case TableA2SessionConnectionState.STA09: {
             const p66: boolean = state.Vtrr;
@@ -913,13 +909,12 @@ export function dispatch_SRELrsp_accept(
             return handleInvalidSequence(state);
         }
     }
-    return state;
 }
 
 export function dispatch_SRELrsp_reject(
     state: SessionServiceConnectionState,
     nf: NOT_FINISHED_SPDU
-): SessionServiceConnectionState {
+): void {
     switch (state.state) {
         case TableA2SessionConnectionState.STA09: {
             const p67: boolean = (state.FU & SUR_NEGOTIATED_RELEASE) > 0;
@@ -940,63 +935,62 @@ export function dispatch_SRELrsp_reject(
             return handleInvalidSequence(state);
         }
     }
-    return state;
 }
 
 // export
-// function dispatch_SRSYNreq_a (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_SRSYNreq_a (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_SRSYNreq_r (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_SRSYNreq_r (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_SRSYNreq_s (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_SRSYNreq_s (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_SRSYNrsp (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_SRSYNrsp (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_SSYNMreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_SSYNMreq (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_SSYNMrsp (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_SSYNMrsp (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_SSYNmreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_SSYNmreq (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_SSYNmdreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_SSYNmdreq (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_SSYNmrsp (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_SSYNmrsp (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_STDreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_STDreq (state: SessionServiceConnectionState): void {
 
 // }
 
 export function dispatch_SUABreq(
     state: SessionServiceConnectionState,
     ab: ABORT_SPDU
-): SessionServiceConnectionState {
+): void {
     const p02_local_choice: boolean = false;
     const p02: boolean = p02_local_choice && !state.TEXP;
     /// See ITU Rec. X.225 (1995), page 161, footnote 4.
@@ -1095,29 +1089,27 @@ export function dispatch_SUABreq(
             return handleInvalidSequence(state);
         }
     }
-    return state;
 }
 
 // export
-// function dispatch_SUERreq (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_SUERreq (state: SessionServiceConnectionState): void {
 
 // }
 
 export function dispatch_TCONind(
     state: SessionServiceConnectionState
-): SessionServiceConnectionState {
+): void {
     if (state.state !== TableA2SessionConnectionState.STA01) {
         return handleInvalidSequence(state);
     }
     state.Vtca = true;
     state.state = TableA2SessionConnectionState.STA01C;
     state.outgoingEvents.emit('TCONrsp');
-    return state;
 }
 
 export function dispatch_TCONcnf(
     state: SessionServiceConnectionState
-): SessionServiceConnectionState {
+): void {
     if (state.state !== TableA2SessionConnectionState.STA01B) {
         return handleInvalidSequence(state);
     }
@@ -1131,12 +1123,11 @@ export function dispatch_TCONcnf(
         state.state = TableA2SessionConnectionState.STA02A;
     }
     state.outgoingEvents.emit('CN', state.cn);
-    return state;
 }
 
 export function dispatch_TDISind(
     state: SessionServiceConnectionState
-): SessionServiceConnectionState {
+): void {
     switch (state.state) {
         case TableA2SessionConnectionState.STA01A:
         case TableA2SessionConnectionState.STA16: {
@@ -1192,15 +1183,14 @@ export function dispatch_TDISind(
             break;
         }
         default: {
-            return state; /* NOOP */
+            return; /* NOOP */
         }
     }
-    return state;
 }
 
 export function dispatch_TIM_Timer(
     state: SessionServiceConnectionState
-): SessionServiceConnectionState {
+): void {
     switch (state.state) {
         case TableA2SessionConnectionState.STA01A:
         case TableA2SessionConnectionState.STA15D:
@@ -1213,12 +1203,11 @@ export function dispatch_TIM_Timer(
             return handleInvalidSequence(state);
         }
     }
-    return state;
 }
 
 export function dispatch_AA(
     state: SessionServiceConnectionState
-): SessionServiceConnectionState {
+): void {
     switch (state.state) {
         case TableA2SessionConnectionState.STA01A: {
             if (state.TIM) {
@@ -1245,13 +1234,12 @@ export function dispatch_AA(
             return handleInvalidSequence(state);
         }
     }
-    return state;
 }
 
 export function dispatch_AB_nr(
     state: SessionServiceConnectionState,
     spdu: ABORT_SPDU
-): SessionServiceConnectionState {
+): void {
     state.cn = undefined;
     const p02_local_choice: boolean = false;
     const p02: boolean = p02_local_choice && !state.TEXP;
@@ -1334,13 +1322,12 @@ export function dispatch_AB_nr(
             return handleInvalidSequence(state);
         }
     }
-    return state;
 }
 
 export function dispatch_AB_r(
     state: SessionServiceConnectionState,
     spdu: ABORT_SPDU
-): SessionServiceConnectionState {
+): void {
     state.cn = undefined;
     const p02_local_choice: boolean = false;
     const p02: boolean = p02_local_choice && !state.TEXP;
@@ -1414,13 +1401,12 @@ export function dispatch_AB_r(
             return handleInvalidSequence(state);
         }
     }
-    return state;
 }
 
 export function dispatch_AC(
     state: SessionServiceConnectionState,
     spdu: ACCEPT_SPDU
-): SessionServiceConnectionState {
+): void {
     if (!state.cn) {
         return handleInvalidSequence(state);
     }
@@ -1522,56 +1508,55 @@ export function dispatch_AC(
             return handleInvalidSequence(state);
         }
     }
-    return state;
 }
 
 // export
-// function dispatch_AD (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_AD (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_ADA (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_ADA (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_AE (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_AE (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_AEA (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_AEA (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_AI (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_AI (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_AIA (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_AIA (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_AR (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_AR (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_AS (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_AS (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_CD (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_CD (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_CDA (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_CDA (state: SessionServiceConnectionState): void {
 
 // }
 
@@ -1579,7 +1564,7 @@ export function dispatch_CDO(
     state: SessionServiceConnectionState,
     cn: CONNECT_SPDU,
     spdu: CONNECT_DATA_OVERFLOW_SPDU
-): SessionServiceConnectionState {
+): void {
     switch (state.state) {
         case TableA2SessionConnectionState.STA01C: {
             state.state = TableA2SessionConnectionState.STA01;
@@ -1619,13 +1604,12 @@ export function dispatch_CDO(
             return handleInvalidSequence(state);
         }
     }
-    return state;
 }
 
 export function dispatch_CN(
     state: SessionServiceConnectionState,
     spdu: CONNECT_SPDU
-): SessionServiceConnectionState {
+): void {
     /* ITU Recommendation X.225 (1995), Section 8.3.1.21. Only one or the other
     may be present. */
     if (spdu.userData && spdu.extendedUserData) {
@@ -1659,7 +1643,7 @@ export function dispatch_CN(
                 // If this SPM initiated this transport.
                 state.state = TableA2SessionConnectionState.STA01;
                 state.outgoingEvents.emit('TDISreq'); // TDISreq
-                return state;
+                return;
             }
 
             // If this SPM did not initiate the transport, and there is no problem with the CN SPDU.
@@ -1734,13 +1718,12 @@ export function dispatch_CN(
             /* NOOP or Not Possible. */
         }
     }
-    return state;
 }
 
 export function dispatch_DN(
     state: SessionServiceConnectionState,
     spdu: DISCONNECT_SPDU
-): SessionServiceConnectionState {
+): void {
     switch (state.state) {
         case TableA2SessionConnectionState.STA01A: {
             // NOOP
@@ -1789,13 +1772,12 @@ export function dispatch_DN(
             return handleInvalidSequence(state);
         }
     }
-    return state;
 }
 
 export function dispatch_DT(
     state: SessionServiceConnectionState,
     spdu: DATA_TRANSFER_SPDU
-): SessionServiceConnectionState {
+): void {
     const p05: boolean =
         (state.FU & SUR_HALF_DUPLEX) === 0 || // !AV(dk)
         state.dataToken !== SessionServiceTokenPossession.local; // !OWNED(dk) // A(dk)
@@ -1896,28 +1878,27 @@ export function dispatch_DT(
             return handleInvalidSequence(state);
         }
     }
-    return state;
 }
 
 // export
-// function dispatch_ED (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_ED (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_ER (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_ER (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_EX (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_EX (state: SessionServiceConnectionState): void {
 
 // }
 
 export function dispatch_FN_nr(
     state: SessionServiceConnectionState,
     spdu: FINISH_SPDU
-): SessionServiceConnectionState {
+): void {
     switch (state.state) {
         case TableA2SessionConnectionState.STA01A: {
             // NOOP
@@ -2066,13 +2047,12 @@ export function dispatch_FN_nr(
             return handleInvalidSequence(state);
         }
     }
-    return state;
 }
 
 export function dispatch_FN_r(
     state: SessionServiceConnectionState,
     spdu: FINISH_SPDU
-): SessionServiceConnectionState {
+): void {
     switch (state.state) {
         case TableA2SessionConnectionState.STA01A: {
             // NOOP
@@ -2226,53 +2206,52 @@ export function dispatch_FN_r(
             return handleInvalidSequence(state);
         }
     }
-    return state;
 }
 
 // export
-// function dispatch_GT (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_GT (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_GTA (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_GTA (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_GTC (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_GTC (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_MAA (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_MAA (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_MAP (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_MAP (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_MIA (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_MIA (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_MIP (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_MIP (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_MIP_d (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_MIP_d (state: SessionServiceConnectionState): void {
 
 // }
 
 export function dispatch_NF(
     state: SessionServiceConnectionState,
     spdu: NOT_FINISHED_SPDU
-): SessionServiceConnectionState {
+): void {
     switch (state.state) {
         case TableA2SessionConnectionState.STA01A: {
             // NOOP
@@ -2313,14 +2292,13 @@ export function dispatch_NF(
             return handleInvalidSequence(state);
         }
     }
-    return state;
 }
 
 export function dispatch_OA(
     state: SessionServiceConnectionState,
     spdu: OVERFLOW_ACCEPT_SPDU,
     userData: Buffer // This should include the first 10240 octets that should have already been sent.
-): SessionServiceConnectionState {
+): void {
     switch (state.state) {
         case TableA2SessionConnectionState.STA01C: {
             state.state = TableA2SessionConnectionState.STA01;
@@ -2380,12 +2358,11 @@ export function dispatch_OA(
             return handleInvalidSequence(state);
         }
     }
-    return state;
 }
 
 export function dispatch_PR_AB(
     state: SessionServiceConnectionState
-): SessionServiceConnectionState {
+): void {
     switch (state.state) {
         case TableA2SessionConnectionState.STA01C: {
             state.state = TableA2SessionConnectionState.STA01;
@@ -2427,38 +2404,37 @@ export function dispatch_PR_AB(
             break;
         }
     }
-    return state;
 }
 
 // export
-// function dispatch_PR_MAA (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_PR_MAA (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_PR_RA (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_PR_RA (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_PR_RS (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_PR_RS (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_PT (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_PT (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_RA (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_RA (state: SessionServiceConnectionState): void {
 
 // }
 
 export function dispatch_RF_nr(
     state: SessionServiceConnectionState,
     spdu: REFUSE_SPDU
-): SessionServiceConnectionState {
+): void {
     switch (state.state) {
         case TableA2SessionConnectionState.STA01A: {
             // NOOP.
@@ -2489,13 +2465,12 @@ export function dispatch_RF_nr(
             return handleInvalidSequence(state);
         }
     }
-    return state;
 }
 
 export function dispatch_RF_r(
     state: SessionServiceConnectionState,
     spdu: REFUSE_SPDU
-): SessionServiceConnectionState {
+): void {
     switch (state.state) {
         case TableA2SessionConnectionState.STA01A: {
             // NOOP.
@@ -2527,26 +2502,25 @@ export function dispatch_RF_r(
             return handleInvalidSequence(state);
         }
     }
-    return state;
 }
 
 // export
-// function dispatch_RS_a (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_RS_a (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_RS_r (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_RS_r (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_RS_s (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_RS_s (state: SessionServiceConnectionState): void {
 
 // }
 
 // export
-// function dispatch_TD (state: SessionServiceConnectionState): SessionServiceConnectionState {
+// function dispatch_TD (state: SessionServiceConnectionState): void {
 
 // }
 
@@ -3776,7 +3750,7 @@ export function encode_PREPARE_SPDU(pdu: PREPARE_SPDU): Buffer {
 // }
 
 // export
-// function receive_CONNECT_SPDU (state: SessionServiceConnectionState, spdu: CONNECT_SPDU): SessionServiceConnectionState {
+// function receive_CONNECT_SPDU (state: SessionServiceConnectionState, spdu: CONNECT_SPDU): void {
 
 // }
 
@@ -4441,9 +4415,9 @@ export function parse_PR_SPDU(spdu: SPDU): PREPARE_SPDU | number {
  */
 export function handleInvalidSequence(
     state: SessionServiceConnectionState
-): SessionServiceConnectionState {
+): void {
     if (!state.transport.connected()) {
-        return state;
+        return;
     }
     // Section A.4.1.1 is unhandled.
     const response: ABORT_SPDU = {};
@@ -4452,14 +4426,13 @@ export function handleInvalidSequence(
         () => state.outgoingEvents.emit('TDISreq'),
         state.timer_timeout
     );
-    return state;
 }
 
 export function handleInvalidSPDU(
     state: SessionServiceConnectionState
-): SessionServiceConnectionState {
+): void {
     if (!state.transport.connected()) {
-        return state;
+        return;
     }
     // Section A.4.1.1 is unhandled.
     const response: ABORT_SPDU = {};
@@ -4468,14 +4441,13 @@ export function handleInvalidSPDU(
         () => state.outgoingEvents.emit('TDISreq'),
         state.timer_timeout
     );
-    return state;
 }
 
 export function handle_too_large_ssdu(
     state: SessionServiceConnectionState
-): SessionServiceConnectionState {
+): void {
     if (!state.transport.connected()) {
-        return state;
+        return;
     }
     // Section A.4.1.1 is unhandled.
     const response: ABORT_SPDU = {};
@@ -4484,7 +4456,6 @@ export function handle_too_large_ssdu(
         () => state.outgoingEvents.emit('TDISreq'),
         state.timer_timeout
     );
-    return state;
 }
 
 function spdu_is_complete (enclosure: ACCEPT_SPDU["enclosureItem"]): boolean {
@@ -4501,16 +4472,16 @@ export function handleSPDU(
             if (typeof cn === 'number') {
                 return [state, cn];
             }
-            const newState = dispatch_CN(state, cn);
-            return [newState];
+            dispatch_CN(state, cn);
+            return [state];
         }
         case SI_OA_SPDU: {
             const oa = parse_OA_SPDU(spdu);
             if (typeof oa === 'number') {
                 return [state, oa];
             }
-            const newState = dispatch_OA(state, oa, state.connectData);
-            return [newState];
+            dispatch_OA(state, oa, state.connectData);
+            return [state];
         }
         case SI_CDO_SPDU: {
             1 + 1; // Needed to avoid some weird Typescript parsing error.
@@ -4521,8 +4492,8 @@ export function handleSPDU(
             if (typeof cdo === 'number') {
                 return [state, cdo];
             }
-            const newState = dispatch_CDO(state, state.cn, cdo);
-            return [newState];
+            dispatch_CDO(state, state.cn, cdo);
+            return [state];
         }
         case SI_AC_SPDU: {
             if (state.in_progress_spdu && !("ac" in state.in_progress_spdu)) {
@@ -4548,8 +4519,8 @@ export function handleSPDU(
             if (spdu_is_complete(ac.enclosureItem)) {
                 const spdu = state.in_progress_spdu.ac;
                 state.in_progress_spdu = undefined;
-                const newState = dispatch_AC(state, spdu);
-                return [newState];
+                dispatch_AC(state, spdu);
+                return [state];
             }
             return [state];
         }
@@ -4579,11 +4550,11 @@ export function handleSPDU(
                 state.in_progress_spdu = undefined;
                 const r: boolean = rf.transportDisconnect === TRANSPORT_DISCONNECT_KEPT;
                 if (r) {
-                    const newState = dispatch_RF_r(state, spdu);
-                    return [newState];
+                    dispatch_RF_r(state, spdu);
+                    return [state];
                 } else {
-                    const newState = dispatch_RF_nr(state, spdu);
-                    return [newState];
+                    dispatch_RF_nr(state, spdu);
+                    return [state];
                 }
             }
             return [state];
@@ -4614,11 +4585,11 @@ export function handleSPDU(
                 state.in_progress_spdu = undefined;
                 const r: boolean = fn.transportDisconnect === TRANSPORT_DISCONNECT_KEPT;
                 if (r) {
-                    const newState = dispatch_FN_r(state, spdu);
-                    return [newState];
+                    dispatch_FN_r(state, spdu);
+                    return [state];
                 } else {
-                    const newState = dispatch_FN_nr(state, spdu);
-                    return [newState];
+                    dispatch_FN_nr(state, spdu);
+                    return [state];
                 }
             }
             return [state];
@@ -4647,8 +4618,8 @@ export function handleSPDU(
                     enclosureItem: 0b11,
                 };
                 state.in_progress_spdu = undefined;
-                const newState = dispatch_DN(state, spdu);
-                return [newState];
+                dispatch_DN(state, spdu);
+                return [state];
             }
             return [state];
         }
@@ -4676,8 +4647,8 @@ export function handleSPDU(
                     enclosureItem: 0b11,
                 };
                 state.in_progress_spdu = undefined;
-                const newState = dispatch_NF(state, spdu);
-                return [newState];
+                dispatch_NF(state, spdu);
+                return [state];
             }
             return [state];
         }
@@ -4707,11 +4678,11 @@ export function handleSPDU(
                 state.in_progress_spdu = undefined;
                 const r: boolean = ab.transportDisconnect === TRANSPORT_DISCONNECT_KEPT;
                 if (r) {
-                    const newState = dispatch_AB_r(state, spdu);
-                    return [newState];
+                    dispatch_AB_r(state, spdu);
+                    return [state];
                 } else {
-                    const newState = dispatch_AB_nr(state, spdu);
-                    return [newState];
+                    dispatch_AB_nr(state, spdu);
+                    return [state];
                 }
             }
             return [state];
@@ -4723,8 +4694,8 @@ export function handleSPDU(
                 return [state, aa];
             }
             // state.peerEvents.emit("", nf);
-            const newState = dispatch_AA(state);
-            return [newState];
+            dispatch_AA(state);
+            return [state];
         }
         case SI_DT_SPDU: {
             if (state.in_progress_spdu && !("dt" in state.in_progress_spdu)) {
@@ -4750,8 +4721,8 @@ export function handleSPDU(
                     enclosureItem: 0b11,
                 };
                 state.in_progress_spdu = undefined;
-                const newState = dispatch_DT(state, spdu);
-                return [newState];
+                dispatch_DT(state, spdu);
+                return [state];
             }
             // const newState = dispatch_DT(state, dt);
             return [state];
@@ -4804,8 +4775,8 @@ export function handleSPDU(
                 return [state, pr];
             }
             if (pr.prepareType === PREPARE_TYPE_ABORT) {
-                const newState = dispatch_PR_AB(state);
-                return [newState];
+                dispatch_PR_AB(state);
+                return [state];
             } else {
                 return [state, ERR_UNSUPPORTED_PREPARE_TYPE];
             }

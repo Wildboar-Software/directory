@@ -824,7 +824,7 @@ function rose_transport_from_itot_stack (
                 undefined,
                 undefined,
                 undefined,
-                "Meerkat DSA",
+                implementation_data,
                 undefined,
                 undefined,
                 undefined,

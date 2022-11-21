@@ -260,9 +260,7 @@ export function create_itot_stack(
                     TransportConnectionState.OPEN_R,
                     TransportConnectionState.OPEN_WR,
                 ].includes(transport.state),
-            writeTSDU: (tsdu: Buffer) => {
-                stack.transport = dispatch_TDTreq(stack.transport, tsdu);
-            },
+            writeTSDU: (tsdu: Buffer) => dispatch_TDTreq(stack.transport, tsdu),
         },
         options?.sessionCaller ?? true,
         options?.transportCaller ?? true,
@@ -292,7 +290,7 @@ export function create_itot_stack(
                         : stack.session.local_selector,
                     sessionUserRequirements: 0,
                 };
-                stack.session = dispatch_SCONreq(stack.session, spdu);
+                dispatch_SCONreq(stack.session, spdu);
             },
             respond_S_CONNECT: (res) => {
                 if (res.refuse_reason === undefined) {
@@ -316,7 +314,7 @@ export function create_itot_stack(
                         },
                         sessionUserRequirements: 0,
                     };
-                    stack.session = dispatch_SCONrsp_accept(
+                    dispatch_SCONrsp_accept(
                         stack.session,
                         spdu
                     );
@@ -328,7 +326,7 @@ export function create_itot_stack(
                         transportDisconnect: TRANSPORT_DISCONNECT_RELEASED,
                         versionNumber: 2,
                     };
-                    stack.session = dispatch_SCONrsp_reject(
+                    dispatch_SCONrsp_reject(
                         stack.session,
                         spdu
                     );
@@ -338,23 +336,23 @@ export function create_itot_stack(
                 const spdu: DATA_TRANSFER_SPDU = {
                     userInformation: req.user_data,
                 };
-                stack.session = dispatch_SDTreq(stack.session, spdu);
+                dispatch_SDTreq(stack.session, spdu);
             },
             S_RELEASE: (req) => {
                 const spdu: FINISH_SPDU = {
                     userData: req.user_data,
                 };
-                stack.session = dispatch_SRELreq(stack.session, spdu);
+                dispatch_SRELreq(stack.session, spdu);
             },
             S_U_ABORT: (req) => {
                 const spdu: ABORT_SPDU = {
                     userData: req.user_data,
                 };
-                stack.session = dispatch_SUABreq(stack.session, spdu);
+                dispatch_SUABreq(stack.session, spdu);
             },
             S_P_ABORT: () => {
                 const spdu: ABORT_SPDU = {};
-                stack.session = dispatch_SUABreq(stack.session, spdu);
+                dispatch_SUABreq(stack.session, spdu);
             },
         },
         () => true,
@@ -468,9 +466,7 @@ export function create_itot_stack(
         acse,
     };
     stack.network.on('NSDU', (nsdu) => dispatch_NSDU(stack.transport, nsdu));
-    stack.transport.outgoingEvents.on('TCONind', () => {
-        stack.session = dispatch_TCONind(stack.session);
-    });
+    stack.transport.outgoingEvents.on('TCONind', () => dispatch_TCONind(stack.session));
     stack.session.outgoingEvents.on('TCONreq', () => {
         const tpdu: CR_TPDU = {
             cdt: 0,
@@ -485,7 +481,7 @@ export function create_itot_stack(
                 ? Buffer.from(options.remoteAddress.tSelector)
                 : undefined,
         };
-        stack.transport = dispatch_TCONreq(stack.transport, tpdu);
+        dispatch_TCONreq(stack.transport, tpdu);
     });
     stack.session.outgoingEvents.on('TCONrsp', () => {
         const cc: CC_TPDU = {
@@ -501,7 +497,7 @@ export function create_itot_stack(
             tpdu_size: undefined, // Intentionally omitted.
             preferred_max_tpdu_size: Math.floor(stack.transport.max_tpdu_size / 128) * 128,
         };
-        stack.transport = dispatch_TCONresp(stack.transport, cc);
+        dispatch_TCONresp(stack.transport, cc);
     });
     stack.transport.outgoingEvents.on('TCONconf', () => {
         dispatch_TCONcnf(stack.session);
@@ -560,7 +556,7 @@ export function create_itot_stack(
                 },
                 sessionUserRequirements: 0,
             };
-            stack.session = dispatch_SCONrsp_accept(stack.session, ac);
+            dispatch_SCONrsp_accept(stack.session, ac);
         }
     });
     stack.session.outgoingEvents.on('SDTind', (ssdu: Buffer) => {
@@ -581,7 +577,7 @@ export function create_itot_stack(
             dispatch_CPA(stack.presentation, ppdu);
         } else {
             const ab: ABORT_SPDU = {};
-            stack.session = dispatch_SUABreq(stack.session, ab);
+            dispatch_SUABreq(stack.session, ab);
         }
     });
     stack.session.outgoingEvents.on('SCONcnf_reject', () => {

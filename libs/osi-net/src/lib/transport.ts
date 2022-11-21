@@ -1245,14 +1245,13 @@ export function encode_ER(tpdu: ER_TPDU): Buffer {
 // This is the normal release procedure for class 0.
 export function implicitNormalRelease(
     c: TransportConnection
-): TransportConnection {
+): void {
     c.outgoingEvents.emit('NDISreq');
-    return c;
 }
 
 export function handleInvalidSequence(
     c: TransportConnection
-): TransportConnection {
+): void {
     // a) transmit an ER-TPDU;
     // b) reset or close the network connection; or
     // c) invoke the release procedures appropriate to the class.
@@ -1264,13 +1263,13 @@ export function handleInvalidSequence(
 
 export function handle_invalid_ref(
     c: TransportConnection
-): TransportConnection {
+): void {
     return implicitNormalRelease(c);
 }
 
 export function handle_too_large_tsdu (
     c: TransportConnection,
-): TransportConnection {
+): void {
     return implicitNormalRelease(c);
 }
 
@@ -1279,7 +1278,7 @@ export function handle_too_large_tsdu (
 export function dispatch_TCONreq(
     c: TransportConnection,
     tpdu: CR_TPDU
-): TransportConnection {
+): void {
     c.src_ref = tpdu.srcRef;
     if (!tpdu.tpdu_size) {
         tpdu.tpdu_size = 2048; // The max for class 0.
@@ -1318,7 +1317,7 @@ export function dispatch_TCONreq(
             } else {
                 return handleInvalidSequence(c);
             }
-            return c;
+            return;
         }
         default:
             return handleInvalidSequence(c);
@@ -1328,7 +1327,7 @@ export function dispatch_TCONreq(
 export function dispatch_TCONresp(
     c: TransportConnection,
     tpdu: CC_TPDU
-): TransportConnection {
+): void {
     c.dst_ref = tpdu.dstRef;
     switch (c.state) {
         case TransportConnectionState.WFTRESP: {
@@ -1351,7 +1350,7 @@ export function dispatch_TCONresp(
             }
             c.state = TransportConnectionState.OPEN;
             c.outgoingEvents.emit('CC', tpdu);
-            return c;
+            return;
         }
         default:
             return handleInvalidSequence(c);
@@ -1361,7 +1360,7 @@ export function dispatch_TCONresp(
 export function dispatch_TDTreq(
     c: TransportConnection,
     user_data: Buffer
-): TransportConnection {
+): void {
     switch (c.state) {
         case TransportConnectionState.OPEN: {
             const max_nsdu_size = c.network.max_nsdu_size();
@@ -1388,14 +1387,14 @@ export function dispatch_TDTreq(
                 }
                 c.network.write_nsdu(encode_DT(tpdu)); // In class 0, there is only one TPDU per NSDU.
             }
-            return c;
+            return;
         }
         default:
             return handleInvalidSequence(c);
     }
 }
 
-export function dispatch_TEXreq(c: TransportConnection): TransportConnection {
+export function dispatch_TEXreq(c: TransportConnection): void {
     // Does not exist in class 0.
     return handleInvalidSequence(c);
 }
@@ -1403,14 +1402,14 @@ export function dispatch_TEXreq(c: TransportConnection): TransportConnection {
 export function dispatch_TDISreq(
     c: TransportConnection,
     tpdu: DR_TPDU
-): TransportConnection {
+): void {
     switch (c.state) {
         case TransportConnectionState.WFNC: {
             c.state = TransportConnectionState.CLOSED;
             if (c.network.transportConnectionsServed() <= 1) {
                 c.outgoingEvents.emit('NDISreq');
             }
-            return c;
+            return;
         }
         case TransportConnectionState.WFCC: {
             const p7: boolean = TRANSPORT_CLASS === 2;
@@ -1420,7 +1419,7 @@ export function dispatch_TDISreq(
                 c.state = TransportConnectionState.CLOSED;
                 c.outgoingEvents.emit('NDISreq');
             }
-            return c;
+            return;
         }
         case TransportConnectionState.WBCL: {
             // Only available in class 2.
@@ -1438,7 +1437,7 @@ export function dispatch_TDISreq(
             } else {
                 return handleInvalidSequence(c);
             }
-            return c;
+            return;
         }
         case TransportConnectionState.CLOSING: {
             // Only available in class 2.
@@ -1447,14 +1446,14 @@ export function dispatch_TDISreq(
         case TransportConnectionState.WFTRESP: {
             c.state = TransportConnectionState.CLOSED;
             c.outgoingEvents.emit('DR', tpdu);
-            return c;
+            return;
         }
         default:
             return handleInvalidSequence(c);
     }
 }
 
-export function dispatch_NDISind(c: TransportConnection): TransportConnection {
+export function dispatch_NDISind(c: TransportConnection): void {
     switch (c.state) {
         case TransportConnectionState.WFNC:
         case TransportConnectionState.WFCC:
@@ -1462,34 +1461,34 @@ export function dispatch_NDISind(c: TransportConnection): TransportConnection {
         case TransportConnectionState.WFTRESP: {
             c.state = TransportConnectionState.CLOSED;
             c.outgoingEvents.emit('TDISind');
-            return c;
+            return;
         }
         case TransportConnectionState.WBCL:
         case TransportConnectionState.CLOSING: {
             // Only available in class 2.
-            return c; // NOOP
+            return; // NOOP
         }
         default:
-            return c; // NOOP
+            return; // NOOP
     }
 }
 
 export function dispatch_NCONconf(
     c: TransportConnection,
     tpdu: CR_TPDU
-): TransportConnection {
+): void {
     switch (c.state) {
         case TransportConnectionState.WFNC: {
             c.state = TransportConnectionState.WFCC;
             c.outgoingEvents.emit('CR', tpdu);
-            return c;
+            return;
         }
         default:
             return handleInvalidSequence(c);
     }
 }
 
-export function dispatch_NRSTind(c: TransportConnection): TransportConnection {
+export function dispatch_NRSTind(c: TransportConnection): void {
     switch (c.state) {
         case TransportConnectionState.WFCC:
         case TransportConnectionState.OPEN:
@@ -1501,7 +1500,7 @@ export function dispatch_NRSTind(c: TransportConnection): TransportConnection {
                 c.outgoingEvents.emit('NDISreq');
             }
             // REVIEW: I don't get how [5] differs from [1].
-            return c;
+            return;
         }
         case TransportConnectionState.WBCL:
         case TransportConnectionState.CLOSING: {
@@ -1516,14 +1515,14 @@ export function dispatch_NRSTind(c: TransportConnection): TransportConnection {
 export function dispatch_CR(
     c: TransportConnection,
     tpdu: CR_TPDU
-): TransportConnection {
+): void {
     switch (c.state) {
         case TransportConnectionState.OPEN:
         case TransportConnectionState.CLOSING:
         case TransportConnectionState.WFTRESP: {
             const p9: boolean = TRANSPORT_CLASS === 4;
             if (p9) {
-                return c;
+                return;
             } else {
                 return handleInvalidSequence(c);
             }
@@ -1561,7 +1560,7 @@ export function dispatch_CR(
                 }
                 c.outgoingEvents.emit('TCONind', tpdu);
             }
-            return c;
+            return;
         }
         default:
             return handleInvalidSequence(c);
@@ -1627,7 +1626,7 @@ function validate_CC(c: TransportConnection, tpdu: CC_TPDU): boolean {
 export function dispatch_CC(
     c: TransportConnection,
     tpdu: CC_TPDU
-): TransportConnection {
+): void {
     switch (c.state) {
         case TransportConnectionState.WFCC: {
             const p5: boolean = TRANSPORT_CLASS === 0;
@@ -1660,7 +1659,7 @@ export function dispatch_CC(
             } else {
                 return handleInvalidSequence(c);
             }
-            return c;
+            return;
         }
         case TransportConnectionState.CLOSED: {
             const dr: DR_TPDU = {
@@ -1670,7 +1669,7 @@ export function dispatch_CC(
                 user_data: Buffer.alloc(0),
             };
             c.outgoingEvents.emit('DR', dr);
-            return c;
+            return;
         }
         case TransportConnectionState.WBCL:
         case TransportConnectionState.CLOSING: {
@@ -1682,7 +1681,7 @@ export function dispatch_CC(
     }
 }
 
-export function dispatch_DR(c: TransportConnection): TransportConnection {
+export function dispatch_DR(c: TransportConnection): void {
     // For some reason, this row in the state table is bifurcated. What does this mean?
     switch (c.state) {
         case TransportConnectionState.WFCC: {
@@ -1692,7 +1691,7 @@ export function dispatch_DR(c: TransportConnection): TransportConnection {
                 // [1]
                 c.outgoingEvents.emit('NDISreq');
             }
-            return c;
+            return;
         }
         case TransportConnectionState.OPEN: {
             const p5: boolean = TRANSPORT_CLASS === 0;
@@ -1715,7 +1714,7 @@ export function dispatch_DR(c: TransportConnection): TransportConnection {
                 // c.outgoingEvents.emit("DC");
                 // c.outgoingEvents.emit("TDISind");
             }
-            return c;
+            return;
         }
         case TransportConnectionState.WFTRESP: {
             // const p10: boolean = false; // Local choice.
@@ -1725,11 +1724,11 @@ export function dispatch_DR(c: TransportConnection): TransportConnection {
             // }
             c.state = TransportConnectionState.CLOSED;
             c.outgoingEvents.emit('TDISind');
-            return c;
+            return;
         }
         case TransportConnectionState.CLOSED: {
             // This will need to be updated if a class other than 0 is implemented.
-            return c;
+            return;
         }
         case TransportConnectionState.WBCL:
         case TransportConnectionState.CLOSING: {
@@ -1741,17 +1740,17 @@ export function dispatch_DR(c: TransportConnection): TransportConnection {
     }
 }
 
-export function dispatch_DC(c: TransportConnection): TransportConnection {
+export function dispatch_DC(c: TransportConnection): void {
     // Only available in class 2.
     return handleInvalidSequence(c);
 }
 
-export function dispatch_AK(c: TransportConnection): TransportConnection {
+export function dispatch_AK(c: TransportConnection): void {
     // Only available in class 2.
     return handleInvalidSequence(c);
 }
 
-export function dispatch_EA(c: TransportConnection): TransportConnection {
+export function dispatch_EA(c: TransportConnection): void {
     // Only available in class 2.
     return handleInvalidSequence(c);
 }
@@ -1759,7 +1758,7 @@ export function dispatch_EA(c: TransportConnection): TransportConnection {
 export function dispatch_DT(
     c: TransportConnection,
     tpdu: DT_TPDU
-): TransportConnection {
+): void {
     // There shouldn't be a dstRef in a TPDU in class 0.
     // if (tpdu.dstRef !== c.dst_ref) {
     //     return handle_invalid_ref(c);
@@ -1776,29 +1775,29 @@ export function dispatch_DT(
                 c.dataBuffer = newBuf;
                 c.outgoingEvents.emit('TSDU', oldBuf);
             }
-            return c;
+            return;
         }
         case TransportConnectionState.CLOSING: {
             // Only available in class 2.
             return handleInvalidSequence(c);
         }
         case TransportConnectionState.CLOSED: {
-            return c;
+            return;
         }
         default:
             return handleInvalidSequence(c);
     }
 }
 
-export function dispatch_ED(c: TransportConnection): TransportConnection {
+export function dispatch_ED(c: TransportConnection): void {
     // Only available in class 2.
     return handleInvalidSequence(c);
 }
 
-export function dispatch_ER(c: TransportConnection): TransportConnection {
+export function dispatch_ER(c: TransportConnection): void {
     switch (c.state) {
         case TransportConnectionState.WFNC: {
-            return c;
+            return;
         }
         case TransportConnectionState.WFCC: {
             c.state = TransportConnectionState.CLOSED;
@@ -1807,10 +1806,10 @@ export function dispatch_ER(c: TransportConnection): TransportConnection {
                 // [1]
                 c.outgoingEvents.emit('NDISreq');
             }
-            return c;
+            return;
         }
         case TransportConnectionState.CLOSED: {
-            return c;
+            return;
         }
         case TransportConnectionState.WBCL:
         case TransportConnectionState.CLOSING:

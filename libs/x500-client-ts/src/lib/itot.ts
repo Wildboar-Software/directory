@@ -202,7 +202,7 @@ import { Provider_reason_reason_not_specified } from "@wildboar/copp/src/lib/mod
 const id_ber = new ObjectIdentifier([2, 1, 1]);
 const id_cer = new ObjectIdentifier([2, 1, 2, 0]);
 const id_der = new ObjectIdentifier([2, 1, 2, 1]);
-const implementation_data: GeneralString = "Meerkat DSA";
+const implementation_data: GeneralString = "@wildboar/x500-client-ts";
 const default_reject: OsiRej_problem = {
     general: GeneralProblem_unrecognizedPDU,
 };
@@ -792,7 +792,7 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
                 undefined,
                 undefined,
                 undefined,
-                "Meerkat DSA",
+                implementation_data,
                 undefined,
                 undefined,
                 undefined,
