@@ -805,7 +805,7 @@ function attachUnboundEventListenersToITOTConnection (
             ctx.telemetry.trackRequest({
                 name: "BIND",
                 url: ctx.config.myAccessPointNSAPs?.map(naddrToURI).find((uri) => !!uri)
-                    ?? `idm://meerkat.invalid:${ctx.config.idm.port}`,
+                    ?? `itot://meerkat.invalid:${ctx.config.itot.port}`,
                 duration: Date.now() - startTime,
                 resultCode: 200,
                 success: true,
@@ -813,7 +813,6 @@ function attachUnboundEventListenersToITOTConnection (
                 measurements: {
                     bytesRead: itot.network.socket.bytesRead,
                     bytesWritten: itot.network.socket.bytesWritten,
-                    // idmFramesReceived: idm.getFramesReceived(),
                 },
             });
         } catch (e) {
@@ -836,7 +835,6 @@ function attachUnboundEventListenersToITOTConnection (
                 measurements: {
                     bytesRead: itot.network.socket.bytesRead,
                     bytesWritten: itot.network.socket.bytesWritten,
-                    // idmFramesReceived: idm.getFramesReceived(),
                 },
             });
         }
