@@ -2,6 +2,7 @@ import { Socket } from 'net';
 import { TypedEmitter } from 'tiny-typed-emitter';
 
 export const TPKT_VERSION: number = 3;
+export const MAX_UINT32: number = Math.pow(2, 32);
 
 export interface NetworkLayerOutgoingEvents {
     NSDU: (tsdu: Buffer) => unknown;
@@ -18,6 +19,7 @@ export enum ISOTransportPhase {
 
 export class ITOTSocket extends NetworkLayerOutgoingEventEmitter {
     private _phase: ISOTransportPhase = ISOTransportPhase.establishment;
+    public max_nsdu_size: number = MAX_UINT32;
 
     public getPhase(): ISOTransportPhase {
         return this._phase;
@@ -38,6 +40,10 @@ export class ITOTSocket extends NetworkLayerOutgoingEventEmitter {
                 break;
             }
             const length = this.buffer.readUint16BE(i + 2);
+            if (length > this.max_nsdu_size) {
+                this.socket.end();
+                return;
+            }
             if (this.buffer.length < i + length) {
                 break;
             }
@@ -46,7 +52,6 @@ export class ITOTSocket extends NetworkLayerOutgoingEventEmitter {
             i += length;
         }
         this.buffer = this.buffer.subarray(i);
-        // FIXME: Validate that NSDUs are of appropriate size.
         nsdus.forEach((nsdu) => this.emit('NSDU', nsdu));
     }
 

@@ -22,6 +22,7 @@ interface OSINetworkingOptions {
     localAddress?: PresentationAddress;
     sessionCaller?: boolean;
     transportCaller?: boolean;
+    max_nsdu_size?: number;
     max_tsdu_size?: number;
     max_tpdu_size?: number,
     abort_timeout_ms?: number;

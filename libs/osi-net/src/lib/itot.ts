@@ -169,7 +169,6 @@ function require_acse_user_data(
     return [pdv, pdv.presentation_data_values.single_ASN1_type];
 }
 
-// FIXME: Is it appropriate for this to have no user data?
 function get_aru(c: PresentationConnection): ARU_PPDU {
     const acse_ber_context: Context_list_Item =
         [
@@ -235,11 +234,14 @@ export function create_itot_stack(
     options?: OSINetworkingOptions,
 ): ISOTransportOverTCPStack {
     const tpkt = new ITOTSocket(socket);
+    if (options?.max_nsdu_size) {
+        tpkt.max_nsdu_size = options.max_nsdu_size;
+    }
     socket.on('data', (data) => tpkt.receiveData(data));
     const transport = createTransportConnection(
         {
             available: () => socket.writable && socket.readable,
-            max_nsdu_size: () => 65531, // See IETF RFC 1006, Section 6.
+            max_nsdu_size: () => options?.max_nsdu_size ?? 65531, // See IETF RFC 1006, Section 6.
             open: () => socket.writable,
             openInProgress: () => socket.connecting,
             transportConnectionsServed: () => 1,
@@ -445,7 +447,6 @@ export function create_itot_stack(
             }
         },
         respond_P_RELEASE: (args: P_RELEASE_Response) => {
-            // FIXME: Can you just make this optional?
             const user_data: User_data = args.user_data ?? {
                 simply_encoded_data: new Uint8Array(),
             };
