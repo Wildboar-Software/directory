@@ -105,10 +105,12 @@ export interface ACPMState {
     responding_AE_qualifier?: AE_qualifier;
     responding_AP_invocation_identifier?: AP_invocation_identifier;
     responding_AE_invocation_identifier?: AE_invocation_identifier;
+    acse_authenticate?: (aarq: AARQ_apdu) => boolean;
 }
 
 export function createAssociationControlState(
-    presentation: PresentationService
+    presentation: PresentationService,
+    acse_authenticate?: (aarq: AARQ_apdu) => boolean,
 ): ACPMState {
     const outgoingEvents = new ACSEOutgoingEventEmitter();
     return {
@@ -116,6 +118,7 @@ export function createAssociationControlState(
         outgoingEvents,
         initiator: true,
         presentation,
+        acse_authenticate,
     };
 }
 

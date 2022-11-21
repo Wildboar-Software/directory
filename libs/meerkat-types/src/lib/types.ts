@@ -1714,13 +1714,62 @@ interface Configuration {
 
     };
 
+    /**
+     * Options relating to the use of ISO Transport Over TCP (ITOT) as described
+     * in [IETF RFC 1006](https://datatracker.ietf.org/doc/html/rfc1006).
+     */
     itot: NetworkService & {
-        abort_timeout_ms: number
-        tsdu_buffer_size: number;
-        ssdu_buffer_size: number;
+
+        /**
+         * The timeout after which the OSI session layer will automatically
+         * abort the session connection in an ISO Transport Over TCP (ITOT)
+         * connection after not receiving a response from the session peer.
+         */
+        abort_timeout_ms: number;
+
+        /**
+         * The largest Network Service Data Unit (NSDU) that an ISO Transport
+         * Over TCP (ITOT) can buffer before being aborted or disconnected. In
+         * ISO Transport Over TCP (ITOT), this means the maximum size of TPKT
+         * packets, which are innately limited to 65531 bytes.
+         */
+        max_nsdu_size?: number;
+
+        /**
+         * The largest Transport Service Data Unit (TSDU) that an ISO Transport
+         * Over TCP (ITOT) can buffer before being aborted or disconnected.
+         */
+        max_tsdu_size?: number;
+
+        /**
+         * The largest Transport Protocol Data Unit (TPDU) that an ISO Transport
+         * Over TCP (ITOT) can transmit before being aborted or disconnected.
+         */
+        max_tpdu_size?: number;
+
+        /**
+         * The largest Session Service Data Unit (SSDU) that an ISO Transport
+         * Over TCP (ITOT) can buffer before being aborted or disconnected.
+         */
+        max_ssdu_size?: number;
+
+        /**
+         * The maximum number of presentation contexts Meerkat DSA will tolerate
+         * in an ITU X.226 OSI Presentation association when using ISO Transport
+         * Over TCP (ITOT).
+         */
         max_presentation_contexts: number;
+
+        /**
+         * Currently unused. Reserved for future support for ACSE-level
+         * authentication. This is a fixed password that Meerkat DSA will
+         * require from ACSE initiators to establish an ACSE association.
+         */
         acse_password?: string;
+
     };
+
+    itots: NetworkService;
 
     /**
      * Options for TLS-wrapped IDM.
@@ -1893,6 +1942,12 @@ interface Configuration {
          * results or errors.
          */
         checkSignaturesOnResponses: boolean;
+
+        /**
+         * If `true`, Meerkat DSA will chain over ISO Transport Over TCP (ITOT)
+         * as described in [IETF RFC 1006](https://datatracker.ietf.org/doc/html/rfc1006).
+         */
+        itot: boolean;
 
     };
 

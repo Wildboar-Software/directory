@@ -824,16 +824,27 @@ const config: Configuration = {
         abort_timeout_ms: process.env.MEERKAT_ITOT_ABORT_TIMEOUT_IN_SECONDS
             ? (Number.parseInt(process.env.MEERKAT_ITOT_ABORT_TIMEOUT_IN_SECONDS, 10) * 1000)
             : 3000,
-        tsdu_buffer_size: process.env.MEERKAT_ITOT_TSDU_BUFFER_SIZE
-            ? Number.parseInt(process.env.MEERKAT_ITOT_TSDU_BUFFER_SIZE, 10)
+        max_nsdu_size: process.env.MEERKAT_ITOT_MAX_NSDU_SIZE
+            ? Number.parseInt(process.env.MEERKAT_ITOT_MAX_NSDU_SIZE, 10)
             : 10_000_000,
-        ssdu_buffer_size: process.env.MEERKAT_ITOT_SSDU_BUFFER_SIZE
-            ? Number.parseInt(process.env.MEERKAT_ITOT_SSDU_BUFFER_SIZE, 10)
+        max_tpdu_size: process.env.MEERKAT_ITOT_MAX_TPDU_SIZE
+            ? Number.parseInt(process.env.MEERKAT_ITOT_MAX_TPDU_SIZE, 10)
+            : 65500,
+        max_tsdu_size: process.env.MEERKAT_ITOT_MAX_TSDU_SIZE
+            ? Number.parseInt(process.env.MEERKAT_ITOT_MAX_TSDU_SIZE, 10)
+            : 10_000_000,
+        max_ssdu_size: process.env.MEERKAT_ITOT_MAX_SSDU_SIZE
+            ? Number.parseInt(process.env.MEERKAT_ITOT_MAX_SSDU_SIZE, 10)
             : 10_000_000,
         max_presentation_contexts: process.env.MEERKAT_ITOT_MAX_PRESENTATION_CONTEXTS
             ? Number.parseInt(process.env.MEERKAT_ITOT_MAX_PRESENTATION_CONTEXTS, 10)
             : 10,
         acse_password: process.env.MEERKAT_ITOT_ACSE_PASSWORD,
+    },
+    itots: {
+        port: process.env.MEERKAT_ITOTS_PORT
+            ? Number.parseInt(process.env.MEERKAT_ITOTS_PORT, 10)
+            : undefined,
     },
     ldap: {
         port: process.env.MEERKAT_LDAP_PORT
@@ -911,6 +922,7 @@ const config: Configuration = {
             : 0,
         signChainedRequests: (process.env.MEERKAT_CHAINING_SIGN_REQUESTS !== "0"),
         checkSignaturesOnResponses: (process.env.MEERKAT_CHAINING_CHECK_SIG !== "0"),
+        itot: (process.env.MEERKAT_ITOT_CHAINING !== "0"),
     },
     ob: {
         minAuthRequired: parseAuthLevel(

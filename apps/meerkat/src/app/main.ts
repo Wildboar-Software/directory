@@ -958,6 +958,12 @@ function attachUnboundEventListenersToITOTConnection (
                     sessionCaller: false,
                     transportCaller: false,
                     abort_timeout_ms: ctx.config.itot.abort_timeout_ms,
+                    max_nsdu_size: ctx.config.itot.max_nsdu_size,
+                    max_tsdu_size: ctx.config.itot.max_tsdu_size,
+                    max_tpdu_size: ctx.config.itot.max_tpdu_size,
+                    max_ssdu_size: ctx.config.itot.max_ssdu_size,
+                    max_presentation_contexts: ctx.config.itot.max_presentation_contexts,
+                    // acse_authenticate
                 },
             );
             attachUnboundEventListenersToITOTConnection(ctx, c, source, itot, startTimes);
@@ -1121,6 +1127,7 @@ async function main (): Promise<void> {
         rejectUnauthorized: ctx.config.tls.rejectUnauthorizedClients,
         enableTrace: isDebugging,
     };
+    const onOCSPRequestCallback = getOnOCSPRequestCallback(ctx, ctx.config.tls);
 
     const startTimes: Map<net.Socket, Date> = new Map();
     // const blocklist: net.BlockList = new net.BlockList();
@@ -1153,7 +1160,7 @@ async function main (): Promise<void> {
                 e: err?.message,
             }));
         });
-        idmsServer.on("OCSPRequest", getOnOCSPRequestCallback(ctx, ctx.config.tls));
+        idmsServer.on("OCSPRequest", onOCSPRequestCallback);
         idmsServer.listen(ctx.config.idms.port, () => {
             ctx.log.info(ctx.i18n.t("log:listening", {
                 protocol: "IDMS",
@@ -1178,7 +1185,7 @@ async function main (): Promise<void> {
         )
     ) {
         const ldapsServer = tls.createServer(tlsOptions, handleLDAP(ctx, startTimes));
-        ldapsServer.on("OCSPRequest", getOnOCSPRequestCallback(ctx, ctx.config.tls));
+        ldapsServer.on("OCSPRequest", onOCSPRequestCallback);
         ldapsServer.listen(ctx.config.ldaps.port, async () => {
             ctx.log.info(ctx.i18n.t("log:listening", {
                 protocol: "LDAPS",
@@ -1199,6 +1206,24 @@ async function main (): Promise<void> {
             ctx.log.info(ctx.i18n.t("log:listening", {
                 protocol: "ITOT",
                 port: ctx.config.itot.port,
+            }));
+        });
+    }
+
+    if (ctx.config.itots.port) {
+        tls
+        const itotsServer = tls.createServer(tlsOptions, handleITOT(ctx, startTimes));
+        itotsServer.on("OCSPRequest", onOCSPRequestCallback);
+        itotsServer.on("error", (err) => {
+            ctx.log.error(ctx.i18n.t("log:server_error", {
+                protocol: "ITOTS",
+                e: err?.message,
+            }));
+        });
+        itotsServer.listen(ctx.config.itots.port, () => {
+            ctx.log.info(ctx.i18n.t("log:listening", {
+                protocol: "ITOTS",
+                port: ctx.config.itots.port,
             }));
         });
     }

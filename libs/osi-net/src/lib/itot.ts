@@ -282,6 +282,8 @@ export function create_itot_stack(
         },
         options?.sessionCaller ?? true,
         options?.transportCaller ?? true,
+        options?.abort_timeout_ms,
+        options?.max_ssdu_size,
     );
     const presentation = createPresentationConnection(
         {
@@ -372,7 +374,8 @@ export function create_itot_stack(
             },
         },
         () => true,
-        (a) => a[0]
+        (a) => a[0],
+        options?.max_presentation_contexts,
     );
     const acse = createAssociationControlState({
         request_P_CONNECT: (args: P_CONNECT_Request) => {

@@ -24,6 +24,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import { assert } from "node:console";
+import type { MeerkatContext } from "./ctx";
 
 const RUNNING_MEERKAT_DSA_HOST: string = "localhost";
 const RUNNING_MEERKAT_DSA_ITOT_PORT: number = 1102;
@@ -40,7 +41,7 @@ describe("Meerkat DSA ITOT Transport", () => {
                 sessionCaller: true,
                 transportCaller: true,
             });
-            const rose = rose_transport_from_itot_stack(stack);
+            const rose = rose_transport_from_itot_stack({} as MeerkatContext, stack);
             rose.events.on("bind_result", () => {
                 const arg: ListArgument = {
                     unsigned: new ListArgumentData(

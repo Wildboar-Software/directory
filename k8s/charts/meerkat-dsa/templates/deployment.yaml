@@ -210,6 +210,66 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: idm_buffer_size
                   optional: true
+            - name: MEERKAT_ITOT_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: itot_port
+                  optional: true
+            - name: MEERKAT_ITOTS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: itots_port
+                  optional: true
+            - name: MEERKAT_ITOT_ABORT_TIMEOUT_IN_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: itot_abort_timeout_in_seconds
+                  optional: true
+            - name: MEERKAT_ITOT_MAX_NSDU_SIZE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: itot_max_nsdu_size
+                  optional: true
+            - name: MEERKAT_ITOT_MAX_TPDU_SIZE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: itot_max_tpdu_size
+                  optional: true
+            - name: MEERKAT_ITOT_MAX_TSDU_SIZE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: itot_max_tsdu_size
+                  optional: true
+            - name: MEERKAT_ITOT_MAX_SSDU_SIZE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: itot_max_ssdu_size
+                  optional: true
+            - name: MEERKAT_ITOT_MAX_PRESENTATION_CONTEXTS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: itot_max_presentation_contexts
+                  optional: true
+            - name: MEERKAT_ITOT_ACSE_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: itot_acse_password
+                  optional: true
+            - name: MEERKAT_DISABLE_ITOT_CHAINING
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: disable_itot_chaining
+                  optional: true
             - name: MEERKAT_LCR_PARALLELISM
               valueFrom:
                 configMapKeyRef:
