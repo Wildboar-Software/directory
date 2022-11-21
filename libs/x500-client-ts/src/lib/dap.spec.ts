@@ -8,6 +8,9 @@ import { DirectoryBindArgument } from "@wildboar/x500/src/lib/modules/DirectoryA
 import {
     id_idm_dap,
 } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/id-idm-dap.va";
+import {
+    createTimestamp,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/createTimestamp.oa";
 
 describe("DAP Client", () => {
     it.skip("works", async () => {
@@ -39,7 +42,16 @@ describe("DAP Client", () => {
         });
         if ("result" in response) {
             const resultData = getOptionallyProtectedValue(response.result.parameter);
+            const ctinfo = resultData.entry.information?.find((info) => ("attribute" in info) && (
+                info.attribute.type_.isEqualTo(createTimestamp["&id"])
+            ));
+            assert(ctinfo);
+            assert("attribute" in ctinfo);
+            const ctattr = ctinfo.attribute;
+            const ct = ctattr.values[0];
+            console.log(`Root DSE created at ${ct.generalizedTime.toISOString()}`);
             return expect(resultData).toBeDefined();
+
         } else {
             assert(false);
         }

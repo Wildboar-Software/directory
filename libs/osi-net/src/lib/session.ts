@@ -2660,13 +2660,6 @@ export enum SessionServiceTokenPossession {
     remote, // See ITU Recommendation X.215 (1995), Section 7.2, bullet point e.
 }
 
-export enum SessionServicePhase {
-    establishment,
-    dataTransfer,
-    release,
-    disconnected,
-}
-
 export interface SessionServicePDUParserState {
     buffer: Buffer;
     bufferIndex: number;
@@ -2847,7 +2840,6 @@ export interface SessionServiceConnectionState
     version: number;
     caller: boolean;
     state: TableA2SessionConnectionState;
-    phase: SessionServicePhase;
     disconnectReason?: number;
     dataToken?: SessionServiceTokenPossession;
     releaseToken?: SessionServiceTokenPossession;
@@ -2890,17 +2882,13 @@ export interface SessionServiceConnectionState
      * received SPDU when the Enclosure Item parameter indicates that an SPDU
      * is the first of multiple segments.
      */
-    in_progress_spdu?: { cn: CONNECT_SPDU }
-        | { oa: OVERFLOW_ACCEPT_SPDU }
-        | { cdo: CONNECT_DATA_OVERFLOW_SPDU }
-        | { ac: ACCEPT_SPDU }
+    in_progress_spdu?: { ac: ACCEPT_SPDU }
         | { rf: REFUSE_SPDU }
         | { fn: FINISH_SPDU }
         | { nf: NOT_FINISHED_SPDU }
         | { dn: DISCONNECT_SPDU }
         | { dt: DATA_TRANSFER_SPDU }
         | { ab: ABORT_SPDU }
-        | { aa: ABORT_ACCEPT_SPDU }
         ;
 }
 
@@ -2917,7 +2905,6 @@ export function newSessionConnection(
         buffer: Buffer.alloc(0),
         bufferIndex: 0,
         caller,
-        phase: SessionServicePhase.establishment,
         state: transport.connected()
             ? TableA2SessionConnectionState.STA01C // This is the default state after transport is established.
             : TableA2SessionConnectionState.STA01,
