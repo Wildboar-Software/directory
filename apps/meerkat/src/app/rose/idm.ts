@@ -36,6 +36,10 @@ import {
     _encode_Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
 import { BER } from "asn1-ts/dist/node/functional";
+import { INTEGER } from "asn1-ts";
+import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
+import { MeerkatContext } from "../ctx";
+import { getLogInfoFromIDM } from "../log/getLogInfoFromIDM";
 
 const idm_reject_to_rose_reject: Map<IdmReject_reason, RejectReason> = new Map([
     [ IdmReject_reason_mistypedPDU, RejectReason.mistyped_pdu ],
@@ -92,8 +96,12 @@ const rose_abort_to_idm_abort: Map<Abort, AbortReason> = new Map([
 ]);
 
 export
-function rose_transport_from_idm_socket (idm: IDMConnection): ROSETransport {
+function rose_transport_from_idm_socket (
+    ctx: MeerkatContext,
+    idm: IDMConnection,
+): ROSETransport {
     const rose = new_rose_transport(idm.socket);
+    const peer: string = `idm://${idm.socket.remoteAddress}:${idm.socket.remotePort}`;
     idm.events.on("bind", (params) => {
         rose.events.emit("bind", {
             protocol_id: params.protocolID,
@@ -184,11 +192,18 @@ function rose_transport_from_idm_socket (idm: IDMConnection): ROSETransport {
     };
 
     rose.write_request = (params) => {
+        const invoke_id: INTEGER = ("present" in params.invoke_id)
+            ? params.invoke_id.present
+            : generateUnusedInvokeID(ctx);
         if (!("present" in params.invoke_id)) {
-            return;
+            const logInfo = getLogInfoFromIDM(idm);
+            ctx.log.warn(ctx.i18n.t("log:rose_request_no_invoke_id", {
+                iid: invoke_id.toString(),
+                peer,
+            }), logInfo);
         }
         idm.writeRequest(
-            params.invoke_id.present,
+            invoke_id,
             params.code,
             params.parameter,
         );
@@ -196,6 +211,8 @@ function rose_transport_from_idm_socket (idm: IDMConnection): ROSETransport {
 
     rose.write_result = (params) => {
         if (!("present" in params.invoke_id)) {
+            const logInfo = getLogInfoFromIDM(idm);
+            ctx.log.error(ctx.i18n.t("log:rose_response_no_invoke_id", { peer }), logInfo);
             return;
         }
         idm.writeResult(
@@ -207,6 +224,8 @@ function rose_transport_from_idm_socket (idm: IDMConnection): ROSETransport {
 
     rose.write_error = (params) => {
         if (!("present" in params.invoke_id)) {
+            const logInfo = getLogInfoFromIDM(idm);
+            ctx.log.error(ctx.i18n.t("log:rose_response_no_invoke_id", { peer }), logInfo);
             return;
         }
         idm.writeError(
@@ -218,6 +237,8 @@ function rose_transport_from_idm_socket (idm: IDMConnection): ROSETransport {
 
     rose.write_reject = (params) => {
         if (!("present" in params.invoke_id)) {
+            const logInfo = getLogInfoFromIDM(idm);
+            ctx.log.error(ctx.i18n.t("log:rose_response_no_invoke_id", { peer }), logInfo);
             return;
         }
         idm.writeReject(

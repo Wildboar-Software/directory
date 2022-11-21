@@ -324,13 +324,13 @@ function attachUnboundEventListenersToIDMConnection (
         idm.events.removeAllListeners("request");
         let conn!: ClientAssociation;
         if (idmBind.protocolID.isEqualTo(dap_ip["&id"]!) && ctx.config.dap.enabled) {
-            const rose = rose_transport_from_idm_socket(idm);
+            const rose = rose_transport_from_idm_socket(ctx, idm);
             conn = new DAPAssociation(ctx, rose);
         } else if (idmBind.protocolID.isEqualTo(dsp_ip["&id"]!) && ctx.config.dsp.enabled) {
-            const rose = rose_transport_from_idm_socket(idm);
+            const rose = rose_transport_from_idm_socket(ctx, idm);
             conn = new DSPAssociation(ctx, rose);
         } else if (idmBind.protocolID.isEqualTo(dop_ip["&id"]!) && ctx.config.dop.enabled) {
-            const rose = rose_transport_from_idm_socket(idm);
+            const rose = rose_transport_from_idm_socket(ctx, idm);
             conn = new DOPAssociation(ctx, rose);
         } else {
             idm.writeAbort(Abort_invalidProtocol);
@@ -755,7 +755,7 @@ function attachUnboundEventListenersToITOTConnection (
     itot: ISOTransportOverTCPStack,
     startTimes: Map<net.Socket, Date>,
 ): void {
-    const rose = rose_transport_from_itot_stack(itot);
+    const rose = rose_transport_from_itot_stack(ctx, itot);
     const properties = {
         remoteFamily: itot.network.socket.remoteFamily,
         remoteAddress: itot.network.socket.remoteAddress,

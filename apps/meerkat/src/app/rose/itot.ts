@@ -195,9 +195,11 @@ import {
     dop_ip,
 } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
 import { Provider_reason_reason_not_specified } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Provider-reason.ta";
+import { MeerkatContext } from "../ctx";
 // import {
 //     disp_ip,
 // } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/disp-ip.oa";
+import { getLogInfoFromITOTStack } from "../log/getLogInfoFromITOTStack";
 
 const id_ber = new ObjectIdentifier([2, 1, 1]);
 const id_cer = new ObjectIdentifier([2, 1, 2, 0]);
@@ -628,9 +630,12 @@ function asn1_value_from_external (
 }
 
 export
-function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETransport {
+function rose_transport_from_itot_stack (
+    ctx: MeerkatContext,
+    itot: ISOTransportOverTCPStack,
+): ROSETransport {
+    const peer: string = `itot://${itot.network.socket.remoteAddress}:${itot.network.socket.remotePort}`;
     const rose = new_rose_transport(itot.network.socket);
-
     itot.acse.outgoingEvents.on('AARQ', (apdu) => {
         itot.acse.presentation.request_P_CONNECT({
             presentation_context_definition_list: [
@@ -693,6 +698,15 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
         });
     });
     itot.acse.outgoingEvents.on('AARE-', (apdu) => {
+        const logInfo = getLogInfoFromITOTStack(itot);
+        ctx.log.warn(ctx.i18n.t("log:acse_aare_reject", {
+            appcontext: apdu.aSO_context_name.toString(),
+            result: apdu.result,
+            diag: ("acse_service_user" in apdu.result_source_diagnostic)
+                ? `USER:${apdu.result_source_diagnostic.acse_service_user.toString()}`
+                : `PROVIDER:${apdu.result_source_diagnostic.acse_service_provider.toString()}`,
+            peer,
+        }), logInfo);
         const acse_ber_context = get_acse_ber_context(itot.presentation);
         itot.acse.presentation.respond_P_CONNECT({
             provider_reason: Provider_reason_reason_not_specified,
@@ -710,6 +724,13 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
         });
     });
     itot.acse.outgoingEvents.on('ABRT', (apdu) => {
+        const logInfo = getLogInfoFromITOTStack(itot);
+        ctx.log.warn(ctx.i18n.t("log:acse_abrt", {
+            source: apdu.abort_source.toString(),
+            diag: apdu.abort_diagnostic?.toString() ?? "1", // 1 = no-reason-given.
+            asoiid: apdu.asoi_identifier?.toString(),
+            peer,
+        }), logInfo);
         const acse_ber_context = get_acse_ber_context(itot.presentation);
         itot.acse.presentation.request_P_U_ABORT({
             user_data: {
@@ -758,6 +779,12 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
         });
     });
     itot.acse.outgoingEvents.on('RLRE-', (apdu) => {
+        const logInfo = getLogInfoFromITOTStack(itot);
+        ctx.log.warn(ctx.i18n.t("log:acse_rlre_reject", {
+            reason: apdu.reason?.toString(),
+            asoiid: apdu.asoi_identifier?.toString(),
+            peer,
+        }), logInfo);
         const acse_ber_context = get_acse_ber_context(itot.presentation);
         itot.acse.presentation.respond_P_RELEASE({
             reject: true,
@@ -777,6 +804,11 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
 
     itot.acse.outgoingEvents.on("A-ASCind", (apdu) => {
         if (!supported_contexts.some((sc) => sc.isEqualTo(apdu.aSO_context_name))) {
+            const logInfo = getLogInfoFromITOTStack(itot);
+            ctx.log.warn(ctx.i18n.t("log:acse_unsupported_context", {
+                appcontext: apdu.aSO_context_name.toString(),
+                peer,
+            }), logInfo);
             const aare = new AARE_apdu(
                 undefined,
                 apdu.aSO_context_name,
@@ -803,12 +835,16 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
             return;
         }
         if (apdu.user_information?.length !== 1) {
+            const logInfo = getLogInfoFromITOTStack(itot);
+            ctx.log.warn(ctx.i18n.t("log:acse_not_one_user_info", { peer }), logInfo);
             abort(itot);
             return;
         }
         const external = apdu.user_information[0];
         const value = asn1_value_from_external(itot, external, true);
         if (!value) {
+            const logInfo = getLogInfoFromITOTStack(itot);
+            ctx.log.warn(ctx.i18n.t("log:acse_no_acse_user_data", { peer }), logInfo);
             abort(itot);
             return;
         }
@@ -830,12 +866,16 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
 
     itot.acse.outgoingEvents.on("A-ASCcnf+", (apdu) => {
         if (apdu.user_information?.length !== 1) {
+            const logInfo = getLogInfoFromITOTStack(itot);
+            ctx.log.warn(ctx.i18n.t("log:acse_not_one_user_info", { peer }), logInfo);
             abort(itot);
             return;
         }
         const external = apdu.user_information[0];
         const value = asn1_value_from_external(itot, external);
         if (!value) {
+            const logInfo = getLogInfoFromITOTStack(itot);
+            ctx.log.warn(ctx.i18n.t("log:acse_no_acse_user_data", { peer }), logInfo);
             abort(itot);
             return;
         }
@@ -857,12 +897,16 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
             return;
         }
         if (apdu.user_information?.length !== 1) {
+            const logInfo = getLogInfoFromITOTStack(itot);
+            ctx.log.warn(ctx.i18n.t("log:acse_not_one_user_info", { peer }), logInfo);
             abort(itot);
             return;
         }
         const external = apdu.user_information[0];
         const value = asn1_value_from_external(itot, external);
         if (!value) {
+            const logInfo = getLogInfoFromITOTStack(itot);
+            ctx.log.warn(ctx.i18n.t("log:acse_no_acse_user_data", { peer }), logInfo);
             abort(itot);
             return;
         }
@@ -898,6 +942,8 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
     });
 
     itot.acse.outgoingEvents.on("P-PABind", () => {
+        const logInfo = getLogInfoFromITOTStack(itot);
+        ctx.log.warn(ctx.i18n.t("log:presentation_abort", { peer }), logInfo);
         rose.events.emit("abort", AbortReason.other);
     });
 
@@ -905,11 +951,18 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
         if ("simply_encoded_data" in ppdu) {
             const default_context = itot.presentation.cp?.normal_mode_parameters?.default_context_name;
             if (!default_context) {
+                const logInfo = getLogInfoFromITOTStack(itot);
+                ctx.log.warn(ctx.i18n.t("log:osi_net_no_default_context_with_simply_encoded_data", { peer }), logInfo);
                 abort(itot);
                 return;
             }
             const codec = oid_to_codec.get(default_context.transfer_syntax_name.toString());
             if (!codec) {
+                const logInfo = getLogInfoFromITOTStack(itot);
+                ctx.log.warn(ctx.i18n.t("log:osi_presentation_transfer_syntax_not_supported", {
+                    peer,
+                    ts: default_context.transfer_syntax_name.toString(),
+                }), logInfo);
                 abort(itot);
                 return;
             }
@@ -925,21 +978,33 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
                     .dcs_agreed_during_connection_establishment
                     .get(pdv.presentation_context_identifier.toString());
                 if (!pc) {
+                    const logInfo = getLogInfoFromITOTStack(itot);
+                    ctx.log.warn(ctx.i18n.t("log:osi_presentation_context_undefined", {
+                        peer,
+                        pci: pdv.presentation_context_identifier.toString(),
+                    }), logInfo);
                     abort(itot);
                     return;
                 }
                 if (pc.transfer_syntax_name_list.length !== 1) {
+                    const logInfo = getLogInfoFromITOTStack(itot);
+                    ctx.log.warn(ctx.i18n.t("log:osi_pdv_multiple_transfer_syntaxes", { peer }), logInfo);
                     abort(itot);
                     return;
                 }
+                const transfer_syntax = pc.transfer_syntax_name_list[0];
                 if ("single_ASN1_type" in pdv.presentation_data_values) {
                     const op = _decode_OsiDirectoryOperation(pdv.presentation_data_values.single_ASN1_type);
                     handle_osi_operation(rose, op);
                 }
                 else if ("octet_aligned" in pdv.presentation_data_values) {
-                    const transfer_syntax = pc.transfer_syntax_name_list[0];
                     const codec = oid_to_codec.get(transfer_syntax.toString());
                     if (!codec) {
+                        const logInfo = getLogInfoFromITOTStack(itot);
+                        ctx.log.warn(ctx.i18n.t("log:osi_presentation_transfer_syntax_not_supported", {
+                            peer,
+                            ts: transfer_syntax.toString(),
+                        }), logInfo);
                         abort(itot);
                         return;
                     }
@@ -950,13 +1015,22 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
                 }
                 else if ("arbitrary" in pdv.presentation_data_values) {
                     if (pdv.presentation_data_values.arbitrary.length % 8) {
+                        const logInfo = getLogInfoFromITOTStack(itot);
+                        ctx.log.warn(ctx.i18n.t("log:osi_presentation_transfer_syntax_not_supported", {
+                            peer,
+                            ts: transfer_syntax.toString(),
+                        }), logInfo);
                         abort(itot);
                         return;
                     }
                     const bytes = packBits(pdv.presentation_data_values.arbitrary);
-                    const transfer_syntax = pc.transfer_syntax_name_list[0];
                     const codec = oid_to_codec.get(transfer_syntax.toString());
                     if (!codec) {
+                        const logInfo = getLogInfoFromITOTStack(itot);
+                        ctx.log.warn(ctx.i18n.t("log:osi_presentation_transfer_syntax_not_supported", {
+                            peer,
+                            ts: transfer_syntax.toString(),
+                        }), logInfo);
                         abort(itot);
                         return;
                     }
@@ -966,11 +1040,20 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
                     handle_osi_operation(rose, op);
                 }
                 else {
+                    const logInfo = getLogInfoFromITOTStack(itot);
+                    ctx.log.warn(ctx.i18n.t("log:osi_presentation_transfer_syntax_not_supported", {
+                        peer,
+                        ts: transfer_syntax.toString(),
+                    }), logInfo);
                     abort(itot);
                     return;
                 }
             }
         } else {
+            const logInfo = getLogInfoFromITOTStack(itot);
+            ctx.log.warn(ctx.i18n.t("log:unrecognized_osi_presentation_user_data_format", {
+                peer,
+            }), logInfo);
             abort(itot);
             return;
         }
@@ -983,6 +1066,12 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
         // yet, so we have to get the PCI that we _will_ define.
         const pci = app_context_to_abstract_syntax_pci.get(params.protocol_id.toString());
         if (!pci) {
+            const logInfo = getLogInfoFromITOTStack(itot);
+            ctx.log.error(ctx.i18n.t("log:osi_net_no_pci", {
+                context: "bind",
+                peer,
+                appcontext: params.protocol_id.toString(),
+            }), logInfo);
             return;
         }
         const [ called_apt, called_aeq ] = break_down_ae_title(params.called_ae_title);
@@ -1028,6 +1117,12 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
             ?? params.protocol_id;
         const pc = get_pc(itot, rose, true);
         if (!pc) {
+            const logInfo = getLogInfoFromITOTStack(itot);
+            ctx.log.error(ctx.i18n.t("log:osi_net_no_pci", {
+                context: "bind_result",
+                peer,
+                appcontext: params.protocol_id.toString(),
+            }), logInfo);
             return;
         }
         const [ rapt, raeq ] = break_down_ae_title(params.responding_ae_title);
@@ -1072,6 +1167,12 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
             ?? params.protocol_id;
         const pc = get_pc(itot, rose, true);
         if (!pc) {
+            const logInfo = getLogInfoFromITOTStack(itot);
+            ctx.log.error(ctx.i18n.t("log:osi_net_no_pci", {
+                context: "bind_error",
+                peer,
+                appcontext: params.protocol_id.toString(),
+            }), logInfo);
             return;
         }
         const [ rapt, raeq ] = break_down_ae_title(params.responding_ae_title);
@@ -1113,6 +1214,12 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
     rose.write_request = (params) => {
         const pc = get_pc(itot, rose);
         if (!pc) {
+            const logInfo = getLogInfoFromITOTStack(itot);
+            ctx.log.error(ctx.i18n.t("log:osi_net_no_pci", {
+                context: "op",
+                peer,
+                appcontext: rose.protocol?.toString(),
+            }), logInfo);
             return;
         }
         const user_data: User_data = {
@@ -1141,6 +1248,12 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
     rose.write_result = (params) => {
         const pc = get_pc(itot, rose);
         if (!pc) {
+            const logInfo = getLogInfoFromITOTStack(itot);
+            ctx.log.error(ctx.i18n.t("log:osi_net_no_pci", {
+                context: "op",
+                peer,
+                appcontext: rose.protocol?.toString(),
+            }), logInfo);
             return;
         }
         const user_data: User_data = {
@@ -1171,6 +1284,12 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
     rose.write_error = (params) => {
         const pc = get_pc(itot, rose);
         if (!pc) {
+            const logInfo = getLogInfoFromITOTStack(itot);
+            ctx.log.error(ctx.i18n.t("log:osi_net_no_pci", {
+                context: "op",
+                peer,
+                appcontext: rose.protocol?.toString(),
+            }), logInfo);
             return;
         }
         const user_data: User_data = {
@@ -1201,6 +1320,12 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
     rose.write_reject = (params) => {
         const pc = get_pc(itot, rose);
         if (!pc) {
+            const logInfo = getLogInfoFromITOTStack(itot);
+            ctx.log.error(ctx.i18n.t("log:osi_net_no_pci", {
+                context: "op",
+                peer,
+                appcontext: rose.protocol?.toString(),
+            }), logInfo);
             return;
         }
         const user_data: User_data = {
@@ -1273,6 +1398,29 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
         );
         dispatch_A_ABRreq(itot.acse, abrt);
     };
+
+    itot.transport.outgoingEvents.prependListener("ER", (tpdu) => {
+        const logInfo = getLogInfoFromITOTStack(itot);
+        ctx.log.warn(ctx.i18n.t("log:osi_transport_error", {
+            peer,
+            dst: tpdu.dstRef,
+            reason: tpdu.reject_cause,
+        }), logInfo);
+    });
+
+    itot.session.outgoingEvents.prependListener("SPABind", () => {
+        const logInfo = getLogInfoFromITOTStack(itot);
+        ctx.log.warn(ctx.i18n.t("log:osi_session_abort", { peer }), logInfo);
+    });
+
+    itot.presentation.outgoingEvents.prependListener("P-PABind", (ppdu) => {
+        const logInfo = getLogInfoFromITOTStack(itot);
+        ctx.log.warn(ctx.i18n.t("log:osi_presentation_abort", {
+            peer,
+            eid: ppdu.event_identifier?.toString() ?? "?",
+            reason: ppdu.provider_reason?.toString() ?? "?",
+        }), logInfo);
+    });
 
     return rose;
 }
