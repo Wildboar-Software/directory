@@ -981,7 +981,7 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
             ?? params.protocol_id;
         // This is needed because we haven't established presentation contexts
         // yet, so we have to get the PCI that we _will_ define.
-        const pci = app_context_to_abstract_syntax_pci.get(params.protocol_id.toString());
+        const pci = app_context_to_abstract_syntax_pci.get(rose.protocol?.toString() ?? "");
         if (!pci) {
             return;
         }
