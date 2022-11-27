@@ -141,8 +141,9 @@ import {
     selection_option_to_selection,
     service_option_to,
     DirectoryVersioned,
+    generateUnusedInvokeId,
 } from "./utils";
-import { KeyObject, randomBytes } from "node:crypto";
+import type { KeyObject } from "node:crypto";
 import { UserPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
 import { strict as assert } from "node:assert";
 import { compareCode } from "@wildboar/x500";
@@ -482,7 +483,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 : {
                     unsigned: chained,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: chainedRead["&operationCode"]!,
                 invoke_id: {
@@ -550,7 +551,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 : {
                     unsigned: chained,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: chainedCompare["&operationCode"]!,
                 invoke_id: {
@@ -586,7 +587,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 : {
                     unsigned: data,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: chainedAbandon["&operationCode"]!,
                 invoke_id: {
@@ -655,7 +656,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 : {
                     unsigned: chained,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: chainedList["&operationCode"]!,
                 invoke_id: {
@@ -785,7 +786,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 : {
                     unsigned: chained,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: chainedSearch["&operationCode"]!,
                 invoke_id: {
@@ -854,7 +855,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 : {
                     unsigned: chained,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: chainedAddEntry["&operationCode"]!,
                 invoke_id: {
@@ -921,7 +922,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 : {
                     unsigned: chained,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: chainedRemoveEntry["&operationCode"]!,
                 invoke_id: {
@@ -990,7 +991,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 : {
                     unsigned: chained,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: chainedModifyEntry["&operationCode"]!,
                 invoke_id: {
@@ -1082,7 +1083,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 : {
                     unsigned: chained,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: chainedModifyDN["&operationCode"]!,
                 invoke_id: {
@@ -1144,7 +1145,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 : {
                     unsigned: chained,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: chainedChangePassword["&operationCode"]!,
                 invoke_id: {
@@ -1201,7 +1202,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 : {
                     unsigned: chained,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: chainedAdministerPassword["&operationCode"]!,
                 invoke_id: {
@@ -1270,7 +1271,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 : {
                     unsigned: chained,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: chainedLdapTransport["&operationCode"]!,
                 invoke_id: {
@@ -1340,7 +1341,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                 : {
                     unsigned: chained,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: chainedLinkedLDAP["&operationCode"]!,
                 invoke_id: {

@@ -137,8 +137,9 @@ import {
     selection_option_to_selection,
     service_option_to,
     DirectoryVersioned,
+    generateUnusedInvokeId,
 } from "./utils";
-import { KeyObject, randomBytes } from "node:crypto";
+import type { KeyObject } from "node:crypto";
 import { UserPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
 import { strict as assert } from "node:assert";
 import { compareCode } from "@wildboar/x500";
@@ -405,7 +406,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                 : {
                     unsigned: data,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: read["&operationCode"]!,
                 invoke_id: {
@@ -463,7 +464,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                 : {
                     unsigned: data,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: compare["&operationCode"]!,
                 invoke_id: {
@@ -499,7 +500,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                 : {
                     unsigned: data,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: abandon["&operationCode"]!,
                 invoke_id: {
@@ -558,7 +559,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                 : {
                     unsigned: data,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: list["&operationCode"]!,
                 invoke_id: {
@@ -678,7 +679,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                 : {
                     unsigned: data,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: search["&operationCode"]!,
                 invoke_id: {
@@ -737,7 +738,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                 : {
                     unsigned: data,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: addEntry["&operationCode"]!,
                 invoke_id: {
@@ -794,7 +795,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                 : {
                     unsigned: data,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: removeEntry["&operationCode"]!,
                 invoke_id: {
@@ -853,7 +854,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                 : {
                     unsigned: data,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: modifyEntry["&operationCode"]!,
                 invoke_id: {
@@ -935,7 +936,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                 : {
                     unsigned: data,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: modifyDN["&operationCode"]!,
                 invoke_id: {
@@ -987,7 +988,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                 : {
                     unsigned: data,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: changePassword["&operationCode"]!,
                 invoke_id: {
@@ -1034,7 +1035,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                 : {
                     unsigned: data,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: administerPassword["&operationCode"]!,
                 invoke_id: {

@@ -109,4 +109,52 @@ describe("DAP Client", () => {
             assert(false);
         }
     });
+
+    it("works with ITOT transport (2)", async () => {
+        const socket = createConnection({
+            host: "localhost",
+            port: 17003,
+        });
+        await new Promise((resolve) => socket.on("connect", resolve));
+        const itot = create_itot_stack(socket, {
+            sessionCaller: true,
+            transportCaller: true,
+        });
+        const rose = rose_transport_from_itot_stack(itot);
+        const dap = create_dap_client(rose);
+        const bind_response = await dap.bind({
+            protocol_id: id_idm_dap,
+            parameter: new DirectoryBindArgument(undefined, undefined),
+        });
+        if ("result" in bind_response) {
+            expect(bind_response.result.parameter).toBeDefined();
+        } else {
+            assert(false);
+        }
+        const op1_response = await dap.list({
+            object: {
+                rdnSequence: [],
+            },
+        });
+        if ("result" in op1_response) {
+            const resultData = getOptionallyProtectedValue(op1_response.result.parameter);
+            assert("listInfo" in resultData);
+        } else {
+            assert(false);
+        }
+        const op2_response = await dap.search({
+            object: {
+                rdnSequence: [],
+            },
+            subset: "level",
+        });
+        if ("result" in op2_response) {
+            const resultData = getOptionallyProtectedValue(op2_response.result.parameter);
+            assert("searchInfo" in resultData);
+        } else {
+            assert(false);
+        }
+        const unbind_response = await dap.unbind();
+        assert("result" in unbind_response);
+    });
 });

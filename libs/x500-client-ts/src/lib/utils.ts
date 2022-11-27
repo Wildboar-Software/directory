@@ -753,3 +753,10 @@ export
 interface DirectoryVersioned {
     directoryVersion: number;
 }
+
+export
+function generateUnusedInvokeId (): number {
+    const bytes = randomBytes(4);
+    bytes[0] &= 0b0111_1111; // To ensure that the number is always positive.
+    return bytes.readUint32BE();
+}

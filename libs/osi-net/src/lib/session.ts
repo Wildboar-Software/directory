@@ -556,6 +556,10 @@ export function dispatch_SCONreq(
             },
         };
     }
+    if (!cn.sessionUserRequirements) {
+        // One is required.
+        cn.sessionUserRequirements = SUR_DUPLEX | SUR_HALF_DUPLEX;
+    }
     state.cn = cn;
     switch (state.state) {
         case TableA2SessionConnectionState.STA01: {

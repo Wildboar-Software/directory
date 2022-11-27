@@ -10,8 +10,13 @@ import {
 import {
     dSABind,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/dSABind.oa";
-import { KeyObject, randomBytes } from "node:crypto";
-import { CertPathOption, generateSIGNED, DirectoryVersioned } from "./utils";
+import type { KeyObject } from "node:crypto";
+import {
+    CertPathOption,
+    generateSIGNED,
+    DirectoryVersioned,
+    generateUnusedInvokeId,
+} from "./utils";
 import {
     requestShadowUpdate,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/requestShadowUpdate.oa";
@@ -135,7 +140,7 @@ function create_disp_client (rose: ROSETransport): DISPClient {
                 : {
                     unsigned: data,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: requestShadowUpdate["&operationCode"]!,
                 invoke_id: {
@@ -173,7 +178,7 @@ function create_disp_client (rose: ROSETransport): DISPClient {
                 : {
                     unsigned: data,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: updateShadow["&operationCode"]!,
                 invoke_id: {
@@ -210,7 +215,7 @@ function create_disp_client (rose: ROSETransport): DISPClient {
                 : {
                     unsigned: data,
                 };
-            const invoke_id: number = randomBytes(4).readUint32BE();
+            const invoke_id: number = generateUnusedInvokeId();
             const outcome = await rose.request({
                 code: coordinateShadowUpdate["&operationCode"]!,
                 invoke_id: {

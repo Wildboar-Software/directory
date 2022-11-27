@@ -10,8 +10,13 @@ import {
 import {
     dSABind,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/dSABind.oa";
-import { KeyObject, randomBytes } from "node:crypto";
-import { CertPathOption, generateSIGNED, DirectoryVersioned } from "./utils";
+import type { KeyObject } from "node:crypto";
+import {
+    CertPathOption,
+    generateSIGNED,
+    DirectoryVersioned,
+    generateUnusedInvokeId,
+} from "./utils";
 import {
     establishOperationalBinding, EstablishOperationalBindingArgument,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/establishOperationalBinding.oa";
@@ -192,7 +197,7 @@ function create_dop_client (rose: ROSETransport): DOPClient {
             : {
                 unsigned: data,
             };
-        const invoke_id: number = randomBytes(4).readUint32BE();
+        const invoke_id: number = generateUnusedInvokeId();
         const outcome = await rose.request({
             code: establishOperationalBinding["&operationCode"]!,
             invoke_id: {
@@ -233,7 +238,7 @@ function create_dop_client (rose: ROSETransport): DOPClient {
             : {
                 unsigned: data,
             };
-        const invoke_id: number = randomBytes(4).readUint32BE();
+        const invoke_id: number = generateUnusedInvokeId();
         const outcome = await rose.request({
             code: modifyOperationalBinding["&operationCode"]!,
             invoke_id: {
@@ -271,7 +276,7 @@ function create_dop_client (rose: ROSETransport): DOPClient {
             : {
                 unsigned: data,
             };
-        const invoke_id: number = randomBytes(4).readUint32BE(); // TODO: Replace with randomUint().
+        const invoke_id: number = generateUnusedInvokeId(); // TODO: Replace with randomUint().
         const outcome = await rose.request({
             code: terminateOperationalBinding["&operationCode"]!,
             invoke_id: {

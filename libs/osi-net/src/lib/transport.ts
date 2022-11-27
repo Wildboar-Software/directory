@@ -1568,10 +1568,10 @@ export function dispatch_CR(
 }
 
 function validate_CC(c: TransportConnection, tpdu: CC_TPDU): boolean {
-    if (c.src_ref !== tpdu.srcRef) {
+    if (c.src_ref !== tpdu.dstRef) {
         return false;
     }
-    if (tpdu.dstRef === 0) {
+    if (tpdu.srcRef === 0) {
         return false;
     }
     // User data is not permitted in class 0.

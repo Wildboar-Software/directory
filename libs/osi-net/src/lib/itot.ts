@@ -39,6 +39,8 @@ import {
     dispatch_SRELrsp_reject,
     NOT_FINISHED_SPDU,
     TRANSPORT_DISCONNECT_RELEASED,
+    SUR_DUPLEX,
+    SUR_HALF_DUPLEX,
 } from './session';
 import {
     createPresentationConnection,
@@ -288,11 +290,12 @@ export function create_itot_stack(
                     callingSessionSelector: options?.localAddress?.sSelector
                         ? Buffer.from(options.localAddress.sSelector)
                         : stack.session.local_selector,
-                    sessionUserRequirements: 0,
+                    sessionUserRequirements: SUR_DUPLEX | SUR_HALF_DUPLEX,
                 };
                 dispatch_SCONreq(stack.session, spdu);
             },
             respond_S_CONNECT: (res) => {
+
                 if (res.refuse_reason === undefined) {
                     const spdu: ACCEPT_SPDU = {
                         userData: res.user_data,
@@ -312,7 +315,12 @@ export function create_itot_stack(
                                 }
                                 : undefined,
                         },
-                        sessionUserRequirements: 0,
+                        sessionUserRequirements: (
+                            stack.session.cn?.sessionUserRequirements
+                            && (stack.session.cn.sessionUserRequirements & SUR_DUPLEX)
+                        )
+                            ? SUR_DUPLEX
+                            : SUR_HALF_DUPLEX,
                     };
                     dispatch_SCONrsp_accept(
                         stack.session,
@@ -322,7 +330,12 @@ export function create_itot_stack(
                     const spdu: REFUSE_SPDU = {
                         reasonData: res.user_data,
                         reasonCode: res.refuse_reason,
-                        sessionUserRequirements: 0,
+                        sessionUserRequirements: (
+                            stack.session.cn?.sessionUserRequirements
+                            && (stack.session.cn.sessionUserRequirements & SUR_DUPLEX)
+                        )
+                            ? SUR_DUPLEX
+                            : SUR_HALF_DUPLEX,
                         transportDisconnect: TRANSPORT_DISCONNECT_RELEASED,
                         versionNumber: 2,
                     };
@@ -554,7 +567,12 @@ export function create_itot_stack(
                     versionNumber: 2,
                     protocolOptions: 0,
                 },
-                sessionUserRequirements: 0,
+                sessionUserRequirements: (
+                    stack.session.cn?.sessionUserRequirements
+                    && (stack.session.cn.sessionUserRequirements & SUR_DUPLEX)
+                )
+                    ? SUR_DUPLEX
+                    : SUR_HALF_DUPLEX,
             };
             dispatch_SCONrsp_accept(stack.session, ac);
         }
