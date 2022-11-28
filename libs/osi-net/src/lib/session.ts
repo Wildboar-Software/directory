@@ -534,7 +534,7 @@ export function dispatch_SCONreq(
         if (user_data.length > 512) {
             if (!cn.connectAcceptItem) {
                 cn.connectAcceptItem = {
-                    versionNumber: 2,
+                    versionNumber: 0b11,
                     protocolOptions: 0,
                 };
             }
@@ -1634,7 +1634,7 @@ export function dispatch_CN(
             const p76_temporary_congestion: boolean = false;
             const p76_version_not_supported: boolean =
                 spdu.connectAcceptItem?.versionNumber !== undefined &&
-                spdu.connectAcceptItem.versionNumber > 2;
+                spdu.connectAcceptItem.versionNumber > 3; // 0b10 & 0xb01 for versions 1 and 2.
             const p01: boolean = !state.Vtca;
             const p02: boolean = p02_local_choice && !state.TEXP;
             const p76: boolean =
@@ -3178,15 +3178,22 @@ function encodeSPDU(spdu: SPDU): Buffer {
             // Parameter Group
             const pgi_bufs: Buffer[] = [];
             for (const pgiparam of param.parameters) {
-                if (pgiparam.value.length > 254) {
+                const len = pgiparam.value.length;
+                if (len > 65535) {
+                    // This was the best I could do without massive changes.
+                    throw new Error(
+                        'SPDU cannot have more than 65535 bytes of header information.'
+                    );
+                }
+                if (len > 254) {
                     const pi_and_li = Buffer.from([pgiparam.pi, 0xff, 0, 0]);
-                    pi_and_li.writeUint16BE(pgiparam.value.length, 2);
+                    pi_and_li.writeUint16BE(len, 2);
                     pgi_bufs.push(pi_and_li);
                     pgi_bufs.push(pgiparam.value);
                 } else {
                     const pi_and_li = Buffer.from([
                         pgiparam.pi,
-                        pgiparam.value.length,
+                        len,
                     ]);
                     pgi_bufs.push(pi_and_li);
                     pgi_bufs.push(pgiparam.value);
@@ -3195,6 +3202,12 @@ function encodeSPDU(spdu: SPDU): Buffer {
             let pg_len: number = 0;
             for (const pgb of pgi_bufs) {
                 pg_len += pgb.length;
+            }
+            if (pg_len > 65535) {
+                // This was the best I could do without massive changes.
+                throw new Error(
+                    'SPDU cannot have more than 65535 bytes of header information.'
+                );
             }
             if (pg_len > 254) {
                 const pgi_and_li = Buffer.from([param.pgi, 0xff, 0, 0]);
@@ -3207,14 +3220,21 @@ function encodeSPDU(spdu: SPDU): Buffer {
                 bufs.push(...pgi_bufs);
             }
         } else {
+            const len = param.value.length;
+            if (len > 65535) {
+                // This was the best I could do without massive changes.
+                throw new Error(
+                    'SPDU cannot have more than 65535 bytes of header information.'
+                );
+            }
             // Single Parameter
-            if (param.value.length > 254) {
+            if (len > 254) {
                 const pi_and_li = Buffer.from([param.pi, 0xff, 0, 0]);
-                pi_and_li.writeUint16BE(param.value.length, 2);
+                pi_and_li.writeUint16BE(len, 2);
                 bufs.push(pi_and_li);
                 bufs.push(param.value);
             } else {
-                const pi_and_li = Buffer.from([param.pi, param.value.length]);
+                const pi_and_li = Buffer.from([param.pi, len]);
                 bufs.push(pi_and_li);
                 bufs.push(param.value);
             }
@@ -3307,8 +3327,8 @@ function encodeConnectAcceptItem(
     }
     if (cai.tsduMaximumSize) {
         const value = Buffer.allocUnsafe(4);
-        value.writeUint16BE(cai.tsduMaximumSize.initiator_to_responder);
-        value.writeUint16BE(cai.tsduMaximumSize.responder_to_initiator);
+        value.writeUint16BE(Math.min(cai.tsduMaximumSize.initiator_to_responder, DEFAULT_MAX_TSDU_SIZE));
+        value.writeUint16BE(Math.min(cai.tsduMaximumSize.responder_to_initiator, DEFAULT_MAX_TSDU_SIZE));
         ret.parameters.push({
             pi: PI_TSDU_MAX_SIZE,
             value,
@@ -3578,8 +3598,8 @@ export function encode_OVERFLOW_ACCEPT_SPDU(pdu: OVERFLOW_ACCEPT_SPDU): Buffer {
     };
     if (pdu.tsduMaximumSize) {
         const value = Buffer.allocUnsafe(4);
-        value.writeUint16BE(pdu.tsduMaximumSize.initiator_to_responder, 0);
-        value.writeUint16BE(pdu.tsduMaximumSize.responder_to_initiator, 2);
+        value.writeUint16BE(Math.min(pdu.tsduMaximumSize.initiator_to_responder, DEFAULT_MAX_TSDU_SIZE), 0);
+        value.writeUint16BE(Math.min(pdu.tsduMaximumSize.responder_to_initiator, DEFAULT_MAX_TSDU_SIZE), 2);
         ret.parameters.push({
             pi: PI_TSDU_MAX_SIZE,
             value,
