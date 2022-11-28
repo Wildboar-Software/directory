@@ -8,6 +8,12 @@ import * as tls from "tls";
 import * as path from "path";
 import * as os from "os";
 import { IdmBind } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta";
+import { rose_transport_from_idm_socket } from "./rose/idm";
+import { rose_transport_from_itot_stack } from "./rose/itot";
+import {
+    create_itot_stack,
+    ISOTransportOverTCPStack,
+} from "@wildboar/osi-net";
 import {
     Abort_reasonNotSpecified,
     Abort_unboundRequest,
@@ -55,6 +61,16 @@ import cookieParser from "cookie-parser";
 import { parseFormData } from "./admin/parseFormData";
 import { applyXSRFCookie } from "./admin/applyXSRFCookie";
 import printCode from "./utils/printCode";
+import {
+    id_ac_directoryAccessAC,
+} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directoryAccessAC.va";
+import {
+    id_ac_directorySystemAC,
+} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directorySystemAC.va";
+import {
+    id_ac_directoryOperationalBindingManagementAC,
+} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directoryOperationalBindingManagementAC.va";
+import { AbortReason } from "@wildboar/rose-transport";
 
 /**
  * @summary Check for Meerkat DSA updates
@@ -305,13 +321,17 @@ function attachUnboundEventListenersToIDMConnection (
     };
     idm.events.on("request", handleWrongSequence);
     idm.events.on("bind", async (idmBind: IdmBind) => {
+        idm.events.removeAllListeners("request");
         let conn!: ClientAssociation;
         if (idmBind.protocolID.isEqualTo(dap_ip["&id"]!) && ctx.config.dap.enabled) {
-            conn = new DAPAssociation(ctx, idm);
+            const rose = rose_transport_from_idm_socket(ctx, idm);
+            conn = new DAPAssociation(ctx, rose);
         } else if (idmBind.protocolID.isEqualTo(dsp_ip["&id"]!) && ctx.config.dsp.enabled) {
-            conn = new DSPAssociation(ctx, idm);
+            const rose = rose_transport_from_idm_socket(ctx, idm);
+            conn = new DSPAssociation(ctx, rose);
         } else if (idmBind.protocolID.isEqualTo(dop_ip["&id"]!) && ctx.config.dop.enabled) {
-            conn = new DOPAssociation(ctx, idm);
+            const rose = rose_transport_from_idm_socket(ctx, idm);
+            conn = new DOPAssociation(ctx, rose);
         } else {
             idm.writeAbort(Abort_invalidProtocol);
             startTimes.delete(idm.s);
@@ -347,6 +367,9 @@ function attachUnboundEventListenersToIDMConnection (
                 },
             });
         } catch (e) {
+            if (isDebugging) {
+                console.error(e);
+            }
             ctx.log.warn(ctx.i18n.t("log:bind_error", {
                 host: originalSocket.remoteAddress,
                 source,
@@ -727,6 +750,248 @@ function handleLDAP (
     };
 }
 
+export
+function attachUnboundEventListenersToITOTConnection (
+    ctx: MeerkatContext,
+    originalSocket: net.Socket | tls.TLSSocket, // Even if STARTTLS is used, you must use the original socket for "bookkeeping" in the associations index.
+    source: string, // Just to avoid recalculating this.
+    itot: ISOTransportOverTCPStack,
+    startTimes: Map<net.Socket, Date>,
+): void {
+    const rose = rose_transport_from_itot_stack(ctx, itot);
+    const properties = {
+        remoteFamily: itot.network.socket.remoteFamily,
+        remoteAddress: itot.network.socket.remoteAddress,
+        remotePort: itot.network.socket.remotePort,
+        administratorEmail: ctx.config.administratorEmail,
+    };
+    const handleWrongSequence = () => {
+        rose.write_abort(AbortReason.unbound_request);
+        startTimes.delete(itot.network.socket);
+        ctx.associations.delete(itot.network.socket);
+        // Note that this is logged below.
+    };
+    rose.events.on("request", handleWrongSequence);
+    rose.events.on("bind", async (bind) => {
+        let conn!: ClientAssociation;
+        if (bind.protocol_id.isEqualTo(id_ac_directoryAccessAC)) {
+            conn = new DAPAssociation(ctx, rose);
+        }
+        else if (bind.protocol_id.isEqualTo(id_ac_directorySystemAC)) {
+            conn = new DSPAssociation(ctx, rose);
+        }
+        else if (bind.protocol_id.isEqualTo(id_ac_directoryOperationalBindingManagementAC)) {
+            conn = new DOPAssociation(ctx, rose);
+        }
+        else {
+            // This branch should not be taken entirely, because the ACSE layer
+            // in `./rose/itot.ts` should reject unsupported protocols.
+            rose.write_abort(AbortReason.invalid_protocol);
+            startTimes.delete(itot.network.socket);
+            ctx.associations.delete(itot.network.socket);
+            ctx.log.warn(ctx.i18n.t("log:unsupported_protocol", {
+                protocol: bind.protocol_id.toString(),
+                host: originalSocket.remoteAddress,
+                source,
+            }), {
+                remoteFamily: itot.network.socket.remoteFamily,
+                remoteAddress: itot.network.socket.remoteAddress,
+                remotePort: itot.network.socket.remotePort,
+                protocol: bind.protocol_id.toString(),
+            });
+            return;
+        }
+        const startTime = Date.now();
+        try {
+            await conn.attemptBind(bind.parameter);
+            ctx.associations.set(originalSocket, conn);
+            ctx.telemetry.trackRequest({
+                name: "BIND",
+                url: ctx.config.myAccessPointNSAPs?.map(naddrToURI).find((uri) => !!uri)
+                    ?? `itot://meerkat.invalid:${ctx.config.itot.port}`,
+                duration: Date.now() - startTime,
+                resultCode: 200,
+                success: true,
+                properties,
+                measurements: {
+                    bytesRead: itot.network.socket.bytesRead,
+                    bytesWritten: itot.network.socket.bytesWritten,
+                },
+            });
+        } catch (e) {
+            if (isDebugging) {
+                console.error(e);
+            }
+            ctx.log.warn(ctx.i18n.t("log:bind_error", {
+                host: originalSocket.remoteAddress,
+                source,
+                e,
+            }), {
+                remoteFamily: itot.network.socket.remoteFamily,
+                remoteAddress: itot.network.socket.remoteAddress,
+                remotePort: itot.network.socket.remotePort,
+                protocol: bind.protocol_id.toString(),
+            });
+            rose.write_abort(AbortReason.reason_not_specified);
+            startTimes.delete(itot.network.socket);
+            ctx.associations.delete(itot.network.socket);
+            ctx.telemetry.trackException({
+                exception: e,
+                properties,
+                measurements: {
+                    bytesRead: itot.network.socket.bytesRead,
+                    bytesWritten: itot.network.socket.bytesWritten,
+                },
+            });
+        }
+    });
+    itot.network.socket.on("close", () => {
+        ctx.associations.set(originalSocket, null);
+        rose.events.removeAllListeners();
+    });
+}
+
+/**
+ * @summary Higher-order function that produces an IDM connection handler
+ * @description
+ *
+ * This higher-order function gets an IDM connection handler.
+ *
+ * @param ctx The context object
+ * @param startTimes A map of socket start times, indexed by socket reference
+ * @returns An ITOT connection handler
+ *
+ * @function
+ */
+ function handleITOT (
+    ctx: MeerkatContext,
+    startTimes: Map<net.Socket, Date>,
+): (socket: net.Socket | tls.TLSSocket) => void {
+    return (c: net.Socket | tls.TLSSocket): void => {
+        c.pause();
+        ctx.associations.set(c, null); // Index this socket, noting that it has no established association.
+        startTimes.set(c, new Date());
+        const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
+        const extraLogData = {
+            remoteFamily: c.remoteFamily,
+            remoteAddress: c.remoteAddress,
+            remotePort: c.remotePort,
+        };
+        if (ctx.associations.size >= ctx.config.maxConnections) {
+            c.destroy();
+            startTimes.delete(c);
+            ctx.associations.delete(c);
+            ctx.log.warn(ctx.i18n.t("log:tcp_max_conn", {
+                source,
+                max: ctx.config.maxConnections,
+            }), extraLogData);
+            return;
+        }
+        if ( // Check connections-per-address, which helps prevent Slow Loris attacks.
+            c.remoteAddress
+            && Array.from(ctx.associations.keys())
+                .filter((s) => s.remoteAddress === c.remoteAddress)
+                .length > ctx.config.maxConnectionsPerAddress
+        ) {
+            c.destroy();
+            startTimes.delete(c);
+            ctx.associations.delete(c);
+            ctx.log.warn(ctx.i18n.t("log:tcp_max_conn_per_addr", {
+                host: c.remoteAddress,
+                source,
+                max: ctx.config.maxConnectionsPerAddress,
+            }), extraLogData);
+            return;
+        }
+        c.on("data", () => { // Check data throughput of socket, which helps prevent Slow Loris attacks.
+            const minutesSinceStart = Math.abs(differenceInMinutes(startTimes.get(c) ?? new Date(), new Date()));
+            if (
+                minutesSinceStart
+                && ((c.bytesRead / minutesSinceStart) < ctx.config.tcp.minimumTransferSpeedInBytesPerMinute)
+            ) {
+                ctx.log.warn(ctx.i18n.t("log:slow_loris", {
+                    host: c.remoteAddress,
+                    source,
+                    bps: ctx.config.tcp.minimumTransferSpeedInBytesPerMinute.toString(),
+                }), extraLogData);
+                c.destroy();
+                startTimes.delete(c);
+                ctx.associations.delete(c);
+            }
+        });
+        c.setNoDelay(ctx.config.tcp.noDelay);
+        if (ctx.config.tcp.timeoutInSeconds) {
+            c.setTimeout(ctx.config.tcp.timeoutInSeconds * 1000);
+            c.on("timeout", () => {
+                ctx.log.warn(ctx.i18n.t("log:tcp_timeout", {
+                    source,
+                    seconds: ctx.config.tcp.timeoutInSeconds,
+                }), extraLogData);
+                c.destroy();
+            });
+        }
+        ctx.log.info(ctx.i18n.t("log:transport_established", {
+            source,
+            transport: (c instanceof tls.TLSSocket) ? "ITOTS" : "ITOT",
+        }), extraLogData);
+
+        c.on("error", (e) => {
+            ctx.log.error(ctx.i18n.t("log:socket_error", {
+                host: c.remoteAddress,
+                source,
+                e: e.message,
+            }), {
+                ...extraLogData,
+                stack: e?.stack,
+            });
+            c.destroy();
+            startTimes.delete(c);
+            ctx.associations.delete(c);
+        });
+
+        c.on("close", () => {
+            ctx.log.info(ctx.i18n.t("log:socket_closed", {
+                source,
+            }), extraLogData);
+            startTimes.delete(c);
+            ctx.associations.delete(c);
+        });
+
+        try {
+            const itot = create_itot_stack(
+                c,
+                {
+                    sessionCaller: false,
+                    transportCaller: false,
+                    abort_timeout_ms: ctx.config.itot.abort_timeout_ms,
+                    max_nsdu_size: ctx.config.itot.max_nsdu_size,
+                    max_tsdu_size: ctx.config.itot.max_tsdu_size,
+                    max_tpdu_size: ctx.config.itot.max_tpdu_size,
+                    max_ssdu_size: ctx.config.itot.max_ssdu_size,
+                    max_presentation_contexts: ctx.config.itot.max_presentation_contexts,
+                    // acse_authenticate
+                },
+            );
+            attachUnboundEventListenersToITOTConnection(ctx, c, source, itot, startTimes);
+        } catch (e) {
+            ctx.log.error(ctx.i18n.t("log:unhandled_exception", {
+                e: e.message,
+                host: c.remoteAddress,
+                source,
+            }), {
+                ...extraLogData,
+                stack: e?.stack,
+            });
+            c.destroy();
+            startTimes.delete(c);
+            ctx.associations.delete(c);
+            return;
+        }
+        c.resume();
+    };
+}
+
+
 /**
  * @summary The entry point of the server
  * @description
@@ -868,6 +1133,7 @@ async function main (): Promise<void> {
         rejectUnauthorized: ctx.config.tls.rejectUnauthorizedClients,
         enableTrace: isDebugging,
     };
+    const onOCSPRequestCallback = getOnOCSPRequestCallback(ctx, ctx.config.tls);
 
     const startTimes: Map<net.Socket, Date> = new Map();
     // const blocklist: net.BlockList = new net.BlockList();
@@ -900,7 +1166,7 @@ async function main (): Promise<void> {
                 e: err?.message,
             }));
         });
-        idmsServer.on("OCSPRequest", getOnOCSPRequestCallback(ctx, ctx.config.tls));
+        idmsServer.on("OCSPRequest", onOCSPRequestCallback);
         idmsServer.listen(ctx.config.idms.port, () => {
             ctx.log.info(ctx.i18n.t("log:listening", {
                 protocol: "IDMS",
@@ -925,11 +1191,45 @@ async function main (): Promise<void> {
         )
     ) {
         const ldapsServer = tls.createServer(tlsOptions, handleLDAP(ctx, startTimes));
-        ldapsServer.on("OCSPRequest", getOnOCSPRequestCallback(ctx, ctx.config.tls));
+        ldapsServer.on("OCSPRequest", onOCSPRequestCallback);
         ldapsServer.listen(ctx.config.ldaps.port, async () => {
             ctx.log.info(ctx.i18n.t("log:listening", {
                 protocol: "LDAPS",
                 port: ctx.config.ldaps.port,
+            }));
+        });
+    }
+
+    if (ctx.config.itot.port) {
+        const itotServer = net.createServer(handleITOT(ctx, startTimes));
+        itotServer.on("error", (err) => {
+            ctx.log.error(ctx.i18n.t("log:server_error", {
+                protocol: "ITOT",
+                e: err?.message,
+            }));
+        });
+        itotServer.listen(ctx.config.itot.port, () => {
+            ctx.log.info(ctx.i18n.t("log:listening", {
+                protocol: "ITOT",
+                port: ctx.config.itot.port,
+            }));
+        });
+    }
+
+    if (ctx.config.itots.port) {
+        tls
+        const itotsServer = tls.createServer(tlsOptions, handleITOT(ctx, startTimes));
+        itotsServer.on("OCSPRequest", onOCSPRequestCallback);
+        itotsServer.on("error", (err) => {
+            ctx.log.error(ctx.i18n.t("log:server_error", {
+                protocol: "ITOTS",
+                e: err?.message,
+            }));
+        });
+        itotsServer.listen(ctx.config.itots.port, () => {
+            ctx.log.info(ctx.i18n.t("log:listening", {
+                protocol: "ITOTS",
+                port: ctx.config.itots.port,
             }));
         });
     }

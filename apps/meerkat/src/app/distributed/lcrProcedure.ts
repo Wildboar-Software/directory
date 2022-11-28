@@ -170,47 +170,51 @@ async function lcrProcedure (
             if ("error" in response) {
                 ctx.log.debug(ctx.i18n.t("log:lcr_error_response", {
                     ...logMsgInfo,
-                    errcode: response.errcode
-                        ? printCode(response.errcode)
+                    errcode: response.error.code
+                        ? printCode(response.error.code)
                         : undefined,
-                    errbytes: Buffer.from(response.error.toBytes().slice(0, 16)).toString("hex"),
+                    errbytes: Buffer.from(response.error.parameter.toBytes().slice(0, 16)).toString("hex"),
                 }), logInfo);
                 unexplore();
                 continue;
-            }
-            if (!response.result) {
-                ctx.log.warn(ctx.i18n.t("log:lcr_undefined_result", logMsgInfo), logInfo);
-                unexplore();
+            } else if ("result" in response) {
+                if (!response.result) {
+                    ctx.log.warn(ctx.i18n.t("log:lcr_undefined_result", logMsgInfo), logInfo);
+                    unexplore();
+                    continue;
+                }
+                // TODO: Shouldn't things like this be checked in apinfoProcedure?
+                if (!("present" in response.result.invoke_id)) {
+                    ctx.log.warn(ctx.i18n.t("log:lcr_invalid_invoke_id_response", logMsgInfo), logInfo);
+                    unexplore();
+                    continue;
+                }
+                if (!response.result.code) {
+                    ctx.log.warn(ctx.i18n.t("log:lcr_missing_opcode", logMsgInfo), logInfo);
+                    unexplore();
+                    continue;
+                }
+                if (!compareCode(response.result.code, id_opcode_list)) {
+                    ctx.log.warn(ctx.i18n.t("log:lcr_mismatch_opcode", logMsgInfo), logInfo);
+                    unexplore();
+                    continue;
+                }
+                try {
+                    // NOTE: You do not need to check signatures. That was
+                    // already handled by apInfoProcedure().
+                    const chainedResult = chainedList.decoderFor["&ResultType"]!(response.result.parameter);
+                    const chainedResultData = getOptionallyProtectedValue(chainedResult);
+                    const listResult = _decode_ListResult(chainedResultData.result);
+                    // Whether signed or not, we still just add the list result.
+                    // This preserves the performer.
+                    listState.resultSets.push(listResult);
+                } catch (e) {
+                    // TODO: Log e
+                    ctx.log.warn(e);
+                }
+            } else {
+                // TODO: Log
                 continue;
-            }
-            // TODO: Shouldn't things like this be checked in apinfoProcedure?
-            if (!("present" in response.invokeId)) {
-                ctx.log.warn(ctx.i18n.t("log:lcr_invalid_invoke_id_response", logMsgInfo), logInfo);
-                unexplore();
-                continue;
-            }
-            if (!response.opCode) {
-                ctx.log.warn(ctx.i18n.t("log:lcr_missing_opcode", logMsgInfo), logInfo);
-                unexplore();
-                continue;
-            }
-            if (!compareCode(response.opCode, id_opcode_list)) {
-                ctx.log.warn(ctx.i18n.t("log:lcr_mismatch_opcode", logMsgInfo), logInfo);
-                unexplore();
-                continue;
-            }
-            try {
-                // NOTE: You do not need to check signatures. That was
-                // already handled by apInfoProcedure().
-                const chainedResult = chainedList.decoderFor["&ResultType"]!(response.result);
-                const chainedResultData = getOptionallyProtectedValue(chainedResult);
-                const listResult = _decode_ListResult(chainedResultData.result);
-                // Whether signed or not, we still just add the list result.
-                // This preserves the performer.
-                listState.resultSets.push(listResult);
-            } catch (e) {
-                // TODO: Log e
-                ctx.log.warn(e);
             }
         }
     };

@@ -336,6 +336,165 @@ If set, this is the filepath to an init script. At startup, Meerkat DSA will
 load this script and execute the default export or an export named `init`, if
 either one exists.
 
+## MEERKAT_ITOT_ABORT_TIMEOUT_IN_SECONDS
+
+The timeout after which the OSI session layer will automatically abort the
+session connection in an ISO Transport Over TCP (ITOT) connection after not
+receiving a response from the session peer.
+
+## MEERKAT_ITOT_ACSE_PASSWORD
+
+**Currently unused.** Reserved for future support for ACSE-level authentication.
+This is a fixed password that Meerkat DSA will require from ACSE initiators to
+establish an ACSE association.
+
+## MEERKAT_ITOT_CHAINING
+
+By default, Meerkat DSA will chain requests to other DSAs that operate over
+ISO Transport Over TCP (ITOT). This can pose some security risks, due to the
+complexity of the OSI networking protocols. To disable ITOT chaining, set this
+environment variable to `0`.
+
+:::info
+
+This may be desirable, since ITOT does _not_ provide point-to-point encryption
+and authentication like TLS. You may need to run ITOT traffic over a VPN or a
+TLS or SSH tunnel.
+
+:::
+
+## MEERKAT_ITOT_MAX_NSDU_SIZE
+
+The largest Network Service Data Unit (NSDU) that an ISO Transport Over TCP
+(ITOT) can buffer before being aborted or disconnected. In ISO Transport Over
+TCP (ITOT), this means the maximum size of TPKT packets, which are innately
+limited to 65531 bytes.
+
+:::caution
+
+If this value is set too low, clients will not be able to send data to the
+configured DSA, or they will take an extremely long time to transmit. If this
+value is set too high, malicious clients will be able to send large payloads
+that exhaust memory and/or compute on the DSA.
+
+This option should almost always be left alone, since TPKTs are innately limited
+to 65531 bytes in size.
+
+:::
+
+## MEERKAT_ITOT_MAX_TPDU_SIZE
+
+The largest Transport Protocol Data Unit (TPDU) that an ISO Transport Over TCP
+(ITOT) can transmit before being aborted or disconnected.
+
+:::caution
+
+If this value is set too low, clients will not be able to send data to the
+configured DSA, or they will take an extremely long time to transmit. If this
+value is set too high, malicious clients will be able to send large payloads
+that exhaust memory and/or compute on the DSA.
+
+This option should almost always be left alone, since the ITU X.224 OSI
+transport protocol used by the ITOT stack is limited in size by the maximum NSDU
+size, which for ITOT, is 65531 bytes (the size limit of a TPKT).
+
+:::
+
+## MEERKAT_ITOT_MAX_TSDU_SIZE
+
+The largest Transport Service Data Unit (TSDU) that an ISO Transport Over TCP
+(ITOT) can buffer before being aborted or disconnected. This option defaults to
+a sensible value and should generally not be changed unless there is a problem
+that warrants it.
+
+:::caution
+
+If this value is set too low, clients will not be able to send data to the
+configured DSA, or they will take an extremely long time to transmit. If this
+value is set too high, malicious clients will be able to send large payloads
+that exhaust memory and/or compute on the DSA.
+
+:::
+
+## MEERKAT_ITOT_MAX_SSDU_SIZE
+
+The largest Session Service Data Unit (SSDU) that an ISO Transport Over TCP
+(ITOT) can buffer before being aborted or disconnected. This option defaults to
+a sensible value and should generally not be changed unless there is a problem
+that warrants it.
+
+:::caution
+
+If this value is set too low, clients will not be able to send data to the
+configured DSA, or they will take an extremely long time to transmit. If this
+value is set too high, malicious clients will be able to send large payloads
+that exhaust memory and/or compute on the DSA.
+
+:::
+
+## MEERKAT_ITOT_MAX_PRESENTATION_CONTEXTS
+
+The maximum number of presentation contexts Meerkat DSA will tolerate in an
+ITU X.226 OSI Presentation association when using ISO Transport Over TCP (ITOT).
+This defaults to 10. If more than this many presentation contexts are proposed
+by a presentation peer, the presentation association will be refused.
+
+:::caution
+
+This option exists to prevent denial-of-service attacks in which a large number
+of presentation contexts are presented.
+
+:::
+
+## MEERKAT_ITOT_PORT
+
+The TCP port Meerkat DSA will listen on for ISO Transport Over TCP (ITOT)
+traffic, as described in [IETF RFC 1006](https://datatracker.ietf.org/doc/html/rfc1006).
+If this is unset, Meerkat DSA will not listen for ITOT traffic.
+
+Many legacy X.500 directory clients support ITOT.
+
+:::caution
+
+ISO Transport Over TCP (ITOT) does **NOT** provide point-to-point encryption or
+peer authentication like TLS does. This means that data sent over ITOT will be
+sent in clear text, meaning that ISPs, routers, and others will be able to snoop
+on your directory traffic. If you expect to send traffic over untrusted
+networks, be sure to use VPNs, TLS tunnels, or SSH tunnels to encrypt and
+authenticate data transmitted over the network.
+
+Meerkat DSA _does_ support ITOT over TLS via the
+[MEERKAT_ITOTS_PORT](./env.md#meerkat_itots_port) configuration option, but most
+legacy clients will not support this.
+
+To add to this, ISO Transport Over TCP (ITOT) is very complicated, because it
+entails another much more complicated networking stack operating over TCP/IP.
+Because of its gigantic attack surface, it is strongly encouraged that you leave
+this disabled unless you have a specific known need to support ITOT clients. IDM
+transport should always be preferred.
+
+:::
+
+## MEERKAT_ITOTS_PORT
+
+The TCP port Meerkat DSA will listen on for ISO Transport Over TCP (ITOT)
+traffic, as described in [IETF RFC 1006](https://datatracker.ietf.org/doc/html/rfc1006),
+but encapsulated within TLS. If this is unset, Meerkat DSA will not listen for
+ITOTS traffic.
+
+Many legacy X.500 directory clients support ITOT, but no known legacy clients
+support ITOT over TLS.
+
+:::caution
+
+ISO Transport Over TCP (ITOT) is very complicated, because it
+entails another much more complicated networking stack operating over TCP/IP.
+Because of its gigantic attack surface, it is strongly encouraged that you leave
+this disabled unless you have a specific known need to support ITOT clients. IDM
+transport should always be preferred, and IDMS even moreso.
+
+:::
+
 ## MEERKAT_LCR_PARALLELISM
 
 If greater than 1, Meerkat DSA will make parallel requests in the

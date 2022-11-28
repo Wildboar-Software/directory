@@ -28,7 +28,7 @@ import {
 import {
     DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as DirectoryBindErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
-import versions from "./versions";
+import versions from "../versions";
 import dnToVertex from "../dit/dnToVertex";
 import { attemptStrongAuth } from "../authn/attemptStrongAuth";
 

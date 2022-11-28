@@ -36,6 +36,8 @@ listen:
 - `MEERKAT_WEB_ADMIN_PORT` (Recommended: 18080; be careful when exposing this.)
 - `MEERKAT_IDM_PORT` (Recommended: 4632)
 - `MEERKAT_IDMS_PORT` (Recommended: 44632)
+- `MEERKAT_ITOT_PORT` (Recommended: 1102)
+- `MEERKAT_ITOTS_PORT` (Recommended: 11102)
 - `MEERKAT_LDAP_PORT` (Recommended: 389; requires root privileges)
 - `MEERKAT_LDAPS_PORT` (Recommended: 636; requires root privileges)
 
@@ -72,6 +74,7 @@ SRV records should be defined for IDM, IDMS, LDAP, and LDAPS like so:
 ```
 _idm._tcp.example.com 3600 IN SRV 0 5 <IDM port number> dsa01.example.com
 _idms._tcp.example.com 3600 IN SRV 0 5 <IDMS port number> dsa01.example.com
+_itot._tcp.example.com 3600 IN SRV 0 5 <IDMS port number> dsa01.example.com
 _ldap._tcp.example.com 3600 IN SRV 0 5 <LDAP port number> dsa01.example.com
 _ldaps._tcp.example.com 3600 IN SRV 0 5 <LDAPS port number> dsa01.example.com
 ```
@@ -112,5 +115,4 @@ In the future, Meerkat DSA may support:
 
 - TOR / Onion Routing / SOCKS Transport
 - ZMQ Transport
-- ITOT Transport
 - LPP Transport
