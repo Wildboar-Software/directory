@@ -367,6 +367,9 @@ function attachUnboundEventListenersToIDMConnection (
                 },
             });
         } catch (e) {
+            if (isDebugging) {
+                console.error(e);
+            }
             ctx.log.warn(ctx.i18n.t("log:bind_error", {
                 host: originalSocket.remoteAddress,
                 source,
@@ -816,6 +819,9 @@ function attachUnboundEventListenersToITOTConnection (
                 },
             });
         } catch (e) {
+            if (isDebugging) {
+                console.error(e);
+            }
             ctx.log.warn(ctx.i18n.t("log:bind_error", {
                 host: originalSocket.remoteAddress,
                 source,
