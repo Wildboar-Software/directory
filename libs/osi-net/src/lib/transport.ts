@@ -194,8 +194,8 @@ export interface TransportConnection {
     network: NetworkLayerService;
     outgoingEvents: TransportLayerOutgoingEventEmitter;
     dataBuffer: Buffer;
-    src_ref: number;
-    dst_ref: number;
+    remote_ref: number;
+    local_ref: number;
     local_t_selector?: Buffer;
     remote_t_selector?: Buffer;
     max_tpdu_size: number;
@@ -224,8 +224,8 @@ export function createTransportConnection(
         network,
         outgoingEvents,
         dataBuffer: Buffer.alloc(0),
-        src_ref: 0,
-        dst_ref: 0,
+        remote_ref: 0,
+        local_ref: 0,
         max_tpdu_size,
         max_tsdu_size,
     };
@@ -1279,14 +1279,14 @@ export function dispatch_TCONreq(
     c: TransportConnection,
     tpdu: CR_TPDU
 ): void {
-    c.src_ref = tpdu.srcRef;
+    c.local_ref = tpdu.srcRef;
     if (!tpdu.tpdu_size) {
         tpdu.tpdu_size = 2048; // The max for class 0.
     } else {
         c.max_tpdu_size = tpdu.tpdu_size;
     }
     if (!tpdu.preferred_max_tpdu_size) {
-        tpdu.preferred_max_tpdu_size = Math.floor(c.max_tpdu_size / 128) * 128;
+        tpdu.preferred_max_tpdu_size = c.max_tpdu_size;
     } else {
         c.max_tpdu_size = tpdu.preferred_max_tpdu_size;
     }
@@ -1328,7 +1328,7 @@ export function dispatch_TCONresp(
     c: TransportConnection,
     tpdu: CC_TPDU
 ): void {
-    c.dst_ref = tpdu.dstRef;
+    c.local_ref = tpdu.srcRef;
     switch (c.state) {
         case TransportConnectionState.WFTRESP: {
             if (tpdu.preferred_max_tpdu_size) {
@@ -1336,7 +1336,8 @@ export function dispatch_TCONresp(
             } else if (tpdu.tpdu_size) {
                 c.max_tpdu_size = tpdu.tpdu_size;
             } else if (c.max_tpdu_size) {
-                tpdu.preferred_max_tpdu_size = Math.floor(c.max_tpdu_size / 128) * 128;
+                tpdu.tpdu_size = c.max_tpdu_size;
+                // tpdu.preferred_max_tpdu_size = c.max_tpdu_size;
             }
             if (tpdu.called_or_responding_transport_selector) {
                 c.local_t_selector = tpdu.called_or_responding_transport_selector;
@@ -1551,8 +1552,8 @@ export function dispatch_CR(
                 }
             } else {
                 c.state = TransportConnectionState.WFTRESP;
-                c.src_ref = tpdu.srcRef;
-                c.dst_ref = randomBytes(2).readUint16BE();
+                c.remote_ref = tpdu.srcRef;
+                c.local_ref = randomBytes(2).readUint16BE();
                 // These are already decoded to proper values in decode_CR().
                 c.max_tpdu_size = tpdu.preferred_max_tpdu_size ?? tpdu.tpdu_size ?? DEFAULT_MAX_TPDU_SIZE;
                 if (tpdu.calling_transport_selector) {
@@ -1568,7 +1569,7 @@ export function dispatch_CR(
 }
 
 function validate_CC(c: TransportConnection, tpdu: CC_TPDU): boolean {
-    if (c.src_ref !== tpdu.dstRef) {
+    if (c.local_ref !== tpdu.dstRef) {
         return false;
     }
     if (tpdu.srcRef === 0) {
@@ -1635,7 +1636,7 @@ export function dispatch_CC(
             const p8: boolean = validate_CC(c, tpdu); // Acceptable CC
             if (p8) {
                 c.state = TransportConnectionState.OPEN;
-                c.dst_ref = tpdu.dstRef;
+                c.local_ref = tpdu.dstRef;
                 // These are already decoded to proper values in decode_CC().
                 c.max_tpdu_size = tpdu.preferred_max_tpdu_size ?? tpdu.tpdu_size ?? DEFAULT_MAX_TPDU_SIZE;
                 if (tpdu.called_or_responding_transport_selector) {
