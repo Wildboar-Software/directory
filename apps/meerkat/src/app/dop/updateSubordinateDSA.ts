@@ -183,11 +183,6 @@ interface UpdateSubordinateOptions {
     endTime?: Date;
 }
 
-export
-interface UpdateSubordinateDSAReturn {
-
-}
-
 /**
  * @summary Updates a subordinate DSA of changes that may affect a hierarchical operational binding
  * @description
