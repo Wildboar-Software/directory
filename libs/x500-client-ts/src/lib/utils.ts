@@ -24,7 +24,7 @@ import { DER, ASN1Encoder, _encodeNull } from "asn1-ts/dist/node/functional";
 import type {
     OPTIONALLY_PROTECTED,
 } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/OPTIONALLY-PROTECTED.ta";
-import { KeyObject, createSign, sign, KeyType } from "crypto";
+import { KeyObject, createSign, sign, KeyType, randomInt } from "crypto";
 import {
     AlgorithmIdentifier,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
@@ -754,9 +754,9 @@ interface DirectoryVersioned {
     directoryVersion: number;
 }
 
+export const MAX_INVOKE_ID: number = 2147483647;
+
 export
 function generateUnusedInvokeId (): number {
-    const bytes = randomBytes(4);
-    bytes[0] &= 0b0111_1111; // To ensure that the number is always positive.
-    return bytes.readUint32BE();
+    return randomInt(MAX_INVOKE_ID);
 }
