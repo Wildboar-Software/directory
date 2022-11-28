@@ -23,7 +23,7 @@ import {
     _decode_ListResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
-import { assert } from "node:console";
+import { strict as assert } from "node:assert";
 import type { MeerkatContext } from "./ctx";
 
 const RUNNING_MEERKAT_DSA_HOST: string = "localhost";
