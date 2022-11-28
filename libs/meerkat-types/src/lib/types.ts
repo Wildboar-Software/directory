@@ -3017,6 +3017,11 @@ interface OperationInvocationInfo {
     pointOfNoReturnTime?: Date;
 }
 
+export
+interface WithIntegerProtocolVersion {
+    protocolVersion?: number;
+}
+
 /**
  * @summary An application association with this DSA.
  * @description
@@ -3027,7 +3032,10 @@ interface OperationInvocationInfo {
  * @class
  */
 export
-abstract class ClientAssociation {
+abstract class ClientAssociation implements WithIntegerProtocolVersion {
+
+    /** The version number of the protocol in use. */
+    protocolVersion?: number | undefined;
 
     /** The underlying TCP socket */
     public socket!: Socket;

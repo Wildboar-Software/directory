@@ -571,6 +571,7 @@ class DSPAssociation extends ClientAssociation {
         this.boundEntry = outcome.boundVertex;
         this.boundNameAndUID = outcome.boundNameAndUID;
         this.authLevel = outcome.authLevel;
+        this.protocolVersion = arg_.versions?.[1] ? 2 : 1;
         if (
             ("basicLevels" in outcome.authLevel)
             && (outcome.authLevel.basicLevels.level === AuthenticationLevel_basicLevels_level_none)
@@ -599,6 +600,7 @@ class DSPAssociation extends ClientAssociation {
                 ctx.config.signing.minAuthRequired,
                 this.authLevel.basicLevels,
             )
+            && ((this.protocolVersion ?? 1) > 1)
         ) {
             this.authorizedForSignedResults = true;
         }
@@ -608,6 +610,7 @@ class DSPAssociation extends ClientAssociation {
                 ctx.config.signing.signedErrorsMinAuthRequired,
                 this.authLevel.basicLevels,
             )
+            && ((this.protocolVersion ?? 1) > 1)
         ) {
             this.authorizedForSignedErrors = true;
         }
@@ -755,6 +758,7 @@ class DSPAssociation extends ClientAssociation {
                 ctx.config.signing.signedErrorsMinAuthRequired,
                 this.authLevel.basicLevels,
             )
+            && ((this.protocolVersion ?? 1) > 1)
         ) {
             this.authorizedForSignedErrors = true;
         }
