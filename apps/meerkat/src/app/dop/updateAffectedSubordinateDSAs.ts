@@ -81,6 +81,15 @@ async function updateAffectedSubordinateDSAs (
                 subr.dse.rdn,
                 accessPoint,
             )
+                .then((response) => {
+                    if (!("result" in response)) {
+                        ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+                            obid: bindingID.identifier.toString(),
+                            version: bindingID.version.toString(),
+                            e: JSON.stringify(response),
+                        }));
+                    }
+                })
                 .catch((e) => {
                     ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
                         obid: bindingID.identifier.toString(),

@@ -6,11 +6,11 @@ import {
 import { TRUE_BIT } from "asn1-ts";
 
 /**
- * @summary Versions of the Directory System Protocol supported by Meerkat DSA.
+ * @summary Versions of the Directory Protocols supported by Meerkat DSA.
  * @description
  *
- * The versions of the Directory System Protocol (DSP) supported by Meerkat DSA.
- * Forms part of the `DSABindResult`.
+ * The versions of the directory protocols supported by Meerkat DSA.
+ * Forms part of the `DSABindResult` and `DirectoryBindResult`.
  *
  * @constant
  */

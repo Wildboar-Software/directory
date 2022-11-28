@@ -121,6 +121,16 @@ idm_buffer_size: "1000000"
 idm_port: 4632
 idms_port: 44632
 # init_js: use initJsConfigName
+itot_port: 1102
+itots_port: 11102
+itot_abort_timeout_in_seconds: 3
+# itot_max_nsdu_size: "65531"
+# itot_max_tpdu_size: "65500"
+# itot_max_tsdu_size: "10000000"
+# itot_max_ssdu_size: "10000000"
+itot_max_presentation_contexts: 10
+# itot_acse_password: banana
+disable_itot_chaining: false
 lcr_parallelism: 0
 ldap_buffer_size: "1000000"
 ldap_port: 389

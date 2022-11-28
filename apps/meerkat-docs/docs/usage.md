@@ -20,7 +20,8 @@ meanings to Meerkat DSA:
 - `idms` - Internet Direct Mapping over TLS
 - `ldap` - LDAP
 - `ldaps` - LDAP over TLS
-- `itot` - ISO Transport Over TCP
+- `itot` - ISO Transport Over TCP (ITOT)
+- `itots` - ISO Transport Over TCP (ITOT) over TLS
 - `lpp` - Lightweight Presentation Protocol
 
 ## X.500 Clients

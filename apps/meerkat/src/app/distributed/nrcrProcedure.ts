@@ -12,8 +12,6 @@ import { ReferralData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractSe
 import { strict as assert } from "assert";
 import { ServiceErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import { apinfoProcedure } from "./apinfoProcedure";
-import Error_ from "@wildboar/x500/src/lib/types/Error_";
-import ResultOrError from "@wildboar/x500/src/lib/types/ResultOrError";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     ServiceProblem_timeLimitExceeded,
@@ -61,6 +59,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
 import { printInvokeId } from "../utils/printInvokeId";
 import { compareAuthenticationLevel } from "@wildboar/x500";
+import { OperationOutcome, ErrorParameters } from "@wildboar/rose-transport";
 
 // TODO: Really, this should have the same return type as the OperationDispatcher.
 // This also returns a value, but also mutates the OD state, which is sketchy.
@@ -93,7 +92,7 @@ async function nrcrProcedure (
     chainingProhibited: BOOLEAN,
     partialNameResolution: BOOLEAN,
     signErrors: boolean,
-): Promise<OPCR | Error_> {
+): Promise<OPCR | ErrorParameters> {
     const op = ("present" in state.invokeId)
         ? assn?.invocations.get(Number(state.invokeId.present))
         : undefined;
@@ -206,7 +205,7 @@ async function nrcrProcedure (
         checkTimeLimit();
         const isNSSR = (cref.referenceType === ReferenceType_nonSpecificSubordinate);
         if (!isNSSR) {
-            const outcome: ResultOrError | null = await apinfoProcedure(
+            const outcome = await apinfoProcedure(
                 ctx,
                 cref.accessPoints[0],
                 req,
@@ -218,9 +217,9 @@ async function nrcrProcedure (
             if (!outcome) {
                 continue;
             } else if (("result" in outcome) && outcome.result) {
-                return chainedRead.decoderFor["&ResultType"]!(outcome.result);
+                return chainedRead.decoderFor["&ResultType"]!(outcome.result.parameter);
             } else if (("error" in outcome) && outcome.error) {
-                return outcome;
+                return outcome.error;
             }
         }
         let allServiceErrors: boolean = true;
@@ -246,7 +245,7 @@ async function nrcrProcedure (
                     signErrors,
                 );
             }
-            let outcome: ResultOrError | null = null;
+            let outcome: OperationOutcome | null = null;
             try {
                 outcome = await apinfoProcedure(
                     ctx,
@@ -265,7 +264,7 @@ async function nrcrProcedure (
             }
             if (("result" in outcome) && outcome.result) {
                 try {
-                    return chainedRead.decoderFor["&ResultType"]!(outcome.result);
+                    return chainedRead.decoderFor["&ResultType"]!(outcome.result.parameter);
                 } catch (e) {
                     ctx.log.error(e.message, {
                         remoteFamily: assn?.socket.remoteFamily,
@@ -277,10 +276,10 @@ async function nrcrProcedure (
                     continue;
                 }
             } else if ("error" in outcome) {
-                if (outcome.errcode && compareCode(outcome.errcode, serviceError["&errorCode"]!)) {
+                if (compareCode(outcome.error.code, serviceError["&errorCode"]!)) {
                     let errorParam: OPTIONALLY_PROTECTED<ServiceErrorData> | null = null;
                     try {
-                        errorParam = serviceError.decoderFor["&ParameterType"]!(outcome.error);
+                        errorParam = serviceError.decoderFor["&ParameterType"]!(outcome.error.parameter);
                     } catch {
                         continue;
                     }
@@ -315,7 +314,7 @@ async function nrcrProcedure (
                             signErrors,
                         );
                     } else {
-                        return outcome;
+                        return outcome.error;
                     }
                 } else {
                     allServiceErrors = false;

@@ -780,11 +780,11 @@ class OperationDispatcher {
                 partialNameResolution,
                 signErrors,
             );
-            if ("error" in nrcrResult) {
+            if ("invoke_id" in nrcrResult) {
                 throw new errors.ChainedError(
                     ctx.i18n.t("err:chained_error"),
-                    nrcrResult.error,
-                    nrcrResult.errcode,
+                    nrcrResult.parameter,
+                    nrcrResult.code,
                 );
             }
             return {
@@ -1133,11 +1133,11 @@ class OperationDispatcher {
                 partialNameResolution,
                 signErrors,
             );
-            if ("error" in nrcrResult) {
+            if ("invoke_id" in nrcrResult) {
                 throw new errors.ChainedError(
                     ctx.i18n.t("err:chained_error"),
-                    nrcrResult.error,
-                    nrcrResult.errcode,
+                    nrcrResult.parameter,
+                    nrcrResult.code,
                 );
             } else {
                 const unprotectedResult = getOptionallyProtectedValue(nrcrResult);
@@ -1261,11 +1261,11 @@ class OperationDispatcher {
                 partialNameResolution,
                 signErrors,
             );
-            if ("error" in nrcrResult) {
+            if ("invoke_id" in nrcrResult) {
                 throw new errors.ChainedError(
                     ctx.i18n.t("err:chained_error"),
-                    nrcrResult.error,
-                    nrcrResult.errcode,
+                    nrcrResult.parameter,
+                    nrcrResult.code,
                 );
             } else {
                 return {

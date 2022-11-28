@@ -7,9 +7,9 @@ const ctx: Context = {
     objectClasses: {
         get: (key: string) => {
             return ({
-                [seloc.top["&id"].toString()]: objectClassFromInformationObject(seloc.top),
-                [seloc.person["&id"].toString()]: objectClassFromInformationObject(seloc.person),
-                [seloc.residentialPerson["&id"].toString()]: objectClassFromInformationObject(seloc.residentialPerson),
+                [seloc.top["&id"].toString()]: objectClassFromInformationObject(seloc.top, "top"),
+                [seloc.person["&id"].toString()]: objectClassFromInformationObject(seloc.person, "person"),
+                [seloc.residentialPerson["&id"].toString()]: objectClassFromInformationObject(seloc.residentialPerson, "residentialPerson"),
             })[key];
         },
     },

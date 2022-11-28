@@ -21,6 +21,18 @@ spec:
       targetPort: 44632
     {{- end }}
     {{- end }}
+    {{- if .Values.itot_port }}
+    - name: itot
+      protocol: TCP
+      port: {{ .Values.itot_port | default 1102 | int }}
+      targetPort: 1102
+    {{- end }}
+    {{- if .Values.itots_port }}
+    - name: itots
+      protocol: TCP
+      port: {{ .Values.itots_port | default 11102 | int }}
+      targetPort: 11102
+    {{- end }}
     {{- if .Values.ldap_port }}
     - name: ldap
       protocol: TCP

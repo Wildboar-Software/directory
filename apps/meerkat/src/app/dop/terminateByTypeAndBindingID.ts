@@ -7,21 +7,7 @@ import type {
 import type {
     OperationalBindingID,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
-import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
-import connect from "../net/connect";
-import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
-import {
-    TerminateOperationalBindingArgument,
-    _encode_TerminateOperationalBindingArgument,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingArgument.ta";
-import {
-    TerminateOperationalBindingArgumentData,
-    _encode_TerminateOperationalBindingArgumentData,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingArgumentData.ta";
-import {
-    terminateOperationalBinding,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/terminateOperationalBinding.oa";
-import { DER } from "asn1-ts/dist/node/functional";
+import { bindForOBM } from "../net/bindToOtherDSA";
 import {
     ServiceErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
@@ -32,7 +18,10 @@ import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
-import { generateSIGNED } from "../pki/generateSIGNED";
+import { OperationOutcome } from "@wildboar/rose-transport";
+import {
+    TerminateOperationalBindingResult,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingResult.ta";
 
 /**
  * @summary Notifies another DSA about a termination of an operational binding.
@@ -47,7 +36,7 @@ import { generateSIGNED } from "../pki/generateSIGNED";
  * @param bindingType The object identifier of the binding type
  * @param bindingID The operational binding ID
  * @param aliasDereferenced Whether an alias was dereferenced in the operation leading up to this
- * @returns A result or error
+ * @returns The DOP terminateOperationalBinding operation outcome
  *
  * @function
  * @async
@@ -61,11 +50,8 @@ async function terminateByTypeAndBindingID (
     bindingID: OperationalBindingID,
     aliasDereferenced?: boolean,
     signErrors: boolean = false,
-): Promise<ResultOrError> {
-    const conn = await connect(ctx, targetSystem, dop_ip["&id"]!, {
-        tlsOptional: ctx.config.chaining.tlsOptional,
-        signErrors,
-    });
+): Promise<OperationOutcome<TerminateOperationalBindingResult>> {
+    const conn = await bindForOBM(ctx, assn, undefined, targetSystem, aliasDereferenced, signErrors);
     if (!conn) {
         throw new ServiceError(
             ctx.i18n.t("err:could_not_connect"),
@@ -85,27 +71,12 @@ async function terminateByTypeAndBindingID (
             signErrors,
         );
     }
-    const data = new TerminateOperationalBindingArgumentData(
+    return conn.terminateOperationalBinding({
         bindingType,
         bindingID,
-        undefined,
-        undefined,
-        undefined,
-    );
-    const unsignedArg: TerminateOperationalBindingArgument = {
-        unsigned: data,
-    };
-    const signArgument: boolean = true; // TODO: Make configurable.
-    if (!signArgument) {
-        return conn.writeOperation({
-            opCode: terminateOperationalBinding["&operationCode"]!,
-            argument: _encode_TerminateOperationalBindingArgument(unsignedArg, DER),
-        });
-    }
-    const arg = generateSIGNED(ctx, data, _encode_TerminateOperationalBindingArgumentData);
-    return conn.writeOperation({
-        opCode: terminateOperationalBinding["&operationCode"]!,
-        argument: _encode_TerminateOperationalBindingArgument(arg, DER),
+        _unrecognizedExtensionsList: [],
+        cert_path: ctx.config.signing.certPath,
+        key: ctx.config.signing.key,
     });
 }
 

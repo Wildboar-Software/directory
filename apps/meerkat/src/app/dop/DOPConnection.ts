@@ -13,17 +13,12 @@ import type { MeerkatContext } from "../ctx";
 import { ASN1Element, ASN1TagClass, TRUE_BIT } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
-    IDMConnection,
-    IDMStatus,
-} from "@wildboar/idm";
-import {
     DSABindArgument,
     _decode_DSABindArgument,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindArgument.ta";
 import {
     _encode_DSABindResult,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindResult.ta";
-import type { Request } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Request.ta";
 import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
 import {
     _encode_Code,
@@ -47,21 +42,6 @@ import {
 import {
     SIGNED,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
-import {
-    IdmReject_reason_duplicateInvokeIDRequest,
-    IdmReject_reason_unsupportedOperationRequest,
-    IdmReject_reason_unknownOperationRequest,
-    IdmReject_reason_mistypedPDU,
-    IdmReject_reason_mistypedArgumentRequest,
-    IdmReject_reason_resourceLimitationRequest,
-    IdmReject_reason_unknownError,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmReject-reason.ta";
-import {
-    Abort_unboundRequest,
-    Abort_invalidProtocol,
-    Abort_reasonNotSpecified,
-    Abort_invalidPDU,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Abort.ta";
 import establishOperationalBinding from "./operations/establishOperationalBinding";
 import modifyOperationalBinding from "./operations/modifyOperationalBinding";
 import terminateOperationalBinding from "./operations/terminateOperationalBinding";
@@ -83,7 +63,7 @@ import {
 import {
     _encode_TerminateOperationalBindingResult,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingResult.ta";
-import versions from "./versions";
+import versions from "../versions";
 import { bind as doBind } from "../authn/dsaBind";
 import {
     directoryBindError,
@@ -127,6 +107,12 @@ import {
     Versions_v2,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";
 import printCode from "../utils/printCode";
+import {
+    ROSETransport,
+    RejectReason,
+    AbortReason,
+    RequestParameters,
+} from "@wildboar/rose-transport";
 
 const securityParametersTagByOpCode: Map<number, number> = new Map([
     [100, 8], // establishOperationalBinding
@@ -150,44 +136,43 @@ const securityParametersTagByOpCode: Map<number, number> = new Map([
 async function handleRequest (
     ctx: MeerkatContext,
     assn: DOPAssociation, // eslint-disable-line
-    request: Request,
+    request: RequestParameters,
 ): Promise<void> {
-    if (!("local" in request.opcode)) {
+    if (!("local" in request.code)) {
         throw new MistypedPDUError();
     }
-    switch (request.opcode.local) {
+    if (!("present" in request.invoke_id)) {
+        throw new MistypedPDUError();
+    }
+    switch (request.code.local) {
     case (100): { // establish
-        const arg = _decode_EstablishOperationalBindingArgument(request.argument);
-        const result = await establishOperationalBinding(ctx, assn, request.invokeID, arg);
-        assn.idm.writeResult(
-            request.invokeID,
-            request.opcode,
-            _encode_EstablishOperationalBindingResult(result, DER),
-        );
+        const arg = _decode_EstablishOperationalBindingArgument(request.parameter);
+        const result = await establishOperationalBinding(ctx, assn, request.invoke_id.present, arg);
+        assn.rose.write_result({
+            invoke_id: request.invoke_id,
+            code: request.code,
+            parameter: _encode_EstablishOperationalBindingResult(result, DER),
+        });
         break;
     }
     case (102): { // modify
-        const arg = _decode_ModifyOperationalBindingArgument(request.argument);
-        const result = await modifyOperationalBinding(ctx, assn, {
-            present: request.invokeID,
-        }, arg);
-        assn.idm.writeResult(
-            request.invokeID,
-            request.opcode,
-            _encode_ModifyOperationalBindingResult(result, DER),
-        );
+        const arg = _decode_ModifyOperationalBindingArgument(request.parameter);
+        const result = await modifyOperationalBinding(ctx, assn, request.invoke_id, arg);
+        assn.rose.write_result({
+            invoke_id: request.invoke_id,
+            code: request.code,
+            parameter: _encode_ModifyOperationalBindingResult(result, DER),
+        });
         break;
     }
     case (101): { // terminate
-        const arg = _decode_TerminateOperationalBindingArgument(request.argument);
-        const result = await terminateOperationalBinding(ctx, assn, {
-            present: request.invokeID,
-        }, arg);
-        assn.idm.writeResult(
-            request.invokeID,
-            request.opcode,
-            _encode_TerminateOperationalBindingResult(result, DER),
-        );
+        const arg = _decode_TerminateOperationalBindingArgument(request.parameter);
+        const result = await terminateOperationalBinding(ctx, assn, request.invoke_id, arg);
+        assn.rose.write_result({
+            invoke_id: request.invoke_id,
+            code: request.code,
+            parameter: _encode_TerminateOperationalBindingResult(result, DER),
+        });
         break;
     }
     default: {
@@ -215,50 +200,69 @@ async function handleRequest (
 async function handleRequestAndErrors (
     ctx: MeerkatContext,
     assn: DOPAssociation, // eslint-disable-line
-    request: Request,
+    request: RequestParameters,
 ): Promise<void> {
-    if (!("local" in request.opcode)) {
-        assn.idm.writeReject(request.invokeID, IdmReject_reason_mistypedPDU);
+    if (!("local" in request.code)) {
+        assn.rose.write_reject({
+            invoke_id: request.invoke_id,
+            problem: RejectReason.mistyped_pdu,
+        });
         return;
     }
-    const opcode = Number(request.opcode.local);
+    const opcode = Number(request.code.local);
     const logInfo = {
         remoteFamily: assn.socket.remoteFamily,
         remoteAddress: assn.socket.remoteAddress,
         remotePort: assn.socket.remotePort,
         association_id: assn.id,
-        invokeID: printInvokeId({ present: request.invokeID }),
+        invokeID: printInvokeId(request.invoke_id),
+        opcode,
     };
-    if ((request.invokeID < 0) || (request.invokeID > Number.MAX_SAFE_INTEGER)) {
+    if (!("present" in request.invoke_id)) {
         ctx.log.warn(ctx.i18n.t("log:unusual_invoke_id", {
             host: assn.socket.remoteAddress,
             cid: assn.id,
         }), logInfo);
-        assn.idm.writeAbort(Abort_invalidPDU);
+        assn.rose.write_abort(AbortReason.invalid_pdu);
         return;
     }
-    if (assn.invocations.has(Number(request.invokeID))) {
-        ctx.log.warn(ctx.i18n.t("log:dup_invoke_id", {
+    const invoke_id = Number(request.invoke_id.present);
+    if ((invoke_id < 0) || (invoke_id > Number.MAX_SAFE_INTEGER)) {
+        ctx.log.warn(ctx.i18n.t("log:unusual_invoke_id", {
             host: assn.socket.remoteAddress,
-            iid: request.invokeID.toString(),
             cid: assn.id,
         }), logInfo);
-        assn.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
+        assn.rose.write_abort(AbortReason.invalid_pdu);
+        return;
+    }
+    if (assn.invocations.has(invoke_id)) {
+        ctx.log.warn(ctx.i18n.t("log:dup_invoke_id", {
+            host: assn.socket.remoteAddress,
+            iid: invoke_id.toString(),
+            cid: assn.id,
+        }), logInfo);
+        assn.rose.write_reject({
+            invoke_id: request.invoke_id,
+            problem: RejectReason.duplicate_invoke_id_request,
+        });
         return;
     }
     if (assn.invocations.size >= ctx.config.maxConcurrentOperationsPerConnection) {
         ctx.log.warn(ctx.i18n.t("log:max_concurrent_op", {
             host: assn.socket.remoteAddress,
             cid: assn.id,
-            iid: request.invokeID.toString(),
+            iid: invoke_id.toString(),
         }), logInfo);
-        assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
+        assn.rose.write_reject({
+            invoke_id: request.invoke_id,
+            problem: RejectReason.resource_limitation_request,
+        });
         return;
     }
     ctx.log.debug(ctx.i18n.t("log:received_request", {
         protocol: "DOP",
-        iid: request.invokeID.toString(),
-        op: printCode(request.opcode),
+        iid: invoke_id.toString(),
+        op: printCode(request.code),
         cid: assn.id,
     }), logInfo);
     const stats: OperationStatistics = {
@@ -270,8 +274,8 @@ async function handleRequestAndErrors (
             protocol: dop_ip["&id"]!.toString(),
         },
         request: {
-            invokeId: Number(request.invokeID),
-            operationCode: codeToString(request.opcode),
+            invokeId: invoke_id,
+            operationCode: codeToString(request.code),
         },
     };
     const startTime = Date.now();
@@ -290,7 +294,7 @@ async function handleRequestAndErrors (
                 new AuthenticationLevel_basicLevels(
                     assn.authLevel.basicLevels.level,
                     assn.authLevel.basicLevels.localQualifier,
-                    isArgumentSigned(request.opcode, request.argument),
+                    isArgumentSigned(request.code, request.parameter),
                 ),
             )
         ) {
@@ -320,8 +324,8 @@ async function handleRequestAndErrors (
                 false,
             );
         }
-        if (isArgumentSigned(request.opcode, request.argument)) {
-            const signedArgElements = request.argument.sequence;
+        if (isArgumentSigned(request.code, request.parameter)) {
+            const signedArgElements = request.parameter.sequence;
             const tbsElement = signedArgElements[0];
             const securityParametersTagNumber: number | undefined = securityParametersTagByOpCode.get(opcode);
             if (securityParametersTagNumber === undefined) {
@@ -351,9 +355,7 @@ async function handleRequestAndErrors (
                 ctx,
                 assn,
                 certPath,
-                {
-                    present: Number(request.invokeID),
-                },
+                request.invoke_id,
                 false,
                 new SIGNED(
                     tbsElement,
@@ -368,7 +370,7 @@ async function handleRequestAndErrors (
         }
         await handleRequest(ctx, assn, request);
         ctx.telemetry.trackRequest({
-            name: codeToString(request.opcode),
+            name: codeToString(request.code),
             url: ctx.config.myAccessPointNSAPs?.map(naddrToURI).find((uri) => !!uri)
                 ?? `idm://meerkat.invalid:${ctx.config.idm.port}`,
             duration: Date.now() - startTime,
@@ -381,12 +383,12 @@ async function handleRequestAndErrors (
             measurements: {
                 bytesRead: assn.socket.bytesRead,
                 bytesWritten: assn.socket.bytesWritten,
-                idmFramesReceived: assn.idm.getFramesReceived(),
+                // idmFramesReceived: assn.idm.getFramesReceived(),
             },
         });
     } catch (e) {
         ctx.telemetry.trackRequest({
-            name: codeToString(request.opcode),
+            name: codeToString(request.code),
             url: ctx.config.myAccessPointNSAPs?.map(naddrToURI).find((uri) => !!uri)
                 ?? `idm://meerkat.invalid:${ctx.config.idm.port}`,
             duration: Date.now() - startTime,
@@ -401,10 +403,10 @@ async function handleRequestAndErrors (
             measurements: {
                 bytesRead: assn.socket.bytesRead,
                 bytesWritten: assn.socket.bytesWritten,
-                idmFramesReceived: assn.idm.getFramesReceived(),
+                // idmFramesReceived: assn.idm.getFramesReceived(),
             },
         });
-        ctx.log.info(`${assn.id}#${request.invokeID}: ${e?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
+        ctx.log.info(`${assn.id}#${invoke_id}: ${e?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
         if (isDebugging) {
             console.error(e);
         }
@@ -427,7 +429,11 @@ async function handleRequestAndErrors (
                     unsigned: e.data,
                 };
             const payload = operationalBindingError.encoderFor["&ParameterType"]!(param, DER);
-            assn.idm.writeError(request.invokeID, code, payload);
+            assn.rose.write_error({
+                invoke_id: request.invoke_id,
+                code,
+                parameter: payload,
+            });
             stats.outcome.error.problem = e.data.problem;
             stats.outcome.error.bindingType = e.data.bindingType?.toString();
             stats.outcome.error.retryAt = e.data.retryAt?.toString();
@@ -442,32 +448,55 @@ async function handleRequestAndErrors (
                     unsigned: e.data,
                 };
             const payload = securityError.encoderFor["&ParameterType"]!(param, DER);
-            assn.idm.writeError(request.invokeID, code, payload);
+            assn.rose.write_error({
+                invoke_id: request.invoke_id,
+                code,
+                parameter: payload,
+            });
             stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof UnknownOperationError) {
-            assn.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
+            assn.rose.write_reject({
+                invoke_id: request.invoke_id,
+                problem: RejectReason.unknown_operation_request,
+            });
         } else if (e instanceof errors.DuplicateInvokeIdError) {
-            assn.idm.writeReject(request.invokeID, IdmReject_reason_duplicateInvokeIDRequest);
+            assn.rose.write_reject({
+                invoke_id: request.invoke_id,
+                problem: RejectReason.duplicate_invoke_id_request,
+            });
         } else if (e instanceof errors.UnsupportedOperationError) {
-            assn.idm.writeReject(request.invokeID, IdmReject_reason_unsupportedOperationRequest);
-        } else if (e instanceof errors.UnknownOperationError) {
-            assn.idm.writeReject(request.invokeID, IdmReject_reason_unknownOperationRequest);
+            assn.rose.write_reject({
+                invoke_id: request.invoke_id,
+                problem: RejectReason.unsupported_operation_request,
+            });
         } else if (e instanceof errors.MistypedPDUError) {
-            assn.idm.writeReject(request.invokeID, IdmReject_reason_mistypedPDU);
+            assn.rose.write_reject({
+                invoke_id: request.invoke_id,
+                problem: RejectReason.mistyped_pdu,
+            });
         } else if (e instanceof errors.MistypedArgumentError) {
-            assn.idm.writeReject(request.invokeID, IdmReject_reason_mistypedArgumentRequest);
+            assn.rose.write_reject({
+                invoke_id: request.invoke_id,
+                problem: RejectReason.mistyped_argument_request,
+            });
         } else if (e instanceof errors.ResourceLimitationError) {
-            assn.idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
+            assn.rose.write_reject({
+                invoke_id: request.invoke_id,
+                problem: RejectReason.resource_limitation_request,
+            });
         } else if (e instanceof errors.UnknownError) {
-            assn.idm.writeReject(request.invokeID, IdmReject_reason_unknownError);
+            assn.rose.write_reject({
+                invoke_id: request.invoke_id,
+                problem: RejectReason.unknown_error,
+            });
         } else if (e instanceof errors.UnboundRequestError) {
-            assn.idm.writeAbort(Abort_unboundRequest);
+            assn.rose.write_abort(AbortReason.unbound_request);
         } else if (e instanceof errors.InvalidProtocolError) {
-            assn.idm.writeAbort(Abort_invalidProtocol);
+            assn.rose.write_abort(AbortReason.invalid_protocol);
         } else if (e instanceof errors.ReasonNotSpecifiedError) {
-            assn.idm.writeAbort(Abort_reasonNotSpecified);
+            assn.rose.write_abort(AbortReason.reason_not_specified);
         } else {
-            assn.idm.writeAbort(Abort_reasonNotSpecified);
+            assn.rose.write_abort(AbortReason.reason_not_specified);
         }
         ctx.telemetry.trackException({
             exception: e,
@@ -478,7 +507,7 @@ async function handleRequestAndErrors (
             measurements: {
                 bytesRead: assn.socket.bytesRead,
                 bytesWritten: assn.socket.bytesWritten,
-                idmFramesReceived: assn.idm.getFramesReceived(),
+                // idmFramesReceived: assn.idm.getFramesReceived(),
             },
         });
     }
@@ -502,7 +531,7 @@ class DOPAssociation extends ClientAssociation {
      * them once the bind is complete, if it completes. This array stores the
      * requests that have come in before the association was bound.
      */
-    public readonly prebindRequests: Request[] = [];
+    public readonly prebindRequests: RequestParameters[] = [];
     public bind: DSABindArgument | undefined;
 
     /**
@@ -519,8 +548,7 @@ class DOPAssociation extends ClientAssociation {
     public async attemptBind (arg: ASN1Element): Promise<void> {
         const arg_ = _decode_DSABindArgument(arg);
         const ctx = this.ctx;
-        const idm = this.idm;
-        const remoteHostIdentifier = `${idm.s.remoteFamily}://${idm.s.remoteAddress}/${idm.s.remotePort}`;
+        const remoteHostIdentifier = `${this.socket.remoteFamily}://${this.socket.remoteAddress}/${this.socket.remotePort}`;
         const telemetryProperties = {
             remoteFamily: this.socket.remoteFamily,
             remoteAddress: this.socket.remoteAddress,
@@ -552,7 +580,7 @@ class DOPAssociation extends ClientAssociation {
         const startBindTime = new Date();
         let outcome!: BindReturn;
         try {
-            outcome = await doBind(ctx, this.idm.socket, arg_, signErrors);
+            outcome = await doBind(ctx, this.socket, arg_, signErrors);
         } catch (e) {
             const logInfo = {
                 remoteFamily: this.socket.remoteFamily,
@@ -575,7 +603,10 @@ class DOPAssociation extends ClientAssociation {
                     ? signDirectoryError(ctx, e.data, _encode_DBE_Param)
                     : err;
                 const error = directoryBindError.encoderFor["&ParameterType"]!(payload, DER);
-                idm.writeBindError(dop_ip["&id"]!, error);
+                this.rose.write_bind_error({
+                    protocol_id: dop_ip["&id"]!, // FIXME:
+                    parameter: error,
+                });
                 const serviceProblem = ("serviceError" in e.data.error)
                     ? e.data.error.serviceError
                     : undefined;
@@ -595,7 +626,7 @@ class DOPAssociation extends ClientAssociation {
                     measurements: {
                         bytesRead: this.socket.bytesRead,
                         bytesWritten: this.socket.bytesWritten,
-                        idmFramesReceived: this.idm.getFramesReceived(),
+                        // idmFramesReceived: this.idm.getFramesReceived(),
                     },
                 });
             } else {
@@ -603,14 +634,14 @@ class DOPAssociation extends ClientAssociation {
                 if (isDebugging) {
                     console.error(e);
                 }
-                idm.writeAbort(Abort_reasonNotSpecified);
+                this.rose.write_abort(AbortReason.reason_not_specified);
                 ctx.telemetry.trackException({
                     exception: e,
                     properties: telemetryProperties,
                     measurements: {
                         bytesRead: this.socket.bytesRead,
                         bytesWritten: this.socket.bytesWritten,
-                        idmFramesReceived: this.idm.getFramesReceived(),
+                        // idmFramesReceived: this.idm.getFramesReceived(),
                     },
                 });
             }
@@ -667,15 +698,20 @@ class DOPAssociation extends ClientAssociation {
             undefined, // TODO: Supply return credentials. NOTE that the specification says that this must be the same CHOICE that the user supplied.
             versions,
         );
-        idm.writeBindResult(dop_ip["&id"]!, _encode_DSABindResult(bindResult, DER));
-        idm.events.removeAllListeners("request");
-        idm.events.on("request", this.handleRequest.bind(this));
+        this.rose.write_bind_result({
+            protocol_id: dop_ip["&id"]!,
+            parameter: _encode_DSABindResult(bindResult, DER),
+        });
+        this.rose.events.removeAllListeners("request");
+        this.rose.events.on("request", this.handleRequest.bind(this));
         for (const req of this.prebindRequests) {
             // We process these requests serially, just because there could be
             // many of them backed up prior to binding.
             await handleRequestAndErrors(this.ctx, this, req).catch();
         }
     }
+
+    // FIXME: Check use of Number() to index outstanding operations.
 
     /**
      * @summary Handle a request
@@ -687,7 +723,7 @@ class DOPAssociation extends ClientAssociation {
      * @private
      * @function
      */
-    private handleRequest (request: Request): void {
+    private handleRequest (request: RequestParameters): void {
         handleRequestAndErrors(this.ctx, this, request); // INTENTIONAL_NO_AWAIT
     }
 
@@ -719,9 +755,10 @@ class DOPAssociation extends ClientAssociation {
      * @async
      */
     private async handleUnbind (): Promise<void> {
-        if (this.idm.remoteStatus !== IDMStatus.BOUND) {
+        if (!this.rose.is_bound) {
             return; // We don't want users to be able to spam unbinds.
         }
+        this.rose.write_unbind_result();
         this.reset();
         this.ctx.telemetry.trackRequest({
             name: "UNBIND",
@@ -731,16 +768,16 @@ class DOPAssociation extends ClientAssociation {
             resultCode: 200,
             success: true,
             properties: {
-                remoteFamily: this.idm.s.remoteFamily,
-                remoteAddress: this.idm.s.remoteAddress,
-                remotePort: this.idm.s.remotePort,
+                remoteFamily: this.socket.remoteFamily,
+                remoteAddress: this.socket.remoteAddress,
+                remotePort: this.socket.remotePort,
                 administratorEmail: this.ctx.config.administratorEmail,
                 association_id: this.id,
             },
             measurements: {
-                bytesRead: this.idm.socket.bytesRead,
-                bytesWritten: this.idm.socket.bytesWritten,
-                idmFramesReceived: this.idm.getFramesReceived(),
+                bytesRead: this.socket.bytesRead,
+                bytesWritten: this.socket.bytesWritten,
+                // idmFramesReceived: this.idm.getFramesReceived(),
             },
         });
         this.ctx.log.warn(this.ctx.i18n.t("log:connection_unbound", {
@@ -758,14 +795,14 @@ class DOPAssociation extends ClientAssociation {
     /**
      * @constructor
      * @param ctx The context object
-     * @param idm The underlying IDM transport socket
+     * @param rose The underlying ROSE transport
      */
     constructor (
         readonly ctx: MeerkatContext,
-        readonly idm: IDMConnection,
+        readonly rose: ROSETransport,
     ) {
         super();
-        this.socket = idm.s;
+        this.socket = rose.socket!;
         assert(ctx.config.dop.enabled, "User somehow bound via DOP when it was disabled.");
         const logInfo = {
             remoteFamily: this.socket.remoteFamily,
@@ -773,15 +810,18 @@ class DOPAssociation extends ClientAssociation {
             remotePort: this.socket.remotePort,
             association_id: this.id,
         };
-        idm.events.on("unbind", this.handleUnbind.bind(this));
-        idm.events.removeAllListeners("request");
-        idm.events.on("request", (request: Request) => {
+        this.rose.events.prependListener("unbind", this.handleUnbind.bind(this));
+        this.rose.events.removeAllListeners("request");
+        this.rose.events.on("request", (request) => {
             if (this.prebindRequests.length >= ctx.config.maxPreBindRequests) {
                 ctx.log.warn(ctx.i18n.t("log:too_many_prebind_requests", {
                     host: this.socket.remoteAddress,
                     cid: this.id,
                 }), logInfo);
-                idm.writeReject(request.invokeID, IdmReject_reason_resourceLimitationRequest);
+                rose.write_reject({
+                    invoke_id: request.invoke_id,
+                    problem: RejectReason.resource_limitation_request,
+                });
                 return;
             }
             this.prebindRequests.push(request);

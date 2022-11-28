@@ -272,7 +272,42 @@
             },
             "tags": []
         },
+        "osi-net": {
+            "root": "libs/osi-net",
+            "sourceRoot": "libs/osi-net/src",
+            "projectType": "library",
+            "targets": {
+                "build": {
+                    "executor": "@nrwl/js:tsc",
+                    "outputs": ["{options.outputPath}"],
+                    "options": {
+                        "outputPath": "dist/libs/osi-net",
+                        "tsConfig": "libs/osi-net/tsconfig.lib.json",
+                        "packageJson": "libs/osi-net/package.json",
+                        "main": "libs/osi-net/src/index.ts",
+                        "assets": ["libs/osi-net/*.md"]
+                    }
+                },
+                "lint": {
+                    "executor": "@nrwl/linter:eslint",
+                    "outputs": ["{options.outputFile}"],
+                    "options": {
+                        "lintFilePatterns": ["libs/osi-net/**/*.ts"]
+                    }
+                },
+                "test": {
+                    "executor": "@nrwl/jest:jest",
+                    "outputs": ["coverage/libs/osi-net"],
+                    "options": {
+                        "jestConfig": "libs/osi-net/jest.config.js",
+                        "passWithNoTests": true
+                    }
+                }
+            },
+            "tags": []
+        },
         "parity-schema": "libs/parity-schema",
+        "rose-transport": "libs/rose-transport",
         "x500-cli": {
             "$schema": "../../node_modules/nx/schemas/project-schema.json",
             "root": "apps/x500-cli",
@@ -363,6 +398,7 @@
             },
             "tags": []
         },
+        "x500-client-ts": "libs/x500-client-ts",
         "x500-functional-tests": {
             "$schema": "../../node_modules/nx/schemas/project-schema.json",
             "root": "libs/x500-functional-tests",

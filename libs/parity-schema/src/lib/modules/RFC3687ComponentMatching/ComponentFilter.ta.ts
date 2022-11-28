@@ -71,13 +71,12 @@ export { ComponentAssertion, _decode_ComponentAssertion, _encode_ComponentAssert
 
 
 /* START_OF_SYMBOL_DEFINITION ComponentFilter */
-// TODO: CHECK_RECURSIVE_DEFINITION
 /**
  * @summary ComponentFilter
  * @description
- * 
+ *
  * ### ASN.1 Definition:
- * 
+ *
  * ```asn1
  * ComponentFilter  ::=  CHOICE {
  *     item  [0] ComponentAssertion,

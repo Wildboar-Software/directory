@@ -135,7 +135,6 @@ import {
 import {
     id_ar_accessControlInnerArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlInnerArea.va";
-import { strict as assert } from "assert";
 import { dseType } from "@wildboar/x500/src/lib/collections/attributes";
 import {
     objectClass,
@@ -145,9 +144,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/aliasedEntryName.oa";
 import isOperationalAttributeType from "../x500/isOperationalAttributeType";
 import becomeSuperior from "../dop/establish/becomeSuperior";
-import {
-    establishOperationalBinding,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/establishOperationalBinding.oa";
 import {
     hierarchicalOperationalBinding,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/hierarchicalOperationalBinding.oa";
@@ -179,6 +175,7 @@ import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/S
 import { stringifyDN } from "../x500/stringifyDN";
 import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
 import { getEntryExistsFilter } from "../database/entryExistsFilter";
+import { _encode_SuperiorToSubordinate } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinate.ta";
 
 const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
 const ID_AC_SPECIFIC: string = id_ar_accessControlSpecificArea.toString();
@@ -1010,7 +1007,7 @@ async function addEntry (
                 signErrors,
             );
         }
-        const result = establishOperationalBinding.decoderFor["&ResultType"]!(obResponse.result);
+        const result = obResponse.result.parameter;
         const resultData = getOptionallyProtectedValue(result);
         // NOTE: The signature is verified in `establishSubordinate()`.
         if (!("roleB_replies" in resultData.initiator)) {
@@ -1055,22 +1052,20 @@ async function addEntry (
                 signErrors,
             );
         }
-        const obArgData = getOptionallyProtectedValue(obArg);
-        assert("roleA_initiates" in obArgData.initiator);
         const now = new Date();
         const validFrom = (
-            obArgData.valid?.validFrom
-            && ("time" in obArgData.valid.validFrom)
-            && !(obArgData.valid.validFrom instanceof ASN1Element)
+            obArg.valid?.validFrom
+            && ("time" in obArg.valid.validFrom)
+            && !(obArg.valid.validFrom instanceof ASN1Element)
         )
-            ? getDateFromOBTime(obArgData.valid.validFrom.time)
+            ? getDateFromOBTime(obArg.valid.validFrom.time)
             : now;
         const validUntil = (
-            obArgData.valid?.validUntil
-            && ("time" in obArgData.valid.validUntil)
-            && !(obArgData.valid.validUntil instanceof ASN1Element)
+            obArg.valid?.validUntil
+            && ("time" in obArg.valid.validUntil)
+            && !(obArg.valid.validUntil instanceof ASN1Element)
         )
-            ? getDateFromOBTime(obArgData.valid.validUntil.time)
+            ? getDateFromOBTime(obArg.valid.validUntil.time)
             : undefined;
         const agreement = new HierarchicalAgreement(
             rdn,
@@ -1099,7 +1094,7 @@ async function addEntry (
                     },
                 },
                 initiator: OperationalBindingInitiator.ROLE_A,
-                initiator_ber: Buffer.from(obArgData.initiator.roleA_initiates.toBytes().buffer),
+                initiator_ber: Buffer.from(_encode_SuperiorToSubordinate(obArg.initiator, DER).toBytes().buffer),
                 validity_start: validFrom,
                 validity_end: validUntil,
                 new_context_prefix_rdn: rdnToJson(agreement.rdn),
@@ -1114,7 +1109,7 @@ async function addEntry (
             await becomeSuperior(
                 ctx,
                 assn,
-                obResponse.invokeId,
+                obResponse.result.invoke_id,
                 agreement,
                 sub2sup,
                 signErrors,

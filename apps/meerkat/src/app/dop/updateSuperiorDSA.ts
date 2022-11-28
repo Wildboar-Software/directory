@@ -10,11 +10,7 @@ import {
     packBits,
 } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
-import { connect, ConnectOptions } from "../net/connect";
-import type {
-    Connection,
-    WriteOperationOptions,
-} from "../net/Connection";
+import { bindForOBM } from "../net/bindToOtherDSA";
 import dnToVertex from "../dit/dnToVertex";
 import getRelevantOperationalBindings from "./getRelevantOperationalBindings";
 import {
@@ -33,20 +29,10 @@ import type {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
-import { dop_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
 import { addMilliseconds, differenceInMilliseconds } from "date-fns";
-import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import {
     modifyOperationalBinding,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/modifyOperationalBinding.oa";
-import {
-    ModifyOperationalBindingArgument,
-    _encode_ModifyOperationalBindingArgument,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingArgument.ta";
-import {
-    ModifyOperationalBindingArgumentData,
-    _encode_ModifyOperationalBindingArgumentData,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingArgumentData.ta";
 import {
     SubordinateToSuperior,
     _encode_SubordinateToSuperior,
@@ -117,13 +103,14 @@ import { rdnToJson } from "../x500/rdnToJson";
 import type {
     Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import type {
-    SecurityParameters,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { sleep } from "../utils/sleep";
-import { generateSIGNED } from "../pki/generateSIGNED";
+// import {  } from "@wildboar/x500-client-ts";
+import { ResultParameters } from "@wildboar/rose-transport";
+import {
+    ModifyOperationalBindingResult,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingResult.ta";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -139,7 +126,8 @@ function codeToString (code?: Code): string | undefined {
 const updateTimingBackoffInSeconds: number[] = [ 1, 2 ];
 
 export
-interface UpdateSuperiorOptions extends ConnectOptions, WriteOperationOptions {
+interface UpdateSuperiorOptions {
+    timeLimitInMilliseconds?: number;
     endTime?: Date;
 }
 
@@ -170,7 +158,7 @@ async function updateSuperiorDSA (
     aliasDereferenced: boolean,
     options?: UpdateSuperiorOptions,
     signErrors: boolean = false,
-): Promise<ResultOrError> {
+): Promise<ResultParameters<ModifyOperationalBindingResult>> {
     const connectionTimeout: number | undefined = options?.timeLimitInMilliseconds;
     const startTime = new Date();
     const timeoutTime: Date | undefined = connectionTimeout
@@ -221,11 +209,12 @@ async function updateSuperiorDSA (
                 continue;
             }
             assert(subr.immediateSuperior);
-            const assn: Connection | null = await connect(ctx, accessPoint, dop_ip["&id"]!, {
-                timeLimitInMilliseconds: options?.timeLimitInMilliseconds,
-                tlsOptional: ctx.config.chaining.tlsOptional,
-                signErrors,
-            });
+            // const assn: Connection | null = await connect(ctx, accessPoint, dop_ip["&id"]!, {
+            //     timeLimitInMilliseconds: options?.timeLimitInMilliseconds,
+            //     tlsOptional: ctx.config.chaining.tlsOptional,
+            //     signErrors,
+            // });
+            const assn = await bindForOBM(ctx, undefined, undefined, accessPoint, aliasDereferenced, signErrors);
             if (!assn) {
                 throw new ServiceError(
                     ctx.i18n.t("err:could_not_connect"),
@@ -361,32 +350,6 @@ async function updateSuperiorDSA (
                     uuid: true,
                 },
             });
-            const createArg = (securityParameters?: SecurityParameters): ModifyOperationalBindingArgument => {
-                const argData = new ModifyOperationalBindingArgumentData(
-                    id_op_binding_hierarchical,
-                    new OperationalBindingID(
-                        bindingID.identifier,
-                        Number(bindingID.version) + 1,
-                    ),
-                    ctx.dsa.accessPoint,
-                    {
-                        roleB_initiates: encodedSub2Sup,
-                    },
-                    new OperationalBindingID(
-                        bindingID.identifier,
-                        bindingVersion,
-                    ),
-                    encodedNewAgreement,
-                    undefined, // Validity remains the same.
-                    securityParameters,
-                );
-                const signArgument: boolean = true; // TODO: Make configurable.
-                return (signArgument
-                    ? generateSIGNED(ctx, argData, _encode_ModifyOperationalBindingArgumentData)
-                    : {
-                        unsigned: argData,
-                    });
-            };
             // A binary exponential backoff loop for retrying failed updates.
             for (const backoff of updateTimingBackoffInSeconds) {
                 const sp = createSecurityParameters(
@@ -395,13 +358,21 @@ async function updateSuperiorDSA (
                     accessPoint.ae_title.rdnSequence,
                     modifyOperationalBinding["&operationCode"]!,
                 );
-                const arg = createArg(sp);
-                const response = await assn.writeOperation({
-                    opCode: modifyOperationalBinding["&operationCode"]!,
-                    argument: _encode_ModifyOperationalBindingArgument(arg, DER),
-                }, {
-                    timeLimitInMilliseconds: timeRemainingForOperation,
+                const response = await assn.modifyHOBWithSuperior({
+                    bindingID,
+                    initiator: sub2sup,
+                    newAgreement: newAgreement,
+                    accessPoint: ctx.dsa.accessPoint,
+                    securityParameters: sp,
+                    cert_path: ctx.config.signing.certPath,
+                    key: ctx.config.signing.key,
                 });
+                // const response = await assn.writeOperation({
+                //     opCode: modifyOperationalBinding["&operationCode"]!,
+                //     argument: _encode_ModifyOperationalBindingArgument(arg, DER),
+                // }, {
+                //     timeLimitInMilliseconds: timeRemainingForOperation,
+                // });
                 if (("result" in response)) {
                     await ctx.db.operationalBinding.update({
                         where: {
@@ -442,11 +413,11 @@ async function updateSuperiorDSA (
                                 : undefined,
                         },
                     });
-                    assn.close();
-                    return response;
-                } else if (("errcode" in response) && response.errcode) {
-                    if (compareCode(response.errcode, operationalBindingError["&errorCode"]!)) {
-                        const obError = operationalBindingError.decoderFor["&ParameterType"]!(response.error);
+                    assn.unbind().then().catch(); // INTENTIONAL_NO_AWAIT
+                    return response.result;
+                } else if ("error" in response) {
+                    if (compareCode(response.error.code, operationalBindingError["&errorCode"]!)) {
+                        const obError = operationalBindingError.decoderFor["&ParameterType"]!(response.error.parameter);
                         const obErrorData = getOptionallyProtectedValue(obError);
                         if (obErrorData.problem === OpBindingErrorParam_problem_invalidNewID) {
                             ctx.log.warn(ctx.i18n.t("log:invalid_new_id"));
@@ -463,7 +434,7 @@ async function updateSuperiorDSA (
                     } else {
                         ctx.log.error(ctx.i18n.t("log:update_superior_dsa", {
                             context: "errcode",
-                            code: codeToString(response.errcode),
+                            code: codeToString(response.error.code),
                         }));
                         break;
                     }
