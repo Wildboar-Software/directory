@@ -439,21 +439,11 @@ export function dispatch_ABRT(state: ACPMState, apdu: ABRT_apdu): void {
 }
 
 export function dispatch_P_PABind(state: ACPMState): void {
-    switch (state.state) {
-        case TableA2AssociationState.STA1:
-        case TableA2AssociationState.STA2:
-        case TableA2AssociationState.STA3:
-        case TableA2AssociationState.STA4:
-        case TableA2AssociationState.STA5:
-        case TableA2AssociationState.STA6:
-        case TableA2AssociationState.STA7: {
-            state.state = TableA2AssociationState.STA0;
-            state.outgoingEvents.emit('P-PABind');
-            break;
-        }
-        default:
-            return handleInvalidSequence_A(state);
-    }
+    // NOTE: This deviates from the specification. If you
+    // handle invalid state when you respond to a presentation abort,
+    // this will create an infinite loop of aborts.
+    state.state = TableA2AssociationState.STA0;
+    state.outgoingEvents.emit('P-PABind');
 }
 
 export function dispatch_EXTRN_1(state: ACPMState): void {
