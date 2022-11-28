@@ -122,6 +122,7 @@ import { signChainedResult } from "../pki/signChainedResult";
 import { addSeconds } from "date-fns";
 import { randomInt } from "crypto";
 import { CommonArguments } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArguments.ta";
+import LDAPAssociation from "../ldap/LDAPConnection";
 
 export
 type SearchResultOrError = {
@@ -548,7 +549,27 @@ class OperationDispatcher {
             );
             const nameResolutionPhase = reqData.chainedArgument.operationProgress?.nameResolutionPhase
                 ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
-            if (nameResolutionPhase === completed) { // Search (II)
+            if (
+                (nameResolutionPhase === completed)
+                /**
+                 * The Java Naming and Directory Interface (JNDI) library
+                 * automatically inserts the `ManageDSAIT` control into search
+                 * requests in most cases. In LDAP, it is expected that the use
+                 * of this control causes searches to return entries as usual,
+                 * but in X.500 directories, the use of this control causes the
+                 * Search (II) procedure to be used, which only delves into
+                 * context prefixes. I think this (meaning that the
+                 * `ManageDSAIT` control causing the Search (II) and List (II)
+                 * procedures to be used) is actually a mistake on the
+                 * part of the X.500 directory specifications, but it might not
+                 * be, so I will not deviate from the specified behavior here,
+                 * except for LDAP requests only.
+                 *
+                 * With this line added, LDAP requests will always use
+                 * Search (I), even if the `ManageDSAIT` control is used.
+                 */
+                && !(assn instanceof LDAPAssociation)
+            ) { // Search (II)
                 await search_ii(
                     ctx,
                     assn,

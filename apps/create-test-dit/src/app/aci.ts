@@ -65,6 +65,42 @@ import type {
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+import {
+    entryUUID,
+} from "@wildboar/parity-schema/src/lib/modules/UUID/entryUUID.oa";
+import {
+    entryDN,
+} from "@wildboar/parity-schema/src/lib/modules/RFC5020EntryDN/entryDN.oa";
+import {
+    superiorUUID,
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/superiorUUID.oa";
+import {
+    dynamicSubtrees,
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/dynamicSubtrees.oa";
+import {
+    entryTtl,
+} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa";
+import {
+    vendorName,
+} from "@wildboar/parity-schema/src/lib/modules/RFC3045VendorInfo/vendorName.oa";
+import {
+    vendorVersion,
+} from "@wildboar/parity-schema/src/lib/modules/RFC3045VendorInfo/vendorVersion.oa";
+import {
+    syncTimestamp,
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/syncTimestamp.oa";
+import {
+    fullVendorVersion,
+} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/fullVendorVersion.oa";
+import {
+    administratorsAddress,
+} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/administratorsAddress.oa";
+import {
+    isMemberOf,
+} from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/isMemberOf.oa";
+import {
+    numSubordinates,
+} from "@wildboar/parity-schema/src/lib/modules/DS389CoreSchema/numSubordinates.oa";
 
 const DENY_ALL_BITS: number[] = [
     GrantsAndDenials_denyAdd,
@@ -283,6 +319,7 @@ const AUTHENTICATED_USER_BASELINE: ACIItem = new ACIItem(
     },
 );
 
+// TODO: Add new op attrs
 const operationalAttributesUserCanReadOnSelf: OBJECT_IDENTIFIER[] = [
     at.entryACI["&id"],
     at.administrativeRole["&id"],
@@ -300,6 +337,18 @@ const operationalAttributesUserCanReadOnSelf: OBJECT_IDENTIFIER[] = [
     at.pwdFailureTime["&id"],
     at.pwdGracesUsed["&id"],
     at.pwdStartTime["&id"],
+    entryUUID["&id"],
+    entryDN["&id"],
+    superiorUUID["&id"],
+    dynamicSubtrees["&id"],
+    entryTtl["&id"],
+    fullVendorVersion["&id"],
+    syncTimestamp["&id"],
+    vendorName["&id"],
+    vendorVersion["&id"],
+    administratorsAddress["&id"],
+    isMemberOf["&id"],
+    numSubordinates["&id"],
 ];
 
 export

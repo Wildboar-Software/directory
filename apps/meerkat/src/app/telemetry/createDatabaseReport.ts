@@ -99,9 +99,10 @@ async function createDatabaseReport (ctx: Context): Promise<Record<string, any>>
             }),
             // DSE types that are calculated.
             alias: await ctx.db.alias.count(),
-            admPoint: await ctx.db.entryAdministrativeRole.count({
-                distinct: ["entry_id"],
-            }),
+            // admPoint: await ctx.db.entryAdministrativeRole.count({
+            //     // Unsupported: See: https://github.com/prisma/prisma/issues/4228
+            //     // distinct: ["entry_id"],
+            // }),
             objectClasses: await ctx.db.entryObjectClass.groupBy({
                 by: ["object_class"],
                 _count: true,
@@ -111,7 +112,7 @@ async function createDatabaseReport (ctx: Context): Promise<Record<string, any>>
             total: await ctx.db.attributeValue.count(),
             byType: await ctx.db.attributeValue.groupBy({
                 by: ["type"],
-                _count: {},
+                _count: true,
             }),
         },
         attributeTypes: {
@@ -132,13 +133,15 @@ async function createDatabaseReport (ctx: Context): Promise<Record<string, any>>
             numberFromDatabase: await ctx.db.friendship.count(),
         },
         nameForms: {
+            all: Array.from(ctx.nameForms.keys())
+                .filter((k) => (k.indexOf(".") > -1)), // human friendly names like "commonName" are indexed too.
             numberFromDatabase: await ctx.db.nameForm.count(),
         },
         contexts: {
             total: await ctx.db.contextValue.count(),
             byType: await ctx.db.contextValue.groupBy({
                 by: ["type"],
-                _count: {},
+                _count: true,
             }),
             // TODO: Which contexts are most likely to have attribute types.
         },

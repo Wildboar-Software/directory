@@ -1,5 +1,23 @@
 # Changelog for Meerkat DSA
 
+## Version 1.2.7
+
+- Fix excessively frequent database report telemetry.
+
+## Version 1.2.6
+
+- Fix crashes caused by use of telemetry.
+
+## Version 1.2.5
+
+- Fix use of `ManageDSAIT` control in LDAP not returning most search results.
+  - This was caused because of a deviation in behavior from LDAP and DAP. Code
+    was added so that LDAP behaves as would be expected from LDAP, while leaving
+    the DAP code unchanged.
+
+No administrative action is needed to upgrade to this version. Just download it
+and use it.
+
 ## Version 1.2.4
 
 - Log much more information on LDAP searches
