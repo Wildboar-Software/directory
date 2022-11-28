@@ -500,15 +500,15 @@ export function create_itot_stack(
         const cc: CC_TPDU = {
             cdt: 0,
             class_option: 0,
-            dstRef: stack.transport.dst_ref,
-            srcRef: stack.transport.src_ref,
+            dstRef: stack.transport.remote_ref,
+            srcRef: stack.transport.local_ref,
             user_data: Buffer.alloc(0),
             called_or_responding_transport_selector: options?.localAddress?.tSelector
                 ? Buffer.from(options.localAddress.tSelector)
                 : undefined,
             calling_transport_selector: stack.transport.remote_t_selector,
             tpdu_size: undefined, // Intentionally omitted.
-            preferred_max_tpdu_size: Math.floor(stack.transport.max_tpdu_size / 128) * 128,
+            preferred_max_tpdu_size: undefined,
         };
         dispatch_TCONresp(stack.transport, cc);
     });
@@ -534,8 +534,8 @@ export function create_itot_stack(
     stack.transport.outgoingEvents.on('NDISreq', () => socket.end());
     stack.session.outgoingEvents.on('TDISreq', () => {
         dispatch_TDISreq(stack.transport, {
-            dstRef: stack.transport.dst_ref,
-            srcRef: stack.transport.src_ref,
+            dstRef: stack.transport.remote_ref,
+            srcRef: stack.transport.local_ref,
             reason: DR_REASON_NOT_SPECIFIED, // This is actually an approriate value.
             user_data: Buffer.alloc(0),
         });
