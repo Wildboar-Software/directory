@@ -70,8 +70,8 @@ import { strict as assert } from "assert";
 import { verifySIGNED } from "../pki/verifySIGNED";
 import stringifyDN from "../x500/stringifyDN";
 import { bindForChaining } from "../net/bindToOtherDSA";
-import { randomUint } from "../utils/randomUint";
 import { OperationOutcome } from "@wildboar/rose-transport";
+import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
 
 /**
  * @summary The Access Point Information Procedure, as defined in ITU Recommendation X.518.
@@ -224,7 +224,7 @@ async function apinfoProcedure (
                 : argument;
             const response = await dsp_client.rose.request({
                 invoke_id: {
-                    present: randomUint(),
+                    present: generateUnusedInvokeID(ctx),
                 },
                 code: req.opCode,
                 parameter: chainedRead.encoderFor["&ArgumentType"]!(payload, DER),

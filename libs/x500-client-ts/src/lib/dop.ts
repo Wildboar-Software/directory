@@ -276,7 +276,7 @@ function create_dop_client (rose: ROSETransport): DOPClient {
             : {
                 unsigned: data,
             };
-        const invoke_id: number = generateUnusedInvokeId(); // TODO: Replace with randomUint().
+        const invoke_id: number = generateUnusedInvokeId();
         const outcome = await rose.request({
             code: terminateOperationalBinding["&operationCode"]!,
             invoke_id: {

@@ -41,9 +41,9 @@ import type {
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 import { addMilliseconds } from "date-fns";
 import { printInvokeId } from "../utils/printInvokeId";
-import { randomUint } from "../utils/randomUint";
 import { bindForChaining } from "../net/bindToOtherDSA";
 import { stringifyDN } from "../x500/stringifyDN";
+import { randomInt } from "node:crypto";
 
 /**
  * @summary Check if name is already taken among NSSR.
@@ -86,7 +86,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                 if (!client) {
                     continue;
                 }
-                const operationIdentifier: INTEGER = randomUint();
+                const operationIdentifier: INTEGER = randomInt();
                 ctx.log.debug(ctx.i18n.t("log:checking_if_name_taken_in_nssr", {
                     opid: operationIdentifier,
                 }), {
