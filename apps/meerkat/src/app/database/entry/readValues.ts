@@ -383,6 +383,7 @@ async function readValues (
                         select: {
                             type: true,
                             ber: true,
+                            fallback: true,
                         },
                     }
                     : undefined,

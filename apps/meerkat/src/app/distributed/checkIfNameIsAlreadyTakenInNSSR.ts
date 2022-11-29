@@ -44,6 +44,7 @@ import { printInvokeId } from "../utils/printInvokeId";
 import { bindForChaining } from "../net/bindToOtherDSA";
 import { stringifyDN } from "../x500/stringifyDN";
 import { randomInt } from "node:crypto";
+import { MAX_INVOKE_ID } from "@wildboar/x500-client-ts";
 
 /**
  * @summary Check if name is already taken among NSSR.
@@ -86,7 +87,7 @@ async function checkIfNameIsAlreadyTakenInNSSR (
                 if (!client) {
                     continue;
                 }
-                const operationIdentifier: INTEGER = randomInt();
+                const operationIdentifier: INTEGER = randomInt(MAX_INVOKE_ID);
                 ctx.log.debug(ctx.i18n.t("log:checking_if_name_taken_in_nssr", {
                     opid: operationIdentifier,
                 }), {

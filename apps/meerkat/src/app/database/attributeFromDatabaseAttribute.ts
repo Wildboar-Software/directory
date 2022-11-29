@@ -21,7 +21,7 @@ import {
 export
 function attributeFromDatabaseAttribute (
     ctx: Context,
-    attr: { type: string, ber: Buffer, ContextValue?: ContextValue[] },
+    attr: { type: string, ber: Buffer, ContextValue?: { type: string; ber: Buffer; fallback: boolean; }[] },
 ): Value {
     const value = new BERElement();
     value.fromBytes(attr.ber);

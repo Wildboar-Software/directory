@@ -54,6 +54,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import stringifyDN from "../x500/stringifyDN";
 import readSubordinates from "../dit/readSubordinates";
+import { subschema } from "@wildboar/x500/src/lib/collections/objectClasses";
 
 const selectAllInfo = new EntryInformationSelection(
     {
@@ -85,6 +86,7 @@ const collectiveAttributeSubentry: string = id_sc_collectiveAttributeSubentry.to
 const contextAssertionSubentry: string = id_sc_contextAssertionSubentry.toString();
 const serviceAdminSubentry: string = id_sc_serviceAdminSubentry.toString();
 const pwdAdminSubentry: string = id_sc_pwdAdminSubentry.toString();
+const subschemaSubentry: string = subschema["&id"].toString();
 
 
 const parent: string = id_oc_parent.toString();
@@ -120,114 +122,125 @@ function encodeRDN (ctx: Context, rdn: RelativeDistinguishedName): string {
     );
 }
 
+const CYAN: string = "#00FFFF";
+const BLUE: string = "#0088FF";
+const GREEN: string = "#00FF00";
+const YELLOW: string = "#FFFF00";
+const ORANGE: string = "#FFAA00";
+const MAGENTA: string = "#FF00FF";
+const GREY: string = "#AAAAAA";
+const WHITE: string = "#FFFFFF";
+
 function printFlags (vertex: Vertex): string {
-    let ret: string = "(";
+    const ret: string[] = [];
     const dse = vertex.dse;
     if (dse.root) {
-        ret += "🏠";
+        ret.push(`<span style="color: ${GREY};">root</span>`);
     }
     if (dse.glue) {
-        ret += "🔗";
+        ret.push(`<span style="color: ${GREY};">glue</span>`);
     }
     if (dse.cp) {
-        ret += "📌";
+        ret.push(`<span style="color: ${GREEN};">cp</span>`);
     }
     if (dse.entry) {
-        ret += "♟";
+        ret.push(`<span style="color: ${WHITE};">entry</span>`);
     }
     if (dse.alias) {
-        ret += "@";
+        ret.push(`<span style="color: ${CYAN};">alias</span>`);
     }
     if (dse.subr) {
-        ret += "👇";
+        ret.push(`<span style="color: ${BLUE};">subr</span>`);
     }
     if (dse.nssr) {
-        ret += "?";
+        ret.push(`<span style="color: ${BLUE};">nssr</span>`);
     }
     if (dse.supr) {
-        ret += "🌙";
+        ret.push(`<span style="color: ${BLUE};">supr</span>`);
     }
     if (dse.xr) {
-        ret += "👉";
+        ret.push(`<span style="color: ${BLUE};">xr</span>`);
     }
     if (dse.admPoint) {
-        ret += "⚙️";
+        ret.push(`<span style="color: ${YELLOW};">admPoint</span>`);
         const ar = dse.admPoint.administrativeRole;
         if (ar.has(autonomousArea)) {
-            ret += "👑";
+            ret.push(`<span style="color: ${GREY};">AA</span>`);
         }
         if (ar.has(accessControlSpecificArea)) {
-            ret += "⚖️";
+            ret.push(`<span style="color: ${GREY};">ACSA</span>`);
         }
         if (ar.has(accessControlInnerArea)) {
-            ret += "⚖️";
+            ret.push(`<span style="color: ${GREY};">ACIA</span>`);
         }
         if (ar.has(subschemaAdminSpecificArea)) {
-            ret += "📐";
+            ret.push(`<span style="color: ${GREY};">SASA</span>`);
         }
         if (ar.has(collectiveAttributeSpecificArea)) {
-            ret += "🌐";
+            ret.push(`<span style="color: ${GREY};">CASA</span>`);
         }
         if (ar.has(collectiveAttributeInnerArea)) {
-            ret += "🌐";
+            ret.push(`<span style="color: ${GREY};">CAIA</span>`);
         }
         if (ar.has(contextDefaultSpecificArea)) {
-            ret += "🎯";
+            ret.push(`<span style="color: ${GREY};">CDSA</span>`);
         }
         if (ar.has(serviceSpecificArea)) {
-            ret += "🔍";
+            ret.push(`<span style="color: ${GREY};">SSA</span>`);
         }
         if (ar.has(pwdAdminSpecificArea)) {
-            ret += "🔒";
+            ret.push(`<span style="color: ${GREY};">PASA</span>`);
         }
     }
     if (dse.subentry) {
-        ret += "🧠";
+        ret.push(`<span style="color: ${MAGENTA};">subentry</span>`);
     }
     if (dse.shadow) {
-        ret += "👥";
+        ret.push(`<span style="color: ${GREY};">shadow</span>`);
     }
     if (dse.immSupr) {
-        ret += "👆";
+        ret.push(`<span style="color: ${BLUE};">immSupr</span>`);
     }
     if (dse.rhob) {
-        ret += "🚦";
+        ret.push(`<span style="color: ${BLUE};">rhob</span>`);
     }
     if (dse.sa) {
-        ret += "👋";
+        ret.push(`<span style="color: ${BLUE};">sa</span>`);
     }
     if (dse.dsSubentry) {
-        ret += "🛠";
+        ret.push(`<span style="color: ${MAGENTA};">dsSubentry</span>`);
     }
     if (dse.familyMember) {
-        ret += "👨‍👩‍👦‍👦";
+        ret.push(`<span style="color: ${ORANGE};">familyMember</span>`);
     }
     if (dse.ditBridge) {
-        ret += "📡";
+        ret.push(`<span style="color: ${BLUE};">ditBridge</span>`);
     }
     if (dse.objectClass.has(accessControlSubentry)) {
-        ret += "⚖️";
+        ret.push(`<span style="color: ${GREY};">access-control</span>`);
     }
     if (dse.objectClass.has(collectiveAttributeSubentry)) {
-        ret += "🌐";
+        ret.push(`<span style="color: ${GREY};">coll-attrs</span>`);
     }
     if (dse.objectClass.has(contextAssertionSubentry)) {
-        ret += "🎯";
+        ret.push(`<span style="color: ${GREY};">context-assert</span>`);
     }
     if (dse.objectClass.has(serviceAdminSubentry)) {
-        ret += "🔍";
+        ret.push(`<span style="color: ${GREY};">service-admin</span>`);
     }
     if (dse.objectClass.has(pwdAdminSubentry)) {
-        ret += "🔒";
+        ret.push(`<span style="color: ${GREY};">pwd-admin</span>`);
+    }
+    if (dse.objectClass.has(subschemaSubentry)) {
+        ret.push(`<span style="color: ${GREY};">schema-admin</span>`);
     }
     if (dse.objectClass.has(parent)) {
-        ret += "👨‍👧";
+        ret.push(`<span style="color: ${ORANGE};">parent</span>`);
     }
     if (dse.objectClass.has(child)) {
-        ret += "👶";
+        ret.push(`<span style="color: ${ORANGE};">child</span>`);
     }
-    ret += ")";
-    return ret;
+    return `(${ret.join(" &amp; ")})`;
 }
 
 function convertDSEToHTML (ctx: Context, vertex: Vertex): [ string, string, string ] {
@@ -259,14 +272,6 @@ export class DitController {
     constructor (
         @Inject(CONTEXT) readonly ctx: Context,
     ) {}
-
-    // @Get("/dsait/tree")
-    // @Render('tree')
-    // async tree () {
-    //     return {
-    //         tree: await convertSubtreeToHTML(this.ctx, this.ctx.dit.root),
-    //     };
-    // }
 
     @Get("/dsait/dse/:id")
     @Render("dsait_dse_id")
