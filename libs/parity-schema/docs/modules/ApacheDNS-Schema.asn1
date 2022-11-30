@@ -1,0 +1,304 @@
+ApacheDNS-Schema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) apache-dns-schema(38)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    ATTRIBUTE, OBJECT-CLASS, top
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	directoryString, ia5String, uid, caseIgnoreIA5Match, integer, integerMatch,
+    description, commonName
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    ;
+
+apacheDnsClass ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"apacheDnsClass"}
+	LDAP-DESC                   "The class of a resource record"
+	ID                          { 1 3 6 1 4 1 18060 0 4 2 2 1 }
+}
+
+apacheDnsSoaRetry ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"apacheDnsSoaRetry"}
+	LDAP-DESC                   "A 32 bit time interval that should elapse before a failed refresh should be retired"
+	ID                          { 1 3 6 1 4 1 18060 0 4 2 2 10 }
+}
+
+apacheDnsSoaExpire ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"apacheDnsSoaExpire"}
+	LDAP-DESC                   "A 32 bit time value that specifies the upper limit on the time interval that can elapse before"
+	ID                          { 1 3 6 1 4 1 18060 0 4 2 2 11 }
+}
+
+apacheDnsSoaMinimum ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"apacheDnsSoaMinimum"}
+	LDAP-DESC                   "The unsigned 32 bit minimum TTL field that should be exported with any RR from this zone."
+	ID                          { 1 3 6 1 4 1 18060 0 4 2 2 12 }
+}
+
+apacheDnsMxPreference ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"apacheDnsMxPreference"}
+	LDAP-DESC                   "An integer denoting the mail exchange preference"
+	ID                          { 1 3 6 1 4 1 18060 0 4 2 2 13 }
+}
+
+apacheDnsServicePriority ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"apacheDnsServicePriority"}
+	LDAP-DESC                   "The unsigned 16 bit priority of this target host"
+	ID                          { 1 3 6 1 4 1 18060 0 4 2 2 14 }
+}
+
+apacheDnsServiceWeight ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"apacheDnsServiceWeight"}
+	LDAP-DESC                   "The unsigned 16 bit weight specifying a relative weight for entries with the same priority"
+	ID                          { 1 3 6 1 4 1 18060 0 4 2 2 15 }
+}
+
+apacheDnsServicePort ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"apacheDnsServicePort"}
+	LDAP-DESC                   "The unsigned 16 bit port on this target host of this service"
+	ID                          { 1 3 6 1 4 1 18060 0 4 2 2 16 }
+}
+
+apacheDnsTtl ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"apacheDnsTtl"}
+	LDAP-DESC                   "An integer denoting time to live"
+	ID                          { 1 3 6 1 4 1 18060 0 4 2 2 2 }
+}
+
+apacheDnsDomainName ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"apacheDnsDomainName"}
+	LDAP-DESC                   "A domain name represented as a sequence of labels"
+	ID                          { 1 3 6 1 4 1 18060 0 4 2 2 3 }
+}
+
+apacheDnsCharacterString ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"apacheDnsCharacterString"}
+	LDAP-DESC                   "A string up to 256 characters in length"
+	ID                          { 1 3 6 1 4 1 18060 0 4 2 2 4 }
+}
+
+apacheDnsIpAddress ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"apacheDnsIpAddress"}
+	LDAP-DESC                   "A 4 octet IP address"
+	ID                          { 1 3 6 1 4 1 18060 0 4 2 2 5 }
+}
+
+apacheDnsSoaMName ATTRIBUTE ::= {
+	SUBTYPE OF                  apacheDnsDomainName
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"apacheDnsSoaMName"}
+	LDAP-DESC                   "The domain name of the name server that was the primary source of data for this zone"
+	ID                          { 1 3 6 1 4 1 18060 0 4 2 2 6 }
+}
+
+apacheDnsSoaRName ATTRIBUTE ::= {
+	SUBTYPE OF                  apacheDnsDomainName
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"apacheDnsSoaRName"}
+	LDAP-DESC                   "The domain name which specifies the mailbox of the person responsible for this zone"
+	ID                          { 1 3 6 1 4 1 18060 0 4 2 2 7 }
+}
+
+apacheDnsSoaSerial ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"apacheDnsSoaSerial"}
+	LDAP-DESC                   "The unsigned 32 bit version number of the original copy of the zone"
+	ID                          { 1 3 6 1 4 1 18060 0 4 2 2 8 }
+}
+
+apacheDnsSoaRefresh ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"apacheDnsSoaRefresh"}
+	LDAP-DESC                   "A 32 bit time interval before the zone should be refreshed"
+	ID                          { 1 3 6 1 4 1 18060 0 4 2 2 9 }
+}
+
+apacheDnsAbstractRecord OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            abstract
+	MUST CONTAIN    {commonName}
+	MAY CONTAIN     {apacheDnsTtl | description}
+	LDAP-NAME       {"apacheDnsAbstractRecord"}
+	LDAP-DESC       "An abstract DNS record objectClass used to build other specific structural objectclasses for di"
+	ID              { 1 3 6 1 4 1 18060 0 4 2 3 1 }
+}
+
+apacheDnsReferralNameServer OBJECT-CLASS ::= {
+	SUBCLASS OF     {apacheDnsAbstractRecord}
+	KIND            structural
+	MUST CONTAIN    {apacheDnsDomainName}
+	LDAP-NAME       {"apacheDnsReferralNameServer"}
+	LDAP-DESC       "A non-authoritative referral or delegation name server"
+	ID              { 1 3 6 1 4 1 18060 0 4 2 3 10 }
+}
+
+apacheDnsReferralAddress OBJECT-CLASS ::= {
+	SUBCLASS OF     {apacheDnsAbstractRecord}
+	KIND            structural
+	MUST CONTAIN    {apacheDnsDomainName | apacheDnsIpAddress}
+	LDAP-NAME       {"apacheDnsReferralAddress"}
+	LDAP-DESC       "A non-authoritative referral or glue address record"
+	ID              { 1 3 6 1 4 1 18060 0 4 2 3 11 }
+}
+
+apacheDnsAddressRecord OBJECT-CLASS ::= {
+	SUBCLASS OF     {apacheDnsAbstractRecord}
+	KIND            structural
+	MUST CONTAIN    {apacheDnsIpAddress}
+	LDAP-NAME       {"apacheDnsAddressRecord"}
+	LDAP-DESC       "An address A record"
+	ID              { 1 3 6 1 4 1 18060 0 4 2 3 2 }
+}
+
+apacheDnsPointerRecord OBJECT-CLASS ::= {
+	SUBCLASS OF     {apacheDnsAbstractRecord}
+	MUST CONTAIN    {apacheDnsDomainName}
+	LDAP-NAME       {"apacheDnsPointerRecord"}
+	LDAP-DESC       "A pointer PTR record"
+	ID              { 1 3 6 1 4 1 18060 0 4 2 3 3 }
+}
+
+apacheDnsNameServerRecord OBJECT-CLASS ::= {
+	SUBCLASS OF     {apacheDnsAbstractRecord}
+	KIND            structural
+	MUST CONTAIN    {apacheDnsDomainName}
+	LDAP-NAME       {"apacheDnsNameServerRecord"}
+	LDAP-DESC       "A name server NS record"
+	ID              { 1 3 6 1 4 1 18060 0 4 2 3 4 }
+}
+
+apacheDnsStartOfAuthorityRecord OBJECT-CLASS ::= {
+	SUBCLASS OF     {apacheDnsAbstractRecord}
+	KIND            structural
+	MUST CONTAIN    {apacheDnsSoaMName | apacheDnsSoaRName | apacheDnsSoaMinimum}
+	MAY CONTAIN     {apacheDnsClass | apacheDnsSoaSerial | apacheDnsSoaRefresh | apacheDnsSoaRetry | apacheDnsSoaExpire}
+	LDAP-NAME       {"apacheDnsStartOfAuthorityRecord"}
+	LDAP-DESC       "A start of authority SOA record"
+	ID              { 1 3 6 1 4 1 18060 0 4 2 3 5 }
+}
+
+apacheDnsCanonicalNameRecord OBJECT-CLASS ::= {
+	SUBCLASS OF     {apacheDnsAbstractRecord}
+	MUST CONTAIN    {apacheDnsDomainName}
+	LDAP-NAME       {"apacheDnsCanonicalNameRecord"}
+	LDAP-DESC       "A canonical name CNAME record"
+	ID              { 1 3 6 1 4 1 18060 0 4 2 3 6 }
+}
+
+apacheDnsMailExchangeRecord OBJECT-CLASS ::= {
+	SUBCLASS OF     {apacheDnsAbstractRecord}
+	KIND            structural
+	MUST CONTAIN    {apacheDnsMxPreference | apacheDnsDomainName}
+	LDAP-NAME       {"apacheDnsMailExchangeRecord"}
+	LDAP-DESC       "A mail exchange MX record"
+	ID              { 1 3 6 1 4 1 18060 0 4 2 3 7 }
+}
+
+apacheDnsTextRecord OBJECT-CLASS ::= {
+	SUBCLASS OF     {apacheDnsAbstractRecord}
+	KIND            structural
+	MUST CONTAIN    {apacheDnsCharacterString}
+	LDAP-NAME       {"apacheDnsTextRecord"}
+	LDAP-DESC       "A text TXT record"
+	ID              { 1 3 6 1 4 1 18060 0 4 2 3 8 }
+}
+
+apacheDnsServiceRecord OBJECT-CLASS ::= {
+	SUBCLASS OF     {apacheDnsAbstractRecord}
+	MUST CONTAIN    {apacheDnsServicePriority | apacheDnsServiceWeight | apacheDnsServicePort | apacheDnsDomainName}
+	LDAP-NAME       {"apacheDnsServiceRecord"}
+	LDAP-DESC       "A service SRV record"
+	ID              { 1 3 6 1 4 1 18060 0 4 2 3 9 }
+}
+
+END

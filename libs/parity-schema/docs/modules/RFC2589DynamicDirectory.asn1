@@ -1,0 +1,83 @@
+RFC2589DynamicDirectory {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) dynamic-directory(32)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    ATTRIBUTE, OBJECT-CLASS, top, DistinguishedName, distinguishedNameMatch
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+    integer, integerMatch, integerOrderingMatch, dn
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    ;
+
+-- Request Value of the Refresh Request
+
+RequestValue ::= SEQUENCE {
+    entryName  [0] LDAPDN,
+    requestTtl [1] INTEGER,
+    ...
+}
+
+ResponseValue ::= SEQUENCE {
+    responseTtl [1] INTEGER,
+    ...
+}
+
+
+-- Object Identifiers
+
+id-at-entryTtl          OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 1466 101 119 3 }
+id-at-dynamicSubtrees   OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 1466 101 119 4 }
+id-oc-dynamicObject     OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 1466 101 119 2 }
+
+-- Atribute Types
+
+entryTtl ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (0..MAX)
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+    NO USER MODIFICATION        TRUE
+    USAGE                       dSAOperation
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"entryTtl"}
+	LDAP-DESC					"This operational attribute is maintained by the server and appears to be present in every dynamic entry.  The attribute is not present when the entry does not contain the dynamicObject object class. The value of this attribute is the time in seconds that the entry will continue to exist before disappearing from the directory.  In the absence of intervening refresh operations, the values returned by reading the attribute in two successive searches are guaranteed to be nonincreasing.  The smallest permissible value is 0, indicating that the entry may disappear without warning. The attribute is marked NO-USER-MODIFICATION since it may only be changed using the refresh operation."
+    ID                          id-at-entryTtl
+}
+
+dynamicSubtrees ATTRIBUTE ::= {
+    WITH SYNTAX 			    DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+    NO USER MODIFICATION        TRUE
+    USAGE                       dSAOperation
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"dynamicSubtrees"}
+	LDAP-DESC					"This operational attribute is maintained by the server and is present in the Root DSE, if the server supports the dynamic extensions described in this memo. The attribute contains a list of all the subtrees in this directory for which the server supports the dynamic extensions."
+    ID                          id-at-dynamicSubtrees
+}
+
+-- Object Classes
+
+dynamicObject OBJECT-CLASS ::= {
+    SUBCLASS OF 	{top}
+	KIND			auxiliary
+	LDAP-NAME		{"dynamicObject"}
+    LDAP-DESC       "This class, if present in an entry, indicates that this entry has a limited lifetime and may disappear automatically when its time-to-live has reached 0.  There are no mandatory attributes of this class, however if the client has not supplied a value for the entryTtl attribute, the server will provide one."
+	ID				id-oc-dynamicObject
+}
+
+END

@@ -1,0 +1,1898 @@
+ApacheDirectoryConfig {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) apache-directory-config(35)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    ATTRIBUTE, OBJECT-CLASS, objectIdentifierMatch,
+    DistinguishedName, distinguishedNameMatch
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	name, UnboundedDirectoryString, distinguishedName, description,
+
+    -- Syntaxes
+    printableString, boolean, integer, dn, directoryString, ia5String,
+    octetString,
+
+    -- Matching Rules
+    caseExactMatch, caseExactOrderingMatch, caseExactSubstringsMatch,
+    caseIgnoreMatch, caseIgnoreOrderingMatch, caseIgnoreSubstringsMatch,
+    booleanMatch, integerMatch, integerOrderingMatch,
+    octetStringMatch, octetStringOrderingMatch, octetStringSubstringsMatch,
+    caseIgnoreIA5Match, caseIgnoreIA5SubstringsMatch
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    userPassword
+        FROM AuthenticationFramework
+        {joint-iso-itu-t ds(5) module(1) authenticationFramework(7) 9}
+
+    ;
+
+ads-directoryServiceId ATTRIBUTE ::= {
+	SUBTYPE OF                  name
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-directoryServiceId"}
+	LDAP-DESC                   "The DirectoryService ID"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 100 }
+}
+
+ads-dsAccessControlEnabled ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-dsAccessControlEnabled"}
+	LDAP-DESC                   "Tells if access control is activated or not"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 101 }
+}
+
+ads-dsAllowAnonymousAccess ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-dsAllowAnonymousAccess"}
+	LDAP-DESC                   "Tells if anonymous access are allowed or not"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 102 }
+}
+
+ads-dsDenormalizeOpAttrsEnabled ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-dsDenormalizeOpAttrsEnabled"}
+	LDAP-DESC                   "Tells if the operational attributes are denormalized or not"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 103 }
+}
+
+ads-dsPasswordHidden ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-dsPasswordHidden"}
+	LDAP-DESC                   "Tells if the password is stored encrypted even for PLAIN authentication"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 104 }
+}
+
+ads-maxPDUSize ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-maxPDUSize"}
+	LDAP-DESC                   "Gives the maximum size of a PDU"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 110 }
+}
+
+ads-dsSyncPeriodMillis ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-dsSyncPeriodMillis"}
+	LDAP-DESC                   "Define the duration between two flushes on disk"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 111 }
+}
+
+ads-dsReplicaId ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-dsReplicaId"}
+	LDAP-DESC                   "The server identifier, used for replication"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 112 }
+}
+
+ads-dsTestEntries ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-dsTestEntries"}
+	LDAP-DESC                   "The set of entries to inject at startup (may be obsolete)"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 113 }
+}
+
+ads-changeLogId ATTRIBUTE ::= {
+	SUBTYPE OF                  name
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-changeLogId"}
+	LDAP-DESC                   "The ChangeLog identifier"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 120 }
+}
+
+ads-changeLogExposed ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-changeLogExposed"}
+	LDAP-DESC                   "Tells if the changeLog system is visible by the clients"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 121 }
+}
+
+ads-interceptorId ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-interceptorId"}
+	LDAP-DESC                   "The Interceptor identifier"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 130 }
+}
+
+ads-interceptorOrder ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-interceptorOrder"}
+	LDAP-DESC                   "The Interceptor order number"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 131 }
+}
+
+ads-hashAlgorithm ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-hashAlgorithm"}
+	LDAP-DESC                   "The hash algorithm"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 132 0 }
+}
+
+ads-hashAttribute ATTRIBUTE ::= {
+	WITH SYNTAX                 OBJECT IDENTIFIER
+	EQUALITY MATCHING RULE      objectIdentifierMatch
+	LDAP-SYNTAX                 oid.&id
+	LDAP-NAME                   {"ads-hashAttribute"}
+	LDAP-DESC                   "An OID of an attributeType that should be hashed"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 132 1 }
+}
+
+ads-journalRotation ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-journalRotation"}
+	LDAP-DESC                   "The size before a journal rotation occurs."
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 141 }
+}
+
+ads-journalWorkingDir ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-journalWorkingDir"}
+	LDAP-DESC                   "The place on disk where the journal is stored."
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 142 }
+}
+
+ads-journalFileName ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-journalFileName"}
+	LDAP-DESC                   "The journal file name."
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 143 }
+}
+
+ads-journalId ATTRIBUTE ::= {
+	SUBTYPE OF                  name
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-journalId"}
+	LDAP-DESC                   "The Journal ID"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 144 }
+}
+
+ads-partitionId ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-partitionId"}
+	LDAP-DESC                   "The Partition identifier"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 150 }
+}
+
+ads-partitionSuffix ATTRIBUTE ::= {
+	SUBTYPE OF                  distinguishedName
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"ads-partitionSuffix"}
+	LDAP-DESC                   "The partition suffix"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 151 }
+}
+
+ads-partitionCacheSize ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-partitionCacheSize"}
+	LDAP-DESC                   "The number of entries in the cache for this partition"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 153 }
+}
+
+ads-contextEntry ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"ads-contextEntry"}
+	LDAP-DESC                   "The Partition context entry"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 154 }
+}
+
+ads-indexAttributeId ATTRIBUTE ::= {
+	SUBTYPE OF                  name
+	WITH SYNTAX                 OBJECT IDENTIFIER
+	EQUALITY MATCHING RULE      objectIdentifierMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 oid.&id
+	LDAP-NAME                   {"ads-indexAttributeId"}
+	LDAP-DESC                   "The attributeType name or OID"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 160 }
+}
+
+ads-indexFileName ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-indexFileName"}
+	LDAP-DESC                   "The index file name"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 161 }
+}
+
+ads-indexWorkingDir ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-indexWorkingDir"}
+	LDAP-DESC                   "The place on disk where the index file is stored"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 162 }
+}
+
+ads-indexNumDupLimit ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-indexNumDupLimit"}
+	LDAP-DESC                   "The number of duplicated element we allow before switching to a secondary tree"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 163 }
+}
+
+ads-indexCacheSize ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-indexCacheSize"}
+	LDAP-DESC                   "The number of key we store in the cache for this index"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 164 }
+}
+
+ads-indexHasReverse ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-indexHasReverse"}
+	LDAP-DESC                   "A flag telling if the index has a reverse table"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 165 }
+}
+
+ads-transportId ATTRIBUTE ::= {
+	SUBTYPE OF                  name
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-transportId"}
+	LDAP-DESC                   "The transport ID"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 200 }
+}
+
+ads-serverId ATTRIBUTE ::= {
+	SUBTYPE OF                  name
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-serverId"}
+	LDAP-DESC                   "The server ID"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 250 }
+}
+
+ads-Id ATTRIBUTE ::= {
+	SUBTYPE OF                  name
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-Id"}
+	LDAP-DESC                   "a generic ID which can be used in any configuration entry DN"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 252 }
+}
+
+ads-extendedOpId ATTRIBUTE ::= {
+	SUBTYPE OF                  name
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-extendedOpId"}
+	LDAP-DESC                   "an ID used for ExtendeOpertion names"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 253 }
+}
+
+ads-confidentialityRequired ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-confidentialityRequired"}
+	LDAP-DESC                   "Tells the server to accept requests using startTLS or LDAPS"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 300 }
+}
+
+ads-allowAnonymousAccess ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-allowAnonymousAccess"}
+	LDAP-DESC                   "Tells the server to accept Anynymous requests or not"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 301 }
+}
+
+ads-maxSizeLimit ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-maxSizeLimit"}
+	LDAP-DESC                   "The maximum number of entries to return"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 302 }
+}
+
+ads-maxTimeLimit ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-maxTimeLimit"}
+	LDAP-DESC                   "The maximum time before an operation is aborted (in seconds)"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 303 }
+}
+
+ads-saslHost ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-saslHost"}
+	LDAP-DESC                   "The name of this host, validated during SASL negotiation"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 304 }
+}
+
+ads-saslPrincipal ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"ads-saslPrincipal"}
+	LDAP-DESC                   "The service principal, used by GSSAPI"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 305 }
+}
+
+ads-saslRealms ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-saslRealms"}
+	LDAP-DESC                   "The realms serviced by this SASL host"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 306 }
+}
+
+ads-keystoreFile ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"ads-keystoreFile"}
+	LDAP-DESC                   "The keystore file to use to store certificates"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 308 }
+}
+
+ads-certificatePassword ATTRIBUTE ::= {
+	SUBTYPE OF                  userPassword
+	WITH SYNTAX                 OCTET STRING
+	EQUALITY MATCHING RULE      octetStringMatch
+	LDAP-SYNTAX                 octetString.&id
+	LDAP-NAME                   {"ads-certificatePassword"}
+	LDAP-DESC                   "The certificate passord"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 309 }
+}
+
+ads-replConsumerImpl ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-replConsumerImpl"}
+	LDAP-DESC                   "The FQCN of the replication consumer/client handler"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 310 }
+}
+
+ads-krbAllowableClockSkew ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-krbAllowableClockSkew"}
+	LDAP-DESC                   "The allowable clock skew"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 400 }
+}
+
+ads-krbEncryptionTypes ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-krbEncryptionTypes"}
+	LDAP-DESC                   "The encryption types"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 401 }
+}
+
+ads-krbEmptyAddressesAllowed ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-krbEmptyAddressesAllowed"}
+	LDAP-DESC                   "Whether empty addresses are allowed"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 402 }
+}
+
+ads-krbForwardableAllowed ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-krbForwardableAllowed"}
+	LDAP-DESC                   "Whether forwardable addresses are allowed"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 403 }
+}
+
+ads-krbPaEncTimestampRequired ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-krbPaEncTimestampRequired"}
+	LDAP-DESC                   "Whether pre-authentication by encrypted timestamp is required"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 404 }
+}
+
+ads-krbPostdatedAllowed ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-krbPostdatedAllowed"}
+	LDAP-DESC                   "Whether postdated tickets are allowed"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 405 }
+}
+
+ads-krbProxiableAllowed ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-krbProxiableAllowed"}
+	LDAP-DESC                   "Whether proxiable addresses are allowed"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 406 }
+}
+
+ads-krbRenewableAllowed ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-krbRenewableAllowed"}
+	LDAP-DESC                   "Whether renewable tickets are allowed"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 407 }
+}
+
+ads-krbKdcPrincipal ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"ads-krbKdcPrincipal"}
+	LDAP-DESC                   "The service principal name"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 408 }
+}
+
+ads-krbMaximumRenewableLifetime ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-krbMaximumRenewableLifetime"}
+	LDAP-DESC                   "The maximum renewable lifetime"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 409 }
+}
+
+ads-krbMaximumTicketLifetime ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-krbMaximumTicketLifetime"}
+	LDAP-DESC                   "The maximum ticket lifetime"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 410 }
+}
+
+ads-krbPrimaryRealm ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-krbPrimaryRealm"}
+	LDAP-DESC                   "The primary realm"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 411 }
+}
+
+ads-krbBodyChecksumVerified ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-krbBodyChecksumVerified"}
+	LDAP-DESC                   "Whether to verify the body checksum"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 412 }
+}
+
+ads-transportAddress ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreOrderingMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"ads-transportAddress"}
+	LDAP-DESC                   "The Address to listen on."
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 61 }
+}
+
+ads-transportBacklog ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-transportBacklog"}
+	LDAP-DESC                   "The number of messages waiting to be processed."
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 62 }
+}
+
+ads-transportEnableSSL ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-transportEnableSSL"}
+	LDAP-DESC                   "Tells if this transport support SSL."
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 63 }
+}
+
+ads-transportNbThreads ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-transportNbThreads"}
+	LDAP-DESC                   "The number of threads to use for the Acceptor"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 64 }
+}
+
+ads-needClientAuth ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-needClientAuth"}
+	LDAP-DESC                   "Tells if the client auth is needed"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 65 }
+}
+
+ads-wantClientAuth ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-wantClientAuth"}
+	LDAP-DESC                   "Tells if the client auth is wanted"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 66 }
+}
+
+ads-enabledProtocols ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreOrderingMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"ads-enabledProtocols"}
+	LDAP-DESC                   "Enabled SSL protocol"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 67 }
+}
+
+ads-enabledCiphers ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreOrderingMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"ads-enabledCiphers"}
+	LDAP-DESC                   "Enabled ciphers"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 68 }
+}
+
+ads-chgPwdPolicyCategoryCount ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-chgPwdPolicyCategoryCount"}
+	LDAP-DESC                   "The policy category count"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 800 }
+}
+
+ads-chgPwdPolicyPasswordLength ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-chgPwdPolicyPasswordLength"}
+	LDAP-DESC                   "The policy minimum password length"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 801 }
+}
+
+ads-chgPwdPolicyTokenSize ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-chgPwdPolicyTokenSize"}
+	LDAP-DESC                   "The policy token size"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 802 }
+}
+
+ads-chgPwdServicePrincipal ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"ads-chgPwdServicePrincipal"}
+	LDAP-DESC                   "The Change Password service principal"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 803 }
+}
+
+ads-interceptorClassName ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-interceptorClassName"}
+	LDAP-DESC                   "Fully qualified class name of the interceptor"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 804 }
+}
+
+ads-enabled ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-enabled"}
+	LDAP-DESC                   "specifies whether a config element is enabled or not, default is true"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 805 }
+}
+
+ads-partitionSyncOnWrite ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-partitionSyncOnWrite"}
+	LDAP-DESC                   "directs a partition to synchronize the underlying storage upon a write operation"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 806 }
+}
+
+ads-jdbmPartitionOptimizerEnabled ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-jdbmPartitionOptimizerEnabled"}
+	LDAP-DESC                   "Enables JDBM partition optimizer"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 807 }
+}
+
+ads-saslMechName ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-saslMechName"}
+	LDAP-DESC                   "SASL mechanism name"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 808 }
+}
+
+ads-ntlmMechProvider ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-ntlmMechProvider"}
+	LDAP-DESC                   "Fully qualified class name of SASL NTLM provider"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 809 }
+}
+
+ads-saslMechClassName ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-saslMechClassName"}
+	LDAP-DESC                   "Fully qualified class name of SASL mechanism implementation"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 810 }
+}
+
+ads-extendedOpHandlerClass ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-extendedOpHandlerClass"}
+	LDAP-DESC                   "Fully qualified class name of the extended operation handler"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 811 }
+}
+
+ads-systemPort ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-systemPort"}
+	LDAP-DESC                   "Port number on system"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 812 }
+}
+
+ads-httpWarFile ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-httpWarFile"}
+	LDAP-DESC                   "a web app archive"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 813 }
+}
+
+ads-httpAppCtxPath ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-httpAppCtxPath"}
+	LDAP-DESC                   "A web app context path"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 814 }
+}
+
+ads-httpConfFile ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-httpConfFile"}
+	LDAP-DESC                   "Jetty web server config file path"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 816 }
+}
+
+ads-replSearchFilter ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"ads-replSearchFilter"}
+	LDAP-DESC                   "Search filter used in replication"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 817 }
+}
+
+-- I cannot find documentation on this syntax.
+-- ads-replLastSentCsn ATTRIBUTE ::= {
+-- 	WITH SYNTAX                 FIXME
+-- 	EQUALITY MATCHING RULE      csnMatch
+-- 	ORDERING MATCHING RULE      csnOrderingMatch
+-- 	SINGLE VALUE                TRUE
+-- 	USAGE                       directoryOperation
+-- 	LDAP-SYNTAX                 { 1 3 6 1 4 1 4203 666 11 2 1 }
+-- 	LDAP-NAME                   {"ads-replLastSentCsn"}
+-- 	LDAP-DESC                   "the CSN that was sent to the client as part of cookie"
+-- 	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 818 }
+-- }
+
+-- I cannot find documentation on this syntax.
+-- ads-replAliasDerefMode ATTRIBUTE ::= {
+-- 	WITH SYNTAX                 FIXME
+-- 	EQUALITY MATCHING RULE      caseExactMatch
+-- 	ORDERING MATCHING RULE      caseExactOrderingMatch
+-- 	SINGLE VALUE                TRUE
+-- 	LDAP-SYNTAX                 { 1 3 6 1 4 1 18060 0 4 1 0 11 }
+-- 	LDAP-NAME                   {"ads-replAliasDerefMode"}
+-- 	LDAP-DESC                   "the alias dereference mode of replication search"
+-- 	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 819 }
+-- }
+
+ads-searchBaseDN ATTRIBUTE ::= {
+	SUBTYPE OF                  distinguishedName
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"ads-searchBaseDN"}
+	LDAP-DESC                   "base DN of the DIT to be searched or replicated"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 820 }
+}
+
+-- I cannot find documentation on this syntax.
+-- ads-replSearchScope ATTRIBUTE ::= {
+-- 	WITH SYNTAX                 FIXME
+-- 	EQUALITY MATCHING RULE      caseExactMatch
+-- 	ORDERING MATCHING RULE      caseExactOrderingMatch
+-- 	SINGLE VALUE                TRUE
+-- 	LDAP-SYNTAX                 { 1 3 6 1 4 1 18060 0 4 1 0 10 }
+-- 	LDAP-NAME                   {"ads-replSearchScope"}
+-- 	LDAP-DESC                   "the search scope of the replication"
+-- 	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 821 }
+-- }
+
+ads-replRefreshNPersist ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-replRefreshNPersist"}
+	LDAP-DESC                   "flag indicating refreshAndPersist mode of replication"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 822 }
+}
+
+ads-replProvHostName ATTRIBUTE ::= {
+	SUBTYPE OF                  ads-transportAddress
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"ads-replProvHostName"}
+	LDAP-DESC                   "replication provider host name"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 823 }
+}
+
+ads-replProvPort ATTRIBUTE ::= {
+	SUBTYPE OF                  ads-transportId
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-replProvPort"}
+	LDAP-DESC                   "replication provider port number"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 824 }
+}
+
+ads-replUserDn ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"ads-replUserDn"}
+	LDAP-DESC                   "user DN used for authenticating with replication provider"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 825 }
+}
+
+ads-replUserPassword ATTRIBUTE ::= {
+	SUBTYPE OF                  userPassword
+	WITH SYNTAX                 OCTET STRING
+	EQUALITY MATCHING RULE      octetStringMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 octetString.&id
+	LDAP-NAME                   {"ads-replUserPassword"}
+	LDAP-DESC                   "replication user password"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 826 }
+}
+
+ads-replRefreshInterval ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-replRefreshInterval"}
+	LDAP-DESC                   "time interval between two refreshOnly sessions"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 827 }
+}
+
+ads-replAttributes ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"ads-replAttributes"}
+	LDAP-DESC                   "the attributes to be replicated"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 828 }
+}
+
+ads-replSearchSizeLimit ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-replSearchSizeLimit"}
+	LDAP-DESC                   "size limit imposed during replication refreshOnly phase"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 829 }
+}
+
+ads-replSearchTimeOut ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-replSearchTimeOut"}
+	LDAP-DESC                   "search timeout imposed during replication refreshOnly phase"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 830 }
+}
+
+ads-replCookie ATTRIBUTE ::= {
+	WITH SYNTAX                 OCTET STRING
+	EQUALITY MATCHING RULE      octetStringMatch
+	ORDERING MATCHING RULE      octetStringOrderingMatch
+	SUBSTRINGS MATCHING RULE    octetStringSubstringsMatch
+	SINGLE VALUE                TRUE
+	USAGE                       directoryOperation
+	LDAP-SYNTAX                 octetString.&id
+	LDAP-NAME                   {"ads-replCookie"}
+	LDAP-DESC                   "cookie sent from the replication provider"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 831 }
+}
+
+ads-replReqHandler ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-replReqHandler"}
+	LDAP-DESC                   "FQCN of the replication replication request handler on a master/provider"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 832 }
+}
+
+ads-replUseTls ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-replUseTls"}
+	LDAP-DESC                   "flag to indicate the use of TLS"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 833 }
+}
+
+ads-replStrictCertValidation ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-replStrictCertValidation"}
+	LDAP-DESC                   "flag to indicate strict certificate validation"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 834 }
+}
+
+ads-replConsumerId ATTRIBUTE ::= {
+	SUBTYPE OF                  name
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-replConsumerId"}
+	LDAP-DESC                   "The replication consumer ID"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 837 }
+}
+
+ads-replEnabled ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-replEnabled"}
+	LDAP-DESC                   "A flag set when the replication is enabled"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 838 }
+}
+
+ads-pwdAttribute ATTRIBUTE ::= {
+	WITH SYNTAX                 OBJECT IDENTIFIER
+	EQUALITY MATCHING RULE      objectIdentifierMatch
+	LDAP-SYNTAX                 oid.&id
+	LDAP-NAME                   {"ads-pwdAttribute"}
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 900 }
+}
+
+ads-pwdMinAge ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-pwdMinAge"}
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 901 }
+}
+
+ads-pwdMaxAge ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-pwdMaxAge"}
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 902 }
+}
+
+ads-pwdInHistory ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-pwdInHistory"}
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 903 }
+}
+
+ads-pwdCheckQuality ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-pwdCheckQuality"}
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 904 }
+}
+
+ads-pwdMinLength ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-pwdMinLength"}
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 905 }
+}
+
+ads-pwdMaxLength ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-pwdMaxLength"}
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 906 }
+}
+
+ads-pwdExpireWarning ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-pwdExpireWarning"}
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 907 }
+}
+
+ads-pwdGraceAuthNLimit ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-pwdGraceAuthNLimit"}
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 908 }
+}
+
+ads-pwdGraceExpire ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-pwdGraceExpire"}
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 909 }
+}
+
+ads-pwdLockout ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-pwdLockout"}
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 910 }
+}
+
+ads-pwdLockoutDuration ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-pwdLockoutDuration"}
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 911 }
+}
+
+ads-pwdMaxFailure ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-pwdMaxFailure"}
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 912 }
+}
+
+ads-pwdFailureCountInterval ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-pwdFailureCountInterval"}
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 913 }
+}
+
+ads-pwdMustChange ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-pwdMustChange"}
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 914 }
+}
+
+ads-pwdAllowUserChange ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-pwdAllowUserChange"}
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 915 }
+}
+
+ads-pwdSafeModify ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-pwdSafeModify"}
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 916 }
+}
+
+ads-pwdMinDelay ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-pwdMinDelay"}
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 917 }
+}
+
+ads-pwdMaxDelay ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-pwdMaxDelay"}
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 918 }
+}
+
+ads-pwdMaxIdle ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-pwdMaxIdle"}
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 919 }
+}
+
+ads-replLogMaxIdle ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-replLogMaxIdle"}
+	LDAP-DESC                   "the duration(in seconds) of consumer inactivity after which the a"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 920 }
+}
+
+ads-pwdId ATTRIBUTE ::= {
+	SUBTYPE OF                  name
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-pwdId"}
+	LDAP-DESC                   "an ID used to identify the passwordPolicy configuration"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 921 }
+}
+
+ads-replLogPurgeThresholdCount ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-replLogPurgeThresholdCount"}
+	LDAP-DESC                   "the minimum number of entries to be present for beginning purging"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 922 }
+}
+
+ads-replPingerSleep ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-replPingerSleep"}
+	LDAP-DESC                   "the time interval(in seconds) between subsequent pings to each re"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 923 }
+}
+
+ads-pwdValidator ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-pwdValidator"}
+	LDAP-DESC                   "FQCN of password validator"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 925 }
+}
+
+ads-authenticatorId ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-authenticatorId"}
+	LDAP-DESC                   "Authenticator Id"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 930 }
+}
+
+ads-delegateHost ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-delegateHost"}
+	LDAP-DESC                   "an external host handling delegate authentication"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 931 }
+}
+
+ads-delegatePort ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"ads-delegatePort"}
+	LDAP-DESC                   "Port number on system"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 932 }
+}
+
+ads-delegateSsl ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-delegateSsl"}
+	LDAP-DESC                   "Tells if the delegatedAuthenticator uses SSL"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 933 }
+}
+
+ads-authenticatorClass ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"ads-authenticatorClass"}
+	LDAP-DESC                   "the fully qualified class name of an authenticator implementation"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 934 }
+}
+
+ads-baseDn ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"ads-baseDn"}
+	LDAP-DESC                   "The base DN from which the authenticator is valid"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 935 }
+}
+
+ads-delegateTls ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"ads-delegateTls"}
+	LDAP-DESC                   "Tells if the authenticator will use StartTLS"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 936 }
+}
+
+ads-delegateSslTrustManager ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseExactMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"ads-delegateSslTrustManager"}
+	LDAP-DESC                   "FQCN of the TrustManager to use to validate the SSL communication"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 937 }
+}
+
+ads-delegateTlsTrustManager ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseExactMatch
+	SINGLE VALUE                TRUE
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"ads-delegateTlsTrustManager"}
+	LDAP-DESC                   "FQCN of the TrustManager to use to validate the startTls communication"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 938 }
+}
+
+ads-base OBJECT-CLASS ::= {
+	KIND            abstract
+	MAY CONTAIN     {ads-enabled | description}
+	LDAP-NAME       {"ads-base"}
+	LDAP-DESC       "The base bean"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 0 }
+}
+
+ads-directoryService OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-base}
+	MUST CONTAIN    {
+        ads-directoryServiceId
+        | ads-dsReplicaId
+        | ads-dsAccessControlEnabled
+        | ads-dsAllowAnonymousAccess
+        | ads-dsDenormalizeOpAttrsEnabled
+        | ads-dsPasswordHidden
+        | ads-dsSyncPeriodMillis
+    }
+	MAY CONTAIN     {ads-dsTestEntries}
+	LDAP-NAME       {"ads-directoryService"}
+	LDAP-DESC       "The DirectoryService ObjectClass"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 100 }
+}
+
+ads-changeLog OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-base}
+	MUST CONTAIN    {ads-changeLogExposed | ads-changeLogId}
+	LDAP-NAME       {"ads-changeLog"}
+	LDAP-DESC       "The ChangeLog"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 120 }
+}
+
+ads-interceptor OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-base}
+	MUST CONTAIN    {
+        ads-interceptorId
+        | ads-interceptorOrder
+        | ads-interceptorClassName
+    }
+	LDAP-NAME       {"ads-interceptor"}
+	LDAP-DESC       "The Interceptor ObjectClass"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 130 }
+}
+
+ads-authenticationInterceptor OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-interceptor}
+	LDAP-NAME       {"ads-authenticationInterceptor"}
+	LDAP-DESC       "The AuthenticationInterceptor ObjectClass"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 131 }
+}
+
+ads-hashInterceptor OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-interceptor}
+	MAY CONTAIN     {ads-hashAlgorithm | ads-hashAttribute}
+	LDAP-NAME       {"ads-hashInterceptor"}
+	LDAP-DESC       "The HashInterceptor ObjectClass"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 132 }
+}
+
+ads-journal OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-base}
+	MUST CONTAIN    {
+        ads-journalWorkingDir
+        | ads-journalRotation
+        | ads-journalId
+        | ads-journalFileName
+    }
+	LDAP-NAME       {"ads-journal"}
+	LDAP-DESC       "The Journal"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 140 }
+}
+
+ads-partition OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-base}
+	KIND            abstract
+	MUST CONTAIN    {ads-partitionId | ads-partitionSuffix}
+	MAY CONTAIN     {ads-contextEntry | ads-partitionSyncOnWrite}
+	LDAP-NAME       {"ads-partition"}
+	LDAP-DESC       "A generic partition"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 150 }
+}
+
+ads-jdbmPartition OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-partition}
+	MAY CONTAIN     {ads-partitionCacheSize | ads-jdbmPartitionOptimizerEnabled}
+	LDAP-NAME       {"ads-jdbmPartition"}
+	LDAP-DESC       "A JDBM partition"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 151 }
+}
+
+ads-index OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-base}
+	KIND            abstract
+	MUST CONTAIN    {ads-indexAttributeId | ads-indexHasReverse}
+	LDAP-NAME       {"ads-index"}
+	LDAP-DESC       "A generic indexed attribute"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 160 }
+}
+
+ads-jdbmIndex OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-index}
+	MAY CONTAIN     {
+        ads-indexFileName
+        | ads-indexWorkingDir
+        | ads-indexNumDupLimit
+        | ads-indexCacheSize
+    }
+	LDAP-NAME       {"ads-jdbmIndex"}
+	LDAP-DESC       "A JDBM indexed attribute"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 161 }
+}
+
+ads-transport OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-base}
+	KIND            abstract
+	MUST CONTAIN    {
+        ads-transportId
+        | ads-systemPort
+        | ads-transportAddress
+    }
+	MAY CONTAIN     {
+        ads-transportBacklog
+        | ads-transportEnableSSL
+        | ads-transportNbThreads
+    }
+	LDAP-NAME       {"ads-transport"}
+	LDAP-DESC       "A transport (TCP or UDP)"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 18 }
+}
+
+ads-tcpTransport OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-transport}
+	MAY CONTAIN     {
+        ads-enabledProtocols
+        | ads-enabledCiphers
+        | ads-wantClientAuth
+        | ads-needClientAuth
+    }
+	LDAP-NAME       {"ads-tcpTransport"}
+	LDAP-DESC       "A TCP transport"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 19 }
+}
+
+ads-udpTransport OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-transport}
+	LDAP-NAME       {"ads-udpTransport"}
+	LDAP-DESC       "an UDP transport"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 20 }
+}
+
+ads-server OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-base}
+	KIND            abstract
+	MUST CONTAIN    {ads-serverId}
+	LDAP-NAME       {"ads-server"}
+	LDAP-DESC       "The server ObjectClass"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 250 }
+}
+
+ads-dsBasedServer OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-server}
+	KIND            abstract
+	MAY CONTAIN     {ads-searchBaseDN}
+	LDAP-NAME       {"ads-dsBasedServer"}
+	LDAP-DESC       "The DirectoryService based server ObjectClass"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 260 }
+}
+
+ads-ldapServer OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-dsBasedServer}
+	MUST CONTAIN    {
+        ads-confidentialityRequired
+        | ads-maxSizeLimit
+        | ads-maxTimeLimit
+        | ads-maxPDUSize
+        | ads-saslHost
+        | ads-saslPrincipal
+        | ads-saslRealms
+        | ads-replEnabled
+        | ads-replPingerSleep
+    }
+	MAY CONTAIN     {
+        ads-keystoreFile
+        | ads-certificatePassword
+        | ads-replReqHandler
+    }
+	LDAP-NAME       {"ads-ldapServer"}
+	LDAP-DESC       "The LdapServer ObjectClass"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 300 }
+}
+
+ads-kdcServer OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-dsBasedServer}
+	MUST CONTAIN    {
+        ads-krbAllowableClockSkew
+        | ads-krbEncryptionTypes
+        | ads-krbEmptyAddressesAllowed
+        | ads-krbForwardableAllowed
+        | ads-krbPaEncTimestampRequired
+        | ads-krbPostdatedAllowed
+        | ads-krbProxiableAllowed
+        | ads-krbRenewableAllowed
+        | ads-krbMaximumRenewableLifetime
+        | ads-krbMaximumTicketLifetime
+        | ads-krbPrimaryRealm
+        | ads-krbBodyChecksumVerified
+    }
+	LDAP-NAME       {"ads-kdcServer"}
+	LDAP-DESC       "The KerberosServer ObjectClass"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 400 }
+}
+
+ads-dnsServer OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-dsBasedServer}
+	LDAP-NAME       {"ads-dnsServer"}
+	LDAP-DESC       "The DnsServer ObjectClass"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 500 }
+}
+
+ads-dhcpServer OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-dsBasedServer}
+	LDAP-NAME       {"ads-dhcpServer"}
+	LDAP-DESC       "The DhcpServer ObjectClass"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 600 }
+}
+
+ads-ntpServer OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-server}
+	LDAP-NAME       {"ads-ntpServer"}
+	LDAP-DESC       "The NtpServer ObjectClass"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 700 }
+}
+
+ads-changePasswordServer OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-dsBasedServer}
+	LDAP-NAME       {"ads-changePasswordServer"}
+	LDAP-DESC       "The ChangePassword ObjectClass"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 800 }
+}
+
+ads-saslMechHandler OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-base}
+	MUST CONTAIN    {ads-saslMechName | ads-saslMechClassName}
+	MAY CONTAIN     {ads-ntlmMechProvider}
+	LDAP-NAME       {"ads-saslMechHandler"}
+	LDAP-DESC       "SASL mechanism handler"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 801 }
+}
+
+ads-extendedOpHandler OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-base}
+	MUST CONTAIN    {ads-extendedOpHandlerClass | ads-extendedOpId}
+	LDAP-NAME       {"ads-extendedOpHandler"}
+	LDAP-DESC       "Extended operation handler"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 802 }
+}
+
+ads-httpWebApp OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-base}
+	MUST CONTAIN    {ads-httpWarFile | ads-id | ads-httpAppCtxPath}
+	LDAP-NAME       {"ads-httpWebApp"}
+	LDAP-DESC       "a web app"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 803 }
+}
+
+ads-httpServer OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-server}
+	MAY CONTAIN     {ads-httpConfFile}
+	LDAP-NAME       {"ads-httpServer"}
+	LDAP-DESC       "integrated jetty http server"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 804 }
+}
+
+ads-replEventLog OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-base}
+	MUST CONTAIN    {
+        ads-dsReplicaId
+        -- | ads-replAliasDerefMode
+        | ads-searchBaseDN
+        -- | ads-replSearchScope
+        | ads-replSearchFilter
+        | ads-replRefreshNPersist
+        | ads-replLogMaxIdle
+        | ads-replLogPurgeThresholdCount
+    }
+	MAY CONTAIN     {
+        -- ads-replLastSentCsn |
+        ads-replCookie
+    }
+	LDAP-NAME       {"ads-replEventLog"}
+	LDAP-DESC       "class to hold a replication consumer event log details"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 805 }
+}
+
+ads-replConsumer OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-base}
+	MUST CONTAIN    {
+        ads-replConsumerId
+        | ads-searchBaseDN
+        | ads-replProvHostName
+        | ads-replProvPort
+        -- | ads-replAliasDerefMode
+        | ads-replAttributes
+        | ads-replRefreshInterval
+        | ads-replRefreshNPersist
+        -- | ads-replSearchScope
+        | ads-replSearchFilter
+        | ads-replSearchSizeLimit
+        | ads-replSearchTimeOut
+        | ads-replUserDn
+        | ads-replUserPassword
+    }
+	MAY CONTAIN     {
+        ads-replUseTls
+        | ads-replStrictCertValidation
+        | ads-replConsumerImpl
+        | ads-replCookie
+    }
+	LDAP-NAME       {"ads-replConsumer"}
+	LDAP-DESC       "replication consumer configuration"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 806 }
+}
+
+ads-passwordPolicy OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-base}
+	MUST CONTAIN    {ads-pwdId | ads-pwdAttribute}
+	MAY CONTAIN     {
+        ads-pwdMinAge
+        | ads-pwdMaxAge
+        | ads-pwdInHistory
+        | ads-pwdCheckQuality
+        | ads-pwdMinLength
+        | ads-pwdMaxLength
+        | ads-pwdExpireWarning
+        | ads-pwdGraceAuthNLimit
+        | ads-pwdGraceExpire
+        | ads-pwdLockout
+        | ads-pwdLockoutDuration
+        | ads-pwdMaxFailure
+        | ads-pwdFailureCountInterval
+        | ads-pwdMustChange
+        | ads-pwdAllowUserChange
+        | ads-pwdSafeModify
+        | ads-pwdMinDelay
+        | ads-pwdMaxDelay
+        | ads-pwdMaxIdle
+        | ads-pwdValidator
+    }
+	LDAP-NAME       {"ads-passwordPolicy"}
+	LDAP-DESC       "class to hold the PasswordPolicy configuration"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 900 }
+}
+
+ads-authenticator OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-base}
+	KIND            abstract
+	MUST CONTAIN    {ads-authenticatorId | ads-baseDn}
+	LDAP-NAME       {"ads-authenticator"}
+	LDAP-DESC       "A generic authenticator"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 901 }
+}
+
+ads-authenticatorImpl OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-authenticator}
+	MUST CONTAIN    {ads-authenticatorClass}
+	LDAP-NAME       {"ads-authenticatorImpl"}
+	LDAP-DESC       "an authenticator implementation"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 902 }
+}
+
+ads-delegatingAuthenticator OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-authenticator}
+	MUST CONTAIN    {ads-delegateHost | ads-delegatePort}
+	MAY CONTAIN     {
+        ads-delegateSsl
+        | ads-delegateTls
+        | ads-delegateSslTrustManager
+        | ads-delegateTlsTrustManager
+    }
+	LDAP-NAME       {"ads-delegatingAuthenticator"}
+	LDAP-DESC       "delegated authentication configuration"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 904 }
+}
+
+ads-mavibotIndex OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-index}
+	LDAP-NAME       {"ads-mavibotIndex"}
+	LDAP-DESC       "A Mavibot index"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 905 }
+}
+
+ads-mavibotPartition OBJECT-CLASS ::= {
+	SUBCLASS OF     {ads-partition}
+	LDAP-NAME       {"ads-mavibotPartition"}
+	LDAP-DESC       "A Mavibot partition"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 906 }
+}
+
+END

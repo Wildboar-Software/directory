@@ -1,0 +1,252 @@
+OtherImplicitlyTaggedTypes {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) implicit-tagged-types(60002)
+}
+DEFINITIONS
+IMPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    id-at, id-mr, id-nf, id-oc, id-avc, id-lsx
+        FROM Wildboar
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) wildboar(1)}
+        WITH SUCCESSORS
+
+    ATTRIBUTE, OBJECT-CLASS, NAME-FORM, MATCHING-RULE, SYNTAX-NAME,
+    CONTEXT, FRIENDS, objectIdentifierMatch, distinguishedNameMatch,
+    DistinguishedName, top
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+    UnboundedDirectoryString, DirectoryString, directoryString,
+    caseIgnoreMatch, caseIgnoreOrderingMatch, caseIgnoreSubstringsMatch,
+    caseExactMatch, caseExactOrderingMatch, caseExactSubstringsMatch,
+    integer, integerMatch, integerOrderingMatch,
+    boolean, booleanMatch, dn, oid, bitString, bitStringMatch,
+    generalizedTime, generalizedTimeMatch, generalizedTimeOrderingMatch,
+    numericString, numericStringOrderingMatch, numericStringSubstringsMatch,
+    octetString, octetStringMatch, octetStringOrderingMatch, octetStringSubstringsMatch
+        FROM SelectedAttributeTypes
+        {joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+        WITH SUCCESSORS
+
+    GeneralNames, GeneralName
+        FROM CertificateExtensions
+        {joint-iso-itu-t ds(5) module(1) certificateExtensions(26) 9}
+
+    CertificateSerialNumber
+        FROM AuthenticationFramework
+        {joint-iso-itu-t ds(5) module(1) authenticationFramework(7) 9}
+        WITH SUCCESSORS
+
+    SubjectKeyIdentifier, IssuerAndSerialNumber, RecipientKeyIdentifier
+        FROM CryptographicMessageSyntax-2009
+        {iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-9(9)
+        smime(16) modules(0) id-mod-cms-2004-02(41)}
+        WITH SUCCESSORS
+
+    ;
+
+SECURITY-CATEGORY ::= TYPE-IDENTIFIER
+
+AccessService ::= SEQUENCE {
+  serviceId          OBJECT IDENTIFIER,
+  objectDef          SEQUENCE SIZE (1..MAX) OF ObjectSel,
+  ... }
+
+ObjectSel ::= SEQUENCE {
+  objecClass         OBJECT-CLASS.&id,
+  objSelect          CHOICE {
+    allObj        [0]  TargetSelect,
+    objectNames   [1]  SEQUENCE SIZE (1..MAX) OF SEQUENCE {
+      object             CHOICE {
+        names         [1]  SEQUENCE SIZE (1..MAX) OF DistinguishedName,
+        subtree       [2]  DistinguishedName,
+        ... },
+      select           TargetSelect,
+      ... },
+    ... },
+  ... }
+
+TargetSelect ::= SEQUENCE {
+  objOper   ObjectOperations OPTIONAL,
+  attrSel   AttributeSel     OPTIONAL,
+  ... }
+  (WITH COMPONENTS {..., objOper  PRESENT } |
+   WITH COMPONENTS {..., attrSel  PRESENT } )
+
+AttributeSel ::= SEQUENCE {
+  attSelect           CHOICE {
+    allAttr        [0]  SEQUENCE {
+      attrOper1      [0]  AttributeOperations OPTIONAL,
+      ... },
+    attributes     [1]  SEQUENCE SIZE (1..MAX) OF SEQUENCE {
+      select              SEQUENCE SIZE (1..MAX) OF ATTRIBUTE.&id,
+      attrOper2      [0]  AttributeOperations OPTIONAL,
+      ... },
+    ... },
+  ... }
+
+ObjectOperations ::= BIT STRING {
+  read            (0),
+  add             (1),
+  modify          (2),
+  delete          (3),
+  rename          (4),
+  discloseOnError (5) }
+
+AttributeOperations ::= BIT STRING {
+  read             (0),
+  compare          (1),
+  add              (2),
+  modify           (3),
+  delete           (4),
+  deleteValue      (5),
+  replaceAttribute (6),
+  discloseOnError  (7) }
+
+ub-clearance-sponsor INTEGER ::= 64
+
+BinaryTime ::= INTEGER (0..MAX)
+
+BinarySigningTime ::= BinaryTime
+
+SvceAuthInfo ::= SEQUENCE {
+    service	    GeneralName,
+    ident		GeneralName,
+    authInfo	OCTET STRING OPTIONAL }
+
+IetfAttrSyntax ::= SEQUENCE {
+    policyAuthority	    [0] GeneralNames    OPTIONAL,
+    values		        SEQUENCE OF CHOICE {
+        octets	OCTET STRING,
+        oid	OBJECT IDENTIFIER,
+        string	UTF8String
+    }
+}
+
+SupportedSecurityCategories SECURITY-CATEGORY ::= { ... }
+
+SecurityCategory-rfc3281{SECURITY-CATEGORY:Supported} ::= SEQUENCE {
+    type		[0] IMPLICIT SECURITY-CATEGORY.&id({Supported}),
+    value		[1] EXPLICIT SECURITY-CATEGORY.&Type({Supported}{@type})
+}
+
+ClassList  ::=  BIT STRING {
+    unmarked 		(0),
+    unclassified 	(1),
+    restricted		(2),
+    confidential	(3),
+    secret		    (4),
+    topSecret		(5)
+}
+
+Clearance-rfc3281 ::= SEQUENCE {
+    policyId		    [0] OBJECT IDENTIFIER,
+    classList		    [1] ClassList DEFAULT {unclassified},
+    securityCategories	[2] SET OF SecurityCategory-rfc3281{{SupportedSecurityCategories}} OPTIONAL
+}
+
+FirmwarePackageIdentifier ::= SEQUENCE {
+    name PreferredOrLegacyPackageIdentifier,
+    stale PreferredOrLegacyStalePackageIdentifier OPTIONAL }
+
+PreferredOrLegacyPackageIdentifier ::= CHOICE {
+    preferred PreferredPackageIdentifier,
+    legacy OCTET STRING }
+
+PreferredPackageIdentifier ::= SEQUENCE {
+    fwPkgID OBJECT IDENTIFIER,
+    verNum INTEGER (0..MAX) }
+
+PreferredOrLegacyStalePackageIdentifier ::= CHOICE {
+    preferredStaleVerNum INTEGER (0..MAX),
+    legacyStaleVersion OCTET STRING }
+
+TargetHardwareIdentifiers ::= SEQUENCE OF OBJECT IDENTIFIER
+
+DecryptKeyIdentifier ::= OCTET STRING
+
+ImplementedCryptoAlgorithms ::= SEQUENCE OF OBJECT IDENTIFIER
+
+ImplementedCompressAlgorithms ::= SEQUENCE OF OBJECT IDENTIFIER
+
+CommunityIdentifier ::= CHOICE {
+    communityOID        OBJECT IDENTIFIER,
+    hwModuleList        HardwareModules }
+
+CommunityIdentifiers ::= SEQUENCE OF CommunityIdentifier
+
+HardwareSerialEntry ::= CHOICE {
+    all                 NULL,
+    single              OCTET STRING,
+    block SEQUENCE {
+        low             OCTET STRING,
+        high            OCTET STRING
+    }
+}
+
+HardwareModules ::= SEQUENCE {
+    hwType              OBJECT IDENTIFIER,
+    hwSerialEntries     SEQUENCE OF HardwareSerialEntry }
+
+FirmwarePackageInfo ::= SEQUENCE {
+    fwPkgType       INTEGER OPTIONAL,
+    dependencies    SEQUENCE OF PreferredOrLegacyPackageIdentifier OPTIONAL }
+
+WrappedFirmwareKey ::= EnvelopedData
+
+BodyPartID ::= INTEGER (0..4294967295)
+BodyPartPath ::= SEQUENCE SIZE (1..MAX) OF BodyPartID
+
+CMCUnsignedData ::= SEQUENCE {
+    bodyPartPath        BodyPartPath,
+    identifier          TYPE-IDENTIFIER.&id,
+    content             TYPE-IDENTIFIER.&Type }
+
+ExtensionReq ::= Extensions
+
+Hash ::= OCTET STRING
+
+IssuerSerial ::= SEQUENCE {
+    issuer                   GeneralNames,
+    serialNumber             CertificateSerialNumber
+}
+
+id-sha256  OBJECT IDENTIFIER  ::=  { joint-iso-itu-t(2)
+    country(16) us(840) organization(1) gov(101)
+    csor(3) nistalgorithm(4) hashalgs(2) 1 }
+
+ESSCertIDv2 ::= SEQUENCE {
+    hashAlgorithm           AlgorithmIdentifier{{SupportedAlgorithms}} DEFAULT {algorithm id-sha256},
+    certHash                Hash,
+    issuerSerial            IssuerSerial OPTIONAL
+}
+
+SignAttrsHash ::= SEQUENCE {
+    algID               AlgorithmIdentifier{{SupportedAlgorithms}},
+    hash                OCTET STRING }
+
+MultipleSignatures ::= SEQUENCE {
+    bodyHashAlg         AlgorithmIdentifier{{SupportedAlgorithms}},
+    signAlg             AlgorithmIdentifier{{SupportedAlgorithms}},
+    signAttrsHash       SignAttrsHash,
+    cert                ESSCertIDv2 OPTIONAL }
+
+SSID ::= OCTET STRING (SIZE (1..32))
+SSIDList ::= SEQUENCE SIZE (1..MAX) OF SSID
+
+SMIMEEncryptionKeyPreference ::= CHOICE {
+    issuerAndSerialNumber   [0] IssuerAndSerialNumber,
+    receipentKeyId          [1] RecipientKeyIdentifier,
+    subjectAltKeyIdentifier [2] SubjectKeyIdentifier
+}
+
+END

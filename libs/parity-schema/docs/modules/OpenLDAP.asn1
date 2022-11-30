@@ -1,0 +1,328 @@
+OpenLDAP {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) openldap(28)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    ATTRIBUTE, OBJECT-CLASS, top, SYNTAX-NAME, RelativeDistinguishedName
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	directoryString, ia5String, uid,
+    caseExactMatch, caseExactOrderingMatch, caseExactSubstringsMatch,
+	UnboundedDirectoryString, caseIgnoreIA5Match,
+    caseIgnoreIA5SubstringsMatch,
+    integer, integerMatch, integerOrderingMatch,
+    commonName, uid, description, localityName, name, caseIgnoreMatch,
+    caseIgnoreOrderingMatch, caseIgnoreSubstringsMatch, caseExactIA5Match,
+    UUID, octetStringMatch, octetStringOrderingMatch, octetStringSubstringsMatch
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    userPassword
+        FROM AuthenticationFramework
+        {joint-iso-itu-t ds(5) module(1) authenticationFramework(7) 9}
+        WITH SUCCESSORS
+
+    manager
+        FROM Cosine
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) cosine(3)}
+        WITH SUCCESSORS
+
+    uuidMatch, uuidOrderingMatch, uuid
+        FROM UUID
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) uuid(29)}
+
+    ;
+
+-- Object Identifiers
+
+id-lsx-rdn          OBJECT IDENTIFIER ::= { 1 2 36 79672281 1 5 0 }
+id-lsx-open         OBJECT IDENTIFIER ::= { 1 2 36 79672281 1 5 3 }
+id-openldapRoot     OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 4203 }
+id-openldap         OBJECT IDENTIFIER ::= { id-openldapRoot 1 }
+id-openldap-at      OBJECT IDENTIFIER ::= { id-openldap 3 }
+id-openldap-oc      OBJECT IDENTIFIER ::= { id-openldap 4 }
+
+-- Attribute Types
+
+superiorUUID ATTRIBUTE ::= {
+	WITH SYNTAX 				UUID
+    EQUALITY MATCHING RULE 		uuidMatch
+    ORDERING MATCHING RULE      uuidOrderingMatch
+    SINGLE VALUE                TRUE
+    NO USER MODIFICATION        TRUE
+    USAGE                       directoryOperation
+	LDAP-SYNTAX 				uuid.&id
+	LDAP-NAME 					{"superiorUUID"}
+    LDAP-DESC                   "UUID of the superior entry"
+	ID { 1 3 6 1 4 1 4203 666 1 11 }
+}
+
+syncreplCookie ATTRIBUTE ::= {
+	WITH SYNTAX 				UUID
+    EQUALITY MATCHING RULE 		octetStringMatch
+    ORDERING MATCHING RULE      octetStringOrderingMatch
+    SUBSTRINGS MATCHING RULE    octetStringSubstringsMatch
+    SINGLE VALUE                TRUE
+    NO USER MODIFICATION        TRUE
+    USAGE                       dSAOperation
+	LDAP-SYNTAX 				octetString.&id
+	LDAP-NAME 					{"syncreplCookie"}
+    LDAP-DESC "syncrepl Cookie for shadow copy"
+	ID { 1 3 6 1 4 1 4203 666 1 23 }
+}
+
+-- contextCSN ATTRIBUTE ::= {
+-- 	WITH SYNTAX 				ChangeSequenceNumber
+--     EQUALITY MATCHING RULE 		csnMatch
+--     ORDERING MATCHING RULE      csnOrderingMatch
+--     NO USER MODIFICATION        TRUE
+--     USAGE                       dSAOperation
+-- 	LDAP-SYNTAX 				csn.&id
+-- 	LDAP-NAME 					{"contextCSN"}
+--     LDAP-DESC "change sequence number of the entry content"
+-- 	ID { 1 3 6 1 4 1 4203 666 1 25 }
+-- }
+
+syncTimestamp ATTRIBUTE ::= {
+	WITH SYNTAX 				GeneralizedTime
+    EQUALITY MATCHING RULE 		generalizedTimeMatch
+    ORDERING MATCHING RULE      generalizedTimeOrderingMatch
+    SINGLE VALUE                TRUE
+    NO USER MODIFICATION        TRUE
+    USAGE                       dSAOperation
+	LDAP-SYNTAX 				generalizedTime.&id
+	LDAP-NAME 					{"syncTimestamp"}
+    LDAP-DESC "Time which object was replicated"
+	ID { 1 3 6 1 4 1 4203 666 1 26 }
+}
+
+monitorContext ATTRIBUTE ::= {
+	WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+    SINGLE VALUE                TRUE
+    NO USER MODIFICATION        TRUE
+    USAGE                       dSAOperation
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"monitorContext"}
+    LDAP-DESC "monitor context"
+	ID { 1 3 6 1 4 1 4203 666 1 10 }
+}
+
+configContext ATTRIBUTE ::= {
+	WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+    SINGLE VALUE                TRUE
+    NO USER MODIFICATION        TRUE
+    USAGE                       dSAOperation
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"configContext"}
+    LDAP-DESC "config context"
+	ID { 1 3 6 1 4 1 4203 1 12 2 1 }
+}
+
+-- Object Classes
+
+glue OBJECT-CLASS ::= {
+    SUBCLASS OF 	{top}
+	KIND			structural
+	LDAP-NAME		{"glue"}
+    LDAP-DESC       "Glue Entry"
+	ID				{ 1 3 6 1 4 1 4203 666 3 4 }
+}
+
+syncConsumerSubentry OBJECT-CLASS ::= {
+    SUBCLASS OF 	{top}
+	KIND			auxiliary
+    MAY CONTAIN     {syncreplCookie}
+	LDAP-NAME		{"syncConsumerSubentry"}
+    LDAP-DESC       "Persistent Info for SyncRepl Consumer"
+	ID				{ 1 3 6 1 4 1 4203 666 3 5 }
+}
+
+-- syncProviderSubentry OBJECT-CLASS ::= {
+--     SUBCLASS OF 	{top}
+-- 	KIND			auxiliary
+--     MAY CONTAIN     {contextCSN}
+-- 	LDAP-NAME		{"syncProviderSubentry"}
+--     LDAP-DESC       "Persistent Info for SyncRepl Producer"
+-- 	ID				{ 1 3 6 1 4 1 4203 666 3 6 }
+-- }
+
+openLDAProotDSE OBJECT-CLASS ::= {
+    SUBCLASS OF 	{top}
+	KIND			structural
+	MAY CONTAIN		{commonName}
+	LDAP-NAME		{"OpenLDAProotDSE", "LDAProotDSE"}
+    LDAP-DESC       "OpenLDAP Root DSE object"
+	ID				{ id-openldap-oc 1 }
+}
+
+-- TODO: Where is {id-openldap-oc 2}?
+
+openLDAPorg OBJECT-CLASS ::= {
+    SUBCLASS OF 	{organization}
+	KIND			structural
+    MAY CONTAIN     {buildingName | displayName | labeledURI}
+	LDAP-NAME		{"OpenLDAPorg"}
+    LDAP-DESC       "OpenLDAP Organizational Object"
+	ID				{ id-openldap-oc 3 }
+}
+
+openLDAPou OBJECT-CLASS ::= {
+    SUBCLASS OF 	{organizationalUnit}
+	KIND			structural
+    MAY CONTAIN     {buildingName | displayName | labeledURI | organizationName}
+	LDAP-NAME		{"OpenLDAPou"}
+    LDAP-DESC       "OpenLDAP Organizational Unit Object"
+	ID				{ id-openldap-oc 4 }
+}
+
+openLDAPperson OBJECT-CLASS ::= {
+    SUBCLASS OF 	{pilotPerson | inetOrgPerson}
+	KIND			structural
+    MUST CONTAIN    {uid | commonName}
+    MAY CONTAIN     {givenName | labeledURI | organizationName}
+	LDAP-NAME		{"OpenLDAPperson"}
+    LDAP-DESC       "OpenLDAP Person"
+	ID				{ id-openldap-oc 5 }
+}
+
+openLDAPdisplayableObject OBJECT-CLASS ::= {
+	KIND			auxiliary
+    MAY CONTAIN     {displayName}
+	LDAP-NAME		{"OpenLDAPdisplayableObject"}
+    LDAP-DESC       "OpenLDAP Displayable Object"
+	ID				{ id-openldap-oc 6 }
+}
+
+-- Matching Rules
+
+-- caseIgnoreIA5SubstringsMatch is defined in X.520
+
+caseExactIA5SubstringsMatch MATCHING-RULE ::= {
+    SYNTAX                  IA5String
+    LDAP-SYNTAX             ia5String.&id
+    LDAP-NAME               {"caseExactIA5SubstringsMatch"}
+    ID                      { 1 3 6 1 4 1 4203 1 2 1 }
+}
+
+-- Uses the metaphone algorithm.
+directoryStringApproxMatch MATCHING-RULE ::= {
+    SYNTAX                  UnboundedDirectoryString
+    LDAP-SYNTAX             directoryString.&id
+    LDAP-NAME               {"directoryStringApproxMatch"}
+    ID                      { 1 3 6 1 4 1 4203 666 4 4 }
+}
+
+-- Uses the metaphone algorithm.
+ia5StringApproxMatch MATCHING-RULE ::= {
+    SYNTAX                  IA5String
+    LDAP-SYNTAX             ia5String.&id
+    LDAP-NAME               {"ia5StringApproxMatch"}
+    ID                      { 1 3 6 1 4 1 4203 666 4 5 }
+}
+
+integerBitAndMatch MATCHING-RULE ::= {
+    SYNTAX                  INTEGER
+    LDAP-SYNTAX             integer.&id
+    LDAP-NAME               {"integerBitAndMatch"}
+    ID                      { 1 2 840 113556 1 4 803 }
+}
+
+integerBitOrMatch MATCHING-RULE ::= {
+    SYNTAX                  INTEGER
+    LDAP-SYNTAX             integer.&id
+    LDAP-NAME               {"integerBitOrMatch"}
+    ID                      { 1 2 840 113556 1 4 804 }
+}
+
+-- { "entry", "( 1.3.6.1.4.1.4203.1.3.1 "
+-- 			"NAME 'entry' "
+-- 			"DESC 'OpenLDAP ACL entry pseudo-attribute' "
+-- 			"SYNTAX 1.3.6.1.4.1.4203.1.1.1 "
+-- 			"SINGLE-VALUE NO-USER-MODIFICATION USAGE dSAOperation )",
+-- 	{ "children", "( 1.3.6.1.4.1.4203.1.3.2 "
+-- 			"NAME 'children' "
+-- 			"DESC 'OpenLDAP ACL children pseudo-attribute' "
+-- 			"SYNTAX 1.3.6.1.4.1.4203.1.1.1 "
+-- 			"SINGLE-VALUE NO-USER-MODIFICATION USAGE dSAOperation )",
+-- { "authzTo", "( 1.3.6.1.4.1.4203.666.1.8 "
+-- 		"NAME ( 'authzTo' 'saslAuthzTo' ) "
+-- 		"DESC 'proxy authorization targets' "
+-- 		"EQUALITY authzMatch "
+-- 		"SYNTAX 1.3.6.1.4.1.4203.666.2.7 "
+-- 		"X-ORDERED 'VALUES' "
+-- 		"USAGE distributedOperation )",
+-- { "authzFrom", "( 1.3.6.1.4.1.4203.666.1.9 "
+-- 		"NAME ( 'authzFrom' 'saslAuthzFrom' ) "
+-- 		"DESC 'proxy authorization sources' "
+-- 		"EQUALITY authzMatch "
+-- 		"SYNTAX 1.3.6.1.4.1.4203.666.2.7 "
+-- 		"X-ORDERED 'VALUES' "
+-- 		"USAGE distributedOperation )",
+
+-- { "pKCS8PrivateKey", "( 1.3.6.1.4.1.4203.666.1.60 "
+--     "NAME 'pKCS8PrivateKey' "
+--     "DESC 'PKCS#8 PrivateKeyInfo, use ;binary' "
+--     "EQUALITY privateKeyMatch "
+--     "SYNTAX 1.2.840.113549.1.8.1.1 )",
+
+-- "( 1.3.6.1.4.1.4203.666.2.1 DESC 'OpenLDAP Experimental ACI' )",
+
+-- "( 1.3.6.1.4.1.4203.666.4.2 NAME 'OpenLDAPaciMatch' SYNTAX 1.3.6.1.4.1.4203.666.2.1 )",
+
+-- "OpenLDAPaci", "( 1.3.6.1.4.1.4203.666.1.5 "
+--     "NAME 'OpenLDAPaci' "
+--     "DESC 'OpenLDAP access control information (experimental)' "
+--     "EQUALITY OpenLDAPaciMatch "
+--     "SYNTAX 1.3.6.1.4.1.4203.666.2.1 "
+--     "USAGE directoryOperation )",
+
+-- "( 1.3.6.1.4.1.1466.115.121.1.1 DESC 'ACI Item' " X_BINARY X_NOT_H_R ")"
+
+-- This syntax is not defined.
+-- ( 1.3.6.1.4.1.1466.115.121.1.2 DESC 'Access Point' " X_NOT_H_R ")
+
+-- ( 1.3.6.1.4.1.1466.115.121.1.55 DESC 'Modify Rights' )
+
+-- ( 1.3.6.1.4.1.4203.666.2.2 DESC 'OpenLDAP authPassword' )
+
+-- ( 1.3.6.1.4.1.4203.666.11.2.1 DESC 'CSN' )
+
+-- ( 1.3.6.1.4.1.4203.666.11.2.4 DESC 'CSN SID' )
+
+-- ( 1.2.840.113549.1.8.1.1 DESC 'PKCS#8 PrivateKeyInfo' )
+
+-- This is handled by substrings matching.
+-- storedPrefixMatch
+
+-- An ancient matching rule that is present only in the 1997 edition of X.501.
+-- readerAndKeyIDMatch
+
+-- An ancient matching rule that is present only in the 1997 edition of X.501.
+-- attributeIntegrityMatch
+
+-- ( 1.3.6.1.4.1.4203.666.4.8 NAME 'dnOneLevelMatch' "
+-- 		"SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )
+
+-- ( 1.3.6.1.4.1.4203.666.4.10 NAME 'dnSubordinateMatch' "
+-- 		"SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )
+
+-- ( 1.3.6.1.4.1.4203.666.4.11 NAME 'dnSuperiorMatch' "
+-- 		"SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )
+
+END

@@ -1,0 +1,627 @@
+DHCP-Schema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) dhcp-schema(41)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    id-nf
+        FROM Wildboar
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) wildboar(1)}
+        WITH SUCCESSORS
+
+    ATTRIBUTE, OBJECT-CLASS, top, DistinguishedName, distinguishedNameMatch
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	ia5String, dn, caseIgnoreIA5Match, generalizedTimeMatch, generalizedTime,
+    integer, integerMatch, commonName, octetString, octetStringMatch
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    ;
+
+-- Attribute Types
+
+dhcpPrimaryDN ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"dhcpPrimaryDN"}
+	LDAP-DESC                   "The DN of the dhcpServer which is the primary server for the configuration."
+	ID                          { 2 16 840 1 113719 1 203 4 1 }
+}
+
+dhcpHostDN ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"dhcpHostDN"}
+	LDAP-DESC                   "the distinguished name(s) of the dhcpHost objects."
+	ID                          { 2 16 840 1 113719 1 203 4 10 }
+}
+
+dhcpPoolDN ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"dhcpPoolDN"}
+	LDAP-DESC                   "The distinguished name(s) of pools."
+	ID                          { 2 16 840 1 113719 1 203 4 11 }
+}
+
+dhcpGroupDN ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"dhcpGroupDN"}
+	LDAP-DESC                   "The distinguished name(s)   of the groups."
+	ID                          { 2 16 840 1 113719 1 203 4 12 }
+}
+
+dhcpSubnetDN ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"dhcpSubnetDN"}
+	LDAP-DESC                   "The distinguished name(s) of the subnets."
+	ID                          { 2 16 840 1 113719 1 203 4 13 }
+}
+
+dhcpLeaseDN ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"dhcpLeaseDN"}
+	LDAP-DESC                   "The distinguished name of a client address."
+	ID                          { 2 16 840 1 113719 1 203 4 14 }
+}
+
+dhcpLeasesDN ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"dhcpLeasesDN"}
+	LDAP-DESC                   "The distinguished name(s) client addresses."
+	ID                          { 2 16 840 1 113719 1 203 4 15 }
+}
+
+dhcpClassesDN ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"dhcpClassesDN"}
+	LDAP-DESC                   "The distinguished name(s) of a class(es) in a subclass."
+	ID                          { 2 16 840 1 113719 1 203 4 16 }
+}
+
+dhcpSubclassesDN ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"dhcpSubclassesDN"}
+	LDAP-DESC                   "The distinguished name(s) of subclass(es)."
+	ID                          { 2 16 840 1 113719 1 203 4 17 }
+}
+
+dhcpSharedNetworkDN ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"dhcpSharedNetworkDN"}
+	LDAP-DESC                   "The distinguished name(s) of sharedNetworks."
+	ID                          { 2 16 840 1 113719 1 203 4 18 }
+}
+
+dhcpServiceDN ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"dhcpServiceDN"}
+	ID                          { 2 16 840 1 113719 1 203 4 19 }
+}
+
+dhcpSecondaryDN ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"dhcpSecondaryDN"}
+	LDAP-DESC                   "The DN of dhcpServer(s) which provide backup service for the configuration."
+	ID                          { 2 16 840 1 113719 1 203 4 2 }
+}
+
+dhcpVersion ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"dhcpVersion"}
+	LDAP-DESC                   "The version attribute of this object."
+	ID                          { 2 16 840 1 113719 1 203 4 20 }
+}
+
+dhcpImplementation ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"dhcpImplementation"}
+	LDAP-DESC                   "Description of the DHCP Server implementation e.g. DHCP Servers vendor."
+	ID                          { 2 16 840 1 113719 1 203 4 21 }
+}
+
+dhcpAddressState ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"dhcpAddressState"}
+	ID                          { 2 16 840 1 113719 1 203 4 22 }
+}
+
+dhcpExpirationTime ATTRIBUTE ::= {
+	WITH SYNTAX                 GeneralizedTime
+	EQUALITY MATCHING RULE      generalizedTimeMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 generalizedTime.&id
+	LDAP-NAME                   {"dhcpExpirationTime"}
+	LDAP-DESC                   "This is the time the current lease for an address expires."
+	ID                          { 2 16 840 1 113719 1 203 4 23 }
+}
+
+dhcpStartTimeOfState ATTRIBUTE ::= {
+	WITH SYNTAX                 GeneralizedTime
+	EQUALITY MATCHING RULE      generalizedTimeMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 generalizedTime.&id
+	LDAP-NAME                   {"dhcpStartTimeOfState"}
+	LDAP-DESC                   "This is the time of the last state change for a leased address."
+	ID                          { 2 16 840 1 113719 1 203 4 24 }
+}
+
+dhcpLastTransactionTime ATTRIBUTE ::= {
+	WITH SYNTAX                 GeneralizedTime
+	EQUALITY MATCHING RULE      generalizedTimeMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 generalizedTime.&id
+	LDAP-NAME                   {"dhcpLastTransactionTime"}
+	LDAP-DESC                   "This is the last time a valid DHCP packet was received from the client."
+	ID                          { 2 16 840 1 113719 1 203 4 25 }
+}
+
+dhcpBootpFlag ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"dhcpBootpFlag"}
+	LDAP-DESC                   "This indicates whether the address was assigned via BOOTP."
+	ID                          { 2 16 840 1 113719 1 203 4 26 }
+}
+
+dhcpDomainName ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"dhcpDomainName"}
+	ID                          { 2 16 840 1 113719 1 203 4 27 }
+}
+
+dhcpDnsStatus ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"dhcpDnsStatus"}
+	ID                          { 2 16 840 1 113719 1 203 4 28 }
+}
+
+dhcpRequestedHostName ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"dhcpRequestedHostName"}
+	LDAP-DESC                   "This is the hostname that was requested by the client."
+	ID                          { 2 16 840 1 113719 1 203 4 29 }
+}
+
+dhcpStatements ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"dhcpStatements"}
+	ID                          { 2 16 840 1 113719 1 203 4 3 }
+}
+
+dhcpAssignedHostName ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"dhcpAssignedHostName"}
+	ID                          { 2 16 840 1 113719 1 203 4 30 }
+}
+
+dhcpReservedForClient ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"dhcpReservedForClient"}
+	ID                          { 2 16 840 1 113719 1 203 4 31 }
+}
+
+dhcpAssignedToClient ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"dhcpAssignedToClient"}
+	ID                          { 2 16 840 1 113719 1 203 4 32 }
+}
+
+dhcpRelayAgentInfo ATTRIBUTE ::= {
+	WITH SYNTAX                 OCTET STRING
+	EQUALITY MATCHING RULE      octetStringMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 octetString.&id
+	LDAP-NAME                   {"dhcpRelayAgentInfo"}
+	ID                          { 2 16 840 1 113719 1 203 4 33 }
+}
+
+dhcpHWAddress ATTRIBUTE ::= {
+	WITH SYNTAX                 OCTET STRING
+	EQUALITY MATCHING RULE      octetStringMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 octetString.&id
+	LDAP-NAME                   {"dhcpHWAddress"}
+	LDAP-DESC                   "The clients hardware address that requested this IP address."
+	ID                          { 2 16 840 1 113719 1 203 4 34 }
+}
+
+dhcpHashBucketAssignment ATTRIBUTE ::= {
+	WITH SYNTAX                 OCTET STRING
+	EQUALITY MATCHING RULE      octetStringMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 octetString.&id
+	LDAP-NAME                   {"dhcpHashBucketAssignment"}
+	ID                          { 2 16 840 1 113719 1 203 4 35 }
+}
+
+dhcpDelayedServiceParameter ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"dhcpDelayedServiceParameter"}
+	ID                          { 2 16 840 1 113719 1 203 4 36 }
+}
+
+dhcpMaxClientLeadTime ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"dhcpMaxClientLeadTime"}
+	ID                          { 2 16 840 1 113719 1 203 4 37 }
+}
+
+dhcpFailOverEndpointState ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"dhcpFailOverEndpointState"}
+	ID                          { 2 16 840 1 113719 1 203 4 38 }
+}
+
+dhcpErrorLog ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"dhcpErrorLog"}
+	ID                          { 2 16 840 1 113719 1 203 4 39 }
+}
+
+dhcpRange ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"dhcpRange"}
+	ID                          { 2 16 840 1 113719 1 203 4 4 }
+}
+
+dhcpPermitList ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"dhcpPermitList"}
+	ID                          { 2 16 840 1 113719 1 203 4 5 }
+}
+
+dhcpNetMask ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"dhcpNetMask"}
+	LDAP-DESC                   "The subnet mask length for the subnet.  The mask can be easily computed from this length."
+	ID                          { 2 16 840 1 113719 1 203 4 6 }
+}
+
+dhcpOption ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"dhcpOption"}
+	ID                          { 2 16 840 1 113719 1 203 4 7 }
+}
+
+dhcpClassData ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"dhcpClassData"}
+	ID                          { 2 16 840 1 113719 1 203 4 8 }
+}
+
+dhcpOptionsDN ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"dhcpOptionsDN"}
+	ID                          { 2 16 840 1 113719 1 203 4 9 }
+}
+
+-- Object Classes
+
+dhcpService OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            structural
+	MUST CONTAIN    {commonName | dhcpPrimaryDN}
+	MAY CONTAIN     {dhcpSecondaryDN | dhcpSharedNetworkDN | dhcpSubnetDN | dhcpGroupDN | dhcpHostDN | dhcpClassesDN | dhcpOptionsDN | dhcpStatements}
+	LDAP-NAME       {"dhcpService"}
+	ID              { 2 16 840 1 113719 1 203 6 1 }
+}
+
+dhcpLeases OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            structural
+	MUST CONTAIN    {commonName | dhcpAddressState}
+	MAY CONTAIN     {dhcpExpirationTime | dhcpStartTimeOfState | dhcpLastTransactionTime | dhcpBootpFlag | dhcpDomainName | dhcpDnsStatus | dhcpRequestedHostName | dhcpAssignedHostName | dhcpReservedForClient | dhcpAssignedToClient | dhcpRelayAgentInfo | dhcpHWAddress}
+	LDAP-NAME       {"dhcpLeases"}
+	LDAP-DESC       "This class represents an IP Address, which may or may not have been leased."
+	ID              { 2 16 840 1 113719 1 203 6 10 }
+}
+
+dhcpLog OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	MUST CONTAIN    {commonName}
+	MAY CONTAIN     {dhcpAddressState | dhcpExpirationTime | dhcpStartTimeOfState | dhcpLastTransactionTime | dhcpBootpFlag | dhcpDomainName | dhcpDnsStatus | dhcpRequestedHostName | dhcpAssignedHostName | dhcpReservedForClient | dhcpAssignedToClient | dhcpRelayAgentInfo | dhcpHWAddress | dhcpErrorLog}
+	LDAP-NAME       {"dhcpLog"}
+	ID              { 2 16 840 1 113719 1 203 6 11 }
+}
+
+dhcpServer OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            structural
+	MUST CONTAIN    {commonName | dhcpServiceDN}
+	MAY CONTAIN     {dhcpVersion | dhcpImplementation | dhcpHashBucketAssignment | dhcpDelayedServiceParameter | dhcpMaxClientLeadTime | dhcpFailOverEndpointState | dhcpStatements}
+	LDAP-NAME       {"dhcpServer"}
+	LDAP-DESC       "DHCP Server Object"
+	ID              { 2 16 840 1 113719 1 203 6 12 }
+}
+
+dhcpSharedNetwork OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            structural
+	MUST CONTAIN    {commonName}
+	MAY CONTAIN     {dhcpSubnetDN | dhcpPoolDN | dhcpOptionsDN | dhcpStatements}
+	LDAP-NAME       {"dhcpSharedNetwork"}
+	LDAP-DESC       "This stores configuration information for a shared network."
+	ID              { 2 16 840 1 113719 1 203 6 2 }
+}
+
+dhcpSubnet OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	MUST CONTAIN    {commonName | dhcpNetMask}
+	MAY CONTAIN     {dhcpRange | dhcpPoolDN | dhcpGroupDN | dhcpHostDN | dhcpClassesDN | dhcpLeasesDN | dhcpOptionsDN | dhcpStatements}
+	LDAP-NAME       {"dhcpSubnet"}
+	LDAP-DESC       "This class defines a subnet. This is a container object."
+	ID              { 2 16 840 1 113719 1 203 6 3 }
+}
+
+dhcpPool OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	MUST CONTAIN    {commonName | dhcpRange}
+	MAY CONTAIN     {dhcpClassesDN | dhcpPermitList | dhcpLeasesDN | dhcpOptionsDN | dhcpStatements}
+	LDAP-NAME       {"dhcpPool"}
+	LDAP-DESC       "This stores configuration information about a pool."
+	ID              { 2 16 840 1 113719 1 203 6 4 }
+}
+
+dhcpGroup OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            structural
+	MUST CONTAIN    {commonName}
+	MAY CONTAIN     {dhcpHostDN | dhcpOptionsDN | dhcpStatements}
+	LDAP-NAME       {"dhcpGroup"}
+	LDAP-DESC       "Group object that lists host DNs and parameters. This is a container object."
+	ID              { 2 16 840 1 113719 1 203 6 5 }
+}
+
+dhcpHost OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            structural
+	MUST CONTAIN    {commonName}
+	MAY CONTAIN     {dhcpLeaseDN | dhcpHWAddress | dhcpOptionsDN | dhcpStatements}
+	LDAP-NAME       {"dhcpHost"}
+	LDAP-DESC       "This represents information about a particular client"
+	ID              { 2 16 840 1 113719 1 203 6 6 }
+}
+
+dhcpClass OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            structural
+	MUST CONTAIN    {commonName}
+	MAY CONTAIN     {dhcpSubclassesDN | dhcpOptionsDN | dhcpStatements}
+	LDAP-NAME       {"dhcpClass"}
+	LDAP-DESC       "Represents information about a collection of related clients."
+	ID              { 2 16 840 1 113719 1 203 6 7 }
+}
+
+dhcpSubClass OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            structural
+	MUST CONTAIN    {commonName}
+	MAY CONTAIN     {dhcpClassData | dhcpOptionsDN | dhcpStatements}
+	LDAP-NAME       {"dhcpSubClass"}
+	LDAP-DESC       "Represents information about a collection of related classes."
+	ID              { 2 16 840 1 113719 1 203 6 8 }
+}
+
+dhcpOptions OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            auxiliary
+	MUST CONTAIN    {commonName}
+	MAY CONTAIN     {dhcpOption}
+	LDAP-NAME       {"dhcpOptions"}
+	LDAP-DESC       "Represents information about a collection of options defined."
+	ID              { 2 16 840 1 113719 1 203 6 9 }
+}
+
+-- Name Forms
+
+dhcpServiceNameForm NAME-FORM ::= {
+	NAMES				dhcpService
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"dhcpServiceNameForm"}
+	ID					{ id-nf 30 }
+}
+
+dhcpLeasesNameForm NAME-FORM ::= {
+	NAMES				dhcpLeases
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"dhcpLeasesNameForm"}
+	ID					{ id-nf 31 }
+}
+
+dhcpLogNameForm NAME-FORM ::= {
+	NAMES				dhcpLog
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"dhcpLogNameForm"}
+	ID					{ id-nf 32 }
+}
+
+dhcpServerNameForm NAME-FORM ::= {
+	NAMES				dhcpServer
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"dhcpServerNameForm"}
+	ID					{ id-nf 33 }
+}
+
+dhcpSharedNetworkNameForm NAME-FORM ::= {
+	NAMES				dhcpSharedNetwork
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"dhcpSharedNetworkNameForm"}
+	ID					{ id-nf 34 }
+}
+
+dhcpSubnetNameForm NAME-FORM ::= {
+	NAMES				dhcpSubnet
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"dhcpSubnetNameForm"}
+	ID					{ id-nf 35 }
+}
+
+dhcpPoolNameForm NAME-FORM ::= {
+	NAMES				dhcpPool
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"dhcpPoolNameForm"}
+	ID					{ id-nf 36 }
+}
+
+dhcpGroupNameForm NAME-FORM ::= {
+	NAMES				dhcpGroup
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"dhcpGroupNameForm"}
+	ID					{ id-nf 37 }
+}
+
+dhcpHostNameForm NAME-FORM ::= {
+	NAMES				dhcpHost
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"dhcpHostNameForm"}
+	ID					{ id-nf 38 }
+}
+
+dhcpClassNameForm NAME-FORM ::= {
+	NAMES				dhcpClass
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"dhcpClassNameForm"}
+	ID					{ id-nf 39 }
+}
+
+dhcpSubClassNameForm NAME-FORM ::= {
+	NAMES				dhcpSubClass
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"dhcpSubClassClassNameForm"}
+	ID					{ id-nf 40 }
+}
+
+END

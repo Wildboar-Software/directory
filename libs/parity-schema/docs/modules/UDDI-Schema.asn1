@@ -1,0 +1,842 @@
+UDDI-Schema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) uddi(17)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    ATTRIBUTE, OBJECT-CLASS, NAME-FORM, STRUCTURE-RULE, top,
+    distinguishedNameMatch, DistinguishedName
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+    directoryString, UnboundedDirectoryString, dn,
+    caseIgnoreMatch, caseIgnoreOrderingMatch, caseIgnoreSubstringsMatch,
+    boolean, booleanMatch,
+    integer, integerMatch, integerOrderingMatch,
+    generalizedTime, generalizedTimeMatch, generalizedTimeOrderingMatch
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+    ;
+
+id-uddi OBJECT IDENTIFIER ::= { 1 3 6 1 1 10 }
+
+-- Attribute Types
+
+uddiBusinessKey ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiBusinessKey"}
+    LDAP-DESC                   "businessEntity unique identifier"
+    ID                          { id-uddi 4 1 }
+}
+
+uddiAuthorizedName ATTRIBUTE ::= {
+    WITH SYNTAX                 DistinguishedName
+    EQUALITY MATCHING RULE      distinguishedNameMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 dn.&id
+    LDAP-NAME                   {"uddiAuthorizedName"}
+    LDAP-DESC                   "businessEntity publisher name"
+    ID                          { id-uddi 4 2 }
+}
+
+uddiOperator ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiOperator"}
+    LDAP-DESC                   "registry site operator of businessEntitys master copy"
+    ID                          { id-uddi 4 3 }
+}
+
+uddiName ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiName"}
+    LDAP-DESC                   "human readable name"
+    ID                          { id-uddi 4 4 }
+}
+
+uddiDescription ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiDescription"}
+    LDAP-DESC                   "short description"
+    ID                          { id-uddi 4 5 }
+}
+
+uddiDiscoveryURLs ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiDiscoveryURLs"}
+    LDAP-DESC                   "URL to retrieve a businessEntity instance"
+    ID                          { id-uddi 4 6 }
+}
+
+uddiUseType ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiUseType"}
+    LDAP-DESC                   "name of convention the referenced document follows"
+    ID                          { id-uddi 4 7 }
+}
+
+uddiPersonName ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiPersonName"}
+    LDAP-DESC                   "name of person or job role available for contact"
+    ID                          { id-uddi 4 8 }
+}
+
+uddiPhone ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiPhone"}
+    LDAP-DESC                   "telephone number for contact"
+    ID                          { id-uddi 4 9 }
+}
+
+uddiEMail ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiEMail"}
+    LDAP-DESC                   "e-mail address for contact"
+    ID                          { id-uddi 4 10 }
+}
+
+uddiSortCode ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiSortCode"}
+    LDAP-DESC                   "specifies an external display mechanism"
+    ID                          { id-uddi 4 11 }
+}
+
+uddiTModelKey ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiTModelKey"}
+    LDAP-DESC                   "tModel unique identifier"
+    ID                          { id-uddi 4 12 }
+}
+
+uddiAddressLine ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiAddressLine"}
+    LDAP-DESC                   "address"
+    ID                          { id-uddi 4 13 }
+}
+
+uddiIdentifierBag ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiIdentifierBag"}
+    LDAP-DESC                   "identification information"
+    ID                          { id-uddi 4 14 }
+}
+
+uddiCategoryBag ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiCategoryBag"}
+    LDAP-DESC                   "categorization information"
+    ID                          { id-uddi 4 15 }
+}
+
+uddiKeyedReference ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiKeyedReference"}
+    LDAP-DESC                   "categorization information"
+    ID                          { id-uddi 4 16 }
+}
+
+uddiServiceKey ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiServiceKey"}
+    LDAP-DESC                   "businessService unique identifier"
+    ID                          { id-uddi 4 17 }
+}
+
+uddiBindingKey ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiBindingKey"}
+    LDAP-DESC                   "bindingTemplate unique identifier"
+    ID                          { id-uddi 4 18 }
+}
+
+uddiAccessPoint ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiAccessPoint"}
+    LDAP-DESC                   "entry point address to call a web service"
+    ID                          { id-uddi 4 19 }
+}
+
+uddiHostingRedirector ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiHostingRedirector"}
+    LDAP-DESC                   "designates a pointer to another bindingTemplate"
+    ID                          { id-uddi 4 20 }
+}
+
+uddiInstanceDescription ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiInstanceDescription"}
+    LDAP-DESC                   "instance details description"
+    ID                          { id-uddi 4 21 }
+}
+
+uddiInstanceParms ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiInstanceParms"}
+    LDAP-DESC                   "URL reference to required settings"
+    ID                          { id-uddi 4 22 }
+}
+
+uddiOverviewDescription ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiOverviewDescription"}
+    LDAP-DESC                   "outlines tModel usage"
+    ID                          { id-uddi 4 23 }
+}
+
+uddiOverviewURL ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiOverviewURL"}
+    LDAP-DESC                   "URL reference to overview document"
+    ID                          { id-uddi 4 24 }
+}
+
+uddiFromKey ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiFromKey"}
+    LDAP-DESC                   "unique businessEntity key reference"
+    ID                          { id-uddi 4 25 }
+}
+
+uddiToKey ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiToKey"}
+    LDAP-DESC                   "unique businessEntity key reference"
+    ID                          { id-uddi 4 26 }
+}
+
+uddiUUID ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiUUID"}
+    LDAP-DESC                   "unique attribute"
+    ID                          { id-uddi 4 27 }
+}
+
+uddiIsHidden ATTRIBUTE ::= {
+    WITH SYNTAX                 BOOLEAN
+    EQUALITY MATCHING RULE      booleanMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 boolean.&id
+    LDAP-NAME                   {"uddiIsHidden"}
+    LDAP-DESC                   "isHidden attribute"
+    ID                          { id-uddi 4 28 }
+}
+
+uddiIsProjection ATTRIBUTE ::= {
+    WITH SYNTAX                 BOOLEAN
+    EQUALITY MATCHING RULE      booleanMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 boolean.&id
+    LDAP-NAME                   {"uddiIsProjection"}
+    LDAP-DESC                   "isServiceProjection attribute"
+    ID                          { id-uddi 4 29 }
+}
+
+uddiLang ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiLang"}
+    LDAP-DESC                   "xml:lang value in v3 Address structure"
+    ID                          { id-uddi 4 30 }
+}
+
+uddiv3BusinessKey ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiv3BusinessKey"}
+    LDAP-DESC                   "UDDIv3 businessEntity unique identifier"
+    ID                          { id-uddi 4 31 }
+}
+
+uddiv3ServiceKey ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiv3ServiceKey"}
+    LDAP-DESC                   "UDDIv3 businessService unique identifier"
+    ID                          { id-uddi 4 32 }
+}
+
+uddiv3BindingKey ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiv3BindingKey"}
+    LDAP-DESC                   "UDDIv3 BindingTemplate unique identifier"
+    ID                          { id-uddi 4 33 }
+}
+
+uddiv3TModelKey ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiv3TModelKey"}
+    LDAP-DESC                   "UDDIv3 TModel unique identifier"
+    ID                          { id-uddi 4 34 }
+}
+
+uddiv3DigitalSignature ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiv3DigitalSignature"}
+    LDAP-DESC                   "UDDIv3 entity digital signature"
+    ID                          { id-uddi 4 35 }
+}
+
+uddiv3NodeId ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiv3NodeId"}
+    LDAP-DESC                   "UDDIv3 Node Identifier"
+    ID                          { id-uddi 4 36 }
+}
+
+uddiv3EntityModificationTime ATTRIBUTE ::= {
+    WITH SYNTAX                 GeneralizedTime
+    EQUALITY MATCHING RULE      generalizedTimeMatch
+    ORDERING MATCHING RULE      generalizedTimeOrderingMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 generalizedTime.&id
+    LDAP-NAME                   {"uddiv3EntityModificationTime"}
+    LDAP-DESC                   "UDDIv3 Last Modified Time for Entity"
+    ID                          { id-uddi 4 37 }
+}
+
+uddiv3SubscriptionKey ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiv3SubscriptionKey"}
+    LDAP-DESC                   "UDDIv3 Subscription unique identifier"
+    ID                          { id-uddi 4 38 }
+}
+
+uddiv3SubscriptionFilter ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiv3SubscriptionFilter"}
+    LDAP-DESC                   "UDDIv3 Subscription Filter"
+    ID                          { id-uddi 4 39 }
+}
+
+uddiv3NotificationInterval ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiv3NotificationInterval"}
+    LDAP-DESC                   "UDDIv3 Notification Interval"
+    ID                          { id-uddi 4 40 }
+}
+
+uddiv3MaxEntities ATTRIBUTE ::= {
+    WITH SYNTAX                 INTEGER (SIZE (0..MAX))
+    EQUALITY MATCHING RULE      integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 integer.&id
+    LDAP-NAME                   {"uddiv3MaxEntities"}
+    LDAP-DESC                   "UDDIv3 Subscription maxEntities field"
+    ID                          { id-uddi 4 41 }
+}
+
+uddiv3ExpiresAfter ATTRIBUTE ::= {
+    WITH SYNTAX                 GeneralizedTime
+    EQUALITY MATCHING RULE      generalizedTimeMatch
+    ORDERING MATCHING RULE      generalizedTimeOrderingMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 generalizedTime.&id
+    LDAP-NAME                   {"uddiv3ExpiresAfter"}
+    LDAP-DESC                   "UDDIv3 Subscription ExpiresAfter field"
+    ID                          { id-uddi 4 42 }
+}
+
+uddiv3BriefResponse ATTRIBUTE ::= {
+    WITH SYNTAX                 BOOLEAN
+    EQUALITY MATCHING RULE      booleanMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 boolean.&id
+    LDAP-NAME                   {"uddiv3BriefResponse"}
+    LDAP-DESC                   "UDDIv3 Subscription ExpiresAfter field"
+    ID                          { id-uddi 4 43 }
+}
+
+uddiv3EntityKey ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"uddiv3EntityKey"}
+    LDAP-DESC                   "UDDIv3 Entity unique identifier"
+    ID                          { id-uddi 4 44 }
+}
+
+uddiv3EntityCreationTime ATTRIBUTE ::= {
+    WITH SYNTAX                 GeneralizedTime
+    EQUALITY MATCHING RULE      generalizedTimeMatch
+    ORDERING MATCHING RULE      generalizedTimeOrderingMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 generalizedTime.&id
+    LDAP-NAME                   {"uddiv3EntityCreationTime"}
+    LDAP-DESC                   "UDDIv3 Entity Creation Time"
+    ID                          { id-uddi 4 45 }
+}
+
+uddiv3EntityDeletionTime ATTRIBUTE ::= {
+    WITH SYNTAX                 GeneralizedTime
+    EQUALITY MATCHING RULE      generalizedTimeMatch
+    ORDERING MATCHING RULE      generalizedTimeOrderingMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 generalizedTime.&id
+    LDAP-NAME                   {"uddiv3EntityDeletionTime"}
+    LDAP-DESC                   "UDDIv3 Entity Deletion Time"
+    ID                          { id-uddi 4 46 }
+}
+
+-- Object Classes
+
+uddiBusinessEntity OBJECT-CLASS ::= {
+    SUBCLASS OF     { top }
+    KIND            structural
+    MUST CONTAIN    {uddiBusinessKey | uddiName}
+    MAY CONTAIN     {
+        uddiAuthorizedName
+        | uddiOperator
+        | uddiDiscoveryURLs
+        | uddiDescription
+        | uddiIdentifierBag
+        | uddiCategoryBag
+        | uddiv3BusinessKey
+        | uddiv3DigitalSignature
+        | uddiv3EntityModificationTime
+        | uddiv3NodeId
+    }
+    LDAP-NAME       {"uddiBusinessEntity"}
+    ID              { id-uddi 6 1 } }
+
+uddiContact OBJECT-CLASS ::= {
+    SUBCLASS OF     { top }
+    KIND            structural
+    MUST CONTAIN    {uddiPersonName | uddiUUID}
+    MAY CONTAIN     {
+        uddiUseType
+        | uddiDescription
+        | uddiPhone
+        | uddiEMail
+    }
+    LDAP-NAME       {"uddiContact"}
+    ID              { id-uddi 6 2 } }
+
+uddiAddress OBJECT-CLASS ::= {
+    SUBCLASS OF     { top }
+    KIND            structural
+    MUST CONTAIN    {uddiUUID}
+    MAY CONTAIN     {
+        uddiUseType
+        | uddiSortCode
+        | uddiTModelKey
+        | uddiv3TModelKey
+        | uddiAddressLine
+        | uddiLang
+    }
+    LDAP-NAME       {"uddiAddress"}
+    ID              { id-uddi 6 3 } }
+
+uddiBusinessService OBJECT-CLASS ::= {
+    SUBCLASS OF     { top }
+    KIND            structural
+    MUST CONTAIN    {uddiServiceKey}
+    MAY CONTAIN     {
+        uddiName
+        | uddiBusinessKey
+        | uddiDescription
+        | uddiCategoryBag
+        | uddiIsProjection
+        | uddiv3ServiceKey
+        | uddiv3BusinessKey
+        | uddiv3DigitalSignature
+        | uddiv3EntityCreationTime
+        | uddiv3EntityModificationTime
+        | uddiv3NodeId
+    }
+    LDAP-NAME       {"uddiBusinessService"}
+    ID              { id-uddi 6 4 } }
+
+uddiBindingTemplate OBJECT-CLASS ::= {
+    SUBCLASS OF     { top }
+    KIND            structural
+    MUST CONTAIN    {uddiBindingKey}
+    MAY CONTAIN     {
+        uddiServiceKey
+        | uddiDescription
+        | uddiAccessPoint
+        | uddiHostingRedirector
+        | uddiCategoryBag
+        | uddiv3BindingKey
+        | uddiv3ServiceKey
+        | uddiv3DigitalSignature
+        | uddiv3EntityCreationTime
+        | uddiv3NodeId
+    }
+    LDAP-NAME       {"uddiBindingTemplate"}
+    ID              { id-uddi 6 5 } }
+
+uddiTModelInstanceInfo OBJECT-CLASS ::= {
+    SUBCLASS OF     { top }
+    KIND            structural
+    MUST CONTAIN    {uddiTModelKey}
+    MAY CONTAIN     {
+        uddiDescription
+        | uddiInstanceDescription
+        | uddiInstanceParms
+        | uddiOverviewDescription
+        | uddiOverviewURL
+        | uddiv3TModelKey
+    }
+    LDAP-NAME       {"uddiTModelInstanceInfo"}
+    ID              { id-uddi 6 6 } }
+
+uddiTModel OBJECT-CLASS ::= {
+    SUBCLASS OF     { top }
+    KIND            structural
+    MUST CONTAIN    {uddiTModelKey | uddiName}
+    MAY CONTAIN     {
+        uddiAuthorizedName
+        | uddiOperator
+        | uddiDescription
+        | uddiOverviewDescription
+        | uddiOverviewURL
+        | uddiIdentifierBag
+        | uddiCategoryBag
+        | uddiIsHidden
+        | uddiv3TModelKey
+        | uddiv3DigitalSignature
+        | uddiv3NodeId
+    }
+    LDAP-NAME       {"uddiTModel"}
+    ID              { id-uddi 6 7 } }
+
+uddiPublisherAssertion OBJECT-CLASS ::= {
+    SUBCLASS OF     { top }
+    KIND            structural
+    MUST CONTAIN    {uddiFromKey | uddiToKey | uddiKeyedReference | uddiUUID}
+    MAY CONTAIN     {uddiv3DigitalSignature | uddiv3NodeId}
+    LDAP-NAME       {"uddiPublisherAssertion"}
+    ID              { id-uddi 6 8 } }
+
+uddiv3Subscription OBJECT-CLASS ::= {
+    SUBCLASS OF     { top }
+    KIND            structural
+    MUST CONTAIN    {uddiv3SubscriptionFilter | uddiUUID}
+    MAY CONTAIN     {
+        uddiAuthorizedName
+        | uddiv3SubscriptionKey
+        | uddiv3BindingKey
+        | uddiv3NotificationInterval
+        | uddiv3MaxEntities
+        | uddiv3ExpiresAfter
+        | uddiv3BriefResponse
+        | uddiv3NodeId
+    }
+    LDAP-NAME       {"uddiv3Subscription"}
+    ID              { id-uddi 6 9 } }
+
+uddiv3EntityObituary OBJECT-CLASS ::= {
+    SUBCLASS OF     { top }
+    KIND            structural
+    MUST CONTAIN    {uddiv3EntityKey | uddiUUID}
+    MAY CONTAIN     {
+        uddiAuthorizedName
+        | uddiv3EntityCreationTime
+        | uddiv3EntityDeletionTime
+        | uddiv3NodeId
+    }
+    LDAP-NAME       {"uddiv3EntityObituary"}
+    ID              { id-uddi 6 10 } }
+
+-- Name Forms
+
+uddiBusinessEntityNameForm NAME-FORM ::= {
+    NAMES               uddiBusinessEntity
+    WITH ATTRIBUTES     { uddiBusinessKey }
+    LDAP-NAME           {"uddiBusinessEntityNameForm"}
+    ID                  { id-uddi 15 1 } }
+
+uddiContactNameForm NAME-FORM ::= {
+    NAMES               uddiContact
+    WITH ATTRIBUTES     { uddiUUID }
+    LDAP-NAME           {"uddiContactNameForm"}
+    ID                  { id-uddi 15 2 } }
+
+uddiAddressNameForm NAME-FORM ::= {
+    NAMES               uddiAddress
+    WITH ATTRIBUTES     { uddiUUID }
+    LDAP-NAME           {"uddiAddressNameForm"}
+    ID                  { id-uddi 15 3 } }
+
+uddiBusinessServiceNameForm NAME-FORM ::= {
+    NAMES               uddiBusinessService
+    WITH ATTRIBUTES     { uddiServiceKey }
+    LDAP-NAME           {"uddiBusinessServiceNameForm"}
+    ID                  { id-uddi 15 4 } }
+
+uddiBindingTemplateNameForm NAME-FORM ::= {
+    NAMES               uddiBindingTemplate
+    WITH ATTRIBUTES     { uddiBindingKey }
+    LDAP-NAME           {"uddiBindingTemplateNameForm"}
+    ID                  { id-uddi 15 5 } }
+
+uddiTModelInstanceInfoNameForm NAME-FORM ::= {
+    NAMES               uddiTModelInstanceInfo
+    WITH ATTRIBUTES     { uddiTModelKey }
+    LDAP-NAME           {"uddiTModelInstanceInfoNameForm"}
+    ID                  { id-uddi 15 6 } }
+
+uddiTModelNameForm NAME-FORM ::= {
+    NAMES               uddiTModel
+    WITH ATTRIBUTES     { uddiTModelKey }
+    LDAP-NAME           {"uddiTModelNameForm"}
+    ID                  { id-uddi 15 7 } }
+
+uddiPublisherAssertionNameForm NAME-FORM ::= {
+    NAMES               uddiPublisherAssertion
+    WITH ATTRIBUTES     { uddiUUID }
+    LDAP-NAME           {"uddiPublisherAssertionNameForm"}
+    ID                  { id-uddi 15 8 } }
+
+uddiv3SubscriptionNameForm NAME-FORM ::= {
+    NAMES               uddiv3Subscription
+    WITH ATTRIBUTES     { uddiUUID }
+    LDAP-NAME           {"uddiv3SubscriptionNameForm"}
+    ID                  { id-uddi 15 9 } }
+
+uddiv3EntityObituaryNameForm NAME-FORM ::= {
+    NAMES               uddiv3EntityObituary
+    WITH ATTRIBUTES     { uddiUUID }
+    LDAP-NAME           {"uddiv3EntityObituaryNameForm"}
+    ID                  { id-uddi 15 10 } }
+
+-- Structure Rules
+
+uddiBusinessEntityStructureRule STRUCTURE-RULE ::= {
+    NAME FORM       uddiBusinessEntityNameForm
+    ID              1
+}
+
+uddiContactStructureRule STRUCTURE-RULE ::= {
+    NAME FORM       uddiContactNameForm
+    SUPERIOR RULES  {1}
+    ID              2
+}
+
+uddiAddressStructureRule STRUCTURE-RULE ::= {
+    NAME FORM       uddiAddressNameForm
+    SUPERIOR RULES  {2}
+    ID              3
+}
+
+uddiBusinessServiceStructureRule STRUCTURE-RULE ::= {
+    NAME FORM       uddiBusinessServiceNameForm
+    SUPERIOR RULES  {1}
+    ID              4
+}
+
+uddiBindingTemplateStructureRule STRUCTURE-RULE ::= {
+    NAME FORM       uddiBindingTemplateNameForm
+    SUPERIOR RULES  {4}
+    ID              5
+}
+
+uddiTModelInstanceInfoStructureRule STRUCTURE-RULE ::= {
+    NAME FORM       uddiTModelInstanceInfoNameForm
+    SUPERIOR RULES  {5}
+    ID              6
+}
+
+uddiTModelStructureRule STRUCTURE-RULE ::= {
+    NAME FORM       uddiTModelNameForm
+    ID              7
+}
+
+uddiPublisherAssertionStructureRule STRUCTURE-RULE ::= {
+    NAME FORM       uddiPublisherAssertionNameForm
+    ID              8
+}
+
+uddiv3SubscriptionStructureRule STRUCTURE-RULE ::= {
+    NAME FORM       uddiv3SubscriptionNameForm
+    ID              9
+}
+
+uddiv3EntityObituaryStructureRule STRUCTURE-RULE ::= {
+    NAME FORM       uddiv3EntityObituaryNameForm
+    ID              10
+}
+
+END

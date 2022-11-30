@@ -1,0 +1,116 @@
+-- See: https://www.rfc-editor.org/rfc/rfc2293.html
+TableFramework {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) table-framework(13)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    id-nf
+        FROM Wildboar
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) wildboar(1)}
+        WITH SUCCESSORS
+
+    ATTRIBUTE, OBJECT-CLASS, NAME-FORM, top
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+    commonName, distinguishedName, name, ub-name, ub-description,
+    DirectoryString
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    manager
+        FROM Cosine
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) cosine(3)}
+        WITH SUCCESSORS
+    ;
+
+mhs-ds OBJECT IDENTIFIER ::= {iso(1) org(3) dod(6) internet(1)
+        private(4) enterprises(1) isode-consortium (453) mhs-ds (7)}
+
+tables OBJECT IDENTIFIER ::= {mhs-ds 1}
+
+oc OBJECT IDENTIFIER ::= {tables 1}
+at OBJECT IDENTIFIER ::= {tables 2}
+
+oc-subtree OBJECT IDENTIFIER ::= {oc 1}
+oc-table OBJECT IDENTIFIER ::= {oc 2}
+oc-table-entry OBJECT IDENTIFIER ::= {oc 3}
+oc-text-table-entry OBJECT IDENTIFIER ::= {oc 4}
+oc-distinguished-name-table-entry  OBJECT IDENTIFIER ::= {oc 5}
+
+at-text-table-key OBJECT IDENTIFIER ::= {at 1}
+at-text-table-value OBJECT IDENTIFIER ::= {at 2}
+at-distinguished-name-table-key OBJECT IDENTIFIER ::= {at 3}
+
+-- Attributes
+
+distinguishedNameTableKey ATTRIBUTE ::= {
+    SUBTYPE OF      distinguishedName
+    ID              at-distinguished-name-table-key }
+
+textTableKey ATTRIBUTE ::= {
+    SUBTYPE OF      name
+    WITH SYNTAX     DirectoryString {ub-name}
+    ID              at-text-table-key }
+
+textTableValue ATTRIBUTE ::= {
+    SUBTYPE OF      name
+    WITH SYNTAX     DirectoryString {ub-description}
+    ID              at-text-table-value }
+
+-- Object Classes
+
+table OBJECT-CLASS ::= {
+    SUBCLASS OF     {top}
+    MUST CONTAIN    {commonName}
+    MAY CONTAIN     {manager}
+    ID              oc-table }
+
+tableEntry OBJECT-CLASS ::= {
+    SUBCLASS OF     {top}
+    MAY CONTAIN     {description}
+    ID              oc-table-entry }
+
+textTableEntry OBJECT-CLASS ::= {
+    SUBCLASS OF     {tableEntry}
+    MUST CONTAIN    {textTableKey}
+    MAY CONTAIN     {textTableValue}
+    ID              oc-text-table-entry }
+
+distinguishedNameTableEntry OBJECT-CLASS ::= {
+    SUBCLASS OF     {tableEntry}
+    MUST CONTAIN    {distinguishedNameTableKey}
+    ID              oc-distinguished-name-table-entry }
+
+-- Name Forms
+
+tableNameForm NAME-FORM ::= {
+    NAMES               table
+    WITH ATTRIBUTES     {commonName}
+    LDAP-NAME           {"tableNameForm"}
+    LDAP-DESC           "Name form for a table."
+    ID                  { id-nf 5 }
+}
+
+textTableEntryNameForm NAME-FORM ::= {
+    NAMES               textTableEntry
+    WITH ATTRIBUTES     {textTableKey}
+    LDAP-NAME           {"textTableEntryNameForm"}
+    LDAP-DESC           "Name form for a text table entry."
+    ID                  { id-nf 6 }
+}
+
+END

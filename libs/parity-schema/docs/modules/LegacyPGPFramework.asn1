@@ -1,0 +1,310 @@
+-- See: https://www.rfc-editor.org/rfc/rfc2164.html
+LegacyPGPFramework {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) legacy-pgp-framework(10)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    id-nf, id-pen
+        FROM Wildboar
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) wildboar(1)}
+        WITH SUCCESSORS
+
+    ATTRIBUTE, OBJECT-CLASS, top, DistinguishedName
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+    name, distinguishedName, objectIdentifier, commonName
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    ;
+
+-- Object Identifiers
+
+mcafee OBJECT IDENTIFIER ::= { id-pen 3401 }
+fsf OBJECT IDENTIFIER ::= { id-pen 11591 }
+
+-- Attribute Types
+
+pgpBaseKeySpaceDN ATTRIBUTE ::= {
+    WITH SYNTAX                 DistinguishedName
+    EQUALITY MATCHING RULE      distinguishedNameMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 dn.&id
+    LDAP-NAME                   {"pgpBaseKeySpaceDN"}
+    LDAP-DESC                   "Points to DN of the object that will store the PGP keys."
+    ID                          { mcafee 8 2 8 }
+}
+
+pgpSoftware ATTRIBUTE ::= {
+    WITH SYNTAX                 DirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"pgpSoftware"}
+    LDAP-DESC                   "Origin of the schema."
+    ID                          { mcafee 8 2 9 }
+}
+
+pgpVersion ATTRIBUTE ::= {
+    WITH SYNTAX                 DirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"pgpVersion"}
+    LDAP-DESC                   "Version of this schema."
+    ID                          { mcafee 8 2 10 }
+}
+
+pgpKey ATTRIBUTE ::= {
+    WITH SYNTAX                 IA5String
+    EQUALITY MATCHING RULE      caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 ia5String.&id
+    LDAP-NAME                   {"pgpKey"}
+    LDAP-DESC                   "OpenPGP public key block"
+    ID                          { mcafee 8 2 11 }
+}
+
+pgpCertID ATTRIBUTE ::= {
+    WITH SYNTAX                 DirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"pgpCertID"}
+    LDAP-DESC                   "OpenPGP long key id."
+    ID                          { mcafee 8 2 12 }
+}
+
+pgpDisabled ATTRIBUTE ::= {
+    WITH SYNTAX                 DirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"pgpDisabled"}
+    LDAP-DESC                   "pgpDisabled attribute for PGP. A flag to temporary disable a keyblock."
+    ID                          { mcafee 8 2 13 }
+}
+
+pgpKeyID ATTRIBUTE ::= {
+    WITH SYNTAX                 DirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"pgpKeyID"}
+    LDAP-DESC                   "OpenPGP short key id."
+    ID                          { mcafee 8 2 14 }
+}
+
+pgpKeyType ATTRIBUTE ::= {
+    WITH SYNTAX                 DirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"pgpKeyType"}
+    LDAP-DESC                   "pgpKeyType attribute for PGP."
+    ID                          { mcafee 8 2 15 }
+}
+
+pgpUserID ATTRIBUTE ::= {
+    WITH SYNTAX                 DirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"pgpUserID"}
+    LDAP-DESC                   "User ID(s) associated with the key."
+    ID                          { mcafee 8 2 16 }
+}
+
+pgpKeyCreateTime ATTRIBUTE ::= {
+    WITH SYNTAX                 DirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"pgpKeyCreateTime"}
+    LDAP-DESC                   "Primary key creation time. Stored in ISO format: '20201231 120000'."
+    ID                          { mcafee 8 2 17 }
+}
+
+pgpSignerID ATTRIBUTE ::= {
+    WITH SYNTAX                 DirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"pgpSignerID"}
+    LDAP-DESC                   "pgpSignerID attribute for PGP"
+    ID                          { mcafee 8 2 18 }
+}
+
+pgpRevoked ATTRIBUTE ::= {
+    WITH SYNTAX                 DirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"pgpRevoked"}
+    LDAP-DESC                   "pgpRevoked attribute for PGP. A value of 1 indicated that the keyblock has been revoked."
+    ID                          { mcafee 8 2 19 }
+}
+
+pgpSubKeyID ATTRIBUTE ::= {
+    WITH SYNTAX                 DirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"pgpSubKeyID"}
+    LDAP-DESC                   "Sub-key ID(s) of the PGP key."
+    ID                          { mcafee 8 2 20 }
+}
+
+pgpKeySize ATTRIBUTE ::= {
+    WITH SYNTAX                 DirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"pgpKeySize"}
+    LDAP-DESC                   "pgpKeySize attribute for PGP. A hint on the keysize."
+    ID                          { mcafee 8 2 21 }
+}
+
+pgpKeyExpireTime ATTRIBUTE ::= {
+    WITH SYNTAX                 DirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"pgpKeyExpireTime"}
+    LDAP-DESC                   "pgpKeyExpireTime attribute for PGP. Stored in ISO format: '20201231 120000'."
+    ID                          { mcafee 8 2 22 }
+}
+
+gpgFingerprint ATTRIBUTE ::= {
+    WITH SYNTAX                 DirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"gpgFingerprint"}
+    LDAP-DESC                   "Fingerprint of the primary key."
+    ID                          { fsf 2 4 1 1 }
+}
+
+gpgSubFingerprint ATTRIBUTE ::= {
+    WITH SYNTAX                 DirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"gpgSubFingerprint"}
+    LDAP-DESC                   "Fingerprints of the secondary keys."
+    ID                          { fsf 2 4 1 2 }
+}
+
+gpgMailbox ATTRIBUTE ::= {
+    WITH SYNTAX                 DirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"gpgMailbox"}
+    LDAP-DESC                   "The utf8 encoded addr-spec of a mailbox."
+    ID                          { fsf 2 4 1 3 }
+}
+
+gpgSubCertID ATTRIBUTE ::= {
+    WITH SYNTAX                 DirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"gpgSubCertID"}
+    LDAP-DESC                   "OpenPGP long subkey id."
+    ID                          { fsf 2 4 1 4 }
+}
+
+-- Object Classes
+
+pgpServerInfo OBJECT-CLASS ::= {
+    SUBCLASS OF         { top }
+    KIND                structural
+    MUST CONTAIN        { commonName | pgpBaseKeySpaceDN }
+    MAY CONTAIN         { pgpSoftware | pgpVersion }
+    LDAP-NAME           {"pgpServerInfo"}
+    LDAP-DESC           "An OpenPGP public keyblock store"
+    ID { mcafee 8 2 23 }
+}
+
+pgpKeyInfo OBJECT-CLASS ::= {
+    SUBCLASS OF         { top }
+    KIND                structural
+    MUST CONTAIN        { pgpCertID | pgpKey }
+    MAY CONTAIN         {
+        pgpDisabled
+        | pgpKeyID
+        | pgpKeyType
+        | pgpUserID
+        | pgpKeyCreateTime
+        | pgpSignerID
+        | pgpRevoked
+        | pgpSubKeyID
+        | pgpKeySize
+        | pgpKeyExpireTime
+        | gpgFingerprint
+        | gpgSubFingerprint
+        | gpgSubCertID
+        | gpgMailbox
+    }
+    LDAP-NAME           {"pgpKeyInfo"}
+    LDAP-DESC           "An OpenPGP public keyblock"
+    ID { mcafee 8 2 24 }
+}
+
+-- Name Forms
+
+pgpServerInfoNameForm NAME-FORM ::= {
+	NAMES				pgpServerInfo
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"pgpServerInfoNameForm"}
+	ID					{ id-nf 59 }
+}
+
+pgpKeyInfoNameForm NAME-FORM ::= {
+	NAMES				pgpKeyInfo
+	WITH ATTRIBUTES		{countryName}
+	LDAP-NAME			{"pgpKeyInfoNameForm"}
+	ID					{ id-nf 60 }
+}
+
+END

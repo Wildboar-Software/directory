@@ -1,0 +1,65 @@
+NamedObject {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) named-object(27)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    id-nf
+        FROM Wildboar
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) wildboar(1)}
+        WITH SUCCESSORS
+
+    OBJECT-CLASS, top
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	commonName, description, uniqueIdentifier
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    ;
+
+namedObject OBJECT-CLASS ::= {
+	SUBCLASS OF 	{top}
+	KIND			structural
+    MUST CONTAIN    {commonName}
+	MAY CONTAIN		{uniqueIdentifier | description}
+	LDAP-NAME		{"namedObject"}
+	ID				{ 1 3 6 1 4 1 5427 1 389 6 20 }
+}
+
+namedPolicy OBJECT-CLASS ::= {
+	SUBCLASS OF 	{namedObject}
+	KIND			structural
+	LDAP-NAME		{"namedPolicy"}
+	ID				{ 1 3 6 1 4 1 5427 1 389 6 21 }
+}
+
+-- Name Forms
+
+namedObjectNameForm NAME-FORM ::= {
+	NAMES				namedObject
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"namedObjectNameForm"}
+	ID					{ id-nf 11 }
+}
+
+namedPolicyNameForm NAME-FORM ::= {
+	NAMES				namedPolicy
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"namedPolicyNameForm"}
+	ID					{ id-nf 12 }
+}
+
+END

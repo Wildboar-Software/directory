@@ -1,0 +1,248 @@
+SambaSchema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) samba-schema(58)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    ATTRIBUTE, OBJECT-CLASS, objectIdentifierMatch,
+    DistinguishedName, distinguishedNameMatch
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	UnboundedDirectoryString, commonName, description, uid,
+    integer, ia5String, integerMatch, integerOrderingMatch,
+    caseIgnoreIA5Match, caseIgnoreIA5SubstringsMatch
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    displayName
+        FROM InetOrgPerson
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) inetorgperson(5)}
+        WITH SUCCESSORS
+
+    ;
+
+id-samba        OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 7165 }
+id-samba-at     OBJECT IDENTIFIER ::= { id-samba 2 1 }
+id-samba-oc     OBJECT IDENTIFIER ::= { id-samba 2 2 }
+
+lmPassword ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+    EQUALITY MATCHING RULE      caseIgnoreIA5Match
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "lmPassword" }
+	LDAP-DESC                   "LanManager Passwd"
+	ID                          { id-samba-at 1 }
+}
+
+ntPassword ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+    EQUALITY MATCHING RULE      caseIgnoreIA5Match
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "ntPassword" }
+	LDAP-DESC                   "NT Passwd"
+	ID                          { id-samba-at 2 }
+}
+
+acctFlags ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+    EQUALITY MATCHING RULE      caseIgnoreIA5Match
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "acctFlags" }
+	LDAP-DESC                   "Account Flags"
+	ID                          { id-samba-at 4 }
+}
+
+-- This value is stored as a large integer that represents the number of 100
+-- nanosecond intervals since January 1, 1601 (UTC).
+pwdLastSet ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER (0..MAX)
+    EQUALITY MATCHING RULE      integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   { "pwdLastSet" }
+	LDAP-DESC                   "NT pwdLastSet"
+	ID                          { id-samba-at 3 }
+}
+
+logonTime ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER (0..MAX)
+    EQUALITY MATCHING RULE      integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   { "logonTime" }
+	LDAP-DESC                   "NT logonTime"
+	ID                          { id-samba-at 5 }
+}
+
+logoffTime ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER (0..MAX)
+    EQUALITY MATCHING RULE      integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   { "logoffTime" }
+	LDAP-DESC                   "NT logoffTime"
+	ID                          { id-samba-at 6 }
+}
+
+kickoffTime ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER (0..MAX)
+    EQUALITY MATCHING RULE      integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   { "kickoffTime" }
+	LDAP-DESC                   "NT kickoffTime"
+	ID                          { id-samba-at 7 }
+}
+
+-- I can't find any documentation on this, but it looks like this is supposed to
+-- behave like a boolean.
+pwdCanChange ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+    EQUALITY MATCHING RULE      integerMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   { "pwdCanChange" }
+	LDAP-DESC                   "NT pwdCanChange"
+	ID                          { id-samba-at 8 }
+}
+
+pwdMustChange ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+    EQUALITY MATCHING RULE      integerMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   { "pwdMustChange" }
+	LDAP-DESC                   "NT pwdMustChange"
+	ID                          { id-samba-at 9 }
+}
+
+homeDrive ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+    EQUALITY MATCHING RULE      caseIgnoreIA5Match
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "homeDrive" }
+	LDAP-DESC                   "NT homeDrive"
+	ID                          { id-samba-at 10 }
+}
+
+scriptPath ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+    EQUALITY MATCHING RULE      caseIgnoreIA5Match
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "scriptPath" }
+	LDAP-DESC                   "NT scriptPath"
+	ID                          { id-samba-at 11 }
+}
+
+profilePath ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+    EQUALITY MATCHING RULE      caseIgnoreIA5Match
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "profilePath" }
+	LDAP-DESC                   "NT profilePath"
+	ID                          { id-samba-at 12 }
+}
+
+userWorkstations ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+    EQUALITY MATCHING RULE      caseIgnoreIA5Match
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "userWorkstations" }
+	LDAP-DESC                   "userWorkstations"
+	ID                          { id-samba-at 13 }
+}
+
+smbHome ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+    EQUALITY MATCHING RULE      caseIgnoreIA5Match
+    LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "smbHome" }
+	LDAP-DESC                   "smbHome"
+	ID                          { id-samba-at 17 }
+}
+
+domain ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+    EQUALITY MATCHING RULE      caseIgnoreIA5Match
+    LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "domain" }
+	LDAP-DESC                   "Windows NT domain to which the user belongs"
+	ID                          { id-samba-at 18 }
+}
+
+rid ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+    EQUALITY MATCHING RULE      integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   { "rid" }
+	LDAP-DESC                   "NT rid"
+	ID                          { id-samba-at 14 }
+}
+
+primaryGroupID ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+    EQUALITY MATCHING RULE      integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   { "primaryGroupID" }
+	LDAP-DESC                   "NT Group RID"
+	ID                          { id-samba-at 15 }
+}
+
+sambaAccount OBJECT-CLASS ::= {
+	SUBCLASS OF         { top }
+	KIND                auxiliary
+	MUST CONTAIN        { uid | rid }
+    MAY CONTAIN         {
+        commonName
+        | lmPassword
+        | ntPassword
+        | pwdLastSet
+        | logonTime
+        | logoffTime
+        | kickoffTime
+        | pwdCanChange
+        | pwdMustChange
+        | acctFlags
+        | displayName
+        | smbHome
+        | homeDrive
+        | scriptPath
+        | profilePath
+        | description
+        | userWorkstations
+        | primaryGroupID
+        | domain
+    }
+	LDAP-NAME           { "sambaAccount" }
+	LDAP-DESC           "Samba Auxilary Account"
+	ID                  { id-samba-oc 3 }
+}
+
+END

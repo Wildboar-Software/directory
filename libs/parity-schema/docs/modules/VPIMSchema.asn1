@@ -1,0 +1,162 @@
+-- See: https://www.rfc-editor.org/rfc/rfc4237.html
+VPIMSchema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) vpim(15)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    ATTRIBUTE, OBJECT-CLASS, NAME-FORM, top
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+    caseIgnoreMatch, caseIgnoreOrderingMatch, caseIgnoreSubstringsMatch
+    caseIgnoreIA5Match, caseIgnoreIA5SubstringsMatch,
+    numericStringMatch, numericStringOrderingMatch, numericStringSubstringsMatch,
+    octetStringMatch, octetStringOrderingMatch, octetStringSubstringsMatch,
+    integerMatch, integerOrderingMatch,
+    UnboundedDirectoryString, DirectoryString, name, description,
+    numericString, octetString, ia5String, directoryString, integer
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    Certificate, x509Certificate, certificateExactMatch
+        FROM AuthenticationFramework
+        {joint-iso-itu-t ds(5) module(1) authenticationFramework(7) 9}
+        WITH SUCCESSORS
+
+    ;
+
+iana-assigned-oid OBJECT IDENTIFIER ::= { 1 3 6 1 1 11 }
+
+-- Attribute Types
+
+vPIMTelephoneNumber ATTRIBUTE ::= {
+    WITH SYNTAX 				NumericString (SIZE (1..20))
+    EQUALITY MATCHING RULE 		numericStringMatch
+    ORDERING MATCHING RULE      numericStringOrderingMatch
+	SUBSTRINGS MATCHING RULE 	numericStringSubstringsMatch
+	LDAP-SYNTAX 				numericString.&id
+	LDAP-NAME 					{"vPIMTelephoneNumber"}
+    ID                          { iana-assigned-oid 2 1 }
+}
+
+vPIMRfc822Mailbox ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String (SIZE (1..256))
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+	SUBSTRINGS MATCHING RULE 	caseIgnoreIA5SubstringsMatch
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"vPIMRfc822Mailbox"}
+    ID                          { iana-assigned-oid 2 2 }
+}
+
+vPIMSpokenName ATTRIBUTE ::= {
+    WITH SYNTAX 				OCTET STRING (SIZE (0..20000))
+    EQUALITY MATCHING RULE 		octetStringMatch
+    ORDERING MATCHING RULE      octetStringOrderingMatch
+	SUBSTRINGS MATCHING RULE 	octetStringSubstringsMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				octetString.&id
+	LDAP-NAME 					{"vPIMSpokenName"}
+    LDAP-DESC                   "Shall contain the spoken name of the user in the voice of the user, and MUST be encoded in 32 kbit/s ADPCM exactly, as defined by IETF RFC 3802."
+    ID                          { iana-assigned-oid 2 3 }
+}
+
+vPIMTextName ATTRIBUTE ::= {
+    WITH SYNTAX 				DirectoryString{20}
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+	SUBSTRINGS MATCHING RULE 	caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"vPIMTextName"}
+    ID                          { iana-assigned-oid 2 4 }
+}
+
+vPIMSupportedAudioMediaTypes ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+	SUBSTRINGS MATCHING RULE 	caseIgnoreIA5SubstringsMatch
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"vPIMSupportedAudioMediaTypes"}
+    ID                          { iana-assigned-oid 2 5 }
+}
+
+vPIMSupportedMessageContext ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+	SUBSTRINGS MATCHING RULE 	caseIgnoreIA5SubstringsMatch
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"vPIMSupportedMessageContext"}
+    ID                          { iana-assigned-oid 2 6 }
+}
+
+vPIMExtendedAbsenceStatus ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+	SUBSTRINGS MATCHING RULE 	caseIgnoreIA5SubstringsMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"vPIMExtendedAbsenceStatus"}
+    ID                          { iana-assigned-oid 2 7 }
+}
+
+vPIMSupportedUABehaviors ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+	SUBSTRINGS MATCHING RULE 	caseIgnoreIA5SubstringsMatch
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"vPIMSupportedUABehaviors"}
+    ID                          { iana-assigned-oid 2 8 }
+}
+
+vPIMMaxMessageSize ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (0..MAX)
+    EQUALITY MATCHING RULE 		integerMatch
+	ORDERING MATCHING RULE 	    integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"vPIMMaxMessageSize"}
+    ID                          { iana-assigned-oid 2 9 }
+}
+
+vPIMSubMailboxes ATTRIBUTE ::= {
+    WITH SYNTAX 				NumericString (SIZE (1..4))
+    EQUALITY MATCHING RULE 		numericStringMatch
+    ORDERING MATCHING RULE      numericStringOrderingMatch
+	SUBSTRINGS MATCHING RULE 	numericStringSubstringsMatch
+	LDAP-SYNTAX 				numericString.&id
+	LDAP-NAME 					{"vPIMSubMailboxes"}
+    ID                          { iana-assigned-oid 2 10 }
+}
+
+-- Object Classes
+
+vPIMUser OBJECT-CLASS ::= {
+    SUBCLASS OF     {top}
+    KIND            auxiliary
+    MUST CONTAIN    {vPIMRfc822Mailbox | vPIMTelephoneNumber}
+    MAY CONTAIN     {
+        vPIMSpokenName
+        | vPIMSupportedUABehaviors
+        | vPIMSupportedAudioMediaTypes
+        | vPIMSupportedMessageContext
+        | vPIMTextName
+        | vPIMExtendedAbsenceStatus
+        | vPIMMaxMessageSize
+        | vPIMSubMailboxes
+    }
+    LDAP-NAME       {"vPIMUser"}
+    ID              { iana-assigned-oid 1 1 }
+}
+
+END

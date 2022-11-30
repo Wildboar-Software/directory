@@ -1,0 +1,140 @@
+-- https://access.redhat.com/documentation/en-us/red_hat_directory_server/11/html/administration_guide/pam-pta
+PAMSchema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) pam-schema(53)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    ATTRIBUTE, OBJECT-CLASS, objectIdentifierMatch,
+    DistinguishedName, distinguishedNameMatch
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	name, UnboundedDirectoryString, distinguishedName, description,
+
+    -- Syntaxes
+    printableString, boolean, integer, dn, directoryString, ia5String,
+    octetString,
+
+    -- Matching Rules
+    caseExactMatch, caseExactOrderingMatch, caseExactSubstringsMatch,
+    caseIgnoreMatch, caseIgnoreOrderingMatch, caseIgnoreSubstringsMatch,
+    booleanMatch, integerMatch, integerOrderingMatch,
+    octetStringMatch, octetStringOrderingMatch, octetStringSubstringsMatch,
+    caseIgnoreIA5Match, caseIgnoreIA5SubstringsMatch
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    ;
+
+pamIncludeSuffix ATTRIBUTE ::= {
+    WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"pamIncludeSuffix"}
+    LDAP-DESC                   "Suffixes to include for PAM authentication"
+    ID                          { 2 16 840 1 113730 3 1 2067 }
+}
+
+pamExcludeSuffix ATTRIBUTE ::= {
+    WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"pamExcludeSuffix"}
+    LDAP-DESC                   "Suffixes to exclude for PAM authentication"
+    ID                          { 2 16 840 1 113730 3 1 2068 }
+}
+
+pamMissingSuffix ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"pamMissingSuffix"}
+    LDAP-DESC                   "How to handle missing include or exclude suffixes"
+    ID                          { 2 16 840 1 113730 3 1 2069 }
+}
+
+pamIDMapMethod ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"pamIDMapMethod"}
+    LDAP-DESC                   "How to map BIND DN to PAM identity"
+    ID                          { 2 16 840 1 113730 3 1 2070 }
+}
+
+pamIDAttr ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"pamIDAttr"}
+    LDAP-DESC                   "Name of attribute holding PAM ID"
+    ID                          { 2 16 840 1 113730 3 1 2071 }
+}
+
+pamFallback ATTRIBUTE ::= {
+    WITH SYNTAX 				BOOLEAN
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				boolean.&id
+	LDAP-NAME 					{"pamFallback"}
+    LDAP-DESC                   "Fallback to regular LDAP BIND if PAM auth fails"
+    ID                          { 2 16 840 1 113730 3 1 2072 }
+}
+
+pamSecure ATTRIBUTE ::= {
+    WITH SYNTAX 				BOOLEAN
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				boolean.&id
+	LDAP-NAME 					{"pamSecure"}
+    LDAP-DESC                   "Require secure (TLS/SSL) connection for PAM auth"
+    ID                          { 2 16 840 1 113730 3 1 2073 }
+}
+
+pamService ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"pamService"}
+    LDAP-DESC                   "Service name to pass to pam_start"
+    ID                          { 2 16 840 1 113730 3 1 2074 }
+}
+
+pamFilter ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"pamFilter"}
+    LDAP-DESC                   "Filter to match entries that should use PAM authentication"
+    ID                          { 2 16 840 1 113730 3 1 2131 }
+}
+
+pamConfig OBJECT-CLASS ::= {
+    SUBCLASS OF     {top}
+    KIND            auxiliary
+    MAY CONTAIN     {
+        commonName
+        | pamMissingSuffix
+        | pamExcludeSuffix
+        | pamIncludeSuffix
+        | pamIDAttr
+        | pamIDMapMethod
+        | pamFallback
+        | pamSecure
+        | pamService
+        | pamFilter
+    }
+	LDAP-NAME       {"pamConfig"}
+    LDAP-DESC       "PAM plugin configuration"
+	ID              { 2 16 840 1 113730 3 2 318 }
+}
+
+END

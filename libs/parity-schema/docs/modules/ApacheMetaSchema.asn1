@@ -1,0 +1,512 @@
+ApacheMetaSchema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) apache-meta-schema(39)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    ATTRIBUTE, OBJECT-CLASS, top
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	directoryString, ia5String, uid
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    ;
+
+-- Syntaxes
+
+
+
+-- Matching Rules
+
+-- Attribute Types
+
+m-oid ATTRIBUTE ::= {
+	WITH SYNTAX                 OBJECT IDENTIFIER
+	EQUALITY MATCHING RULE      objectIdentifierMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 { 1 3 6 1 4 1 18060 0 4 0 0 2 }
+	LDAP-NAME                   {"m-oid"}
+	LDAP-DESC                   "The Object Identifier"
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 1 }
+}
+
+m-supAttributeType ATTRIBUTE ::= {
+	WITH SYNTAX                 OBJECT IDENTIFIER
+	EQUALITY MATCHING RULE      nameOrNumericIdMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 oid.&id
+	LDAP-NAME                   {"m-supAttributeType"}
+	LDAP-DESC                   "The list of superior"
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 10 }
+}
+
+m-equality ATTRIBUTE ::= {
+	WITH SYNTAX                 OBJECT IDENTIFIER
+	EQUALITY MATCHING RULE      nameOrNumericIdMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 oid.&id
+	LDAP-NAME                   {"m-equality"}
+	LDAP-DESC                   "Equality matching rule"
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 11 }
+}
+
+m-ordering ATTRIBUTE ::= {
+	WITH SYNTAX                 OBJECT IDENTIFIER
+	EQUALITY MATCHING RULE      nameOrNumericIdMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 oid.&id
+	LDAP-NAME                   {"m-ordering"}
+	LDAP-DESC                   "Ordering matching rule"
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 12 }
+}
+
+m-substr ATTRIBUTE ::= {
+	WITH SYNTAX                 OBJECT IDENTIFIER
+	EQUALITY MATCHING RULE      nameOrNumericIdMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 oid.&id
+	LDAP-NAME                   {"m-substr"}
+	LDAP-DESC                   "Substring matching rule"
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 13 }
+}
+
+-- m-syntax ATTRIBUTE ::= {
+-- 	WITH SYNTAX                 FIXME
+-- 	EQUALITY MATCHING RULE      nameOrNumericIdMatch
+-- 	SINGLE VALUE                TRUE
+-- 	USAGE                       userApplications
+-- 	LDAP-SYNTAX                 { 1 3 6 1 4 1 18060 0 4 0 0 2 }
+-- 	LDAP-NAME                   {"m-syntax"}
+-- 	LDAP-DESC                   "The syntax OID for attributeTypes and matchingRules"
+-- 	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 14 }
+-- }
+
+m-singleValue ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"m-singleValue"}
+	LDAP-DESC                   "The attribute is single valued"
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 15 }
+}
+
+m-collective ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"m-collective"}
+	LDAP-DESC                   "The attribute is collective"
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 16 }
+}
+
+m-noUserModification ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"m-noUserModification"}
+	LDAP-DESC                   "The attribute is protected"
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 17 }
+}
+
+m-usage ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"m-usage"}
+	LDAP-DESC                   "Usage type of an attributeType"
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 18 }
+}
+
+-- m-name ATTRIBUTE ::= {
+-- 	WITH SYNTAX                 FIXME
+-- 	EQUALITY MATCHING RULE      caseIgnoreMatch
+-- 	USAGE                       userApplications
+-- 	LDAP-SYNTAX                 { 1 3 6 1 4 1 18060 0 4 0 0 6 }
+-- 	LDAP-NAME                   {"m-name"}
+-- 	LDAP-DESC                   "The Object name"
+-- 	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 2 }
+-- }
+
+-- m-ruleId ATTRIBUTE ::= {
+-- 	WITH SYNTAX                 FIXME
+-- 	EQUALITY MATCHING RULE      ruleIdMatch
+-- 	USAGE                       userApplications
+-- 	LDAP-SYNTAX                 { 1 3 6 1 4 1 18060 0 4 0 0 4 }
+-- 	LDAP-NAME                   {"m-ruleId"}
+-- 	LDAP-DESC                   "The rule ID"
+-- 	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 20 }
+-- }
+
+m-form ATTRIBUTE ::= {
+	WITH SYNTAX                 OBJECT IDENTIFIER
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 oid.&id
+	LDAP-NAME                   {"m-form"}
+	LDAP-DESC                   "The name form associated with this DITStructure rule"
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 21 }
+}
+
+m-supDITStructureRule ATTRIBUTE ::= {
+	WITH SYNTAX                 NumericString
+	EQUALITY MATCHING RULE      supDITStructureRuleMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 numericString.&id
+	LDAP-NAME                   {"m-supDITStructureRule"}
+	LDAP-DESC                   "The list of superiors"
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 22 }
+}
+
+m-oc ATTRIBUTE ::= {
+	WITH SYNTAX                 OBJECT IDENTIFIER
+	EQUALITY MATCHING RULE      numericOidMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 oid.&id
+	LDAP-NAME                   {"m-oc"}
+	LDAP-DESC                   "The structural ObjectClass"
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 24 }
+}
+
+m-aux ATTRIBUTE ::= {
+	WITH SYNTAX                 OBJECT IDENTIFIER
+	EQUALITY MATCHING RULE      numericOidMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 oid.&id
+	LDAP-NAME                   {"m-aux"}
+	LDAP-DESC                   "List of auxiliary ObjectClasses"
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 26 }
+}
+
+m-not ATTRIBUTE ::= {
+	WITH SYNTAX                 OBJECT IDENTIFIER
+	EQUALITY MATCHING RULE      numericOidMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 oid.&id
+	LDAP-NAME                   {"m-not"}
+	LDAP-DESC                   "List of precluded attribute types"
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 27 }
+}
+
+m-applies ATTRIBUTE ::= {
+	WITH SYNTAX                 OBJECT IDENTIFIER
+	EQUALITY MATCHING RULE      numericOidMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 oid.&id
+	LDAP-NAME                   {"m-applies"}
+	LDAP-DESC                   "List of attribute types the matching rule applies to"
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 29 }
+}
+
+m-description ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"m-description"}
+	LDAP-DESC                   "meta descriptive information"
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 3 }
+}
+
+-- m-matchingRuleSyntax ATTRIBUTE ::= {
+-- 	WITH SYNTAX                 FIXME
+-- 	EQUALITY MATCHING RULE      numericOidMatch
+-- 	SINGLE VALUE                TRUE
+-- 	USAGE                       userApplications
+-- 	LDAP-SYNTAX                 { 1 3 6 1 4 1 18060 0 4 0 0 2 }
+-- 	LDAP-NAME                   {"m-matchingRuleSyntax"}
+-- 	LDAP-DESC                   "The MatchingRule Syntax"
+-- 	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 31 }
+-- }
+
+m-fqcn ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseExactMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"m-fqcn"}
+	LDAP-DESC                   "The fully qualified class name of a code based schema entity"
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 32 }
+}
+
+-- m-bytecode ATTRIBUTE ::= {
+-- 	WITH SYNTAX                 FIXME
+-- 	SINGLE VALUE                TRUE
+-- 	USAGE                       userApplications
+-- 	LDAP-SYNTAX                 { 1 3 6 1 4 1 1466 115 121 1 5 }
+-- 	LDAP-NAME                   {"m-bytecode"}
+-- 	LDAP-DESC                   "The Java bytecode for a code based schema entity"
+-- 	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 33 }
+-- }
+
+x-not-human-readable ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"x-not-human-readable"}
+	LDAP-DESC                   "whether or not a syntax is human readable"
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 34 }
+}
+
+x-schema ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"x-schema"}
+	LDAP-DESC                   "Stores the name of the schema"
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 35 }
+}
+
+x-read-only ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"x-read-only"}
+	LDAP-DESC                   "Tells if the schema element is read-only or not."
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 36 }
+}
+
+m-disabled ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"m-disabled"}
+	LDAP-DESC                   "Used as a marker for schemas to enable or disable them."
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 37 }
+}
+
+m-dependencies ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"m-dependencies"}
+	LDAP-DESC                   "The dependencies of a schema: other schema names."
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 38 }
+}
+
+-- m-length ATTRIBUTE ::= {
+-- 	WITH SYNTAX                 FIXME
+-- 	EQUALITY MATCHING RULE      caseIgnoreMatch
+-- 	SINGLE VALUE                TRUE
+-- 	USAGE                       userApplications
+-- 	LDAP-SYNTAX                 { 1 3 6 1 4 1 18060 0 4 0 0 4 }
+-- 	LDAP-NAME                   {"m-length"}
+-- 	LDAP-DESC                   "The maximum length for an attribute value."
+-- 	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 39 }
+-- }
+
+m-obsolete ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"m-obsolete"}
+	LDAP-DESC                   "The type is obsolete"
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 4 }
+}
+
+m-supObjectClass ATTRIBUTE ::= {
+	WITH SYNTAX                 OBJECT IDENTIFIER
+	EQUALITY MATCHING RULE      nameOrNumericIdMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 oid.&id
+	LDAP-NAME                   {"m-supObjectClass"}
+	LDAP-DESC                   "The list of superiors"
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 5 }
+}
+
+m-must ATTRIBUTE ::= {
+	WITH SYNTAX                 OBJECT IDENTIFIER
+	EQUALITY MATCHING RULE      nameOrNumericIdMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 oid.&id
+	LDAP-NAME                   {"m-must"}
+	LDAP-DESC                   "The list of mandatory ATs"
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 6 }
+}
+
+m-may ATTRIBUTE ::= {
+	WITH SYNTAX                 OBJECT IDENTIFIER
+	EQUALITY MATCHING RULE      nameOrNumericIdMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 oid.&id
+	LDAP-NAME                   {"m-may"}
+	LDAP-DESC                   "The list of authorized ATs"
+	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 7 }
+}
+
+-- m-typeObjectClass ATTRIBUTE ::= {
+-- 	WITH SYNTAX                 FIXME
+-- 	EQUALITY MATCHING RULE      objectClassTypeMatch
+-- 	SINGLE VALUE                TRUE
+-- 	USAGE                       userApplications
+-- 	LDAP-SYNTAX                 { 1 3 6 1 4 1 18060 0 4 0 0 1 }
+-- 	LDAP-NAME                   {"m-typeObjectClass"}
+-- 	LDAP-DESC                   "The objectclass type"
+-- 	ID                          { 1 3 6 1 4 1 18060 0 4 0 2 8 }
+-- }
+
+metaTop OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            abstract
+	MUST CONTAIN    {m-oid}
+	MAY CONTAIN     {m-description | x-schema}
+	LDAP-NAME       {"metaTop"}
+	LDAP-DESC       "Top level objectclass of all meta objects"
+	ID              { 1 3 6 1 4 1 18060 0 4 0 3 1 }
+}
+
+metaSyntaxChecker OBJECT-CLASS ::= {
+	SUBCLASS OF     {metaTop}
+	KIND            structural
+	MUST CONTAIN    {m-fqcn}
+	MAY CONTAIN     {m-bytecode}
+	LDAP-NAME       {"metaSyntaxChecker"}
+	LDAP-DESC       "meta definition of the SyntaxChecker object"
+	ID              { 1 3 6 1 4 1 18060 0 4 0 3 10 }
+}
+
+metaSchema OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            structural
+	MUST CONTAIN    {cn}
+	MAY CONTAIN     {m-disabled | m-dependencies}
+	LDAP-NAME       {"metaSchema"}
+	LDAP-DESC       "A schema object under which meta schema definitions are found"
+	ID              { 1 3 6 1 4 1 18060 0 4 0 3 11 }
+}
+
+metaNormalizer OBJECT-CLASS ::= {
+	SUBCLASS OF     {metaTop}
+	KIND            structural
+	MUST CONTAIN    {m-fqcn}
+	MAY CONTAIN     {m-bytecode}
+	LDAP-NAME       {"metaNormalizer"}
+	LDAP-DESC       "meta definition of a Normalizer object"
+	ID              { 1 3 6 1 4 1 18060 0 4 0 3 12 }
+}
+
+metaComparator OBJECT-CLASS ::= {
+	SUBCLASS OF     {metaTop}
+	KIND            structural
+	MUST CONTAIN    {m-fqcn}
+	MAY CONTAIN     {m-bytecode}
+	LDAP-NAME       {"metaComparator"}
+	LDAP-DESC       "meta definition of a Comparator object"
+	ID              { 1 3 6 1 4 1 18060 0 4 0 3 13 }
+}
+
+metaObjectClass OBJECT-CLASS ::= {
+	SUBCLASS OF     {metaTop}
+	KIND            structural
+	MUST CONTAIN    {m-oid}
+	MAY CONTAIN     {m-name | m-obsolete | m-supObjectClass | m-typeObjectClass | m-must | m-may}
+	LDAP-NAME       {"metaObjectClass"}
+	LDAP-DESC       "meta definition of the objectclass object"
+	ID              { 1 3 6 1 4 1 18060 0 4 0 3 2 }
+}
+
+metaAttributeType OBJECT-CLASS ::= {
+	SUBCLASS OF     {metaTop}
+	KIND            structural
+	MAY CONTAIN     {m-name | m-obsolete | m-supAttributeType | m-equality | m-ordering | m-substr | m-syntax | m-singleValue | m-collective | m-noUserModification | m-usage | m-length}
+	LDAP-NAME       {"metaAttributeType"}
+	LDAP-DESC       "meta definition of the AttributeType object"
+	ID              { 1 3 6 1 4 1 18060 0 4 0 3 3 }
+}
+
+metaSyntax OBJECT-CLASS ::= {
+	SUBCLASS OF     {metaTop}
+	KIND            structural
+	MAY CONTAIN     {x-not-human-readable | m-obsolete}
+	LDAP-NAME       {"metaSyntax"}
+	LDAP-DESC       "meta definition of the Syntax object"
+	ID              { 1 3 6 1 4 1 18060 0 4 0 3 4 }
+}
+
+metaMatchingRule OBJECT-CLASS ::= {
+	SUBCLASS OF     {metaTop}
+	KIND            structural
+	MUST CONTAIN    {m-syntax}
+	MAY CONTAIN     {m-name | m-obsolete}
+	LDAP-NAME       {"metaMatchingRule"}
+	LDAP-DESC       "meta definition of the MatchingRule object"
+	ID              { 1 3 6 1 4 1 18060 0 4 0 3 5 }
+}
+
+metaDITStructureRule OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            structural
+	MUST CONTAIN    {m-ruleId | m-form}
+	MAY CONTAIN     {m-name | m-obsolete | m-supDITStructureRule}
+	LDAP-NAME       {"metaDITStructureRule"}
+	LDAP-DESC       "meta definition of the DITStructureRule object"
+	ID              { 1 3 6 1 4 1 18060 0 4 0 3 6 }
+}
+
+metaNameForm OBJECT-CLASS ::= {
+	SUBCLASS OF     {metaTop}
+	KIND            structural
+	MUST CONTAIN    {m-oc | m-must}
+	MAY CONTAIN     {m-name | m-obsolete | m-may}
+	LDAP-NAME       {"metaNameForm"}
+	LDAP-DESC       "meta definition of the NameForm object"
+	ID              { 1 3 6 1 4 1 18060 0 4 0 3 7 }
+}
+
+metaMatchingRuleUse OBJECT-CLASS ::= {
+	SUBCLASS OF     {metaTop}
+	KIND            structural
+	MUST CONTAIN    {m-applies}
+	MAY CONTAIN     {m-name | m-obsolete}
+	LDAP-NAME       {"metaMatchingRuleUse"}
+	LDAP-DESC       "meta definition of the MatchingRuleUse object"
+	ID              { 1 3 6 1 4 1 18060 0 4 0 3 8 }
+}
+
+metaDITContentRule OBJECT-CLASS ::= {
+	SUBCLASS OF     {metaTop}
+	KIND            structural
+	MAY CONTAIN     {m-name | m-obsolete | m-aux | m-must | m-may | m-not}
+	LDAP-NAME       {"metaDITContentRule"}
+	LDAP-DESC       "meta definition of the DITContentRule object"
+	ID              { 1 3 6 1 4 1 18060 0 4 0 3 9 }
+}
+
+END

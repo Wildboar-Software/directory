@@ -1,0 +1,222 @@
+-- See: https://web.archive.org/web/20180825034547/http://x500standard.com/index.php?n=X500.ISSSSchema
+-- ISSS = Information Society Standardization System
+ISSS-Schema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) isss(18)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    ATTRIBUTE, OBJECT-CLASS, NAME-FORM, top
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+    directoryString, DirectoryString,
+    caseIgnoreMatch, caseIgnoreOrderingMatch, caseIgnoreSubstringsMatch,
+    telephoneNr, serialNumber, uid, givenName, initials, generationQualifier,
+    uniqueIdentifier, title, houseIdentifier, commonName, telephoneNumber
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    organization, organizationalPerson, residentialPerson
+        FROM SelectedObjectClasses
+        {joint-iso-itu-t ds(5) module(1) selectedObjectClasses(6) 9}
+
+    mail, labeledURI
+        FROM Core
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) openldap-core(6)}
+        WITH SUCCESSORS
+
+    secretary, textEncodedORAddress, mobileTelephoneNumber,
+    pagerTelephoneNumber, homePostalAddress, roomNumber, buildingName
+        FROM Cosine
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) cosine(3)}
+    ;
+
+euroDir ::= { iso(1) identified-organisation(3) ewos(16) eg(2) dir(1) }
+euroModule                  OBJECT IDENTIFIER ::= {euroDir 1}   -- for ASN.1 modules
+euro-at                     OBJECT IDENTIFIER ::= {euroDir 4}   -- for attributes types
+euro-as                     OBJECT IDENTIFIER ::= {euroDir 5}   -- for attribute syntaxes
+euro-oc                     OBJECT IDENTIFIER ::= {euroDir 6}   -- for object classes
+euro-alg                    OBJECT IDENTIFIER ::= {euroDir 8}   -- for security algorithms
+euro-mr                     OBJECT IDENTIFIER ::= {euroDir 13}  -- for matching rules
+euro-nf                     OBJECT IDENTIFIER ::= {euroDir 15}  -- for name forms
+id-euro-oc-organization     OBJECT IDENTIFIER ::= { euro-oc 1 }
+id-euro-oc-orgUnit          OBJECT IDENTIFIER ::= { euro-oc 2 }
+id-euro-oc-orgPerson        OBJECT IDENTIFIER ::= { euro-oc 3 }
+id-euro-oc-resPerson        OBJECT IDENTIFIER ::= { euro-oc 4 }
+id-euro-at-orgID            OBJECT IDENTIFIER ::= { euro-at 1 }
+id-euro-at-floor            OBJECT IDENTIFIER ::= { euro-at 2 }
+id-euro-at-floorEntity      OBJECT IDENTIFIER ::= { euro-at 3 }
+id-euro-at-telExten         OBJECT IDENTIFIER ::= { euro-at 4 }
+id-euro-at-fax              OBJECT IDENTIFIER ::= { euro-at 5 }
+id-euro-at-localEmails      OBJECT IDENTIFIER ::= { euro-at 6 }
+id-euro-at-area             OBJECT IDENTIFIER ::= { euro-at 7 }
+id-euro-nf-orgNF            OBJECT IDENTIFIER ::= { euro-nf 1 }
+id-euro-nf-orgPersNF        OBJECT IDENTIFIER ::= { euro-nf 2 }
+id-euro-nf-resPersNF        OBJECT IDENTIFIER ::= { euro-nf 3 }
+
+euroOrganization OBJECT-CLASS ::= {
+    SUBCLASS OF     { top }
+    KIND            auxiliary
+    MAY CONTAIN     {
+        serialNumber                -- from X.520
+        | secretary                 -- from RFC-1274
+        | mail                      -- from RFC-1274
+        | textEncodedORAddress      -- from RFC-1274
+        | mobileTelephoneNumber     -- from RFC-1274
+        | pagerTelephoneNumber      -- from RFC-1274
+        | labeledURI                -- from RFC-2079
+        | area                      -- defined here
+        | fax                       -- defined here
+        | vATName }                 -- defined here
+    LDAP-NAME       {"euroOrganization"}
+    ID              id-euro-oc-organization }
+
+euroOrgUnit OBJECT-CLASS ::= {
+    SUBCLASS OF  { top }
+    KIND         auxiliary
+    MAY CONTAIN  {
+        serialNumber            -- from X.520
+        | secretary             -- from RFC-1274
+        | mail                  -- from RFC-1274
+        | textEncodedORAddress  -- from RFC-1274
+        | mobileTelephoneNumber -- from RFC-1274
+        | pagerTelephoneNumber  -- from RFC-1274
+        | labeledURI            -- from RFC-2079
+        | area                  -- defined here
+        | fax }                 -- defined here
+    LDAP-NAME    {"euroOrgUnit"}
+    ID           id-euro-oc-orgUnit }
+
+euroOrgPerson OBJECT-CLASS ::= {
+    SUBCLASS OF  { top }
+    KIND         auxiliary
+    MAY CONTAIN  {
+        givenName               -- from X.520
+        | initials              -- from X.520
+        | generationQualifier   -- from X.520
+        | uniqueIdentifier      -- from X.520
+        | serialNumber          -- from X.520
+        | secretary             -- from RFC-1274
+        | mail                  -- from RFC-1274
+        | textEncodedORAddress  -- from RFC-1274
+        | uid                   -- from RFC-1274
+        | mobileTelephoneNumber                -- from RFC-1274
+        | homeTelephoneNumber             -- from RFC-1274
+        | pagerTelephoneNumber                 -- from RFC-1274
+        | homePostalAddress     -- from RFC-1274
+        | roomNumber            -- from RFC-1274
+        | buildingName          -- from RFC-1274
+        | labeledURI            -- from RFC-2079
+        -- | jpegPhoto           from RFC 2798 / Not supported by X.500 directories, though.
+        | area                  -- defined here
+        | floor                 -- defined here
+        | floorEntity           -- defined here
+        | fax                   -- defined here
+        | telExten              -- defined here
+    }
+    LDAP-NAME    {"euroOrgPerson"}
+    ID           id-euro-oc-orgPerson }
+
+euroResPerson OBJECT-CLASS ::= {
+    SUBCLASS OF  { top }
+    KIND         auxiliary
+    MAY CONTAIN  {
+        givenName               -- from X.520
+        | initials              -- from X.520
+        | generationQualifier   -- from X.520
+        | title                 -- from X.520
+        | uniqueIdentifier      -- from X.520
+        | serialNumber          -- from X.520
+        | houseIdentifier       -- from X.520
+        | mail                  -- from RFC-1274
+        | textEncodedORAddress  -- from RFC-1274
+        | mobileTelephoneNumber -- from RFC-1274
+        | pagerTelephoneNumber  -- from RFC-1274
+        | buildingName          -- from RFC-1274
+        | labeledURI            -- from RFC-2079
+        | fax                   -- defined here
+        | area                  -- defined here
+        | floor                 -- defined here
+        | floorEntity }         -- defined here
+    LDAP-NAME    {"euroResPerson"}
+    ID           id-euro-oc-resPerson }
+
+vATName ATTRIBUTE ::= {
+    WITH SYNTAX                 DirectoryString {ub-vATName}
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"vATName"}
+    ID                          id-euro-at-orgID }
+
+floor ATTRIBUTE ::= {
+    WITH SYNTAX                 DirectoryString {ub-floor}
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"floor"}
+    ID                          id-euro-at-floor }
+
+floorEntity ATTRIBUTE ::= {
+    WITH SYNTAX                 DirectoryString {ub-floor}
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"floorEntity"}
+    ID                          id-euro-at-floorEntity }
+
+telExten ATTRIBUTE ::= {
+    SUBTYPE OF                  telephoneNumber
+    LDAP-SYNTAX                 telephoneNr.&id
+    LDAP-NAME                   {"telExten"}
+    ID                          id-euro-at-telExten }
+
+fax ATTRIBUTE ::= {
+    SUBTYPE OF                  telephoneNumber  -- from X.520
+    LDAP-SYNTAX                 telephoneNr.&id
+    LDAP-NAME                   {"telExten"}
+    ID                          id-euro-at-fax }
+
+area ATTRIBUTE ::= {
+    WITH SYNTAX                 DirectoryString {ub-area}
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"area"}
+    ID                          id-euro-at-area }
+
+euroOrgNF NAME-FORM ::= {
+    NAMES                   organization
+    WITH ATTRIBUTES         { organizationName }
+    AND OPTIONALLY          { serialNumber }
+    LDAP-NAME               {"euroOrgNF"}
+    ID                      id-euro-nf-orgNF }
+
+euroOrgPersNF NAME-FORM ::= {
+    NAMES                   organizationalPerson
+    WITH ATTRIBUTES         { commonName }
+    AND OPTIONALLY          { serialNumber }
+    LDAP-NAME               {"euroOrgPersNF"}
+    ID                      id-euro-nf-orgPersNF }
+
+euroResPersNF NAME-FORM ::= {
+    NAMES                   residentialPerson
+    WITH ATTRIBUTES         { commonName }
+    AND OPTIONALLY          { serialNumber }
+    LDAP-NAME               {"euroResPersNF"}
+    ID                      id-euro-nf-resPersNF }
+
+END

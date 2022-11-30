@@ -1,0 +1,124 @@
+-- See: https://www.rfc-editor.org/rfc/rfc3687.html
+RFC3687ComponentMatching {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) component-matching(33)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    ATTRIBUTE, OBJECT-CLASS, top, MATCHING-RULE
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	directoryString, ia5String,
+    caseExactMatch, caseExactOrderingMatch, caseExactSubstringsMatch,
+	caseIgnoreIA5Match, caseIgnoreIA5SubstringsMatch,
+    commonName, description
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    ;
+
+ComponentReference ::= UTF8String
+
+ComponentAssertion ::= SEQUENCE {
+    component         ComponentReference (SIZE(1..MAX)) OPTIONAL,
+    useDefaultValues  BOOLEAN DEFAULT TRUE,
+    rule              MATCHING-RULE.&id,
+    value             MATCHING-RULE.&AssertionType,
+    ...
+}
+
+ComponentFilter ::= CHOICE {
+    item  [0] ComponentAssertion,
+    and   [1] SEQUENCE OF ComponentFilter,
+    or    [2] SEQUENCE OF ComponentFilter,
+    not   [3] ComponentFilter,
+    ...
+}
+
+-- Object Identifiers
+
+id-lsx-rdn                      OBJECT IDENTIFIER ::= { 1 2 36 79672281 1 5 0 }
+id-lsx-null                     OBJECT IDENTIFIER ::= { 1 2 36 79672281 1 5 1 }
+id-lsx-componentFilter          OBJECT IDENTIFIER ::= { 1 2 36 79672281 1 5 2 }
+id-lsx-open                     OBJECT IDENTIFIER ::= { 1 2 36 79672281 1 5 3 }
+id-mr-rdnMatch                  OBJECT IDENTIFIER ::= { 1 2 36 79672281 1 13 3 }
+id-mr-presentMatch              OBJECT IDENTIFIER ::= { 1 2 36 79672281 1 13 5 }
+id-mr-componentFilterMatch      OBJECT IDENTIFIER ::= { 1 2 36 79672281 1 13 2 }
+id-mr-allComponentsMatch        OBJECT IDENTIFIER ::= { 1 2 36 79672281 1 13 6 }
+id-mr-directoryComponentsMatch  OBJECT IDENTIFIER ::= { 1 2 36 79672281 1 13 7 }
+
+-- LDAP Syntaxes
+
+rdn SYNTAX-NAME ::= {
+    LDAP-DESC               "RDN"
+    DIRECTORY SYNTAX        RelativeDistinguishedName
+    ID                      id-lsx-rdn
+}
+
+null SYNTAX-NAME ::= {
+    LDAP-DESC               "NULL"
+    DIRECTORY SYNTAX        NULL
+    ID                      id-lsx-null
+}
+
+componentFilter SYNTAX-NAME ::= {
+    LDAP-DESC               "ComponentFilter"
+    DIRECTORY SYNTAX        ComponentFilter
+    ID                      id-lsx-componentFilter
+}
+
+open SYNTAX-NAME ::= {
+    LDAP-DESC               "OpenAssertionType"
+    DIRECTORY SYNTAX        TYPE-IDENTIFIER.&Type
+    ID                      id-lsx-open
+}
+
+-- Matching Rules
+
+rdnMatch MATCHING-RULE ::= {
+    SYNTAX                  RelativeDistinguishedName
+    LDAP-SYNTAX             rdn.&id
+    LDAP-NAME               {"rdnMatch"}
+    ID                      id-mr-rdnMatch
+}
+
+presentMatch MATCHING-RULE ::= {
+    SYNTAX                  NULL
+    LDAP-SYNTAX             null.&id
+    LDAP-NAME               {"presentMatch"}
+    ID                      id-mr-presentMatch
+}
+
+componentFilterMatch MATCHING-RULE ::= {
+    SYNTAX                  ComponentFilter
+    LDAP-SYNTAX             componentFilter.&id
+    LDAP-NAME               {"componentFilterMatch"}
+    ID                      id-mr-componentFilterMatch
+}
+
+allComponentsMatch MATCHING-RULE ::= {
+    -- SYNTAX                  TYPE-IDENTIFIER.&Type
+    LDAP-SYNTAX             open.&id
+    LDAP-NAME               {"allComponentsMatch"}
+    ID                      id-mr-allComponentsMatch
+}
+
+directoryComponentsMatch MATCHING-RULE ::= {
+    -- SYNTAX                  TYPE-IDENTIFIER.&Type
+    LDAP-SYNTAX             open.&id
+    LDAP-NAME               {"directoryComponentsMatch"}
+    ID                      id-mr-directoryComponentsMatch
+}
+
+END

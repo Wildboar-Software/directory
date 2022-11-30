@@ -1,0 +1,128 @@
+DynGroup {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) dyngroup(24)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    id-nf
+        FROM Wildboar
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) wildboar(1)}
+        WITH SUCCESSORS
+
+    ATTRIBUTE, OBJECT-CLASS, top, distinguishedName, distinguishedNameMatch
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	directoryString, ia5String, dn,
+    caseExactMatch, caseExactOrderingMatch, caseExactSubstringsMatch,
+    commonName, description, organizationName, organizationalUnitName,
+    owner, seeAlso, businessCategory
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    labeledURI
+        FROM OpenLDAPCoreSchema
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) openldap-core(6)}
+        WITH SUCCESSORS
+
+    ;
+
+-- Object Identifiers
+
+id-netscapeRoot     OBJECT IDENTIFIER ::= { 2 16 840 1 113730 }
+id-nsds             OBJECT IDENTIFIER ::= { id-netscapeRoot 3 }
+id-nsdsat           OBJECT IDENTIFIER ::= { id-nsds 1 }
+id-nsdsoc           OBJECT IDENTIFIER ::= { id-nsds 2 }
+id-openldap-exp11   OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 4203 666 11 }
+id-dynGroupBase     OBJECT IDENTIFIER ::= { id-openldap-exp11 8 }
+id-dynGroupAttr     OBJECT IDENTIFIER ::= { id-dynGroupBase 1 }
+id-dynGroupOC       OBJECT IDENTIFIER ::= { id-dynGroupBase 2 }
+
+-- Attribute Types
+
+memberURL ATTRIBUTE ::= {
+    SUBTYPE OF                  labeledURI
+    EQUALITY MATCHING RULE 		caseExactMatch
+	ORDERING MATCHING RULE		caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE 	caseExactSubstringsMatch
+	LDAP-SYNTAX 				directoryString.&id
+    LDAP-NAME                   {"memberURL"}
+    LDAP-DESC "Identifies an URL associated with each member of a group. Any type of labeled URL can be used."
+    ID                          { id-nsdsat 198 }
+}
+
+dgIdentity ATTRIBUTE ::= {
+    SUBTYPE OF                  distinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				dn.&id
+    LDAP-NAME                   {"dgIdentity"}
+    LDAP-DESC "Identity to use when processing the memberURL"
+    ID                          { id-dynGroupAttr 1 }
+}
+
+-- dgAuthz ATTRIBUTE ::= {
+--     WITH SYNTAX                 ???
+--     EQUALITY MATCHING RULE 		authzMatch
+-- 	LDAP-SYNTAX 				{ 1 3 6 1 4 1 4203 666 2 7 }
+--     LDAP-NAME                   {"dgAuthz"}
+--     LDAP-DESC "Optional authorization rules that determine who is allowed to assume the dgIdentity"
+--     ID                          { id-dynGroupAttr 1 }
+-- }
+
+-- attributeType ( DynGroupAttr:2
+-- 	NAME 'dgAuthz'
+-- 	DESC 'Optional authorization rules that determine who is allowed to assume the dgIdentity'
+-- 	EQUALITY authzMatch
+-- 	SYNTAX 1.3.6.1.4.1.4203.666.2.7
+-- 	X-ORDERED 'VALUES' )
+
+-- Object Classes
+
+groupOfURLs OBJECT-CLASS ::= {
+	SUBCLASS OF 	{top}
+	KIND			structural
+    MUST CONTAIN    {commonName}
+	MAY CONTAIN		{
+        memberURL
+        | businessCategory
+        | description
+        | organizationName
+        | organizationalUnitName
+        | owner
+        | seeAlso
+	}
+	LDAP-NAME		{"groupOfURLs"}
+	ID				{ id-nsdsoc 33 }
+}
+
+-- dgIdentityAux OBJECT-CLASS ::= {
+-- 	SUBCLASS OF 	{top}
+-- 	KIND			auxiliary
+-- 	MAY CONTAIN		{dgIdentity | dgAuthz}
+-- 	LDAP-NAME		{"dgIdentityAux"}
+-- 	ID				{ id-dynGroupOC 1 }
+-- }
+
+-- Name Forms
+
+groupOfURLsNameForm NAME-FORM ::= {
+	NAMES				groupOfURLs
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"groupOfURLsNameForm"}
+	ID					{ id-nf 46 }
+}
+
+END

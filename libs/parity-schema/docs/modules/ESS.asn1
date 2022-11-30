@@ -1,0 +1,303 @@
+ExtendedSecurityServices-2009
+    { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-9(9)
+    smime(16) modules(0) id-mod-ess-2006-02(42) }
+DEFINITIONS IMPLICIT TAGS ::=
+BEGIN
+IMPORTS
+
+    id-at, id-mr, id-nf, id-oc, id-avc, id-lsx
+        FROM Wildboar
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) wildboar(1)}
+        WITH SUCCESSORS
+
+    ATTRIBUTE, OBJECT-CLASS, NAME-FORM, MATCHING-RULE, SYNTAX-NAME,
+    CONTEXT, FRIENDS, objectIdentifierMatch, distinguishedNameMatch,
+    DistinguishedName, top, Attribute, Name
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+    UnboundedDirectoryString, DirectoryString, directoryString,
+    caseIgnoreMatch, caseIgnoreOrderingMatch, caseIgnoreSubstringsMatch,
+    caseExactMatch, caseExactOrderingMatch, caseExactSubstringsMatch,
+    integer, integerMatch, integerOrderingMatch,
+    boolean, booleanMatch, dn, oid, bitString, bitStringMatch,
+    generalizedTime, generalizedTimeMatch, generalizedTimeOrderingMatch,
+    numericString, numericStringOrderingMatch, numericStringSubstringsMatch,
+    octetString, octetStringMatch, octetStringOrderingMatch, octetStringSubstringsMatch
+        FROM SelectedAttributeTypes
+        {joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+        WITH SUCCESSORS
+
+    Extensions, AlgorithmIdentifier, SupportedAlgorithms, ALGORITHM,
+    CertificateSerialNumber
+        FROM AuthenticationFramework
+        {joint-iso-itu-t ds(5) module(1) authenticationFramework(7) 9}
+        WITH SUCCESSORS
+
+    ub-schema
+        FROM UpperBounds
+        {joint-iso-itu-t ds(5) module(1) upperBounds(10) 7}
+        WITH SUCCESSORS
+
+    SECURITY-CATEGORY, SecurityCategory
+        FROM EnhancedSecurity
+        {joint-iso-itu-t ds(5) modules(1) enhancedSecurity(28) 9}
+        WITH SUCCESSORS
+
+    PolicyInformation, GeneralNames
+        FROM CertificateExtensions
+        {joint-iso-itu-t ds(5) module(1) certificateExtensions(26) 9}
+        WITH SUCCESSORS
+
+    id-sha256
+        FROM AlgorithmObjectIdentifiers
+        {joint-iso-itu-t ds(5) module(1) algorithmObjectIdentifiers(8) 9}
+        WITH SUCCESSORS
+
+    ;
+
+-- Taken from CryptographicMessageSyntax-2009
+ContentType ::= OBJECT IDENTIFIER
+
+IssuerAndSerialNumber ::= SEQUENCE { -- TODO: You might just want to import this from the X.500 specs.
+    issuer              Name,
+    serialNumber        CertificateSerialNumber }
+
+SubjectKeyIdentifier ::= OCTET STRING
+
+EssSignedAttributes ATTRIBUTE ::= {
+    aa-receiptRequest | aa-contentIdentifier | aa-contentHint |
+    aa-msgSigDigest | aa-contentReference | aa-securityLabel |
+    aa-equivalentLabels | aa-mlExpandHistory | aa-signingCertificate |
+    aa-signingCertificateV2, ... }
+
+-- Extended Security Services
+-- The construct "SEQUENCE SIZE (1..MAX) OF" appears in several ASN.1
+-- constructs in this module.  A valid ASN.1 SEQUENCE can have zero or
+-- more entries.  The SIZE (1..MAX) construct constrains the SEQUENCE
+-- to have at least one entry.  MAX indicates the upper bound is
+-- unspecified.  Implementations are free to choose an upper bound
+-- that suits their environment.
+
+-- Section 2.7
+aa-receiptRequest ATTRIBUTE ::= {
+    WITH SYNTAX     ReceiptRequest
+    ID              id-aa-receiptRequest }
+
+ReceiptRequest ::= SEQUENCE {
+    signedContentIdentifier ContentIdentifier,
+    receiptsFrom ReceiptsFrom,
+    receiptsTo SEQUENCE SIZE (1..ub-receiptsTo) OF GeneralNames
+}
+
+ub-receiptsTo INTEGER ::= 16
+
+aa-contentIdentifier ATTRIBUTE ::= {
+    WITH SYNTAX     ContentIdentifier
+    ID              id-aa-contentIdentifier }
+
+id-aa-receiptRequest OBJECT IDENTIFIER ::=
+    { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-9(9)
+    smime(16) id-aa(2) 1}
+
+ContentIdentifier ::= OCTET STRING
+
+id-aa-contentIdentifier OBJECT IDENTIFIER ::= { iso(1) member-body(2)
+    us(840) rsadsi(113549) pkcs(1) pkcs-9(9) smime(16) id-aa(2) 7}
+
+id-ct-receipt OBJECT IDENTIFIER ::=
+    { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-9(9)
+    smime(16) id-ct(1) 1}
+
+ReceiptsFrom ::= CHOICE {
+    allOrFirstTier [0] AllOrFirstTier,
+        -- formerly "allOrNone [0]AllOrNone"
+    receiptList [1] SEQUENCE OF GeneralNames }
+
+AllOrFirstTier ::= INTEGER { -- Formerly AllOrNone
+    allReceipts (0),
+    firstTierRecipients (1) }
+
+-- Section 2.8
+
+Receipt ::= SEQUENCE {
+    version                   ESSVersion,
+    contentType               ContentType,
+    signedContentIdentifier   ContentIdentifier,
+    originatorSignatureValue  OCTET STRING
+}
+
+ESSVersion ::= INTEGER  { v1(1) }  -- Section 2.9
+
+aa-contentHint ATTRIBUTE ::= {
+    WITH SYNTAX     ContentHints
+    ID              id-aa-contentHint }
+
+id-aa-contentHint OBJECT IDENTIFIER ::=
+    { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-9(9)
+    smime(16) id-aa(2) 4}
+
+ContentHints ::= SEQUENCE {
+    contentDescription UTF8String (SIZE (1..MAX)) OPTIONAL,
+    contentType ContentType }
+
+-- Section 2.10
+
+aa-msgSigDigest ATTRIBUTE ::= {
+    WITH SYNTAX     MsgSigDigest
+    ID              id-aa-msgSigDigest }
+
+id-aa-msgSigDigest OBJECT IDENTIFIER ::= { iso(1) member-body(2)
+    us(840) rsadsi(113549) pkcs(1) pkcs-9(9) smime(16) id-aa(2) 5}
+
+MsgSigDigest ::= OCTET STRING
+
+-- Section 2.11
+
+aa-contentReference ATTRIBUTE ::= {
+    WITH SYNTAX     ContentReference
+    ID              id-aa-contentReference }
+
+id-aa-contentReference OBJECT IDENTIFIER ::=
+    { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-9(9)
+    smime(16) id-aa(2) 10 }
+
+ContentReference ::= SEQUENCE {
+    contentType ContentType,
+    signedContentIdentifier ContentIdentifier,
+    originatorSignatureValue OCTET STRING }
+
+-- Section 3.2
+
+aa-securityLabel ATTRIBUTE ::= {
+    WITH SYNTAX     ESSSecurityLabel
+    ID              id-aa-securityLabel }
+
+id-aa-securityLabel OBJECT IDENTIFIER ::=
+    { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-9(9)
+    smime(16) id-aa(2) 2}
+
+ESSSecurityLabel ::= SET {
+    security-policy-identifier SecurityPolicyIdentifier,
+    security-classification SecurityClassification OPTIONAL,
+    privacy-mark ESSPrivacyMark OPTIONAL,
+    security-categories SecurityCategories OPTIONAL }  SecurityPolicyIdentifier ::= OBJECT IDENTIFIER
+
+SecurityClassification ::= INTEGER {
+    unmarked (0),
+    unclassified (1),
+    restricted (2),
+    confidential (3),
+    secret (4),
+    top-secret (5)
+} (0..ub-integer-options)
+
+ub-integer-options INTEGER ::= 256
+
+ESSPrivacyMark ::= CHOICE {
+    pString      PrintableString (SIZE (1..ub-privacy-mark-length)),
+    utf8String   UTF8String (SIZE (1..MAX))
+}
+
+ub-privacy-mark-length INTEGER ::= 128
+
+SecurityCategories ::=
+    SET SIZE (1..ub-security-categories) OF SecurityCategory
+        {{SupportedSecurityCategories}}
+
+ub-security-categories INTEGER ::= 64
+
+SupportedSecurityCategories SECURITY-CATEGORY ::= { ... }
+
+-- Section 3.4
+
+aa-equivalentLabels ATTRIBUTE ::= {
+    WITH SYNTAX     EquivalentLabels
+    ID              id-aa-equivalentLabels }
+
+id-aa-equivalentLabels OBJECT IDENTIFIER ::=
+    { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-9(9)
+    smime(16) id-aa(2) 9}
+
+EquivalentLabels ::= SEQUENCE OF ESSSecurityLabel
+
+-- Section 4.4
+
+aa-mlExpandHistory ATTRIBUTE ::= {
+    WITH SYNTAX     MLExpansionHistory
+    ID              id-aa-mlExpandHistory }
+
+id-aa-mlExpandHistory OBJECT IDENTIFIER ::=
+    { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-9(9)
+    smime(16) id-aa(2) 3 }
+
+MLExpansionHistory ::= SEQUENCE
+    SIZE (1..ub-ml-expansion-history) OF MLData
+ub-ml-expansion-history INTEGER ::= 64
+
+MLData ::= SEQUENCE {
+    mailListIdentifier EntityIdentifier,
+    expansionTime GeneralizedTime,
+    mlReceiptPolicy MLReceiptPolicy OPTIONAL }
+
+EntityIdentifier ::= CHOICE {
+    issuerAndSerialNumber IssuerAndSerialNumber,
+    subjectKeyIdentifier SubjectKeyIdentifier }
+
+MLReceiptPolicy ::= CHOICE {
+    none         [0] NULL,
+    insteadOf    [1] SEQUENCE SIZE (1..MAX) OF GeneralNames,
+    inAdditionTo [2] SEQUENCE SIZE (1..MAX) OF GeneralNames }
+
+-- Section 5.4
+
+aa-signingCertificate ATTRIBUTE ::= {
+    WITH SYNTAX     SigningCertificate
+    ID              id-aa-signingCertificate }
+
+id-aa-signingCertificate OBJECT IDENTIFIER ::=
+    { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9)
+    smime(16) id-aa(2) 12 }
+
+SigningCertificate ::=  SEQUENCE {
+    certs        SEQUENCE OF ESSCertID,
+    policies     SEQUENCE OF PolicyInformation OPTIONAL
+}
+
+aa-signingCertificateV2 ATTRIBUTE ::= {
+    WITH SYNTAX     SigningCertificateV2
+    ID              id-aa-signingCertificateV2 }
+
+id-aa-signingCertificateV2 OBJECT IDENTIFIER ::=
+    { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9)
+    smime(16) id-aa(2) 47 }
+
+SigningCertificateV2 ::=  SEQUENCE {
+    certs        SEQUENCE OF ESSCertIDv2,
+    policies     SEQUENCE OF PolicyInformation OPTIONAL
+}
+
+HashAlgorithm ::= AlgorithmIdentifier{{SupportedAlgorithms}}
+
+ESSCertIDv2 ::= SEQUENCE {
+    hashAlgorithm    HashAlgorithm
+                        DEFAULT { algorithm id-sha256 },
+    certHash        Hash,
+    issuerSerial    IssuerSerial OPTIONAL
+}
+
+ESSCertID ::=  SEQUENCE {
+    certHash        Hash,
+    issuerSerial    IssuerSerial OPTIONAL
+}
+
+Hash ::= OCTET STRING
+
+IssuerSerial ::= SEQUENCE {
+    issuer          GeneralNames,
+    serialNumber    CertificateSerialNumber
+}
+
+END

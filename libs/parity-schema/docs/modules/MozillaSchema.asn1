@@ -1,0 +1,235 @@
+MozillaSchema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) mozilla(43)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    ATTRIBUTE, OBJECT-CLASS, top
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	directoryString, UnboundedDirectoryString, name, caseIgnoreMatch,
+    caseIgnoreSubstringsMatch, ia5String, caseIgnoreIA5Match,
+    caseIgnoreIA5SubstringsMatch, TelephoneNumber, telephoneNumberMatch,
+    telephoneNumberSubstringsMatch, telephoneNr, boolean, PostalAddress,
+    caseIgnoreListMatch, caseIgnoreListSubstringsMatch, postalAddr,
+    countryName
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    friendlyCountryName
+        FROM Cosine
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) cosine(3)}
+
+    ;
+
+xmozillanickname ATTRIBUTE ::= {
+	SUBTYPE OF                  name
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"xmozillanickname","mozillaNickname"}
+	ID                          { 1 3 6 1 4 1 13769 2 1 1 }
+}
+
+mozillaHomeFriendlyCountryName ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"mozillaHomeFriendlyCountryName"}
+	ID                          { 1 3 6 1 4 1 13769 2 1 10 }
+}
+
+homeurl ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"homeurl","mozillaHomeUrl"}
+	ID                          { 1 3 6 1 4 1 13769 2 1 11 }
+}
+
+workurl ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"workurl","mozillaWorkUrl"}
+	ID                          { 1 3 6 1 4 1 13769 2 1 12 }
+}
+
+nsAIMid ATTRIBUTE ::= {
+	WITH SYNTAX                 TelephoneNumber
+	EQUALITY MATCHING RULE      telephoneNumberMatch
+	SUBSTRINGS MATCHING RULE    telephoneNumberSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 telephoneNr.&id
+	LDAP-NAME                   {"nsAIMid"}
+	LDAP-DESC                   "AOL Instant Messenger (AIM) Identity"
+	ID                          { 1 3 6 1 4 1 13769 2 1 13 }
+}
+
+xmozillausehtmlmail ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"xmozillausehtmlmail","mozillaUseHtmlMail"}
+	ID                          { 1 3 6 1 4 1 13769 2 1 2 }
+}
+
+mozillaSecondEmail ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"mozillaSecondEmail"}
+	ID                          { 1 3 6 1 4 1 13769 2 1 3 }
+}
+
+mozillaHomeLocalityName ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"mozillaHomeLocalityName"}
+	ID                          { 1 3 6 1 4 1 13769 2 1 4 }
+}
+
+mozillaPostalAddress2 ATTRIBUTE ::= {
+	WITH SYNTAX                 PostalAddress
+	EQUALITY MATCHING RULE      caseIgnoreListMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreListSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 postalAddr.&id
+	LDAP-NAME                   {"mozillaPostalAddress2"}
+	ID                          { 1 3 6 1 4 1 13769 2 1 5 }
+}
+
+mozillaHomePostalAddress2 ATTRIBUTE ::= {
+	WITH SYNTAX                 PostalAddress
+	EQUALITY MATCHING RULE      caseIgnoreListMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreListSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 postalAddr.&id
+	LDAP-NAME                   {"mozillaHomePostalAddress2"}
+	ID                          { 1 3 6 1 4 1 13769 2 1 6 }
+}
+
+mozillaHomeState ATTRIBUTE ::= {
+	SUBTYPE OF                  name
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"mozillaHomeState"}
+	ID                          { 1 3 6 1 4 1 13769 2 1 7 }
+}
+
+mozillaHomePostalCode ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"mozillaHomePostalCode"}
+	ID                          { 1 3 6 1 4 1 13769 2 1 8 }
+}
+
+mozillaHomeCountryName ATTRIBUTE ::= {
+	SUBTYPE OF                  name
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"mozillaHomeCountryName"}
+	ID                          { 1 3 6 1 4 1 13769 2 1 9 }
+}
+
+custom1 ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"custom1","mozillaCustom1"}
+	ID                          { 1 3 6 1 4 1 13769 2 1 96 }
+}
+
+custom2 ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"custom2","mozillaCustom2"}
+	ID                          { 1 3 6 1 4 1 13769 2 1 97 }
+}
+
+custom3 ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"custom3","mozillaCustom3"}
+	ID                          { 1 3 6 1 4 1 13769 2 1 98 }
+}
+
+custom4 ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"custom4","mozillaCustom4"}
+	ID                          { 1 3 6 1 4 1 13769 2 1 99 }
+}
+
+mozillaAbPersonObsolete OBJECT-CLASS ::= {
+	SUBCLASS OF     {inetOrgPerson}
+	KIND            structural
+	MAY CONTAIN     {
+        xmozillanickname
+        | xmozillausehtmlmail
+        | mozillaSecondEmail
+        | mozillaPostalAddress2
+        | mozillaHomePostalAddress2
+        | mozillaHomeLocalityName
+        | mozillaHomeState
+        | mozillaHomePostalCode
+        | mozillaHomeCountryName
+        | mozillaHomeFriendlyCountryName
+        | homeurl
+        | workurl
+        | custom1
+        | custom2
+        | custom3
+        | custom4
+        | nsAIMid
+        | countryName
+        | friendlyCountryName
+    }
+	LDAP-NAME       {"mozillaAbPersonObsolete"}
+	ID              { 1 3 6 1 4 1 13769 2 2 1 }
+}
+
+END

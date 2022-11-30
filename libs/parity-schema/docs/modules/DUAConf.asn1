@@ -1,0 +1,252 @@
+DUAConf {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) duaconf(4)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    id-nf
+        FROM Wildboar
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) wildboar(1)}
+        WITH SUCCESSORS
+
+    ATTRIBUTE, OBJECT-CLASS, NAME-FORM, DistinguishedName, top,
+    distinguishedNameMatch
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	directoryString, dn, caseIgnoreIA5Match, caseIgnoreIA5SubstringsMatch,
+	ia5String, caseIgnoreListMatch, caseIgnoreListSubstringsMatch,
+	caseIgnoreMatch, caseIgnoreOrderingMatch, caseIgnoreSubstringsMatch,
+	commonName, UnboundedDirectoryString, integer, integerOrderingMatch,
+    boolean, booleanMatch, caseExactMatch, caseExactOrderingMatch,
+    caseExactSubstringsMatch, integerMatch
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    ;
+
+duaConfSchemaOID OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 11 1 3 1 }
+
+defaultServerList ATTRIBUTE ::= {
+	WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+	ORDERING MATCHING RULE		caseIgnoreOrderingMatch
+	SUBSTRINGS MATCHING RULE 	caseIgnoreSubstringsMatch
+	SINGLE VALUE				TRUE
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"defaultServerList"}
+	LDAP-DESC					"Default LDAP server host address used by a DUA"
+	ID { duaConfSchemaOID 1 0 }
+}
+
+defaultSearchBase ATTRIBUTE ::= {
+	WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+	SINGLE VALUE				TRUE
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"defaultSearchBase"}
+	LDAP-DESC					"Default LDAP base DN used by a DUA"
+	ID { duaConfSchemaOID 1 1 }
+}
+
+preferredServerList ATTRIBUTE ::= {
+	WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+	ORDERING MATCHING RULE		caseIgnoreOrderingMatch
+	SUBSTRINGS MATCHING RULE 	caseIgnoreSubstringsMatch
+	SINGLE VALUE				TRUE
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"preferredServerList"}
+	LDAP-DESC "Preferred LDAP server host addresses to be used by a DUA"
+	ID { duaConfSchemaOID 1 2 }
+}
+
+searchTimeLimit ATTRIBUTE ::= {
+	WITH SYNTAX 				INTEGER (0..MAX)
+    EQUALITY MATCHING RULE 		integerMatch
+	ORDERING MATCHING RULE		integerOrderingMatch
+	SINGLE VALUE				TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"searchTimeLimit"}
+	LDAP-DESC "Maximum time in seconds a DUA should allow for a search to complete"
+	ID { duaConfSchemaOID 1 3 }
+}
+
+bindTimeLimit ATTRIBUTE ::= {
+	WITH SYNTAX 				INTEGER (0..MAX)
+    EQUALITY MATCHING RULE 		integerMatch
+	ORDERING MATCHING RULE		integerOrderingMatch
+	SINGLE VALUE				TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"bindTimeLimit"}
+	LDAP-DESC "Maximum time in seconds a DUA should allow for the bind operation to complete"
+	ID { duaConfSchemaOID 1 4 }
+}
+
+followReferrals ATTRIBUTE ::= {
+	WITH SYNTAX 				BOOLEAN
+    EQUALITY MATCHING RULE 		booleanMatch
+	SINGLE VALUE				TRUE
+	LDAP-SYNTAX 				boolean.&id
+	LDAP-NAME 					{"followReferrals"}
+	LDAP-DESC "Tells DUA if it should follow referrals returned by a DSA search result"
+	ID { duaConfSchemaOID 1 5 }
+}
+
+dereferenceAliases ATTRIBUTE ::= {
+	WITH SYNTAX 				BOOLEAN
+    EQUALITY MATCHING RULE 		booleanMatch
+	SINGLE VALUE				TRUE
+	LDAP-SYNTAX 				boolean.&id
+	LDAP-NAME 					{"dereferenceAliases"}
+	LDAP-DESC "Tells DUA if it should dereference aliases"
+	ID { duaConfSchemaOID 1 16 }
+}
+
+authenticationMethod ATTRIBUTE ::= {
+	WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+	ORDERING MATCHING RULE		caseIgnoreOrderingMatch
+	SUBSTRINGS MATCHING RULE 	caseIgnoreSubstringsMatch
+	SINGLE VALUE				TRUE
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"authenticationMethod"}
+	LDAP-DESC "A keystring which identifies the type of authentication method used to contact the DSA"
+	ID { duaConfSchemaOID 1 6 }
+}
+
+profileTTL ATTRIBUTE ::= {
+	WITH SYNTAX 				INTEGER (0..MAX)
+    EQUALITY MATCHING RULE 		integerMatch
+	ORDERING MATCHING RULE		integerOrderingMatch
+	SINGLE VALUE				TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"profileTTL"}
+	LDAP-DESC "Time to live, in seconds, before a client DUA should re-read this configuration profile"
+	ID { duaConfSchemaOID 1 7 }
+}
+
+serviceSearchDescriptor ATTRIBUTE ::= {
+	WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseExactMatch
+	ORDERING MATCHING RULE		caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE 	caseExactSubstringsMatch
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"serviceSearchDescriptor"}
+	LDAP-DESC "LDAP search descriptor list used by a DUA"
+	ID { duaConfSchemaOID 1 14 }
+}
+
+attributeMap ATTRIBUTE ::= {
+	WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+	SUBSTRINGS MATCHING RULE 	caseIgnoreIA5SubstringsMatch
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"attributeMap"}
+	LDAP-DESC "Attribute mappings used by a DUA"
+	ID { duaConfSchemaOID 1 9 }
+}
+
+credentialLevel ATTRIBUTE ::= {
+	WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+	SUBSTRINGS MATCHING RULE 	caseIgnoreIA5SubstringsMatch
+	SINGLE VALUE				TRUE
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"credentialLevel"}
+	LDAP-DESC "Identifies type of credentials a DUA should use when binding to the LDAP server"
+	ID { duaConfSchemaOID 1 10 }
+}
+
+objectclassMap ATTRIBUTE ::= {
+	WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+	SUBSTRINGS MATCHING RULE 	caseIgnoreIA5SubstringsMatch
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"objectclassMap"}
+	LDAP-DESC "Objectclass mappings used by a DUA"
+	ID { duaConfSchemaOID 1 11 }
+}
+
+defaultSearchScope ATTRIBUTE ::= {
+	WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+	SUBSTRINGS MATCHING RULE 	caseIgnoreIA5SubstringsMatch
+	SINGLE VALUE				TRUE
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"defaultSearchScope"}
+	LDAP-DESC "Default search scope used by a DUA"
+	ID { duaConfSchemaOID 1 12 }
+}
+
+serviceCredentialLevel ATTRIBUTE ::= {
+	WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+	SUBSTRINGS MATCHING RULE 	caseIgnoreIA5SubstringsMatch
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"serviceCredentialLevel"}
+	LDAP-DESC "Identifies type of credentials a DUA should use when binding to the LDAP server for a specific service"
+	ID { duaConfSchemaOID 1 13 }
+}
+
+serviceAuthenticationMethod ATTRIBUTE ::= {
+	WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+	ORDERING MATCHING RULE		caseIgnoreOrderingMatch
+	SUBSTRINGS MATCHING RULE 	caseIgnoreSubstringsMatch
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"serviceAuthenticationMethod"}
+	LDAP-DESC "Authentication method used by a service of the DUA"
+	ID { duaConfSchemaOID 1 15 }
+}
+
+-- Object Classes
+
+duaConfigProfile OBJECT-CLASS ::= {
+	SUBCLASS OF 	{top}
+	KIND			structural
+	MUST CONTAIN	{commonName}
+	MAY CONTAIN		{
+		defaultServerList
+		| preferredServerList
+		| defaultSearchBase
+		| defaultSearchScope
+		| searchTimeLimit
+		| bindTimeLimit
+		| credentialLevel
+		| authenticationMethod
+		| followReferrals
+		| dereferenceAliases
+		| serviceSearchDescriptor
+		| serviceCredentialLevel
+		| serviceAuthenticationMethod
+		| objectclassMap
+		| attributeMap
+		| profileTTL
+	}
+	LDAP-NAME		{"DUAConfigProfile"}
+	LDAP-DESC		"Abstraction of a base configuration for a DUA"
+	ID				{ duaConfSchemaOID 2 5 }
+}
+
+-- Name Forms
+
+duaConfigProfileNameForm NAME-FORM ::= {
+	NAMES				duaConfigProfile
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"duaConfigProfileNameForm"}
+	ID					{ id-nf 3 }
+}
+
+END

@@ -1,0 +1,47 @@
+-- See: [IETF RFC 3296](https://www.rfc-editor.org/rfc/rfc3296.html).
+LDAPReferral {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) ldap-referral(21)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    ATTRIBUTE, OBJECT-CLASS, top
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	directoryString, caseExactMatch, UnboundedDirectoryString
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    ;
+
+ref ATTRIBUTE ::= {
+	WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseExactMatch
+    USAGE                       distributedOperation
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"ref"}
+	LDAP-DESC                   "named reference - a labeledURI"
+	ID { 2 16 840 1 113730 3 1 34 }
+}
+
+referral OBJECT-CLASS ::= {
+	SUBCLASS OF 	{top}
+	KIND			structural
+	MUST CONTAIN	{ref}
+	LDAP-NAME		{"referral"}
+	LDAP-DESC		"named subordinate reference object"
+	ID				{ 2 16 840 1 113730 3 2 6 }
+}
+
+END

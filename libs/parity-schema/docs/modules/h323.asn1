@@ -1,0 +1,358 @@
+H323-X500-Schema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) h323-x500-schema(1000)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    id-at, id-mr, id-nf, id-oc, id-avc, id-lsx
+        FROM Wildboar
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) wildboar(1)}
+        WITH SUCCESSORS
+
+    ATTRIBUTE, OBJECT-CLASS, NAME-FORM, MATCHING-RULE, SYNTAX-NAME,
+    CONTEXT, FRIENDS, objectIdentifierMatch, distinguishedNameMatch,
+    DistinguishedName, top
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+    UnboundedDirectoryString, DirectoryString, directoryString,
+    caseIgnoreMatch, caseIgnoreOrderingMatch, caseIgnoreSubstringsMatch,
+    caseExactMatch, caseExactOrderingMatch, caseExactSubstringsMatch,
+    integer, integerMatch, integerOrderingMatch,
+    boolean, booleanMatch, dn, oid, bitString, bitStringMatch,
+    generalizedTime, generalizedTimeMatch, generalizedTimeOrderingMatch,
+    numericString, numericStringOrderingMatch, numericStringSubstringsMatch,
+    octetString, octetStringMatch, octetStringOrderingMatch, octetStringSubstringsMatch
+        FROM SelectedAttributeTypes
+        {joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+        WITH SUCCESSORS
+    ;
+
+-- Object Identifiers
+
+h350-cr OBJECT IDENTIFIER ::= { 0 0 8 350 1 1 }
+co OBJECT IDENTIFIER ::= {h350-cr co(2)}
+co-at OBJECT IDENTIFIER ::= {co at(1)}
+co-oc OBJECT IDENTIFIER ::= {co oc(2)}
+cu OBJECT IDENTIFIER ::= {h350-cr cu(1)}
+cu-at OBJECT IDENTIFIER ::= {cu at(1)}
+cu-oc OBJECT IDENTIFIER ::= {cu oc(2)}
+h323-Id OBJECT IDENTIFIER ::= {h350-cr h323-Id(3)}
+h323-id-at OBJECT IDENTIFIER ::= {h323-Id at(1)}
+h323-id-oc OBJECT IDENTIFIER ::= {h323-Id oc(2)}
+h235-Id OBJECT IDENTIFIER ::= {h350-cr h235-Id(4)}
+h235-id-at OBJECT IDENTIFIER ::= {h235-Id at(1)}
+h235-id-oc OBJECT IDENTIFIER ::= {h235-Id oc(2)}
+h320-Id OBJECT IDENTIFIER ::= {h350-cr h320-Id(5)}
+h320-id-at OBJECT IDENTIFIER ::= {h320-Id at(1)}
+h320-id-oc OBJECT IDENTIFIER ::= {h320-Id oc(2)}
+sip-Id OBJECT IDENTIFIER ::= {h350-cr sip-Id(6)}
+sip-id-at OBJECT IDENTIFIER ::= {sip-Id at(1)}
+sip-id-oc OBJECT IDENTIFIER ::= {sip-Id oc(2)}
+gi OBJECT IDENTIFIER ::= {h350-cr gi(7)}
+gi-at OBJECT IDENTIFIER ::= {gi at(1)}
+gi-oc OBJECT IDENTIFIER ::= {gi oc(2)}
+call-Id OBJECT IDENTIFIER ::= {h350-cr call-Id(8)}
+call-id-at OBJECT IDENTIFIER ::= {call-Id at(1)}
+call-id-oc OBJECT IDENTIFIER ::= {call-Id oc(2)}
+
+-- LDAP Syntaxes
+
+
+-- Matching Rules
+
+
+-- Attribute Types
+
+commUniqueId ATTRIBUTE ::= {
+  WITH SYNTAX               IA5String
+  EQUALITY MATCHING RULE    caseIgnoreIA5Match
+  SUBSTRINGS MATCHING RULE  caseIgnoreIA5SubstringsMatch
+  ID                        {co-at  1}
+}
+
+commOwner ATTRIBUTE ::= {
+  WITH SYNTAX               UnboundedDirectoryString
+  EQUALITY MATCHING RULE    caseExactMatch
+  ID                        {co-at  2}
+}
+
+commPrivate ATTRIBUTE ::= {
+    WITH SYNTAX             IA5String
+    ID                      {co-at  3}
+}
+
+commURI ATTRIBUTE ::= {
+  WITH SYNTAX               DirectoryString {256}
+  EQUALITY MATCHING RULE    caseExactMatch
+  ID                        {cu-at  1}
+}
+
+h323IdentityGKDomain ATTRIBUTE ::= {
+  WITH SYNTAX             IA5String
+  EQUALITY MATCHING RULE  caseIgnoreIA5Match
+  ID                      {h323-id-at  1}
+}
+
+h323Identityh323-ID ATTRIBUTE ::= {
+  WITH SYNTAX               IA5String
+  EQUALITY MATCHING RULE    caseIgnoreIA5Match
+  SUBSTRINGS MATCHING RULE  caseIgnoreIA5SubstringsMatch
+  ID                        {h323-id-at  2}
+}
+
+h323IdentitydialedDigits ATTRIBUTE ::= {
+  WITH SYNTAX               IA5String
+  EQUALITY MATCHING RULE    caseIgnoreIA5Match
+  SUBSTRINGS MATCHING RULE  caseIgnoreIA5SubstringsMatch
+  ID                        {h323-id-at  3}
+}
+
+h323Identityemail-ID ATTRIBUTE ::= {
+  WITH SYNTAX               IA5String
+  EQUALITY MATCHING RULE    caseIgnoreIA5Match
+  SUBSTRINGS MATCHING RULE  caseIgnoreIA5SubstringsMatch
+  ID                        {h323-id-at  4}
+}
+
+h323IdentityURL-ID ATTRIBUTE ::= {
+  WITH SYNTAX               UnboundedDirectoryString
+  EQUALITY MATCHING RULE    caseExactMatch
+  SUBSTRINGS MATCHING RULE  caseExactSubstringsMatch
+  ID                        {h323-id-at  5}
+}
+
+h323IdentitytransportID ATTRIBUTE ::= {
+  WITH SYNTAX               IA5String
+  EQUALITY MATCHING RULE    caseIgnoreIA5Match
+  SUBSTRINGS MATCHING RULE  caseIgnoreIA5SubstringsMatch
+  ID                        {h323-id-at  6}
+}
+
+h323IdentitypartyNumber ATTRIBUTE ::= {
+  WITH SYNTAX               IA5String
+  EQUALITY MATCHING RULE    caseIgnoreIA5Match
+  SUBSTRINGS MATCHING RULE  caseIgnoreIA5SubstringsMatch
+  ID                        {h323-id-at  7}
+}
+
+h323IdentitymobileUIM ATTRIBUTE ::= {
+  WITH SYNTAX               IA5String
+  EQUALITY MATCHING RULE    caseIgnoreIA5Match
+  SUBSTRINGS MATCHING RULE  caseIgnoreIA5SubstringsMatch
+  ID                        {h323-id-at  8}
+}
+
+h323IdentityEndpointType ATTRIBUTE ::= {
+  WITH SYNTAX               UnboundedDirectoryString
+  EQUALITY MATCHING RULE    caseIgnoreMatch
+  SUBSTRINGS MATCHING RULE  caseIgnoreSubstringsMatch
+  ID                        {h323-id-at  9}
+}
+
+h323IdentityServiceLevel ATTRIBUTE ::= {
+  WITH SYNTAX               UnboundedDirectoryString
+  EQUALITY MATCHING RULE    caseIgnoreMatch
+  SUBSTRINGS MATCHING RULE  caseIgnoreSubstringsMatch
+  ID                        {h323-id-at  10}
+}
+
+h235IdentityEndpointID ATTRIBUTE ::= {
+  WITH SYNTAX               UnboundedDirectoryString
+  EQUALITY MATCHING RULE    caseIgnoreMatch
+  SUBSTRINGS MATCHING RULE  caseIgnoreSubstringsMatch
+  ID                        {h235-id-at  1}
+}
+
+h235IdentityPassword ATTRIBUTE ::= {
+  WITH SYNTAX             OCTET STRING
+  EQUALITY MATCHING RULE  octetStringMatch
+  ID                      {h235-id-at  2}
+}
+
+h320IdentityCC ATTRIBUTE ::= {
+  WITH SYNTAX             IA5String(SIZE (1..3))
+  EQUALITY MATCHING RULE  caseIgnoreIA5Match
+  ID                      {h320-id-at  1}
+}
+
+h320IdentityNDC ATTRIBUTE ::= {
+  WITH SYNTAX             IA5String(SIZE (1..15))
+  EQUALITY MATCHING RULE  caseIgnoreIA5Match
+  ID                      {h320-id-at  4}
+}
+
+h320IdentitySN ATTRIBUTE ::= {
+  WITH SYNTAX             IA5String(SIZE (1..15))
+  EQUALITY MATCHING RULE  caseIgnoreIA5Match
+  ID                      {h320-id-at  5}
+}
+
+h320IdentityServiceLevel ATTRIBUTE ::= {
+  WITH SYNTAX               UnboundedDirectoryString
+  EQUALITY MATCHING RULE    caseIgnoreMatch
+  SUBSTRINGS MATCHING RULE  caseIgnoreSubstringsMatch
+  ID                        {h320-id-at  2}
+}
+
+h320IdentityExtension ATTRIBUTE ::= {
+  WITH SYNTAX               UnboundedDirectoryString
+  EQUALITY MATCHING RULE    caseIgnoreMatch
+  SUBSTRINGS MATCHING RULE  caseIgnoreSubstringsMatch
+  ID                        {h320-id-at  3}
+}
+
+sIPIdentitySIPURI ATTRIBUTE ::= {
+  WITH SYNTAX               UnboundedDirectoryString
+  EQUALITY MATCHING RULE    caseExactMatch
+  SUBSTRINGS MATCHING RULE  caseExactSubstringsMatch
+  ID                        {sip-id-at  1}
+}
+
+sIPIdentityRegistrarAddress ATTRIBUTE ::= {
+  WITH SYNTAX             IA5String
+  EQUALITY MATCHING RULE  caseIgnoreIA5Match
+  ID                      {sip-id-at  2}
+}
+
+sIPIdentityProxyAddress ATTRIBUTE ::= {
+  WITH SYNTAX             IA5String
+  EQUALITY MATCHING RULE  caseIgnoreIA5Match
+  ID                      {sip-id-at  3}
+}
+
+sIPIdentityAddress ATTRIBUTE ::= {
+  WITH SYNTAX             IA5String
+  EQUALITY MATCHING RULE  caseIgnoreIA5Match
+  ID                      {sip-id-at  4}
+}
+
+sIPIdentityPassword ATTRIBUTE ::= {
+  WITH SYNTAX             OCTET STRING
+  EQUALITY MATCHING RULE  octetStringMatch
+  ID                      {sip-id-at  5}
+}
+
+sIPIdentityUserName ATTRIBUTE ::= {
+  WITH SYNTAX               UnboundedDirectoryString
+  EQUALITY MATCHING RULE    caseIgnoreMatch
+  SUBSTRINGS MATCHING RULE  caseIgnoreSubstringsMatch
+  ID                        {sip-id-at  6}
+}
+
+sIPIdentityServiceLevel ATTRIBUTE ::= {
+  WITH SYNTAX               IA5String
+  EQUALITY MATCHING RULE    caseIgnoreIA5Match
+  SUBSTRINGS MATCHING RULE  caseIgnoreIA5SubstringsMatch
+  ID                        {sip-id-at  7}
+}
+
+genericIdentityProtocolIdentifier ATTRIBUTE ::= {
+  WITH SYNTAX               UnboundedDirectoryString
+  EQUALITY MATCHING RULE    caseIgnoreMatch
+  SUBSTRINGS MATCHING RULE  caseIgnoreSubstringsMatch
+  ID                        {gi-at  1}
+}
+
+genericIdentityMessage ATTRIBUTE ::= {
+  WITH SYNTAX               UnboundedDirectoryString
+  EQUALITY MATCHING RULE    caseIgnoreMatch
+  SUBSTRINGS MATCHING RULE  caseIgnoreSubstringsMatch
+  ID                        {gi-at  2}
+}
+
+callPreferenceURI ATTRIBUTE ::= {
+  WITH SYNTAX               UnboundedDirectoryString
+  EQUALITY MATCHING RULE    caseExactMatch
+  SUBSTRINGS MATCHING RULE  caseExactSubstringsMatch
+  ID                        {call-id-at  1}
+}
+
+userSMIMECertificate ATTRIBUTE ::= {
+    WITH SYNTAX						OCTET STRING
+    EQUALITY MATCHING RULE			octetStringMatch
+    ORDERING MATCHING RULE			octetStringOrderingMatch
+    SUBSTRINGS MATCHING RULE		octetStringSubstringsMatch
+    LDAP-SYNTAX						octetString.&id
+    LDAP-NAME						{"userSMIMECertificate"}
+    ID								{ 2 16 840 1 113730 3 1 40 }
+}
+
+-- Object Classes
+
+commObject OBJECT-CLASS ::= {
+  SUBCLASS OF   {top}
+  MUST CONTAIN  {commUniqueId}
+  MAY CONTAIN   {commOwner | commPrivate}
+  ID            {co-oc  1}
+}
+
+commURIObject OBJECT-CLASS ::= {
+  SUBCLASS OF  {top}
+  KIND         auxiliary
+  MAY CONTAIN  {commURI}
+  ID           {cu-oc  1}
+}
+
+h323Identity OBJECT-CLASS ::= {
+  SUBCLASS OF  {top}
+  MAY CONTAIN
+    {h323IdentityGKDomain | h323Identityh323-ID | h323IdentitydialedDigits |
+      h323Identityemail-ID | h323IdentityURL-ID | h323IdentitytransportID |
+      h323IdentitypartyNumber | h323IdentitymobileUIM |
+      h323IdentityEndpointType | h323IdentityServiceLevel}
+  ID           {h323-id-oc  1}
+}
+
+h235Identity OBJECT-CLASS ::= {
+  SUBCLASS OF  {top}
+  MAY CONTAIN
+    {h235IdentityEndpointID | h235IdentityPassword | userCertificate |
+      cACertificate | authorityRevocationList | certificateRevocationList |
+      crossCertificatePair}
+  ID           {h235-id-oc  1}
+}
+
+h320Identity OBJECT-CLASS ::= {
+  SUBCLASS OF  {top}
+  MAY CONTAIN
+    {h320IdentityCC | h320IdentityNDC | h320IdentitySN |
+      h320IdentityServiceLevel | h320IdentityExtension}
+  ID           {h320-id-oc  1}
+}
+
+sIPIdentity OBJECT-CLASS ::= {
+  SUBCLASS OF  {top}
+  MAY CONTAIN
+    {sIPIdentitySIPURI | sIPIdentityRegistrarAddress | sIPIdentityProxyAddress
+      | sIPIdentityAddress | sIPIdentityPassword | sIPIdentityUserName |
+      sIPIdentityServiceLevel | userSMIMECertificate}
+  ID           {sip-id-oc  1}
+}
+
+genericIdentity OBJECT-CLASS ::= {
+  SUBCLASS OF  {top}
+  MAY CONTAIN  {genericIdentityProtocolIdentifier | genericIdentityMessage}
+  ID           {gi-oc  1}
+}
+
+callPreferenceURIObject OBJECT-CLASS ::= {
+  SUBCLASS OF  {top}
+  MAY CONTAIN  {callPreferenceURI}
+  ID           {call-id-oc  1}
+}
+
+-- Name Forms
+
+
+END

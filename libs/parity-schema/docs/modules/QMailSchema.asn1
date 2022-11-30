@@ -1,0 +1,482 @@
+QMailSchema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) qmail-schema(55)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    ATTRIBUTE, OBJECT-CLASS, objectIdentifierMatch,
+    DistinguishedName, distinguishedNameMatch
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	name, UnboundedDirectoryString, distinguishedName, description,
+
+    -- Syntaxes
+    printableString, boolean, integer, dn, directoryString, ia5String,
+    octetString, numericString,
+
+    -- Matching Rules
+    caseExactMatch, caseExactOrderingMatch, caseExactSubstringsMatch,
+    caseIgnoreMatch, caseIgnoreOrderingMatch, caseIgnoreSubstringsMatch,
+    booleanMatch, integerMatch, integerOrderingMatch,
+    octetStringMatch, octetStringOrderingMatch, octetStringSubstringsMatch,
+    caseIgnoreIA5Match, caseIgnoreIA5SubstringsMatch,
+    numericStringMatch
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    ;
+
+id-at OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 7914 1 2 1 }
+id-at2 OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 7914 1 3 1 }
+id-at3 OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 7914 1 4 1 10 }
+
+qmailUID ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (0..MAX)
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"qmailUID"}
+    LDAP-DESC                   "UID of the user on the mailsystem"
+    ID                          { id-at 1 }
+}
+
+qmailGID ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (0..MAX)
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"qmailGID"}
+    LDAP-DESC                   "GID of the user on the mailsystem"
+    ID                          { id-at 2 }
+}
+
+mailMessageStore ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseExactIA5Match
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"mailMessageStore"}
+    LDAP-DESC                   "Path to the maildir/mbox on the mail system"
+    ID                          { id-at 3 }
+}
+
+mailAlternateAddress ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"mailAlternateAddress"}
+    LDAP-DESC                   "Secondary (alias) mailaddresses for the same user"
+    ID                          { id-at 4 }
+}
+
+mailHost ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"mailHost"}
+    LDAP-DESC                   "On which qmail server the messagestore of this user is located."
+    ID                          { id-at 6 }
+}
+
+mailForwardingAddress ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"mailForwardingAddress"}
+    LDAP-DESC                   "Address(es) to forward all incoming messages to."
+    ID                          { id-at 7 }
+}
+
+deliveryProgramPath ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseExactIA5Match
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"deliveryProgramPath"}
+    LDAP-DESC                   "Program to execute for all incoming mails."
+    ID                          { id-at 8 }
+}
+
+qmailDotMode ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String ("both" | "dotonly" | "ldaponly" | "ldapwithprog")
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"qmailDotMode"}
+    LDAP-DESC                   "Interpretation of .qmail files: both, dotonly, ldaponly, ldapwithprog"
+    ID                          { id-at 9 }
+}
+
+deliveryMode ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String ("nolocal" | "noforward" | "noprogram" | "reply")
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"deliveryMode"}
+    LDAP-DESC                   "multi field entries of: nolocal, noforward, noprogram, reply"
+    ID                          { id-at 10 }
+}
+
+mailReplyText ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"mailReplyText"}
+    LDAP-DESC                   "A reply text for every incoming message"
+    ID                          { id-at 11 }
+}
+
+accountStatus ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String ("active" | "noaccess" | "disabled" | "deleted")
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"accountStatus"}
+    LDAP-DESC                   "The status of a user account: active, noaccess, disabled, deleted"
+    ID                          { id-at 12 }
+}
+
+qmailAccountPurge ATTRIBUTE ::= {
+    WITH SYNTAX 				NumericString
+    EQUALITY MATCHING RULE 		numericStringMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				numericString.&id
+	LDAP-NAME 					{"qmailAccountPurge"}
+    LDAP-DESC                   "The earliest date when a mailMessageStore will be purged"
+    ID                          { id-at 13 }
+}
+
+mailQuotaSize ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (0..MAX)
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"mailQuotaSize"}
+    LDAP-DESC                   "The size of space the user can have until further messages get bounced."
+    ID                          { id-at 15 }
+}
+
+mailQuotaCount ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (0..MAX)
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"mailQuotaCount"}
+    LDAP-DESC                   "The number of messages the user can have until further messages get bounced."
+    ID                          { id-at 16 }
+}
+
+mailSizeMax ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (0..MAX)
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"mailSizeMax"}
+    LDAP-DESC                   "The maximum size of a single messages the user accepts."
+    ID                          { id-at 17 }
+}
+
+dnmember ATTRIBUTE ::= {
+    WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"dnmember"}
+    LDAP-DESC                   "Group member specified as distinguished name."
+    ID                          { id-at2 1 }
+}
+
+rfc822member ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"rfc822member"}
+    LDAP-DESC                   "Group member specified as normal rf822 email address."
+    ID                          { id-at2 2 }
+}
+
+filtermember ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"filtermember"}
+    LDAP-DESC                   "Group member specified as ldap search filter."
+    ID                          { id-at2 3 }
+}
+
+senderconfirm ATTRIBUTE ::= {
+    WITH SYNTAX 				BOOLEAN
+    EQUALITY MATCHING RULE 		booleanMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				boolean.&id
+	LDAP-NAME 					{"senderconfirm"}
+    LDAP-DESC                   "Sender to Group has to answer confirmation email."
+    ID                          { id-at2 4 }
+}
+
+membersonly ATTRIBUTE ::= {
+    WITH SYNTAX 				BOOLEAN
+    EQUALITY MATCHING RULE 		booleanMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				boolean.&id
+	LDAP-NAME 					{"membersonly"}
+    LDAP-DESC                   "Sender to Group must be group member itself."
+    ID                          { id-at2 5 }
+}
+
+confirmtext ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"confirmtext"}
+    LDAP-DESC                   "Text that will be sent with sender confirmation email."
+    ID                          { id-at2 6 }
+}
+
+dnmoderator ATTRIBUTE ::= {
+    WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"dnmoderator"}
+    LDAP-DESC                   "Group moderator specified as Distinguished name."
+    ID                          { id-at2 7 }
+}
+
+rfc822moderator ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"rfc822moderator"}
+    LDAP-DESC                   "Group moderator specified as normal rfc822 email address."
+    ID                          { id-at2 8 }
+}
+
+moderatortext ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"moderatortext"}
+    LDAP-DESC                   "Text that will be sent with request for moderation email."
+    ID                          { id-at2 9 }
+}
+
+dnsender ATTRIBUTE ::= {
+    WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"dnsender"}
+    LDAP-DESC                   "Allowed sender specified as distinguished name."
+    ID                          { id-at2 10 }
+}
+
+rfc822sender ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"rfc822sender"}
+    LDAP-DESC                   "Allowed sender specified as normal rf822 email address."
+    ID                          { id-at2 11 }
+}
+
+filtersender ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"filtersender"}
+    LDAP-DESC                   "Allowed sender specified as ldap search filter."
+    ID                          { id-at2 12 }
+}
+
+qladnmanager ATTRIBUTE ::= {
+    WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"qladnmanager"}
+    LDAP-DESC                   "qladnmanager"
+    ID                          { id-at3 1 }
+}
+
+qlaDomainList ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"qlaDomainList"}
+    LDAP-DESC                   "qlaDomainList"
+    ID                          { id-at3 2 }
+}
+
+qlaUidPrefix ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"qlaUidPrefix"}
+    LDAP-DESC                   "qlaUidPrefix"
+    ID                          { id-at3 3 }
+}
+
+qlaQmailUid ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"qlaQmailUid"}
+    LDAP-DESC                   "qlaQmailUid"
+    ID                          { id-at3 4 }
+}
+
+qlaQmailGid ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"qlaQmailGid"}
+    LDAP-DESC                   "qlaQmailGid"
+    ID                          { id-at3 5 }
+}
+
+qlaMailMStorePrefix ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"qlaMailMStorePrefix"}
+    LDAP-DESC                   "qlaMailMStorePrefix"
+    ID                          { id-at3 6 }
+}
+
+qlaMailQuotaSize ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (0..MAX)
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"qlaMailQuotaSize"}
+    LDAP-DESC                   "qlaMailQuotaSize"
+    ID                          { id-at3 7 }
+}
+
+qlaMailQuotaCount ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (0..MAX)
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"qlaMailQuotaCount"}
+    LDAP-DESC                   "qlaMailQuotaCount"
+    ID                          { id-at3 8 }
+}
+
+qlaMailSizeMax ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (0..MAX)
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"qlaMailSizeMax"}
+    LDAP-DESC                   "qlaMailSizeMax"
+    ID                          { id-at3 9 }
+}
+
+qlaMailHostList ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"qlaMailHostList"}
+    LDAP-DESC                   "qlaMailHostList"
+    ID                          { id-at3 10 }
+}
+
+qmailUser OBJECT-CLASS ::= {
+    SUBCLASS OF     {top}
+    KIND            auxiliary
+    MUST CONTAIN    {mail}
+    MAY CONTAIN     {
+        uid
+        | mailMessageStore
+        | homeDirectory
+        | userPassword
+        | mailAlternateAddress
+        | qmailUID
+        | qmailGID
+        | mailHost
+        | mailForwardingAddress
+        | deliveryProgramPath
+        | qmailDotMode
+        | deliveryMode
+        | mailReplyText
+        | accountStatus
+        | qmailAccountPurge
+        | mailQuotaSize
+        | mailQuotaCount
+        | mailSizeMax
+    }
+	LDAP-NAME       {"qmailUser"}
+    LDAP-DESC       "QMail-LDAP User"
+	ID              { 1 3 6 1 4 1 7914 1 2 2 1 }
+}
+
+qmailGroup OBJECT-CLASS ::= {
+    SUBCLASS OF     {top}
+    KIND            auxiliary
+    MUST CONTAIN    {
+        mail
+        | mailAlternateAddress
+        | mailMessageStore
+    }
+    MAY CONTAIN     {
+        dnmember
+        | rfc822member
+        | filtermember
+        | senderconfirm
+        | membersonly
+        | confirmtext
+        | dnmoderator
+        | rfc822moderator
+        | moderatortext
+        | dnsender
+        | rfc822sender
+        | filtersender
+    }
+	LDAP-NAME       {"qmailGroup"}
+    LDAP-DESC       "QMail-LDAP Group"
+	ID              { 1 3 6 1 4 1 7914 1 3 2 1 }
+}
+
+END

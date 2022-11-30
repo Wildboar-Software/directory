@@ -1,0 +1,81 @@
+DS389CommonSchema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) ds389-common-schema(46)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    OBJECT-CLASS, top
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+    ;
+
+glue OBJECT-CLASS ::= {
+    SUBCLASS OF 	{top}
+    KIND            structural
+    LDAP-NAME       {"glue"}
+    LDAP-DESC       "Netscape defined objectclass"
+    ID              { 2 16 840 1 113730 3 2 30 }
+}
+
+-- These are skipped because nsLicensedFor is specific to Netscape, and undescribed.
+-- nsLicenseStartTime and nsLicenseEndTime have directorystring syntax, but they really should be time types.
+
+-- Rejected from this implementation, but decent ideas to copy from:
+
+-- Not marked as NO-USER-MODIFICATION
+-- retryCountResetTime
+-- attributeTypes: ( 2 16 840 1 113730 3 1 94 NAME 'retryCountResetTime' DESC 'Netscape defined password policy attribute type' SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 SINGLE-VALUE USAGE directoryOperation X-ORIGIN 'Netscape Directory Server' )
+-- attributeTypes: ( 2 16 840 1 113730 3 1 95 NAME 'accountUnlockTime' DESC 'Netscape defined password policy attribute type' SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 SINGLE-VALUE USAGE directoryOperation X-ORIGIN 'Netscape Directory Server' )
+
+-- Not marked with USAGE dSAOperation, even though that is clearly their purpose
+-- serverProductName ATTRIBUTE ::= {
+--     WITH SYNTAX                 UnboundedDirectoryString
+--     LDAP-SYNTAX 				directoryString.&id
+-- 	LDAP-NAME 					{"serverProductName"}
+-- 	LDAP-DESC					"Netscape defined attribute type"
+--     ID                          { 2 16 840 1 113730 3 1 71 }
+-- }
+
+-- administratorContactInfo ATTRIBUTE ::= {
+--     WITH SYNTAX                 UnboundedDirectoryString
+--     LDAP-SYNTAX 				directoryString.&id
+-- 	LDAP-NAME 					{"administratorContactInfo"}
+-- 	LDAP-DESC					"Netscape defined attribute type"
+--     ID                          { 2 16 840 1 113730 3 1 74 }
+-- }
+
+-- serverHostName ATTRIBUTE ::= {
+--     WITH SYNTAX                 UnboundedDirectoryString
+--     LDAP-SYNTAX 				directoryString.&id
+-- 	LDAP-NAME 					{"serverHostName"}
+-- 	LDAP-DESC					"Netscape defined attribute type"
+--     ID                          { 2 16 840 1 113730 3 1 76 }
+-- }
+
+-- Not marked with USAGE directoryOperation, even though that is clearly their purpose
+-- attributeTypes: ( 2 16 840 1 113730 3 1 2346 NAME ( 'passwordMaxSequence' 'pwdMaxSequence' ) DESC '389 Directory Server password policy attribute type' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 SINGLE-VALUE X-ORIGIN '389 Directory Server' )
+-- attributeTypes: ( 2 16 840 1 113730 3 1 2347 NAME ( 'passwordMaxSeqSets' 'pwdMaxSeqSets' ) DESC '389 Directory Server password policy attribute type' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 SINGLE-VALUE X-ORIGIN '389 Directory Server' )
+-- attributeTypes: ( 2 16 840 1 113730 3 1 2348 NAME ( 'passwordMaxClassChars' 'pwdMaxClassChars' ) DESC '389 Directory Server password policy attribute type' SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 SINGLE-VALUE X-ORIGIN '389 Directory Server' )
+
+-- Obsolete. Oracle says they are used for legacy replication.
+-- attributeTypes: ( 2.16.840.1.113730.3.1.613 NAME 'copiedFrom' DESC 'Netscape defined attribute type' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15  SINGLE-VALUE USAGE directoryOperation X-ORIGIN 'Netscape Directory Server' )
+-- attributeTypes: ( 2.16.840.1.113730.3.1.614 NAME 'copyingFrom' DESC 'Netscape defined attribute type' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15  SINGLE-VALUE USAGE directoryOperation X-ORIGIN 'Netscape Directory Server' )
+
+-- Several problems. DirectoryString syntax instead of a time type, incorrect USAGE, no NO-USER-MODIFICATION, etc.
+-- attributeTypes: ( 2.16.840.1.113730.3.1.37 NAME 'nsLicenseStartTime' DESC 'Netscape defined attribute type' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 X-ORIGIN 'Netscape Administration Services' )
+-- attributeTypes: ( 2.16.840.1.113730.3.1.38 NAME 'nsLicenseEndTime' DESC 'Netscape defined attribute type' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 X-ORIGIN 'Netscape Administration Services' )
+
+-- Specific to Netscape, no USAGE, and no NO-USER-MODIFICATION
+-- attributeTypes: ( 2.16.840.1.113730.3.1.36 NAME 'nsLicensedFor' DESC 'Netscape defined attribute type' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 X-ORIGIN 'Netscape Administration Services' )
+
+END

@@ -1,7 +1,4 @@
-# idm
+# Internet Directly-Mapped (IDM) Protocol in TypeScript
 
-This library was generated with [Nx](https://nx.dev).
-
-## Running unit tests
-
-Run `nx test idm` to execute the unit tests via [Jest](https://jestjs.io).
+TypeScript implementation of a the Internet Directly-Mapped (IDM) Protocol as
+described in [ITU Recommendation X.519 (2019)](https://www.itu.int/rec/T-REC-X.519/en).

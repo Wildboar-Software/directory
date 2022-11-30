@@ -1,0 +1,39 @@
+NSCommonSchema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) ns-common-schema(52)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    ATTRIBUTE, OBJECT-CLASS
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	UnboundedDirectoryString, directoryString, caseIgnoreMatch,
+    caseIgnoreSubstringsMatch
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    ;
+
+legalName ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"legalName"}
+    LDAP-DESC                   "An individuals legalName."
+    ID                          { 2 16 840 1 113730 3 1 2343 }
+}
+
+END

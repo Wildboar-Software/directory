@@ -1,0 +1,84 @@
+-- See IETF: draft-lachman-laser-ldap-mail-routing-02.txt
+SendmailSchema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) sendmail-schema(59)
+}
+DEFINITIONS
+EXPLICIT TAGS
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    ATTRIBUTE, OBJECT-CLASS, objectIdentifierMatch,
+    DistinguishedName, distinguishedNameMatch
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	name, UnboundedDirectoryString, distinguishedName, description,
+
+    -- Syntaxes
+    printableString, boolean, integer, dn, directoryString, ia5String,
+    octetString,
+
+    -- Matching Rules
+    caseExactMatch, caseExactOrderingMatch, caseExactSubstringsMatch,
+    caseIgnoreMatch, caseIgnoreOrderingMatch, caseIgnoreSubstringsMatch,
+    booleanMatch, integerMatch, integerOrderingMatch,
+    octetStringMatch, octetStringOrderingMatch, octetStringSubstringsMatch,
+    caseIgnoreIA5Match, caseIgnoreIA5SubstringsMatch
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    ;
+
+mailLocalAddress ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+    EQUALITY MATCHING RULE      caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+    LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "mailLocalAddress" }
+	LDAP-DESC                   "RFC822 email address of this recipient"
+	ID                          { 2 16 840 1 113730 3 1 13 }
+}
+
+mailHost ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+    EQUALITY MATCHING RULE      caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "mailHost" }
+	LDAP-DESC                   "FQDN of the SMTP/MTA of this recipient"
+	ID                          { 2 16 840 1 113730 3 1 18 }
+}
+
+mailRoutingAddress ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+    EQUALITY MATCHING RULE      caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "mailRoutingAddress" }
+	LDAP-DESC                   "RFC822 routing address of this recipient"
+	ID                          { 2 16 840 1 113730 3 1 47 }
+}
+
+inetLocalMailRecipient OBJECT-CLASS ::= {
+	SUBCLASS OF         { top }
+	KIND                auxiliary
+    MAY CONTAIN         {
+        mailLocalAddress
+        | mailHost
+        | mailRoutingAddress
+    }
+	LDAP-NAME           { "inetLocalMailRecipient" }
+	LDAP-DESC           "Internet local mail recipient"
+	ID                  { 2 16 840 1 113730 3 2 147 }
+}
+
+END

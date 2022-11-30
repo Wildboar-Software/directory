@@ -1,0 +1,151 @@
+-- See: https://www.rfc-editor.org/rfc/rfc6109.html
+RFC6109CertifiedElectronicMail {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) rfc-6109-mail(14)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    id-nf
+        FROM Wildboar
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) wildboar(1)}
+        WITH SUCCESSORS
+
+    ATTRIBUTE, OBJECT-CLASS, NAME-FORM, top
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+    caseIgnoreMatch, caseIgnoreOrderingMatch, caseIgnoreSubstringsMatch
+    caseIgnoreIA5Match, caseIgnoreIA5SubstringsMatch,
+    UnboundedDirectoryString, ia5String, directoryString, name, description
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    Certificate, x509Certificate, certificateExactMatch
+        FROM AuthenticationFramework
+        {joint-iso-itu-t ds(5) module(1) authenticationFramework(7) 9}
+        WITH SUCCESSORS
+
+    ;
+
+-- Attributes
+
+providerCertificateHash ATTRIBUTE ::= {
+    WITH SYNTAX                 IA5String
+    EQUALITY MATCHING RULE      caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"providerCertificateHash"}
+	LDAP-DESC                   "Hash SHA1 of X.509 certificate in hexadecimal format"
+	ID                          { 1 3 6 1 4 1 16572 2 2 1 }
+}
+
+providerCertificate ATTRIBUTE ::= {
+    WITH SYNTAX                 Certificate
+    EQUALITY MATCHING RULE      certificateExactMatch
+	LDAP-SYNTAX 				x509Certificate.&id
+	LDAP-NAME 					{"providerCertificate"}
+	LDAP-DESC                   "X.509 certificate in ASN.1 DER binary format"
+	ID                          { 1 3 6 1 4 1 16572 2 2 2 }
+}
+
+providerName ATTRIBUTE ::= {
+    SUBTYPE OF                  name
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-NAME 					{"providerName"}
+	LDAP-DESC                   "PEC provider name"
+	ID                          { 1 3 6 1 4 1 16572 2 2 3 }
+}
+
+mailReceipt ATTRIBUTE ::= {
+    WITH SYNTAX                 IA5String
+    EQUALITY MATCHING RULE      caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"mailReceipt"}
+	LDAP-DESC                   "E-mail address of the service mailbox"
+	ID                          { 1 3 6 1 4 1 16572 2 2 4 }
+}
+
+managedDomains ATTRIBUTE ::= {
+    WITH SYNTAX                 IA5String
+    EQUALITY MATCHING RULE      caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"managedDomains"}
+	LDAP-DESC                   "Domains handled by the PEC provider"
+	ID                          { 1 3 6 1 4 1 16572 2 2 5 }
+}
+
+ldifLocationURL ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME 					{"LDIFLocationURL"}
+	LDAP-DESC                   "URL of the LDIF file that defines the entry"
+	ID                          { 1 3 6 1 4 1 16572 2 2 6 }
+}
+
+providerUnit ATTRIBUTE ::= {
+    SUBTYPE OF                  name
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-NAME 					{"providerUnit"}
+	LDAP-DESC                   "Name of the secondary operative environment"
+	ID                          { 1 3 6 1 4 1 16572 2 2 7 }
+}
+
+-- Object Classes
+
+ldifLocationURLObject OBJECT-CLASS ::= {
+    SUBCLASS OF     {top}
+    KIND            auxiliary
+    MAY CONTAIN     {ldifLocationURL}
+    LDAP-NAME       {"LDIFLocationURLObject"}
+    ID              { 1 3 6 1 4 1 16572 2 1 1 }
+}
+
+provider OBJECT-CLASS ::= {
+    SUBCLASS OF     {top}
+    KIND            structural
+    MUST CONTAIN    {
+        providerCertificateHash
+        | providerCertificate
+        | providerName
+        | mailReceipt
+        | managedDomains
+    }
+    MAY CONTAIN     {
+        description
+        | ldifLocationURL
+        | providerUnit
+    }
+    LDAP-NAME       {"provider"}
+    ID              { 1 3 6 1 4 1 16572 2 1 2 }
+}
+
+-- Name Forms
+
+providerNameForm NAME-FORM ::= {
+	NAMES				provider
+	WITH ATTRIBUTES		{providerName}
+	LDAP-NAME			{"providerNameForm"}
+	ID					{ id-nf 7 }
+}
+
+END

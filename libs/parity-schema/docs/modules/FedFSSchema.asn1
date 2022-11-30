@@ -1,0 +1,381 @@
+-- See: https://www.rfc-editor.org/rfc/rfc7532.html
+FedFSSchema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) fedfs(16)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    id-nf
+        FROM Wildboar
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) wildboar(1)}
+        WITH SUCCESSORS
+
+    ATTRIBUTE, OBJECT-CLASS, NAME-FORM, top, DistinguishedName,
+    distinguishedNameMatch
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+    integerMatch, integerOrderingMatch, booleanMatch, caseIgnoreOrderingMatch,
+    integer, dn, boolean, UUID, name
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    labeledURI
+        FROM OpenLDAPCoreSchema
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) openldap-core(6)}
+        WITH SUCCESSORS
+
+    UUID, uuidMatch, uuidOrderingMatch, uuid
+        FROM UUID
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) uuid(29)}
+
+    ;
+
+daniel-ellard OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 31103 }
+
+-- Attribute Types
+
+fedfsUuid ATTRIBUTE ::= {
+    WITH SYNTAX                 UUID
+    EQUALITY MATCHING RULE      uuidMatch
+    ORDERING MATCHING RULE      uuidOrderingMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 uuid.&id
+	LDAP-NAME 					{"fedfsUuid"}
+    LDAP-DESC                   "A UUID used by NSDB"
+    ID                          { daniel-ellard 1 1 }
+}
+
+fedfsFsnUuid ATTRIBUTE ::= {
+    SUBTYPE OF                  fedfsUuid
+    SINGLE VALUE                TRUE
+	LDAP-NAME 					{"fedfsFsnUuid"}
+    LDAP-DESC                   "The FSN UUID component of an FSN"
+    ID                          { daniel-ellard 1 4 }
+}
+
+fedfsFsnTTL ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (0..MAX)
+    EQUALITY MATCHING RULE 		integerMatch
+	ORDERING MATCHING RULE 	    integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"fedfsFsnTTL"}
+    LDAP-DESC                   "Time to live of an FSN tree"
+    ID                          { daniel-ellard 1 11 }
+}
+
+fedfsNceDN ATTRIBUTE ::= {
+    WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"fedfsNceDN"}
+    LDAP-DESC                   "NCE Distinguished Name"
+    ID                          { daniel-ellard 1 14 }
+}
+
+fedfsFslUuid ATTRIBUTE ::= {
+    SUBTYPE OF                  fedfsUuid
+    SINGLE VALUE                TRUE
+	LDAP-NAME 					{"fedfsFslUuid"}
+    LDAP-DESC                   "UUID of an FSL"
+    ID                          { daniel-ellard 1 8 }
+}
+
+fedfsAnnotation ATTRIBUTE ::= {
+    SUBTYPE OF                  name
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+	LDAP-NAME 					{"fedfsAnnotation"}
+	LDAP-DESC                   "Annotation of an object"
+	ID                          { daniel-ellard 1 12 }
+}
+
+fedfsDescr ATTRIBUTE ::= {
+    SUBTYPE OF                  name
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+	LDAP-NAME 					{"fedfsDescr"}
+	LDAP-DESC                   "Description of an object"
+	ID                          { daniel-ellard 1 13 }
+}
+
+fedfsNfsURI ATTRIBUTE ::= {
+    SUBTYPE OF                  labeledURI
+    SINGLE VALUE                TRUE
+	LDAP-NAME 					{"fedfsNfsURI"}
+	LDAP-DESC                   "Location of fileset"
+	ID                          { daniel-ellard 1 120 }
+}
+
+fedfsNfsCurrency ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (-2147483648..2147483647)
+    EQUALITY MATCHING RULE 		integerMatch
+	ORDERING MATCHING RULE 	    integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"fedfsNfsCurrency"}
+    LDAP-DESC                   "up-to-date measure of the data"
+    ID                          { daniel-ellard 1 103 }
+}
+
+fedfsNfsGenFlagWritable ATTRIBUTE ::= {
+    WITH SYNTAX 				BOOLEAN
+    EQUALITY MATCHING RULE 		booleanMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				boolean.&id
+	LDAP-NAME 					{"fedfsNfsGenFlagWritable"}
+    LDAP-DESC                   "Indicates if the file system is writable"
+    ID                          { daniel-ellard 1 104 }
+}
+
+fedfsNfsGenFlagGoing ATTRIBUTE ::= {
+    WITH SYNTAX 				BOOLEAN
+    EQUALITY MATCHING RULE 		booleanMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				boolean.&id
+	LDAP-NAME 					{"fedfsNfsGenFlagGoing"}
+    LDAP-DESC                   "Indicates if the file system is going"
+    ID                          { daniel-ellard 1 105 }
+}
+
+fedfsNfsGenFlagSplit ATTRIBUTE ::= {
+    WITH SYNTAX 				BOOLEAN
+    EQUALITY MATCHING RULE 		booleanMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				boolean.&id
+	LDAP-NAME 					{"fedfsNfsGenFlagSplit"}
+    LDAP-DESC                   "Indicates if there are multiple file systems"
+    ID                          { daniel-ellard 1 106 }
+}
+
+fedfsNfsTransFlagRdma ATTRIBUTE ::= {
+    WITH SYNTAX 				BOOLEAN
+    EQUALITY MATCHING RULE 		booleanMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				boolean.&id
+	LDAP-NAME 					{"fedfsNfsTransFlagRdma"}
+    LDAP-DESC                   "Indicates if the transport supports RDMA"
+    ID                          { daniel-ellard 1 107 }
+}
+
+fedfsNfsClassSimul ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (0..255)
+    EQUALITY MATCHING RULE 		integerMatch
+	ORDERING MATCHING RULE 	    integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"fedfsNfsClassSimul"}
+    LDAP-DESC                   "The simultaneous-use class of the file system"
+    ID                          { daniel-ellard 1 108 }
+}
+
+fedfsNfsClassHandle ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (0..255)
+    EQUALITY MATCHING RULE 		integerMatch
+	ORDERING MATCHING RULE 	    integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"fedfsNfsClassHandle"}
+    LDAP-DESC                   "The handle class of the file system"
+    ID                          { daniel-ellard 1 109 }
+}
+
+fedfsNfsClassFileid ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (0..255)
+    EQUALITY MATCHING RULE 		integerMatch
+	ORDERING MATCHING RULE 	    integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"fedfsNfsClassFileid"}
+    LDAP-DESC                   "The fileid class of the file system"
+    ID                          { daniel-ellard 1 110 }
+}
+
+fedfsNfsClassWritever ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (0..255)
+    EQUALITY MATCHING RULE 		integerMatch
+	ORDERING MATCHING RULE 	    integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"fedfsNfsClassWritever"}
+    LDAP-DESC                   "The write-verifier class of the file system"
+    ID                          { daniel-ellard 1 111 }
+}
+
+fedfsNfsClassChange ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (0..255)
+    EQUALITY MATCHING RULE 		integerMatch
+	ORDERING MATCHING RULE 	    integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"fedfsNfsClassChange"}
+    LDAP-DESC                   "The change class of the file system"
+    ID                          { daniel-ellard 1 112 }
+}
+
+fedfsNfsClassReaddir ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (0..255)
+    EQUALITY MATCHING RULE 		integerMatch
+	ORDERING MATCHING RULE   	integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"fedfsNfsClassReaddir"}
+    LDAP-DESC                   "The readdir class of the file system"
+    ID                          { daniel-ellard 1 113 }
+}
+
+fedfsNfsReadRank ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (0..255)
+    EQUALITY MATCHING RULE 		integerMatch
+	ORDERING MATCHING RULE   	integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"fedfsNfsReadRank"}
+    LDAP-DESC                   "The read rank of the file system"
+    ID                          { daniel-ellard 1 114 }
+}
+
+fedfsNfsReadOrder ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (0..255)
+    EQUALITY MATCHING RULE 		integerMatch
+	ORDERING MATCHING RULE   	integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"fedfsNfsReadOrder"}
+    LDAP-DESC                   "The read order of the file system"
+    ID                          { daniel-ellard 1 115 }
+}
+
+fedfsNfsWriteRank ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (0..255)
+    EQUALITY MATCHING RULE 		integerMatch
+	ORDERING MATCHING RULE   	integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"fedfsNfsWriteRank"}
+    LDAP-DESC                   "The write rank of the file system"
+    ID                          { daniel-ellard 1 116 }
+}
+
+fedfsNfsWriteOrder ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (0..255)
+    EQUALITY MATCHING RULE 		integerMatch
+	ORDERING MATCHING RULE 	    integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"fedfsNfsWriteOrder"}
+    LDAP-DESC                   "The write order of the file system"
+    ID                          { daniel-ellard 1 117 }
+}
+
+fedfsNfsVarSub ATTRIBUTE ::= {
+    WITH SYNTAX 				BOOLEAN
+    EQUALITY MATCHING RULE 		booleanMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				boolean.&id
+	LDAP-NAME 					{"fedfsNfsVarSub"}
+    LDAP-DESC                   "Indicates if variable substitution is present"
+    ID                          { daniel-ellard 1 118 }
+}
+
+fedfsNfsValidFor ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (-2147483648..2147483647)
+    EQUALITY MATCHING RULE 		integerMatch
+	ORDERING MATCHING RULE 	    integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"fedfsNfsValidFor"}
+    LDAP-DESC                   "Valid for time"
+    ID                          { daniel-ellard 1 19 }
+}
+
+-- Object Classes
+
+fedfsNsdbContainerInfo OBJECT-CLASS ::= {
+    SUBCLASS OF     {top}
+    KIND            auxiliary
+    MUST CONTAIN    {fedfsNceDN}
+    MAY CONTAIN     {fedfsAnnotation | fedfsDescr}
+    LDAP-NAME       {"fedfsNsdbContainerInfo"}
+    LDAP-DESC       "Describes NCE location"
+    ID              { daniel-ellard 1 1001 }
+}
+
+fedfsFsn OBJECT-CLASS ::= {
+    SUBCLASS OF     {top}
+    KIND            structural
+    MUST CONTAIN    {fedfsFsnUuid | fedfsFsnTTL}
+    MAY CONTAIN     {fedfsAnnotation | fedfsDescr}
+    LDAP-NAME       {"fedfsFsn"}
+    LDAP-DESC       "Represents a fileset"
+    ID              { daniel-ellard 1 1002 }
+}
+
+fedfsFsl OBJECT-CLASS ::= {
+    SUBCLASS OF     {top}
+    KIND            abstract
+    MUST CONTAIN    {fedfsFslUuid | fedfsFsnUuid}
+    MAY CONTAIN     {fedfsAnnotation | fedfsDescr}
+    LDAP-NAME       {"fedfsFsl"}
+    LDAP-DESC       "A physical location of a fileset"
+    ID              { daniel-ellard 1 1003 }
+}
+
+fedfsNfsFsl OBJECT-CLASS ::= {
+    SUBCLASS OF     {fedfsFsl}
+    KIND            structural
+    MUST CONTAIN    {
+        fedfsNfsURI
+        | fedfsNfsCurrency
+        | fedfsNfsGenFlagWritable
+        | fedfsNfsGenFlagGoing
+        | fedfsNfsGenFlagSplit
+        | fedfsNfsTransFlagRdma
+        | fedfsNfsClassSimul
+        | fedfsNfsClassHandle
+        | fedfsNfsClassFileid
+        | fedfsNfsClassWritever
+        | fedfsNfsClassChange
+        | fedfsNfsClassReaddir
+        | fedfsNfsReadRank
+        | fedfsNfsReadOrder
+        | fedfsNfsWriteRank
+        | fedfsNfsWriteOrder
+        | fedfsNfsVarSub
+        | fedfsNfsValidFor
+    }
+    LDAP-NAME       {"fedfsNfsFsl"}
+    LDAP-DESC       "An NFS location of a fileset"
+    ID              { daniel-ellard 1 1004 }
+}
+
+-- Name Forms
+
+fedfsFsnNameForm NAME-FORM ::= {
+	NAMES				fedfsFsn
+	WITH ATTRIBUTES		{fedfsFsnUuid}
+	LDAP-NAME			{"fedfsFsnNameForm"}
+	ID					{ id-nf 8 }
+}
+
+fedfsNfsFslNameForm NAME-FORM ::= {
+	NAMES				fedfsNfsFsl
+	WITH ATTRIBUTES		{fedfsFslUuid}
+	LDAP-NAME			{"fedfsNfsFslNameForm"}
+	ID					{ id-nf 9 }
+}
+
+END

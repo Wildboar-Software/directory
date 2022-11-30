@@ -1,0 +1,570 @@
+OtherAttributes {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) other-attributes(1001)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    id-at, id-mr, id-nf, id-oc, id-avc, id-lsx
+        FROM Wildboar
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) wildboar(1)}
+        WITH SUCCESSORS
+
+    ATTRIBUTE, OBJECT-CLASS, NAME-FORM, MATCHING-RULE, SYNTAX-NAME,
+    CONTEXT, FRIENDS, objectIdentifierMatch, distinguishedNameMatch,
+    DistinguishedName, top
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+    UnboundedDirectoryString, DirectoryString, directoryString,
+    caseIgnoreMatch, caseIgnoreOrderingMatch, caseIgnoreSubstringsMatch,
+    caseExactMatch, caseExactOrderingMatch, caseExactSubstringsMatch,
+    integer, integerMatch, integerOrderingMatch,
+    boolean, booleanMatch, dn, oid, bitString, bitStringMatch,
+    generalizedTime, generalizedTimeMatch, generalizedTimeOrderingMatch,
+    numericString, numericStringOrderingMatch, numericStringSubstringsMatch,
+    octetString, octetStringMatch, octetStringOrderingMatch,
+    octetStringSubstringsMatch, url
+        FROM SelectedAttributeTypes
+        {joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+        WITH SUCCESSORS
+
+    Extensions, AlgorithmIdentifier, SupportedAlgorithms
+        FROM AuthenticationFramework
+        {joint-iso-itu-t ds(5) module(1) authenticationFramework(7) 9}
+        WITH SUCCESSORS
+
+    ub-schema
+        FROM UpperBounds {joint-iso-itu-t ds(5) module(1) upperBounds(10) 7}
+
+    Tokenized, URI, URIs, RFID, GPS, Address, DBRecord, Pointer, Pointers,
+    HashPointer, Sidechain, Sidechains, TimeStamp, TimeStamped, SigncryptedKey,
+    ParentBlock
+        FROM OtherAutomaticallyTaggedTypes
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) auto-tagged-types(60001)}
+
+    AccessService, ObjectSel, TargetSelect, AttributeSel, ObjectOperations,
+    AttributeOperations, BinaryTime, BinarySigningTime, SvceAuthInfo,
+    IetfAttrSyntax, SupportedSecurityCategories, ClassList,
+    FirmwarePackageIdentifier, PreferredOrLegacyPackageIdentifier,
+    PreferredPackageIdentifier, PreferredOrLegacyStalePackageIdentifier,
+    TargetHardwareIdentifiers, DecryptKeyIdentifier,
+    ImplementedCryptoAlgorithms, ImplementedCompressAlgorithms,
+    CommunityIdentifier, CommunityIdentifiers, HardwareSerialEntry,
+    HardwareModules, FirmwarePackageInfo, WrappedFirmwareKey, BodyPartID,
+    BodyPartPath, CMCUnsignedData, ExtensionReq, Hash, IssuerSerial,
+    ESSCertIDv2, SignAttrsHash, MultipleSignatures, SSID, SSIDList,
+    Clearance-rfc3281, ub-clearance-sponsor, SECURITY-CATEGORY,
+    SecurityCategory-rfc3281{}
+        FROM OtherImplicitlyTaggedTypes
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) implicit-tagged-types(60002)}
+        WITH SUCCESSORS
+
+    SignerInfos, SignerInfo, ContentInfo
+        FROM CryptographicMessageSyntax-2009
+        { iso(1) member-body(2) us(840) rsadsi(113549)
+        pkcs(1) pkcs-9(9) smime(16) modules(0) id-mod-cms-2004-02(41) }
+
+    ;
+
+LockSession ::= SEQUENCE {
+  entryName  [0]  DistinguishedName,
+  atribute   [1]  OBJECT IDENTIFIER
+}
+
+METHOD ::= CLASS {
+  &InputAttributes   ATTRIBUTE OPTIONAL,
+  &SpecificInput     OPTIONAL,
+  &OutputAttributes  ATTRIBUTE OPTIONAL,
+  &SpecificOutput    OPTIONAL,
+  &description       IA5String OPTIONAL,
+  &id                OBJECT IDENTIFIER UNIQUE
+}
+WITH SYNTAX {
+  [INPUT ATTRIBUTES &InputAttributes]
+  [SPECIFIC-INPUT &SpecificInput]
+  [OUTPUT ATTRIBUTES &OutputAttributes]
+  [SPECIFIC-OUTPUT &SpecificOutput]
+  [BEHAVIOUR &description]
+  ID &id
+}
+
+MethodIdentifier ::= SEQUENCE {
+  methodid         METHOD.&id({SupportedMethods}),
+  inputAttributes
+    SET OF METHOD.&InputAttributes.&id({SupportedMethods}{@methodid})
+      OPTIONAL,
+  --EDITOR: check this, for METHOD.&InputAttributes is a set of information object classes
+  --and cannot be the governor of a component of a SEQUENCE
+  specific-Input
+    [0]  METHOD.&SpecificInput({SupportedMethods}{@methodid}) OPTIONAL
+}
+
+MethodUseDescription ::= SEQUENCE {
+    identifier   OBJECT-CLASS.&id,
+    name         SET OF DirectoryString{ub-schema} OPTIONAL,
+    description  DirectoryString{ub-schema} OPTIONAL,
+    obsolete     BOOLEAN DEFAULT FALSE,
+    information  [0]  SET OF OBJECT IDENTIFIER
+}
+
+SF-CODE ::= OBJECT IDENTIFIER
+
+lb-secretKey INTEGER ::= 32
+ub-secretKey INTEGER ::= 128
+
+KEKDerivationAlgorithm ::= SEQUENCE {
+  kekAlg       AlgorithmIdentifier{{SupportedAlgorithms}},
+  pbkdf2Param  PBKDF2-params }
+
+PBKDF2-params ::= SEQUENCE {
+  salt CHOICE {
+    specified   OCTET STRING,
+    otherSource AlgorithmIdentifier{{SupportedAlgorithms}},
+    ... },
+  iterationCount INTEGER (1..MAX),
+  keyLength      INTEGER (1..MAX) OPTIONAL,
+  prf            AlgorithmIdentifier{{SupportedAlgorithms}},
+  ... }
+
+
+CEKMaxDecrypts ::= INTEGER
+CEKReference ::= OCTET STRING
+
+SMIMECapability ::= SEQUENCE {
+    capabilityID	TYPE-IDENTIFIER.&id,
+    parameters		TYPE-IDENTIFIER.&Type OPTIONAL }
+
+SMIMECapabilities ::= SEQUENCE SIZE (1..MAX) OF SMIMECapability
+
+DT-Code ::= OBJECT IDENTIFIER
+
+SourceType ::= DistinguishedName
+
+-- Object Identifiers
+
+id-cs3                          OBJECT IDENTIFIER ::= { itu-t(0) recommendation(0) q(17) 1238 }
+id-soa                          OBJECT IDENTIFIER ::= { id-cs3 soa(21) }
+id-at                           OBJECT IDENTIFIER ::= { id-cs3 at(4) }
+id-soa-methodRuleUse            OBJECT IDENTIFIER ::= { id-soa methodRuleUse(1) }
+id-at-secretKey                 OBJECT IDENTIFIER ::= { id-at secretKey(2) }
+id-at-identifierList            OBJECT IDENTIFIER ::= { id-at identifierList(3) }
+id-at-bindLevelIfOK             OBJECT IDENTIFIER ::= { id-at bindLevelIfOK(4) }
+id-at-lockSession               OBJECT IDENTIFIER ::= { id-at lockSession(5) }
+id-at-failureCounter            OBJECT IDENTIFIER ::= { id-at failureCounter(6) }
+id-at-maxAttempts               OBJECT IDENTIFIER ::= { id-at maxAttempts(7) }
+id-at-currentList               OBJECT IDENTIFIER ::= { id-at currentList(8) }
+id-at-stockId                   OBJECT IDENTIFIER ::= { id-at stockId(9) }
+id-at-source                    OBJECT IDENTIFIER ::= { id-at source(10) }
+id-at-sizeOfRestocking          OBJECT IDENTIFIER ::= { id-at sizeOfRestocking(11) }
+id-at-challengeResponse         OBJECT IDENTIFIER ::= { id-at challengeResponse(12) }
+id-pkcs                         OBJECT IDENTIFIER ::= { iso(1) member-body(2) usa(840) rsadsi(113549) pkcs(1) }
+id-pkcs-9                       OBJECT IDENTIFIER ::= { id-pkcs pkcs-9(9) }
+id-aa                           OBJECT IDENTIFIER ::= { id-pkcs-9 smime(16) attributes(2) }
+id-aa-encrypKeyPref             OBJECT IDENTIFIER ::= { id-aa 11 }
+id-aa-CEKReference              OBJECT IDENTIFIER ::= { id-aa 30 }
+id-aa-CEKMaxDecrypts            OBJECT IDENTIFIER ::= { id-aa 31 }
+id-aa-KEKDerivationAlg          OBJECT IDENTIFIER ::= { id-aa 32 }
+id-pbact                        OBJECT IDENTIFIER ::= { joint-iso-itu-t(2) telebiometrics(42) e-health-protocol(3) pbact(20) }
+id-pbactPrivAttr                OBJECT IDENTIFIER ::= { id-pbact prAttr(2) }
+id-at-accessService             OBJECT IDENTIFIER ::= { id-pbactPrivAttr 1 }
+id-pkix                         OBJECT IDENTIFIER ::= { iso(1) identified-organization(3) dod(6) internet(1) security(5) mechanisms(5) pkix(7) }
+id-pda                          OBJECT IDENTIFIER ::= { id-pkix 9 }
+id-pda-dateOfBirth              OBJECT IDENTIFIER ::= { id-pda 1 }
+id-pda-placeOfBirth             OBJECT IDENTIFIER ::= { id-pda 2 }
+id-pda-gender                   OBJECT IDENTIFIER ::= { id-pda 3 }
+id-pda-countryOfCitizenship     OBJECT IDENTIFIER ::= { id-pda 4 }
+id-pda-countryOfResidence       OBJECT IDENTIFIER ::= { id-pda 5 }
+id-aca                          OBJECT IDENTIFIER ::= { id-pkix 10 }
+id-aca-authenticationInfo       OBJECT IDENTIFIER ::= { id-aca 1 }
+id-aca-accessIdentity           OBJECT IDENTIFIER ::= { id-aca 2 }
+id-aca-chargingIdentity         OBJECT IDENTIFIER ::= { id-aca 3 }
+id-aca-group                    OBJECT IDENTIFIER ::= { id-aca 4 }
+id-aca-encAttrs                 OBJECT IDENTIFIER ::= { id-aca 6 }
+
+id-clearanceSponsor             OBJECT IDENTIFIER ::= { joint-iso-ccitt(2)
+    country(16) us(840) organization(1) gov(101) dod(2) infosec(1) attributes(5)
+    68 }
+
+id-deviceOwner                  OBJECT IDENTIFIER ::= { joint-iso-ccitt(2)
+    country(16) us(840) organization(1) gov(101) dod(2) infosec(1) attributes(5)
+    69 }
+
+id-aa-binarySigningTime         OBJECT IDENTIFIER ::= { iso(1) member-body(2) us(840)
+    rsadsi(113549) pkcs(1) pkcs9(9) smime(16) aa(2) 46 }
+
+id-tokenization-manifest        OBJECT IDENTIFIER ::= { iso(1)
+    identified-organization(3) tc68(133) country(16) x9(840) x9Standards(9)
+    x9-73(73) tokenization(3) }
+
+id-tokenizedParts               OBJECT IDENTIFIER ::= { id-tokenization-manifest tokenizedParts(0) }
+
+id-smimeCapabilities OBJECT IDENTIFIER ::= { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-9(9) 15 }
+
+id-signerInfo           OBJECT IDENTIFIER ::= {itu-t recommendation(0) x(24) cms-profile(894) attribute(2) signerInfo(0)}
+id-signerInfos 	        OBJECT IDENTIFIER ::= {itu-t recommendation(0) x(24) cms-profile(894) attribute(2) signerInfos(1)}
+id-contentLocation      OBJECT IDENTIFIER ::= {itu-t recommendation(0) x(24) cms-profile(894) attribute(2) contentLocation(2)}
+id-contentLocations     OBJECT IDENTIFIER ::= {itu-t recommendation(0) x(24) cms-profile(894) attribute(2) contentLocations(3)}
+id-precedingBlock       OBJECT IDENTIFIER ::= {itu-t recommendation(0) x(24) cms-profile(894) attribute(2) precedingBlock(4)}
+id-timeStamped          OBJECT IDENTIFIER ::= {itu-t recommendation(0) x(24) cms-profile(894) attribute(2) timeStamped(5)}
+id-sidechains           OBJECT IDENTIFIER ::= {itu-t recommendation(0) x(24) cms-profile(894) attribute(2) sidechains(6)}
+id-parentBlock          OBJECT IDENTIFIER ::= {itu-t recommendation(0) x(24) cms-profile(894) attribute(2) parentBlock(7)}
+
+signcryption OBJECT IDENTIFIER ::= { iso(1) identified-organization(3) tc68(133)
+    country(16) x9(840) x9Standards(9) x9-73(73) signcryption(4) }
+
+signcryption-mode       OBJECT IDENTIFIER ::= { signcryption modes(1) }
+
+signcrypted-envelope    OBJECT IDENTIFIER ::= { signcryption-mode enveloped(4) }
+
+id-contentType OBJECT IDENTIFIER ::= { iso(1) member-body(2)
+    us(840) rsadsi(113549) pkcs(1) pkcs9(9) 3 }
+
+id-messageDigest OBJECT IDENTIFIER ::= { iso(1) member-body(2)
+    us(840) rsadsi(113549) pkcs(1) pkcs9(9) 4 }
+
+id-signingTime OBJECT IDENTIFIER ::= { iso(1) member-body(2)
+    us(840) rsadsi(113549) pkcs(1) pkcs9(9) 5 }
+
+id-countersignature OBJECT IDENTIFIER ::= { iso(1) member-body(2)
+    us(840) rsadsi(113549) pkcs(1) pkcs9(9) 6 }
+
+id-aa-cmc-unsignedData OBJECT IDENTIFIER ::= {id-aa 34}
+
+id-aa-firmwarePackageID OBJECT IDENTIFIER ::= {
+    iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9)
+    smime(16) aa(2) 35 }
+
+id-aa-targetHardwareIDs OBJECT IDENTIFIER ::= {
+    iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9)
+    smime(16) aa(2) 36 }
+
+id-aa-decryptKeyID OBJECT IDENTIFIER ::= {
+    iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9)
+    smime(16) aa(2) 37 }
+
+id-aa-implCryptoAlgs OBJECT IDENTIFIER ::= {
+    iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9)
+    smime(16) aa(2) 38 }
+
+id-aa-wrappedFirmwareKey OBJECT IDENTIFIER ::= {
+    iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9)
+    smime(16) aa(2) 39 }
+
+id-aa-communityIdentifiers OBJECT IDENTIFIER ::= {
+    iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9)
+    smime(16) aa(2) 40 }
+
+id-aa-firmwarePackageInfo OBJECT IDENTIFIER ::= {
+    iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9)
+    smime(16) aa(2) 42 }
+
+id-aa-implCompressAlgs OBJECT IDENTIFIER ::= {
+    iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9)
+    smime(16) aa(2) 43 }
+
+id-ExtensionReq OBJECT IDENTIFIER ::= {iso(1) member-body(2) us(840)
+    rsadsi(113549) pkcs(1) pkcs-9(9) 14}
+
+id-aa-multipleSignatures OBJECT IDENTIFIER ::= {
+    iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9)
+    id-aa(2) 51 }
+
+id-aca-wlanSSID                 OBJECT IDENTIFIER ::= { id-aca 7 }
+-- id-pkip                         OBJECT IDENTIFIER ::= { id-pkix 5 }
+-- id-regCtrl                      OBJECT IDENTIFIER ::= { id-pkip 1 }
+-- id-regCtrl-regToken             OBJECT IDENTIFIER ::= { id-regCtrl 1 }
+-- id-regCtrl-authenticator        OBJECT IDENTIFIER ::= { id-regCtrl 2 }
+-- id-regCtrl-pkiPublicationInfo   OBJECT IDENTIFIER ::= { id-regCtrl 3 }
+-- id-regCtrl-pkiArchiveOptions    OBJECT IDENTIFIER ::= { id-regCtrl 4 }
+-- id-regCtrl-oldCertID            OBJECT IDENTIFIER ::= { id-regCtrl 5 }
+-- id-regCtrl-protocolEncrKey      OBJECT IDENTIFIER ::= { id-regCtrl 6 }
+-- id-regInfo                      OBJECT IDENTIFIER ::= { id-pkip 2 }
+-- id-regInfo-utf8Pairs            OBJECT IDENTIFIER ::= { id-regInfo 1 }
+-- id-regInfo-certReq              OBJECT IDENTIFIER ::= { id-regInfo 2 }
+
+id-at-clearance-rfc3281              OBJECT IDENTIFIER ::= {
+    joint-iso-itu-t(2) ds(5) module(1) selected-attribute-types(5)
+    clearance (55) }
+
+-- LDAP Syntaxes
+
+
+-- Matching Rules
+
+
+-- Attribute Types
+
+cEKReference ATTRIBUTE ::= {
+    WITH SYNTAX               CEKReference
+    EQUALITY MATCHING RULE    octetStringMatch
+    SINGLE VALUE              TRUE
+    ID                        id-aa-CEKReference }
+
+cEKMaxDecrypts ATTRIBUTE ::= {
+    WITH SYNTAX               CEKMaxDecrypts
+    EQUALITY MATCHING RULE    integerMatch
+    SINGLE VALUE              TRUE
+    ID                        id-aa-CEKReference }
+
+kEKDerivationAlg ATTRIBUTE ::= {
+    WITH SYNTAX               KEKDerivationAlgorithm
+    EQUALITY MATCHING RULE    integerMatch
+    SINGLE VALUE              TRUE
+    ID                        id-aa-KEKDerivationAlg }
+
+accessService ATTRIBUTE ::= {
+    WITH SYNTAX       AccessService
+    ID                id-at-accessService }
+
+dateOfBirth ATTRIBUTE ::= {
+    WITH SYNTAX						GeneralizedTime
+    EQUALITY MATCHING RULE			generalizedTimeMatch
+    ORDERING MATCHING RULE			generalizedTimeOrderingMatch
+    SINGLE VALUE					TRUE
+    LDAP-SYNTAX						generalizedTime.&id
+    LDAP-NAME						{"dateOfBirth"}
+    LDAP-DESC						"IETF RFC 3739: Date of birth of the subject"
+    ID								id-pda-dateOfBirth
+}
+
+placeOfBirth ATTRIBUTE ::= {
+    WITH SYNTAX						DirectoryString{128}
+    EQUALITY MATCHING RULE			caseIgnoreMatch
+    ORDERING MATCHING RULE			caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE		caseIgnoreSubstringsMatch
+    -- Purposefully not single-valued so values with contexts can display different languages
+    LDAP-SYNTAX						directoryString.&id
+    LDAP-NAME						{"placeOfBirth"}
+    LDAP-DESC						"IETF RFC 3739: Place of birth of the subject"
+    ID								id-pda-placeOfBirth
+}
+
+gender ATTRIBUTE ::= {
+    WITH SYNTAX						PrintableString (SIZE(1) ^ FROM("M"|"F"|"m"|"f"))
+    EQUALITY MATCHING RULE			caseIgnoreMatch
+    ORDERING MATCHING RULE			caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE		caseIgnoreSubstringsMatch
+    SINGLE VALUE					TRUE
+    LDAP-SYNTAX						directoryString.&id
+    LDAP-NAME						{"gender"}
+    LDAP-DESC						"IETF RFC 3739: Gender of the subject"
+    ID								id-pda-gender
+}
+
+countryOfCitizenship ATTRIBUTE ::= {
+    WITH SYNTAX						PrintableString (SIZE (2)) (CONSTRAINED BY { -- ISO 3166 codes only -- })
+    EQUALITY MATCHING RULE			caseIgnoreMatch
+    ORDERING MATCHING RULE			caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE		caseIgnoreSubstringsMatch
+    LDAP-SYNTAX						directoryString.&id
+    LDAP-NAME						{"countryOfCitizenship"}
+    LDAP-DESC						"IETF RFC 3739: Country of citizenship of the subject"
+    ID								id-pda-countryOfCitizenship
+}
+
+countryOfResidence ATTRIBUTE ::= {
+    WITH SYNTAX						PrintableString (SIZE (2)) (CONSTRAINED BY { -- ISO 3166 codes only -- })
+    EQUALITY MATCHING RULE			caseIgnoreMatch
+    ORDERING MATCHING RULE			caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE		caseIgnoreSubstringsMatch
+    LDAP-SYNTAX						directoryString.&id
+    LDAP-NAME						{"countryOfResidence"}
+    LDAP-DESC						"IETF RFC 3739: Country of residence of the subject"
+    ID								id-pda-countryOfResidence
+}
+
+deviceOwner ATTRIBUTE ::= {
+    WITH SYNTAX						OBJECT IDENTIFIER
+    EQUALITY MATCHING RULE			objectIdentifierMatch
+    LDAP-SYNTAX						oid.&id
+    LDAP-NAME						{"deviceOwner"}
+    LDAP-DESC						"The object identifier of the owner of this device"
+    ID								id-deviceOwner
+}
+
+clearanceSponsor ATTRIBUTE ::= {
+    WITH SYNTAX						DirectoryString{ub-clearance-sponsor} ( WITH COMPONENTS { utf8String PRESENT } )
+    EQUALITY MATCHING RULE			caseIgnoreMatch
+    ORDERING MATCHING RULE			caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE		caseIgnoreSubstringsMatch
+    LDAP-SYNTAX						directoryString.&id
+    LDAP-NAME						{"clearanceSponsor"}
+    LDAP-DESC						"IETF RFC 5917: The sponsor of the clearance of the subject with which this attribute is associated"
+    ID								id-clearanceSponsor
+}
+
+binarySigningTime ATTRIBUTE ::= {
+    WITH SYNTAX						BinarySigningTime
+    EQUALITY MATCHING RULE			integerMatch
+    ORDERING MATCHING RULE			integerOrderingMatch
+    LDAP-SYNTAX						integer.&id
+    LDAP-NAME						{"binarySigningtime"}
+    LDAP-DESC						"IETF RFC 4049: The time at which the signer (purportedly) performed the signing process."
+    ID								id-aa-binarySigningTime
+}
+
+tokenizedParts ATTRIBUTE ::= {
+    WITH SYNTAX     Tokenized
+    ID              id-tokenizedParts
+}
+
+authenticationInfo ATTRIBUTE ::= {
+    WITH SYNTAX     SvceAuthInfo
+    ID              id-aca-authenticationInfo }
+
+accesIdentity ATTRIBUTE ::= {
+    WITH SYNTAX     SvceAuthInfo
+    ID              id-aca-accessIdentity }
+
+chargingIdentity ATTRIBUTE ::= {
+    WITH SYNTAX     IetfAttrSyntax
+    ID              id-aca-chargingIdentity }
+
+group ATTRIBUTE ::= {
+    WITH SYNTAX     IetfAttrSyntax
+    ID              id-aca-group }
+
+clearance-RFC3281 ATTRIBUTE ::= {
+    WITH SYNTAX     Clearance-rfc3281
+    ID              id-at-clearance-rfc3281 }
+
+encAttrs ATTRIBUTE ::= {
+    WITH SYNTAX     ContentInfo
+    ID              id-aca-encAttrs }
+
+smimeCapabilities ATTRIBUTE ::= {
+    WITH SYNTAX     SMIMECapabilities{{SMimeCapsSet}}
+    ID              id-smimeCapabilities }
+
+signerInfo ATTRIBUTE ::= {
+    WITH SYNTAX         SignerInfo
+    ID                  id-signerInfo }
+
+signerInfos	ATTRIBUTE ::= {
+    WITH SYNTAX         SignerInfos
+    ID                  id-signerInfos }
+
+contentLocation ATTRIBUTE ::= {
+    SUBTYPE OF          url
+    ID                  id-contentLocation }
+
+contentLocations	ATTRIBUTE ::= {
+    WITH SYNTAX         URIs
+    ID                  id-contentLocations }
+
+precedingBlock ATTRIBUTE ::= {
+    WITH SYNTAX         HashPointer
+    ID                  id-precedingBlock }
+
+timeStamped ATTRIBUTE ::= {
+    WITH SYNTAX         TimeStamped
+    ID                  id-timeStamped }
+
+sidechains ATTRIBUTE ::= {
+    WITH SYNTAX         Sidechains
+    ID                  id-sidechains }
+
+parentBlock ATTRIBUTE ::= {
+    WITH SYNTAX         ParentBlock
+    ID                  id-parentBlock }
+
+signcryptedEnvelope ATTRIBUTE ::= {
+    WITH SYNTAX         SigncryptedKey
+    ID                  signcrypted-envelope }
+
+encrypKeyPref ATTRIBUTE ::= {
+    WITH SYNTAX         SMIMEEncryptionKeyPreference
+    ID                  id-aa-encrypKeyPref }
+
+firmwarePackageID ATTRIBUTE ::= {
+    WITH SYNTAX         FirmwarePackageIdentifier
+    ID                  id-aa-firmwarePackageID }
+
+targetHardwareIDs ATTRIBUTE ::= {
+    WITH SYNTAX         TargetHardwareIdentifiers
+    ID                  id-aa-targetHardwareIDs }
+
+decryptKeyID ATTRIBUTE ::= {
+    WITH SYNTAX         DecryptKeyIdentifier
+    ID                  id-aa-decryptKeyID }
+
+implCryptoAlgs ATTRIBUTE ::= {
+    WITH SYNTAX         ImplementedCryptoAlgorithms
+    ID                  id-aa-implCryptoAlgs }
+
+implCompressAlgs ATTRIBUTE ::= {
+    WITH SYNTAX         ImplementedCompressAlgorithms
+    ID                  id-aa-implCompressAlgs }
+
+communityIdentifiers ATTRIBUTE ::= {
+    WITH SYNTAX         CommunityIdentifiers
+    ID                  id-aa-communityIdentifiers }
+
+firmwarePackageInfo ATTRIBUTE ::= {
+    WITH SYNTAX         FirmwarePackageInfo
+    ID                  id-aa-firmwarePackageInfo }
+
+wrappedFirmwareKey ATTRIBUTE ::= {
+    WITH SYNTAX         WrappedFirmwareKey
+    ID                  id-aa-wrappedFirmwareKey }
+
+contentType ATTRIBUTE ::= {
+    WITH SYNTAX						OBJECT IDENTIFIER
+    EQUALITY MATCHING RULE			objectIdentifierMatch
+    LDAP-SYNTAX						oid.&id
+    LDAP-NAME						{"contentType"}
+    LDAP-DESC						"PKCS #9: the content type of a CMS message"
+    ID								id-contentType
+}
+
+messageDigest ATTRIBUTE ::= {
+    WITH SYNTAX						MessageDigest
+    EQUALITY MATCHING RULE			octetStringMatch
+    ORDERING MATCHING RULE			octetStringOrderingMatch
+    LDAP-SYNTAX						octetString.&id
+    LDAP-NAME						{"messageDigest"}
+    LDAP-DESC						"PKCS #9: message digest of a CMS message"
+    ID								id-messageDigest
+}
+
+signingTime ATTRIBUTE ::= {
+    WITH SYNTAX         SigningTime
+    ID                  id-signingTime }
+
+countersignature ATTRIBUTE ::= {
+    WITH SYNTAX         Countersignature
+    ID                  id-countersignature }
+
+extension-req ATTRIBUTE ::= {
+    WITH SYNTAX         ExtensionReq
+    ID                  id-ExtensionReq }
+
+unsignedData ATTRIBUTE ::= {
+    WITH SYNTAX         CMCUnsignedData
+    ID                  id-aa-cmc-unsignedData }
+
+multipleSignatures ATTRIBUTE ::= {
+    WITH SYNTAX         MultipleSignatures
+    ID                  id-aa-multipleSignatures }
+
+wlanSSID ATTRIBUTE ::= {
+    WITH SYNTAX         SSIDList
+    ID                  id-aca-wlanSSID }
+
+-- Object Classes
+
+-- Name Forms
+
+END

@@ -1,0 +1,123 @@
+Wildboar {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) wildboar(1)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+ID ::= OBJECT IDENTIFIER
+
+PrivateEnterpriseNumber ::= INTEGER (0..MAX)
+
+pen-wildboar PrivateEnterpriseNumber ::= 56490
+
+-- Taken from ITU X.501 UsefulDefinitions.asn1
+internet        ID ::= {iso(1) identified-organization(3) dod(6) internet(1)}
+-- From: https://www.iana.org/assignments/enterprise-numbers/enterprise-numbers
+-- Prefix: iso.org.dod.internet.private.enterprise (1.3.6.1.4.1)
+id-pen          ID ::= {internet private(4) enterprise(1)}
+id-wildboar     ID ::= {id-pen pen-wildboar}
+ds              ID ::= {id-wildboar ds(5)}
+
+module                                   ID ::= {ds 1}
+serviceElement                           ID ::= {ds 2}
+applicationContext                       ID ::= {ds 3}
+attributeType                            ID ::= {ds 4}
+attributeSyntaxVendor                    ID ::= {ds 5}
+-- This arc will not be used by these Directory Specifications
+objectClass                              ID ::= {ds 6}
+-- attributeSet                          ID ::= {ds 7}
+algorithm                                ID ::= {ds 8}
+abstractSyntax                           ID ::= {ds 9}
+-- object                                ID ::= {ds 10}
+-- port                                  ID ::= {ds 11}
+dsaOperationalAttribute                  ID ::= {ds 12}
+matchingRule                             ID ::= {ds 13}
+knowledgeMatchingRule                    ID ::= {ds 14}
+nameForm                                 ID ::= {ds 15}
+group                                    ID ::= {ds 16}
+subentry                                 ID ::= {ds 17}
+operationalAttributeType                 ID ::= {ds 18}
+operationalBinding                       ID ::= {ds 19}
+schemaObjectClass                        ID ::= {ds 20}
+schemaOperationalAttribute               ID ::= {ds 21}
+administrativeRoles                      ID ::= {ds 23}
+accessControlAttribute                   ID ::= {ds 24}
+--rosObject                              ID ::= {ds 25}
+--contract                               ID ::= {ds 26}
+--package                                ID ::= {ds 27}
+accessControlSchemes                     ID ::= {ds 28}
+certificateExtension                     ID ::= {ds 29}
+managementObject                         ID ::= {ds 30}
+attributeValueContext                    ID ::= {ds 31}
+-- securityExchange                      ID ::= {ds 32}
+idmProtocol                              ID ::= {ds 33}
+problem                                  ID ::= {ds 34}
+notification                             ID ::= {ds 35}
+matchingRestriction                      ID ::= {ds 36} -- None are currently defined
+controlAttributeType                     ID ::= {ds 37}
+keyPurposes                              ID ::= {ds 38}
+passwordQuality                          ID ::= {ds 39}
+attributeSyntax                          ID ::= {ds 40}
+avRestriction                            ID ::= {ds 41}
+cmsContentType                           ID ::= {ds 42}
+id-birthMethod                           ID ::= {ds 51}
+id-placeOfDeath                          ID ::= {ds 52}
+id-levelOfEducation                      ID ::= {ds 53}
+id-race                                  ID ::= {ds 54}
+id-methodOfDisposition                   ID ::= {ds 55}
+id-mannerOfDeath                         ID ::= {ds 56}
+id-deathCertifierTypes                   ID ::= {ds 57}
+id-religion                              ID ::= {ds 58}
+ldap-syntax                              ID ::= {ds 389}
+
+-- synonyms
+
+id-oc                                    ID ::= objectClass
+id-at                                    ID ::= attributeType
+id-as                                    ID ::= abstractSyntax
+id-mr                                    ID ::= matchingRule
+id-nf                                    ID ::= nameForm
+id-sc                                    ID ::= subentry
+id-oa                                    ID ::= operationalAttributeType
+id-ob                                    ID ::= operationalBinding
+id-doa                                   ID ::= dsaOperationalAttribute
+id-kmr                                   ID ::= knowledgeMatchingRule
+id-soc                                   ID ::= schemaObjectClass
+id-soa                                   ID ::= schemaOperationalAttribute
+id-ar                                    ID ::= administrativeRoles
+id-aca                                   ID ::= accessControlAttribute
+id-ac                                    ID ::= applicationContext
+-- id-rosObject                          ID ::= rosObject
+-- id-contract                           ID ::= contract
+-- id-package                            ID ::= package
+id-acScheme                              ID ::= accessControlSchemes
+id-ce                                    ID ::= certificateExtension
+id-mgt                                   ID ::= managementObject
+id-avc                                   ID ::= attributeValueContext
+-- id-se                                 ID ::= securityExchange
+id-idm                                   ID ::= idmProtocol
+id-pr                                    ID ::= problem
+id-not                                   ID ::= notification
+id-mre                                   ID ::= matchingRestriction
+id-cat                                   ID ::= controlAttributeType
+id-kp                                    ID ::= keyPurposes
+id-pq                                    ID ::= passwordQuality
+id-ats                                   ID ::= attributeSyntax
+--id-lc                                  ID ::= ldapControl
+id-asx                                   ID ::= attributeSyntax
+id-lsx                                   ID ::= ldap-syntax
+-- id-ldx                                   ID ::= ldap-x509
+-- id-lat                                   ID ::= ldap-attr
+-- id-lmr                                   ID ::= ldap-match
+-- id-oat                                   ID ::= openLDAP-attributes
+-- id-coat                                  ID ::= cosineAttr
+id-avr                                   ID ::= avRestriction
+id-cmsct                                 ID ::= cmsContentType
+
+END

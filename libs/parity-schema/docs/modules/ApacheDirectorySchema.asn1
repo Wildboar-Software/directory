@@ -1,0 +1,788 @@
+ApacheDirectorySchema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) apache-directory-schema(36)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    ATTRIBUTE, OBJECT-CLASS, top, DistinguishedName,
+    distinguishedNameMatch, objectIdentifierMatch, modifyTimestamp
+    modifiersName
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+    dn, integer, integerMatch, integerOrderingMatch, ia5String,
+    caseIgnoreIA5Match, caseExactIA5Match, distinguishedName, oid,
+    directoryString, caseIgnoreMatch, UnboundedDirectoryString,
+    generalizedTime, generalizedTimeMatch, generalizedTimeOrderingMatch,
+    printableString, UUID, commonName, description,
+    organizationalUnitName, booleanMatch, boolean
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    ACIItem
+        FROM BasicAccessControl
+        {joint-iso-itu-t ds(5) module(1) basicAccessControl(24) 9}
+        WITH SUCCESSORS
+
+    UUID, uuidMatch
+        FROM UUID
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) uuid(29)}
+
+    ;
+
+aci SYNTAX-NAME ::= {
+    LDAP-DESC               "ACIItem"
+    DIRECTORY SYNTAX        ACIItem
+    ID                      { 1 3 6 1 4 1 1466 115 121 1 1 }
+}
+
+autonomousAreaSubentry ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	SINGLE VALUE                TRUE
+	NO USER MODIFICATION        TRUE
+	USAGE                       directoryOperation
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"autonomousAreaSubentry"}
+	LDAP-DESC                   "Used to track a subentry associated with an autonomousArea"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 10 }
+}
+
+accessControlSubentries ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	NO USER MODIFICATION        TRUE
+	USAGE                       directoryOperation
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"accessControlSubentries"}
+	LDAP-DESC                   "Used to track a subentry associated with access control areas"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 11 }
+}
+
+nbChildren ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	NO USER MODIFICATION        TRUE
+	USAGE                       directoryOperation
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"nbChildren"}
+	LDAP-DESC                   "The number of children for this entry"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 12 }
+}
+
+nbSubordinates ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	NO USER MODIFICATION        TRUE
+	USAGE                       directoryOperation
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"nbSubordinates"}
+	LDAP-DESC                   "The number of subordinates for this entry"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 13 }
+}
+
+apacheServicePid ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"apacheServicePid"}
+	LDAP-DESC                   "A string up to 256 characters in length"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 15 }
+}
+
+apacheServiceFactoryPid ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"apacheServiceFactoryPid"}
+	LDAP-DESC                   "A string up to 256 characters in length"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 16 }
+}
+
+apacheCatalogEntryName ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"apacheCatalogEntryName"}
+	LDAP-DESC                   "A string up to 256 characters in length"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 17 }
+}
+
+apacheCatalogEntryBaseDn ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"apacheCatalogEntryBaseDn"}
+	LDAP-DESC                   "A string up to 256 characters in length"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 18 }
+}
+
+windowsFilePath ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"windowsFilePath"}
+	LDAP-DESC                   "A windows file path where case does not make a difference"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 19 }
+}
+
+unixFilePath ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseExactIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"unixFilePath"}
+	LDAP-DESC                   "A UNIX file path where case does make a difference"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 20 }
+}
+
+fullyQualifiedJavaClassName ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseExactIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"fullyQualifiedJavaClassName"}
+	LDAP-DESC                   "The fully qualified name for a (Java) class"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 21 }
+}
+
+javaClassByteCode ATTRIBUTE ::= {
+	WITH SYNTAX                 OCTET STRING
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 { 1 3 6 1 4 1 1466 115 121 1 5 }
+	LDAP-NAME                   {"javaClassByteCode"}
+	LDAP-DESC                   "The actual byte code for a (Java) class"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 22 }
+}
+
+classLoaderDefaultSearchContext ATTRIBUTE ::= {
+	SUBTYPE OF                  distinguishedName
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"classLoaderDefaultSearchContext"}
+	LDAP-DESC                   "The default search context for the Ldap Class Loader"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 23 }
+}
+
+-- FIXME: This matching rule makes no sense with this attribute syntax.
+-- Supported Public Key Algorithms in X.509 (AF).
+-- And the syntax just makes no sense given what this attribute describes.
+-- prescriptiveTriggerSpecification ATTRIBUTE ::= {
+-- 	WITH SYNTAX                 FIXME
+-- 	EQUALITY MATCHING RULE      directoryStringFirstComponentMatch
+-- 	USAGE                       directoryOperation
+-- 	LDAP-SYNTAX                 { 1 3 6 1 4 1 1466 115 121 1 59 }
+-- 	LDAP-NAME                   {"prescriptiveTriggerSpecification"}
+-- 	LDAP-DESC                   "Trigger specification that applies to a set of entries"
+-- 	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 25 }
+-- }
+
+-- FIXME: This matching rule makes no sense with this attribute syntax.
+-- And the syntax just makes no sense given what this attribute describes.
+-- entryTriggerSpecification ATTRIBUTE ::= {
+-- 	WITH SYNTAX                 FIXME
+-- 	EQUALITY MATCHING RULE      directoryStringFirstComponentMatch
+-- 	USAGE                       directoryOperation
+-- 	LDAP-SYNTAX                 { 1 3 6 1 4 1 1466 115 121 1 59 }
+-- 	LDAP-NAME                   {"entryTriggerSpecification"}
+-- 	LDAP-DESC                   "Trigger specification that applies to a single entry"
+-- 	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 26 }
+-- }
+
+triggerExecutionSubentries ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	NO USER MODIFICATION        TRUE
+	USAGE                       directoryOperation
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"triggerExecutionSubentries"}
+	LDAP-DESC                   "Used to track subentries associated with a trigger area which an entry falls under"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 27 }
+}
+
+apachePresence ATTRIBUTE ::= {
+	WITH SYNTAX                 OBJECT IDENTIFIER
+	EQUALITY MATCHING RULE      objectIdentifierMatch
+	NO USER MODIFICATION        TRUE
+	USAGE                       dSAOperation
+	LDAP-SYNTAX                 oid.&id
+	LDAP-NAME                   {"apachePresence"}
+	LDAP-DESC                   "Index attribute used to track the existence of attributes"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 3 }
+}
+
+entryDeleted ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	NO USER MODIFICATION        TRUE
+	USAGE                       directoryOperation
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"entryDeleted"}
+	LDAP-DESC                   "Whether or not an entry has been deleted."
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 31 }
+}
+
+comparators ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	USAGE                       directoryOperation
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"comparators"}
+	LDAP-DESC                   "A multivalued comparator description attribute"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 32 }
+}
+
+normalizers ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	USAGE                       directoryOperation
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"normalizers"}
+	LDAP-DESC                   "A multivalued normalizer description attribute"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 33 }
+}
+
+syntaxCheckers ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	USAGE                       directoryOperation
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"syntaxCheckers"}
+	LDAP-DESC                   "A multivalued syntaxCheckers description attribute"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 34 }
+}
+
+schemaModifyTimestamp ATTRIBUTE ::= {
+	SUBTYPE OF                  modifyTimestamp
+	WITH SYNTAX                 GeneralizedTime
+	EQUALITY MATCHING RULE      generalizedTimeMatch
+	ORDERING MATCHING RULE      generalizedTimeOrderingMatch
+	USAGE                       directoryOperation
+	LDAP-SYNTAX                 generalizedTime.&id
+	LDAP-NAME                   {"schemaModifyTimestamp"}
+	LDAP-DESC                   "time which schema was modified"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 35 }
+}
+
+schemaModifiersName ATTRIBUTE ::= {
+	SUBTYPE OF                  modifiersName
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	USAGE                       directoryOperation
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"schemaModifiersName"}
+	LDAP-DESC                   "the DN of the modifier of the schema"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 36 }
+}
+
+subschemaSubentryName ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"subschemaSubentryName"}
+	LDAP-DESC                   "the DN of the schema subentry the modification info corresponds to"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 37 }
+}
+
+privateKeyFormat ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseExactIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"privateKeyFormat"}
+	LDAP-DESC                   "The format of the private key used for TLS"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 38 }
+}
+
+keyAlgorithm ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseExactIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"keyAlgorithm"}
+	LDAP-DESC                   "The algorithm used for the key/pair used by the server for TLS"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 39 }
+}
+
+apacheOneLevel ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	NO USER MODIFICATION        TRUE
+	USAGE                       dSAOperation
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"apacheOneLevel"}
+	LDAP-DESC                   "Index attribute used to track one level searches"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 4 }
+}
+
+privateKey ATTRIBUTE ::= {
+	WITH SYNTAX                 OCTET STRING
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 { 1 3 6 1 4 1 1466 115 121 1 5 } -- Binary
+	LDAP-NAME                   {"privateKey"}
+	LDAP-DESC                   "The private key material used for TLS"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 40 }
+}
+
+publicKeyFormat ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseExactIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"publicKeyFormat"}
+	LDAP-DESC                   "The format of the public key used for TLS"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 41 }
+}
+
+publicKey ATTRIBUTE ::= {
+	WITH SYNTAX                 OCTET STRING
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 { 1 3 6 1 4 1 1466 115 121 1 5 }
+	LDAP-NAME                   {"publicKey"}
+	LDAP-DESC                   "The public key material used for TLS"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 42 }
+}
+
+apacheSubLevel ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	NO USER MODIFICATION        TRUE
+	USAGE                       dSAOperation
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"apacheSubLevel"}
+	LDAP-DESC                   "Index attribute used to track sub level searches"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 43 }
+}
+
+revisions ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	NO USER MODIFICATION        TRUE
+	USAGE                       dSAOperation
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"revisions"}
+	LDAP-DESC                   "Revision numbers used in change log"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 44 }
+}
+
+changeTime ATTRIBUTE ::= {
+	WITH SYNTAX                 GeneralizedTime
+	EQUALITY MATCHING RULE      generalizedTimeMatch
+	ORDERING MATCHING RULE      generalizedTimeOrderingMatch
+	SINGLE VALUE                TRUE
+	NO USER MODIFICATION        TRUE
+	USAGE                       dSAOperation
+	LDAP-SYNTAX                 generalizedTime.&id
+	LDAP-NAME                   {"changeTime"}
+	LDAP-DESC                   "represents the time when the change event occurred"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 45 }
+}
+
+changeType ATTRIBUTE ::= {
+	WITH SYNTAX                 PrintableString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	NO USER MODIFICATION        TRUE
+	USAGE                       dSAOperation
+	LDAP-SYNTAX                 printableString.&id
+	LDAP-NAME                   {"changeType"}
+	LDAP-DESC                   "type of change operation"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 46 }
+}
+
+rev ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE                TRUE
+	NO USER MODIFICATION        TRUE
+	USAGE                       dSAOperation
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"rev","eventId"}
+	LDAP-DESC                   "the unique sequential id for the event (a.k.a revision number)"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 47 }
+}
+
+committer ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	SINGLE VALUE                TRUE
+	NO USER MODIFICATION        TRUE
+	USAGE                       dSAOperation
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"committer"}
+	LDAP-DESC                   "the principal committing the change"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 48 }
+}
+
+changeLogContext ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	SINGLE VALUE                TRUE
+	USAGE                       dSAOperation
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"changeLogContext"}
+	LDAP-DESC                   "tells about the changelog context suffix"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 49 }
+}
+
+apacheOneAlias ATTRIBUTE ::= {
+	WITH SYNTAX                 UUID
+	EQUALITY MATCHING RULE      uuidMatch
+	NO USER MODIFICATION        TRUE
+	USAGE                       dSAOperation
+	LDAP-SYNTAX                 { 1 3 6 1 1 16 1 }
+	LDAP-NAME                   {"apacheOneAlias"}
+	LDAP-DESC                   "Index attribute used to track single level aliases"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 5 }
+}
+
+apacheRdn ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      exactDnAsStringMatch
+	NO USER MODIFICATION        TRUE
+	USAGE                       dSAOperation
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"apacheRdn"}
+	LDAP-DESC                   "Index attribute RDN with values both user provided and normalized based on schema"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 50 }
+}
+
+entryParentId ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseExactMatch
+	ORDERING MATCHING RULE      caseExactOrderingMatch
+	SINGLE VALUE                TRUE
+	NO USER MODIFICATION        TRUE
+	USAGE                       directoryOperation
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"entryParentId"}
+	LDAP-DESC                   "attribute holding the id of parent entry"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 51 }
+}
+
+apacheSubAlias ATTRIBUTE ::= {
+	WITH SYNTAX                 UUID
+	EQUALITY MATCHING RULE      uuidMatch
+	NO USER MODIFICATION        TRUE
+	USAGE                       dSAOperation
+	LDAP-SYNTAX                 { 1 3 6 1 1 16 1 }
+	LDAP-NAME                   {"apacheSubAlias"}
+	LDAP-DESC                   "Index attribute used to track sub level aliases"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 6 }
+}
+
+apacheAlias ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	SINGLE VALUE                TRUE
+	NO USER MODIFICATION        TRUE
+	USAGE                       dSAOperation
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   {"apacheAlias"}
+	LDAP-DESC                   "Index attribute used to track aliases"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 7 }
+}
+
+prefNodeName ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseExactMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"prefNodeName"}
+	LDAP-DESC                   "Attribute to describe the name of a Java Preferences API node"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 8 }
+}
+
+apacheSamType ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"apacheSamType"}
+	LDAP-DESC                   "Single-use Authentication Mechanism type/vendor code"
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 2 9 }
+}
+
+storedProcLangId ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseExactIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"storedProcLangId"}
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 5 1 }
+}
+
+storedProcUnitName ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseExactIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"storedProcUnitName"}
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 5 2 }
+}
+
+javaByteCode ATTRIBUTE ::= {
+	WITH SYNTAX                 OCTET STRING
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 { 1 3 6 1 4 1 1466 115 121 1 5 }
+	LDAP-NAME                   {"javaByteCode"}
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 5 4 }
+}
+
+javaxScriptLangId ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseExactIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"javaxScriptLangId"}
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 5 6 }
+}
+
+javaxScriptCode ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseExactIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"javaxScriptCode"}
+	ID                          { 1 3 6 1 4 1 18060 0 4 1 5 7 }
+}
+
+-- contextCSN ATTRIBUTE ::= {
+-- 	WITH SYNTAX                 FIXME
+-- 	EQUALITY MATCHING RULE      csnMatch
+-- 	ORDERING MATCHING RULE      csnOrderingMatch
+-- 	NO USER MODIFICATION        TRUE
+-- 	USAGE                       directoryOperation
+-- 	LDAP-SYNTAX                 { 1 3 6 1 4 1 4203 666 11 2 1 }
+-- 	LDAP-NAME                   {"contextCSN"}
+-- 	LDAP-DESC                   "the largest committed CSN of a context"
+-- 	ID                          { 1 3 6 1 4 1 4203 666 1 25 }
+-- }
+
+-- entryCSN ATTRIBUTE ::= {
+-- 	WITH SYNTAX                 FIXME
+-- 	EQUALITY MATCHING RULE      csnMatch
+-- 	ORDERING MATCHING RULE      csnOrderingMatch
+-- 	SINGLE VALUE                TRUE
+-- 	NO USER MODIFICATION        TRUE
+-- 	USAGE                       directoryOperation
+-- 	LDAP-SYNTAX                 { 1 3 6 1 4 1 4203 666 11 2 1 }
+-- 	LDAP-NAME                   {"entryCSN"}
+-- 	LDAP-DESC                   "change sequence number of the entry"
+-- 	ID                          { 1 3 6 1 4 1 4203 666 1 7 }
+-- }
+
+-- prescriptiveACI ATTRIBUTE ::= {
+-- 	WITH SYNTAX                 ACIItem
+-- 	EQUALITY MATCHING RULE      directoryStringFirstComponentMatch
+-- 	USAGE                       directoryOperation
+-- 	LDAP-SYNTAX                 aci.&id
+-- 	LDAP-NAME                   {"prescriptiveACI"}
+-- 	LDAP-DESC                   "Access control information that applies to a set of entries"
+-- 	ID                          { 2 5 24 4 }
+-- }
+
+-- entryACI ATTRIBUTE ::= {
+-- 	WITH SYNTAX                 ACIItem
+-- 	EQUALITY MATCHING RULE      directoryStringFirstComponentMatch
+-- 	USAGE                       directoryOperation
+-- 	LDAP-SYNTAX                 aci.&id
+-- 	LDAP-NAME                   {"entryACI"}
+-- 	LDAP-DESC                   "Access control information that applies to a single entry"
+-- 	ID                          { 2 5 24 5 }
+-- }
+
+-- subentryACI ATTRIBUTE ::= {
+-- 	WITH SYNTAX                 ACIItem
+-- 	EQUALITY MATCHING RULE      directoryStringFirstComponentMatch
+-- 	USAGE                       directoryOperation
+-- 	LDAP-SYNTAX                 aci.&id
+-- 	LDAP-NAME                   {"subentryACI"}
+-- 	LDAP-DESC                   "Access control information that applies to a single subentry"
+-- 	ID                          { 2 5 24 6 }
+-- }
+
+-- triggerExecutionSubentry OBJECT-CLASS ::= {
+-- 	KIND            auxiliary
+-- 	MUST CONTAIN    {prescriptiveTriggerSpecification}
+-- 	LDAP-NAME       {"triggerExecutionSubentry"}
+-- 	LDAP-DESC       "Used to track a subentry associated with trigger areas"
+-- 	ID              { 1 3 6 1 4 1 18060 0 4 1 2 28 }
+-- }
+
+prefNode OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            structural
+	MUST CONTAIN    {prefNodeName}
+	LDAP-NAME       {"prefNode"}
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 1 }
+}
+
+schemaModificationAttributes OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            structural
+	MUST CONTAIN    {
+        organizationalUnitName
+        | subschemaSubentryName
+        | schemaModifyTimestamp
+        | schemaModifiersName
+    }
+	LDAP-NAME       {"schemaModificationAttributes"}
+	LDAP-DESC       "a special entry tracking schema modification attributes"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 10 }
+}
+
+tlsKeyInfo OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            auxiliary
+	MUST CONTAIN    {privateKeyFormat | keyAlgorithm | privateKey | publicKeyFormat | publicKey}
+	LDAP-NAME       {"tlsKeyInfo"}
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 11 }
+}
+
+changeLogEvent OBJECT-CLASS ::= {
+	MUST CONTAIN    {changeTime | changeType | rev | committer}
+	LDAP-NAME       {"changeLogEvent"}
+	LDAP-DESC       "represents change events"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 12 }
+}
+
+tag OBJECT-CLASS ::= {
+	MUST CONTAIN    {rev}
+	MAY CONTAIN     {description}
+	LDAP-NAME       {"tag"}
+	LDAP-DESC       "represents a Tag in change log"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 13 }
+}
+
+apacheServiceConfiguration OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            structural
+	MUST CONTAIN    {commonName | apacheServicePid}
+	MAY CONTAIN     {apacheServiceFactoryPid}
+	LDAP-NAME       {"apacheServiceConfiguration"}
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 3 }
+}
+
+apacheFactoryConfiguration OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	MUST CONTAIN    {commonName | apacheServicePid}
+	LDAP-NAME       {"apacheFactoryConfiguration"}
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 4 }
+}
+
+apacheCatalogEntry OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	MUST CONTAIN    {commonName | apacheCatalogEntryBaseDn}
+	MAY CONTAIN     {apacheCatalogEntryName}
+	LDAP-NAME       {"apacheCatalogEntry"}
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 5 }
+}
+
+windowsFile OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	MUST CONTAIN    {windowsFilePath}
+	LDAP-NAME       {"windowsFile"}
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 6 }
+}
+
+unixFile OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            structural
+	MUST CONTAIN    {unixFilePath}
+	LDAP-NAME       {"unixFile"}
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 7 }
+}
+
+javaClass OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            structural
+	MUST CONTAIN    {fullyQualifiedJavaClassName | javaClassByteCode}
+	LDAP-NAME       {"javaClass"}
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 8 }
+}
+
+apacheSubschema OBJECT-CLASS ::= {
+	SUBCLASS OF     {subschema}
+	KIND            auxiliary
+	MAY CONTAIN     {comparators | normalizers | syntaxCheckers}
+	LDAP-NAME       {"apacheSubschema"}
+	LDAP-DESC       "RFC2252 extension for controlling subschema (sub)entry in ApacheDS"
+	ID              { 1 3 6 1 4 1 18060 0 4 1 3 9 }
+}
+
+storedProcUnit OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            abstract
+	MUST CONTAIN    {storedProcLangId | storedProcUnitName}
+	LDAP-NAME       {"storedProcUnit"}
+	ID              { 1 3 6 1 4 1 18060 0 4 1 5 3 }
+}
+
+javaStoredProcUnit OBJECT-CLASS ::= {
+	SUBCLASS OF     {storedProcUnit}
+	KIND            structural
+	MUST CONTAIN    {javaByteCode}
+	LDAP-NAME       {"javaStoredProcUnit"}
+	ID              { 1 3 6 1 4 1 18060 0 4 1 5 5 }
+}
+
+javaxScriptStoredProcUnit OBJECT-CLASS ::= {
+	SUBCLASS OF     {storedProcUnit}
+	KIND            structural
+	MUST CONTAIN    {javaxScriptLangId | javaxScriptCode}
+	LDAP-NAME       {"javaxScriptStoredProcUnit"}
+	ID              { 1 3 6 1 4 1 18060 0 4 1 5 8 }
+}
+
+-- accessControlSubentry OBJECT-CLASS ::= {
+-- 	KIND            auxiliary
+-- 	MUST CONTAIN    {prescriptiveACI}
+-- 	LDAP-NAME       {"accessControlSubentry"}
+-- 	ID              { 2 5 17 1 }
+-- }
+
+END

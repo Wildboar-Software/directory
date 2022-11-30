@@ -1,0 +1,123 @@
+RFC2739Calendar {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) rfc-2739-calendar(8)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    ATTRIBUTE, OBJECT-CLASS, top
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	ia5String, caseIgnoreIA5Match, caseIgnoreIA5SubstringsMatch
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+    ;
+
+msat OBJECT IDENTIFIER ::= { 1 2 840 113556 1 4 }
+msoc OBJECT IDENTIFIER ::= { 1 2 840 113556 1 5 }
+
+calCalURI ATTRIBUTE ::= {
+    WITH SYNTAX                 IA5String
+    EQUALITY MATCHING RULE      caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 ia5String.&id
+    LDAP-NAME                   {"calCalURI"}
+    ID { msat 478 }
+}
+
+calFBURL ATTRIBUTE ::= {
+    WITH SYNTAX                 IA5String
+    EQUALITY MATCHING RULE      caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 ia5String.&id
+    LDAP-NAME                   {"calFBURL"}
+    ID { msat 479 }
+}
+
+calCAPURI ATTRIBUTE ::= {
+    WITH SYNTAX                 IA5String
+    EQUALITY MATCHING RULE      caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 ia5String.&id
+    LDAP-NAME                   {"calCAPURI"}
+    ID { msat 480 }
+}
+
+calCalAdrURI ATTRIBUTE ::= {
+    WITH SYNTAX                 IA5String
+    EQUALITY MATCHING RULE      caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 ia5String.&id
+    LDAP-NAME                   {"calCalAdrURI"}
+    ID { msat 481 }
+}
+
+calOtherCalURIs ATTRIBUTE ::= {
+    WITH SYNTAX                 IA5String
+    EQUALITY MATCHING RULE      caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+    LDAP-SYNTAX                 ia5String.&id
+    LDAP-NAME                   {"calOtherCalURIs"}
+    ID { msat 482 }
+}
+
+calOtherFBURLs ATTRIBUTE ::= {
+    WITH SYNTAX                 IA5String
+    EQUALITY MATCHING RULE      caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+    LDAP-SYNTAX                 ia5String.&id
+    LDAP-NAME                   {"calOtherFBURLs"}
+    ID { msat 483 }
+}
+
+calOtherCAPURIs ATTRIBUTE ::= {
+    WITH SYNTAX                 IA5String
+    EQUALITY MATCHING RULE      caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+    LDAP-SYNTAX                 ia5String.&id
+    LDAP-NAME                   {"calOtherCAPURIs"}
+    ID { msat 484 }
+}
+
+calOtherCalAdrURIs ATTRIBUTE ::= {
+    WITH SYNTAX                 IA5String
+    EQUALITY MATCHING RULE      caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+    LDAP-SYNTAX                 ia5String.&id
+    LDAP-NAME                   {"calOtherCalAdrURIs"}
+    ID { msat 485 }
+}
+
+calEntry OBJECT-CLASS ::= {
+    SUBCLASS OF     {top}
+    KIND            auxiliary
+    MAY CONTAIN {
+        calCalURI
+        | calFBURL
+        | calCAPURI
+        | calCalAdrURI
+        | calOtherCalURIs
+        | calOtherFBURLs
+        | calOtherCAPURIs
+        | calOtherCalAdrURIs
+    }
+    LDAP-NAME       {"calEntry"}
+    LDAP-DESC       "Calendering and free/busy information"
+    ID              { msoc 87 }
+}
+
+END

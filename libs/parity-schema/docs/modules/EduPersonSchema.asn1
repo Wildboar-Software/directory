@@ -1,0 +1,221 @@
+-- Origin: http://middleware.internet2.edu/eduperson/
+EduPersonSchema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) edu-person-schema(48)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    ATTRIBUTE, OBJECT-CLASS, DistinguishedName, distinguishedNameMatch
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+    UnboundedDirectoryString, dn, directoryString,
+    caseExactMatch, caseExactOrderingMatch, caseExactSubstringsMatch,
+    caseIgnoreMatch, caseIgnoreOrderingMatch, caseIgnoreSubstringsMatch
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    ;
+
+id-at-eduPersonAffiliation          OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 5923 1 1 1 1 }
+id-at-eduPersonNickName             OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 5923 1 1 1 2 }
+id-at-eduPersonOrgDN                OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 5923 1 1 1 3 }
+id-at-eduPersonOrgUnitDN            OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 5923 1 1 1 4 }
+id-at-eduPersonPrimaryAffiliation   OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 5923 1 1 1 5 }
+id-at-eduPersonPrincipalName        OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 5923 1 1 1 6 }
+id-at-eduPersonEntitlement          OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 5923 1 1 1 7 }
+id-at-eduPersonPrimaryOrgUnitDN     OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 5923 1 1 1 8 }
+id-at-eduPersonScopedAffiliation    OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 5923 1 1 1 9 }
+id-at-eduPersonTargetedID           OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 5923 1 1 1 10 }
+id-at-eduPersonAssurance            OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 5923 1 1 1 11 }
+id-at-eduPersonPrincipalNamePrior   OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 5923 1 1 1 12 }
+id-at-eduPersonUniqueId             OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 5923 1 1 1 13 }
+id-at-eduPersonOrcid                OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 5923 1 1 1 16 }
+
+eduPersonAffiliation ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"eduPersonAffiliation"}
+	LDAP-DESC					"Affiliation"
+    ID                          id-at-eduPersonAffiliation
+}
+
+eduPersonNickName ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"eduPersonNickName"}
+	LDAP-DESC					"NickName"
+    ID                          id-at-eduPersonNickName
+}
+
+eduPersonOrgDN ATTRIBUTE ::= {
+    WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"eduPersonOrgDN"}
+	LDAP-DESC					"Organization DN"
+    ID                          id-at-eduPersonOrgDN
+}
+
+eduPersonOrgUnitDN ATTRIBUTE ::= {
+    WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"eduPersonOrgUnitDN"}
+	LDAP-DESC					"Organizational Unit DN"
+    ID                          id-at-eduPersonOrgUnitDN
+}
+
+eduPersonPrimaryAffiliation ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"eduPersonPrimaryAffiliation"}
+	LDAP-DESC					"Primary Affiliation"
+    ID                          id-at-eduPersonPrimaryAffiliation
+}
+
+eduPersonPrincipalName ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"eduPersonPrincipalName"}
+	LDAP-DESC					"Principal Name"
+    ID                          id-at-eduPersonPrincipalName
+}
+
+eduPersonEntitlement ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseExactMatch
+    ORDERING MATCHING RULE      caseExactOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"eduPersonEntitlement"}
+	LDAP-DESC					"Entitlement"
+    ID                          id-at-eduPersonEntitlement
+}
+
+eduPersonPrimaryOrgUnitDN ATTRIBUTE ::= {
+    WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"eduPersonPrimaryOrgUnitDN"}
+	LDAP-DESC					"Primary Organizational Unit"
+    ID                          id-at-eduPersonPrimaryOrgUnitDN
+}
+
+eduPersonScopedAffiliation ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"eduPersonScopedAffiliation"}
+	LDAP-DESC					"Scoped Affiliation"
+    ID                          id-at-eduPersonScopedAffiliation
+}
+
+eduPersonTargetedID ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseExactMatch
+    ORDERING MATCHING RULE      caseExactOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"eduPersonTargetedID"}
+	LDAP-DESC					"eduPerson per Internet2 and EDUCAUSE"
+    ID                          id-at-eduPersonTargetedID
+}
+
+eduPersonAssurance ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseExactMatch
+    ORDERING MATCHING RULE      caseExactOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseExactSubstringsMatch
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"eduPersonAssurance"}
+	LDAP-DESC					"eduPerson per Internet2 and EDUCAUSE"
+    ID                          id-at-eduPersonAssurance
+}
+
+eduPersonPrincipalNamePrior ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"eduPersonPrincipalNamePrior"}
+	LDAP-DESC					"eduPersonPrincipalNamePrior per Internet2"
+    ID                          id-at-eduPersonPrincipalNamePrior
+}
+
+eduPersonUniqueId ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"eduPersonUniqueId"}
+	LDAP-DESC					"eduPersonUniqueId per Internet2"
+    ID                          id-at-eduPersonUniqueId
+}
+
+eduPersonOrcid ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"eduPersonOrcid"}
+	LDAP-DESC					"ORCID researcher identifiers belonging to the principal"
+    ID                          id-at-eduPersonOrcid
+}
+
+eduPerson OBJECT-CLASS ::= {
+	KIND            auxiliary
+	MAY CONTAIN     {
+        eduPersonAffiliation
+        | eduPersonNickName
+        | eduPersonOrgDN
+        | eduPersonOrgUnitDN
+        | eduPersonPrimaryAffiliation
+        | eduPersonPrincipalName
+        | eduPersonEntitlement
+        | eduPersonPrimaryOrgUnitDN
+        | eduPersonScopedAffiliation
+        | eduPersonTargetedID
+        | eduPersonAssurance
+        | eduPersonPrincipalNamePrior
+        | eduPersonUniqueId
+        | eduPersonOrcid
+    }
+	LDAP-NAME       {"eduPerson"}
+	ID              { 1 3 6 1 4 1 5923 1 1 2 }
+}
+
+END

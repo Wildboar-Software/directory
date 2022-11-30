@@ -1,0 +1,613 @@
+RFC7612Printer {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) rfc-7612-printer(12)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    id-nf
+        FROM Wildboar
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) wildboar(1)}
+        WITH SUCCESSORS
+
+    ATTRIBUTE, OBJECT-CLASS, NAME-FORM, top
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+    caseIgnoreMatch, caseIgnoreOrderingMatch, caseIgnoreSubstringsMatch,
+    booleanMatch, integerMatch, integerOrderingMatch, directoryString, integer,
+    boolean, UnboundedDirectoryString
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+    ;
+
+-- Attributes
+
+printer-uri ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-uri"}
+    LDAP-DESC                   "A URI supported by this Printer."
+    ID                          { 1 3 18 0 2 4 1140 }
+}
+
+printer-xri-supported ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-xri-supported"}
+    LDAP-DESC                   "An XRI (extended resource identifier) supported by this Printer."
+    ID                          { 1 3 18 0 2 4 1107 }
+}
+
+printer-name ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-name"}
+    LDAP-DESC                   "The site-specific administrative name of this Printer."
+    ID                          { 1 3 18 0 2 4 1135 }
+}
+
+printer-natural-language-configured ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-natural-language-configured"}
+    LDAP-DESC                   "The configured natural language for LDAP attributes of syntax DirectoryString (UTF-8) in this directory entry."
+    ID                          { 1 3 18 0 2 4 1119 }
+}
+
+printer-location ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-location"}
+    LDAP-DESC                   "The physical location of this Printer."
+    ID                          { 1 3 18 0 2 4 1136 }
+}
+
+printer-info ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-info"}
+    LDAP-DESC                   "Descriptive information about this Printer."
+    ID                          { 1 3 18 0 2 4 1139 }
+}
+
+printer-more-info ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-more-info"}
+    LDAP-DESC                   "A URI for more information about this specific Printer."
+    ID                          { 1 3 18 0 2 4 1134 }
+}
+
+printer-make-and-model ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-make-and-model"}
+    LDAP-DESC                   "Make and model of this Printer."
+    ID                          { 1 3 18 0 2 4 1138 }
+}
+
+printer-ipp-versions-supported ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-ipp-versions-supported"}
+    LDAP-DESC                   "Comma-delimited list of IPP versions supported by this Printer."
+    ID                          { 1 3 18 0 2 4 1133 }
+}
+
+printer-multiple-document-jobs-supported ATTRIBUTE ::= {
+    WITH SYNTAX                 BOOLEAN
+    EQUALITY MATCHING RULE      booleanMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 boolean.&id
+    LDAP-NAME                   {"printer-multiple-document-jobs-supported"}
+    LDAP-DESC                   "Indicates whether or not this Printer supports more than one document per job."
+    ID                          { 1 3 18 0 2 4 1132 }
+}
+
+printer-charset-configured ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-charset-configured"}
+    LDAP-DESC                   "The configured charset for IPP protocol values of error and status messages generated by this Printer."
+    ID                          { 1 3 18 0 2 4 1109 }
+}
+
+printer-charset-supported ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-charset-supported"}
+    LDAP-DESC                   "One of the charsets supported for IPP protocol values of IPP string attributes that correspond to attributes of syntax DirectoryString (UTF-8) for this directory entry."
+    ID                          { 1 3 18 0 2 4 1131 }
+}
+
+printer-generated-natural-language-supported ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-generated-natural-language-supported"}
+    LDAP-DESC                   "One of the natural languages supported for LDAP attributes of syntax DirectoryString (UTF-8) in this directory entry."
+    ID                          { 1 3 18 0 2 4 1137 }
+}
+
+printer-document-format-supported ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-document-format-supported"}
+    LDAP-DESC                   "One of the source document formats that can be interpreted and printed by this Printer."
+    ID                          { 1 3 18 0 2 4 1130 }
+}
+
+printer-color-supported ATTRIBUTE ::= {
+    WITH SYNTAX                 BOOLEAN
+    EQUALITY MATCHING RULE      booleanMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 boolean.&id
+    LDAP-NAME                   {"printer-color-supported"}
+    LDAP-DESC                   "Indicates whether or not this Printer is capable of any type of color printing at all, including highlight color."
+    ID                          { 1 3 18 0 2 4 1129 }
+}
+
+printer-compression-supported ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-compression-supported"}
+    LDAP-DESC                   "Comma-delimited list of compression algorithms supported by this Printer."
+    ID                          { 1 3 18 0 2 4 1128 }
+}
+
+printer-pages-per-minute ATTRIBUTE ::= {
+    WITH SYNTAX                 INTEGER (0..MAX)
+    EQUALITY MATCHING RULE      integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 integer.&id
+    LDAP-NAME                   {"printer-pages-per-minute"}
+    LDAP-DESC                   "The nominal number of pages per minute that can be output by this Printer."
+    ID                          { 1 3 18 0 2 4 1127 }
+}
+
+printer-pages-per-minute-color ATTRIBUTE ::= {
+    WITH SYNTAX                 INTEGER (0..MAX)
+    EQUALITY MATCHING RULE      integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 integer.&id
+    LDAP-NAME                   {"printer-pages-per-minute-color"}
+    LDAP-DESC                   "The nominal number of color pages per minute that can be output by this Printer.."
+    ID                          { 1 3 18 0 2 4 1126 }
+}
+
+printer-finishings-supported ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-finishings-supported"}
+    LDAP-DESC                   "Comma-delimited list of finishing operations supported by this Printer."
+    ID                          { 1 3 18 0 2 4 1125 }
+}
+
+printer-number-up-supported ATTRIBUTE ::= {
+    WITH SYNTAX                 INTEGER (0..MAX)
+    EQUALITY MATCHING RULE      integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 integer.&id
+    LDAP-NAME                   {"printer-number-up-supported"}
+    LDAP-DESC                   "Maximum number of print-stream pages that can be imposed upon a single side of an instance of a selected medium by this Printer."
+    ID                          { 1 3 18 0 2 4 1124 }
+}
+
+printer-sides-supported ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-sides-supported"}
+    LDAP-DESC                   "Comma-delimited list of impression sides (one or two) and the two-sided impression rotations supported by this Printer."
+    ID                          { 1 3 18 0 2 4 1123 }
+}
+
+printer-media-supported ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-media-supported"}
+    LDAP-DESC                   "One of the names/sizes/types/colors of the media supported by this Printer."
+    ID                          { 1 3 18 0 2 4 1122 }
+}
+
+printer-media-local-supported ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-media-local-supported"}
+    LDAP-DESC                   "One of the site-specific media supported by this Printer."
+    ID                          { 1 3 18 0 2 4 1117 }
+}
+
+printer-resolution-supported ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-resolution-supported"}
+    LDAP-DESC                   "One of the resolutions supported for printing documents by this Printer."
+    ID                          { 1 3 18 0 2 4 1121 }
+}
+
+printer-print-quality-supported ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-print-quality-supported"}
+    LDAP-DESC                   "Comma-delimited list of print qualities supported for printing documents on this Printer."
+    ID                          { 1 3 18 0 2 4 1120 }
+}
+
+printer-job-priority-supported ATTRIBUTE ::= {
+    WITH SYNTAX                 INTEGER (0..MAX) -- This is the _number_ of levels, not the min or max level itself.
+    EQUALITY MATCHING RULE      integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 integer.&id
+    LDAP-NAME                   {"printer-job-priority-supported"}
+    LDAP-DESC                   "Indicates the number of job priority levels supported by this Printer."
+    ID                          { 1 3 18 0 2 4 1110 }
+}
+
+printer-copies-supported ATTRIBUTE ::= {
+    WITH SYNTAX                 INTEGER (0..MAX) -- This is the _number_ of levels, not the min or max level itself.
+    EQUALITY MATCHING RULE      integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 integer.&id
+    LDAP-NAME                   {"printer-copies-supported"}
+    LDAP-DESC                   "The maximum number of copies of a document that can be printed as a single job on this Printer."
+    ID                          { 1 3 18 0 2 4 1118 }
+}
+
+printer-job-k-octets-supported ATTRIBUTE ::= {
+    WITH SYNTAX                 INTEGER (0..MAX) -- This is the _number_ of levels, not the min or max level itself.
+    EQUALITY MATCHING RULE      integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 integer.&id
+    LDAP-NAME                   {"printer-job-k-octets-supported"}
+    LDAP-DESC                   "The maximum size of an incoming print job that this Printer will accept, in kilobytes (1,024 octets)."
+    ID                          { 1 3 18 0 2 4 1111 }
+}
+
+printer-current-operator ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-current-operator"}
+    LDAP-DESC                   "The identity of the current human operator responsible for operating this Printer."
+    ID                          { 1 3 18 0 2 4 1112 }
+}
+
+printer-service-person ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-service-person"}
+    LDAP-DESC                   "The identity of the current human service person responsible for servicing this Printer."
+    ID                          { 1 3 18 0 2 4 1113 }
+}
+
+printer-delivery-orientation-supported ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-delivery-orientation-supported"}
+    LDAP-DESC                   "Comma-delimited list of delivery orientations of pages as they are printed and ejected supported by this Printer."
+    ID                          { 1 3 18 0 2 4 1114 }
+}
+
+printer-stacking-order-supported ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-stacking-order-supported"}
+    LDAP-DESC                   "Comma-delimited list of stacking orders of pages as they are printed and ejected supported by this Printer."
+    ID                          { 1 3 18 0 2 4 1115 }
+}
+
+printer-output-features-supported ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-output-features-supported"}
+    LDAP-DESC                   "Comma-delimited list of output features supported by this Printer."
+    ID                          { 1 3 18 0 2 4 1116 }
+}
+
+printer-aliases ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-aliases"}
+    LDAP-DESC                   "One of the site-specific administrative names of this Printer in addition to the value specified for printer-name."
+    ID                          { 1 3 18 0 2 4 1108 }
+}
+
+printer-device-id ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-device-id"}
+    LDAP-DESC                   "The IEEE 1284 Device ID for this Printer."
+    ID                          { 1 3 18 0 2 24 46 1 101 }
+}
+
+printer-device-service-count ATTRIBUTE ::= {
+    WITH SYNTAX                 INTEGER (0..MAX)
+    EQUALITY MATCHING RULE      integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 integer.&id
+    LDAP-NAME                   {"printer-device-service-count"}
+    LDAP-DESC                   "The number of Printer (print service) instances configured on this Imaging Device (host system)."
+    ID                          { 1 3 18 0 2 24 46 1 102 }
+}
+
+printer-uuid ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-uuid"}
+    LDAP-DESC                   "A URN specifying the UUID of this Printer (print service) instance on this Imaging Device (host system)."
+    ID                          { 1 3 18 0 2 24 46 1 104 }
+}
+
+printer-charge-info ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-charge-info"}
+    LDAP-DESC                   "Descriptive information about paid printing services for this Printer."
+    ID                          { 1 3 18 0 2 24 46 1 105 }
+}
+
+printer-charge-info-uri ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-charge-info-uri"}
+    LDAP-DESC                   "A URI for a human-readable Web page for paid printing services for this Printer."
+    ID                          { 1 3 18 0 2 24 46 1 106 }
+}
+
+printer-geo-location ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-geo-location"}
+    LDAP-DESC                   "A geo: URI specifying the geographic location of this Printer."
+    ID                          { 1 3 18 0 2 24 46 1 107 }
+}
+
+printer-ipp-features-supported ATTRIBUTE ::= {
+    WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"printer-ipp-features-supported"}
+    LDAP-DESC                   "Comma-delimited list of IPP protocol features that this Printer supports."
+    ID                          { 1 3 18 0 2 24 46 1 108 }
+}
+
+-- Object Classes
+
+printerLPR OBJECT-CLASS ::= {
+    SUBCLASS OF         {top}
+    KIND                auxiliary
+    MUST CONTAIN        {printer-name}
+    MAY CONTAIN         {printer-aliases}
+    LDAP-NAME           {"printerLPR"}
+    LDAP-DESC           "LPR information."
+    ID                  { 1 3 18 0 2 6 253 }
+}
+
+slpServicePrinter OBJECT-CLASS ::= {
+    SUBCLASS OF         {slpService}
+    KIND                auxiliary
+    LDAP-NAME           {"slpServicePrinter"}
+    LDAP-DESC           "Service Location Protocol (SLP) information."
+    ID                  { 1 3 18 0 2 6 254 }
+}
+
+printerService OBJECT-CLASS ::= {
+    SUBCLASS OF         {printerAbstract}
+    KIND                structrual
+    MAY CONTAIN         {printer-uri | printer-xri-supported}
+    LDAP-NAME           {"printerService"}
+    LDAP-DESC           "Printer information."
+    ID                  { 1 3 18 0 2 6 255 }
+}
+
+printerIPP OBJECT-CLASS ::= {
+    SUBCLASS OF         {top}
+    KIND                auxiliary
+    MAY CONTAIN         {
+        printer-ipp-versions-supported
+        | printer-ipp-features-supported
+        | printer-multiple-document-jobs-supported
+    }
+    LDAP-NAME           {"printerIPP"}
+    LDAP-DESC           "Internet Printing Protocol (IPP) information."
+    ID                  { 1 3 18 0 2 6 256 }
+}
+
+printerServiceAuxClass OBJECT-CLASS ::= {
+    SUBCLASS OF         {printerAbstract}
+    KIND                auxiliary
+    MAY CONTAIN         {printer-uri | printer-xri-supported}
+    LDAP-NAME           {"printerServiceAuxClass"}
+    LDAP-DESC           "Printer information."
+    ID                  { 1 3 18 0 2 6 257 }
+}
+
+printerAbstract OBJECT-CLASS ::= {
+    SUBCLASS OF         {top}
+    KIND                abstract
+    MAY CONTAIN         {
+        printer-name
+        | printer-natural-language-configured
+        | printer-location
+        | printer-info
+        | printer-more-info
+        | printer-make-and-model
+        | printer-multiple-document-jobs-supported
+        | printer-charset-configured
+        | printer-charset-supported
+        | printer-generated-natural-language-supported
+        | printer-document-format-supported
+        | printer-color-supported
+        | printer-compression-supported
+        | printer-pages-per-minute
+        | printer-pages-per-minute-color
+        | printer-finishings-supported
+        | printer-number-up-supported
+        | printer-sides-supported
+        | printer-media-supported
+        | printer-media-local-supported
+        | printer-resolution-supported
+        | printer-print-quality-supported
+        | printer-job-priority-supported
+        | printer-copies-supported
+        | printer-job-k-octets-supported
+        | printer-current-operator
+        | printer-service-person
+        | printer-delivery-orientation-supported
+        | printer-stacking-order-supported
+        | printer-output-features-supported
+        | printer-device-id
+        | printer-device-service-count
+        | printer-uuid
+        | printer-charge-info
+        | printer-charge-info-uri
+        | printer-geo-location
+    }
+    LDAP-NAME           {"printerAbstract"}
+    LDAP-DESC           "Printer-related information."
+    ID                  { 1 3 18 0 2 6 258 }
+}
+
+-- Name Forms
+
+printerServiceNameForm NAME-FORM ::= {
+    NAMES               printerService
+    WITH ATTRIBUTES     {printer-name} -- Comes from the parent abstract class.
+    AND OPTIONALLY      {printer-uuid}
+    LDAP-NAME           {"printerServiceNameForm"}
+    LDAP-DESC           "Name form for a printer service."
+    ID                  { id-nf 4 }
+}
+
+END

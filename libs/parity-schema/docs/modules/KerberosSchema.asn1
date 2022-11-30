@@ -1,0 +1,642 @@
+KerberosSchema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) kerberos-schema(50)
+}
+DEFINITIONS
+EXPLICIT TAGS
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    id-nf
+        FROM Wildboar
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) wildboar(1)}
+        WITH SUCCESSORS
+
+    ATTRIBUTE, OBJECT-CLASS, DistinguishedName, distinguishedNameMatch, top
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	UnboundedDirectoryString, distinguishedName, boolean, integer, dn,
+    directoryString, ia5String, octetString, caseIgnoreMatch,
+    caseIgnoreOrderingMatch, caseIgnoreSubstringsMatch, booleanMatch,
+    integerMatch, integerOrderingMatch, octetStringMatch, caseExactIA5Match,
+    generalizedTime, generalizedTimeMatch, generalizedTimeOrderingMatch,
+    commonName
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    ;
+
+id-kerberos OBJECT IDENTIFIER ::= {
+    joint-iso-ccitt(2)
+    country(16)
+    us(840)
+    organization(1)
+    novell(113719)
+    applications(1)
+    kerberos(301)
+}
+
+id-at   OBJECT IDENTIFIER ::= { id-kerberos 4 }
+id-lsx  OBJECT IDENTIFIER ::= { id-kerberos 5 }
+id-oc   OBJECT IDENTIFIER ::= { id-kerberos 6 }
+
+krbPrincipalName ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseExactIA5Match
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"krbPrincipalName"}
+    LDAP-DESC                   "This is the principal name in the RFC 1964 specified format"
+    ID                          { id-at 1 1 }
+}
+
+krbPrincipalType ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER
+    EQUALITY MATCHING RULE 		integerMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"krbPrincipalType"}
+    LDAP-DESC                   "This specifies the type of the principal, the types could be any of the types mentioned in section 6.2 of RFC 4120"
+    ID                          { id-at 3 1 }
+}
+
+krbUPEnabled ATTRIBUTE ::= {
+    WITH SYNTAX 				BOOLEAN
+    EQUALITY MATCHING RULE 		booleanMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				boolean.&id
+	LDAP-NAME 					{"krbUPEnabled"}
+    LDAP-DESC                   "TRUE, if User Password is to be used as the kerberos password; FALSE, if User Password and the kerberos password are different."
+    ID                          { id-at 3 1 }
+}
+
+krbPrincipalExpiration ATTRIBUTE ::= {
+    WITH SYNTAX 				GeneralizedTime
+    EQUALITY MATCHING RULE 		generalizedTimeMatch
+    ORDERING MATCHING RULE      generalizedTimeOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				generalizedTime.&id
+	LDAP-NAME 					{"krbPrincipalExpiration"}
+    LDAP-DESC                   "The time at which the principal expires"
+    ID                          { id-at 6 1 }
+}
+
+krbTicketFlags ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER
+    EQUALITY MATCHING RULE 		integerMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"krbTicketFlags"}
+    LDAP-DESC                   "holds information about the kerberos flags, per RFC 4120, for a principal"
+    ID                          { id-at 8 1 }
+}
+
+krbMaxTicketLife ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"krbMaxTicketLife"}
+    LDAP-DESC                   "The maximum ticket lifetime for a principal in seconds"
+    ID                          { id-at 9 1 }
+}
+
+krbMaxRenewableAge ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"krbMaxRenewableAge"}
+    LDAP-DESC                   "Maximum renewable lifetime for a principal's ticket in seconds"
+    ID                          { id-at 10 1 }
+}
+
+krbRealmReferences ATTRIBUTE ::= {
+    WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"krbRealmReferences"}
+    LDAP-DESC                   "Forward reference to the Realm object. FDN of the krbRealmContainer object."
+    ID                          { id-at 14 1 }
+}
+
+krbLdapServers ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"krbLdapServers"}
+    LDAP-DESC                   "List of LDAP servers that kerberos servers can contact, in URI format."
+    ID                          { id-at 15 1 }
+}
+
+krbKdcServers ATTRIBUTE ::= {
+    WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"krbKdcServers"}
+    LDAP-DESC                   "A set of forward references to the KDC Service objects. FDNs of the krbKdcService objects."
+    ID                          { id-at 17 1 }
+}
+
+krbPwdServers ATTRIBUTE ::= {
+    WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"krbPwdServers"}
+    LDAP-DESC                   "A set of forward references to the Password Service objects. FDNs of the krbPwdService objects."
+    ID                          { id-at 18 1 }
+}
+
+krbHostServer ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseExactIA5Match
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"krbHostServer"}
+    LDAP-DESC                   "This attribute holds the Host Name or the ip address, transport protocol and ports of the kerberos service host. The format is host_name-or-ip_address#protocol#port. Protocol can be 0 or 1. 0 is for UDP. 1 is for TCP."
+    ID                          { id-at 24 1 }
+}
+
+SearchScope ::= INTEGER {
+    oneLevel (1),
+    subtree (2)
+}
+
+krbSearchScope ATTRIBUTE ::= {
+    WITH SYNTAX                 SearchScope
+    EQUALITY MATCHING RULE 		integerMatch
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"krbSearchScope"}
+    LDAP-DESC                   "This attribute holds the scope for searching the principals"
+    ID                          { id-at 25 1 }
+}
+
+krbPrincipalReferences ATTRIBUTE ::= {
+    WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"krbPrincipalReferences"}
+    LDAP-DESC                   "FDNs pointing to Kerberos principals."
+    ID                          { id-at 26 1 }
+}
+
+PrincipalNamingAttrSyntax ::= UTF8String ("cn", "sn", "uid", "givenname", "fullname")
+
+krbPrincNamingAttr ATTRIBUTE ::= {
+    WITH SYNTAX 				PrincipalNamingAttrSyntax
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"krbPrincNamingAttr"}
+    LDAP-DESC                   "This attribute specifies which attribute of the user objects are to be used as the principal name component for Kerberos. The allowed values are cn, sn, uid, givenname, fullname."
+    ID                          { id-at 28 1 }
+}
+
+krbAdmServers ATTRIBUTE ::= {
+    WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"krbAdmServers"}
+    LDAP-DESC                   "A set of forward references to the Administration Service objects. FDNs of the krbAdmService objects."
+    ID                          { id-at 29 1 }
+}
+
+krbMaxPwdLife ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (1..MAX)
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"krbMaxPwdLife"}
+    LDAP-DESC                   "Maximum lifetime of a principal's password in seconds"
+    ID                          { id-at 30 1 }
+}
+
+krbMinPwdLife ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (1..MAX)
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"krbMinPwdLife"}
+    LDAP-DESC                   "Minimum lifetime of a principal's password in seconds"
+    ID                          { id-at 31 1 }
+}
+
+krbPwdMinDiffChars ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (0..MAX)
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"krbPwdMinDiffChars"}
+    LDAP-DESC                   "Minimum number of character clases allowed in a password"
+    ID                          { id-at 32 1 }
+}
+
+krbPwdMinLength ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (1..MAX)
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"krbPwdMinLength"}
+    LDAP-DESC                   "Minimum length of the password"
+    ID                          { id-at 33 1 }
+}
+
+krbPwdHistoryLength ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (0..MAX)
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"krbPwdHistoryLength"}
+    LDAP-DESC                   "Minimum length of the password"
+    ID                          { id-at 34 1 }
+}
+
+krbPwdPolicyReference ATTRIBUTE ::= {
+    WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"krbPwdPolicyReference"}
+    LDAP-DESC                   "FDN pointing to a Kerberos Password Policy object."
+    ID                          { id-at 36 1 }
+}
+
+krbPasswordExpiration ATTRIBUTE ::= {
+    WITH SYNTAX 				GeneralizedTime
+    EQUALITY MATCHING RULE 		generalizedTimeMatch
+    ORDERING MATCHING RULE      generalizedTimeOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				generalizedTime.&id
+	LDAP-NAME 					{"krbPasswordExpiration"}
+    LDAP-DESC                   "The time at which the principal's password expires"
+    ID                          { id-at 37 1 }
+}
+
+krbPrincipalKey ATTRIBUTE ::= {
+    WITH SYNTAX 				OCTET STRING
+    EQUALITY MATCHING RULE      octetStringMatch
+	LDAP-SYNTAX 				octetString.&id
+	LDAP-NAME 					{"krbPrincipalKey"}
+    LDAP-DESC                   "This attribute holds the principal's key (krbPrincipalKey) that is encrypted with the master key (krbMKey)."
+    ID                          { id-at 39 1 }
+}
+
+krbTicketPolicyReference ATTRIBUTE ::= {
+    WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"krbTicketPolicyReference"}
+    LDAP-DESC                   "FDN pointing to a Kerberos Ticket Policy object."
+    ID                          { id-at 40 1 }
+}
+
+krbSubTrees ATTRIBUTE ::= {
+    WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"krbSubTrees"}
+    LDAP-DESC                   "Forward reference to an entry that starts sub-trees where principals and other kerberos objects in the realm are configured."
+    ID                          { id-at 41 1 }
+}
+
+krbDefaultEncSaltTypes ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"krbDefaultEncSaltTypes"}
+    LDAP-DESC                   "Holds the default encryption/salt type combinations of principals for the Realm. Stores in the form of key:salt strings. Example: des-cbc-crc:normal"
+    ID                          { id-at 42 1 }
+}
+
+krbSupportedEncSaltTypes ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"krbSupportedEncSaltTypes"}
+    LDAP-DESC                   "Holds the Supported encryption/salt type combinations of principals for the Realm. Stores in the form of key:salt strings. The supported encryption types are mentioned in IETF RFC 3961."
+    ID                          { id-at 43 1 }
+}
+
+krbPwdHistory ATTRIBUTE ::= {
+    WITH SYNTAX 				OCTET STRING
+    EQUALITY MATCHING RULE      octetStringMatch
+	LDAP-SYNTAX 				octetString.&id
+	LDAP-NAME 					{"krbPwdHistory"}
+    LDAP-DESC                   "This attribute holds the principal's old keys (krbPwdHistory) that is encrypted with the kadmin/history key."
+    ID                          { id-at 44 1 }
+}
+
+krbLastPwdChange ATTRIBUTE ::= {
+    WITH SYNTAX 				GeneralizedTime
+    EQUALITY MATCHING RULE 		generalizedTimeMatch
+    ORDERING MATCHING RULE      generalizedTimeOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				generalizedTime.&id
+	LDAP-NAME 					{"krbLastPwdChange"}
+    LDAP-DESC                   "The time at which the principal's password last password change happened."
+    ID                          { id-at 45 1 }
+}
+
+krbMKey ATTRIBUTE ::= {
+    WITH SYNTAX 				OCTET STRING
+    EQUALITY MATCHING RULE      octetStringMatch
+	LDAP-SYNTAX 				octetString.&id
+	LDAP-NAME 					{"krbMKey"}
+    LDAP-DESC                   "This attribute holds the kerberos master key."
+    ID                          { id-at 46 1 }
+}
+
+krbPrincipalAliases ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseExactIA5Match
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"krbPrincipalAliases"}
+    LDAP-DESC                   "This stores the alternate principal names for the principal in the RFC 1961 specified format"
+    ID                          { id-at 47 1 }
+}
+
+krbLastSuccessfulAuth ATTRIBUTE ::= {
+    WITH SYNTAX 				GeneralizedTime
+    EQUALITY MATCHING RULE 		generalizedTimeMatch
+    ORDERING MATCHING RULE      generalizedTimeOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				generalizedTime.&id
+	LDAP-NAME 					{"krbLastSuccessfulAuth"}
+    LDAP-DESC                   "The time at which the principal's last successful authentication happened."
+    ID                          { id-at 48 1 }
+}
+
+krbLastFailedAuth ATTRIBUTE ::= {
+    WITH SYNTAX 				GeneralizedTime
+    EQUALITY MATCHING RULE 		generalizedTimeMatch
+    ORDERING MATCHING RULE      generalizedTimeOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				generalizedTime.&id
+	LDAP-NAME 					{"krbLastFailedAuth"}
+    LDAP-DESC                   "The time at which the principal's last failed authentication happened."
+    ID                          { id-at 49 1 }
+}
+
+krbLoginFailedCount ATTRIBUTE ::= {
+    WITH SYNTAX 				INTEGER (0..MAX)
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"krbLoginFailedCount"}
+    LDAP-DESC                   "This attribute stores the number of failed authentication attempts that happened for the principal since the last successful authentication."
+    ID                          { id-at 50 1 }
+}
+
+krbExtraData ATTRIBUTE ::= {
+    WITH SYNTAX 				OCTET STRING
+    EQUALITY MATCHING RULE      octetStringMatch
+	LDAP-SYNTAX 				octetString.&id
+	LDAP-NAME 					{"krbExtraData"}
+    LDAP-DESC                   "This attribute holds the application specific data."
+    ID                          { id-at 51 1 }
+}
+
+krbObjectReferences ATTRIBUTE ::= {
+    WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"krbObjectReferences"}
+    LDAP-DESC                   "This stores the DNs of the directory objects to which the principal object belongs."
+    ID                          { id-at 52 1 }
+}
+
+krbPrincContainerRef ATTRIBUTE ::= {
+    WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"krbPrincContainerRef"}
+    LDAP-DESC                   "This attribute holds references to a Container object where the additional principal objects and stand alone principal objects (krbPrincipal) can be created."
+    ID                          { id-at 53 1 }
+}
+
+-- Object Classes
+
+krbContainer OBJECT-CLASS ::= {
+    MUST CONTAIN    {commonName}
+	LDAP-NAME       {"krbContainer"}
+    LDAP-DESC       "This is a kerberos container for all the realms in a tree."
+	ID              { id-oc 1 1 }
+}
+
+krbRealmContainer OBJECT-CLASS ::= {
+    MUST CONTAIN    {commonName}
+    MAY CONTAIN     {
+        krbMKey
+        | krbUPEnabled
+        | krbSubTrees
+        | krbSearchScope
+        | krbLdapServers
+        | krbSupportedEncSaltTypes
+        | krbDefaultEncSaltTypes
+        | krbTicketPolicyReference
+        | krbKdcServers
+        | krbPwdServers
+        | krbAdmServers
+        | krbPrincNamingAttr
+        | krbPwdPolicyReference
+        | krbPrincContainerRef
+    }
+	LDAP-NAME       {"krbRealmContainer"}
+    LDAP-DESC       "This is a kerberos container for all the realms in a tree."
+	ID              { id-oc 2 1 }
+}
+
+krbService OBJECT-CLASS ::= {
+    SUBCLASS OF     {top}
+    KIND            abstract
+    MUST CONTAIN    {commonName}
+    MAY CONTAIN     {krbHostServer | krbRealmReferences}
+	LDAP-NAME       {"krbService"}
+	ID              { id-oc 3 1 }
+}
+
+krbKdcService OBJECT-CLASS ::= {
+    SUBCLASS OF     {krbService}
+    KIND            structural
+	LDAP-NAME       {"krbKdcService"}
+    LDAP-DESC       "Representative object for the KDC server to bind into a LDAP directory and have a connection to access Kerberos data with the required access rights."
+	ID              { id-oc 4 1 }
+}
+
+krbPwdService OBJECT-CLASS ::= {
+    SUBCLASS OF     {krbService}
+    KIND            structural
+	LDAP-NAME       {"krbPwdService"}
+    LDAP-DESC       "Representative object for the Kerberos Password server to bind into a LDAP directory and have a connection to access Kerberos data with the required access rights."
+	ID              { id-oc 5 1 }
+}
+
+krbPrincipalAux OBJECT-CLASS ::= {
+    KIND            auxiliary
+    MAY CONTAIN     {
+        krbPrincipalName
+        | krbUPEnabled
+        | krbPrincipalKey
+        | krbTicketPolicyReference
+        | krbPrincipalExpiration
+        | krbPasswordExpiration
+        | krbPwdPolicyReference
+        | krbPrincipalType
+        | krbPwdHistory
+        | krbLastPwdChange
+        | krbPrincipalAliases
+        | krbLastSuccessfulAuth
+        | krbLastFailedAuth
+        | krbLoginFailedCount
+        | krbExtraData
+    }
+	LDAP-NAME       {"krbPrincipalAux"}
+    LDAP-DESC       "The principal data auxiliary class. Holds principal information and is used to store principal information for Person, Service objects."
+	ID              { id-oc 8 1 }
+}
+
+krbPrincipal OBJECT-CLASS ::= {
+    SUBCLASS OF     {top}
+    KIND            structural
+    MUST CONTAIN    {krbPrincipalName}
+    MAY CONTAIN     {krbObjectReferences}
+	LDAP-NAME       {"krbPrincipal"}
+    LDAP-DESC       "This class is used to create additional principals and stand alone principals."
+	ID              { id-oc 9 1 }
+}
+
+krbPrincRefAux OBJECT-CLASS ::= {
+    SUBCLASS OF     {top}
+    KIND            auxiliary
+    MAY CONTAIN     {krbPrincipalReferences}
+	LDAP-NAME       {"krbPrincRefAux"}
+    LDAP-DESC       "The principal references auxiliary class. Holds all principals referred from a service"
+	ID              { id-oc 11 1 }
+}
+
+krbAdmService OBJECT-CLASS ::= {
+    SUBCLASS OF     {krbService}
+    KIND            structural
+	LDAP-NAME       {"krbAdmService"}
+    LDAP-DESC       "Representative object for the Kerberos Administration server to bind into a LDAP directory and have a connection Id to access Kerberos data with the required access rights."
+	ID              { id-oc 13 1 }
+}
+
+krbPwdPolicy OBJECT-CLASS ::= {
+    SUBCLASS OF     {top}
+    KIND            structural
+    MUST CONTAIN    {commonName}
+    MAY CONTAIN     {
+        krbMaxPwdLife
+        | krbMinPwdLife
+        | krbPwdMinDiffChars
+        | krbPwdMinLength
+        | krbPwdHistoryLength
+    }
+	LDAP-NAME       {"krbPwdPolicy"}
+    LDAP-DESC       "The krbPwdPolicy object is a template password policy that can be applied to principals when they are created."
+	ID              { id-oc 14 1 }
+}
+
+krbTicketPolicyAux OBJECT-CLASS ::= {
+    KIND            auxiliary
+    MAY CONTAIN     {
+        krbTicketFlags
+        | krbMaxTicketLife
+        | krbMaxRenewableAge
+    }
+	LDAP-NAME       {"krbTicketPolicyAux"}
+    LDAP-DESC       "Holds Kerberos ticket policy attributes."
+	ID              { id-oc 16 1 }
+}
+
+krbTicketPolicy OBJECT-CLASS ::= {
+    SUBCLASS OF     {top}
+    KIND            structural
+    MUST CONTAIN    {commonName}
+	LDAP-NAME       {"krbTicketPolicy"}
+    LDAP-DESC       "An effective ticket policy that is associated with a realm or a principal"
+	ID              { id-oc 17 1 }
+}
+
+-- Name Forms
+
+krbContainerNameForm NAME-FORM ::= {
+	NAMES				krbContainer
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"krbContainerNameForm"}
+	ID					{ id-nf 16 }
+}
+
+krbRealmContainerNameForm NAME-FORM ::= {
+	NAMES				krbRealmContainer
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"krbRealmContainerNameForm"}
+	ID					{ id-nf 17 }
+}
+
+krbKdcServiceNameForm NAME-FORM ::= {
+	NAMES				krbKdcService
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"krbKdcServiceNameForm"}
+	ID					{ id-nf 18 }
+}
+
+krbPwdServiceNameForm NAME-FORM ::= {
+	NAMES				krbPwdService
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"krbPwdServiceNameForm"}
+	ID					{ id-nf 19 }
+}
+
+krbPrincipalNameForm NAME-FORM ::= {
+	NAMES				krbPrincipal
+	WITH ATTRIBUTES		{krbPrincipalName}
+	LDAP-NAME			{"krbPrincipalNameForm"}
+	ID					{ id-nf 20 }
+}
+
+krbAdmServiceNameForm NAME-FORM ::= {
+	NAMES				krbAdmService
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"krbAdmServiceNameForm"}
+	ID					{ id-nf 21 }
+}
+
+krbPwdPolicyNameForm NAME-FORM ::= {
+	NAMES				krbPwdPolicy
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"krbPwdPolicyNameForm"}
+	ID					{ id-nf 22 }
+}
+
+krbTicketPolicyNameForm NAME-FORM ::= {
+	NAMES				krbTicketPolicy
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"krbTicketPolicyNameForm"}
+	ID					{ id-nf 23 }
+}
+
+END

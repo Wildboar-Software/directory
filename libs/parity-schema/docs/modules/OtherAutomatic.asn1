@@ -1,0 +1,97 @@
+OtherAutomaticallyTaggedTypes {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) auto-tagged-types(60001)
+}
+DEFINITIONS
+AUTOMATIC TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    id-at, id-mr, id-nf, id-oc, id-avc, id-lsx
+        FROM Wildboar
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) wildboar(1)}
+        WITH SUCCESSORS
+
+    ATTRIBUTE, OBJECT-CLASS, NAME-FORM, MATCHING-RULE, SYNTAX-NAME,
+    CONTEXT, FRIENDS, objectIdentifierMatch, distinguishedNameMatch,
+    DistinguishedName, top
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+    UnboundedDirectoryString, DirectoryString, directoryString,
+    caseIgnoreMatch, caseIgnoreOrderingMatch, caseIgnoreSubstringsMatch,
+    caseExactMatch, caseExactOrderingMatch, caseExactSubstringsMatch,
+    integer, integerMatch, integerOrderingMatch,
+    boolean, booleanMatch, dn, oid, bitString, bitStringMatch,
+    generalizedTime, generalizedTimeMatch, generalizedTimeOrderingMatch,
+    numericString, numericStringOrderingMatch, numericStringSubstringsMatch,
+    octetString, octetStringMatch, octetStringOrderingMatch, octetStringSubstringsMatch
+        FROM SelectedAttributeTypes
+        {joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+        WITH SUCCESSORS
+
+    ContentInfo
+        FROM CryptographicMessageSyntax-2009
+        { iso(1) member-body(2) us(840) rsadsi(113549)
+        pkcs(1) pkcs-9(9) smime(16) modules(0) id-mod-cms-2004-02(41) }
+
+    ;
+
+Tokenized ::= SEQUENCE {
+    name  OBJECT IDENTIFIER,
+    parts TYPE-IDENTIFIER.&Type OPTIONAL
+}
+
+URI ::= UTF8String(SIZE(1..MAX))
+
+URIs ::= SEQUENCE SIZE(1..MAX) OF uri URI
+
+RFID ::= OCTET STRING
+GPS ::= OCTET STRING
+Address ::= UTF8String
+DBRecord ::= UTF8String
+
+Pointer ::= CHOICE {
+    uri			URI,		-- Uniform Resource Identifier
+    rfid		RFID,		-- Radio Frequency Identification
+    gps			GPS,		-- Global Positioning System
+    address	Address,	-- Free format object location
+    dbRecord	DBRecord,	-- Number of fully qualified name
+    ...			-- Expect other pointer types
+    }
+
+Pointers ::= SEQUENCE SIZE(1..MAX) OF pointer Pointer
+
+HashPointer ::= SEQUENCE {
+    hash		DigestedData OPTIONAL,
+    pointers	Pointers OPTIONAL }
+    ((WITH COMPONENTS {..., hash PRESENT}) | (WITH COMPONENTS {..., pointers PRESENT}))
+
+Sidechain	::= HashPointer
+
+Sidechains	::= SEQUENCE (SIZE(0..MAX)) OF linked Sidechain
+
+ParentBlock	::= HashPointer
+
+TimeStampToken ::= ContentInfo -- This is true.
+
+TimeStamp	::= CHOICE {
+    timeStampToken	TimeStampToken,
+    localTimeStamp	GeneralizedTime,
+    ...	-- Expect additional time types --
+}
+
+TimeStamped ::= SEQUENCE {
+    timeStampValue	    TimeStamp,
+    timeStampService	URI OPTIONAL }
+
+SigncryptedKey ::= OCTET STRING
+
+END

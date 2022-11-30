@@ -1,7 +1,4 @@
-# ocsp-client
+# Online Certificate Status Protocol (OCSP) Client in TypeScript
 
-This library was generated with [Nx](https://nx.dev).
-
-## Running unit tests
-
-Run `nx test ocsp-client` to execute the unit tests via [Jest](https://jestjs.io).
+This is a TypeScript client for OCSP. It's main exported symbol of interest is
+`getOCSPResponse()`.

@@ -1,0 +1,63 @@
+RFC3045VendorInfo {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) vendor-info(31)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    ATTRIBUTE, OBJECT-CLASS, top, SYNTAX-NAME, RelativeDistinguishedName
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	UnboundedDirectoryString, directoryString,
+    caseExactMatch, caseExactOrderingMatch, caseExactSubstringsMatch
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    ;
+
+-- Object Identifiers
+
+id-at-vendorName        OBJECT IDENTIFIER ::= { 1 3 6 1 1 4 }
+id-at-vendorVersion     OBJECT IDENTIFIER ::= { 1 3 6 1 1 5 }
+
+-- Atribute Types
+
+vendorName ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseExactMatch
+    ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE 	caseExactSubstringsMatch
+    SINGLE VALUE                TRUE
+    NO USER MODIFICATION        TRUE
+    USAGE                       dSAOperation
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"vendorName"}
+	LDAP-DESC					"RFC3045: name of implementation vendor"
+    ID                          id-at-vendorName
+}
+
+vendorVersion ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseExactMatch
+    ORDERING MATCHING RULE      caseExactOrderingMatch
+	SUBSTRINGS MATCHING RULE 	caseExactSubstringsMatch
+    SINGLE VALUE                TRUE
+    NO USER MODIFICATION        TRUE
+    USAGE                       dSAOperation
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"vendorVersion"}
+	LDAP-DESC					"RFC3045: version of implementation"
+    ID                          id-at-vendorVersion
+}
+
+END

@@ -1,0 +1,717 @@
+SambaV3Schema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) samba-v3-schema(45)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    id-nf
+        FROM Wildboar
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) wildboar(1)}
+        WITH SUCCESSORS
+
+    ATTRIBUTE, OBJECT-CLASS, top
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	integer, integerMatch, caseIgnoreIA5Match, ia5String, directoryString,
+    UnboundedDirectoryString, caseIgnoreMatch, description, commonName, uid
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    displayName
+        FROM InetOrgPerson
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) inetorgperson(5)}
+
+    uidNumber, gidNumber
+        FROM NIS
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) nis(7)}
+
+    ;
+
+sambaGroupType ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"sambaGroupType"}
+	LDAP-DESC                   "NT Group Type"
+	ID                          { 1 3 6 1 4 1 7165 2 1 19 }
+}
+
+sambaSID ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"sambaSID"}
+	LDAP-DESC                   "Security ID"
+	ID                          { 1 3 6 1 4 1 7165 2 1 20 }
+}
+
+sambaNextUserRid ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"sambaNextUserRid"}
+	LDAP-DESC                   "Next NT rid to give our for users"
+	ID                          { 1 3 6 1 4 1 7165 2 1 21 }
+}
+
+sambaNextGroupRid ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"sambaNextGroupRid"}
+	LDAP-DESC                   "Next NT rid to give out for groups"
+	ID                          { 1 3 6 1 4 1 7165 2 1 22 }
+}
+
+sambaPrimaryGroupSID ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"sambaPrimaryGroupSID"}
+	LDAP-DESC                   "Primary Group Security ID"
+	ID                          { 1 3 6 1 4 1 7165 2 1 23 }
+}
+
+sambaLMPassword ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"sambaLMPassword"}
+	LDAP-DESC                   "LanManager Password"
+	ID                          { 1 3 6 1 4 1 7165 2 1 24 }
+}
+
+sambaNTPassword ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"sambaNTPassword"}
+	LDAP-DESC                   "MD4 hash of the unicode password"
+	ID                          { 1 3 6 1 4 1 7165 2 1 25 }
+}
+
+sambaAcctFlags ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"sambaAcctFlags"}
+	LDAP-DESC                   "Account Flags"
+	ID                          { 1 3 6 1 4 1 7165 2 1 26 }
+}
+
+sambaPwdLastSet ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"sambaPwdLastSet"}
+	LDAP-DESC                   "Timestamp of the last password update"
+	ID                          { 1 3 6 1 4 1 7165 2 1 27 }
+}
+
+sambaPwdCanChange ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"sambaPwdCanChange"}
+	LDAP-DESC                   "Timestamp of when the user is allowed to update the password"
+	ID                          { 1 3 6 1 4 1 7165 2 1 28 }
+}
+
+sambaPwdMustChange ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"sambaPwdMustChange"}
+	LDAP-DESC                   "Timestamp of when the password will expire"
+	ID                          { 1 3 6 1 4 1 7165 2 1 29 }
+}
+
+sambaLogonTime ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"sambaLogonTime"}
+	LDAP-DESC                   "Timestamp of last logon"
+	ID                          { 1 3 6 1 4 1 7165 2 1 30 }
+}
+
+sambaLogoffTime ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"sambaLogoffTime"}
+	LDAP-DESC                   "Timestamp of last logoff"
+	ID                          { 1 3 6 1 4 1 7165 2 1 31 }
+}
+
+sambaKickoffTime ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"sambaKickoffTime"}
+	LDAP-DESC                   "Timestamp of when the user will be logged off automatically"
+	ID                          { 1 3 6 1 4 1 7165 2 1 32 }
+}
+
+sambaHomeDrive ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"sambaHomeDrive"}
+	LDAP-DESC                   "Driver letter of home directory mapping"
+	ID                          { 1 3 6 1 4 1 7165 2 1 33 }
+}
+
+sambaLogonScript ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"sambaLogonScript"}
+	LDAP-DESC                   "Logon script path"
+	ID                          { 1 3 6 1 4 1 7165 2 1 34 }
+}
+
+sambaProfilePath ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"sambaProfilePath"}
+	LDAP-DESC                   "Roaming profile path"
+	ID                          { 1 3 6 1 4 1 7165 2 1 35 }
+}
+
+sambaUserWorkstations ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"sambaUserWorkstations"}
+	LDAP-DESC                   "List of user workstations the user is allowed to logon to"
+	ID                          { 1 3 6 1 4 1 7165 2 1 36 }
+}
+
+sambaHomePath ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"sambaHomePath"}
+	LDAP-DESC                   "Home directory UNC path"
+	ID                          { 1 3 6 1 4 1 7165 2 1 37 }
+}
+
+sambaDomainName ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"sambaDomainName"}
+	LDAP-DESC                   "Windows NT domain to which the user belongs"
+	ID                          { 1 3 6 1 4 1 7165 2 1 38 }
+}
+
+sambaNextRid ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"sambaNextRid"}
+	LDAP-DESC                   "Next NT rid to give out for anything"
+	ID                          { 1 3 6 1 4 1 7165 2 1 39 }
+}
+
+sambaAlgorithmicRidBase ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"sambaAlgorithmicRidBase"}
+	LDAP-DESC                   "Base at which the samba RID generation algorithm should operate"
+	ID                          { 1 3 6 1 4 1 7165 2 1 40 }
+}
+
+sambaShareName ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"sambaShareName"}
+	LDAP-DESC                   "Share Name"
+	ID                          { 1 3 6 1 4 1 7165 2 1 41 }
+}
+
+sambaOptionName ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"sambaOptionName"}
+	LDAP-DESC                   "Option Name"
+	ID                          { 1 3 6 1 4 1 7165 2 1 42 }
+}
+
+sambaBoolOption ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   {"sambaBoolOption"}
+	LDAP-DESC                   "A boolean option"
+	ID                          { 1 3 6 1 4 1 7165 2 1 43 }
+}
+
+sambaIntegerOption ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"sambaIntegerOption"}
+	LDAP-DESC                   "An integer option"
+	ID                          { 1 3 6 1 4 1 7165 2 1 44 }
+}
+
+sambaStringOption ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseExactIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"sambaStringOption"}
+	LDAP-DESC                   "A string option"
+	ID                          { 1 3 6 1 4 1 7165 2 1 45 }
+}
+
+sambaStringListOption ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"sambaStringListOption"}
+	LDAP-DESC                   "A string list option"
+	ID                          { 1 3 6 1 4 1 7165 2 1 46 }
+}
+
+sambaMungedDial ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseExactMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"sambaMungedDial"}
+	ID                          { 1 3 6 1 4 1 7165 2 1 47 }
+}
+
+sambaBadPasswordCount ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"sambaBadPasswordCount"}
+	LDAP-DESC                   "Bad password attempt count"
+	ID                          { 1 3 6 1 4 1 7165 2 1 48 }
+}
+
+sambaBadPasswordTime ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"sambaBadPasswordTime"}
+	LDAP-DESC                   "Time of the last bad password attempt"
+	ID                          { 1 3 6 1 4 1 7165 2 1 49 }
+}
+
+sambaPrivName ATTRIBUTE ::= {
+	SUBTYPE OF                  name
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"sambaPrivName"}
+	ID                          { 1 3 6 1 4 1 7165 2 1 50 }
+}
+
+sambaSIDList ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"sambaSIDList"}
+	LDAP-DESC                   "Security ID List"
+	ID                          { 1 3 6 1 4 1 7165 2 1 51 }
+}
+
+sambaPrivilegeList ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"sambaPrivilegeList"}
+	LDAP-DESC                   "Privileges List"
+	ID                          { 1 3 6 1 4 1 7165 2 1 52 }
+}
+
+sambaTrustFlags ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"sambaTrustFlags"}
+	LDAP-DESC                   "Trust Password Flags"
+	ID                          { 1 3 6 1 4 1 7165 2 1 53 }
+}
+
+sambaPasswordHistory ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"sambaPasswordHistory"}
+	LDAP-DESC                   "Concatenated MD4 hashes of the unicode passwords used on this account"
+	ID                          { 1 3 6 1 4 1 7165 2 1 54 }
+}
+
+sambaLogonHours ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"sambaLogonHours"}
+	LDAP-DESC                   "Logon Hours"
+	ID                          { 1 3 6 1 4 1 7165 2 1 55 }
+}
+
+sambaMinPwdLength ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"sambaMinPwdLength"}
+	LDAP-DESC                   "Minimal password length (default: 5)"
+	ID                          { 1 3 6 1 4 1 7165 2 1 58 }
+}
+
+sambaPwdHistoryLength ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"sambaPwdHistoryLength"}
+	LDAP-DESC                   "Length of Password History Entries (default: 0 =>  off)"
+	ID                          { 1 3 6 1 4 1 7165 2 1 59 }
+}
+
+sambaLogonToChgPwd ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"sambaLogonToChgPwd"}
+	LDAP-DESC                   "Force Users to logon for password change (default: 0 => off, 2 => on)"
+	ID                          { 1 3 6 1 4 1 7165 2 1 60 }
+}
+
+sambaMaxPwdAge ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"sambaMaxPwdAge"}
+	LDAP-DESC                   "Maximum password age, in seconds (default: -1 => never expire passwords)"
+	ID                          { 1 3 6 1 4 1 7165 2 1 61 }
+}
+
+sambaMinPwdAge ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"sambaMinPwdAge"}
+	LDAP-DESC                   "Minimum password age, in seconds (default: 0 => allow immediate password change)"
+	ID                          { 1 3 6 1 4 1 7165 2 1 62 }
+}
+
+sambaLockoutDuration ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"sambaLockoutDuration"}
+	LDAP-DESC                   "Lockout duration in minutes (default: 30, -1 => forever)"
+	ID                          { 1 3 6 1 4 1 7165 2 1 63 }
+}
+
+sambaLockoutObservationWindow ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"sambaLockoutObservationWindow"}
+	LDAP-DESC                   "Reset time after lockout in minutes (default: 30)"
+	ID                          { 1 3 6 1 4 1 7165 2 1 64 }
+}
+
+sambaLockoutThreshold ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"sambaLockoutThreshold"}
+	LDAP-DESC                   "Lockout users after bad logon attempts (default: 0 => off)"
+	ID                          { 1 3 6 1 4 1 7165 2 1 65 }
+}
+
+sambaForceLogoff ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"sambaForceLogoff"}
+	LDAP-DESC                   "Disconnect Users outside logon hours (default: -1 => off, 0 => on)"
+	ID                          { 1 3 6 1 4 1 7165 2 1 66 }
+}
+
+sambaRefuseMachinePwdChange ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	EQUALITY MATCHING RULE      integerMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   {"sambaRefuseMachinePwdChange"}
+	LDAP-DESC                   "Allow Machine Password changes (default: 0 => off)"
+	ID                          { 1 3 6 1 4 1 7165 2 1 67 }
+}
+
+-- Object Classes
+
+sambaConfig OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            auxiliary
+	MAY CONTAIN     {description}
+	LDAP-NAME       {"sambaConfig"}
+	LDAP-DESC       "Samba Configuration Section"
+	ID              { 1 3 6 1 4 1 7165 1 2 2 10 }
+}
+
+sambaShare OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            structural
+	MUST CONTAIN    {sambaShareName}
+	MAY CONTAIN     {description}
+	LDAP-NAME       {"sambaShare"}
+	LDAP-DESC       "Samba Share Section"
+	ID              { 1 3 6 1 4 1 7165 2 2 11 }
+}
+
+sambaConfigOption OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            structural
+	MUST CONTAIN    {sambaOptionName}
+	MAY CONTAIN     {sambaBoolOption | sambaIntegerOption | sambaStringListOption | sambaStringOption | description}
+	LDAP-NAME       {"sambaConfigOption"}
+	LDAP-DESC       "Samba Configuration Option"
+	ID              { 1 3 6 1 4 1 7165 2 2 12 }
+}
+
+sambaPrivilege OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            auxiliary
+	MUST CONTAIN    {sambaSID}
+	MAY CONTAIN     {sambaPrivilegeList}
+	LDAP-NAME       {"sambaPrivilege"}
+	LDAP-DESC       "Samba Privilege"
+	ID              { 1 3 6 1 4 1 7165 2 2 13 }
+}
+
+sambaTrustPassword OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	MUST CONTAIN    {sambaDomainName | sambaNTPassword | sambaTrustFlags}
+	MAY CONTAIN     {sambaPwdLastSet | sambaSID}
+	LDAP-NAME       {"sambaTrustPassword"}
+	LDAP-DESC       "Samba Trust Password"
+	ID              { 1 3 6 1 4 1 7165 2 2 14 }
+}
+
+sambaGroupMapping OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            auxiliary
+	MUST CONTAIN    {gidNumber | sambaGroupType | sambaSID}
+	MAY CONTAIN     {description | displayName | sambaSIDList}
+	LDAP-NAME       {"sambaGroupMapping"}
+	LDAP-DESC       "Samba Group Mapping"
+	ID              { 1 3 6 1 4 1 7165 2 2 4 }
+}
+
+sambaDomain OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            structural
+	MUST CONTAIN    {sambaDomainName | sambaSID}
+	MAY CONTAIN     {sambaAlgorithmicRidBase | sambaForceLogoff | sambaLockoutDuration | sambaLockoutObservationWindow | sambaLockoutThreshold | sambaLogonToChgPwd | sambaMaxPwdAge | sambaMinPwdAge | sambaMinPwdLength | sambaNextGroupRid | sambaNextRid | sambaNextUserRid | sambaPwdHistoryLength | sambaRefuseMachinePwdChange}
+	LDAP-NAME       {"sambaDomain"}
+	LDAP-DESC       "Samba Domain Information"
+	ID              { 1 3 6 1 4 1 7165 2 2 5 }
+}
+
+sambaSamAccount OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            auxiliary
+	MUST CONTAIN    {sambaSID | uid}
+	MAY CONTAIN     {
+        commonName
+        | description
+        | displayName
+        | sambaAcctFlags
+        | sambaBadPasswordCount
+        | sambaBadPasswordTime
+        | sambaDomainName
+        | sambaHomeDrive
+        | sambaHomePath
+        | sambaKickoffTime
+        | sambaLMPassword
+        | sambaLogoffTime
+        | sambaLogonHours
+        | sambaLogonScript
+        | sambaLogonTime
+        | sambaMungedDial
+        | sambaNTPassword
+        | sambaPasswordHistory
+        | sambaPrimaryGroupSID
+        | sambaProfilePath
+        | sambaPwdCanChange
+        | sambaPwdLastSet
+        | sambaPwdMustChange
+        | sambaUserWorkstations
+    }
+	LDAP-NAME       {"sambaSamAccount"}
+	LDAP-DESC       "Samba 3.0 Auxilary SAM Account"
+	ID              { 1 3 6 1 4 1 7165 2 2 6 }
+}
+
+sambaUnixIdPool OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            auxiliary
+	MUST CONTAIN    {gidNumber | uidNumber}
+	LDAP-NAME       {"sambaUnixIdPool"}
+	LDAP-DESC       "Pool for allocating UNIX uids/gids"
+	ID              { 1 3 6 1 4 1 7165 2 2 7 }
+}
+
+sambaIdmapEntry OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            auxiliary
+	MUST CONTAIN    {sambaSID}
+	MAY CONTAIN     {gidNumber | uidNumber}
+	LDAP-NAME       {"sambaIdmapEntry"}
+	LDAP-DESC       "Mapping from a SID to an ID"
+	ID              { 1 3 6 1 4 1 7165 2 2 8 }
+}
+
+sambaSidEntry OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            structural
+	MUST CONTAIN    {sambaSID}
+	LDAP-NAME       {"sambaSidEntry"}
+	LDAP-DESC       "Structural Class for a SID"
+	ID              { 1 3 6 1 4 1 7165 2 2 9 }
+}
+
+-- Name Forms
+
+sambaShareNameForm NAME-FORM ::= {
+	NAMES				sambaShare
+	WITH ATTRIBUTES		{sambaShareName}
+	LDAP-NAME			{"sambaShareNameForm"}
+	ID					{ id-nf 42 }
+}
+
+sambaConfigOptionNameForm NAME-FORM ::= {
+	NAMES				sambaConfigOption
+	WITH ATTRIBUTES		{sambaOptionName}
+	LDAP-NAME			{"sambaConfigOptionNameForm"}
+	ID					{ id-nf 43 }
+}
+
+-- sambaTrustPassword intentionally excluded. No suitable attributes for naming.
+
+sambaDomainNameForm NAME-FORM ::= {
+	NAMES				sambaDomain
+	WITH ATTRIBUTES		{sambaDomainName}
+	LDAP-NAME			{"sambaDomainNameForm"}
+	ID					{ id-nf 44 }
+}
+
+sambaSidEntryNameForm NAME-FORM ::= {
+	NAMES				sambaSidEntry
+	WITH ATTRIBUTES		{sambaSID}
+	LDAP-NAME			{"sambaSidEntryNameForm"}
+	ID					{ id-nf 45 }
+}
+
+END

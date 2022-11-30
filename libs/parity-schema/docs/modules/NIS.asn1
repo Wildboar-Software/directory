@@ -1,0 +1,518 @@
+NIS {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) nis(7)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    ATTRIBUTE, OBJECT-CLASS, top, SYNTAX-NAME
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	directoryString, ia5String, uid,
+    caseExactMatch, caseExactOrderingMatch, caseExactSubstringsMatch,
+	UnboundedDirectoryString, caseIgnoreIA5Match,
+    caseIgnoreIA5SubstringsMatch,
+    integer, integerMatch, integerOrderingMatch,
+    commonName, uid, description, localityName, name, caseIgnoreMatch,
+    caseIgnoreOrderingMatch, caseIgnoreSubstringsMatch, caseExactIA5Match
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    userPassword
+        FROM AuthenticationFramework
+        {joint-iso-itu-t ds(5) module(1) authenticationFramework(7) 9}
+        WITH SUCCESSORS
+
+    manager
+        FROM Cosine
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) cosine(3)}
+        WITH SUCCESSORS
+
+    ;
+
+id-nisSchema    OBJECT IDENTIFIER ::= {
+    iso(1) org(3) dod(6) internet(1) directory(1) nisSchema(1) }
+id-nis-lsx      OBJECT IDENTIFIER ::= { 1 3 6 1 1 1 0 }
+id-nis-at       OBJECT IDENTIFIER ::= { 1 3 6 1 1 1 1 }
+id-nis-oc       OBJECT IDENTIFIER ::= { 1 3 6 1 1 1 2 }
+
+AbsoluteFilePath ::= IA5String (SIZE (1..4096))
+maxUint8  INTEGER ::= 255
+maxUint16 INTEGER ::= 65535
+maxUint32 INTEGER ::= 4294967295
+Uint8  ::= INTEGER (0..maxUint8)
+Uint16 ::= INTEGER (0..maxUint16)
+Uint32 ::= INTEGER (0..maxUint32)
+UnixEpoch ::= Uint32
+
+-- Syntaxes
+
+NISNetgroupTripleSyntax ::= SEQUENCE {
+    hostname    [0] IA5String OPTIONAL,
+    username    [1] IA5String OPTIONAL,
+    domainname  [2] IA5String OPTIONAL
+}
+
+BootParameterSyntax ::= SEQUENCE {
+    key     IA5String,
+    server  IA5String,
+    path    IA5String
+}
+
+nisNetgroupTripleSyntax SYNTAX-NAME ::= {
+    LDAP-DESC         "NIS netgroup triple"
+    DIRECTORY SYNTAX  NISNetgroupTripleSyntax
+    ID                { id-nis-lsx 0 } }
+
+bootParameterSyntax SYNTAX-NAME ::= {
+    LDAP-DESC         "Boot parameter"
+    DIRECTORY SYNTAX  BootParameterSyntax
+    ID                { id-nis-lsx 1 } }
+
+-- Attributes
+
+uidNumber ATTRIBUTE ::= {
+	WITH SYNTAX 				Uint32
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE				TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"uidNumber"}
+	LDAP-DESC					"An integer uniquely identifying a user in an administrative domain"
+	ID { id-nis-at 0 }
+}
+
+gidNumber ATTRIBUTE ::= {
+	WITH SYNTAX 				Uint32
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE				TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"gidNumber"}
+	LDAP-DESC					"An integer uniquely identifying a group in an administrative domain"
+	ID { id-nis-at 1 }
+}
+
+gecos ATTRIBUTE ::= {
+	WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+	SUBSTRINGS MATCHING RULE 	caseIgnoreIA5SubstringsMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"gecos"}
+	LDAP-DESC                   "The GECOS field; the common name"
+	ID { id-nis-at 2 }
+}
+
+homeDirectory ATTRIBUTE ::= {
+	WITH SYNTAX 				AbsoluteFilePath
+    EQUALITY MATCHING RULE 		caseExactIA5Match
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"homeDirectory"}
+	LDAP-DESC                   "The absolute path to the home directory"
+	ID { id-nis-at 3 }
+}
+
+loginShell ATTRIBUTE ::= {
+	WITH SYNTAX 				AbsoluteFilePath
+    EQUALITY MATCHING RULE 		caseExactIA5Match
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"loginShell"}
+	LDAP-DESC                   "The path to the login shell"
+	ID { id-nis-at 4 }
+}
+
+shadowLastChange ATTRIBUTE ::= {
+	WITH SYNTAX 				UnixEpoch
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE				TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"shadowLastChange"}
+	ID { id-nis-at 5 }
+}
+
+shadowMin ATTRIBUTE ::= {
+	WITH SYNTAX 				Uint32
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE				TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"shadowMin"}
+	ID { id-nis-at 6 }
+}
+
+shadowMax ATTRIBUTE ::= {
+	WITH SYNTAX 				Uint32
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE				TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"shadowMax"}
+	ID { id-nis-at 7 }
+}
+
+shadowWarning ATTRIBUTE ::= {
+	WITH SYNTAX 				Uint32
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE				TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"shadowWarning"}
+	ID { id-nis-at 8 }
+}
+
+shadowInactive ATTRIBUTE ::= {
+	WITH SYNTAX 				Uint32
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE				TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"shadowInactive"}
+	ID { id-nis-at 9 }
+}
+
+shadowExpire ATTRIBUTE ::= {
+	WITH SYNTAX 				Uint32
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE				TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"shadowExpire"}
+	ID { id-nis-at 10 }
+}
+
+shadowFlag ATTRIBUTE ::= {
+	WITH SYNTAX 				Uint32
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE				TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"shadowFlag"}
+	ID { id-nis-at 11 }
+}
+
+memberUid ATTRIBUTE ::= {
+	WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseExactIA5Match
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"memberUid"}
+	ID { id-nis-at 12 }
+}
+
+memberNisNetgroup ATTRIBUTE ::= {
+	WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseExactIA5Match
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"memberNisNetgroup"}
+	ID { id-nis-at 13 }
+}
+
+nisNetgroupTriple ATTRIBUTE ::= {
+	WITH SYNTAX 				NISNetgroupTripleSyntax
+	LDAP-SYNTAX 				nisNetgroupTripleSyntax.&id
+	LDAP-NAME 					{"nisNetgroupTriple"}
+    LDAP-DESC                   "Netgroup triple"
+	ID { id-nis-at 14 }
+}
+
+ipServicePort ATTRIBUTE ::= {
+	WITH SYNTAX 				INTEGER (0..65535)
+    EQUALITY MATCHING RULE      integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"ipServicePort"}
+	ID { id-nis-at 15 }
+}
+
+ipServiceProtocol ATTRIBUTE ::= {
+    SUBTYPE OF                  name
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"ipServiceProtocol"}
+    ID                          { id-nis-at 16 }
+}
+
+ipProtocolNumber ATTRIBUTE ::= {
+	WITH SYNTAX 				Uint8
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE				TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"ipProtocolNumber"}
+	ID { id-nis-at 17 }
+}
+
+oncRpcNumber ATTRIBUTE ::= {
+	WITH SYNTAX 				INTEGER
+    EQUALITY MATCHING RULE 		integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+	SINGLE VALUE				TRUE
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"oncRpcNumber"}
+	ID { id-nis-at 18 }
+}
+
+ipHostNumber ATTRIBUTE ::= {
+	WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+	SUBSTRINGS MATCHING RULE 	caseIgnoreIA5SubstringsMatch
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"ipHostNumber"}
+    LDAP-DESC                   "IP address"
+	ID { id-nis-at 19 }
+}
+
+ipNetworkNumber ATTRIBUTE ::= {
+	WITH SYNTAX 				IA5String (SIZE (0..128))
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+	SUBSTRINGS MATCHING RULE 	caseIgnoreIA5SubstringsMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"ipNetworkNumber"}
+    LDAP-DESC                   "IP network"
+	ID { id-nis-at 20 }
+}
+
+ipNetmaskNumber ATTRIBUTE ::= {
+	WITH SYNTAX 				IA5String (SIZE (0..128))
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+	SUBSTRINGS MATCHING RULE 	caseIgnoreIA5SubstringsMatch
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"ipNetmaskNumber"}
+    LDAP-DESC                   "IP netmask"
+	ID { id-nis-at 21 }
+}
+
+macAddress ATTRIBUTE ::= {
+	WITH SYNTAX 				IA5String (SIZE (0..128))
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+	SUBSTRINGS MATCHING RULE 	caseIgnoreIA5SubstringsMatch
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"macAddress"}
+    LDAP-DESC                   "MAC address"
+	ID { id-nis-at 22 }
+}
+
+bootParameter ATTRIBUTE ::= {
+	WITH SYNTAX 				BootParameterSyntax
+	LDAP-SYNTAX 				bootParameterSyntax.&id
+	LDAP-NAME 					{"bootParameter"}
+    LDAP-DESC                   "rpc.bootparamd parameter"
+	ID { id-nis-at 23 }
+}
+
+bootFile ATTRIBUTE ::= {
+	WITH SYNTAX 				IA5String (SIZE (1..MAX))
+    EQUALITY MATCHING RULE 		caseExactIA5Match
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"bootFile"}
+    LDAP-DESC                   "Boot image name"
+	ID { id-nis-at 24 }
+}
+
+-- id-nis-at 25 is undefined.
+
+nisMapName ATTRIBUTE ::= {
+    SUBTYPE OF                  name
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 directoryString.&id
+    LDAP-NAME                   {"nisMapName"}
+    ID                          { id-nis-at 26 }
+}
+
+nisMapEntry ATTRIBUTE ::= {
+	WITH SYNTAX 				IA5String (SIZE (1..1024))
+    EQUALITY MATCHING RULE 		caseExactIA5Match
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"nisMapEntry"}
+	ID { id-nis-at 27 }
+}
+
+-- # Object Class Definitions
+
+posixAccount OBJECT-CLASS ::= {
+	SUBCLASS OF 	{top}
+	KIND			auxiliary
+	MUST CONTAIN	{
+        commonName
+        | uid
+        | uidNumber
+        | gidNumber
+        | homeDirectory
+    }
+	MAY CONTAIN		{
+        userPassword
+        | loginShell
+        | gecos
+        | description
+	}
+	LDAP-NAME		{"posixAccount"}
+	LDAP-DESC		"Abstraction of an account with POSIX attributes"
+	ID				{ id-nis-oc 0 }
+}
+
+shadowAccount OBJECT-CLASS ::= {
+	SUBCLASS OF 	{top}
+	KIND			auxiliary
+	MUST CONTAIN	{uid}
+	MAY CONTAIN		{
+        userPassword
+        | shadowLastChange
+        | shadowMin
+        | shadowMax
+        | shadowWarning
+        | shadowInactive
+        | shadowExpire
+        | shadowFlag
+        | description
+	}
+	LDAP-NAME		{"shadowAccount"}
+	LDAP-DESC		"Additional attributes for shadow passwords"
+	ID				{ id-nis-oc 1 }
+}
+
+posixGroup OBJECT-CLASS ::= {
+	SUBCLASS OF 	{top}
+	KIND			structural
+	MUST CONTAIN	{
+        commonName
+        | gidNumber
+    }
+	MAY CONTAIN		{
+        userPassword
+        | memberUid
+        | description
+	}
+	LDAP-NAME		{"posixGroup"}
+	LDAP-DESC		"Abstraction of a group of accounts"
+	ID				{ id-nis-oc 2 }
+}
+
+ipService OBJECT-CLASS ::= {
+	SUBCLASS OF 	{top}
+	KIND			structural
+	MUST CONTAIN	{
+        commonName
+        | ipServicePort
+        | ipServiceProtocol
+    }
+	MAY CONTAIN		{description}
+	LDAP-NAME		{"ipService"}
+	LDAP-DESC		"Abstraction an Internet Protocol service"
+	ID				{ id-nis-oc 3 }
+}
+
+ipProtocol OBJECT-CLASS ::= {
+	SUBCLASS OF 	{top}
+	KIND			structural
+	MUST CONTAIN	{commonName | ipProtocolNumber}
+	MAY CONTAIN		{description}
+	LDAP-NAME		{"ipProtocol"}
+	LDAP-DESC		"Abstraction of an IP protocol"
+	ID				{ id-nis-oc 4 }
+}
+
+oncRpc OBJECT-CLASS ::= {
+	SUBCLASS OF 	{top}
+	KIND			structural
+	MUST CONTAIN	{commonName | oncRpcNumber}
+	MAY CONTAIN		{description}
+	LDAP-NAME		{"oncRpc"}
+	LDAP-DESC		"Abstraction of an ONC/RPC binding"
+	ID				{ id-nis-oc 5 }
+}
+
+ipHost OBJECT-CLASS ::= {
+	SUBCLASS OF 	{top}
+	KIND			auxiliary
+	MUST CONTAIN	{commonName | ipHostNumber}
+	MAY CONTAIN		{localityName | description | manager}
+	LDAP-NAME		{"ipHost"}
+	LDAP-DESC		"Abstraction of a host, an IP device"
+	ID				{ id-nis-oc 6 }
+}
+
+ipNetwork OBJECT-CLASS ::= {
+	SUBCLASS OF 	{top}
+	KIND			structural
+	MUST CONTAIN	{commonName | ipNetworkNumber}
+	MAY CONTAIN		{ipNetmaskNumber | localityName | description | manager}
+	LDAP-NAME		{"ipNetwork"}
+	LDAP-DESC		"Abstraction of an IP network"
+	ID				{ id-nis-oc 7 }
+}
+
+nisNetgroup OBJECT-CLASS ::= {
+	SUBCLASS OF 	{top}
+	KIND			structural
+	MUST CONTAIN	{commonName}
+	MAY CONTAIN		{
+        nisNetgroupTriple
+        | memberNisNetgroup
+        | description
+	}
+	LDAP-NAME		{"nisNetgroup"}
+	LDAP-DESC		"Abstraction of a netgroup"
+	ID				{ id-nis-oc 8 }
+}
+
+nisMap OBJECT-CLASS ::= {
+	SUBCLASS OF 	{top}
+	KIND			structural
+	MUST CONTAIN	{nisMapName}
+	MAY CONTAIN		{description}
+	LDAP-NAME		{"nisMap"}
+	LDAP-DESC		"A generic abstraction of a NIS map"
+	ID				{ id-nis-oc 9 }
+}
+
+nisObject OBJECT-CLASS ::= {
+	SUBCLASS OF 	{top}
+	KIND			structural
+	MUST CONTAIN	{commonName | nisMapEntry | nisMapName}
+	MAY CONTAIN		{description}
+	LDAP-NAME		{"nisObject"}
+	LDAP-DESC		"An entry in a NIS map"
+	ID				{ id-nis-oc 10 }
+}
+
+ieee802Device OBJECT-CLASS ::= {
+	SUBCLASS OF 	{top}
+	KIND			auxiliary
+	MAY CONTAIN		{macAddress}
+	LDAP-NAME		{"ieee802Device"}
+	LDAP-DESC		"A device with a MAC address"
+	ID				{ id-nis-oc 11 }
+}
+
+bootableDevice OBJECT-CLASS ::= {
+	SUBCLASS OF 	{top}
+	KIND			auxiliary
+	MAY CONTAIN		{bootFile | bootParameter}
+	LDAP-NAME		{"bootableDevice"}
+	LDAP-DESC		"A device with boot parameters"
+	ID				{ id-nis-oc 12 }
+}
+
+END

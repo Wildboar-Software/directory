@@ -1,0 +1,154 @@
+InetMailSchema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) inet-mail-schema(49)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    id-nf
+        FROM Wildboar
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) wildboar(1)}
+        WITH SUCCESSORS
+
+    ATTRIBUTE, OBJECT-CLASS
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	name, UnboundedDirectoryString, description, dn, directoryString, ia5String,
+    caseIgnoreMatch, caseIgnoreOrderingMatch, caseIgnoreSubstringsMatch,
+    caseExactIA5Match,
+    caseIgnoreIA5Match, caseIgnoreIA5SubstringsMatch
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    mail
+        FROM OpenLDAPCoreSchema
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) openldap-core(6)}
+
+    ;
+
+id-at-transport             OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 15347 2 102 }
+id-at-mailRoutingAddress    OBJECT IDENTIFIER ::= { 2 16 840 1 113730 3 1 24 }
+id-at-maildest              OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 15347 2 110 }
+id-at-mailaccess            OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 15347 2 111 }
+id-at-maildrop              OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 15347 2 100 }
+id-at-mailbox               OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 10018 1 1 1 }
+id-oc-mailUser              OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 15347 2 1 }
+id-oc-mailGroup             OBJECT IDENTIFIER ::= { 2 16 840 1 113730 3 2 4 }
+id-oc-transportTable        OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 15347 2 3 }
+
+transport ATTRIBUTE ::= {
+    SUBTYPE OF                  name
+	LDAP-NAME 					{"transport"}
+    ID                          id-at-transport
+}
+
+mailRoutingAddress ATTRIBUTE ::= {
+    SUBTYPE OF                  mail
+	LDAP-NAME 					{"mailRoutingAddress"}
+    ID                          id-at-mailRoutingAddress
+}
+
+maildest ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"maildest"}
+    LDAP-DESC                   "Restricted to send only to local network"
+    ID                          id-at-maildest
+}
+
+mailaccess ATTRIBUTE ::= {
+    WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"mailaccess"}
+    LDAP-DESC                   "Can be mailed to restricted groups"
+    ID                          id-at-mailaccess
+}
+
+maildrop ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseIgnoreIA5Match
+    SUBSTRINGS MATCHING RULE    caseIgnoreIA5SubstringsMatch
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"maildrop"}
+    LDAP-DESC                   "RFC1274: RFC822 Mailbox"
+    ID                          id-at-maildrop
+}
+
+mailbox ATTRIBUTE ::= {
+    WITH SYNTAX 				IA5String
+    EQUALITY MATCHING RULE 		caseExactIA5Match
+    SINGLE VALUE                TRUE
+	LDAP-SYNTAX 				ia5String.&id
+	LDAP-NAME 					{"mailbox"}
+    LDAP-DESC                   "The absolute path to the mailbox for a mail account in a non-default location"
+    ID                          id-at-mailbox
+}
+
+mailUser OBJECT-CLASS ::= {
+	KIND            auxiliary
+    MUST CONTAIN    {uid | mail | maildrop}
+	MAY CONTAIN     {commonName | mailbox | maildest | mailaccess}
+	LDAP-NAME       {"mailUser"}
+    LDAP-DESC       "E-Mail User"
+	ID              id-oc-mailUser
+}
+
+mailGroup OBJECT-CLASS ::= {
+	KIND            structural
+    MUST CONTAIN    {commonName | mail}
+	MAY CONTAIN     {mailRoutingAddress | member | description}
+	LDAP-NAME       {"mailGroup"}
+    LDAP-DESC       "E-Mail Group"
+	ID              id-oc-mailGroup
+}
+
+transportTable OBJECT-CLASS ::= {
+	KIND            structural
+    MUST CONTAIN    {commonName | transport}
+	LDAP-NAME       {"transportTable"}
+    LDAP-DESC       "MTA Transport Table"
+	ID              id-oc-transportTable
+}
+
+-- Name Forms
+
+mailGroupCommonNameForm NAME-FORM ::= {
+	NAMES				mailGroup
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"mailGroupCommonNameForm"}
+	ID					{ id-nf 13 }
+}
+
+mailGroupMailNameForm NAME-FORM ::= {
+	NAMES				mailGroup
+	WITH ATTRIBUTES		{mail}
+	LDAP-NAME			{"mailGroupMailNameForm"}
+	ID					{ id-nf 14 }
+}
+
+transportTableNameForm NAME-FORM ::= {
+	NAMES				transportTable
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"transportTableNameForm"}
+	ID					{ id-nf 15 }
+}
+
+END

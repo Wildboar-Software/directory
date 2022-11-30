@@ -1,7 +1,5 @@
-# meerkat-types
+# Meerkat-Related TypeScript Types
 
-This library was generated with [Nx](https://nx.dev).
-
-## Running unit tests
-
-Run `nx test meerkat-types` to execute the unit tests via [Jest](https://jestjs.io).
+The types used by Meerkat DSA have been extracted to this separate package so
+that they can be used for creating Meerkat DSA type drivers in separate
+packages.

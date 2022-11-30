@@ -1,0 +1,1269 @@
+-- Originally, this was going to be based off of this:
+-- https://github.com/389ds/389-ds-base/blob/4559a89c0877e45143fa3c9cc34393d4d0cd2696/ldap/schema/60radius.ldif
+-- However, the schema there seemed out of sync with what FreeRADIUS server
+-- documented here:
+-- here: https://github.com/FreeRADIUS/freeradius-server/tree/master/doc/schemas/ldap/openldap
+-- For the sake of correct implementation, this ASN.1 module prefers the schema
+-- defined by the latter.
+RADIUSSchema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) radius-schema(56)
+}
+DEFINITIONS
+EXPLICIT TAGS
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    id-nf
+        FROM Wildboar
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) wildboar(1)}
+        WITH SUCCESSORS
+
+    ATTRIBUTE, OBJECT-CLASS, top, DistinguishedName, distinguishedNameMatch
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	UnboundedDirectoryString, distinguishedName, description,
+    boolean, integer, dn, directoryString, ia5String,
+    caseIgnoreMatch, caseIgnoreSubstringsMatch,
+    booleanMatch, caseIgnoreIA5Match, commonName, uid
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    userPassword
+        FROM AuthenticationFramework
+        {joint-iso-itu-t ds(5) module(1) authenticationFramework(7) 9}
+        WITH SUCCESSORS
+
+    ;
+
+id-at-freeRadius OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 11344 }
+
+radiusArapFeatures ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusArapFeatures" }
+	ID                          { id-at-freeRadius 4 1 2 1 1 }
+}
+
+radiusArapSecurity ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusArapSecurity" }
+	ID                          { id-at-freeRadius 4 1 2 1 2 }
+}
+
+radiusArapZoneAccess ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusArapZoneAccess" }
+	ID                          { id-at-freeRadius 4 1 2 1 3 }
+}
+
+radiusAuthType ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusAuthType" }
+	LDAP-DESC                   "controlItem: Auth-Type"
+	ID                          { id-at-freeRadius 4 1 2 1 44 }
+}
+
+radiusCallbackId ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusCallbackId" }
+	LDAP-DESC                   "replyItem: Callback-Id"
+	ID                          { id-at-freeRadius 4 1 2 1 4 }
+}
+
+radiusCallbackNumber ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusCallbackNumber" }
+	LDAP-DESC                   "replyItem: Callback-Number"
+	ID                          { id-at-freeRadius 4 1 2 1 5 }
+}
+
+radiusCalledStationId ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusCalledStationId" }
+	LDAP-DESC                   "controlItem: Called-Station-Id"
+	ID                          { id-at-freeRadius 4 1 2 1 6 }
+}
+
+radiusCallingStationId ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusCallingStationId" }
+	LDAP-DESC                   "controlItem: Calling-Station-Id"
+	ID                          { id-at-freeRadius 4 1 2 1 7 }
+}
+
+radiusClass ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusClass" }
+	LDAP-DESC                   "replyItem: Class"
+	ID                          { id-at-freeRadius 4 1 2 1 8 }
+}
+
+radiusClientIPAddress ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusClientIPAddress" }
+	ID                          { id-at-freeRadius 4 1 2 1 45 }
+}
+
+radiusFilterId ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusFilterId" }
+	LDAP-DESC                   "replyItem: Filter-Id"
+	ID                          { id-at-freeRadius 4 1 2 1 9 }
+}
+
+radiusFramedAppleTalkLink ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusFramedAppleTalkLink" }
+	LDAP-DESC                   "replyItem: Framed-AppleTalk-Link"
+	ID                          { id-at-freeRadius 4 1 2 1 10 }
+}
+
+radiusFramedAppleTalkNetwork ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusFramedAppleTalkNetwork" }
+	LDAP-DESC                   "replyItem: Framed-AppleTalk-Network"
+	ID                          { id-at-freeRadius 4 1 2 1 11 }
+}
+
+radiusFramedAppleTalkZone ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusFramedAppleTalkZone" }
+	LDAP-DESC                   "replyItem: Framed-AppleTalk-Zone"
+	ID                          { id-at-freeRadius 4 1 2 1 12 }
+}
+
+radiusFramedCompression ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusFramedCompression" }
+	LDAP-DESC                   "replyItem: Framed-Compression"
+	ID                          { id-at-freeRadius 4 1 2 1 13 }
+}
+
+radiusFramedIPAddress ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusFramedIPAddress" }
+	LDAP-DESC                   "replyItem: Framed-IP-Address"
+	ID                          { id-at-freeRadius 4 1 2 1 14 }
+}
+
+radiusFramedIPNetmask ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusFramedIPNetmask" }
+	LDAP-DESC                   "replyItem: Framed-IP-Netmask"
+	ID                          { id-at-freeRadius 4 1 2 1 15 }
+}
+
+radiusFramedIPXNetwork ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusFramedIPXNetwork" }
+	LDAP-DESC                   "replyItem: Framed-IPX-Network"
+	ID                          { id-at-freeRadius 4 1 2 1 16 }
+}
+
+radiusFramedMTU ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusFramedMTU" }
+	ID                          { id-at-freeRadius 4 1 2 1 17 }
+}
+
+radiusFramedProtocol ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusFramedProtocol" }
+	LDAP-DESC                   "replyItem: Framed-Protocol"
+	ID                          { id-at-freeRadius 4 1 2 1 18 }
+}
+
+radiusFramedRoute ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusFramedRoute" }
+	LDAP-DESC                   "replyItem: Framed-Route"
+	ID                          { id-at-freeRadius 4 1 2 1 19 }
+}
+
+radiusFramedRouting ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusFramedRouting" }
+	LDAP-DESC                   "replyItem: Framed-Routing"
+	ID                          { id-at-freeRadius 4 1 2 1 20 }
+}
+
+radiusGroupName ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusGroupName" }
+	ID                          { id-at-freeRadius 4 1 2 1 46 }
+}
+
+radiusHint ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusHint" }
+	ID                          { id-at-freeRadius 4 1 2 1 47 }
+}
+
+radiusHuntgroupName ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusHuntgroupName" }
+	ID                          { id-at-freeRadius 4 1 2 1 48 }
+}
+
+radiusIdleTimeout ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusIdleTimeout" }
+	LDAP-DESC                   "replyItem: Idle-Timeout"
+	ID                          { id-at-freeRadius 4 1 2 1 21 }
+}
+
+radiusLoginIPHost ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusLoginIPHost" }
+	LDAP-DESC                   "replyItem: Login-IP-Host"
+	ID                          { id-at-freeRadius 4 1 2 1 22 }
+}
+
+radiusLoginLATGroup ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusLoginLATGroup" }
+	LDAP-DESC                   "replyItem: Login-LAT-Group"
+	ID                          { id-at-freeRadius 4 1 2 1 23 }
+}
+
+radiusLoginLATNode ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusLoginLATNode" }
+	LDAP-DESC                   "replyItem: Login-LAT-Node"
+	ID                          { id-at-freeRadius 4 1 2 1 24 }
+}
+
+radiusLoginLATPort ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusLoginLATPort" }
+	LDAP-DESC                   "replyItem: Login-LAT-Port"
+	ID                          { id-at-freeRadius 4 1 2 1 25 }
+}
+
+radiusLoginLATService ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusLoginLATService" }
+	LDAP-DESC                   "replyItem: Login-LAT-Service"
+	ID                          { id-at-freeRadius 4 1 2 1 26 }
+}
+
+radiusLoginService ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusLoginService" }
+	LDAP-DESC                   "replyItem: Login-Service"
+	ID                          { id-at-freeRadius 4 1 2 1 27 }
+}
+
+radiusLoginTCPPort ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusLoginTCPPort" }
+	LDAP-DESC                   "replyItem: Login-TCP-Port"
+	ID                          { id-at-freeRadius 4 1 2 1 28 }
+}
+
+radiusPasswordRetry ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusPasswordRetry" }
+	ID                          { id-at-freeRadius 4 1 2 1 29 }
+}
+
+radiusPortLimit ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusPortLimit" }
+	LDAP-DESC                   "replyItem: Port-Limit"
+	ID                          { id-at-freeRadius 4 1 2 1 30 }
+}
+
+radiusProfileDN ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+	EQUALITY MATCHING RULE      distinguishedNameMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   { "radiusProfileDN" }
+	ID                          { id-at-freeRadius 4 1 2 1 49 }
+}
+
+radiusPrompt ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusPrompt" }
+	ID                          { id-at-freeRadius 4 1 2 1 31 }
+}
+
+radiusProxyToRealm ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusProxyToRealm" }
+	ID                          { id-at-freeRadius 4 1 2 1 50 }
+}
+
+radiusReplicateToRealm ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusReplicateToRealm" }
+	ID                          { id-at-freeRadius 4 1 2 1 51 }
+}
+
+radiusRealm ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusRealm" }
+	ID                          { id-at-freeRadius 4 1 2 1 52 }
+}
+
+radiusServiceType ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusServiceType" }
+	LDAP-DESC                   "replyItem: Service-Type"
+	ID                          { id-at-freeRadius 4 1 2 1 32 }
+}
+
+radiusSessionTimeout ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusSessionTimeout" }
+	LDAP-DESC                   "replyItem: Session-Timeout"
+	ID                          { id-at-freeRadius 4 1 2 1 33 }
+}
+
+radiusTerminationAction ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusTerminationAction" }
+	LDAP-DESC                   "replyItem: Termination-Action"
+	ID                          { id-at-freeRadius 4 1 2 1 34 }
+}
+
+radiusTunnelAssignmentId ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusTunnelAssignmentId" }
+	ID                          { id-at-freeRadius 4 1 2 1 35 }
+}
+
+radiusTunnelMediumType ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusTunnelMediumType" }
+	ID                          { id-at-freeRadius 4 1 2 1 36 }
+}
+
+radiusTunnelPassword ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusTunnelPassword" }
+	ID                          { id-at-freeRadius 4 1 2 1 37 }
+}
+
+radiusTunnelPreference ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusTunnelPreference" }
+	ID                          { id-at-freeRadius 4 1 2 1 38 }
+}
+
+radiusTunnelPrivateGroupId ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusTunnelPrivateGroupId" }
+	ID                          { id-at-freeRadius 4 1 2 1 39 }
+}
+
+radiusTunnelServerEndpoint ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusTunnelServerEndpoint" }
+	ID                          { id-at-freeRadius 4 1 2 1 40 }
+}
+
+radiusTunnelType ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusTunnelType" }
+	ID                          { id-at-freeRadius 4 1 2 1 41 }
+}
+
+radiusVSA ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusVSA" }
+	ID                          { id-at-freeRadius 4 1 2 1 42 }
+}
+
+radiusTunnelClientEndpoint ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusTunnelClientEndpoint" }
+	ID                          { id-at-freeRadius 4 1 2 1 43 }
+}
+
+radiusSimultaneousUse ATTRIBUTE ::= {
+	WITH SYNTAX                 INTEGER
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 integer.&id
+	LDAP-NAME                   { "radiusSimultaneousUse" }
+	LDAP-DESC                   "controlItem: Simultaneous-Use"
+	ID                          { id-at-freeRadius 4 1 2 1 53 }
+}
+
+radiusLoginTime ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusLoginTime" }
+	ID                          { id-at-freeRadius 4 1 2 1 54 }
+}
+
+radiusUserCategory ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusUserCategory" }
+	ID                          { id-at-freeRadius 4 1 2 1 55 }
+}
+
+radiusStripUserName ATTRIBUTE ::= {
+	WITH SYNTAX                 BOOLEAN
+    EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   { "radiusStripUserName" }
+	ID                          { id-at-freeRadius 4 1 2 1 56 }
+}
+
+dialupAccess ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "dialupAccess" }
+	ID                          { id-at-freeRadius 4 1 2 1 57 }
+}
+
+radiusExpiration ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusExpiration" }
+	LDAP-DESC                   "controlItem: Expiration"
+	ID                          { id-at-freeRadius 4 1 2 1 58 }
+}
+
+radiusAttribute ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusAttribute" }
+	LDAP-DESC                   "controlItem: $GENERIC$"
+	ID                          { id-at-freeRadius 4 1 2 1 59 }
+}
+
+radiusNASIpAddress ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusNASIpAddress" }
+	ID                          { id-at-freeRadius 4 1 2 1 61 }
+}
+
+radiusReplyMessage ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusReplyMessage" }
+	LDAP-DESC                   "replyItem: Reply-Message"
+	ID                          { id-at-freeRadius 4 1 2 1 62 }
+}
+
+radiusControlAttribute ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusControlAttribute" }
+	LDAP-DESC                   "controlItem: $GENERIC$"
+	ID                          { id-at-freeRadius 4 1 2 1 63 }
+}
+
+radiusReplyAttribute ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusReplyAttribute" }
+	LDAP-DESC                   "replyItem: $GENERIC$"
+	ID                          { id-at-freeRadius 4 1 2 1 64 }
+}
+
+radiusRequestAttribute ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusRequestAttribute" }
+	LDAP-DESC                   "requestItem: $GENERIC$"
+	ID                          { id-at-freeRadius 4 1 2 1 65 }
+}
+
+radiusClientIdentifier ATTRIBUTE ::= {
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusClientIdentifier" }
+	LDAP-DESC                   "Client identifier"
+	ID                          { id-at-freeRadius 4 1 1 2 2 }
+}
+
+radiusClientSecret ATTRIBUTE ::= {
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusClientSecret" }
+	LDAP-DESC                   "Client secret"
+	ID                          { id-at-freeRadius 4 1 1 2 3 }
+}
+
+
+radiusClientShortname ATTRIBUTE ::= {
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusClientShortname" }
+	LDAP-DESC                   "Client shortname"
+	ID                          { id-at-freeRadius 4 1 1 2 4 }
+}
+
+radiusClientVirtualServer ATTRIBUTE ::= {
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusClientVirtualServer" }
+	LDAP-DESC                   "VirtualServer"
+	ID                          { id-at-freeRadius 4 1 1 2 5 }
+}
+
+radiusClientType ATTRIBUTE ::= {
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusClientType" }
+	LDAP-DESC                   "Client Type"
+	ID                          { id-at-freeRadius 4 1 1 2 6 }
+}
+
+radiusClientRequireMa ATTRIBUTE ::= {
+	EQUALITY MATCHING RULE      booleanMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 boolean.&id
+	LDAP-NAME                   { "radiusClientRequireMa" }
+	LDAP-DESC                   "Require Message Authenticator"
+	ID                          { id-at-freeRadius 4 1 1 2 7 }
+}
+
+radiusClientComment ATTRIBUTE ::= {
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "radiusClientComment" }
+	LDAP-DESC                   "Client comment"
+	ID                          { id-at-freeRadius 4 1 1 2 8 }
+}
+
+freeradiusDhcpv4GatewayIdentifier ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "freeradiusDhcpv4GatewayIdentifier" }
+	LDAP-DESC                   "Usually Option 82 Remote ID"
+	ID                          { id-at-freeRadius 4 2 1 1 1 }
+}
+
+freeradiusDhcpv4GatewayAddr ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "freeradiusDhcpv4GatewayAddr" }
+	LDAP-DESC                   "Gateway IP address, usually GIADDR"
+	ID                          { id-at-freeRadius 4 2 1 1 2 }
+}
+
+freeradiusDhcpv4PoolName ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "freeradiusDhcpv4PoolName" }
+	LDAP-DESC                   "DHCP IP pool name"
+	ID                          { id-at-freeRadius 4 2 1 1 3 }
+}
+
+freeradiusDhcpv4Attribute ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "freeradiusDhcpv4Attribute" }
+	LDAP-DESC                   "DHCP attribute in format [<list>.]<attr> <op> <value>"
+	ID                          { id-at-freeRadius 4 2 2 1 4 }
+}
+
+freeradiusDhcpv6GatewayIdentifier ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "freeradiusDhcpv6GatewayIdentifier" }
+	LDAP-DESC                   "Gateway Identifier"
+	ID                          { id-at-freeRadius 4 3 1 1 1 }
+}
+
+freeradiusDhcpv6GatewayAddr ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "freeradiusDhcpv6GatewayAddr" }
+	LDAP-DESC                   "Gateway IP address"
+	ID                          { id-at-freeRadius 4 3 1 1 2 }
+}
+
+freeradiusDhcpv6PoolNameNA ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "freeradiusDhcpv6PoolNameNA" }
+	LDAP-DESC                   "DHCPv6 IP NA pool name"
+	ID                          { id-at-freeRadius 4 3 1 1 3 }
+}
+
+freeradiusDhcpv6PoolNamePD ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "freeradiusDhcpv6PoolNamePD" }
+	LDAP-DESC                   "DHCPv6 IP PD pool name"
+	ID                          { id-at-freeRadius 4 3 1 1 4 }
+}
+
+freeradiusDhcpv6PoolNameTA ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "freeradiusDhcpv6PoolNameTA" }
+	LDAP-DESC                   "DHCPv6 IP TA pool name"
+	ID                          { id-at-freeRadius 4 3 1 1 5 }
+}
+
+freeradiusDhcpv6Attribute ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseIgnoreMatch
+	SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "freeradiusDhcpv6Attribute" }
+	LDAP-DESC                   "DHCPv6 attribute in format [<list>.]<attr> <op> <value>"
+	ID                          { id-at-freeRadius 4 3 2 1 1 }
+}
+
+radiusAcctAuthentic ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "radiusAcctAuthentic" }
+	ID                          { id-at-freeRadius 4 1 3 1 66 }
+}
+
+radiusAcctInputOctets ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "radiusAcctInputOctets" }
+	ID                          { id-at-freeRadius 4 1 3 1 67 }
+}
+
+radiusAcctInterval ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "radiusAcctInterval" }
+	ID                          { id-at-freeRadius 4 1 3 1 68 }
+}
+
+radiusAcctOutputOctets ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "radiusAcctOutputOctets" }
+	ID                          { id-at-freeRadius 4 1 3 1 69 }
+}
+
+radiusAcctSessionId ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "radiusAcctSessionId" }
+	ID                          { id-at-freeRadius 4 1 3 1 70 }
+}
+
+radiusAcctSessionTime ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "radiusAcctSessionTime" }
+	ID                          { id-at-freeRadius 4 1 3 1 71 }
+}
+
+radiusAcctStartTime ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "radiusAcctStartTime" }
+	ID                          { id-at-freeRadius 4 1 3 1 72 }
+}
+
+radiusAcctStopTime ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "radiusAcctStopTime" }
+	ID                          { id-at-freeRadius 4 1 3 1 73 }
+}
+
+radiusAcctTerminateCause ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "radiusAcctTerminateCause" }
+	ID                          { id-at-freeRadius 4 1 3 1 74 }
+}
+
+radiusAcctUniqueId ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "radiusAcctUniqueId" }
+	ID                          { id-at-freeRadius 4 1 3 1 75 }
+}
+
+radiusAcctUpdateTime ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "radiusAcctUpdateTime" }
+	ID                          { id-at-freeRadius 4 1 3 1 76 }
+}
+
+radiusConnectInfoStart ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "radiusConnectInfoStart" }
+	ID                          { id-at-freeRadius 4 1 3 1 77 }
+}
+
+radiusConnectInfoStop ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "radiusConnectInfoStop" }
+	ID                          { id-at-freeRadius 4 1 3 1 78 }
+}
+
+radiusNASIdentifier ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "radiusNASIdentifier" }
+	ID                          { id-at-freeRadius 4 1 3 1 79 }
+}
+
+radiusNASPort ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "radiusNASPort" }
+	ID                          { id-at-freeRadius 4 1 3 1 80 }
+}
+
+radiusNASPortId ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "radiusNASPortId" }
+	ID                          { id-at-freeRadius 4 1 3 1 81 }
+}
+
+radiusNASPortType ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "radiusNASPortType" }
+	ID                          { id-at-freeRadius 4 1 3 1 82 }
+}
+
+radiusUserName ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseIgnoreIA5Match
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "radiusUserName" }
+	ID                          { id-at-freeRadius 4 1 3 1 83 }
+}
+
+-- Object Classes
+
+radiusClient OBJECT-CLASS ::= {
+	SUBCLASS OF         { top }
+	KIND                structural
+	MUST CONTAIN        { radiusClientIdentifier | radiusClientSecret }
+	MAY CONTAIN         {
+        radiusClientShortname
+        | radiusClientVirtualServer
+        | radiusClientType
+        | radiusClientRequireMa
+        | radiusClientComment
+    }
+	LDAP-NAME           { "radiusClient" }
+	LDAP-DESC           "radiusClient object class"
+	ID                  { id-at-freeRadius 4 1 1 1 1 }
+}
+
+freeradiusDhcpv4Gateway OBJECT-CLASS ::= {
+	SUBCLASS OF         { top }
+	KIND                auxiliary
+	MAY CONTAIN         {
+        freeradiusDhcpv4GatewayIdentifier
+        | freeradiusDhcpv4GatewayAddr
+        | freeradiusDhcpv4PoolName
+    }
+	LDAP-NAME           { "freeradiusDhcpv4Gateway" }
+	LDAP-DESC           "A DHCP gateway, and attributes specific to it"
+	ID                  { id-at-freeRadius 4 2 1 2 1 }
+}
+
+freeradiusDhcpv4Profile OBJECT-CLASS ::= {
+	SUBCLASS OF         { top }
+	KIND                auxiliary
+	MAY CONTAIN         { freeradiusDhcpv4Attribute }
+	LDAP-NAME           { "freeradiusDhcpv4Profile" }
+	ID                  { id-at-freeRadius 4 2 2 2 2 }
+}
+
+freeradiusDhcpv6Gateway OBJECT-CLASS ::= {
+	SUBCLASS OF         { top }
+	KIND                auxiliary
+	MAY CONTAIN         {
+        freeradiusDhcpv6GatewayIdentifier
+        | freeradiusDhcpv6GatewayAddr
+        | freeradiusDhcpv6PoolNameNA
+        | freeradiusDhcpv6PoolNamePD
+        | freeradiusDhcpv6PoolNameTA
+    }
+	LDAP-NAME           { "freeradiusDhcpv6Gateway" }
+	LDAP-DESC           "A DHCP gateway, and attributes specific to it"
+	ID                  { id-at-freeRadius 4 3 1 2 1 }
+}
+
+freeradiusDhcpv6Profile OBJECT-CLASS ::= {
+	SUBCLASS OF         { top }
+	KIND                auxiliary
+	MAY CONTAIN         { freeradiusDhcpv6Attribute }
+	LDAP-NAME           { "freeradiusDhcpv6Profile" }
+	ID                  { id-at-freeRadius 4 3 2 2 2 }
+}
+
+radiusacct OBJECT-CLASS ::= {
+	SUBCLASS OF         { top }
+	KIND                auxiliary
+	MAY CONTAIN         {
+        radiusAcctAuthentic
+        | radiusAcctInputOctets
+        | radiusAcctInterval
+        | radiusAcctOutputOctets
+        | radiusAcctSessionId
+        | radiusAcctSessionTime
+        | radiusAcctStartTime
+        | radiusAcctStopTime
+        | radiusAcctTerminateCause
+        | radiusAcctUniqueId
+        | radiusAcctUpdateTime
+        | radiusConnectInfoStart
+        | radiusConnectInfoStop
+        | radiusNASIdentifier
+        | radiusNASPort
+        | radiusNASPortId
+        | radiusNASPortType
+        | radiusUserName
+    }
+	LDAP-NAME           { "radiusacct" }
+	ID                  { id-at-freeRadius 4 3 2 3 }
+}
+
+radiusprofile OBJECT-CLASS ::= {
+	SUBCLASS OF         { top }
+	KIND                auxiliary
+	MAY CONTAIN         {
+        radiusArapFeatures
+        | radiusArapSecurity
+        | radiusArapZoneAccess
+        | radiusAuthType
+        | radiusCallbackId
+        | radiusCallbackNumber
+        | radiusCalledStationId
+        | radiusCallingStationId
+        | radiusClass
+        | radiusClientIPAddress
+        | radiusFilterId
+        | radiusFramedAppleTalkLink
+        | radiusFramedAppleTalkNetwork
+        | radiusFramedAppleTalkZone
+        | radiusFramedCompression
+        | radiusFramedIPAddress
+        | radiusFramedIPNetmask
+        | radiusFramedIPXNetwork
+        | radiusFramedMTU
+        | radiusFramedProtocol
+        | radiusAttribute
+        | radiusFramedRoute
+        | radiusFramedRouting
+        | radiusIdleTimeout
+        | radiusGroupName
+        | radiusHint
+        | radiusHuntgroupName
+        | radiusLoginIPHost
+        | radiusLoginLATGroup
+        | radiusLoginLATNode
+        | radiusLoginLATPort
+        | radiusLoginLATService
+        | radiusLoginService
+        | radiusLoginTCPPort
+        | radiusLoginTime
+        | radiusPasswordRetry
+        | radiusPortLimit
+        | radiusPrompt
+        | radiusProxyToRealm
+        | radiusRealm
+        | radiusReplicateToRealm
+        | radiusServiceType
+        | radiusSessionTimeout
+        | radiusStripUserName
+        | radiusTerminationAction
+        | radiusTunnelClientEndpoint
+        | radiusProfileDN
+        | radiusSimultaneousUse
+        | radiusTunnelAssignmentId
+        | radiusTunnelMediumType
+        | radiusTunnelPassword
+        | radiusTunnelPreference
+        | radiusTunnelPrivateGroupId
+        | radiusTunnelServerEndpoint
+        | radiusTunnelType
+        | radiusUserCategory
+        | radiusVSA
+        | radiusExpiration
+        | dialupAccess
+        | radiusNASIpAddress
+        | radiusReplyMessage
+        | radiusControlAttribute
+        | radiusReplyAttribute
+        | radiusRequestAttribute
+    }
+	LDAP-NAME           { "radiusprofile" }
+	ID                  { id-at-freeRadius 4 3 2 1 }
+}
+
+radiusObjectProfile OBJECT-CLASS ::= {
+	SUBCLASS OF         { top }
+	KIND                structural
+	MUST CONTAIN        { commonName }
+	MAY CONTAIN         { uid | userPassword | description }
+	LDAP-NAME           { "radiusObjectProfile" }
+	LDAP-DESC           "A Container Objectclass to be used for creating radius profile object"
+	ID                  { id-at-freeRadius 4 3 2 2 }
+}
+
+-- Name Forms
+
+radiusClientNameForm NAME-FORM ::= {
+	NAMES				radiusClient
+	WITH ATTRIBUTES		{radiusClientIdentifier}
+	LDAP-NAME			{"radiusClientNameForm"}
+	ID					{ id-nf 24 }
+}
+
+radiusObjectProfileNameForm NAME-FORM ::= {
+	NAMES				radiusObjectProfile
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"radiusObjectProfileNameForm"}
+	ID					{ id-nf 25 }
+}
+
+END

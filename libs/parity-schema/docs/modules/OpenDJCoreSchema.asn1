@@ -1,0 +1,179 @@
+OpenDJCoreSchema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) opendj-core-schema(63)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    id-nf
+        FROM Wildboar
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) wildboar(1)}
+        WITH SUCCESSORS
+
+    ATTRIBUTE, OBJECT-CLASS, objectIdentifierMatch, DistinguishedName,
+    distinguishedNameMatch, top
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	UnboundedDirectoryString,
+
+    -- Attributes
+    commonName, description, uid, countryName, localityName, organizationName,
+    stateOrProvinceName, organizationalUnitName, streetAddress, postalAddress,
+    preferredDeliveryMethod, seeAlso, telephoneNumber, owner, businessCategory,
+    member, dc,
+
+    -- Syntaxes
+    boolean, integer, dn, directoryString, ia5String, octetString,
+
+    -- Matching Rules
+    octetStringMatch, caseIgnoreIA5Match, caseExactIA5Match
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    textEncodedORAddress, favouriteDrink, roomNumber, userClass,
+    homePostalAddress, secretary, personalTitle, janetMailbox,
+    mobileTelephoneNumber, pagerTelephoneNumber, organizationalStatus,
+    mailPreferenceOption, buildingName, manager, uniqueIdentifier, info,
+    dITRedirect, audio, domain
+        FROM Cosine
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) cosine(3)}
+
+    mail
+        FROM OpenLDAPCoreSchema {iso(1) identified-organization(3) dod(6)
+        internet(1) private(4) enterprise(1) wildboar(56490) module(1)
+        openldap-core(6)}
+
+    organization, organizationalUnit, person
+        FROM SelectedObjectClasses {joint-iso-itu-t ds(5) module(1)
+        selectedObjectClasses(6) 9}
+
+    memberURL
+        FROM DynGroup {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) dyngroup(24)}
+
+    ;
+
+-- Attribute Types
+
+-- From: https://datatracker.ietf.org/doc/html/draft-wahl-ldap-adminaddr
+administratorsAddress ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String -- Must encode a URL.
+    USAGE                       directoryOperation
+    LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   { "administratorsAddress" }
+    LDAP-DESC                   "URIs (including mailto:) that identify the location of the DSA or naming context administrator."
+	ID                          { 1 3 6 1 4 1 1466 101 120 1 }
+}
+
+isMemberOf ATTRIBUTE ::= {
+	WITH SYNTAX                 DistinguishedName
+    EQUALITY MATCHING RULE      distinguishedNameMatch
+    USAGE                       directoryOperation
+    LDAP-SYNTAX                 dn.&id
+	LDAP-NAME                   { "isMemberOf" }
+    LDAP-DESC                   "Sun-defined attribute type"
+	ID                          { 1 3 6 1 4 1 42 2 27 9 1 792 }
+}
+
+etag ATTRIBUTE ::= {
+    WITH SYNTAX             OCTET STRING
+    EQUALITY MATCHING RULE  octetStringMatch
+    SINGLE VALUE            TRUE
+    NO USER MODIFICATION    TRUE
+    USAGE                   directoryOperation
+    LDAP-SYNTAX             octetString.&id
+    LDAP-NAME               {"etag"}
+    ID                      { 1 3 6 1 4 1 36733 2 1 1 59 }
+}
+
+emailAddress ATTRIBUTE ::= {
+    WITH SYNTAX             IA5String
+    EQUALITY MATCHING RULE  caseIgnoreIA5Match
+    LDAP-SYNTAX             ia5String.&id
+    LDAP-NAME               {"emailAddress"}
+    LDAP-DESC               "represents the email address part of an X.509 certificate"
+    ID                      { 1 2 840 113549 1 9 1 }
+}
+
+fullVendorVersion ATTRIBUTE ::= {
+    WITH SYNTAX             UnboundedDirectoryString
+    EQUALITY MATCHING RULE  caseExactIA5Match
+    SINGLE VALUE            TRUE
+    NO USER MODIFICATION    TRUE
+    USAGE                   dSAOperation
+    LDAP-SYNTAX             directoryString.&id
+    LDAP-NAME               {"fullVendorVersion"}
+    ID                      { 1 3 6 1 4 1 36733 2 1 1 141 }
+}
+
+-- Object Classes
+
+untypedObject OBJECT-CLASS ::= {
+    SUBCLASS OF         {top}
+	KIND                structural
+    MAY CONTAIN         {
+        countryName
+        | commonName
+        | dc
+        | localityName
+        | organizationName
+        | organizationalUnitName
+        | stateOrProvinceName
+        | streetAddress
+        | uid
+        | description
+        | owner
+        | seeAlso
+    }
+	LDAP-NAME           { "untypedObject" }
+	LDAP-DESC           "Entry of no particular type"
+	ID                  { 1 3 6 1 4 1 26027 1 2 900 }
+}
+
+uidObject OBJECT-CLASS ::= {
+    SUBCLASS OF         {top}
+	KIND                auxiliary
+    MUST CONTAIN        {uid}
+	LDAP-NAME           { "uidObject" }
+	ID                  { 1 3 6 1 1 3 1 }
+}
+
+groupOfEntries OBJECT-CLASS ::= {
+    SUBCLASS OF         { top }
+	KIND                structural
+    MUST CONTAIN        { commonName }
+    MAY CONTAIN         {
+        member
+        | businessCategory
+        | seeAlso
+        | owner
+        | organizationalUnitName
+        | organizationName
+        | description
+    }
+	LDAP-NAME           { "groupOfEntries" }
+	ID                  { 1 2 826 0 1 3458854 2 1 1 }
+}
+
+-- Name Forms
+
+groupOfEntriesNameForm NAME-FORM ::= {
+	NAMES				groupOfEntries
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"groupOfEntriesNameForm"}
+	ID					{ id-nf 50 }
+}
+
+END

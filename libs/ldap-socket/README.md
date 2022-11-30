@@ -1,7 +1,4 @@
-# ldap-socket
+# Lightweight Directory Access Protocol (LDAP) Socket in TypeScript
 
-This library was generated with [Nx](https://nx.dev).
-
-## Running unit tests
-
-Run `nx test ldap-socket` to execute the unit tests via [Jest](https://jestjs.io).
+A library that wraps a TCP or TLS socket emits LDAP message events as LDAP
+messages are read and allows for writing LDAP messages.

@@ -1,0 +1,161 @@
+Java {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) java(46)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    id-nf
+        FROM Wildboar
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) wildboar(1)}
+        WITH SUCCESSORS
+
+    ATTRIBUTE, OBJECT-CLASS, top
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	directoryString, ia5String, UnboundedDirectoryString, caseExactMatch,
+    caseExactIA5Match, octetString, commonName
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    ;
+
+javaFactory ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseExactMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"javaFactory"}
+	LDAP-DESC                   "Fully qualified Java class name of a JNDI object factory"
+	ID                          { 1 3 6 1 4 1 42 2 27 4 1 10 }
+}
+
+javaReferenceAddress ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseExactMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"javaReferenceAddress"}
+	LDAP-DESC                   "Addresses associated with a JNDI Reference"
+	ID                          { 1 3 6 1 4 1 42 2 27 4 1 11 }
+}
+
+javaDoc ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseExactIA5Match
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"javaDoc"}
+	LDAP-DESC                   "The Java documentation for the class"
+	ID                          { 1 3 6 1 4 1 42 2 27 4 1 12 }
+}
+
+javaClassNames ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseExactMatch
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"javaClassNames"}
+	LDAP-DESC                   "Fully qualified Java class or interface name"
+	ID                          { 1 3 6 1 4 1 42 2 27 4 1 13 }
+}
+
+javaClassName ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+	EQUALITY MATCHING RULE      caseExactMatch
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   {"javaClassName"}
+	LDAP-DESC                   "Fully qualified name of distinguished Java class or interface"
+	ID                          { 1 3 6 1 4 1 42 2 27 4 1 6 }
+}
+
+javaCodebase ATTRIBUTE ::= {
+	WITH SYNTAX                 IA5String
+	EQUALITY MATCHING RULE      caseExactIA5Match
+	USAGE                       userApplications
+	LDAP-SYNTAX                 ia5String.&id
+	LDAP-NAME                   {"javaCodebase"}
+	LDAP-DESC                   "URL(s) specifying the location of class definition"
+	ID                          { 1 3 6 1 4 1 42 2 27 4 1 7 }
+}
+
+javaSerializedData ATTRIBUTE ::= {
+	WITH SYNTAX                 OCTET STRING
+	SINGLE VALUE                TRUE
+	USAGE                       userApplications
+	LDAP-SYNTAX                 octetString.&id
+	LDAP-NAME                   {"javaSerializedData"}
+	LDAP-DESC                   "Serialized form of a Java object"
+	ID                          { 1 3 6 1 4 1 42 2 27 4 1 8 }
+}
+
+javaContainer OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            structural
+	MUST CONTAIN    {commonName}
+	LDAP-NAME       {"javaContainer"}
+	LDAP-DESC       "Container for a Java object"
+	ID              { 1 3 6 1 4 1 42 2 27 4 2 1 }
+}
+
+javaObject OBJECT-CLASS ::= {
+	SUBCLASS OF     {top}
+	KIND            abstract
+	MUST CONTAIN    {javaClassName}
+	MAY CONTAIN     {javaClassNames | javaCodebase | javaDoc | description}
+	LDAP-NAME       {"javaObject"}
+	LDAP-DESC       "Java object representation"
+	ID              { 1 3 6 1 4 1 42 2 27 4 2 4 }
+}
+
+javaSerializedObject OBJECT-CLASS ::= {
+	SUBCLASS OF     {javaObject}
+	KIND            auxiliary
+	MUST CONTAIN    {javaSerializedData}
+	LDAP-NAME       {"javaSerializedObject"}
+	LDAP-DESC       "Java serialized object"
+	ID              { 1 3 6 1 4 1 42 2 27 4 2 5 }
+}
+
+javaNamingReference OBJECT-CLASS ::= {
+	SUBCLASS OF     {javaObject}
+	KIND            auxiliary
+	MAY CONTAIN     {javaReferenceAddress | javaFactory}
+	LDAP-NAME       {"javaNamingReference"}
+	LDAP-DESC       "JNDI reference"
+	ID              { 1 3 6 1 4 1 42 2 27 4 2 7 }
+}
+
+javaMarshalledObject OBJECT-CLASS ::= {
+	SUBCLASS OF     {javaObject}
+	KIND            auxiliary
+	MUST CONTAIN    {javaSerializedData}
+	LDAP-NAME       {"javaMarshalledObject"}
+	LDAP-DESC       "Java marshalled object"
+	ID              { 1 3 6 1 4 1 42 2 27 4 2 8 }
+}
+
+-- Name Forms
+
+javaContainerNameForm NAME-FORM ::= {
+	NAMES				javaContainer
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"javaContainerNameForm"}
+	ID					{ id-nf 41 }
+}
+
+END

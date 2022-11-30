@@ -1,0 +1,103 @@
+SabayonSchema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) sabayon-schema(57)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    id-nf
+        FROM Wildboar
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) wildboar(1)}
+        WITH SUCCESSORS
+
+    ATTRIBUTE, OBJECT-CLASS, top
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	UnboundedDirectoryString, commonName, description,
+    directoryString, caseIgnoreMatch, caseIgnoreSubstringsMatch
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    labeledURI
+        FROM OpenLDAPCoreSchema
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) openldap-core(6)}
+        WITH SUCCESSORS
+
+    ;
+
+sabayonProfileURL ATTRIBUTE ::= {
+	SUBTYPE OF                  labeledURI
+	LDAP-NAME                   { "sabayonProfileURL" }
+	LDAP-DESC                   "The URL of a sabayon profile"
+	ID                          { 1 3 6 1 4 1 2312 4 3 3 1 }
+}
+
+-- This attribute is used to store the name of a sabayon profile.
+-- It can refer to either a local zipfile (which will be looked up
+-- in /etc/desktop-profiles/$(name).zip), or it can be used to
+-- map to another ldap object that maps to the final profile URL
+sabayonProfileName ATTRIBUTE ::= {
+	WITH SYNTAX                 UnboundedDirectoryString
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 directoryString.&id
+	LDAP-NAME                   { "sabayonProfileName" }
+	LDAP-DESC                   "The Name of a sabayon profile"
+	ID                          { 1 3 6 1 4 1 2312 4 3 3 2 }
+}
+
+-- Simple example object to store profile information
+-- If you use this or something similar instead of a direct URL
+-- in your user object you get more flexibility.
+sabayonProfile OBJECT-CLASS ::= {
+	SUBCLASS OF         { top }
+	KIND                structural
+	MUST CONTAIN        { commonName }
+	MAY CONTAIN         { sabayonProfileURL | description }
+	LDAP-NAME           { "sabayonProfile" }
+	LDAP-DESC           "sabayon profile"
+	ID                  { 1 3 6 1 4 1 2312 4 3 4 1 }
+}
+
+sabayonProfileNameObject OBJECT-CLASS ::= {
+	SUBCLASS OF         { top }
+	KIND                auxiliary
+	MUST CONTAIN        { sabayonProfileName }
+	LDAP-NAME           { "sabayonProfileNameObject" }
+	LDAP-DESC           "contains sabayon profile name"
+	ID                  { 1 3 6 1 4 1 2312 4 3 4 2 }
+}
+
+sabayonProfileURLObject OBJECT-CLASS ::= {
+	SUBCLASS OF         { top }
+	KIND                auxiliary
+	MUST CONTAIN        { commonName }
+    MAY CONTAIN         { sabayonProfileURL }
+	LDAP-NAME           { "sabayonProfileURLObject" }
+	LDAP-DESC           "contains sabayon profile"
+	ID                  { 1 3 6 1 4 1 2312 4 3 4 3 }
+}
+
+-- Name Forms
+
+sabayonProfileNameForm NAME-FORM ::= {
+	NAMES				sabayonProfile
+	WITH ATTRIBUTES		{commonName}
+	LDAP-NAME			{"sabayonProfileNameForm"}
+	ID					{ id-nf 26 }
+}
+
+END

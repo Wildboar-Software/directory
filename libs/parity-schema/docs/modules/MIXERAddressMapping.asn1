@@ -1,0 +1,105 @@
+-- See: https://www.rfc-editor.org/rfc/rfc2164.html
+MIXERAddressMapping {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) mixer-address-mapping(9)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    ATTRIBUTE, OBJECT-CLASS, top, DistinguishedName
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+    name, distinguishedName, objectIdentifier
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    mhs-or-addresses, mhs-message-transfer-agent
+        FROM MHSDirectoryObjectsAndAttributes
+        {joint-iso-itu-t mhs(6) arch(5) modules(0) directory(1) version-1999(1)}
+        WITH SUCCESSORS
+    ;
+
+mhs-ds OBJECT IDENTIFIER ::= {iso(1) org(3) dod(6) internet(1) private(4)
+    enterprises(1) isode-consortium(453) mhs-ds (7)}
+
+mapping OBJECT IDENTIFIER ::= {mhs-ds 4}
+
+oc OBJECT IDENTIFIER ::= {mapping 1}
+at OBJECT IDENTIFIER ::= {mapping 2}
+
+oc-rfc822-to-x400-mapping OBJECT IDENTIFIER ::= {oc 1}
+oc-x400-to-rfc822-mapping OBJECT IDENTIFIER ::= {oc 2}
+oc-omitted-or-address-component OBJECT IDENTIFIER ::= {oc 3}
+oc-mixer-gateway OBJECT IDENTIFIER ::= {oc 4}
+
+at-associated-or-address OBJECT IDENTIFIER ::= {at 6}
+at-associated-x400-gateway OBJECT IDENTIFIER ::= {at 3}
+at-associated-domain OBJECT IDENTIFIER ::= {at 4}
+at-or-address-component-type OBJECT IDENTIFIER ::= {at 7}
+at-associated-internet-gateway OBJECT IDENTIFIER ::= {at 8}
+at-mcgam-tables OBJECT IDENTIFIER ::= {at 9}
+
+-- Attributes
+
+associatedORAddress ATTRIBUTE ::= {
+    SUBTYPE OF          distinguishedName
+    SINGLE VALUE        TRUE
+    ID                  at-associated-or-address }
+
+associatedX400Gateway ATTRIBUTE ::= {
+    SUBTYPE OF      mhs-or-addresses
+    ID              at-associated-x400-gateway }
+
+associatedDomain ATTRIBUTE ::= {
+    SUBTYPE OF          name
+    SINGLE VALUE        TRUE
+    ID                  at-associated-domain }
+
+associatedInternetGateway ATTRIBUTE ::= {
+    SUBTYPE OF          name
+    ID                  at-associated-internet-gateway }
+
+oRAddressComponentType ATTRIBUTE ::= {
+    SUBTYPE OF          objectIdentifier
+    SINGLE VALUE        TRUE
+    ID                  at-or-address-component-type }
+
+mcgamTables ATTRIBUTE ::= {
+    WITH SYNTAX         SEQUENCE OF DistinguishedName
+    SINGLE VALUE        TRUE
+    ID                  at-mcgam-tables }
+
+-- Object Classes
+
+omittedORAddressComponent OBJECT-CLASS ::=
+    SUBCLASS OF         {top}
+    MUST CONTAIN        {oRAddressComponentType}
+    ID                  oc-omitted-or-address-component }
+
+rFC822ToX400Mapping OBJECT-CLASS ::= {
+    SUBCLASS OF     {domainComponent}
+    MAY CONTAIN     {associatedORAddress | associatedX400Gateway}
+    ID              oc-rfc822-to-x400-mapping }
+
+x400ToRFC822Mapping OBJECT-CLASS ::= {
+    SUBCLASS OF     {top}
+    MAY CONTAIN     {associatedDomain | associatedInternetGateway}
+    ID              oc-x400-to-rfc822-mapping }
+
+mixerGateway OBJECT-CLASS ::=
+    SUBCLASS OF     {mhs-message-transfer-agent}
+    KIND            auxiliary
+    MUST CONTAIN    {mcgamTables}
+    ID              oc-mixer-gateway }
+
+END

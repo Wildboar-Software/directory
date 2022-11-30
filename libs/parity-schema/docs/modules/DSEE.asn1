@@ -1,0 +1,147 @@
+DSEE {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) dsee(23)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    ATTRIBUTE, OBJECT-CLASS, top, SYNTAX-NAME, DistinguishedName
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+	directoryString, UnboundedDirectoryString, boolean, booleanMatch,
+    integer, integerMatch, integerOrderingMatch,
+    caseIgnoreMatch, caseIgnoreOrderingMatch, caseIgnoreSubstringsMatch,
+    octetString, octetStringMatch, octetStringOrderingMatch, octetStringSubstringsMatch
+		FROM SelectedAttributeTypes
+		{joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+		WITH SUCCESSORS
+
+    ;
+
+-- Object Identifiers
+
+netscapeRoot    OBJECT IDENTIFIER ::= { 2 16 840 1 113730 }
+netscapeDS      OBJECT IDENTIFIER ::= { netscapeRoot 3 }
+nsdsat          OBJECT IDENTIFIER ::= { netscapeDS 1 }
+nsdsoc          OBJECT IDENTIFIER ::= { netscapeDS 2 }
+sunroot         OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 42 }
+sunds           OBJECT IDENTIFIER ::= { sunroot 2 27 }
+
+-- Attribute Types
+
+changeNumber ATTRIBUTE ::= {
+	WITH SYNTAX 				INTEGER (0..MAX)
+    EQUALITY MATCHING RULE 		integerMatch
+	ORDERING MATCHING RULE		integerOrderingMatch
+	LDAP-SYNTAX 				integer.&id
+	LDAP-NAME 					{"changeNumber"}
+	ID { nsdsat 5 }
+}
+
+targetDn ATTRIBUTE ::= {
+	WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"targetDn"}
+	ID { nsdsat 6 }
+}
+
+changeType ATTRIBUTE ::= {
+	WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+	ORDERING MATCHING RULE		caseIgnoreOrderingMatch
+	SUBSTRINGS MATCHING RULE 	caseIgnoreSubstringsMatch
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"changeType"}
+	ID { nsdsat 7 }
+}
+
+changes ATTRIBUTE ::= {
+	WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		octetStringMatch
+	ORDERING MATCHING RULE		octetStringOrderingMatch
+	SUBSTRINGS MATCHING RULE 	octetStringSubstringsMatch
+	LDAP-SYNTAX 				octetString.&id
+	LDAP-NAME 					{"changes"}
+	ID { nsdsat 8 }
+}
+
+newRdn ATTRIBUTE ::= {
+	WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"newRdn"}
+	ID { nsdsat 9 }
+}
+
+deleteOldRdn ATTRIBUTE ::= {
+	WITH SYNTAX 				BOOLEAN
+    EQUALITY MATCHING RULE 		booleanMatch
+	LDAP-SYNTAX 				boolean.&id
+	LDAP-NAME 					{"deleteOldRdn"}
+	ID { nsdsat 10 }
+}
+
+newSuperior ATTRIBUTE ::= {
+	WITH SYNTAX 				DistinguishedName
+    EQUALITY MATCHING RULE 		distinguishedNameMatch
+	LDAP-SYNTAX 				dn.&id
+	LDAP-NAME 					{"newSuperior"}
+	ID { nsdsat 11 }
+}
+
+changeTime ATTRIBUTE ::= {
+	WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+	ORDERING MATCHING RULE		caseIgnoreOrderingMatch
+	SUBSTRINGS MATCHING RULE 	caseIgnoreSubstringsMatch
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"changeTime"}
+	ID { nsdsat 77 }
+}
+
+nsUniqueId ATTRIBUTE ::= {
+	WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+	ORDERING MATCHING RULE		caseIgnoreOrderingMatch
+	SUBSTRINGS MATCHING RULE 	caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    NO USER MODIFICATION        TRUE
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"nsUniqueId"}
+	ID { nsdsat 542 }
+}
+
+targetUniqueId ATTRIBUTE ::= {
+	WITH SYNTAX 				UnboundedDirectoryString
+    EQUALITY MATCHING RULE 		caseIgnoreMatch
+	ORDERING MATCHING RULE		caseIgnoreOrderingMatch
+	SUBSTRINGS MATCHING RULE 	caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    NO USER MODIFICATION        TRUE
+	LDAP-SYNTAX 				directoryString.&id
+	LDAP-NAME 					{"targetUniqueId"}
+	ID { sunds 9 1 596 }
+}
+
+-- Object Classes
+
+changeLogEntry OBJECT-CLASS ::= {
+	SUBCLASS OF 	{top}
+	KIND			structural
+	MUST CONTAIN	{targetDn | changeTime | changeNumber | changeType}
+	MAY CONTAIN		{changes | newRdn | deleteOldRdn | newSuperior}
+	LDAP-NAME		{"changeLogEntry"}
+	ID				{ nsdsoc 1 }
+}
+
+END
