@@ -6,9 +6,13 @@ LABEL app="meerkat"
 # RUN /usr/local/bin/npx -v
 WORKDIR /srv/meerkat
 COPY ./dist/apps/meerkat ./
-RUN apk add --no-cache python3
-RUN apk add --no-cache make
-RUN apk add --no-cache g++
+
+# These used to be needed for installing applicationinsights-native-metrics
+# but this package was removed since it failed to build too much anyway.
+# RUN apk add --no-cache python3
+# RUN apk add --no-cache make
+# RUN apk add --no-cache g++
+
 RUN npm install --only=production --no-audit --no-fund --no-save
 # We save the Prisma CLI at build time so we can perform migrations in this
 # container without worrying about NPM outages.
