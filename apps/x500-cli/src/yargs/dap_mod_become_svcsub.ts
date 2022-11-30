@@ -26,7 +26,7 @@ interface BecomeServiceSubentryArgs {
 }
 
 export // eslint-disable-next-line @typescript-eslint/ban-types
-function create (ctx: Context): CommandModule<{}, BecomeServiceSubentryArgs> {
+function create (ctx: Context): CommandModule {
     return {
         command: "svcsub <object> <id> <dmdId>",
         describe: "Make a DSE into a serviceAdminSubentry",
