@@ -63,6 +63,10 @@ import {
     _decode_RelativeDistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
 import stringifyRDNSequence from "@wildboar/ldap/src/lib/stringifiers/RDNSequence";
+import { _decode_UiiFormat } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UiiFormat.ta";
+import { uii } from "@wildboar/x500/src/lib/collections/attributes";
+import { UiiFilter } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UiiFilter.ta";
+import { _decode_EpcFormat } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/EpcFormat.ta";
 
 function escapeUBS (str: UBS): string {
     return directoryStringToString(str)
@@ -503,4 +507,156 @@ function getRDNEncoder (ctx: Context): LDAPSyntaxEncoder {
         const r = _decode_RelativeDistinguishedName(value);
         return encodeLDAPDN(ctx, [ r ]);
     };
+}
+
+//   UtmCoordinates ::= SEQUENCE {
+//     zone      PrintableString,
+//     easting   NumericString,
+//     northing  NumericString }
+export
+const utmCoordinates: LDAPSyntaxEncoder = (value: ASN1Element): Uint8Array => {
+    const components = value.sequence;
+    if (components.length !== 3) {
+        throw new Error("833b2654-2626-4599-b7c9-f8f073c86de3");
+    }
+    const zone = components[0].printableString
+        .slice(0, 3).replace(/"/g, ""); // Just for good measure.
+    const easting = components[1].numericString;
+    const northing = components[2].numericString;
+    const str = `{ zone "${zone}", easting "${easting}", northing "${northing}" }`;
+    return Buffer.from(str);
+};
+
+// UiiFormat ::= SEQUENCE {
+//     baseObject  URI  OPTIONAL,
+//     subset      ENUMERATED {
+//         baseObject   (0),
+//         oneLevel     (1),
+//         wholeSubtree (2) } DEFAULT baseObject,
+//     next        CHOICE {
+//         length      INTEGER,
+//         filter      UiiFilter } }
+
+// UiiFilter ::= CHOICE {
+//     item  [0]  UiiItem,
+//     and   [1]  SET OF UiiFilter,
+//     or    [2]  SET OF UiiFilter,
+//     not   [3]  UiiFilter }
+
+// UiiItem ::= SEQUENCE {
+//     type   ATTRIBUTE.&id,
+//     length INTEGER OPTIONAL }
+
+export
+function uiiFilterToString (u: UiiFilter): string {
+    if ("item" in u) {
+        return u.item.length // I am pretty sure length can't be zero anyway.
+            ? `item:{ type ${u.item.type_.toString()}, length ${u.item.length} }`
+            : `item:{ type ${u.item.type_.toString()} }`;
+    } else if ("and" in u) {
+        const subs = u.and.map(uiiFilterToString);
+        return `and:{ ${subs.join(", ")} }`;
+    } else if ("or" in u) {
+        const subs = u.or.map(uiiFilterToString);
+        return `or:{ ${subs.join(", ")} }`;
+    } else {
+        return `not:${uiiFilterToString(u.not)}`;
+    }
+}
+
+export
+const uiiForm: LDAPSyntaxEncoder = (value: ASN1Element): Uint8Array => {
+    const substrings: string[] = [];
+    const u = _decode_UiiFormat(value);
+    if (u.baseObject) {
+        const baseObject = u.baseObject.replace(/"/g, "%22");
+        substrings.push(`uri "${baseObject}"`);
+    }
+    if (u.subset) {
+        const subset: string | undefined = ([
+            "baseObject",
+            "oneLevel",
+            "wholeSubtree",
+        ])[u.subset];
+        if (subset) {
+            substrings.push(`subset ${subset}`);
+        }
+    }
+    if ("length" in u.next) {
+        u.next.length
+        substrings.push(`next length:${u.next.length}`);
+    } else {
+        const filter = uiiFilterToString(u.next.filter);
+        substrings.push(`next filter:${filter}`);
+    }
+    return Buffer.from(`{ ${substrings.join(", ")} }`);
+}
+
+// EpcFormat ::= SEQUENCE {
+//     fields          SEQUENCE SIZE (1..MAX) OF SEQUENCE {
+//       bits            INTEGER,
+//       charField       CHOICE {
+//         characters  [0] INTEGER,
+//         maxValue    [1] INTEGER },
+//       result          ENUMERATED {
+//         numericPad     (0),
+//         numeric        (1),
+//         alpha7bits     (2) } DEFAULT numericPad },
+//     digitShift  [0] INTEGER                        OPTIONAL,
+//     checkCalc   [1] INTEGER                        OPTIONAL,
+//     urnPrefix       UTF8String                     OPTIONAL }
+
+export
+const epcForm: LDAPSyntaxEncoder = (value: ASN1Element): Uint8Array => {
+    const substrings: string[] = [];
+    const e = _decode_EpcFormat(value);
+    const fieldSubstrings = e.fields.map((f) => {
+        const result: string | undefined = ([
+            "numericPad",
+            "numeric",
+            "alpha7bits",
+        ])[f.result ?? 99];
+        const choice = ("characters" in f.charField)
+            ? `characters:${f.charField.characters}`
+            : `maxValue:${f.charField.maxValue}`;
+        return result
+            ? `{ bits ${f.bits}, charField ${choice}, result ${result} }`
+            : `{ bits ${f.bits}, charField ${choice} }`;
+    });
+    substrings.push(`fields { ${fieldSubstrings.join(", ")} }`);
+    if (e.digitShift) {
+        substrings.push(`digitShift ${e.digitShift}`);
+    }
+    if (e.checkCalc) {
+        substrings.push(`checkCalc ${e.checkCalc}`);
+    }
+    if (e.urnPrefix) {
+        substrings.push(`urnPrefix ${e.urnPrefix.replace(/"/g, "%22")}`);
+    }
+    return Buffer.from(`{ ${substrings.join(", ")} }`);
+}
+
+export
+const countryString3c: LDAPSyntaxEncoder = (value: ASN1Element): Uint8Array => {
+    return Buffer.from(value.printableString);
+}
+
+export
+const countryString3n: LDAPSyntaxEncoder = (value: ASN1Element): Uint8Array => {
+    return Buffer.from(value.numericString);
+}
+
+export
+const dnsString: LDAPSyntaxEncoder = (value: ASN1Element): Uint8Array => {
+    return Buffer.from(value.utf8String);
+}
+
+export
+const intEmailString: LDAPSyntaxEncoder = (value: ASN1Element): Uint8Array => {
+    return Buffer.from(value.utf8String);
+}
+
+export
+const jidString: LDAPSyntaxEncoder = (value: ASN1Element): Uint8Array => {
+    return Buffer.from(value.utf8String);
 }

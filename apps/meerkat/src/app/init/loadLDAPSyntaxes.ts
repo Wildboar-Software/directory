@@ -37,6 +37,14 @@ import { telexNr } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/t
 import { utcTime } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/utcTime.oa";
 import { ldapSyntaxDescription } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/ldapSyntaxDescription.oa";
 import { substringAssertion } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/substringAssertion.oa";
+import { utmCoordinates } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/utmCoordinates.oa";
+import { uiiForm } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uiiForm.oa";
+import { epcForm } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/epcForm.oa";
+import { countryString3c } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/countryString3c.oa";
+import { countryString3n } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/countryString3n.oa";
+import { dnsString } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dnsString.oa";
+import { intEmailString } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/intEmailString.oa";
+import { jidString } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/jidString.oa";
 import * as decoders from "@wildboar/ldap/src/lib/syntaxDecoders";
 import * as encoders from "@wildboar/ldap/src/lib/syntaxEncoders";
 import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
@@ -119,6 +127,14 @@ const ldapSyntaxes = {
     "null": null_,
     open,
     rdn,
+    utmCoordinates,
+    uiiForm,
+    epcForm,
+    countryString3c,
+    countryString3n,
+    dnsString,
+    intEmailString,
+    jidString,
 };
 
 const nisNetgroupTripleSyntaxSyntax: string = `NISNetgroupTripleSyntax ::= SEQUENCE {
@@ -321,6 +337,23 @@ function loadLDAPSyntaxes (ctx: Context): void {
     ctx.ldapSyntaxes.set("commonName", ctx.ldapSyntaxes.get(directoryString["&id"]!.toString())!);
     ctx.ldapSyntaxes.set("surname", ctx.ldapSyntaxes.get(directoryString["&id"]!.toString())!);
     ctx.ldapSyntaxes.set("sn", ctx.ldapSyntaxes.get(directoryString["&id"]!.toString())!);
+
+    ctx.ldapSyntaxes.get(utmCoordinates["&id"].toString())!.decoder = localDecoders.utmCoords;
+    ctx.ldapSyntaxes.get(utmCoordinates["&id"].toString())!.encoder = localEncoders.utmCoordinates;
+    ctx.ldapSyntaxes.get(uiiForm["&id"].toString())!.decoder = localDecoders.getUIIFormDecoder(ctx);
+    ctx.ldapSyntaxes.get(uiiForm["&id"].toString())!.encoder = localEncoders.uiiForm;
+    ctx.ldapSyntaxes.get(epcForm["&id"].toString())!.decoder = localDecoders.epcForm;
+    ctx.ldapSyntaxes.get(epcForm["&id"].toString())!.encoder = localEncoders.epcForm;
+    ctx.ldapSyntaxes.get(countryString3c["&id"].toString())!.decoder = localDecoders.countryString3c;
+    ctx.ldapSyntaxes.get(countryString3c["&id"].toString())!.encoder = localEncoders.countryString3c;
+    ctx.ldapSyntaxes.get(countryString3n["&id"].toString())!.decoder = localDecoders.countryString3n;
+    ctx.ldapSyntaxes.get(countryString3n["&id"].toString())!.encoder = localEncoders.countryString3n;
+    ctx.ldapSyntaxes.get(dnsString["&id"].toString())!.decoder = localDecoders.dnsString;
+    ctx.ldapSyntaxes.get(dnsString["&id"].toString())!.encoder = localEncoders.dnsString;
+    ctx.ldapSyntaxes.get(intEmailString["&id"].toString())!.decoder = localDecoders.intEmailString;
+    ctx.ldapSyntaxes.get(intEmailString["&id"].toString())!.encoder = localEncoders.intEmailString;
+    ctx.ldapSyntaxes.get(jidString["&id"].toString())!.decoder = localDecoders.jidString;
+    ctx.ldapSyntaxes.get(jidString["&id"].toString())!.encoder = localEncoders.jidString;
 
     Object.entries(ldapSyntaxes).forEach(([ name, ldapSyntax ]) => {
         ctx.nameToObjectIdentifier.set(name, ldapSyntax["&id"]);

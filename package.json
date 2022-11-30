@@ -67,6 +67,7 @@
     "cookie-parser": "1.4.6",
     "csurf": "1.11.0",
     "date-fns": "^2.29.1",
+    "email-addresses": "^5.0.0",
     "escape-html": "^1.0.3",
     "fast-levenshtein": "^3.0.0",
     "hbs": "^4.2.0",
