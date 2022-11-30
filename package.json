@@ -38,7 +38,7 @@
     "@nestjs/platform-express": "^9.0.8",
     "@nestjs/swagger": "^6.0.5",
     "@nestjs/terminus": "^9.1.0",
-    "@prisma/client": "^4.1.1",
+    "@prisma/client": "^4.7.0",
     "@wildboar/acse": "^1.0.6",
     "@wildboar/cms": "^1.0.4",
     "@wildboar/copp": "^1.0.2",
