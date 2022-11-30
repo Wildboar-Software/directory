@@ -57,26 +57,6 @@ function stringifyGN (
     } else {
         return "[Unrecognized GeneralName alternative]";
     }
-    // return stringifyLDAPDN(gn
-    //     .map((rdn) => rdn
-    //         .map((atav) => [ atav.type_, atav.value ])),
-    //     (syntax: OBJECT_IDENTIFIER) => {
-    //         const attrSpec = ctx.attributeTypes.get(syntax.toString());
-    //         if (!attrSpec?.ldapSyntax) {
-    //             return undefined;
-    //         }
-    //         const ldapSyntax = ctx.ldapSyntaxes.get(attrSpec.ldapSyntax.toString());
-    //         if (!ldapSyntax?.encoder) {
-    //             return undefined;
-    //         }
-    //         const encoder = ldapSyntax.encoder;
-    //         return (value: ASN1Element): string => Buffer.from(encoder(value)).toString("utf-8");
-    //     },
-    //     (type: OBJECT_IDENTIFIER) => {
-    //         const attrSpec = ctx.attributeTypes.get(type.toString());
-    //         return attrSpec?.ldapNames?.[0];
-    //     },
-    // );
 }
 
 export default stringifyDN;

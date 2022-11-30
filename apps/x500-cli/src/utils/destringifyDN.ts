@@ -8,6 +8,7 @@ import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttri
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+import { getLDAPSyntax } from "../getLDAPSyntax";
 
 export
 function destringifyDN (
@@ -19,10 +20,10 @@ function destringifyDN (
         (syntax: string) => {
             const desc = normalizeAttributeDescription(Buffer.from(syntax));
             const attrSpec = ctx.attributes.get(desc);
-            if (!attrSpec?.ldapSyntax) {
+            if (!attrSpec) {
                 return undefined;
             }
-            const ldapSyntax = ctx.ldapSyntaxes.get(attrSpec.ldapSyntax.toString());
+            const ldapSyntax = getLDAPSyntax(ctx, attrSpec.id);
             if (!ldapSyntax?.decoder) {
                 return undefined;
             }

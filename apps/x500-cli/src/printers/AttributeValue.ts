@@ -6,6 +6,7 @@ import {
 import printValue from "./Value";
 import { dn } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dn.oa";
 import stringifyDN from "../utils/stringifyDN";
+import { getLDAPSyntax } from "../getLDAPSyntax";
 
 export
 function printAttributeValue (
@@ -13,7 +14,8 @@ function printAttributeValue (
     value: ASN1Element,
     spec?: AttributeInfo,
 ): string {
-    if (spec?.ldapSyntax?.isEqualTo(dn["&id"])) {
+    const ldapSyntax = spec && getLDAPSyntax(ctx, spec.id);
+    if (ldapSyntax?.id.isEqualTo(dn["&id"])) {
         const dn_ = _decode_DistinguishedName(value);
         return stringifyDN(ctx, dn_);
     }

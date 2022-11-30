@@ -57,6 +57,7 @@ interface AttributeInfo {
     ldapNames?: LDAPName[];
     ldapDescription?: string;
     valuePrinter?: ValuePrinter;
+    parent?: OBJECT_IDENTIFIER;
 }
 
 export

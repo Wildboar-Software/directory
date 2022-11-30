@@ -13,6 +13,7 @@ function attributeFromInformationObject (io: ATTRIBUTE, name?: string): Attribut
             ? io["&ldapName"]
             : (name ? [ name ] : undefined),
         ldapDescription: io["&ldapDesc"],
+        parent: io["&derivation"]?.["&id"],
     };
 }
 

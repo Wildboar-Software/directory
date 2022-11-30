@@ -2,6 +2,7 @@ import type { Context } from "@wildboar/meerkat-types";
 import { OBJECT_IDENTIFIER, ASN1Element } from "asn1-ts";
 import stringifyRDNSequence from "@wildboar/ldap/src/lib/stringifiers/RDNSequence";
 import type { RDNSequence } from "@wildboar/x500/src/lib/modules/InformationFramework/RDNSequence.ta";
+import { getLDAPSyntax } from "../x500/getLDAPSyntax";
 
 /**
  * @summary Encode an X.500 directory name as an LDAP string
@@ -26,11 +27,7 @@ function encodeLDAPDN (ctx: Context, dn: RDNSequence): Uint8Array {
             .map((rdn) => rdn
                 .map((atav) => [ atav.type_, atav.value ])),
         (attrType: OBJECT_IDENTIFIER) => {
-            const attr = ctx.attributeTypes.get(attrType.toString());
-            if (!attr?.ldapSyntax) {
-                return undefined;
-            }
-            const syntax_ = ctx.ldapSyntaxes.get(attr?.ldapSyntax.toString());
+            const syntax_ = getLDAPSyntax(ctx, attrType);
             if (!syntax_ || !syntax_.encoder) {
                 return undefined;
             }

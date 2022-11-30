@@ -6,6 +6,7 @@ import type {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
 import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
+import { getLDAPSyntax } from "../x500/getLDAPSyntax";
 
 /**
  * @summary Convert an X.500 directory attribute into an LDAP `PartialAttribute`
@@ -32,10 +33,10 @@ import encodeLDAPOID from "@wildboar/ldap/src/lib/encodeLDAPOID";
 export
 function getPartialAttributeFromAttribute (ctx: Context, attr: Attribute): PartialAttribute | undefined {
     const spec = ctx.attributeTypes.get(attr.type_.toString());
-    if (!spec?.ldapSyntax) {
+    if (!spec) {
         return undefined;
     }
-    const ldapSyntax = ctx.ldapSyntaxes.get(spec.ldapSyntax.toString());
+    const ldapSyntax = getLDAPSyntax(ctx, spec.id);
     if (!ldapSyntax?.decoder) {
         return undefined;
     }

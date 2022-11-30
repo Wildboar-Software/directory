@@ -6,6 +6,7 @@ import type {
 import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+import { getLDAPSyntax } from "../x500/getLDAPSyntax";
 
 /**
  * @summary Convert an LDAP `PartialAttribute` into an X.500 directory attribute
@@ -28,10 +29,10 @@ export
 function getAttributeFromPartialAttribute (ctx: Context, attr: PartialAttribute): Attribute | undefined {
     const desc = normalizeAttributeDescription(attr.type_);
     const spec = ctx.attributeTypes.get(desc);
-    if (!spec?.ldapSyntax) {
+    if (!spec) {
         return undefined;
     }
-    const ldapSyntax = ctx.ldapSyntaxes.get(spec.ldapSyntax.toString());
+    const ldapSyntax = getLDAPSyntax(ctx, spec.id);
     if (!ldapSyntax?.decoder) {
         return undefined;
     }

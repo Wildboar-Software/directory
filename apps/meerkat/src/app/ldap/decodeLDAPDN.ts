@@ -3,6 +3,7 @@ import type { RDNSequence } from "@wildboar/x500/src/lib/modules/InformationFram
 import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
 import normalizeAttributeDescription from "@wildboar/ldap/src/lib/normalizeAttributeDescription";
 import destringifyRDNSequence from "@wildboar/ldap/src/lib/destringifiers/RDNSequence";
+import { getLDAPSyntax } from "../x500/getLDAPSyntax";
 
 /**
  * @summary Decode an LDAP distinguished name and reverse it.
@@ -33,12 +34,12 @@ function decodeLDAPDN (ctx: Context, dn: Uint8Array | string): RDNSequence {
         (attrDesc: string) => {
             const attrType = normalizeAttributeDescription(Buffer.from(attrDesc));
             const attr = ctx.attributeTypes.get(attrType);
-            if (!attr?.ldapSyntax) {
-                throw new Error(attrDesc.toString());
+            if (!attr) {
+                throw new Error(`fc4579b5-76fc-4240-affc-952206e5b343: ${attrDesc.toString()}`);
             }
-            const syntax_ = ctx.ldapSyntaxes.get(attr.ldapSyntax.toString());
+            const syntax_ = getLDAPSyntax(ctx, attr.id);
             if (!syntax_ || !syntax_.decoder) {
-                throw new Error(attr.ldapSyntax.toString());
+                throw new Error(`ca45d142-f02a-4a75-9850-970868f910db: ${attrDesc.toString()}`);
             }
             return [
                 attr.id,

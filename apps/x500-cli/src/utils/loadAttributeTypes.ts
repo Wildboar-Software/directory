@@ -3568,6 +3568,7 @@ import {
 import {
     interfaceType,
 } from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/interfaceType.oa";
+import getLDAPSyntax from "../getLDAPSyntax";
 
 const printObjectClass: ValuePrinter = (
     ctx: Context,
@@ -4848,10 +4849,10 @@ function loadAttributeTypes (ctx: Context): void {
             attr.ldapNames?.forEach((ldapName: string): void => {
                 ctx.attributes.set(ldapName.trim(), attr);
                 ctx.attributes.set(ldapName.trim().toLowerCase(), attr);
-                if (!attr.ldapSyntax) {
+                if (!attr) {
                     return;
                 }
-                const oidSyntax = ctx.ldapSyntaxes.get(attr.ldapSyntax.toString());
+                const oidSyntax = getLDAPSyntax(ctx, attr.id);
                 if (!oidSyntax) {
                     return;
                 }

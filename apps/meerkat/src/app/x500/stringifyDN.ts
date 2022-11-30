@@ -4,6 +4,7 @@ import stringifyLDAPDN from "@wildboar/ldap/src/lib/stringifiers/RDNSequence";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import { getLDAPSyntax } from "../x500/getLDAPSyntax";
 
 /**
  * @summary Convert a distinguished name to a string
@@ -34,10 +35,10 @@ function stringifyDN (
             .map((atav) => [ atav.type_, atav.value ])),
         (syntax: OBJECT_IDENTIFIER) => {
             const attrSpec = ctx.attributeTypes.get(syntax.toString());
-            if (!attrSpec?.ldapSyntax) {
+            if (!attrSpec) {
                 return undefined;
             }
-            const ldapSyntax = ctx.ldapSyntaxes.get(attrSpec.ldapSyntax.toString());
+            const ldapSyntax = getLDAPSyntax(ctx, attrSpec.id);
             if (!ldapSyntax?.encoder) {
                 return undefined;
             }

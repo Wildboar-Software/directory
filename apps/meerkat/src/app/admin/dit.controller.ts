@@ -55,6 +55,9 @@ import {
 import stringifyDN from "../x500/stringifyDN";
 import readSubordinates from "../dit/readSubordinates";
 import { subschema } from "@wildboar/x500/src/lib/collections/objectClasses";
+import { getLDAPSyntax } from "../x500/getLDAPSyntax";
+import { at } from "lodash";
+import { entryDN } from "@wildboar/parity-schema/src/lib/modules/RFC5020EntryDN/entryDN.oa";
 
 const selectAllInfo = new EntryInformationSelection(
     {
@@ -95,10 +98,10 @@ const child: string = id_oc_child.toString();
 function encodeRDN (ctx: Context, rdn: RelativeDistinguishedName): string {
     const stringEncoderGetter: StringEncoderGetter = (syntax: OBJECT_IDENTIFIER): StringEncoder | undefined => {
         const attrSpec = ctx.attributeTypes.get(syntax.toString());
-        if (!attrSpec?.ldapSyntax) {
+        if (!attrSpec) {
             return undefined;
         }
-        const ldapSyntax = ctx.ldapSyntaxes.get(attrSpec.ldapSyntax.toString());
+        const ldapSyntax = getLDAPSyntax(ctx, attrSpec.id);
         if (!ldapSyntax?.encoder) {
             return undefined;
         }
@@ -306,7 +309,13 @@ export class DitController {
         });
         const attributes: [ string, string, string ][] = [
             ...userAttributes,
-            ...operationalAttributes,
+            ...operationalAttributes
+                /**
+                 * We don't display the entryDN attribute because the vertex's
+                 * superior is not loaded in this controller, so this will
+                 * display incorrectly.
+                 */
+                .filter((a) => !a.type.isEqualTo(entryDN["&id"])),
             ...collectiveValues,
         ]
             .map((attr) => [
@@ -320,10 +329,10 @@ export class DitController {
                         const dn_ = _decode_DistinguishedName(attr.value);
                         return stringifyDN(this.ctx, dn_);
                     }
-                    if (!spec?.ldapSyntax) {
+                    if (!spec) {
                         return defaultEncoder(attr.value);
                     }
-                    const ldapSyntax = this.ctx.ldapSyntaxes.get(spec?.ldapSyntax.toString());
+                    const ldapSyntax = getLDAPSyntax(this.ctx, spec.id);
                     if (!ldapSyntax?.encoder) {
                         return defaultEncoder(attr.value);
                     }
