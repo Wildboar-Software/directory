@@ -1,87 +1,19 @@
 /* eslint-disable */
-import {
-    itu_t,
-    itu_r,
-    ccitt,
-    iso,
-    joint_iso_itu_t,
-    joint_iso_ccitt,
-    OPTIONAL,
-    BOOLEAN,
-    INTEGER,
-    BIT_STRING,
-    OCTET_STRING,
-    NULL,
-    OBJECT_IDENTIFIER,
-    ObjectDescriptor,
-    EXTERNAL,
-    REAL,
-    INSTANCE_OF,
-    ENUMERATED,
-    EMBEDDED_PDV,
-    UTF8String,
-    RELATIVE_OID,
-    SEQUENCE,
-    SEQUENCE_OF,
-    SET,
-    SET_OF,
-    GraphicString,
-    NumericString,
-    VisibleString,
-    PrintableString,
-    ISO646String,
-    TeletexString,
-    GeneralString,
-    T61String,
-    UniversalString,
-    VideotexString,
-    BMPString,
-    IA5String,
-    CharacterString,
-    UTCTime,
-    GeneralizedTime,
-    TIME,
-    DATE,
-    TIME_OF_DAY,
-    DATE_TIME,
-    DURATION,
-    OID_IRI,
-    RELATIVE_OID_IRI,
-    TRUE,
-    FALSE,
-    TRUE_BIT,
-    FALSE_BIT,
-    PLUS_INFINITY,
-    MINUS_INFINITY,
-    NOT_A_NUMBER,
-    TYPE_IDENTIFIER,
-    ABSTRACT_SYNTAX,
-    ASN1Element as _Element,
-    ASN1TagClass as _TagClass,
-    ASN1Construction as _Construction,
-    ASN1UniversalType as _UniversalType,
-    ObjectIdentifier as _OID,
-    External as _External,
-    EmbeddedPDV as _PDV,
-    ASN1ConstructionError as _ConstructionError,
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
-
-
+import { ASN1Element as _Element, INTEGER } from 'asn1-ts';
+import * as $ from 'asn1-ts/dist/node/functional';
 
 /* START_OF_SYMBOL_DEFINITION SinglePubInfo_pubMethod */
 /**
  * @summary SinglePubInfo_pubMethod
  * @description
- * 
+ *
  * ### ASN.1 Definition:
- * 
+ *
  * ```asn1
  * SinglePubInfo-pubMethod ::= INTEGER { -- REMOVED_FROM_UNNESTING -- }
  * ```
  */
-export
-type SinglePubInfo_pubMethod = INTEGER;
+export type SinglePubInfo_pubMethod = INTEGER;
 /* END_OF_SYMBOL_DEFINITION SinglePubInfo_pubMethod */
 
 /* START_OF_SYMBOL_DEFINITION SinglePubInfo_pubMethod_dontCare */
@@ -90,8 +22,7 @@ type SinglePubInfo_pubMethod = INTEGER;
  * @constant
  * @type {number}
  */
-export
-const SinglePubInfo_pubMethod_dontCare: SinglePubInfo_pubMethod = 0; /* LONG_NAMED_INTEGER_VALUE */
+export const SinglePubInfo_pubMethod_dontCare: SinglePubInfo_pubMethod = 0; /* LONG_NAMED_INTEGER_VALUE */
 /* END_OF_SYMBOL_DEFINITION SinglePubInfo_pubMethod_dontCare */
 
 /* START_OF_SYMBOL_DEFINITION dontCare */
@@ -100,8 +31,8 @@ const SinglePubInfo_pubMethod_dontCare: SinglePubInfo_pubMethod = 0; /* LONG_NAM
  * @constant
  * @type {number}
  */
-export
-const dontCare: SinglePubInfo_pubMethod = SinglePubInfo_pubMethod_dontCare; /* SHORT_NAMED_INTEGER_VALUE */
+export const dontCare: SinglePubInfo_pubMethod =
+    SinglePubInfo_pubMethod_dontCare; /* SHORT_NAMED_INTEGER_VALUE */
 /* END_OF_SYMBOL_DEFINITION dontCare */
 
 /* START_OF_SYMBOL_DEFINITION SinglePubInfo_pubMethod_x500 */
@@ -110,8 +41,7 @@ const dontCare: SinglePubInfo_pubMethod = SinglePubInfo_pubMethod_dontCare; /* S
  * @constant
  * @type {number}
  */
-export
-const SinglePubInfo_pubMethod_x500: SinglePubInfo_pubMethod = 1; /* LONG_NAMED_INTEGER_VALUE */
+export const SinglePubInfo_pubMethod_x500: SinglePubInfo_pubMethod = 1; /* LONG_NAMED_INTEGER_VALUE */
 /* END_OF_SYMBOL_DEFINITION SinglePubInfo_pubMethod_x500 */
 
 /* START_OF_SYMBOL_DEFINITION x500 */
@@ -120,8 +50,8 @@ const SinglePubInfo_pubMethod_x500: SinglePubInfo_pubMethod = 1; /* LONG_NAMED_I
  * @constant
  * @type {number}
  */
-export
-const x500: SinglePubInfo_pubMethod = SinglePubInfo_pubMethod_x500; /* SHORT_NAMED_INTEGER_VALUE */
+export const x500: SinglePubInfo_pubMethod =
+    SinglePubInfo_pubMethod_x500; /* SHORT_NAMED_INTEGER_VALUE */
 /* END_OF_SYMBOL_DEFINITION x500 */
 
 /* START_OF_SYMBOL_DEFINITION SinglePubInfo_pubMethod_web */
@@ -130,8 +60,7 @@ const x500: SinglePubInfo_pubMethod = SinglePubInfo_pubMethod_x500; /* SHORT_NAM
  * @constant
  * @type {number}
  */
-export
-const SinglePubInfo_pubMethod_web: SinglePubInfo_pubMethod = 2; /* LONG_NAMED_INTEGER_VALUE */
+export const SinglePubInfo_pubMethod_web: SinglePubInfo_pubMethod = 2; /* LONG_NAMED_INTEGER_VALUE */
 /* END_OF_SYMBOL_DEFINITION SinglePubInfo_pubMethod_web */
 
 /* START_OF_SYMBOL_DEFINITION web */
@@ -140,8 +69,8 @@ const SinglePubInfo_pubMethod_web: SinglePubInfo_pubMethod = 2; /* LONG_NAMED_IN
  * @constant
  * @type {number}
  */
-export
-const web: SinglePubInfo_pubMethod = SinglePubInfo_pubMethod_web; /* SHORT_NAMED_INTEGER_VALUE */
+export const web: SinglePubInfo_pubMethod =
+    SinglePubInfo_pubMethod_web; /* SHORT_NAMED_INTEGER_VALUE */
 /* END_OF_SYMBOL_DEFINITION web */
 
 /* START_OF_SYMBOL_DEFINITION SinglePubInfo_pubMethod_ldap */
@@ -150,8 +79,7 @@ const web: SinglePubInfo_pubMethod = SinglePubInfo_pubMethod_web; /* SHORT_NAMED
  * @constant
  * @type {number}
  */
-export
-const SinglePubInfo_pubMethod_ldap: SinglePubInfo_pubMethod = 3; /* LONG_NAMED_INTEGER_VALUE */
+export const SinglePubInfo_pubMethod_ldap: SinglePubInfo_pubMethod = 3; /* LONG_NAMED_INTEGER_VALUE */
 /* END_OF_SYMBOL_DEFINITION SinglePubInfo_pubMethod_ldap */
 
 /* START_OF_SYMBOL_DEFINITION ldap */
@@ -160,12 +88,13 @@ const SinglePubInfo_pubMethod_ldap: SinglePubInfo_pubMethod = 3; /* LONG_NAMED_I
  * @constant
  * @type {number}
  */
-export
-const ldap: SinglePubInfo_pubMethod = SinglePubInfo_pubMethod_ldap; /* SHORT_NAMED_INTEGER_VALUE */
+export const ldap: SinglePubInfo_pubMethod =
+    SinglePubInfo_pubMethod_ldap; /* SHORT_NAMED_INTEGER_VALUE */
 /* END_OF_SYMBOL_DEFINITION ldap */
 
 /* START_OF_SYMBOL_DEFINITION _cached_decoder_for_SinglePubInfo_pubMethod */
-let _cached_decoder_for_SinglePubInfo_pubMethod: $.ASN1Decoder<SinglePubInfo_pubMethod> | null = null;
+let _cached_decoder_for_SinglePubInfo_pubMethod: $.ASN1Decoder<SinglePubInfo_pubMethod> | null =
+    null;
 /* END_OF_SYMBOL_DEFINITION _cached_decoder_for_SinglePubInfo_pubMethod */
 
 /* START_OF_SYMBOL_DEFINITION _decode_SinglePubInfo_pubMethod */
@@ -175,15 +104,17 @@ let _cached_decoder_for_SinglePubInfo_pubMethod: $.ASN1Decoder<SinglePubInfo_pub
  * @param {_Element} el The element being decoded.
  * @returns {SinglePubInfo_pubMethod} The decoded data structure.
  */
-export
-function _decode_SinglePubInfo_pubMethod (el: _Element) {
-    if (!_cached_decoder_for_SinglePubInfo_pubMethod) { _cached_decoder_for_SinglePubInfo_pubMethod = $._decodeInteger; }
+export function _decode_SinglePubInfo_pubMethod(el: _Element) {
+    if (!_cached_decoder_for_SinglePubInfo_pubMethod) {
+        _cached_decoder_for_SinglePubInfo_pubMethod = $._decodeInteger;
+    }
     return _cached_decoder_for_SinglePubInfo_pubMethod(el);
 }
 /* END_OF_SYMBOL_DEFINITION _decode_SinglePubInfo_pubMethod */
 
 /* START_OF_SYMBOL_DEFINITION _cached_encoder_for_SinglePubInfo_pubMethod */
-let _cached_encoder_for_SinglePubInfo_pubMethod: $.ASN1Encoder<SinglePubInfo_pubMethod> | null = null;
+let _cached_encoder_for_SinglePubInfo_pubMethod: $.ASN1Encoder<SinglePubInfo_pubMethod> | null =
+    null;
 /* END_OF_SYMBOL_DEFINITION _cached_encoder_for_SinglePubInfo_pubMethod */
 
 /* START_OF_SYMBOL_DEFINITION _encode_SinglePubInfo_pubMethod */
@@ -194,9 +125,13 @@ let _cached_encoder_for_SinglePubInfo_pubMethod: $.ASN1Encoder<SinglePubInfo_pub
  * @param elGetter A function that can be used to get new ASN.1 elements.
  * @returns {_Element} The SinglePubInfo_pubMethod, encoded as an ASN.1 Element.
  */
-export
-function _encode_SinglePubInfo_pubMethod (value: SinglePubInfo_pubMethod, elGetter: $.ASN1Encoder<SinglePubInfo_pubMethod>) {
-    if (!_cached_encoder_for_SinglePubInfo_pubMethod) { _cached_encoder_for_SinglePubInfo_pubMethod = $._encodeInteger; }
+export function _encode_SinglePubInfo_pubMethod(
+    value: SinglePubInfo_pubMethod,
+    elGetter: $.ASN1Encoder<SinglePubInfo_pubMethod>
+) {
+    if (!_cached_encoder_for_SinglePubInfo_pubMethod) {
+        _cached_encoder_for_SinglePubInfo_pubMethod = $._encodeInteger;
+    }
     return _cached_encoder_for_SinglePubInfo_pubMethod(value, elGetter);
 }
 

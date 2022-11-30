@@ -128,6 +128,7 @@
     "json-schema-to-typescript": "^11.0.2",
     "nx": "14.5.4",
     "prettier": "2.7.1",
+    "prettier-plugin-organize-imports": "^3.2.1",
     "prisma": "^4.7.0",
     "sloc": "^0.2.1",
     "ts-jest": "27.1.4",

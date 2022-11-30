@@ -1,95 +1,45 @@
 /* eslint-disable */
 import {
-    itu_t,
-    itu_r,
-    ccitt,
-    iso,
-    joint_iso_itu_t,
-    joint_iso_ccitt,
-    OPTIONAL,
-    BOOLEAN,
-    INTEGER,
-    BIT_STRING,
-    OCTET_STRING,
-    NULL,
-    OBJECT_IDENTIFIER,
-    ObjectDescriptor,
-    EXTERNAL,
-    REAL,
-    INSTANCE_OF,
-    ENUMERATED,
-    EMBEDDED_PDV,
-    UTF8String,
-    RELATIVE_OID,
-    SEQUENCE,
-    SEQUENCE_OF,
-    SET,
-    SET_OF,
-    GraphicString,
-    NumericString,
-    VisibleString,
-    PrintableString,
-    ISO646String,
-    TeletexString,
-    GeneralString,
-    T61String,
-    UniversalString,
-    VideotexString,
-    BMPString,
-    IA5String,
-    CharacterString,
-    UTCTime,
-    GeneralizedTime,
-    TIME,
-    DATE,
-    TIME_OF_DAY,
-    DATE_TIME,
-    DURATION,
-    OID_IRI,
-    RELATIVE_OID_IRI,
-    TRUE,
-    FALSE,
-    TRUE_BIT,
-    FALSE_BIT,
-    PLUS_INFINITY,
-    MINUS_INFINITY,
-    NOT_A_NUMBER,
-    TYPE_IDENTIFIER,
-    ABSTRACT_SYNTAX,
-    ASN1Element as _Element,
-    ASN1TagClass as _TagClass,
-    ASN1Construction as _Construction,
-    ASN1UniversalType as _UniversalType,
-    ObjectIdentifier as _OID,
-    External as _External,
-    EmbeddedPDV as _PDV,
-    ASN1ConstructionError as _ConstructionError,
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
-import { SIGNED, _get_decoder_for_SIGNED, _get_encoder_for_SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
-export { SIGNED, _get_decoder_for_SIGNED, _get_encoder_for_SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
-import { BiometricCertificateInfo, _decode_BiometricCertificateInfo, _encode_BiometricCertificateInfo } from "../TAI/BiometricCertificateInfo.ta";
-export { BiometricCertificateInfo, _decode_BiometricCertificateInfo, _encode_BiometricCertificateInfo } from "../TAI/BiometricCertificateInfo.ta";
-
+    SIGNED,
+    _get_decoder_for_SIGNED,
+    _get_encoder_for_SIGNED,
+} from '@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta';
+import { ASN1Element as _Element } from 'asn1-ts';
+import * as $ from 'asn1-ts/dist/node/functional';
+import {
+    BiometricCertificateInfo,
+    _decode_BiometricCertificateInfo,
+    _encode_BiometricCertificateInfo,
+} from '../TAI/BiometricCertificateInfo.ta';
+export {
+    SIGNED,
+    _get_decoder_for_SIGNED,
+    _get_encoder_for_SIGNED,
+} from '@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta';
+export {
+    BiometricCertificateInfo,
+    _decode_BiometricCertificateInfo,
+    _encode_BiometricCertificateInfo,
+} from '../TAI/BiometricCertificateInfo.ta';
 
 /* START_OF_SYMBOL_DEFINITION BiometricCertificate */
 /**
  * @summary BiometricCertificate
  * @description
- * 
+ *
  * ### ASN.1 Definition:
- * 
+ *
  * ```asn1
- * BiometricCertificate  ::= 
+ * BiometricCertificate  ::=
  *   SIGNED{BiometricCertificateInfo}
  * ```
  */
-export
-type BiometricCertificate = SIGNED<BiometricCertificateInfo>; // DefinedType
+export type BiometricCertificate = SIGNED<BiometricCertificateInfo>; // DefinedType
 /* END_OF_SYMBOL_DEFINITION BiometricCertificate */
 
 /* START_OF_SYMBOL_DEFINITION _cached_decoder_for_BiometricCertificate */
-let _cached_decoder_for_BiometricCertificate: $.ASN1Decoder<BiometricCertificate> | null = null;
+let _cached_decoder_for_BiometricCertificate: $.ASN1Decoder<BiometricCertificate> | null =
+    null;
 /* END_OF_SYMBOL_DEFINITION _cached_decoder_for_BiometricCertificate */
 
 /* START_OF_SYMBOL_DEFINITION _decode_BiometricCertificate */
@@ -99,15 +49,20 @@ let _cached_decoder_for_BiometricCertificate: $.ASN1Decoder<BiometricCertificate
  * @param {_Element} el The element being decoded.
  * @returns {BiometricCertificate} The decoded data structure.
  */
-export
-function _decode_BiometricCertificate (el: _Element) {
-    if (!_cached_decoder_for_BiometricCertificate) { _cached_decoder_for_BiometricCertificate = _get_decoder_for_SIGNED<BiometricCertificateInfo>(_decode_BiometricCertificateInfo); }
+export function _decode_BiometricCertificate(el: _Element) {
+    if (!_cached_decoder_for_BiometricCertificate) {
+        _cached_decoder_for_BiometricCertificate =
+            _get_decoder_for_SIGNED<BiometricCertificateInfo>(
+                _decode_BiometricCertificateInfo
+            );
+    }
     return _cached_decoder_for_BiometricCertificate(el);
 }
 /* END_OF_SYMBOL_DEFINITION _decode_BiometricCertificate */
 
 /* START_OF_SYMBOL_DEFINITION _cached_encoder_for_BiometricCertificate */
-let _cached_encoder_for_BiometricCertificate: $.ASN1Encoder<BiometricCertificate> | null = null;
+let _cached_encoder_for_BiometricCertificate: $.ASN1Encoder<BiometricCertificate> | null =
+    null;
 /* END_OF_SYMBOL_DEFINITION _cached_encoder_for_BiometricCertificate */
 
 /* START_OF_SYMBOL_DEFINITION _encode_BiometricCertificate */
@@ -118,9 +73,16 @@ let _cached_encoder_for_BiometricCertificate: $.ASN1Encoder<BiometricCertificate
  * @param elGetter A function that can be used to get new ASN.1 elements.
  * @returns {_Element} The BiometricCertificate, encoded as an ASN.1 Element.
  */
-export
-function _encode_BiometricCertificate (value: BiometricCertificate, elGetter: $.ASN1Encoder<BiometricCertificate>) {
-    if (!_cached_encoder_for_BiometricCertificate) { _cached_encoder_for_BiometricCertificate = _get_encoder_for_SIGNED<BiometricCertificateInfo>(_encode_BiometricCertificateInfo); }
+export function _encode_BiometricCertificate(
+    value: BiometricCertificate,
+    elGetter: $.ASN1Encoder<BiometricCertificate>
+) {
+    if (!_cached_encoder_for_BiometricCertificate) {
+        _cached_encoder_for_BiometricCertificate =
+            _get_encoder_for_SIGNED<BiometricCertificateInfo>(
+                _encode_BiometricCertificateInfo
+            );
+    }
     return _cached_encoder_for_BiometricCertificate(value, elGetter);
 }
 

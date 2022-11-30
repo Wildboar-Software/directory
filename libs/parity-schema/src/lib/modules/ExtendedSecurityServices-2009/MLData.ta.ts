@@ -1,96 +1,40 @@
 /* eslint-disable */
 import {
-    itu_t,
-    itu_r,
-    ccitt,
-    iso,
-    joint_iso_itu_t,
-    joint_iso_ccitt,
-    OPTIONAL,
-    BOOLEAN,
-    INTEGER,
-    BIT_STRING,
-    OCTET_STRING,
-    NULL,
-    OBJECT_IDENTIFIER,
-    ObjectDescriptor,
-    EXTERNAL,
-    REAL,
-    INSTANCE_OF,
-    ENUMERATED,
-    EMBEDDED_PDV,
-    UTF8String,
-    RELATIVE_OID,
-    SEQUENCE,
-    SEQUENCE_OF,
-    SET,
-    SET_OF,
-    GraphicString,
-    NumericString,
-    VisibleString,
-    PrintableString,
-    ISO646String,
-    TeletexString,
-    GeneralString,
-    T61String,
-    UniversalString,
-    VideotexString,
-    BMPString,
-    IA5String,
-    CharacterString,
-    UTCTime,
-    GeneralizedTime,
-    TIME,
-    DATE,
-    TIME_OF_DAY,
-    DATE_TIME,
-    DURATION,
-    OID_IRI,
-    RELATIVE_OID_IRI,
-    TRUE,
-    FALSE,
-    TRUE_BIT,
-    FALSE_BIT,
-    PLUS_INFINITY,
-    MINUS_INFINITY,
-    NOT_A_NUMBER,
-    TYPE_IDENTIFIER,
-    ABSTRACT_SYNTAX,
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
-    ASN1Construction as _Construction,
-    ASN1UniversalType as _UniversalType,
-    ObjectIdentifier as _OID,
-    External as _External,
-    EmbeddedPDV as _PDV,
-    ASN1ConstructionError as _ConstructionError,
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
-import { EntityIdentifier, _decode_EntityIdentifier, _encode_EntityIdentifier } from "../ExtendedSecurityServices-2009/EntityIdentifier.ta";
-export { EntityIdentifier, _decode_EntityIdentifier, _encode_EntityIdentifier } from "../ExtendedSecurityServices-2009/EntityIdentifier.ta";
-import { MLReceiptPolicy, _decode_MLReceiptPolicy, _encode_MLReceiptPolicy } from "../ExtendedSecurityServices-2009/MLReceiptPolicy.ta";
-export { MLReceiptPolicy, _decode_MLReceiptPolicy, _encode_MLReceiptPolicy } from "../ExtendedSecurityServices-2009/MLReceiptPolicy.ta";
-
+    GeneralizedTime,
+    OPTIONAL,
+} from 'asn1-ts';
+import * as $ from 'asn1-ts/dist/node/functional';
+import {
+    EntityIdentifier,
+    _decode_EntityIdentifier,
+    _encode_EntityIdentifier,
+} from '../ExtendedSecurityServices-2009/EntityIdentifier.ta';
+import {
+    MLReceiptPolicy,
+    _decode_MLReceiptPolicy,
+    _encode_MLReceiptPolicy,
+} from '../ExtendedSecurityServices-2009/MLReceiptPolicy.ta';
 
 /* START_OF_SYMBOL_DEFINITION MLData */
 /**
  * @summary MLData
  * @description
- * 
+ *
  * ### ASN.1 Definition:
- * 
+ *
  * ```asn1
  * MLData ::= SEQUENCE {
  *     mailListIdentifier EntityIdentifier,
  *     expansionTime GeneralizedTime,
  *     mlReceiptPolicy MLReceiptPolicy OPTIONAL }
  * ```
- * 
+ *
  * @class
  */
-export
-class MLData {
-    constructor (
+export class MLData {
+    constructor(
         /**
          * @summary `mailListIdentifier`.
          * @public
@@ -114,20 +58,24 @@ class MLData {
     /**
      * @summary Restructures an object into a MLData
      * @description
-     * 
+     *
      * This takes an `object` and converts it to a `MLData`.
-     * 
+     *
      * @public
      * @static
      * @method
      * @param {Object} _o An object having all of the keys and values of a `MLData`.
      * @returns {MLData}
      */
-    public static _from_object (_o: { [_K in keyof (MLData)]: (MLData)[_K] }): MLData {
-        return new MLData(_o.mailListIdentifier, _o.expansionTime, _o.mlReceiptPolicy);
+    public static _from_object(_o: {
+        [_K in keyof MLData]: MLData[_K];
+    }): MLData {
+        return new MLData(
+            _o.mailListIdentifier,
+            _o.expansionTime,
+            _o.mlReceiptPolicy
+        );
     }
-
-
 }
 /* END_OF_SYMBOL_DEFINITION MLData */
 
@@ -135,16 +83,37 @@ class MLData {
 /**
  * @summary The Leading Root Component Types of MLData
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the leading root component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
-export
-const _root_component_type_list_1_spec_for_MLData: $.ComponentSpec[] = [
-    new $.ComponentSpec("mailListIdentifier", false, $.hasAnyTag, undefined, undefined),
-    new $.ComponentSpec("expansionTime", false, $.hasTag(_TagClass.universal, 24), undefined, undefined),
-    new $.ComponentSpec("mlReceiptPolicy", true, $.or($.hasTag(_TagClass.context, 0), $.hasTag(_TagClass.context, 1), $.hasTag(_TagClass.context, 2)), undefined, undefined)
+export const _root_component_type_list_1_spec_for_MLData: $.ComponentSpec[] = [
+    new $.ComponentSpec(
+        'mailListIdentifier',
+        false,
+        $.hasAnyTag,
+        undefined,
+        undefined
+    ),
+    new $.ComponentSpec(
+        'expansionTime',
+        false,
+        $.hasTag(_TagClass.universal, 24),
+        undefined,
+        undefined
+    ),
+    new $.ComponentSpec(
+        'mlReceiptPolicy',
+        true,
+        $.or(
+            $.hasTag(_TagClass.context, 0),
+            $.hasTag(_TagClass.context, 1),
+            $.hasTag(_TagClass.context, 2)
+        ),
+        undefined,
+        undefined
+    ),
 ];
 /* END_OF_SYMBOL_DEFINITION _root_component_type_list_1_spec_for_MLData */
 
@@ -152,30 +121,25 @@ const _root_component_type_list_1_spec_for_MLData: $.ComponentSpec[] = [
 /**
  * @summary The Trailing Root Component Types of MLData
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the trailing root component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
-export
-const _root_component_type_list_2_spec_for_MLData: $.ComponentSpec[] = [
-    
-];
+export const _root_component_type_list_2_spec_for_MLData: $.ComponentSpec[] =
+    [];
 /* END_OF_SYMBOL_DEFINITION _root_component_type_list_2_spec_for_MLData */
 
 /* START_OF_SYMBOL_DEFINITION _extension_additions_list_spec_for_MLData */
 /**
  * @summary The Extension Addition Component Types of MLData
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the extension addition component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
-export
-const _extension_additions_list_spec_for_MLData: $.ComponentSpec[] = [
-    
-];
+export const _extension_additions_list_spec_for_MLData: $.ComponentSpec[] = [];
 /* END_OF_SYMBOL_DEFINITION _extension_additions_list_spec_for_MLData */
 
 /* START_OF_SYMBOL_DEFINITION _cached_decoder_for_MLData */
@@ -189,33 +153,42 @@ let _cached_decoder_for_MLData: $.ASN1Decoder<MLData> | null = null;
  * @param {_Element} el The element being decoded.
  * @returns {MLData} The decoded data structure.
  */
-export
-function _decode_MLData (el: _Element) {
-    if (!_cached_decoder_for_MLData) { _cached_decoder_for_MLData = function (el: _Element): MLData {
-    /* START_OF_SEQUENCE_COMPONENT_DECLARATIONS */
-    let mailListIdentifier!: EntityIdentifier;
-    let expansionTime!: GeneralizedTime;
-    let mlReceiptPolicy: OPTIONAL<MLReceiptPolicy>;
-    /* END_OF_SEQUENCE_COMPONENT_DECLARATIONS */
-    /* START_OF_CALLBACKS_MAP */
-    const callbacks: $.DecodingMap = {
-        "mailListIdentifier": (_el: _Element): void => { mailListIdentifier = _decode_EntityIdentifier(_el); },
-        "expansionTime": (_el: _Element): void => { expansionTime = $._decodeGeneralizedTime(_el); },
-        "mlReceiptPolicy": (_el: _Element): void => { mlReceiptPolicy = _decode_MLReceiptPolicy(_el); }
-    };
-    /* END_OF_CALLBACKS_MAP */
-    $._parse_sequence(el, callbacks,
-        _root_component_type_list_1_spec_for_MLData,
-        _extension_additions_list_spec_for_MLData,
-        _root_component_type_list_2_spec_for_MLData,
-        undefined,
-    );
-    return new MLData( /* SEQUENCE_CONSTRUCTOR_CALL */
-        mailListIdentifier,
-        expansionTime,
-        mlReceiptPolicy
-    );
-}; }
+export function _decode_MLData(el: _Element) {
+    if (!_cached_decoder_for_MLData) {
+        _cached_decoder_for_MLData = function (el: _Element): MLData {
+            /* START_OF_SEQUENCE_COMPONENT_DECLARATIONS */
+            let mailListIdentifier!: EntityIdentifier;
+            let expansionTime!: GeneralizedTime;
+            let mlReceiptPolicy: OPTIONAL<MLReceiptPolicy>;
+            /* END_OF_SEQUENCE_COMPONENT_DECLARATIONS */
+            /* START_OF_CALLBACKS_MAP */
+            const callbacks: $.DecodingMap = {
+                mailListIdentifier: (_el: _Element): void => {
+                    mailListIdentifier = _decode_EntityIdentifier(_el);
+                },
+                expansionTime: (_el: _Element): void => {
+                    expansionTime = $._decodeGeneralizedTime(_el);
+                },
+                mlReceiptPolicy: (_el: _Element): void => {
+                    mlReceiptPolicy = _decode_MLReceiptPolicy(_el);
+                },
+            };
+            /* END_OF_CALLBACKS_MAP */
+            $._parse_sequence(
+                el,
+                callbacks,
+                _root_component_type_list_1_spec_for_MLData,
+                _extension_additions_list_spec_for_MLData,
+                _root_component_type_list_2_spec_for_MLData,
+                undefined
+            );
+            return new MLData /* SEQUENCE_CONSTRUCTOR_CALL */(
+                mailListIdentifier,
+                expansionTime,
+                mlReceiptPolicy
+            );
+        };
+    }
     return _cached_decoder_for_MLData(el);
 }
 /* END_OF_SYMBOL_DEFINITION _decode_MLData */
@@ -232,17 +205,35 @@ let _cached_encoder_for_MLData: $.ASN1Encoder<MLData> | null = null;
  * @param elGetter A function that can be used to get new ASN.1 elements.
  * @returns {_Element} The MLData, encoded as an ASN.1 Element.
  */
-export
-function _encode_MLData (value: MLData, elGetter: $.ASN1Encoder<MLData>) {
-    if (!_cached_encoder_for_MLData) { _cached_encoder_for_MLData = function (value: MLData, elGetter: $.ASN1Encoder<MLData>): _Element {
-    return $._encodeSequence(([] as (_Element | undefined)[]).concat(
-        [
-            /* REQUIRED   */ _encode_EntityIdentifier(value.mailListIdentifier, $.BER),
-            /* REQUIRED   */ $._encodeGeneralizedTime(value.expansionTime, $.BER),
-            /* IF_ABSENT  */ ((value.mlReceiptPolicy === undefined) ? undefined : _encode_MLReceiptPolicy(value.mlReceiptPolicy, $.BER))
-        ],
-    ).filter((c: (_Element | undefined)): c is _Element => (!!c)), $.BER);
-}; }
+export function _encode_MLData(value: MLData, elGetter: $.ASN1Encoder<MLData>) {
+    if (!_cached_encoder_for_MLData) {
+        _cached_encoder_for_MLData = function (
+            value: MLData,
+            elGetter: $.ASN1Encoder<MLData>
+        ): _Element {
+            return $._encodeSequence(
+                ([] as (_Element | undefined)[])
+                    .concat([
+                        /* REQUIRED   */ _encode_EntityIdentifier(
+                            value.mailListIdentifier,
+                            $.BER
+                        ),
+                        /* REQUIRED   */ $._encodeGeneralizedTime(
+                            value.expansionTime,
+                            $.BER
+                        ),
+                        /* IF_ABSENT  */ value.mlReceiptPolicy === undefined
+                            ? undefined
+                            : _encode_MLReceiptPolicy(
+                                  value.mlReceiptPolicy,
+                                  $.BER
+                              ),
+                    ])
+                    .filter((c: _Element | undefined): c is _Element => !!c),
+                $.BER
+            );
+        };
+    }
     return _cached_encoder_for_MLData(value, elGetter);
 }
 

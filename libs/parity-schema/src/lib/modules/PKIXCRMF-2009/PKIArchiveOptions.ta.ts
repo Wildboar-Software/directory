@@ -1,84 +1,28 @@
 /* eslint-disable */
 import {
-    itu_t,
-    itu_r,
-    ccitt,
-    iso,
-    joint_iso_itu_t,
-    joint_iso_ccitt,
-    OPTIONAL,
-    BOOLEAN,
-    INTEGER,
-    BIT_STRING,
-    OCTET_STRING,
-    NULL,
-    OBJECT_IDENTIFIER,
-    ObjectDescriptor,
-    EXTERNAL,
-    REAL,
-    INSTANCE_OF,
-    ENUMERATED,
-    EMBEDDED_PDV,
-    UTF8String,
-    RELATIVE_OID,
-    SEQUENCE,
-    SEQUENCE_OF,
-    SET,
-    SET_OF,
-    GraphicString,
-    NumericString,
-    VisibleString,
-    PrintableString,
-    ISO646String,
-    TeletexString,
-    GeneralString,
-    T61String,
-    UniversalString,
-    VideotexString,
-    BMPString,
-    IA5String,
-    CharacterString,
-    UTCTime,
-    GeneralizedTime,
-    TIME,
-    DATE,
-    TIME_OF_DAY,
-    DATE_TIME,
-    DURATION,
-    OID_IRI,
-    RELATIVE_OID_IRI,
-    TRUE,
-    FALSE,
-    TRUE_BIT,
-    FALSE_BIT,
-    PLUS_INFINITY,
-    MINUS_INFINITY,
-    NOT_A_NUMBER,
-    TYPE_IDENTIFIER,
-    ABSTRACT_SYNTAX,
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
-    ASN1Construction as _Construction,
-    ASN1UniversalType as _UniversalType,
-    ObjectIdentifier as _OID,
-    External as _External,
-    EmbeddedPDV as _PDV,
-    ASN1ConstructionError as _ConstructionError,
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
-import { EncryptedKey, _decode_EncryptedKey, _encode_EncryptedKey } from "../PKIXCRMF-2009/EncryptedKey.ta";
-export { EncryptedKey, _decode_EncryptedKey, _encode_EncryptedKey } from "../PKIXCRMF-2009/EncryptedKey.ta";
-import { KeyGenParameters, _decode_KeyGenParameters, _encode_KeyGenParameters } from "../PKIXCRMF-2009/KeyGenParameters.ta";
-export { KeyGenParameters, _decode_KeyGenParameters, _encode_KeyGenParameters } from "../PKIXCRMF-2009/KeyGenParameters.ta";
-
+    BOOLEAN,
+} from 'asn1-ts';
+import * as $ from 'asn1-ts/dist/node/functional';
+import {
+    EncryptedKey,
+    _decode_EncryptedKey,
+    _encode_EncryptedKey,
+} from '../PKIXCRMF-2009/EncryptedKey.ta';
+import {
+    KeyGenParameters,
+    _decode_KeyGenParameters,
+    _encode_KeyGenParameters,
+} from '../PKIXCRMF-2009/KeyGenParameters.ta';
 
 /* START_OF_SYMBOL_DEFINITION PKIArchiveOptions */
 /**
  * @summary PKIArchiveOptions
  * @description
- * 
+ *
  * ### ASN.1 Definition:
- * 
+ *
  * ```asn1
  * PKIArchiveOptions  ::=  CHOICE {
  *     encryptedPrivKey     [0] EncryptedKey,
@@ -88,15 +32,15 @@ export { KeyGenParameters, _decode_KeyGenParameters, _encode_KeyGenParameters } 
  *     archiveRemGenPrivKey [2] BOOLEAN }
  * ```
  */
-export
-type PKIArchiveOptions =
-    { encryptedPrivKey: EncryptedKey } /* CHOICE_ALT_ROOT */
+export type PKIArchiveOptions =
+    | { encryptedPrivKey: EncryptedKey } /* CHOICE_ALT_ROOT */
     | { keyGenParameters: KeyGenParameters } /* CHOICE_ALT_ROOT */
     | { archiveRemGenPrivKey: BOOLEAN } /* CHOICE_ALT_ROOT */;
 /* END_OF_SYMBOL_DEFINITION PKIArchiveOptions */
 
 /* START_OF_SYMBOL_DEFINITION _cached_decoder_for_PKIArchiveOptions */
-let _cached_decoder_for_PKIArchiveOptions: $.ASN1Decoder<PKIArchiveOptions> | null = null;
+let _cached_decoder_for_PKIArchiveOptions: $.ASN1Decoder<PKIArchiveOptions> | null =
+    null;
 /* END_OF_SYMBOL_DEFINITION _cached_decoder_for_PKIArchiveOptions */
 
 /* START_OF_SYMBOL_DEFINITION _decode_PKIArchiveOptions */
@@ -106,19 +50,35 @@ let _cached_decoder_for_PKIArchiveOptions: $.ASN1Decoder<PKIArchiveOptions> | nu
  * @param {_Element} el The element being decoded.
  * @returns {PKIArchiveOptions} The decoded data structure.
  */
-export
-function _decode_PKIArchiveOptions (el: _Element) {
-    if (!_cached_decoder_for_PKIArchiveOptions) { _cached_decoder_for_PKIArchiveOptions = $._decode_inextensible_choice<PKIArchiveOptions>({
-    "CONTEXT 0": [ "encryptedPrivKey", $._decode_explicit<EncryptedKey>(() => _decode_EncryptedKey) ],
-    "CONTEXT 1": [ "keyGenParameters", $._decode_implicit<KeyGenParameters>(() => _decode_KeyGenParameters) ],
-    "CONTEXT 2": [ "archiveRemGenPrivKey", $._decode_implicit<BOOLEAN>(() => $._decodeBoolean) ]
-}); }
+export function _decode_PKIArchiveOptions(el: _Element) {
+    if (!_cached_decoder_for_PKIArchiveOptions) {
+        _cached_decoder_for_PKIArchiveOptions =
+            $._decode_inextensible_choice<PKIArchiveOptions>({
+                'CONTEXT 0': [
+                    'encryptedPrivKey',
+                    $._decode_explicit<EncryptedKey>(
+                        () => _decode_EncryptedKey
+                    ),
+                ],
+                'CONTEXT 1': [
+                    'keyGenParameters',
+                    $._decode_implicit<KeyGenParameters>(
+                        () => _decode_KeyGenParameters
+                    ),
+                ],
+                'CONTEXT 2': [
+                    'archiveRemGenPrivKey',
+                    $._decode_implicit<BOOLEAN>(() => $._decodeBoolean),
+                ],
+            });
+    }
     return _cached_decoder_for_PKIArchiveOptions(el);
 }
 /* END_OF_SYMBOL_DEFINITION _decode_PKIArchiveOptions */
 
 /* START_OF_SYMBOL_DEFINITION _cached_encoder_for_PKIArchiveOptions */
-let _cached_encoder_for_PKIArchiveOptions: $.ASN1Encoder<PKIArchiveOptions> | null = null;
+let _cached_encoder_for_PKIArchiveOptions: $.ASN1Encoder<PKIArchiveOptions> | null =
+    null;
 /* END_OF_SYMBOL_DEFINITION _cached_encoder_for_PKIArchiveOptions */
 
 /* START_OF_SYMBOL_DEFINITION _encode_PKIArchiveOptions */
@@ -129,13 +89,36 @@ let _cached_encoder_for_PKIArchiveOptions: $.ASN1Encoder<PKIArchiveOptions> | nu
  * @param elGetter A function that can be used to get new ASN.1 elements.
  * @returns {_Element} The PKIArchiveOptions, encoded as an ASN.1 Element.
  */
-export
-function _encode_PKIArchiveOptions (value: PKIArchiveOptions, elGetter: $.ASN1Encoder<PKIArchiveOptions>) {
-    if (!_cached_encoder_for_PKIArchiveOptions) { _cached_encoder_for_PKIArchiveOptions = $._encode_choice<PKIArchiveOptions>({
-    "encryptedPrivKey": $._encode_explicit(_TagClass.context, 0, () => _encode_EncryptedKey, $.BER),
-    "keyGenParameters": $._encode_implicit(_TagClass.context, 1, () => _encode_KeyGenParameters, $.BER),
-    "archiveRemGenPrivKey": $._encode_implicit(_TagClass.context, 2, () => $._encodeBoolean, $.BER),
-}, $.BER); }
+export function _encode_PKIArchiveOptions(
+    value: PKIArchiveOptions,
+    elGetter: $.ASN1Encoder<PKIArchiveOptions>
+) {
+    if (!_cached_encoder_for_PKIArchiveOptions) {
+        _cached_encoder_for_PKIArchiveOptions =
+            $._encode_choice<PKIArchiveOptions>(
+                {
+                    encryptedPrivKey: $._encode_explicit(
+                        _TagClass.context,
+                        0,
+                        () => _encode_EncryptedKey,
+                        $.BER
+                    ),
+                    keyGenParameters: $._encode_implicit(
+                        _TagClass.context,
+                        1,
+                        () => _encode_KeyGenParameters,
+                        $.BER
+                    ),
+                    archiveRemGenPrivKey: $._encode_implicit(
+                        _TagClass.context,
+                        2,
+                        () => $._encodeBoolean,
+                        $.BER
+                    ),
+                },
+                $.BER
+            );
+    }
     return _cached_encoder_for_PKIArchiveOptions(value, elGetter);
 }
 

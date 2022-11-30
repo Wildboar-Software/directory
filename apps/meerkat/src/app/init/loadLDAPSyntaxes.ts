@@ -37,7 +37,7 @@ import { telexNr } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/t
 import { utcTime } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/utcTime.oa";
 import { ldapSyntaxDescription } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/ldapSyntaxDescription.oa";
 import { substringAssertion } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/substringAssertion.oa";
-import { utmCoordinates } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/utmCoordinates.oa";
+import { utmCoords } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/utmCoords.oa";
 import { uiiForm } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uiiForm.oa";
 import { epcForm } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/epcForm.oa";
 import { countryString3c } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/countryString3c.oa";
@@ -127,7 +127,7 @@ const ldapSyntaxes = {
     "null": null_,
     open,
     rdn,
-    utmCoordinates,
+    utmCoords,
     uiiForm,
     epcForm,
     countryString3c,
@@ -338,8 +338,8 @@ function loadLDAPSyntaxes (ctx: Context): void {
     ctx.ldapSyntaxes.set("surname", ctx.ldapSyntaxes.get(directoryString["&id"]!.toString())!);
     ctx.ldapSyntaxes.set("sn", ctx.ldapSyntaxes.get(directoryString["&id"]!.toString())!);
 
-    ctx.ldapSyntaxes.get(utmCoordinates["&id"].toString())!.decoder = localDecoders.utmCoords;
-    ctx.ldapSyntaxes.get(utmCoordinates["&id"].toString())!.encoder = localEncoders.utmCoordinates;
+    ctx.ldapSyntaxes.get(utmCoords["&id"].toString())!.decoder = localDecoders.utmCoords;
+    ctx.ldapSyntaxes.get(utmCoords["&id"].toString())!.encoder = localEncoders.utmCoordinates;
     ctx.ldapSyntaxes.get(uiiForm["&id"].toString())!.decoder = localDecoders.getUIIFormDecoder(ctx);
     ctx.ldapSyntaxes.get(uiiForm["&id"].toString())!.encoder = localEncoders.uiiForm;
     ctx.ldapSyntaxes.get(epcForm["&id"].toString())!.decoder = localDecoders.epcForm;

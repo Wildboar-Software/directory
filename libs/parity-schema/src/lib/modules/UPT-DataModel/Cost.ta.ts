@@ -1,91 +1,31 @@
 /* eslint-disable */
 import {
-    itu_t,
-    itu_r,
-    ccitt,
-    iso,
-    joint_iso_itu_t,
-    joint_iso_ccitt,
-    OPTIONAL,
-    BOOLEAN,
-    INTEGER,
-    BIT_STRING,
-    OCTET_STRING,
-    NULL,
-    OBJECT_IDENTIFIER,
-    ObjectDescriptor,
-    EXTERNAL,
-    REAL,
-    INSTANCE_OF,
-    ENUMERATED,
-    EMBEDDED_PDV,
-    UTF8String,
-    RELATIVE_OID,
-    SEQUENCE,
-    SEQUENCE_OF,
-    SET,
-    SET_OF,
-    GraphicString,
-    NumericString,
-    VisibleString,
-    PrintableString,
-    ISO646String,
-    TeletexString,
-    GeneralString,
-    T61String,
-    UniversalString,
-    VideotexString,
-    BMPString,
-    IA5String,
-    CharacterString,
-    UTCTime,
-    GeneralizedTime,
-    TIME,
-    DATE,
-    TIME_OF_DAY,
-    DATE_TIME,
-    DURATION,
-    OID_IRI,
-    RELATIVE_OID_IRI,
-    TRUE,
-    FALSE,
-    TRUE_BIT,
-    FALSE_BIT,
-    PLUS_INFINITY,
-    MINUS_INFINITY,
-    NOT_A_NUMBER,
-    TYPE_IDENTIFIER,
-    ABSTRACT_SYNTAX,
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
-    ASN1Construction as _Construction,
-    ASN1UniversalType as _UniversalType,
-    ObjectIdentifier as _OID,
-    External as _External,
-    EmbeddedPDV as _PDV,
-    ASN1ConstructionError as _ConstructionError,
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
-import { CurrencyValue, _decode_CurrencyValue, _encode_CurrencyValue } from "../UPT-DataModel/CurrencyValue.ta";
-export { CurrencyValue, _decode_CurrencyValue, _encode_CurrencyValue } from "../UPT-DataModel/CurrencyValue.ta";
-
+    INTEGER,
+} from 'asn1-ts';
+import * as $ from 'asn1-ts/dist/node/functional';
+import {
+    CurrencyValue,
+    _decode_CurrencyValue,
+    _encode_CurrencyValue,
+} from '../UPT-DataModel/CurrencyValue.ta';
 
 /* START_OF_SYMBOL_DEFINITION Cost */
 /**
  * @summary Cost
  * @description
- * 
+ *
  * ### ASN.1 Definition:
- * 
+ *
  * ```asn1
  * Cost  ::=  CHOICE {pulse  [0]  INTEGER(1..ub-pulse),
  *                  cost   [1]  CurrencyValue
  * }
  * ```
  */
-export
-type Cost =
-    { pulse: INTEGER } /* CHOICE_ALT_ROOT */
+export type Cost =
+    | { pulse: INTEGER } /* CHOICE_ALT_ROOT */
     | { cost: CurrencyValue } /* CHOICE_ALT_ROOT */;
 /* END_OF_SYMBOL_DEFINITION Cost */
 
@@ -100,12 +40,19 @@ let _cached_decoder_for_Cost: $.ASN1Decoder<Cost> | null = null;
  * @param {_Element} el The element being decoded.
  * @returns {Cost} The decoded data structure.
  */
-export
-function _decode_Cost (el: _Element) {
-    if (!_cached_decoder_for_Cost) { _cached_decoder_for_Cost = $._decode_inextensible_choice<Cost>({
-    "CONTEXT 0": [ "pulse", $._decode_implicit<INTEGER>(() => $._decodeInteger) ],
-    "CONTEXT 1": [ "cost", $._decode_explicit<CurrencyValue>(() => _decode_CurrencyValue) ]
-}); }
+export function _decode_Cost(el: _Element) {
+    if (!_cached_decoder_for_Cost) {
+        _cached_decoder_for_Cost = $._decode_inextensible_choice<Cost>({
+            'CONTEXT 0': [
+                'pulse',
+                $._decode_implicit<INTEGER>(() => $._decodeInteger),
+            ],
+            'CONTEXT 1': [
+                'cost',
+                $._decode_explicit<CurrencyValue>(() => _decode_CurrencyValue),
+            ],
+        });
+    }
     return _cached_decoder_for_Cost(el);
 }
 /* END_OF_SYMBOL_DEFINITION _decode_Cost */
@@ -122,12 +69,26 @@ let _cached_encoder_for_Cost: $.ASN1Encoder<Cost> | null = null;
  * @param elGetter A function that can be used to get new ASN.1 elements.
  * @returns {_Element} The Cost, encoded as an ASN.1 Element.
  */
-export
-function _encode_Cost (value: Cost, elGetter: $.ASN1Encoder<Cost>) {
-    if (!_cached_encoder_for_Cost) { _cached_encoder_for_Cost = $._encode_choice<Cost>({
-    "pulse": $._encode_implicit(_TagClass.context, 0, () => $._encodeInteger, $.BER),
-    "cost": $._encode_explicit(_TagClass.context, 1, () => _encode_CurrencyValue, $.BER),
-}, $.BER); }
+export function _encode_Cost(value: Cost, elGetter: $.ASN1Encoder<Cost>) {
+    if (!_cached_encoder_for_Cost) {
+        _cached_encoder_for_Cost = $._encode_choice<Cost>(
+            {
+                pulse: $._encode_implicit(
+                    _TagClass.context,
+                    0,
+                    () => $._encodeInteger,
+                    $.BER
+                ),
+                cost: $._encode_explicit(
+                    _TagClass.context,
+                    1,
+                    () => _encode_CurrencyValue,
+                    $.BER
+                ),
+            },
+            $.BER
+        );
+    }
     return _cached_encoder_for_Cost(value, elGetter);
 }
 

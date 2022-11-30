@@ -1,86 +1,40 @@
 /* eslint-disable */
 import {
-    itu_t,
-    itu_r,
-    ccitt,
-    iso,
-    joint_iso_itu_t,
-    joint_iso_ccitt,
-    OPTIONAL,
-    BOOLEAN,
-    INTEGER,
-    BIT_STRING,
-    OCTET_STRING,
-    NULL,
-    OBJECT_IDENTIFIER,
-    ObjectDescriptor,
-    EXTERNAL,
-    REAL,
-    INSTANCE_OF,
-    ENUMERATED,
-    EMBEDDED_PDV,
-    UTF8String,
-    RELATIVE_OID,
-    SEQUENCE,
-    SEQUENCE_OF,
-    SET,
-    SET_OF,
-    GraphicString,
-    NumericString,
-    VisibleString,
-    PrintableString,
-    ISO646String,
-    TeletexString,
-    GeneralString,
-    T61String,
-    UniversalString,
-    VideotexString,
-    BMPString,
-    IA5String,
-    CharacterString,
-    UTCTime,
-    GeneralizedTime,
-    TIME,
-    DATE,
-    TIME_OF_DAY,
-    DATE_TIME,
-    DURATION,
-    OID_IRI,
-    RELATIVE_OID_IRI,
-    TRUE,
-    FALSE,
-    TRUE_BIT,
-    FALSE_BIT,
-    PLUS_INFINITY,
-    MINUS_INFINITY,
-    NOT_A_NUMBER,
-    TYPE_IDENTIFIER,
-    ABSTRACT_SYNTAX,
+    DistinguishedName,
+    _decode_DistinguishedName,
+    _encode_DistinguishedName,
+} from '@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta';
+import {
+    DirectoryString,
+    _decode_DirectoryString,
+    _encode_DirectoryString,
+} from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/DirectoryString.ta';
+import {
+    ASN1ConstructionError as _ConstructionError,
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
-    ASN1Construction as _Construction,
-    ASN1UniversalType as _UniversalType,
-    ObjectIdentifier as _OID,
-    External as _External,
-    EmbeddedPDV as _PDV,
-    ASN1ConstructionError as _ConstructionError,
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
-import { DistinguishedName, _decode_DistinguishedName, _encode_DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-export { DistinguishedName, _decode_DistinguishedName, _encode_DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import { DirectoryString, _decode_DirectoryString, _encode_DirectoryString } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/DirectoryString.ta";
-export { DirectoryString, _decode_DirectoryString, _encode_DirectoryString } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/DirectoryString.ta";
-import { ub_dynamic_value_extra_info } from "../TraderDefinitions/ub-dynamic-value-extra-info.va";
-export { ub_dynamic_value_extra_info } from "../TraderDefinitions/ub-dynamic-value-extra-info.va";
-
+    OBJECT_IDENTIFIER,
+} from 'asn1-ts';
+import * as $ from 'asn1-ts/dist/node/functional';
+export {
+    DistinguishedName,
+    _decode_DistinguishedName,
+    _encode_DistinguishedName,
+} from '@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta';
+export {
+    DirectoryString,
+    _decode_DirectoryString,
+    _encode_DirectoryString,
+} from '@wildboar/x500/src/lib/modules/SelectedAttributeTypes/DirectoryString.ta';
+export { ub_dynamic_value_extra_info } from '../TraderDefinitions/ub-dynamic-value-extra-info.va';
 
 /* START_OF_SYMBOL_DEFINITION DynamicPropValue */
 /**
  * @summary DynamicPropValue
  * @description
- * 
+ *
  * ### ASN.1 Definition:
- * 
+ *
  * ```asn1
  * DynamicPropValue ::= SEQUENCE {
  *   propertyType       OBJECT IDENTIFIER,
@@ -88,12 +42,11 @@ export { ub_dynamic_value_extra_info } from "../TraderDefinitions/ub-dynamic-val
  *   extraInfo          DirectoryString{ub-dynamic-value-extra-info}
  * }
  * ```
- * 
+ *
  * @class
  */
-export
-class DynamicPropValue {
-    constructor (
+export class DynamicPropValue {
+    constructor(
         /**
          * @summary `propertyType`.
          * @public
@@ -117,20 +70,24 @@ class DynamicPropValue {
     /**
      * @summary Restructures an object into a DynamicPropValue
      * @description
-     * 
+     *
      * This takes an `object` and converts it to a `DynamicPropValue`.
-     * 
+     *
      * @public
      * @static
      * @method
      * @param {Object} _o An object having all of the keys and values of a `DynamicPropValue`.
      * @returns {DynamicPropValue}
      */
-    public static _from_object (_o: { [_K in keyof (DynamicPropValue)]: (DynamicPropValue)[_K] }): DynamicPropValue {
-        return new DynamicPropValue(_o.propertyType, _o.dynamicPropEvalIf, _o.extraInfo);
+    public static _from_object(_o: {
+        [_K in keyof DynamicPropValue]: DynamicPropValue[_K];
+    }): DynamicPropValue {
+        return new DynamicPropValue(
+            _o.propertyType,
+            _o.dynamicPropEvalIf,
+            _o.extraInfo
+        );
     }
-
-
 }
 /* END_OF_SYMBOL_DEFINITION DynamicPropValue */
 
@@ -138,51 +95,66 @@ class DynamicPropValue {
 /**
  * @summary The Leading Root Component Types of DynamicPropValue
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the leading root component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
-export
-const _root_component_type_list_1_spec_for_DynamicPropValue: $.ComponentSpec[] = [
-    new $.ComponentSpec("propertyType", false, $.hasTag(_TagClass.universal, 6), undefined, undefined),
-    new $.ComponentSpec("dynamicPropEvalIf", false, $.hasTag(_TagClass.universal, 16), undefined, undefined),
-    new $.ComponentSpec("extraInfo", false, $.hasAnyTag, undefined, undefined)
-];
+export const _root_component_type_list_1_spec_for_DynamicPropValue: $.ComponentSpec[] =
+    [
+        new $.ComponentSpec(
+            'propertyType',
+            false,
+            $.hasTag(_TagClass.universal, 6),
+            undefined,
+            undefined
+        ),
+        new $.ComponentSpec(
+            'dynamicPropEvalIf',
+            false,
+            $.hasTag(_TagClass.universal, 16),
+            undefined,
+            undefined
+        ),
+        new $.ComponentSpec(
+            'extraInfo',
+            false,
+            $.hasAnyTag,
+            undefined,
+            undefined
+        ),
+    ];
 /* END_OF_SYMBOL_DEFINITION _root_component_type_list_1_spec_for_DynamicPropValue */
 
 /* START_OF_SYMBOL_DEFINITION _root_component_type_list_2_spec_for_DynamicPropValue */
 /**
  * @summary The Trailing Root Component Types of DynamicPropValue
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the trailing root component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
-export
-const _root_component_type_list_2_spec_for_DynamicPropValue: $.ComponentSpec[] = [
-    
-];
+export const _root_component_type_list_2_spec_for_DynamicPropValue: $.ComponentSpec[] =
+    [];
 /* END_OF_SYMBOL_DEFINITION _root_component_type_list_2_spec_for_DynamicPropValue */
 
 /* START_OF_SYMBOL_DEFINITION _extension_additions_list_spec_for_DynamicPropValue */
 /**
  * @summary The Extension Addition Component Types of DynamicPropValue
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the extension addition component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
-export
-const _extension_additions_list_spec_for_DynamicPropValue: $.ComponentSpec[] = [
-    
-];
+export const _extension_additions_list_spec_for_DynamicPropValue: $.ComponentSpec[] =
+    [];
 /* END_OF_SYMBOL_DEFINITION _extension_additions_list_spec_for_DynamicPropValue */
 
 /* START_OF_SYMBOL_DEFINITION _cached_decoder_for_DynamicPropValue */
-let _cached_decoder_for_DynamicPropValue: $.ASN1Decoder<DynamicPropValue> | null = null;
+let _cached_decoder_for_DynamicPropValue: $.ASN1Decoder<DynamicPropValue> | null =
+    null;
 /* END_OF_SYMBOL_DEFINITION _cached_decoder_for_DynamicPropValue */
 
 /* START_OF_SYMBOL_DEFINITION _decode_DynamicPropValue */
@@ -192,35 +164,42 @@ let _cached_decoder_for_DynamicPropValue: $.ASN1Decoder<DynamicPropValue> | null
  * @param {_Element} el The element being decoded.
  * @returns {DynamicPropValue} The decoded data structure.
  */
-export
-function _decode_DynamicPropValue (el: _Element) {
-    if (!_cached_decoder_for_DynamicPropValue) { _cached_decoder_for_DynamicPropValue = function (el: _Element): DynamicPropValue {
-    const sequence: _Element[] = el.sequence;
-    if (sequence.length < 3) {
-        throw new _ConstructionError("DynamicPropValue contained only " + sequence.length.toString() + " elements.");
+export function _decode_DynamicPropValue(el: _Element) {
+    if (!_cached_decoder_for_DynamicPropValue) {
+        _cached_decoder_for_DynamicPropValue = function (
+            el: _Element
+        ): DynamicPropValue {
+            const sequence: _Element[] = el.sequence;
+            if (sequence.length < 3) {
+                throw new _ConstructionError(
+                    'DynamicPropValue contained only ' +
+                        sequence.length.toString() +
+                        ' elements.'
+                );
+            }
+            sequence[0].name = 'propertyType';
+            sequence[1].name = 'dynamicPropEvalIf';
+            sequence[2].name = 'extraInfo';
+            let propertyType!: OBJECT_IDENTIFIER;
+            let dynamicPropEvalIf!: DistinguishedName;
+            let extraInfo!: DirectoryString;
+            propertyType = $._decodeObjectIdentifier(sequence[0]);
+            dynamicPropEvalIf = _decode_DistinguishedName(sequence[1]);
+            extraInfo = _decode_DirectoryString(sequence[2]);
+            return new DynamicPropValue(
+                propertyType,
+                dynamicPropEvalIf,
+                extraInfo
+            );
+        };
     }
-    sequence[0].name = "propertyType";
-    sequence[1].name = "dynamicPropEvalIf";
-    sequence[2].name = "extraInfo";
-    let propertyType!: OBJECT_IDENTIFIER;
-    let dynamicPropEvalIf!: DistinguishedName;
-    let extraInfo!: DirectoryString;
-    propertyType = $._decodeObjectIdentifier(sequence[0]);
-    dynamicPropEvalIf = _decode_DistinguishedName(sequence[1]);
-    extraInfo = _decode_DirectoryString(sequence[2]);
-    return new DynamicPropValue(
-        propertyType,
-        dynamicPropEvalIf,
-        extraInfo,
-
-    );
-}; }
     return _cached_decoder_for_DynamicPropValue(el);
 }
 /* END_OF_SYMBOL_DEFINITION _decode_DynamicPropValue */
 
 /* START_OF_SYMBOL_DEFINITION _cached_encoder_for_DynamicPropValue */
-let _cached_encoder_for_DynamicPropValue: $.ASN1Encoder<DynamicPropValue> | null = null;
+let _cached_encoder_for_DynamicPropValue: $.ASN1Encoder<DynamicPropValue> | null =
+    null;
 /* END_OF_SYMBOL_DEFINITION _cached_encoder_for_DynamicPropValue */
 
 /* START_OF_SYMBOL_DEFINITION _encode_DynamicPropValue */
@@ -231,17 +210,36 @@ let _cached_encoder_for_DynamicPropValue: $.ASN1Encoder<DynamicPropValue> | null
  * @param elGetter A function that can be used to get new ASN.1 elements.
  * @returns {_Element} The DynamicPropValue, encoded as an ASN.1 Element.
  */
-export
-function _encode_DynamicPropValue (value: DynamicPropValue, elGetter: $.ASN1Encoder<DynamicPropValue>) {
-    if (!_cached_encoder_for_DynamicPropValue) { _cached_encoder_for_DynamicPropValue = function (value: DynamicPropValue, elGetter: $.ASN1Encoder<DynamicPropValue>): _Element {
-    return $._encodeSequence(([] as (_Element | undefined)[]).concat(
-        [
-            /* REQUIRED   */ $._encodeObjectIdentifier(value.propertyType, $.BER),
-            /* REQUIRED   */ _encode_DistinguishedName(value.dynamicPropEvalIf, $.BER),
-            /* REQUIRED   */ _encode_DirectoryString(value.extraInfo, $.BER)
-        ],
-    ).filter((c: (_Element | undefined)): c is _Element => (!!c)), $.BER);
-}; }
+export function _encode_DynamicPropValue(
+    value: DynamicPropValue,
+    elGetter: $.ASN1Encoder<DynamicPropValue>
+) {
+    if (!_cached_encoder_for_DynamicPropValue) {
+        _cached_encoder_for_DynamicPropValue = function (
+            value: DynamicPropValue,
+            elGetter: $.ASN1Encoder<DynamicPropValue>
+        ): _Element {
+            return $._encodeSequence(
+                ([] as (_Element | undefined)[])
+                    .concat([
+                        /* REQUIRED   */ $._encodeObjectIdentifier(
+                            value.propertyType,
+                            $.BER
+                        ),
+                        /* REQUIRED   */ _encode_DistinguishedName(
+                            value.dynamicPropEvalIf,
+                            $.BER
+                        ),
+                        /* REQUIRED   */ _encode_DirectoryString(
+                            value.extraInfo,
+                            $.BER
+                        ),
+                    ])
+                    .filter((c: _Element | undefined): c is _Element => !!c),
+                $.BER
+            );
+        };
+    }
     return _cached_encoder_for_DynamicPropValue(value, elGetter);
 }
 

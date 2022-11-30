@@ -1,84 +1,38 @@
 /* eslint-disable */
 import {
-    itu_t,
-    itu_r,
-    ccitt,
-    iso,
-    joint_iso_itu_t,
-    joint_iso_ccitt,
-    OPTIONAL,
-    BOOLEAN,
-    INTEGER,
-    BIT_STRING,
-    OCTET_STRING,
-    NULL,
-    OBJECT_IDENTIFIER,
-    ObjectDescriptor,
-    EXTERNAL,
-    REAL,
-    INSTANCE_OF,
-    ENUMERATED,
-    EMBEDDED_PDV,
-    UTF8String,
-    RELATIVE_OID,
-    SEQUENCE,
-    SEQUENCE_OF,
-    SET,
-    SET_OF,
-    GraphicString,
-    NumericString,
-    VisibleString,
-    PrintableString,
-    ISO646String,
-    TeletexString,
-    GeneralString,
-    T61String,
-    UniversalString,
-    VideotexString,
-    BMPString,
-    IA5String,
-    CharacterString,
-    UTCTime,
-    GeneralizedTime,
-    TIME,
-    DATE,
-    TIME_OF_DAY,
-    DATE_TIME,
-    DURATION,
-    OID_IRI,
-    RELATIVE_OID_IRI,
-    TRUE,
-    FALSE,
-    TRUE_BIT,
-    FALSE_BIT,
-    PLUS_INFINITY,
-    MINUS_INFINITY,
-    NOT_A_NUMBER,
-    TYPE_IDENTIFIER,
-    ABSTRACT_SYNTAX,
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
-    ASN1Construction as _Construction,
-    ASN1UniversalType as _UniversalType,
-    ObjectIdentifier as _OID,
-    External as _External,
-    EmbeddedPDV as _PDV,
-    ASN1ConstructionError as _ConstructionError,
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
-import { POPOSigningKey, _decode_POPOSigningKey, _encode_POPOSigningKey } from "../PKIXCRMF-2009/POPOSigningKey.ta";
-export { POPOSigningKey, _decode_POPOSigningKey, _encode_POPOSigningKey } from "../PKIXCRMF-2009/POPOSigningKey.ta";
-import { POPOPrivKey, _decode_POPOPrivKey, _encode_POPOPrivKey } from "../PKIXCRMF-2009/POPOPrivKey.ta";
-export { POPOPrivKey, _decode_POPOPrivKey, _encode_POPOPrivKey } from "../PKIXCRMF-2009/POPOPrivKey.ta";
-
+    NULL,
+} from 'asn1-ts';
+import * as $ from 'asn1-ts/dist/node/functional';
+import {
+    POPOPrivKey,
+    _decode_POPOPrivKey,
+    _encode_POPOPrivKey,
+} from '../PKIXCRMF-2009/POPOPrivKey.ta';
+import {
+    POPOSigningKey,
+    _decode_POPOSigningKey,
+    _encode_POPOSigningKey,
+} from '../PKIXCRMF-2009/POPOSigningKey.ta';
+export {
+    POPOPrivKey,
+    _decode_POPOPrivKey,
+    _encode_POPOPrivKey,
+} from '../PKIXCRMF-2009/POPOPrivKey.ta';
+export {
+    POPOSigningKey,
+    _decode_POPOSigningKey,
+    _encode_POPOSigningKey,
+} from '../PKIXCRMF-2009/POPOSigningKey.ta';
 
 /* START_OF_SYMBOL_DEFINITION ProofOfPossession */
 /**
  * @summary ProofOfPossession
  * @description
- * 
+ *
  * ### ASN.1 Definition:
- * 
+ *
  * ```asn1
  * ProofOfPossession  ::=  CHOICE {
  *     raVerified        [0] NULL,
@@ -89,16 +43,16 @@ export { POPOPrivKey, _decode_POPOPrivKey, _encode_POPOPrivKey } from "../PKIXCR
  *     keyAgreement      [3] POPOPrivKey }
  * ```
  */
-export
-type ProofOfPossession =
-    { raVerified: NULL } /* CHOICE_ALT_ROOT */
+export type ProofOfPossession =
+    | { raVerified: NULL } /* CHOICE_ALT_ROOT */
     | { signature: POPOSigningKey } /* CHOICE_ALT_ROOT */
     | { keyEncipherment: POPOPrivKey } /* CHOICE_ALT_ROOT */
     | { keyAgreement: POPOPrivKey } /* CHOICE_ALT_ROOT */;
 /* END_OF_SYMBOL_DEFINITION ProofOfPossession */
 
 /* START_OF_SYMBOL_DEFINITION _cached_decoder_for_ProofOfPossession */
-let _cached_decoder_for_ProofOfPossession: $.ASN1Decoder<ProofOfPossession> | null = null;
+let _cached_decoder_for_ProofOfPossession: $.ASN1Decoder<ProofOfPossession> | null =
+    null;
 /* END_OF_SYMBOL_DEFINITION _cached_decoder_for_ProofOfPossession */
 
 /* START_OF_SYMBOL_DEFINITION _decode_ProofOfPossession */
@@ -108,20 +62,37 @@ let _cached_decoder_for_ProofOfPossession: $.ASN1Decoder<ProofOfPossession> | nu
  * @param {_Element} el The element being decoded.
  * @returns {ProofOfPossession} The decoded data structure.
  */
-export
-function _decode_ProofOfPossession (el: _Element) {
-    if (!_cached_decoder_for_ProofOfPossession) { _cached_decoder_for_ProofOfPossession = $._decode_inextensible_choice<ProofOfPossession>({
-    "CONTEXT 0": [ "raVerified", $._decode_implicit<NULL>(() => $._decodeNull) ],
-    "CONTEXT 1": [ "signature", $._decode_implicit<POPOSigningKey>(() => _decode_POPOSigningKey) ],
-    "CONTEXT 2": [ "keyEncipherment", $._decode_explicit<POPOPrivKey>(() => _decode_POPOPrivKey) ],
-    "CONTEXT 3": [ "keyAgreement", $._decode_explicit<POPOPrivKey>(() => _decode_POPOPrivKey) ]
-}); }
+export function _decode_ProofOfPossession(el: _Element) {
+    if (!_cached_decoder_for_ProofOfPossession) {
+        _cached_decoder_for_ProofOfPossession =
+            $._decode_inextensible_choice<ProofOfPossession>({
+                'CONTEXT 0': [
+                    'raVerified',
+                    $._decode_implicit<NULL>(() => $._decodeNull),
+                ],
+                'CONTEXT 1': [
+                    'signature',
+                    $._decode_implicit<POPOSigningKey>(
+                        () => _decode_POPOSigningKey
+                    ),
+                ],
+                'CONTEXT 2': [
+                    'keyEncipherment',
+                    $._decode_explicit<POPOPrivKey>(() => _decode_POPOPrivKey),
+                ],
+                'CONTEXT 3': [
+                    'keyAgreement',
+                    $._decode_explicit<POPOPrivKey>(() => _decode_POPOPrivKey),
+                ],
+            });
+    }
     return _cached_decoder_for_ProofOfPossession(el);
 }
 /* END_OF_SYMBOL_DEFINITION _decode_ProofOfPossession */
 
 /* START_OF_SYMBOL_DEFINITION _cached_encoder_for_ProofOfPossession */
-let _cached_encoder_for_ProofOfPossession: $.ASN1Encoder<ProofOfPossession> | null = null;
+let _cached_encoder_for_ProofOfPossession: $.ASN1Encoder<ProofOfPossession> | null =
+    null;
 /* END_OF_SYMBOL_DEFINITION _cached_encoder_for_ProofOfPossession */
 
 /* START_OF_SYMBOL_DEFINITION _encode_ProofOfPossession */
@@ -132,14 +103,42 @@ let _cached_encoder_for_ProofOfPossession: $.ASN1Encoder<ProofOfPossession> | nu
  * @param elGetter A function that can be used to get new ASN.1 elements.
  * @returns {_Element} The ProofOfPossession, encoded as an ASN.1 Element.
  */
-export
-function _encode_ProofOfPossession (value: ProofOfPossession, elGetter: $.ASN1Encoder<ProofOfPossession>) {
-    if (!_cached_encoder_for_ProofOfPossession) { _cached_encoder_for_ProofOfPossession = $._encode_choice<ProofOfPossession>({
-    "raVerified": $._encode_implicit(_TagClass.context, 0, () => $._encodeNull, $.BER),
-    "signature": $._encode_implicit(_TagClass.context, 1, () => _encode_POPOSigningKey, $.BER),
-    "keyEncipherment": $._encode_explicit(_TagClass.context, 2, () => _encode_POPOPrivKey, $.BER),
-    "keyAgreement": $._encode_explicit(_TagClass.context, 3, () => _encode_POPOPrivKey, $.BER),
-}, $.BER); }
+export function _encode_ProofOfPossession(
+    value: ProofOfPossession,
+    elGetter: $.ASN1Encoder<ProofOfPossession>
+) {
+    if (!_cached_encoder_for_ProofOfPossession) {
+        _cached_encoder_for_ProofOfPossession =
+            $._encode_choice<ProofOfPossession>(
+                {
+                    raVerified: $._encode_implicit(
+                        _TagClass.context,
+                        0,
+                        () => $._encodeNull,
+                        $.BER
+                    ),
+                    signature: $._encode_implicit(
+                        _TagClass.context,
+                        1,
+                        () => _encode_POPOSigningKey,
+                        $.BER
+                    ),
+                    keyEncipherment: $._encode_explicit(
+                        _TagClass.context,
+                        2,
+                        () => _encode_POPOPrivKey,
+                        $.BER
+                    ),
+                    keyAgreement: $._encode_explicit(
+                        _TagClass.context,
+                        3,
+                        () => _encode_POPOPrivKey,
+                        $.BER
+                    ),
+                },
+                $.BER
+            );
+    }
     return _cached_encoder_for_ProofOfPossession(value, elGetter);
 }
 
