@@ -192,5 +192,6 @@
     "mismatch_sec_params_name_and_this_dsa": "Recipient name in chaining arguments security parameters did not match this DSA's name.",
     "mismatch_sec_params_opcode_common_args": "Operation code does not match operation code indicated in security parameters of the original DAP argument.",
     "mismatch_sec_params_opcode_chaining_args": "Operation code does not match operation code indicated in security parameters of the chaining arguments.",
-    "aliased_rdns_lt0": "aliasedRDNs field was less than zero."
+    "aliased_rdns_lt0": "aliasedRDNs field was less than zero.",
+    "not_authz_chaining@add_entry_target_system": "Association {{aid}} not authorized for chaining via the addEntry targetSystem parameter."
 }

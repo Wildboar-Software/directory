@@ -21,10 +21,14 @@ import { TLSSocket } from "tls";
 import { naddrToURI } from "@wildboar/x500";
 import { BOOLEAN, OBJECT_IDENTIFIER } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
-import type {
+import {
     AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
-import { ClientAssociation, AbandonError, OperationInvocationInfo } from "@wildboar/meerkat-types";
+import {
+    ClientAssociation,
+    AbandonError,
+    OperationInvocationInfo,
+} from "@wildboar/meerkat-types";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     PresentationAddress,
@@ -41,8 +45,20 @@ import getCredentialsForNSAP from "./getCredentialsForNSAP";
 import { DSACredentials } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSACredentials.ta";
 import { getOnOCSPResponseCallback } from "../pki/getOnOCSPResponseCallback";
 import { addMilliseconds, differenceInMilliseconds } from "date-fns";
+import { URL } from "node:url";
 
 const DEFAULT_CONNECTION_TIMEOUT_IN_MS: number = 15 * 1000;
+
+// Currently, only MySQL is supported, but this includes more database protocols
+// just for a little future-proofing.
+const DEFAULT_DBMS_PORTS: Record<string, string> = {
+    "mysql": "3306",
+    "postgresql": "5432",
+    "postgres": "5432",
+    "mssql": "1433",
+    "sqlserver": "1433",
+    "mongodb": "27017",
+};
 
 async function dsa_bind <ClientType extends AsyncROSEClient> (
     ctx: MeerkatContext,
@@ -83,8 +99,48 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
             );
         }
         const uri = naddrToURI(naddr);
+        /**
+         * This section exists to prevent a security vulnerability where this
+         * DSA could be tricked into chaining requests to the database. Such
+         * requests will probably get interpreted by the database as corrupt
+         * packets and thereby have no negative consequences, but the
+         * possibility still must be addressed.
+         *
+         * Furthermore, Meerkat DSA cannot rely on use of network policy by
+         * DSA administrators, because the database must be accessible, so there
+         * is no way at the network-level to prevent chained requests from being
+         * sent to the database.
+         *
+         * Finally, so as to avoid revealing the port of the database, this
+         * implementation simply returns `null`, which will look like a normal
+         * failure to connect to the caller, rather than returning an error
+         * that makes it obvious that the connectivity was rejected. A TCP port
+         * number is not generally a big secret, but if Meerkat DSA supports
+         * multiple DBMSes in the future, the port used could reveal what DBMS
+         * is in use.
+         */
+        if (uri && process.env.DATABASE_URL) {
+            try {
+                const destination = new URL(uri);
+                const dbURL = new URL(process.env.DATABASE_URL);
+                const dbPort = dbURL.port || DEFAULT_DBMS_PORTS[dbURL.protocol.replace(":", "").toLowerCase()];
+                if (dbPort === destination.port) {
+                    ctx.log.warn(ctx.i18n.t("log:will_not_bind_to_db_port", {
+                        aid: assn?.id ?? "?",
+                        uri,
+                    }));
+                    return null;
+                }
+            } catch {
+                ctx.log.warn(ctx.i18n.t("log:will_not_bind_to_db_port", {
+                    aid: assn?.id ?? "?",
+                    uri,
+                }));
+                return null;
+            }
+        }
         ctx.log.debug(ctx.i18n.t("log:trying_naddr", {
-            uri,
+            uri: uri ?? "<FAILED TO DECODE NETWORK ADDRESS>",
         }), {
             dest: uri,
         });

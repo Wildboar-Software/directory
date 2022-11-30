@@ -131,3 +131,42 @@ with an anonymous bind.
 
 Populating the `AccessPointCredentials` table has to be done manually. There is
 no way to do this using Meerkat DSA (including the web admin console), currently.
+
+## Security Risks of Chaining
+
+:::caution
+
+If you allow a user to add an entry via the `addEntry` operation and they are
+authorization to chain operations, they might be able to spam the DSA with
+`targetSystem` values containing LAN IP addresses and make the DSA act as a
+TCP port scanner and scan the local network and submit chained requests. This
+could be an especially bad problem if a reached TCP port will interpret bytes of
+a chained request as a different protocol packet, such as a MySQL packet!
+
+:::
+
+To prevent abuse as described above, do not generously grant permissions to
+add entries, and require signed arguments for chaining to make it as difficult
+as possible to exploit this.
+
+You can configure the authentication required for chaining via these
+configuration options:
+
+- [`MEERKAT_MIN_AUTH_LEVEL_FOR_CHAINING`](./env.md#meerkat_min_auth_level_for_chaining)
+- [`MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_CHAINING`](./env.md#meerkat_min_auth_local_qualifier_for_chaining)
+- [`MEERKAT_SIGNING_REQUIRED_FOR_CHAINING`](./env.md#meerkat_signing_required_for_chaining)
+
+It is also strongly advised to configure network policies that prevent Meerkat
+DSA from reaching other services on its local network that it should not be able
+to reach. This is simple to do on Kubernetes or Docker.
+
+:::info
+
+Meerkat DSA will **NOT** chain to a transport service that has the same port
+number as the DBMS, while this may seem overly restrictive, it is to prevent
+Meerkat DSA from being tricked into sending directory requests to the DBMS,
+which could get interpreted as, for example, MySQL packets. This has to be
+implemented within Meerkat DSA, because you cannot block Meerkat DSA's access
+to the DBMS at the network level.
+
+:::

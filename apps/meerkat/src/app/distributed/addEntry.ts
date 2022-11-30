@@ -175,7 +175,10 @@ import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/S
 import { stringifyDN } from "../x500/stringifyDN";
 import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
 import { getEntryExistsFilter } from "../database/entryExistsFilter";
-import { _encode_SuperiorToSubordinate } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinate.ta";
+import {
+    _encode_SuperiorToSubordinate,
+} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinate.ta";
+import { compareAuthenticationLevel } from "@wildboar/x500";
 
 const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
 const ID_AC_SPECIFIC: string = id_ar_accessControlSpecificArea.toString();
@@ -972,6 +975,41 @@ async function addEntry (
     // to contradict the use of targetSystem, but there's not really any problem
     // here using both.
     if (data.targetSystem) {
+        const insufficientAuthForChaining = assn && (
+            (
+                ("basicLevels" in assn.authLevel)
+                && (compareAuthenticationLevel( // Returns true if a > b.
+                    ctx.config.chaining.minAuthRequired,
+                    assn.authLevel.basicLevels,
+                ))
+            )
+            || !("basicLevels" in assn.authLevel)
+        );
+        if (insufficientAuthForChaining) {
+            throw new errors.SecurityError(
+                ctx.i18n.t("err:not_authz_chaining", {
+                    aid: assn.id,
+                    context: "add_entry_target_system",
+                }),
+                new SecurityErrorData(
+                    SecurityProblem_insufficientAccessRights,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        securityError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
         const { arg: obArg, response: obResponse } = await establishSubordinate(
             ctx,
             immediateSuperior,
