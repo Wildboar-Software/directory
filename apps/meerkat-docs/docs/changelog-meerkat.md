@@ -1,5 +1,11 @@
 # Changelog for Meerkat DSA
 
+## Version 1.3.0
+
+- Support ISO Transport Over TCP (ITOT).
+- Introduce missing LDAP syntaxes.
+- Reject chaining to any TCP port that has the same port as the DBMS.
+
 ## Version 1.2.7
 
 - Fix excessively frequent database report telemetry.
