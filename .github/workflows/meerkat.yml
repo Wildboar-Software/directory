@@ -761,6 +761,8 @@ jobs:
         run: |
           helm install meerkat-dsa-${{ matrix.dmd }} ${{ env.CHART_REPO }}/${{ env.CHART_NAME }} \
             -f values_override.yaml \
+            --set itot_port=17003 \
+            --set itots_port=17004 \
             --set fullnameOverride=meerkat-${{ matrix.dmd }} \
             --set service.type=LoadBalancer \
             --set adminService.type=LoadBalancer \
