@@ -878,4 +878,4 @@ jobs:
         run: npm ci
       - name: Run the functional tests
         run: npx nx run x500-functional-tests:test --skip-nx-cache
-        timeout-minutes: 10
+        timeout-minutes: 30
