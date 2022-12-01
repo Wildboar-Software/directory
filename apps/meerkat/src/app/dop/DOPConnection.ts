@@ -261,7 +261,7 @@ async function handleRequestAndErrors (
     }
     ctx.log.debug(ctx.i18n.t("log:received_request", {
         protocol: "DOP",
-        iid: invoke_id.toString(),
+        iid: request.invoke_id.present.toString(),
         op: printCode(request.code),
         cid: assn.id,
     }), logInfo);
