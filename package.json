@@ -69,6 +69,7 @@
     "email-addresses": "^5.0.0",
     "escape-html": "^1.0.3",
     "fast-levenshtein": "^3.0.0",
+    "flat": "^5.0.2",
     "hbs": "^4.2.0",
     "i18n-iso-countries": "^7.5.0",
     "i18next": "^21.8.16",
