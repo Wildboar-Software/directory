@@ -13,4 +13,5 @@ export default {
     },
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
     coverageDirectory: '../../coverage/libs/ocsp-client',
+    verbose: process.env.CI === "true",
 };

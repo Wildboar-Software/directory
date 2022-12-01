@@ -13,4 +13,5 @@ export default {
     },
     moduleFileExtensions: ['ts', 'js', 'html'],
     coverageDirectory: '../../coverage/libs/rose-transport',
+    verbose: process.env["CI"] === "true",
 };

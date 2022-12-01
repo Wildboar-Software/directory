@@ -13,4 +13,5 @@ export default {
     moduleFileExtensions: ['ts', 'js', 'html'],
     coverageDirectory: '../../coverage/apps/meerkat',
     testEnvironment: "node",
+    verbose: process.env.CI === "true",
 };

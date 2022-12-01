@@ -13,4 +13,5 @@ export default {
     },
     moduleFileExtensions: ['ts', 'js', 'html'],
     coverageDirectory: '../../coverage/apps/create-test-dit',
+    verbose: process.env.CI === "true",
 };

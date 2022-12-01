@@ -13,4 +13,5 @@ export default {
     },
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
     coverageDirectory: '../../coverage/libs/x500-cli-config',
+    verbose: process.env["CI"] === "true",
 };

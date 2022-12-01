@@ -13,4 +13,5 @@ export default {
     },
     moduleFileExtensions: ['ts', 'js', 'html'],
     coverageDirectory: '../../coverage/libs/x500-client-ts',
+    verbose: process.env["CI"] === "true",
 };
