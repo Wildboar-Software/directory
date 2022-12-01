@@ -64,8 +64,10 @@ async function connect (
         console.error("Socket timeout");
         process.exit(2359);
     });
-    if (url.protocol.toLowerCase().endsWith("s")) {
-        socket = new tls.TLSSocket(socket);
+    if (url.protocol.replace(":", "").toLowerCase().endsWith("s")) {
+        socket = new tls.TLSSocket(socket, {
+            rejectUnauthorized: true,
+        });
     }
     const idm = new IDMConnection(socket);
     { // Bind

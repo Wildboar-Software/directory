@@ -150,10 +150,11 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
             accessPoint.address.tSelector,
             [naddr],
         );
+        timeRemaining = Math.abs(differenceInMilliseconds(new Date(), timeoutTime));
         const rose = rose_from_presentation_address(paddr, {
             ...ctx.config.tls,
             rejectUnauthorized: ctx.config.tls.rejectUnauthorizedServers,
-        });
+        }, timeRemaining);
         if (!rose) {
             continue;
         }

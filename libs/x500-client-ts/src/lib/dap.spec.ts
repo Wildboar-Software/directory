@@ -15,6 +15,7 @@ import {
 import {
     createTimestamp,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/createTimestamp.oa";
+import { TLSSocket } from "node:tls";
 
 describe("DAP Client", () => {
     it.skip("works with IDM transport", async () => {
@@ -54,7 +55,7 @@ describe("DAP Client", () => {
             assert("attribute" in ctinfo);
             const ctattr = ctinfo.attribute;
             const ct = ctattr.values[0];
-            console.log(`Root DSE created at ${ct.generalizedTime.toISOString()}`);
+            console.log(`Root DSE read at ${ct.generalizedTime.toISOString()}`);
             return expect(resultData).toBeDefined();
 
         } else {
@@ -62,7 +63,57 @@ describe("DAP Client", () => {
         }
     });
 
-    it("works with ITOT transport", async () => {
+    it("works with IDMS transport", async () => {
+        const socket = createConnection({
+            host: "dsa01.gb.mkdemo.wildboar.software",
+            port: 44632,
+        });
+        const tlsSocket = new TLSSocket(socket, {
+            rejectUnauthorized: true,
+        });
+        await new Promise((resolve) => socket.on("connect", resolve));
+        const idm = new IDMConnection(tlsSocket, {
+            rejectUnauthorized: true,
+        });
+        const rose = rose_transport_from_idm_socket(idm);
+        const dap = create_dap_client(rose);
+        const bind_response = await dap.bind({
+            protocol_id: id_idm_dap,
+            parameter: new DirectoryBindArgument(undefined, undefined),
+        });
+        if ("result" in bind_response) {
+            expect(bind_response.result.parameter).toBeDefined();
+        } else {
+            assert(false);
+        }
+        const response = await dap.read({
+            object: {
+                rdnSequence: [],
+            },
+            selection: {
+                extraAttributes: {
+                    allOperationalAttributes: null,
+                },
+            },
+        });
+        if ("result" in response) {
+            const resultData = getOptionallyProtectedValue(response.result.parameter);
+            const ctinfo = resultData.entry.information?.find((info) => ("attribute" in info) && (
+                info.attribute.type_.isEqualTo(createTimestamp["&id"])
+            ));
+            assert(ctinfo);
+            assert("attribute" in ctinfo);
+            const ctattr = ctinfo.attribute;
+            const ct = ctattr.values[0];
+            console.log(`Root DSE read at ${ct.generalizedTime.toISOString()}`);
+            return expect(resultData).toBeDefined();
+
+        } else {
+            assert(false);
+        }
+    });
+
+    it.skip("works with ITOT transport", async () => {
         const socket = createConnection({
             host: "localhost",
             port: 17003,
@@ -102,7 +153,7 @@ describe("DAP Client", () => {
             assert("attribute" in ctinfo);
             const ctattr = ctinfo.attribute;
             const ct = ctattr.values[0];
-            console.log(`Root DSE created at ${ct.generalizedTime.toISOString()}`);
+            console.log(`Root DSE read at ${ct.generalizedTime.toISOString()}`);
             return expect(resultData).toBeDefined();
 
         } else {
@@ -110,7 +161,7 @@ describe("DAP Client", () => {
         }
     });
 
-    it("works with ITOT transport (2)", async () => {
+    it.skip("works with ITOT transport (2)", async () => {
         const socket = createConnection({
             host: "localhost",
             port: 17003,
