@@ -39,10 +39,10 @@ data:
   itots_port: {{ .Values.itots_port | quote }}
   {{- end }}
   itot_abort_timeout_in_seconds: {{ .Values.itot_abort_timeout_in_seconds | quote }}
-  itot_max_nsdu_size: {{ .Values.itot_max_nsdu_size | quote }}
-  itot_max_tpdu_size: {{ .Values.itot_max_tpdu_size | quote }}
-  itot_max_tsdu_size: {{ .Values.itot_max_tsdu_size | quote }}
-  itot_max_ssdu_size: {{ .Values.itot_max_ssdu_size | quote }}
+  itot_max_nsdu_size: {{ .Values.itot_max_nsdu_size | default "65531" | quote }}
+  itot_max_tpdu_size: {{ .Values.itot_max_tpdu_size | default "65500" | quote }}
+  itot_max_tsdu_size: {{ .Values.itot_max_tsdu_size | default "10000000" | quote }}
+  itot_max_ssdu_size: {{ .Values.itot_max_ssdu_size | default "10000000" | quote }}
   itot_max_presentation_contexts: {{ .Values.itot_max_presentation_contexts | quote }}
   {{- if .Values.itot_acse_password }}
   itot_acse_password: {{ .Values.itot_acse_password | quote }}
