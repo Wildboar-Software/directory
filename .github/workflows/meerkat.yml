@@ -83,10 +83,10 @@ jobs:
       fail-fast: false
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         timeout-minutes: 2
       - name: Install Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: '18'
         timeout-minutes: 2
@@ -114,11 +114,11 @@ jobs:
   #     fail-fast: false
   #   steps:
   #     - name: Checkout
-  #       uses: actions/checkout@v2
+  #       uses: actions/checkout@v3
   #     - name: Install Node.js
-  #       uses: actions/setup-node@v2
+  #       uses: actions/setup-node@v3
   #       with:
-  #         node-version: '17'
+  #         node-version: '18'
   #     - name: Install NPM Packages
   #       run: npm ci
   #     - name: Generate Prisma Client
@@ -142,10 +142,10 @@ jobs:
           - 'x500-cli-config'
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         timeout-minutes: 2
       - name: Install Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         timeout-minutes: 2
         with:
           node-version: '18'
@@ -179,17 +179,17 @@ jobs:
       fail-fast: false
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         timeout-minutes: 2
       - name: Determine Meerkat DSA Version
         timeout-minutes: 1
         run: |
             echo "PUBLISHING_MEERKAT_VERSION=$(cat k8s/charts/meerkat-dsa/Chart.yaml | grep appVersion | sed 's/appVersion: //' | sed 's/\r$//')" >> $GITHUB_ENV
       - name: Install Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         timeout-minutes: 2
         with:
-          node-version: '17'
+          node-version: '18'
       - name: Install NPM Packages
         run: npm ci
         timeout-minutes: 5
@@ -199,18 +199,18 @@ jobs:
       - name: Compile Meerkat DSA
         run: npx nx run meerkat:build:production --skip-nx-cache
         timeout-minutes: 10
-      # - name: Set up Docker Buildx
-      #   uses: docker/setup-buildx-action@v1
-      #   timeout-minutes: 10
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        timeout-minutes: 10
       - name: Login to the Container Registry
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         timeout-minutes: 2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         timeout-minutes: 10
         with:
           push: true
@@ -230,7 +230,7 @@ jobs:
       fail-fast: false
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         timeout-minutes: 2
       - name: Create the Helm Package
         run: helm package .
@@ -277,10 +277,10 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Setup Kubectl
-        uses: azure/setup-kubectl@v2.0
+        uses: azure/setup-kubectl@v3
         timeout-minutes: 2
       - name: Set Kubernetes Context
-        uses: azure/aks-set-context@v1
+        uses: azure/aks-set-context@v3
         timeout-minutes: 2
         with:
           creds: '${{ secrets.AZURE_CREDENTIALS }}'
@@ -314,13 +314,13 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Setup Kubectl
-        uses: azure/setup-kubectl@v2.0
+        uses: azure/setup-kubectl@v3
         timeout-minutes: 2
       - name: Setup Helm
-        uses: azure/setup-helm@v1
+        uses: azure/setup-helm@v3
         timeout-minutes: 2
       - name: Set Kubernetes Context
-        uses: azure/aks-set-context@v1
+        uses: azure/aks-set-context@v3
         timeout-minutes: 2
         with:
           creds: '${{ secrets.AZURE_CREDENTIALS }}'
@@ -395,13 +395,13 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Setup Kubectl
-        uses: azure/setup-kubectl@v2.0
+        uses: azure/setup-kubectl@v3
         timeout-minutes: 2
       - name: Setup Helm
-        uses: azure/setup-helm@v1
+        uses: azure/setup-helm@v3
         timeout-minutes: 2
       - name: Set Kubernetes Context
-        uses: azure/aks-set-context@v1
+        uses: azure/aks-set-context@v3
         timeout-minutes: 2
         with:
           creds: '${{ secrets.AZURE_CREDENTIALS }}'
@@ -492,18 +492,18 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Setup Kubectl
-        uses: azure/setup-kubectl@v2.0
+        uses: azure/setup-kubectl@v3
         timeout-minutes: 2
         # with:
         #   version: 'v1.18.8'
       - name: Setup Helm
-        uses: azure/setup-helm@v1
+        uses: azure/setup-helm@v3
         timeout-minutes: 2
         # with:
         #   version: '<version>' # default is latest stable
         # id: install
       - name: Set Kubernetes Context
-        uses: azure/aks-set-context@v1
+        uses: azure/aks-set-context@v3
         timeout-minutes: 2
         with:
           creds: '${{ secrets.AZURE_CREDENTIALS }}'
@@ -612,13 +612,13 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Setup Kubectl
-        uses: azure/setup-kubectl@v2.0
+        uses: azure/setup-kubectl@v3
         timeout-minutes: 2
       - name: Setup Helm
-        uses: azure/setup-helm@v1
+        uses: azure/setup-helm@v3
         timeout-minutes: 2
       - name: Set Kubernetes Context
-        uses: azure/aks-set-context@v1
+        uses: azure/aks-set-context@v3
         timeout-minutes: 2
         with:
           creds: '${{ secrets.AZURE_CREDENTIALS }}'
@@ -694,11 +694,11 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Setup Kubectl
-        uses: azure/setup-kubectl@v2.0
+        uses: azure/setup-kubectl@v3
       - name: Setup Helm
-        uses: azure/setup-helm@v1
+        uses: azure/setup-helm@v3
       - name: Set Kubernetes Context
-        uses: azure/aks-set-context@v1
+        uses: azure/aks-set-context@v3
         with:
           creds: '${{ secrets.AZURE_CREDENTIALS }}'
           cluster-name: ${{ env.CLUSTER_NAME }}
@@ -823,11 +823,11 @@ jobs:
       fail-fast: false
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Install Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: '17'
+          node-version: '18'
       - name: Install NPM Packages
         run: npm ci
       - name: Compile the Test DIT Creator
@@ -869,11 +869,11 @@ jobs:
       MEERKAT_TEST_LDAP_PORT: "389"
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Install Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: '17'
+          node-version: '18'
       - name: Install NPM Packages
         run: npm ci
       - name: Run the functional tests
