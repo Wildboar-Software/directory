@@ -2,7 +2,7 @@ name: Meerkat DSA Workflow
 
 on:
   push:
-    tags:        
+    tags:
       - v2.*
       - v1.*
 
@@ -76,6 +76,7 @@ jobs:
 
   lint:
     name: Linting
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     environment: production
     strategy:
@@ -83,19 +84,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        timeout-minutes: 2
       - name: Install Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '17'
+          node-version: '18'
+        timeout-minutes: 2
       - name: Install NPM Packages
         run: npm ci
+        timeout-minutes: 5
       - name: Generate Prisma Client
         run: npx -q prisma generate --schema=apps/meerkat/src/prisma/schema.prisma
+        timeout-minutes: 1
       - name: Run Linter
         run: npx nx run-many --target=lint --all --skip-nx-cache
         timeout-minutes: 2
       - name: Lint Helm Charts
         run: helm lint ./k8s/charts/meerkat-dsa/
+        timeout-minutes: 1
 
   # TODO: For now, this job is disabled. For some reason, it just hangs there
   # indefinitely until it times out. This happens locally, so I know it's not
@@ -123,6 +129,7 @@ jobs:
 
   publish_libs:
     name: Publish Libraries
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     environment: production
     strategy:
@@ -136,27 +143,34 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        timeout-minutes: 2
       - name: Install Node.js
         uses: actions/setup-node@v2
+        timeout-minutes: 2
         with:
-          node-version: '17'
+          node-version: '18'
       - name: Install NPM Packages
         run: npm ci
+        timeout-minutes: 5
       - name: Generate Prisma Client
         run: npx -q prisma generate --schema=apps/meerkat/src/prisma/schema.prisma
+        timeout-minutes: 1
       - name: Compile ${{ matrix.library }} Library
         run: npx nx run ${{ matrix.library }}:build --skip-nx-cache
+        timeout-minutes: 5
         # We use || true here because the version numbers will usually be the
         # same between pipeline runs, so most attempted publishing will fail due
         # to duplicate version numbers.
       - name: Publish NPM Package
         uses: JS-DevTools/npm-publish@v1
+        timeout-minutes: 3
         with:
           package: ./dist/libs/${{ matrix.library }}/package.json
           token: ${{ secrets.NPM_TOKEN }}
 
   build_meerkat_dsa:
     name: Build Meerkat DSA
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     needs:
       - publish_libs
@@ -166,29 +180,38 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        timeout-minutes: 2
       - name: Determine Meerkat DSA Version
+        timeout-minutes: 1
         run: |
             echo "PUBLISHING_MEERKAT_VERSION=$(cat k8s/charts/meerkat-dsa/Chart.yaml | grep appVersion | sed 's/appVersion: //' | sed 's/\r$//')" >> $GITHUB_ENV
       - name: Install Node.js
         uses: actions/setup-node@v2
+        timeout-minutes: 2
         with:
           node-version: '17'
       - name: Install NPM Packages
         run: npm ci
+        timeout-minutes: 5
       - name: Generate Prisma Client
         run: npx -q prisma generate --schema=apps/meerkat/src/prisma/schema.prisma
+        timeout-minutes: 1
       - name: Compile Meerkat DSA
         run: npx nx run meerkat:build:production --skip-nx-cache
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        timeout-minutes: 10
+      # - name: Set up Docker Buildx
+      #   uses: docker/setup-buildx-action@v1
+      #   timeout-minutes: 10
       - name: Login to the Container Registry
         uses: docker/login-action@v1
+        timeout-minutes: 2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
         uses: docker/build-push-action@v2
+        timeout-minutes: 10
         with:
           push: true
           tags: ghcr.io/wildboar-software/meerkat-dsa:latest,ghcr.io/wildboar-software/meerkat-dsa:${{ env.PUBLISHING_MEERKAT_VERSION }}
@@ -200,6 +223,7 @@ jobs:
   # job runs the `helm` command successfully!
   helm:
     name: Publish Helm Chart
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     environment: production
     strategy:
@@ -207,14 +231,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        timeout-minutes: 2
       - name: Create the Helm Package
         run: helm package .
+        timeout-minutes: 2
         working-directory: ./k8s/charts/meerkat-dsa
       - name: Create the Helm Index
         run: helm repo index . --url https://${{ env.STORAGE_ACCOUNT_NAME }}.blob.core.windows.net/${{ env.CHART_CONTAINER }}
         working-directory: ./k8s/charts/meerkat-dsa
+        timeout-minutes: 2
       - name: Upload Helm Packages
         uses: bacongobbler/azure-blob-storage-upload@main
+        timeout-minutes: 2
         with:
           source_dir: ./k8s/charts/meerkat-dsa
           container_name: ${{ env.CHART_CONTAINER }}
@@ -223,6 +251,7 @@ jobs:
           overwrite: 'true'
       - name: Upload Helm Index
         uses: bacongobbler/azure-blob-storage-upload@main
+        timeout-minutes: 2
         with:
           source_dir: ./k8s/charts/meerkat-dsa
           container_name: ${{ env.CHART_CONTAINER }}
@@ -232,6 +261,7 @@ jobs:
 
   ensure_k8s_namespaces:
     name: Create Kubernetes Namespaces
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     environment: production
     strategy:
@@ -243,18 +273,22 @@ jobs:
     steps:
       - name: Login to Azure
         uses: azure/login@v1
+        timeout-minutes: 2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Setup Kubectl
         uses: azure/setup-kubectl@v2.0
+        timeout-minutes: 2
       - name: Set Kubernetes Context
         uses: azure/aks-set-context@v1
+        timeout-minutes: 2
         with:
           creds: '${{ secrets.AZURE_CREDENTIALS }}'
           cluster-name: ${{ env.CLUSTER_NAME }}
           resource-group: ${{ env.RESOURCE_GROUP }}
       - name: Create Kubernetes Namespace
         run: kubectl create ns ${{ matrix.ns }}
+        timeout-minutes: 2
         continue-on-error: true
 
   reset_environments:
@@ -276,42 +310,54 @@ jobs:
     steps:
       - name: Login to Azure
         uses: azure/login@v1
+        timeout-minutes: 2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Setup Kubectl
         uses: azure/setup-kubectl@v2.0
+        timeout-minutes: 2
       - name: Setup Helm
         uses: azure/setup-helm@v1
+        timeout-minutes: 2
       - name: Set Kubernetes Context
         uses: azure/aks-set-context@v1
+        timeout-minutes: 2
         with:
           creds: '${{ secrets.AZURE_CREDENTIALS }}'
           cluster-name: ${{ env.CLUSTER_NAME }}
           resource-group: ${{ env.RESOURCE_GROUP }}
       - name: Delete Migration Job
         run: kubectl delete job meerkat-dsa-${{ matrix.dmd }}-migrate -n ${{ env.NAMESPACE }}
+        timeout-minutes: 2
         continue-on-error: true
       - name: Uninstall Previous Meerkat DSA Release
         run: helm uninstall meerkat-dsa-${{ matrix.dmd }} -n ${{ env.NAMESPACE }}
+        timeout-minutes: 3
         continue-on-error: true
       - name: Uninstall Previous MySQL Database
         run: helm uninstall meerkat-db -n ${{ env.NAMESPACE }}
+        timeout-minutes: 3
         continue-on-error: true
       - name: Delete MySQL Secret
         run: kubectl delete secret mysql-db-${{ matrix.dmd }} -n ${{ env.NAMESPACE }}
+        timeout-minutes: 2
         continue-on-error: true
       - name: Delete Meerkat Database Secret
         run: kubectl delete secret meerkat-${{ matrix.dmd }}-db -n ${{ env.NAMESPACE }}
+        timeout-minutes: 2
         continue-on-error: true
       - name: Delete Meerkat Signing Secret
         run: kubectl delete secret meerkat-${{ matrix.dmd }}-signing -n ${{ env.NAMESPACE }}
+        timeout-minutes: 2
         continue-on-error: true
       - name: Delete Meerkat TLS Secret
         run: kubectl delete secret meerkat-${{ matrix.dmd }}-tls -n ${{ env.NAMESPACE }}
+        timeout-minutes: 2
         continue-on-error: true
       - name: Delete MySQL Database Data
         run: kubectl delete pvc data-meerkat-db-mysql-0 -n ${{ env.NAMESPACE }}
         continue-on-error: true
+        timeout-minutes: 5
       - name: Delete DSA DNS Record
         run: |
           az network dns record-set a delete \
@@ -319,6 +365,7 @@ jobs:
             --zone-name ${{ env.ZONE }} \
             --name dsa01.${{ matrix.dmd }} \
             --yes
+        timeout-minutes: 3
         continue-on-error: true
       - name: Delete Web Admin DNS Record
         run: |
@@ -327,9 +374,11 @@ jobs:
             --zone-name ${{ env.ZONE }} \
             --name webadm01.${{ matrix.dmd }} \
             --yes
+        timeout-minutes: 3
         continue-on-error: true
 
   deploy_db:
+    timeout-minutes: 20
     name: Deploy the Database
     runs-on: ubuntu-latest
     needs:
@@ -342,22 +391,28 @@ jobs:
     steps:
       - name: Login to Azure
         uses: azure/login@v1
+        timeout-minutes: 2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Setup Kubectl
         uses: azure/setup-kubectl@v2.0
+        timeout-minutes: 2
       - name: Setup Helm
         uses: azure/setup-helm@v1
+        timeout-minutes: 2
       - name: Set Kubernetes Context
         uses: azure/aks-set-context@v1
+        timeout-minutes: 2
         with:
           creds: '${{ secrets.AZURE_CREDENTIALS }}'
           cluster-name: ${{ env.CLUSTER_NAME }}
           resource-group: ${{ env.RESOURCE_GROUP }}
       - name: Create Database Initialization Configmap
         run: echo "${{ env.INIT_DB_CONFIG }}" > initdb.cm.yaml
+        timeout-minutes: 1
       - name: Apply Database Initialization Configmap
         run: kubectl apply -f initdb.cm.yaml
+        timeout-minutes: 3
         # I was having an issue getting a new instance to start. I think the issue
         # is that the password settings for a given chart are only applied the first
         # time it is deployed. When you delete a bitnami/mysql release, it does NOT
@@ -372,35 +427,43 @@ jobs:
             --from-literal=mysql-replication-password=${{ env.PASSWORD }} \
             --from-literal=mysql-password=${{ env.PASSWORD }} \
             --namespace=${{ env.NAMESPACE }}
+        timeout-minutes: 2
       - name: Create Meerkat Database Secret for Root DSA
         run: |
           kubectl create secret generic meerkat-root-db \
             --from-literal=databaseUrl=mysql://root_user:asdf_root@meerkat-db-mysql.${{ env.NAMESPACE }}.svc.cluster.local:3306/directory_root \
             --namespace=${{ env.NAMESPACE }}
+        timeout-minutes: 2
       - name: Create Meerkat Database Secret for C=GB DSA
         run: |
           kubectl create secret generic meerkat-gb-db \
             --from-literal=databaseUrl=mysql://gb_user:asdf_gb@meerkat-db-mysql.${{ env.NAMESPACE }}.svc.cluster.local:3306/directory_gb \
             --namespace=${{ env.NAMESPACE }}
+        timeout-minutes: 2
       - name: Create Meerkat Database Secret for C=RU DSA
         run: |
           kubectl create secret generic meerkat-ru-db \
             --from-literal=databaseUrl=mysql://ru_user:asdf_ru@meerkat-db-mysql.${{ env.NAMESPACE }}.svc.cluster.local:3306/directory_ru \
             --namespace=${{ env.NAMESPACE }}
+        timeout-minutes: 2
       - name: Create Meerkat Database Secret for C=RU,L=Moscow DSA
         run: |
           kubectl create secret generic meerkat-moscow-db \
             --from-literal=databaseUrl=mysql://moscow_user:asdf_moscow@meerkat-db-mysql.${{ env.NAMESPACE }}.svc.cluster.local:3306/directory_moscow \
             --namespace=${{ env.NAMESPACE }}
+        timeout-minutes: 2
       - name: Create Meerkat Database Secret for the Test DSA
         run: |
           kubectl create secret generic meerkat-test-db \
             --from-literal=databaseUrl=mysql://test_user:asdf_test@meerkat-db-mysql.${{ env.NAMESPACE }}.svc.cluster.local:3306/directory_test \
             --namespace=${{ env.NAMESPACE }}
+        timeout-minutes: 2
       - name: Add Bitnami Helm Repo
         run: helm repo add bitnami https://charts.bitnami.com/bitnami
+        timeout-minutes: 1
       - name: Update Helm Repo Index
         run: helm repo update
+        timeout-minutes: 2
       - name: Install MySQL
         run: |
           helm install meerkat-db bitnami/mysql \
@@ -409,9 +472,11 @@ jobs:
             --set initdbScriptsConfigMap=database-init \
             --atomic \
             --namespace=${{ env.NAMESPACE }}
+        timeout-minutes: 5
 
   deploy_test:
     name: Deploy Test Environment
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     needs:
       - build_meerkat_dsa
@@ -423,25 +488,30 @@ jobs:
     steps:
       - name: Login to Azure
         uses: azure/login@v1
+        timeout-minutes: 2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Setup Kubectl
         uses: azure/setup-kubectl@v2.0
+        timeout-minutes: 2
         # with:
         #   version: 'v1.18.8'
       - name: Setup Helm
         uses: azure/setup-helm@v1
+        timeout-minutes: 2
         # with:
         #   version: '<version>' # default is latest stable
         # id: install
       - name: Set Kubernetes Context
         uses: azure/aks-set-context@v1
+        timeout-minutes: 2
         with:
           creds: '${{ secrets.AZURE_CREDENTIALS }}'
           cluster-name: ${{ env.CLUSTER_NAME }}
           resource-group: ${{ env.RESOURCE_GROUP }}
       - name: Create Temp Folder
         run: mkdir -p ./tmp
+        timeout-minutes: 1
       - name: Create OpenSSL Keypair
         run: |
           openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes \
@@ -449,24 +519,30 @@ jobs:
             -out ./tmp/test.crt \
             -subj "/CN=dsa01.test.${{ env.ZONE }}" \
             -addext "subjectAltName=DNS:dsa01.test.${{ env.ZONE }}"
+        timeout-minutes: 1
       - name: Create Meerkat Signing Secret
         run: |
           kubectl create secret tls meerkat-test-signing \
             --cert=./tmp/test.crt \
             --key=./tmp/test.key \
             --namespace=${{ env.NAMESPACE }}
+        timeout-minutes: 2
       - name: Create Meerkat TLS Secret
         run: |
           kubectl create secret tls meerkat-test-tls \
             --cert=./tmp/test.crt \
             --key=./tmp/test.key \
             --namespace=${{ env.NAMESPACE }}
+        timeout-minutes: 2
       - name: Add Wildboar Helm Repo
         run: helm repo add ${{ env.CHART_REPO }} https://${{ env.STORAGE_ACCOUNT_NAME }}.blob.core.windows.net/${{ env.CHART_CONTAINER }}
+        timeout-minutes: 2
       - name: Update Helm Repo Index
         run: helm repo update
+        timeout-minutes: 2
       - name: Create Values Override File
         run: echo "${{ env.VALUES_OVERRIDE }}" > values_override.yaml
+        timeout-minutes: 1
       - name: Deploy Meerkat DSA via Helm
         run: |
           helm install meerkat-dsa-test ${{ env.CHART_REPO }}/${{ env.CHART_NAME }} \
@@ -493,14 +569,18 @@ jobs:
             --set max_concurrent_operations_per_connection=50 \
             --atomic \
             --namespace=${{ env.NAMESPACE }}
+        timeout-minutes: 10
       - name: Wait 30 Seconds for Public IP to be Allocated
         run: sleep 30
+        timeout-minutes: 1
       - name: Save Directory Service IP Address
         run: |
           echo 'DIRECTORY_SERVICE_IP=$(kubectl get svc -n ${{ env.NAMESPACE }} meerkat-test-directory --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")' >> $GITHUB_ENV
+        timeout-minutes: 1
       - name: Save Web Admin Service IP Address
         run: |
           echo 'WEB_ADMIN_SERVICE_IP=$(kubectl get svc -n ${{ env.NAMESPACE }} meerkat-test-web-admin --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")' >> $GITHUB_ENV
+        timeout-minutes: 1
       - name: Create DSA DNS Record
         run: |
           az network dns record-set a add-record \
@@ -509,6 +589,7 @@ jobs:
             --ttl 60 \
             --record-set-name dsa01.test \
             --ipv4-address ${{ env.DIRECTORY_SERVICE_IP }}
+        timeout-minutes: 2
       - name: Create WebAdmin DNS Record
         run: |
           az network dns record-set a add-record \
@@ -517,38 +598,48 @@ jobs:
             --ttl 60 \
             --record-set-name webadm01.test \
             --ipv4-address ${{ env.WEB_ADMIN_SERVICE_IP }}
+        timeout-minutes: 2
 
   create_demo_pki:
     name: Create Demo PKI
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     environment: production
     steps:
       - name: Login to Azure
         uses: azure/login@v1
+        timeout-minutes: 2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Setup Kubectl
         uses: azure/setup-kubectl@v2.0
+        timeout-minutes: 2
       - name: Setup Helm
         uses: azure/setup-helm@v1
+        timeout-minutes: 2
       - name: Set Kubernetes Context
         uses: azure/aks-set-context@v1
+        timeout-minutes: 2
         with:
           creds: '${{ secrets.AZURE_CREDENTIALS }}'
           cluster-name: ${{ env.CLUSTER_NAME }}
           resource-group: ${{ env.RESOURCE_GROUP }}
       - name: Create Temp Folder
         run: mkdir -p ./tmp
+        timeout-minutes: 1
       - name: Create Certificate Authority Certificate
         run: echo "${{ env.CA_CERT }}" > ca.crt
+        timeout-minutes: 1
       - name: Delete Demo Trust Anchor ConfigMap
         run: kubectl delete configmap ${{ env.DEMO_TRUST_ANCHOR_CONFIG_NAME }} -n ${{ env.NAMESPACE }}
+        timeout-minutes: 2
         continue-on-error: true
       - name: Create Demo Trust Anchor ConfigMap
         run: |
           kubectl create configmap ${{ env.DEMO_TRUST_ANCHOR_CONFIG_NAME }} \
             --from-file=ca.pem=ca.crt \
             --namespace=${{ env.NAMESPACE }}
+        timeout-minutes: 1
 
   deploy_demo:
     name: Deploy Demo Environment
