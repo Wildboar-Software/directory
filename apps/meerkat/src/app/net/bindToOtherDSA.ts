@@ -17,7 +17,6 @@ import {
     _encode_DSABindArgument,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindArgument.ta";
 import { versions } from "../versions";
-import { TLSSocket } from "tls";
 import { naddrToURI } from "@wildboar/x500";
 import { BOOLEAN, OBJECT_IDENTIFIER } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -46,6 +45,10 @@ import { DSACredentials } from "@wildboar/x500/src/lib/modules/DistributedOperat
 import { getOnOCSPResponseCallback } from "../pki/getOnOCSPResponseCallback";
 import { addMilliseconds, differenceInMilliseconds } from "date-fns";
 import { URL } from "node:url";
+import { Socket, createConnection } from "node:net";
+import { connect as tlsConnect, TLSSocket } from "node:tls";
+import isDebugging from "is-debugging";
+
 
 const DEFAULT_CONNECTION_TIMEOUT_IN_MS: number = 15 * 1000;
 
@@ -98,7 +101,12 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
                 signErrors,
             );
         }
-        const uri = naddrToURI(naddr);
+        const uriString = naddrToURI(naddr);
+        if (!uriString) {
+            // FIXME: Log an error.
+            continue;
+        }
+        const url = new URL(uriString);
         /**
          * This section exists to prevent a security vulnerability where this
          * DSA could be tricked into chaining requests to the database. Such
@@ -119,30 +127,29 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
          * multiple DBMSes in the future, the port used could reveal what DBMS
          * is in use.
          */
-        if (uri && process.env.DATABASE_URL) {
+        if (uriString && process.env.DATABASE_URL) {
             try {
-                const destination = new URL(uri);
                 const dbURL = new URL(process.env.DATABASE_URL);
                 const dbPort = dbURL.port || DEFAULT_DBMS_PORTS[dbURL.protocol.replace(":", "").toLowerCase()];
-                if (dbPort === destination.port) {
+                if (dbPort === url.port) {
                     ctx.log.warn(ctx.i18n.t("log:will_not_bind_to_db_port", {
                         aid: assn?.id ?? "?",
-                        uri,
+                        uri: uriString,
                     }));
                     return null;
                 }
             } catch {
                 ctx.log.warn(ctx.i18n.t("log:will_not_bind_to_db_port", {
                     aid: assn?.id ?? "?",
-                    uri,
+                    uri: uriString,
                 }));
                 return null;
             }
         }
         ctx.log.debug(ctx.i18n.t("log:trying_naddr", {
-            uri: uri ?? "<FAILED TO DECODE NETWORK ADDRESS>",
+            uri: uriString ?? "<FAILED TO DECODE NETWORK ADDRESS>",
         }), {
-            dest: uri,
+            dest: uriString,
         });
         const paddr = new PresentationAddress(
             accessPoint.address.pSelector,
@@ -151,9 +158,49 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
             [naddr],
         );
         timeRemaining = Math.abs(differenceInMilliseconds(new Date(), timeoutTime));
-        const rose = rose_from_presentation_address(paddr, {
+        // FIXME: You need to inject the socket so you can listen into
+        // events like secureConnect as soon as the socket is created.
+
+        const usingImplicitTLSProtocol: boolean = url
+            .protocol
+            .replace(":", "")
+            .toLowerCase()
+            .endsWith("s");
+
+        const socket: Socket | TLSSocket = usingImplicitTLSProtocol
+            ? tlsConnect({
+                ...ctx.config.tls,
+                pskCallback: undefined,
+                rejectUnauthorized: ctx.config.tls.rejectUnauthorizedServers,
+                host: url.hostname,
+                port: Number.parseInt(url.port, 10),
+                timeout: timeRemaining,
+            })
+            : createConnection({
+                host: url.hostname,
+                port: Number.parseInt(url.port, 10),
+                timeout: timeRemaining,
+            });
+
+        if (socket instanceof TLSSocket) {
+            socket.once("secureConnect", () => {
+                if (!socket.authorized && ctx.config.tls.rejectUnauthorizedServers) {
+                    socket.destroy(); // Destroy for immediate and complete denial.
+                    ctx.log.warn(ctx.i18n.t("err:tls_auth_failure", {
+                        url: uriString,
+                        e: socket.authorizationError,
+                    }));
+                    if (isDebugging && socket.authorizationError) {
+                        console.error(socket.authorizationError);
+                    }
+                }
+            });
+        }
+
+        const rose = rose_from_presentation_address(paddr, socket, {
             ...ctx.config.tls,
             rejectUnauthorized: ctx.config.tls.rejectUnauthorizedServers,
+            isServer: false,
         }, timeRemaining);
         if (!rose) {
             continue;
@@ -168,9 +215,9 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
         let tls_in_use: boolean = !!rose.socket && (rose.socket instanceof TLSSocket);
         if (!tls_in_use) {
             ctx.log.debug(ctx.i18n.t("log:attempting_starttls", {
-                uri,
+                uri: uriString,
             }), {
-                dest: uri,
+                dest: uriString,
             });
             timeRemaining = Math.abs(differenceInMilliseconds(new Date(), timeoutTime));
             const tls_response = await rose.startTLS?.({
@@ -181,9 +228,9 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
                     if (tls_response.response === 0) {
                         tls_in_use = true;
                         ctx.log.debug(ctx.i18n.t("log:established_starttls", {
-                            uri,
+                            uri: uriString,
                         }), {
-                            dest: uri,
+                            dest: uriString,
                         });
                     }
                 } else if ("not_supported_locally" in tls_response) {
@@ -195,9 +242,9 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
                     // TODO: Log abort
                 } else if ("timeout" in tls_response) {
                     ctx.log.debug(ctx.i18n.t("log:timed_out_connecting_to_naddr", {
-                        uri,
+                        uri: uriString,
                     }), {
-                        dest: uri,
+                        dest: uriString,
                     });
                     return null;
                     // TODO: Log
@@ -210,10 +257,10 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
         if (!tls_in_use && !ctx.config.chaining.tlsOptional) {
             if (!ctx.config.chaining.tlsOptional) {
                 ctx.log.debug(ctx.i18n.t("log:starttls_error", {
-                    uri,
+                    uri: uriString,
                     context: "tls_required",
                 }), {
-                    dest: uri,
+                    dest: uriString,
                 });
                 continue;
             }
@@ -224,14 +271,15 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
             const tls_socket = new TLSSocket(rose.socket!, {
                 ...ctx.config.tls,
                 rejectUnauthorized: ctx.config.tls.rejectUnauthorizedServers,
+                isServer: false,
             });
             rose.socket = tls_socket;
         }
 
         const c: ClientType = client_getter(rose);
         const strongCredData = createStrongCredentials(ctx, accessPoint.ae_title.rdnSequence);
-        const extraCredentials: DSACredentials[] = uri
-            ? await getCredentialsForNSAP(ctx, uri.toString())
+        const extraCredentials: DSACredentials[] = uriString
+            ? await getCredentialsForNSAP(ctx, uriString.toString())
             : [];
         const otherCreds: (DSACredentials | undefined)[] = [
             ...extraCredentials,
@@ -270,9 +318,9 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
             } else if ("timeout" in bind_response) {
                 // TODO: Add context to inform whether this was because of StartTLS or Bind
                 ctx.log.debug(ctx.i18n.t("log:timed_out_connecting_to_naddr", {
-                    uri,
+                    uri: uriString,
                 }), {
-                    dest: uri,
+                    dest: uriString,
                 });
                 return null;
             }
@@ -281,9 +329,9 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
             continue;
         }
         ctx.log.info(ctx.i18n.t("log:bound_to_naddr", {
-            uri,
+            uri: uriString,
         }), {
-            dest: uri,
+            dest: uriString,
         });
         return c;
     }

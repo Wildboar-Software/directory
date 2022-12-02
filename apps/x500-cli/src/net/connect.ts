@@ -68,6 +68,7 @@ async function connect (
         socket = new tls.TLSSocket(socket, {
             rejectUnauthorized: true,
         });
+        // FIXME: Check .authorized!
     }
     const idm = new IDMConnection(socket);
     { // Bind

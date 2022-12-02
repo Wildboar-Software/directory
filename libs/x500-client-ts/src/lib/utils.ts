@@ -103,12 +103,11 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
 import { ROSETransport } from "@wildboar/rose-transport";
 import { createConnection } from "node:net";
-import { TLSSocket } from "node:tls";
+import { TLSSocket, TLSSocketOptions, connect as tlsConnect } from "node:tls";
 import { IDMConnection } from "@wildboar/idm";
 import { rose_transport_from_idm_socket } from "./idm";
 import { rose_transport_from_itot_stack } from "./itot";
 import { create_itot_stack, PresentationAddress } from "@wildboar/osi-net";
-import { TLSSocketOptions } from "tls";
 import { naddrToURI } from "@wildboar/x500";
 import { readFileSync } from "node:fs";
 import { PEMObject } from "pem-ts";
@@ -159,6 +158,7 @@ import {
     Certificate,
     _decode_Certificate,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
+import { Socket } from "net";
 
 export
 interface SelectionOptions extends EntryInformationSelection {
@@ -495,6 +495,7 @@ export type CertPathOption =
 export
 function rose_from_url (
     url: string | URL,
+    socket?: Socket | TLSSocket,
     address?: PresentationAddress,
     tlsOptions?: TLSSocketOptions,
     socket_timeout: number = 60_000,
@@ -510,31 +511,34 @@ function rose_from_url (
     }
     switch (protocol) {
         case ("idm"): {
-            const socket = createConnection({
+            const tcpSocket = socket ?? createConnection({
                 host,
                 port,
                 timeout: socket_timeout,
             });
-            const idm = new IDMConnection(socket, tlsOptions);
+            const idm = new IDMConnection(tcpSocket, tlsOptions);
             return rose_transport_from_idm_socket(idm);
         }
         case ("idms"): {
-            const socket = createConnection({
-                host,
-                port,
-                timeout: socket_timeout,
-            });
-            const tlsSocket = new TLSSocket(socket, tlsOptions);
+            const tlsSocket = (!socket || !(socket instanceof TLSSocket))
+                ? tlsConnect({
+                    host,
+                    port,
+                    ...tlsOptions,
+                    timeout: socket_timeout,
+                    socket,
+                })
+                : socket;
             const idm = new IDMConnection(tlsSocket, tlsOptions);
             return rose_transport_from_idm_socket(idm);
         }
         case ("itot"): {
-            const socket = createConnection({
+            const tcpSocket = socket ?? createConnection({
                 host,
                 port,
                 timeout: socket_timeout,
             });
-            const itot = create_itot_stack(socket, {
+            const itot = create_itot_stack(tcpSocket, {
                 remoteAddress: address,
                 sessionCaller: true,
                 transportCaller: true,
@@ -542,12 +546,15 @@ function rose_from_url (
             return rose_transport_from_itot_stack(itot);
         }
         case ("itots"): {
-            const socket = createConnection({
-                host,
-                port,
-                timeout: socket_timeout,
-            });
-            const tlsSocket = new TLSSocket(socket, tlsOptions);
+            const tlsSocket = (!socket || !(socket instanceof TLSSocket))
+                ? tlsConnect({
+                    host,
+                    port,
+                    ...tlsOptions,
+                    timeout: socket_timeout,
+                    socket,
+                })
+                : socket;
             const itot = create_itot_stack(tlsSocket, {
                 remoteAddress: address,
                 sessionCaller: true,
@@ -564,6 +571,7 @@ function rose_from_url (
 export
 function rose_from_presentation_address (
     address: PresentationAddress,
+    socket?: Socket | TLSSocket,
     tlsOptions?: TLSSocketOptions,
     socket_timeout: number = 60_000,
 ): ROSETransport | null {
@@ -576,7 +584,7 @@ function rose_from_presentation_address (
         return null;
     }
     const u = new URL(url);
-    return rose_from_url(u, address, tlsOptions, socket_timeout);
+    return rose_from_url(u, socket, address, tlsOptions, socket_timeout);
 }
 
 export
