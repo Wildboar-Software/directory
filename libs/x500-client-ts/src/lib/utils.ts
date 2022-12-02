@@ -143,7 +143,6 @@ import {
 import {
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
-import { RelaxationPolicy } from "@wildboar/x500/src/lib/modules/ServiceAdministration/RelaxationPolicy.ta";
 import {
     EntryInformationSelection,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
@@ -158,7 +157,41 @@ import {
     Certificate,
     _decode_Certificate,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
-import { Socket } from "net";
+import { Socket } from "node:net";
+import { IndexableOID } from "@wildboar/meerkat-types";
+import {
+    dap_ip,
+} from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
+import {
+    dsp_ip,
+} from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dsp-ip.oa";
+import {
+    dop_ip,
+} from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
+import {
+    disp_ip,
+} from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/disp-ip.oa";
+import {
+    id_ac_directoryAccessAC,
+} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directoryAccessAC.va";
+import {
+    id_ac_directorySystemAC,
+} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directorySystemAC.va";
+import {
+    id_ac_directoryOperationalBindingManagementAC,
+} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directoryOperationalBindingManagementAC.va";
+import {
+    id_ac_shadowConsumerInitiatedAC,
+} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowConsumerInitiatedAC.va";
+import {
+    id_ac_shadowSupplierInitiatedAC,
+} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowSupplierInitiatedAC.va";
+import {
+    id_ac_shadowSupplierInitiatedAsynchronousAC,
+} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowSupplierInitiatedAsynchronousAC.va";
+import {
+    id_ac_shadowConsumerInitiatedAsynchronousAC,
+} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowConsumerInitiatedAsynchronousAC.va";
 
 export
 interface SelectionOptions extends EntryInformationSelection {
@@ -768,3 +801,65 @@ export
 function generateUnusedInvokeId (): number {
     return randomInt(MAX_INVOKE_ID);
 }
+
+export
+const protocol_id_to_app_context: Map<IndexableOID, OBJECT_IDENTIFIER> = new Map([
+    [ dap_ip["&id"]!.toString(), id_ac_directoryAccessAC ],
+    [ dsp_ip["&id"]!.toString(), id_ac_directorySystemAC ],
+    [ dop_ip["&id"]!.toString(), id_ac_directoryOperationalBindingManagementAC ],
+    // [ disp_ip["&id"]!.toString(), ], // I don't know how to map this one...
+    [ id_ac_directoryAccessAC.toString(), id_ac_directoryAccessAC ],
+    [ id_ac_directorySystemAC.toString(), id_ac_directorySystemAC ],
+    [ id_ac_directoryOperationalBindingManagementAC.toString(), id_ac_directoryOperationalBindingManagementAC ],
+    [ id_ac_shadowConsumerInitiatedAC.toString(), id_ac_shadowConsumerInitiatedAC ],
+    [ id_ac_shadowSupplierInitiatedAC.toString(), id_ac_shadowSupplierInitiatedAC ],
+    [ id_ac_shadowSupplierInitiatedAsynchronousAC.toString(), id_ac_shadowSupplierInitiatedAsynchronousAC ],
+    [ id_ac_shadowConsumerInitiatedAsynchronousAC.toString(), id_ac_shadowConsumerInitiatedAsynchronousAC ],
+]);
+
+export
+const app_context_to_protocol_id: Map<IndexableOID, OBJECT_IDENTIFIER> = new Map([
+    [ dap_ip["&id"]!.toString(), dap_ip["&id"]! ],
+    [ dsp_ip["&id"]!.toString(), dsp_ip["&id"]! ],
+    [ dop_ip["&id"]!.toString(), dop_ip["&id"]! ],
+    [ disp_ip["&id"]!.toString(), disp_ip["&id"]! ],
+    [ id_ac_directoryAccessAC.toString(), dap_ip["&id"]! ],
+    [ id_ac_directorySystemAC.toString(), dsp_ip["&id"]! ],
+    [ id_ac_directoryOperationalBindingManagementAC.toString(), dop_ip["&id"]! ],
+    [ id_ac_shadowConsumerInitiatedAC.toString(), disp_ip["&id"]! ],
+    [ id_ac_shadowSupplierInitiatedAC.toString(), disp_ip["&id"]! ],
+    [ id_ac_shadowSupplierInitiatedAsynchronousAC.toString(), disp_ip["&id"]! ],
+    [ id_ac_shadowConsumerInitiatedAsynchronousAC.toString(), disp_ip["&id"]! ],
+]);
+
+/**
+ * @summary Compute the value of `ROSETransport.protocol`
+ * @description
+ *
+ * The `ROSETransport` abstraction is supposed to be abstract enough to not
+ * concern itself with the means by which ROSE PDUs are transported (IDM, ITOT,
+ * LPP, XOT, etc.), but some of the object identifiers used in these transports
+ * are specific to the transport mechanism. For instance, the Directory Access
+ * Protocol uses a different protocol ID when transported over IDM versus its
+ * corresponding application context when transported over OSI networking.
+ *
+ * To remove this coupling, This function shall be used to translate the
+ * protocol identifer supplied in bind arguments and results to an object
+ * identifier that shall be used to identify a directory protocol at the ROSE
+ * layer.
+ *
+ * Concretely, this implementation uses the application context object
+ * identifiers to identify protocols rather than IDM protocol object
+ * identifiers, simply because there are more application context object
+ * identifiers (there are multiple OSI DISP application contexts, but only one
+ * IDM DISP protocol), and therefore, it is less ambiguous.
+ *
+ * @param pid The protocol ID or application context
+ * @returns The object identifier that should be used to populate the `protocol`
+ *  field on a `ROSETransport` object.
+ *
+ * @function
+ */
+export
+const protocol_id_to_rose_protocol
+    = (pid: OBJECT_IDENTIFIER): OBJECT_IDENTIFIER | undefined => protocol_id_to_app_context.get(pid.toString());

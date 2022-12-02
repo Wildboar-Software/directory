@@ -36,6 +36,7 @@ import {
     _encode_Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
 import { BER } from "asn1-ts/dist/node/functional";
+import { protocol_id_to_rose_protocol, app_context_to_protocol_id } from "./utils";
 
 const idm_reject_to_rose_reject: Map<IdmReject_reason, RejectReason> = new Map([
     [ IdmReject_reason_mistypedPDU, RejectReason.mistyped_pdu ],
@@ -160,8 +161,9 @@ function rose_transport_from_idm_socket (idm: IDMConnection): ROSETransport {
     });
 
     rose.write_bind = (params) => {
+        rose.protocol = protocol_id_to_rose_protocol(params.protocol_id) ?? params.protocol_id;
         idm.writeBind(
-            params.protocol_id,
+            app_context_to_protocol_id.get(params.protocol_id.toString()) ?? params.protocol_id,
             params.parameter,
             params.calling_ae_title,
             params.called_ae_title,
@@ -170,8 +172,9 @@ function rose_transport_from_idm_socket (idm: IDMConnection): ROSETransport {
 
     rose.write_bind_result = (params) => {
         rose.is_bound = true;
+        rose.protocol = protocol_id_to_rose_protocol(params.protocol_id) ?? params.protocol_id;
         idm.writeBindResult(
-            params.protocol_id,
+            app_context_to_protocol_id.get(params.protocol_id.toString()) ?? params.protocol_id,
             params.parameter,
             params.responding_ae_title,
         );
@@ -180,7 +183,7 @@ function rose_transport_from_idm_socket (idm: IDMConnection): ROSETransport {
     rose.write_bind_error = (params) => {
         rose.is_bound = false;
         idm.writeBindError(
-            params.protocol_id,
+            app_context_to_protocol_id.get(params.protocol_id.toString()) ?? params.protocol_id,
             params.parameter,
             params.responding_ae_title,
         );

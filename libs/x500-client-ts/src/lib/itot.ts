@@ -185,19 +185,8 @@ import {
     Associate_source_diagnostic_acse_service_user_no_reason_given,
     Associate_source_diagnostic_acse_service_user_application_context_name_not_supported,
 } from "@wildboar/acse/src/lib/modules/ACSE-1/Associate-source-diagnostic-acse-service-user.ta";
-import {
-    dap_ip,
-} from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
-import {
-    dsp_ip,
-} from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dsp-ip.oa";
-import {
-    dop_ip,
-} from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
 import { Provider_reason_reason_not_specified } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Provider-reason.ta";
-// import {
-//     disp_ip,
-// } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/disp-ip.oa";
+import { protocol_id_to_rose_protocol } from "./utils";
 
 const id_ber = new ObjectIdentifier([2, 1, 1]);
 const id_cer = new ObjectIdentifier([2, 1, 2, 0]);
@@ -217,20 +206,6 @@ const app_context_to_abstract_syntax_pci: Map<IndexableOID, number> = new Map([
     [ id_ac_directoryAccessAC.toString(), 3 ],
     [ id_ac_directorySystemAC.toString(), 5 ],
     [ id_ac_directoryOperationalBindingManagementAC.toString(), 7 ],
-]);
-
-const protocol_id_to_app_context: Map<IndexableOID, OBJECT_IDENTIFIER> = new Map([
-    [ dap_ip["&id"]!.toString(), id_ac_directoryAccessAC ],
-    [ dsp_ip["&id"]!.toString(), id_ac_directorySystemAC ],
-    [ dop_ip["&id"]!.toString(), id_ac_directoryOperationalBindingManagementAC ],
-    // [ disp_ip["&id"]!.toString(), ], // I don't know how to map this one...
-    [ id_ac_directoryAccessAC.toString(), id_ac_directoryAccessAC ],
-    [ id_ac_directorySystemAC.toString(), id_ac_directorySystemAC ],
-    [ id_ac_directoryOperationalBindingManagementAC.toString(), id_ac_directoryOperationalBindingManagementAC ],
-    [ id_ac_shadowConsumerInitiatedAC.toString(), id_ac_shadowConsumerInitiatedAC ],
-    [ id_ac_shadowSupplierInitiatedAC.toString(), id_ac_shadowSupplierInitiatedAC ],
-    [ id_ac_shadowSupplierInitiatedAsynchronousAC.toString(), id_ac_shadowSupplierInitiatedAsynchronousAC ],
-    [ id_ac_shadowConsumerInitiatedAsynchronousAC.toString(), id_ac_shadowConsumerInitiatedAsynchronousAC ],
 ]);
 
 const oid_to_codec = new Map<string, (() => typeof BERElement | typeof CERElement | typeof DERElement)>([
@@ -977,8 +952,7 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
     });
 
     rose.write_bind = (params) => {
-        rose.protocol = protocol_id_to_app_context.get(params.protocol_id.toString())
-            ?? params.protocol_id;
+        rose.protocol = protocol_id_to_rose_protocol(params.protocol_id) ?? params.protocol_id;
         // This is needed because we haven't established presentation contexts
         // yet, so we have to get the PCI that we _will_ define.
         const pci = app_context_to_abstract_syntax_pci.get(rose.protocol?.toString() ?? "");
@@ -1024,8 +998,7 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
 
     rose.write_bind_result = (params) => {
         rose.is_bound = true;
-        rose.protocol = protocol_id_to_app_context.get(params.protocol_id.toString())
-            ?? params.protocol_id;
+        rose.protocol = protocol_id_to_rose_protocol(params.protocol_id) ?? params.protocol_id;
         const pc = get_pc(itot, rose, true);
         if (!pc) {
             return;
@@ -1068,8 +1041,7 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
 
     rose.write_bind_error = (params) => {
         rose.is_bound = false;
-        rose.protocol = protocol_id_to_app_context.get(params.protocol_id.toString())
-            ?? params.protocol_id;
+        rose.protocol = protocol_id_to_rose_protocol(params.protocol_id) ?? params.protocol_id;
         const pc = get_pc(itot, rose, true);
         if (!pc) {
             return;

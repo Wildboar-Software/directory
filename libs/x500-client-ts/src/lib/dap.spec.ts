@@ -63,7 +63,7 @@ describe("DAP Client", () => {
         }
     });
 
-    it("works with IDMS transport", async () => {
+    it.skip("works with IDMS transport", async () => {
         const socket = createConnection({
             host: "dsa01.gb.mkdemo.wildboar.software",
             port: 44632,
