@@ -63,8 +63,7 @@
     "timed_out_connecting_to_naddr": "Timed out binding to network address {{uri}}.",
     "trying_naddr": "Trying to bind to network address {{uri}}.",
     "bound_to_naddr": "Successfully bound to network address {{uri}}.",
-    "attempting_starttls": "Attempting STARTTLS with network address {{uri}}.",
-    "established_starttls": "Established STARTTLS with network address {{uri}}.",
+    "attempting_starttls": "Attempting StartTLS with network address {{uri}}.",
     "starttls_established@association": "Connection {{cid}} used StartTLS to enable TLS.",
     "starttls_established@transport": "TCP connection from {{source}} used StartTLS to enable TLS.",
     "received_ldap_request": "Received LDAP request {{mid}} of type {{type}} from connection {{cid}}.",
@@ -193,5 +192,24 @@
     "osi_transport_error": "OSI transport error (ER TPDU) received from {{peer}} (DST-REF {{dst}}) with reason {{reason}}.",
     "osi_session_abort": "OSI session provider abort (AB SPDU) received from {{peer}}.",
     "osi_presentation_abort": "OSI presentation provider abort (ARP PPDU) received from {{peer}} for event ID {{eid}} and with reason code {{reason}}.",
-    "will_not_bind_to_db_port": "This DSA has refused to bind to another network address to fulfill a request initiated by association {{aid}} to {{uri}} because it has the same port as the database."
+    "will_not_bind_to_db_port": "This DSA has refused to bind to another network address to fulfill a request initiated by association {{aid}} to {{uri}} because it has the same port as the database.",
+    "could_not_convert_naddr_to_url": "Could not convert N-selector (index {{i}}) to a URL for presentation address for {{aet}}.",
+    "ocsp_response_invalid": "OCSP response received from {{aet}} was found to be invalid with code: {{code}}.",
+    "could_not_create_rose_client": "Could not create ROSE client for connecting to {{url}}.",
+    "tls_already_in_use": "TLS already in use for connecting to {{url}}.",
+    "start_tls_rejected": "StartTLS request was rejected from {{url}} with reason {{reason}}.",
+
+    "start_tls_result_received@accepted": "StartTLS acceptance received from {{url}}. Switching to TLS.",
+    "start_tls_result_received@rejected": "StartTLS rejection received from {{url}} with reason {{reason}}.",
+    "start_tls_abort_received": "Received abort with reason {{reason}} from {{url}} in response to StartTLS request.",
+    "start_tls_timeout_received": "StartTLS request to {{url}} timed out.",
+    "start_tls_other_received": "StartTLS request to {{url}} received other error: {{e}}.",
+    "start_tls_not_supported_locally": "StartTLS not supported locally. No such request will be sent to {{url}}.",
+    "start_tls_already_in_use": "StartTLS cannot be used, because TLS is already in use with {{url}}.",
+
+    "bind_result_received": "Bind result received from {{url}}.",
+    "bind_error_received": "Bind error received from {{url}}. First few bytes of hex encoding: {{hex}}.",
+    "bind_abort_received": "Abort received from {{url}} in response to bind request.",
+    "bind_timeout_received": "Bind attempt to {{url}} timed out.",
+    "bind_other_received": "Bind request to {{url}} received other error: {{e}}."
 }

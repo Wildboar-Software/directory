@@ -104,6 +104,7 @@ function rose_transport_from_idm_socket (idm: IDMConnection): ROSETransport {
         });
     });
     idm.events.on("bindResult", (params) => {
+        rose.is_bound = true;
         rose.events.emit("bind_result", {
             protocol_id: params.protocolID,
             responding_ae_title: params.respondingAETitle,
@@ -238,7 +239,9 @@ function rose_transport_from_idm_socket (idm: IDMConnection): ROSETransport {
         idm.writeUnbind();
     };
 
-    rose.write_unbind_result = () => {};
+    rose.write_unbind_result = () => {
+        rose.is_bound = false;
+    };
 
     rose.write_unbind_error = () => {};
 

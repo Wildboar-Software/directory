@@ -48,6 +48,7 @@ import { URL } from "node:url";
 import { Socket, createConnection } from "node:net";
 import { connect as tlsConnect, TLSSocket } from "node:tls";
 import isDebugging from "is-debugging";
+import stringifyDN from "../x500/stringifyDN";
 
 
 const DEFAULT_CONNECTION_TIMEOUT_IN_MS: number = 15 * 1000;
@@ -63,6 +64,7 @@ const DEFAULT_DBMS_PORTS: Record<string, string> = {
     "mongodb": "27017",
 };
 
+// FIXME: Also log other info
 async function dsa_bind <ClientType extends AsyncROSEClient> (
     ctx: MeerkatContext,
     assn: ClientAssociation | undefined,
@@ -79,7 +81,8 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
         ? timeLimit
         : addMilliseconds(startTime, Math.max(timeLimit ?? DEFAULT_CONNECTION_TIMEOUT_IN_MS, 500));
     let timeRemaining: number = Math.abs(differenceInMilliseconds(new Date(), timeoutTime));
-    for (const naddr of accessPoint.address.nAddresses) {
+    for (let i = 0; i < accessPoint.address.nAddresses.length; i++) {
+        const naddr = accessPoint.address.nAddresses[i];
         if (op?.abandonTime) {
             op.events.emit("abandon");
             throw new AbandonError(
@@ -103,7 +106,10 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
         }
         const uriString = naddrToURI(naddr);
         if (!uriString) {
-            // FIXME: Log an error.
+            ctx.log.warn(ctx.i18n.t("log:could_not_convert_naddr_to_url", {
+                aet: stringifyDN(ctx, accessPoint.ae_title.rdnSequence),
+                i,
+            }));
             continue;
         }
         const url = new URL(uriString);
@@ -136,14 +142,14 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
                         aid: assn?.id ?? "?",
                         uri: uriString,
                     }));
-                    return null;
+                    continue;
                 }
             } catch {
                 ctx.log.warn(ctx.i18n.t("log:will_not_bind_to_db_port", {
                     aid: assn?.id ?? "?",
                     uri: uriString,
                 }));
-                return null;
+                continue;
             }
         }
         ctx.log.debug(ctx.i18n.t("log:trying_naddr", {
@@ -158,9 +164,6 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
             [naddr],
         );
         timeRemaining = Math.abs(differenceInMilliseconds(new Date(), timeoutTime));
-        // FIXME: You need to inject the socket so you can listen into
-        // events like secureConnect as soon as the socket is created.
-
         const usingImplicitTLSProtocol: boolean = url
             .protocol
             .replace(":", "")
@@ -195,6 +198,15 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
                     }
                 }
             });
+            socket.once("OCSPResponse", getOnOCSPResponseCallback(ctx, (valid, code) => {
+                ctx.log.warn(ctx.i18n.t("log:ocsp_response_invalid", {
+                    code,
+                    aet: stringifyDN(ctx, accessPoint.ae_title.rdnSequence),
+                }));
+                if (!valid) {
+                    socket.end();
+                }
+            }));
         }
 
         const rose = rose_from_presentation_address(paddr, socket, {
@@ -203,14 +215,11 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
             isServer: false,
         }, timeRemaining);
         if (!rose) {
+            ctx.log.debug(ctx.i18n.t("log:could_not_create_rose_client", {
+                url: uriString,
+            }));
             continue;
         }
-        rose.socket!.once("OCSPResponse", getOnOCSPResponseCallback(ctx, (valid) => {
-            // TODO: Log information with code parameter.
-            if (!valid) {
-                rose.socket!.end();
-            }
-        }));
 
         let tls_in_use: boolean = !!rose.socket && (rose.socket instanceof TLSSocket);
         if (!tls_in_use) {
@@ -226,30 +235,55 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
             if (tls_response) {
                 if ("response" in tls_response) {
                     if (tls_response.response === 0) {
+                        rose.socket = new TLSSocket(rose.socket!, {
+                            ...ctx.config.tls,
+                            rejectUnauthorized: ctx.config.tls.rejectUnauthorizedServers,
+                            isServer: false,
+                        });
                         tls_in_use = true;
-                        ctx.log.debug(ctx.i18n.t("log:established_starttls", {
-                            uri: uriString,
+                        ctx.log.debug(ctx.i18n.t("log:start_tls_result_received", {
+                            url: uriString,
+                            context: "accepted",
                         }), {
                             dest: uriString,
                         });
+                    } else {
+                        ctx.log.debug(ctx.i18n.t("log:start_tls_result_received", {
+                            url: uriString,
+                            reason: tls_response.response,
+                            context: "rejected",
+                        }), {
+                            dest: uriString,
+                        });
+                        if (!ctx.config.chaining.tlsOptional) {
+                            continue;
+                        }
                     }
                 } else if ("not_supported_locally" in tls_response) {
+                    ctx.log.debug(ctx.i18n.t("log:start_tls_not_supported_locally", { url: uriString }));
                     // Do not log a message, since this can be inferred from the URL.
                 } else if ("already_in_use" in tls_response) {
                     // Do not log a message, since this can be inferred from the URL.
+                    ctx.log.debug(ctx.i18n.t("log:start_tls_already_in_use", { url: uriString }));
                 } else if ("abort" in tls_response) {
-                    // tls_response.abort
-                    // TODO: Log abort
+                    const reason = tls_response.abort;
+                    ctx.log.debug(ctx.i18n.t("log:start_tls_abort_received", {
+                        url: uriString,
+                        reason,
+                    }));
                 } else if ("timeout" in tls_response) {
-                    ctx.log.debug(ctx.i18n.t("log:timed_out_connecting_to_naddr", {
+                    ctx.log.debug(ctx.i18n.t("log:start_tls_timeout_received", {
                         uri: uriString,
                     }), {
                         dest: uriString,
                     });
                     return null;
-                    // TODO: Log
                 } else {
-                    // TODO: Log other error.
+                    ctx.log.debug(ctx.i18n.t("log:start_tls_other_received", {
+                        url: uriString,
+                        e: JSON.stringify(tls_response.other),
+                    }));
+                    continue;
                 }
             }
         }
@@ -313,16 +347,31 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
                 timeout: timeRemaining,
             });
             if ("result" in bind_response) {
-                // TODO: Actual handle other outcomes. (Maybe just logging is needed.)
+                ctx.log.debug(ctx.i18n.t("log:bind_result_received", {
+                    url: uriString,
+                }));
                 break;
+            } else if ("error" in bind_response) {
+                ctx.log.debug(ctx.i18n.t("log:bind_error_received", {
+                    url: uriString,
+                    hex: Buffer.from(bind_response.error.parameter.toBytes())
+                        .subarray(0, 100)
+                        .toString("hex"),
+                }));
             } else if ("timeout" in bind_response) {
-                // TODO: Add context to inform whether this was because of StartTLS or Bind
-                ctx.log.debug(ctx.i18n.t("log:timed_out_connecting_to_naddr", {
-                    uri: uriString,
-                }), {
-                    dest: uriString,
-                });
+                ctx.log.debug(ctx.i18n.t("log:bind_timeout_received", {
+                    url: uriString,
+                }));
                 return null;
+            } else if ("abort" in bind_response) {
+                ctx.log.debug(ctx.i18n.t("log:bind_abort_received", {
+                    url: uriString,
+                }));
+            } else {
+                ctx.log.debug(ctx.i18n.t("log:bind_other_received", {
+                    url: uriString,
+                    e: JSON.stringify(bind_response.other),
+                }));
             }
         }
         if (!rose.is_bound) {
@@ -337,8 +386,6 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
     }
     return null;
 }
-
-// FIXME: Implement timeouts!
 
 export
 async function bindForChaining (

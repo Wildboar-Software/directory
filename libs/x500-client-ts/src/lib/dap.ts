@@ -367,8 +367,8 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                 return outcome;
             }
         },
-        request: async (params: RequestParameters): Promise<OperationOutcome> => rose.request(params),
-        unbind: async (): Promise<UnbindOutcome> => rose.unbind(),
+        request: (params: RequestParameters): Promise<OperationOutcome> => rose.request(params),
+        unbind: (): Promise<UnbindOutcome> => rose.unbind(),
 
         read: async (params: ReadOptions): Promise<OperationOutcome<typeof read["&ResultType"]>> => {
             const name = name_option_to_name(params.object);

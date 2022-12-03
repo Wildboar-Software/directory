@@ -816,6 +816,7 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
         }
         const bind = _decode_TheOsiBindRes(value);
         const raet = merge_ap_and_ae(apdu.responding_AP_title, apdu.responding_AE_qualifier);
+        rose.is_bound = true;
         rose.events.emit("bind_result", {
             parameter: bind,
             protocol_id: apdu.aSO_context_name,
