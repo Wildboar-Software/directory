@@ -561,6 +561,8 @@ class DOPAssociation extends ClientAssociation {
      */
     public async attemptBind (arg: ASN1Element): Promise<void> {
         const arg_ = _decode_DSABindArgument(arg);
+        console.log(Buffer.from(arg.value).toString("hex"));
+        console.log(arg_);
         const ctx = this.ctx;
         const remoteHostIdentifier = `${this.socket.remoteFamily}://${this.socket.remoteAddress}/${this.socket.remotePort}`;
         const telemetryProperties = {

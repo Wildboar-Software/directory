@@ -340,8 +340,6 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
         const strongCredData = createStrongCredentials(ctx, accessPoint.ae_title.rdnSequence);
         if (!strongCredData) {
             ctx.log.warn(ctx.i18n.t("log:could_not_create_strong_creds", { url: uriString }), logInfo);
-        } else {
-            console.log("Created strong credentials.");
         }
         const extraCredentials: DSACredentials[] = uriString
             ? await getCredentialsForNSAP(ctx, uriString.toString())
@@ -360,7 +358,6 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
             ]
             : otherCreds;
         for (const cred of credentials) {
-            console.log(cred);
             timeRemaining = Math.abs(differenceInMilliseconds(new Date(), timeoutTime));
             const bind_response = await c.bind({
                 protocol_id,
