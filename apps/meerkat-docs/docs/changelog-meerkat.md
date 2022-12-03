@@ -48,7 +48,7 @@ that X.500 directories can be easily used. These include:
 
 - A Rust SDK / Library
   - This will open up possibilities for PAM modules, Linux kernel modules, and more!
-- A Golang SDK / Library (which is already [partially complete](./libs/x500-go))
+- A Golang SDK / Library (which is already [partially complete](https://github.com/Wildboar-Software/directory/tree/master/libs/x500-go))
 - A [PassportJS](https://www.passportjs.org/) Strategy
 
 Depending on how long this takes, work may also begin on an X.500 GUI client!
