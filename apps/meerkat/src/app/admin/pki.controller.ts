@@ -1988,9 +1988,9 @@ export class PkiController {
             });
         }
         const signingMessage = vcpReturnCodeToString.get(signingResult?.returnCode ?? -999)
-            ?? "UNRECOGNIZED RETURN CODE";
+            ?? `UNRECOGNIZED RETURN CODE ${signingResult?.returnCode}`;
         const tlsMessage = vcpReturnCodeToString.get(tlsResult?.returnCode ?? -999)
-            ?? "UNRECOGNIZED RETURN CODE";
+            ?? `UNRECOGNIZED RETURN CODE ${tlsResult?.returnCode}`;
         const signingSuccess: boolean = (signingResult?.returnCode === VCP_RETURN_OK);
         const tlsSuccess: boolean = (signingResult?.returnCode === VCP_RETURN_OK);
         return {

@@ -109,7 +109,7 @@
     "cannot_move_child": "Cannot move child entry, because it would break a compound entry.",
     "unavailable_critical_extension": "Unavailable critical extension {{index}}.",
     "unrecognized_sort_key": "Critical sort key attribute type not recognized.",
-    "not_authorized_ob": "Not authorized to request an operational binding.",
+    "not_authorized_ob": "Not authorized to request an operational binding. Required auth level: {{required}}. Had auth level: {{had}}.",
     "invalid_attribute_syntax": "Invalid attribute syntax for type {{type}}.",
     "invalid_context_syntax": "Invalid context syntax for type {{type}}.",
     "attribute_already_exists": "Attribute of type {{type}} already exists.",

@@ -181,6 +181,10 @@ async function handleRequest (
     }
 }
 
+function authLevelToDiagnosticString (a: AuthenticationLevel_basicLevels): string {
+    return `${a.level}:${a.localQualifier ?? "ABSENT"}:${a.signed ?? "ABSENT"}`;
+}
+
 /**
  * @summary Process a request
  * @description
@@ -298,8 +302,18 @@ async function handleRequestAndErrors (
                 ),
             )
         ) {
+            const had: string = ("basicLevels" in assn.authLevel)
+                ? authLevelToDiagnosticString(new AuthenticationLevel_basicLevels(
+                    assn.authLevel.basicLevels.level,
+                    assn.authLevel.basicLevels.localQualifier,
+                    isArgumentSigned(request.code, request.parameter),
+                ))
+                : "EXTERNAL";
             throw new SecurityError(
-                ctx.i18n.t("err:not_authorized_ob"),
+                ctx.i18n.t("err:not_authorized_ob", {
+                    required: authLevelToDiagnosticString(ctx.config.ob.minAuthRequired),
+                    had,
+                }),
                 new SecurityErrorData(
                     SecurityProblem_inappropriateAuthentication,
                     undefined,
@@ -652,7 +666,7 @@ class DOPAssociation extends ClientAssociation {
         this.boundEntry = outcome.boundVertex;
         this.boundNameAndUID = outcome.boundNameAndUID;
         this.authLevel = outcome.authLevel;
-        this.protocolVersion = arg_.versions?.[1] ? 2 : 1;
+        this.protocolVersion = arg_.versions?.[Versions_v2] ? 2 : 1;
         if (
             ("basicLevels" in outcome.authLevel)
             && (outcome.authLevel.basicLevels.level === AuthenticationLevel_basicLevels_level_none)

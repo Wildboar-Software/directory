@@ -97,6 +97,7 @@ import {
     compareAuthenticationLevel,
 } from "@wildboar/x500/src/lib/comparators/compareAuthenticationLevel";
 import {
+    Versions_v2,
     _encode_DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as _encode_DBE_Param,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
 import stringifyDN from "../x500/stringifyDN";
@@ -641,7 +642,7 @@ class DAPAssociation extends ClientAssociation {
         this.boundEntry = outcome.boundVertex;
         this.boundNameAndUID = outcome.boundNameAndUID;
         this.authLevel = outcome.authLevel;
-        this.protocolVersion = arg_.versions?.[1] ? 2 : 1;
+        this.protocolVersion = arg_.versions?.[Versions_v2] ? 2 : 1;
         if (
             ("basicLevels" in outcome.authLevel)
             && (outcome.authLevel.basicLevels.level === AuthenticationLevel_basicLevels_level_none)

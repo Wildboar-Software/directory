@@ -10,9 +10,6 @@ import {
     SimpleCredentials,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
 import {
-    StrongCredentials,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/StrongCredentials.ta";
-import {
     HASH,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/HASH.ta";
 import {

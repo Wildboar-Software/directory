@@ -235,11 +235,33 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
             if (tls_response) {
                 if ("response" in tls_response) {
                     if (tls_response.response === 0) {
-                        rose.socket = new TLSSocket(rose.socket!, {
+                        const tlsSocket = new TLSSocket(rose.socket!, {
                             ...ctx.config.tls,
                             rejectUnauthorized: ctx.config.tls.rejectUnauthorizedServers,
                             isServer: false,
                         });
+                        tlsSocket.once("secureConnect", () => {
+                            if (!tlsSocket.authorized && ctx.config.tls.rejectUnauthorizedServers) {
+                                tlsSocket.destroy(); // Destroy for immediate and complete denial.
+                                ctx.log.warn(ctx.i18n.t("err:tls_auth_failure", {
+                                    url: uriString,
+                                    e: tlsSocket.authorizationError,
+                                }));
+                                if (isDebugging && tlsSocket.authorizationError) {
+                                    console.error(tlsSocket.authorizationError);
+                                }
+                            }
+                        });
+                        tlsSocket.once("OCSPResponse", getOnOCSPResponseCallback(ctx, (valid, code) => {
+                            ctx.log.warn(ctx.i18n.t("log:ocsp_response_invalid", {
+                                code,
+                                aet: stringifyDN(ctx, accessPoint.ae_title.rdnSequence),
+                            }));
+                            if (!valid) {
+                                socket.end();
+                            }
+                        }));
+                        rose.socket = tlsSocket;
                         tls_in_use = true;
                         ctx.log.debug(ctx.i18n.t("log:start_tls_result_received", {
                             url: uriString,
