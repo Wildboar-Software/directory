@@ -1972,10 +1972,13 @@ export class PkiController {
             const userCert = pkiPath[pkiPath.length - 1];
             const certPath = new CertificationPath(
                 userCert,
-                pkiPath.reverse().map((cert) => new CertificatePair(
-                    cert,
-                    undefined,
-                )),
+                pkiPath
+                    .slice(0, -1)
+                    .reverse()
+                    .map((cert) => new CertificatePair(
+                        cert,
+                        undefined,
+                    )),
             );
             signingResult = await verifyAnyCertPath(this.ctx, certPath, undefined, {
                 trustAnchorList: this.ctx.config.signing.trustAnchorList,
