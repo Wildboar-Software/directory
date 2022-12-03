@@ -14,12 +14,10 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directoryOperationalBindingManagementAC.va";
 import {
     DSABindArgument,
-    _encode_DSABindArgument,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindArgument.ta";
 import { versions } from "../versions";
 import { naddrToURI } from "@wildboar/x500";
 import { BOOLEAN, OBJECT_IDENTIFIER } from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
 import {
     AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
@@ -49,6 +47,7 @@ import { Socket, createConnection } from "node:net";
 import { connect as tlsConnect, TLSSocket } from "node:tls";
 import isDebugging from "is-debugging";
 import stringifyDN from "../x500/stringifyDN";
+import { DSABindResult } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindResult.ta";
 
 
 const DEFAULT_CONNECTION_TIMEOUT_IN_MS: number = 15 * 1000;
@@ -64,7 +63,7 @@ const DEFAULT_DBMS_PORTS: Record<string, string> = {
     "mongodb": "27017",
 };
 
-async function dsa_bind <ClientType extends AsyncROSEClient> (
+async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSABindResult>> (
     ctx: MeerkatContext,
     assn: ClientAssociation | undefined,
     protocol_id: OBJECT_IDENTIFIER,
@@ -361,10 +360,10 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
             timeRemaining = Math.abs(differenceInMilliseconds(new Date(), timeoutTime));
             const bind_response = await c.bind({
                 protocol_id,
-                parameter: _encode_DSABindArgument(new DSABindArgument(
+                parameter: new DSABindArgument(
                     cred,
                     versions,
-                ), DER),
+                ),
                 calling_ae_title: {
                     directoryName: ctx.dsa.accessPoint.ae_title,
                 },

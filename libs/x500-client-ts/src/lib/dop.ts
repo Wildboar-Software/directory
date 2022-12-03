@@ -8,7 +8,7 @@ import {
     UnbindOutcome,
 } from "@wildboar/rose-transport";
 import {
-    dSABind,
+    dSABind, DSABindArgument, DSABindResult,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/dSABind.oa";
 import type { KeyObject } from "node:crypto";
 import {
@@ -90,8 +90,8 @@ import {
     Versions_v2,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";
 
-type BindArgument = typeof dSABind["&ArgumentType"];
-type BindResult = typeof dSABind["&ResultType"];
+type BindArgument = DSABindArgument;
+type BindResult = DSABindResult;
 export type DOPBindParameters = BindParameters<BindArgument>;
 export type DOPBindOutcome = BindOutcome<BindResult>;
 

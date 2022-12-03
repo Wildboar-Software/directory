@@ -208,7 +208,7 @@ import { LdapArgumentData, _encode_LdapArgumentData } from "@wildboar/x500/src/l
 import { LdapArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LdapArgument.ta";
 import { LinkedArgumentData, _encode_LinkedArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LinkedArgumentData.ta";
 import {
-    dSABind,
+    dSABind, DSABindArgument, DSABindResult,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/dSABind.oa";
 import {
     SearchControls,
@@ -222,8 +222,8 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";
 
 type ChainedArg = typeof chainedRead["&ArgumentType"];
-type BindArgument = typeof dSABind["&ArgumentType"];
-type BindResult = typeof dSABind["&ResultType"];
+type BindArgument = DSABindArgument;
+type BindResult = DSABindResult;
 export type DSPBindParameters = BindParameters<BindArgument>;
 export type DSPBindOutcome = BindOutcome<BindResult>;
 
@@ -410,13 +410,13 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
         rose,
         directoryVersion: 1,
         bind: async (params: DSPBindParameters): Promise<DSPBindOutcome> => {
-            const parameter = directoryBind.encoderFor["&ArgumentType"]!(params.parameter, BER);
+            const parameter = dSABind.encoderFor["&ArgumentType"]!(params.parameter, BER);
             const outcome = await rose.bind({
                 ...params,
                 parameter,
             });
             if ("result" in outcome) {
-                const parameter = directoryBind.decoderFor["&ResultType"]!(outcome.result.parameter);
+                const parameter = dSABind.decoderFor["&ResultType"]!(outcome.result.parameter);
                 if (parameter.versions?.[Versions_v2] === TRUE_BIT) {
                     dsp.directoryVersion = 2;
                 } else if (parameter.versions?.[Versions_v1] === TRUE_BIT) {
