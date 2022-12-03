@@ -64,7 +64,6 @@ const DEFAULT_DBMS_PORTS: Record<string, string> = {
     "mongodb": "27017",
 };
 
-// FIXME: Also log other info
 async function dsa_bind <ClientType extends AsyncROSEClient> (
     ctx: MeerkatContext,
     assn: ClientAssociation | undefined,
@@ -76,6 +75,15 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
     signErrors: boolean = false,
     timeLimit: number | Date = 30_000,
 ): Promise<ClientType | null> {
+    const logInfo = {
+        protocol_id: protocol_id.toString(),
+        association_id: assn?.id,
+        op: op?.invokeId.toString(),
+        aliasDereferenced,
+        signErrors,
+        timeLimit,
+        dsa_version: ctx.dsa.version,
+    };
     const startTime = new Date();
     const timeoutTime: Date = (timeLimit instanceof Date)
         ? timeLimit
@@ -109,9 +117,13 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
             ctx.log.warn(ctx.i18n.t("log:could_not_convert_naddr_to_url", {
                 aet: stringifyDN(ctx, accessPoint.ae_title.rdnSequence),
                 i,
-            }));
+            }), logInfo);
             continue;
         }
+        logInfo["destination_url"] = uriString;
+        try { // We do not want a crash just for logging.
+            logInfo["destination_aet"] = stringifyDN(ctx, accessPoint.ae_title.rdnSequence);
+        } catch { /* NOOP */ }
         const url = new URL(uriString);
         /**
          * This section exists to prevent a security vulnerability where this
@@ -141,22 +153,20 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
                     ctx.log.warn(ctx.i18n.t("log:will_not_bind_to_db_port", {
                         aid: assn?.id ?? "?",
                         uri: uriString,
-                    }));
+                    }), logInfo);
                     continue;
                 }
             } catch {
                 ctx.log.warn(ctx.i18n.t("log:will_not_bind_to_db_port", {
                     aid: assn?.id ?? "?",
                     uri: uriString,
-                }));
+                }), logInfo);
                 continue;
             }
         }
         ctx.log.debug(ctx.i18n.t("log:trying_naddr", {
             uri: uriString ?? "<FAILED TO DECODE NETWORK ADDRESS>",
-        }), {
-            dest: uriString,
-        });
+        }), logInfo);
         const paddr = new PresentationAddress(
             accessPoint.address.pSelector,
             accessPoint.address.sSelector,
@@ -192,7 +202,7 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
                     ctx.log.warn(ctx.i18n.t("err:tls_auth_failure", {
                         url: uriString,
                         e: socket.authorizationError,
-                    }));
+                    }), logInfo);
                     if (isDebugging && socket.authorizationError) {
                         console.error(socket.authorizationError);
                     }
@@ -217,7 +227,7 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
         if (!rose) {
             ctx.log.debug(ctx.i18n.t("log:could_not_create_rose_client", {
                 url: uriString,
-            }));
+            }), logInfo);
             continue;
         }
 
@@ -225,9 +235,7 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
         if (!tls_in_use) {
             ctx.log.debug(ctx.i18n.t("log:attempting_starttls", {
                 uri: uriString,
-            }), {
-                dest: uriString,
-            });
+            }), logInfo);
             timeRemaining = Math.abs(differenceInMilliseconds(new Date(), timeoutTime));
             const tls_response = await rose.startTLS?.({
                 timeout: timeRemaining,
@@ -266,45 +274,43 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
                         ctx.log.debug(ctx.i18n.t("log:start_tls_result_received", {
                             url: uriString,
                             context: "accepted",
-                        }), {
-                            dest: uriString,
-                        });
+                        }), logInfo);
                     } else {
                         ctx.log.debug(ctx.i18n.t("log:start_tls_result_received", {
                             url: uriString,
                             reason: tls_response.response,
                             context: "rejected",
-                        }), {
-                            dest: uriString,
-                        });
+                        }), logInfo);
                         if (!ctx.config.chaining.tlsOptional) {
                             continue;
                         }
                     }
                 } else if ("not_supported_locally" in tls_response) {
-                    ctx.log.debug(ctx.i18n.t("log:start_tls_not_supported_locally", { url: uriString }));
+                    ctx.log.debug(ctx.i18n.t("log:start_tls_not_supported_locally", {
+                        url: uriString,
+                    }), logInfo);
                     // Do not log a message, since this can be inferred from the URL.
                 } else if ("already_in_use" in tls_response) {
                     // Do not log a message, since this can be inferred from the URL.
-                    ctx.log.debug(ctx.i18n.t("log:start_tls_already_in_use", { url: uriString }));
+                    ctx.log.debug(ctx.i18n.t("log:start_tls_already_in_use", {
+                        url: uriString,
+                    }), logInfo);
                 } else if ("abort" in tls_response) {
                     const reason = tls_response.abort;
                     ctx.log.debug(ctx.i18n.t("log:start_tls_abort_received", {
                         url: uriString,
                         reason,
-                    }));
+                    }), logInfo);
                 } else if ("timeout" in tls_response) {
                     ctx.log.debug(ctx.i18n.t("log:start_tls_timeout_received", {
                         uri: uriString,
-                    }), {
-                        dest: uriString,
-                    });
+                    }), logInfo);
                     return null;
                 } else {
                     ctx.log.debug(ctx.i18n.t("log:start_tls_other_received", {
                         url: uriString,
                         e: JSON.stringify(tls_response.other),
-                    }));
+                    }), logInfo);
                     continue;
                 }
             }
@@ -315,9 +321,7 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
                 ctx.log.debug(ctx.i18n.t("log:starttls_error", {
                     uri: uriString,
                     context: "tls_required",
-                }), {
-                    dest: uriString,
-                });
+                }), logInfo);
                 continue;
             }
         } else if (!(rose.socket instanceof TLSSocket)) {
@@ -371,7 +375,7 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
             if ("result" in bind_response) {
                 ctx.log.debug(ctx.i18n.t("log:bind_result_received", {
                     url: uriString,
-                }));
+                }), logInfo);
                 break;
             } else if ("error" in bind_response) {
                 ctx.log.debug(ctx.i18n.t("log:bind_error_received", {
@@ -379,21 +383,21 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
                     hex: Buffer.from(bind_response.error.parameter.toBytes())
                         .subarray(0, 100)
                         .toString("hex"),
-                }));
+                }), logInfo);
             } else if ("timeout" in bind_response) {
                 ctx.log.debug(ctx.i18n.t("log:bind_timeout_received", {
                     url: uriString,
-                }));
+                }), logInfo);
                 return null;
             } else if ("abort" in bind_response) {
                 ctx.log.debug(ctx.i18n.t("log:bind_abort_received", {
                     url: uriString,
-                }));
+                }), logInfo);
             } else {
                 ctx.log.debug(ctx.i18n.t("log:bind_other_received", {
                     url: uriString,
                     e: JSON.stringify(bind_response.other),
-                }));
+                }), logInfo);
             }
         }
         if (!rose.is_bound) {
@@ -401,9 +405,7 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
         }
         ctx.log.info(ctx.i18n.t("log:bound_to_naddr", {
             uri: uriString,
-        }), {
-            dest: uriString,
-        });
+        }), logInfo);
         return c;
     }
     return null;

@@ -211,5 +211,10 @@
     "bind_error_received": "Bind error received from {{url}}. First few bytes of hex encoding: {{hex}}.",
     "bind_abort_received": "Abort received from {{url}} in response to bind request.",
     "bind_timeout_received": "Bind attempt to {{url}} timed out.",
-    "bind_other_received": "Bind request to {{url}} received other error: {{e}}."
+    "bind_other_received": "Bind request to {{url}} received other error: {{e}}.",
+
+    "key_type_has_no_oid": "Could not translate key type {{kt}} to an object identifier.",
+    "cannot_create_strong_creds": "Cannot create strong credentials, because no signing key or cert path was defined, or the key type was not recognized.",
+    "cannot_create_strong_creds_failed_pseudo_sig": "Cannot create strong credentials, because a pre-flight signature could not be produced.",
+    "cannot_create_strong_creds_failed_sig": "Cannot create strong credentials, because the signature could not be produced."
 }

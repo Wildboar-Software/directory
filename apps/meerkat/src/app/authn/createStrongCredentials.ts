@@ -45,19 +45,25 @@ function createStrongCredentials (
     const pkiPath = ctx.config.signing.certPath;
     const key = ctx.config.signing.key;
     if (!pkiPath || !key || !key.asymmetricKeyType) {
+        ctx.log.debug(ctx.i18n.t("log:cannot_create_strong_creds"));
         return null;
     }
     const algOID = keyTypeToAlgOID.get(key.asymmetricKeyType);
     if (!algOID) {
+        ctx.log.debug(ctx.i18n.t("log:key_type_has_no_oid", {
+            kt: key.asymmetricKeyType,
+        }));
         return null;
     }
     const endEntityCert = pkiPath[pkiPath.length - 1];
     if (!endEntityCert) {
+        ctx.log.debug(ctx.i18n.t("log:cannot_create_strong_creds_no_ee_cert"));
         return null;
     }
     const certPath: CertificationPath = new CertificationPath(
         endEntityCert,
-        [ ...pkiPath.slice(0, -1) ]
+        pkiPath
+            .slice(0, -1)
             .reverse()
             .map((cert) => new CertificatePair(
                 cert,
@@ -70,6 +76,7 @@ function createStrongCredentials (
      */
     const pseudoSig = generateSIGNED(ctx, null, () => new DERElement());
     if (!("signed" in pseudoSig)) {
+        ctx.log.debug(ctx.i18n.t("log:cannot_create_strong_creds_failed_pseudo_sig"));
         return null;
     }
     const algID = pseudoSig.signed.algorithmIdentifier;
@@ -84,6 +91,7 @@ function createStrongCredentials (
     );
     const op = generateSIGNED(ctx, tokenContent, _encode_TokenContent);
     if (!("signed" in op)) {
+        ctx.log.debug(ctx.i18n.t("log:cannot_create_strong_creds_failed_sig"));
         return null;
     }
 
