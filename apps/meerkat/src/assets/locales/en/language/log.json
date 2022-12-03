@@ -217,5 +217,7 @@
     "cannot_create_strong_creds_deps_unmet": "Cannot create strong credentials, because no signing key or cert path was defined, or the key type was not recognized.",
     "cannot_create_strong_creds_failed_pseudo_sig": "Cannot create strong credentials, because a pre-flight signature could not be produced.",
     "cannot_create_strong_creds_failed_sig": "Cannot create strong credentials, because the signature could not be produced.",
-    "could_not_create_strong_creds": "Could not create strong credentials for distributed operation with {{url}}."
+    "could_not_create_strong_creds": "Could not create strong credentials for distributed operation with {{url}}.",
+    "dsa_bind_with_simple_creds": "Simple authentication attempt from {{source}}.",
+    "dsa_bind_with_strong_creds": "Strong authentication attempt from {{source}}."
 }

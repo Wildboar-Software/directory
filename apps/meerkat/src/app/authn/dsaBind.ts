@@ -56,6 +56,7 @@ async function bind (
     arg: DSABindArgument,
     signErrors: boolean,
 ): Promise<BindReturn> {
+    console.log(arg.credentials);
     const tlsProtocol: string | null = ("getProtocol" in socket)
         ? socket.getProtocol()
         : null;
@@ -110,6 +111,7 @@ async function bind (
         // No security parameters will be provided for failed auth attempts.
     );
     if ("simple" in arg.credentials) {
+        ctx.log.debug(ctx.i18n.t("log:dsa_bind_with_simple_creds", { source }), logInfo);
         // TODO: Refactor out of here to de-duplicate from `apps/meerkat/src/app/dap/bind.ts`
         const foundEntry = await dnToVertex(ctx, ctx.dit.root, arg.credentials.simple.name);
         if (!arg.credentials.simple.password) {
@@ -198,6 +200,7 @@ async function bind (
             },
         };
     } else if ("strong" in arg.credentials) {
+        ctx.log.debug(ctx.i18n.t("log:dsa_bind_with_strong_creds", { source }), logInfo);
         return attemptStrongAuth(
             ctx,
             DSABindError,
