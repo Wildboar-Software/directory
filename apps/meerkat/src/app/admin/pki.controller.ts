@@ -1952,10 +1952,12 @@ export class PkiController {
             const userCert = tlsPkiPath[0];
             const tlsCertPath = new CertificationPath(
                 userCert,
-                tlsPkiPath.map((cert) => new CertificatePair(
-                    cert,
-                    undefined,
-                )),
+                tlsPkiPath
+                    .slice(1)
+                    .map((cert) => new CertificatePair(
+                        cert,
+                        undefined,
+                    )),
             );
             tlsResult = await verifyAnyCertPath(this.ctx, tlsCertPath, undefined, {
                 trustAnchorList: this.ctx.config.tls.trustAnchorList,
