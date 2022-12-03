@@ -16,9 +16,10 @@ import {
     createTimestamp,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/createTimestamp.oa";
 import { TLSSocket } from "node:tls";
+import { SimpleCredentials } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
 
 describe("DAP Client", () => {
-    it.skip("works with IDM transport", async () => {
+    it("works with IDM transport", async () => {
         const socket = createConnection({
             host: "localhost",
             port: 4632,
@@ -29,7 +30,15 @@ describe("DAP Client", () => {
         const dap = create_dap_client(rose);
         const bind_response = await dap.bind({
             protocol_id: id_idm_dap,
-            parameter: new DirectoryBindArgument(undefined, undefined),
+            parameter: new DirectoryBindArgument({
+                simple: new SimpleCredentials(
+                    [],
+                    undefined,
+                    {
+                        unprotected: Buffer.from("heythere"),
+                    },
+                ),
+            }, undefined),
         });
         if ("result" in bind_response) {
             expect(bind_response.result.parameter).toBeDefined();
