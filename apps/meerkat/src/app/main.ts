@@ -321,9 +321,6 @@ function attachUnboundEventListenersToIDMConnection (
     };
     idm.events.on("request", handleWrongSequence);
     idm.events.on("bind", async (idmBind: IdmBind) => {
-        console.log(idm);
-        console.log(idmBind);
-        console.log(idmBind.argument);
         idm.events.removeAllListeners("request");
         let conn!: ClientAssociation;
         if (idmBind.protocolID.isEqualTo(dap_ip["&id"]!) && ctx.config.dap.enabled) {
@@ -353,7 +350,6 @@ function attachUnboundEventListenersToIDMConnection (
         }
         const startTime = Date.now();
         try {
-            console.log(idmBind.argument);
             await conn.attemptBind(idmBind.argument);
             ctx.associations.set(originalSocket, conn);
             ctx.telemetry.trackRequest({

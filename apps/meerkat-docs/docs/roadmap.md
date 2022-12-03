@@ -4,15 +4,6 @@ We will not promise any particular schedule of delivery of features or bug fixes
 at this time. However, the very high-level roadmap for Meerkat DSA can be
 broken down to the following versions.
 
-## Version 1.3.0 - ITOT
-
-This update will introduce ISO Transport Over TCP (ITOT) as an alternative
-protocol stack to Internet Directly-Mapped (IDM). The rationale for introducing
-this above the many other more desirable features of X.500 directories is that
-older X.500 directory software, such as Quipu, only uses ITOT. Therefore,
-supporting ITOT transport in Meerkat DSA will allow integration with Quipu and
-other older X.500 DSAs and DUAs.
-
 ## Version 1.4.0 - Schema Update ("Wildboar Schema")
 
 This update will introduce thousands of new schema objects defined by Wildboar

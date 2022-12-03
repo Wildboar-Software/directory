@@ -2,12 +2,12 @@ name: Meerkat DSA Workflow
 
 on:
   push:
-    # tags:
-    #   - v2.*
-    #   - v1.*
+    tags:
+      - v2.*
+      - v1.*
     # Temporary, so I don't have to keep adding BS tags.
-    branches:
-      - master
+    # branches:
+    #   - master
 
 env:
   CLUSTER_NAME: production

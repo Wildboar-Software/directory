@@ -56,7 +56,6 @@ async function bind (
     arg: DSABindArgument,
     signErrors: boolean,
 ): Promise<BindReturn> {
-    console.log(arg.credentials);
     const tlsProtocol: string | null = ("getProtocol" in socket)
         ? socket.getProtocol()
         : null;

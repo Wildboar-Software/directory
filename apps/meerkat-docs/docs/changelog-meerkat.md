@@ -2,9 +2,56 @@
 
 ## Version 1.3.0
 
-- Support ISO Transport Over TCP (ITOT).
-- Introduce missing LDAP syntaxes.
+### Changes
+
+- Support ISO Transport Over TCP (ITOT), as defined in [IETF RFC 1006](https://datatracker.ietf.org/doc/html/rfc1006).
+  - This is supported both when Meerkat DSA acts as a server and as a client (in DSP, DOP, or DISP, for instance).
+  - It is recommended that you leave this disabled unless you need it for some reason.
+- Introduce missing LDAP syntaxes:
+    - `utmCoordinates`
+    - `uiiForm`
+    - `epcForm`
+    - `countryString3c`
+    - `countryString3n`
+    - `dnsString`
+    - `intEmailString`
+    - `jidString`
 - Reject chaining to any TCP port that has the same port as the DBMS.
+  - This is a security feature to prevent malicious users from tricking your DSA
+    into making requests to your DBMS. (In all likelihood, your DBMS will
+    probably just interpret these as corrupt packets, but there is a _chance_
+    that it might not!)
+
+### Announcement
+
+Wildboar Software is now maintaining the
+[ISO Development Environment](https://en.wikipedia.org/wiki/ISO_Development_Environment)!
+This massive project contains an X.500 directory that was implemented in the
+early 90s called "Quipu." Check it out
+[here](https://github.com/Wildboar-Software/isode)! It was recently updated in a
+[BountySource challenge](https://app.bountysource.com/issues/109508245-will-not-compile-on-a-modern-linux-system-bounty)
+to run on modern Linux systems, such as Ubuntu. Thank you
+[@abcpro1](https://github.com/abcpro1) for your work on this!
+
+Part of the rationale for prioritizing ITOT support was for integration testing
+with Quipu DSA. The `@wildboar/rose-transport` and `@wildboar/x500-client-ts`
+libraries have been tested with Quipu DSA, but Meerkat DSA has not been
+integration-tested with Quipu DSA yet. However, this is in the works!
+
+More documentation about Quipu DSA, the X.500 libraries, terminal client, and
+other tools found within ISODE will be added soon!
+
+### Next Developments
+
+No promises, but the current plan is to work on X.500 clients and SDKs next so
+that X.500 directories can be easily used. These include:
+
+- A Rust SDK / Library
+  - This will open up possibilities for PAM modules, Linux kernel modules, and more!
+- A Golang SDK / Library (which is already [partially complete](./libs/x500-go))
+- A [PassportJS](https://www.passportjs.org/) Strategy
+
+Depending on how long this takes, work may also begin on an X.500 GUI client!
 
 ## Version 1.2.7
 
