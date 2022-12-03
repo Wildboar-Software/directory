@@ -45,7 +45,7 @@ function createStrongCredentials (
     const pkiPath = ctx.config.signing.certPath;
     const key = ctx.config.signing.key;
     if (!pkiPath || !key || !key.asymmetricKeyType) {
-        ctx.log.debug(ctx.i18n.t("log:cannot_create_strong_creds"));
+        ctx.log.debug(ctx.i18n.t("log:cannot_create_strong_creds_deps_unmet"));
         return null;
     }
     const algOID = keyTypeToAlgOID.get(key.asymmetricKeyType);

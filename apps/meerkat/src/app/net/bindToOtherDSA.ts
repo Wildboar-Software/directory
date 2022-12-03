@@ -338,6 +338,9 @@ async function dsa_bind <ClientType extends AsyncROSEClient> (
 
         const c: ClientType = client_getter(rose);
         const strongCredData = createStrongCredentials(ctx, accessPoint.ae_title.rdnSequence);
+        if (!strongCredData) {
+            ctx.log.warn(ctx.i18n.t("log:could_not_create_strong_creds", { url: uriString }), logInfo);
+        }
         const extraCredentials: DSACredentials[] = uriString
             ? await getCredentialsForNSAP(ctx, uriString.toString())
             : [];

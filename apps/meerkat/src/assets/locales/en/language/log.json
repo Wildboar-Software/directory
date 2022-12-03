@@ -61,7 +61,7 @@
     "not_authz_to_add_top_level@hint": "To be able to add an entry to the top level in Meerkat DSA, the environment variable MEERKAT_OPEN_TOP_LEVEL must be set to '1', or there must be entries in this DSA with passwords, or you must be authenticated non-anonymously as an entry that has the boolean may_add_top_level_dse set. The first entry created in this DSA with a password will have this flag set automatically. This was the DN: {{dn}}",
     "operation_progress_not_understood": "OperationProgress value {{value}} not understood from association {{cid}}.",
     "timed_out_connecting_to_naddr": "Timed out binding to network address {{uri}}.",
-    "trying_naddr": "Trying to bind to network address {{uri}}.",
+    "trying_naddr": "Trying to connect to network address {{uri}}.",
     "bound_to_naddr": "Successfully bound to network address {{uri}}.",
     "attempting_starttls": "Attempting StartTLS with network address {{uri}}.",
     "starttls_established@association": "Connection {{cid}} used StartTLS to enable TLS.",
@@ -214,7 +214,8 @@
     "bind_other_received": "Bind request to {{url}} received other error: {{e}}.",
 
     "key_type_has_no_oid": "Could not translate key type {{kt}} to an object identifier.",
-    "cannot_create_strong_creds": "Cannot create strong credentials, because no signing key or cert path was defined, or the key type was not recognized.",
+    "cannot_create_strong_creds_deps_unmet": "Cannot create strong credentials, because no signing key or cert path was defined, or the key type was not recognized.",
     "cannot_create_strong_creds_failed_pseudo_sig": "Cannot create strong credentials, because a pre-flight signature could not be produced.",
-    "cannot_create_strong_creds_failed_sig": "Cannot create strong credentials, because the signature could not be produced."
+    "cannot_create_strong_creds_failed_sig": "Cannot create strong credentials, because the signature could not be produced.",
+    "could_not_create_strong_creds": "Could not create strong credentials for distributed operation with {{url}}."
 }
