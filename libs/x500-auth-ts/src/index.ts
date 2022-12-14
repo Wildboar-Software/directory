@@ -544,85 +544,68 @@ async function compare_auth (
         ),
         timeLimit: 15,
     };
-    dap_client.compare(compare_arg)
-        .then((outcome) => {
-            if ("result" in outcome) {
-                const data = getOptionallyProtectedValue(outcome.result.parameter);
-                if (data.matched) {
-                    done(null, { username });
-                } else {
-                    // WARNING: This MUST be the same behavior taken if
-                    // the entry does not exist, otherwise, it could
-                    // lead to information disclosure vulnerabilities.
-                    done();
-                }
-                return;
-            }
-            else if ("error" in outcome) {
-                options?.log?.({
-                    level: LOG_LEVEL_WARN,
-                    type: "error",
-                    username,
-                    error_code: outcome.error.code,
-                });
-                done();
-                return;
-            }
-            else if ("reject" in outcome) {
-                options?.log?.({
-                    level: LOG_LEVEL_WARN,
-                    type: "reject",
-                    error_problem_str: rejectReasonToString[outcome.reject.problem],
-                    username,
-                });
-                done(new Error());
-                return;
-            }
-            else if ("abort" in outcome) {
-                options?.log?.({
-                    level: LOG_LEVEL_WARN,
-                    type: "abort",
-                    error_problem_str: abortReasonToString[outcome.abort],
-                    username,
-                });
-                done(new Error());
-                return;
-            }
-            else if ("timeout" in outcome) {
-                options?.log?.({
-                    level: LOG_LEVEL_WARN,
-                    type: "timeout",
-                    username,
-                });
-                done(new Error());
-                return;
-            }
-            else {
-                options?.log?.({
-                    level: LOG_LEVEL_WARN,
-                    type: "other",
-                    username,
-                    other: outcome.other,
-                });
-                done(new Error());
-                return;
-            }
-        })
-        .catch((e) => {
-            options?.log?.({
-                level: LOG_LEVEL_ERROR,
-                type: "compare_throw",
-                message: e?.message,
-                username,
-                other: {
-                    "warning": "You should NOT log this entire object. It could contain passwords.",
-                    ...compare_arg,
-                },
-            });
-            done(e);
-            return;
-        })
-        ;
+    const outcome = await dap_client.compare(compare_arg);
+    if ("result" in outcome) {
+        const data = getOptionallyProtectedValue(outcome.result.parameter);
+        if (data.matched) {
+            done(null, { username });
+        } else {
+            // WARNING: This MUST be the same behavior taken if
+            // the entry does not exist, otherwise, it could
+            // lead to information disclosure vulnerabilities.
+            done();
+        }
+        return;
+    }
+    else if ("error" in outcome) {
+        options?.log?.({
+            level: LOG_LEVEL_WARN,
+            type: "error",
+            username,
+            error_code: outcome.error.code,
+        });
+        done();
+        return;
+    }
+    else if ("reject" in outcome) {
+        options?.log?.({
+            level: LOG_LEVEL_WARN,
+            type: "reject",
+            error_problem_str: rejectReasonToString[outcome.reject.problem],
+            username,
+        });
+        done(new Error());
+        return;
+    }
+    else if ("abort" in outcome) {
+        options?.log?.({
+            level: LOG_LEVEL_WARN,
+            type: "abort",
+            error_problem_str: abortReasonToString[outcome.abort],
+            username,
+        });
+        done(new Error());
+        return;
+    }
+    else if ("timeout" in outcome) {
+        options?.log?.({
+            level: LOG_LEVEL_WARN,
+            type: "timeout",
+            username,
+        });
+        done(new Error());
+        return;
+    }
+    else {
+        options?.log?.({
+            level: LOG_LEVEL_WARN,
+            type: "other",
+            username,
+            other: outcome.other,
+        });
+        done(new Error());
+        return;
+    }
 }
 
 export
