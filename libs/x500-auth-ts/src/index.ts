@@ -6,6 +6,7 @@ import {
     DAPBindParameters,
     CompareOptions,
     SearchOptions,
+    ReadOptions,
 } from "@wildboar/x500-client-ts";
 import { URL } from "node:url";
 import type {
@@ -90,7 +91,6 @@ export const LOG_LEVEL_ERROR: number = 4;
 export
 interface LogEvent {
     level: number;
-    // TODO: Include log level
     type: string;
     error_code?: Code;
     error_problem_num?: number;
@@ -205,18 +205,36 @@ Additional features:
 
 export type User = Record<string, unknown>;
 
+export
+interface PostAuthenticateReadable {
+    read_arg?: (dn: Name) => ReadOptions;
+}
+
+export
+interface DirectSubstrategyOptions extends PostAuthenticateReadable {
+    get_directory_name_from_username: (username: string) => Name | null;
+}
+
+export
+interface SearchSubstrategyOptions {
+    creds_to_arg: (username: string, password: string) => SearchArgumentData,
+    entry_to_user: (entry: EntryInformation) => User,
+}
+
+export
+interface CompareSubstrategyOptions extends PostAuthenticateReadable {
+    get_compare_arg: (username: string, password: string) => [ Name, CompareOptions | null ];
+}
+
 export type X500PassportSubstrategy =
     | {
-        direct: (username: string) => Name | null;
+        direct: DirectSubstrategyOptions;
     }
     | {
-        search: {
-            creds_to_arg: (username: string, password: string) => SearchArgumentData,
-            entry_to_user: (entry: EntryInformation) => User,
-        },
+        search: SearchSubstrategyOptions;
     }
     | {
-        compare: (username: string, password: string) => [ Name, CompareOptions | null ],
+        compare: CompareSubstrategyOptions;
     }
     ;
 
@@ -228,11 +246,15 @@ interface X500PassportStrategyOptions extends DAPOptions {
     substrategy: X500PassportSubstrategy;
     log?: (event: LogEvent) => unknown;
 
-    // If set, this strategy will search for user groups and include membership
-    // data in the user info.
-    // TODO: Document object classes
-    // search_for_groups?: (username: string) => SearchArgumentData;
-    is_member_of_authorized_group?: (dn: Name) => SearchOptions,
+    /**
+     * This can be used for getting group memberships, roles, devices, etc.
+     */
+    get_related_entries?: (dn: Name) => SearchOptions,
+
+    calculate_user?: (
+        user: User,
+        other_entries: EntryInformation[],
+    ) => User,
 }
 
 export type DoneCallback = (err?: any, user?: User | null) => unknown;
@@ -335,7 +357,7 @@ function get_auth_function (options: X500PassportStrategyOptions): AuthFunction 
 
     return function (username: string, password: string, done: DoneCallback) {
         if ("direct" in options.substrategy) {
-            const dn = options.substrategy.direct(username);
+            const dn = options.substrategy.direct.get_directory_name_from_username(username);
             if (!dn) {
                 done(new Error("4fa0a1e0-2571-4a05-aae4-b24042e42ce6"));
                 return;
@@ -558,7 +580,7 @@ function get_auth_function (options: X500PassportStrategyOptions): AuthFunction 
                 done(new Error());
                 return;
             }
-            const [ name, calculated_compare_arg ] = options.substrategy.compare(username, password);
+            const [ name, calculated_compare_arg ] = options.substrategy.compare.get_compare_arg(username, password);
             const compare_arg: CompareOptions = calculated_compare_arg ?? {
                 object: name,
                 purported: new AttributeValueAssertion(
