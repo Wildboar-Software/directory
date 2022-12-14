@@ -24,7 +24,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
 import { TRUE_BIT } from "asn1-ts";
 import { BER } from "asn1-ts/dist/node/functional";
-import { directoryBindError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/directoryBindError.oa";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import {
     ServiceProblem_administrativeLimitExceeded,
@@ -102,7 +101,6 @@ interface LogEvent {
     message?: string;
     other?: Record<string, unknown>;
 }
-
 
 export const serviceProblemToMessage: Record<number, string> = {
     [ServiceProblem_administrativeLimitExceeded as number]: "administrativeLimitExceeded",
@@ -365,12 +363,13 @@ function handle_non_result (
 }
 
 export
-function direct_auth (
+async function direct_auth (
+    state: AuthFunctionState,
     options: X500PassportStrategyOptions,
     username: string,
     password: string,
     done: DoneCallback,
-) {
+): Promise<void> {
     assert("direct" in options.substrategy);
     const dn = options.substrategy.direct.get_directory_name_from_username(username);
     if (!dn) {
@@ -383,7 +382,7 @@ function direct_auth (
         return;
     }
     const dap = create_dap_client(rose);
-    dap.bind({
+    const outcome = await dap.bind({
         protocol_id: id_ac_directoryAccessAC,
         parameter: {
             credentials: {
@@ -401,92 +400,44 @@ function direct_auth (
             ]),
             _unrecognizedExtensionsList: [],
         },
-    })
-    .then((outcome) => {
-        if ("result" in outcome) {
-            done(null, { username });
+    });
+    if (!("result" in outcome)) {
+        if ("error" in outcome) {
+            done();
             return;
         }
-        else if ("error" in outcome) {
-            if (outcome.error.code) { // Not understood error type.
-                done(new Error());
-                return;
-            }
-            const dirBindError = directoryBindError.decoderFor["&ParameterType"]!(outcome.error.parameter);
-            const data = getOptionallyProtectedValue(dirBindError);
-            if ("serviceError" in data.error) {
-                options?.log?.({
-                    level: LOG_LEVEL_WARN,
-                    type: "bind_error/service_error",
-                    error_problem_num: Number(data.error.serviceError),
-                    error_problem_str: serviceProblemToMessage[data.error.serviceError as number],
-                    username,
-                });
-                done(new Error());
-                return;
-            }
-            else if ("securityError" in data.error) {
-                options?.log?.({
-                    level: LOG_LEVEL_WARN,
-                    type: "bind_error/security_error",
-                    error_problem_num: Number(data.error.securityError),
-                    error_problem_str: securityProblemToMessage[data.error.securityError as number],
-                    username,
-                });
-                done(new Error());
-                return;
-            }
-            else {
-                options?.log?.({
-                    level: LOG_LEVEL_WARN,
-                    type: "bind_error/other_error",
-                    username,
-                });
-                done(new Error());
-                return;
-            }
-        }
-        else if ("abort" in outcome) {
-            options?.log?.({
-                level: LOG_LEVEL_WARN,
-                type: "bind_abort",
-                error_problem_str: abortReasonToString[outcome.abort],
-                username,
-            });
-            done(new Error());
-            return;
-        }
-        else if ("timeout" in outcome) {
-            options?.log?.({
-                level: LOG_LEVEL_WARN,
-                type: "bind_timeout",
-                username,
-            });
-            done(new Error());
-            return;
-        }
-        else {
-            options?.log?.({
-                level: LOG_LEVEL_WARN,
-                type: "bind_other",
-                username,
-                other: outcome.other,
-            });
-            done(new Error());
-            return;
-        }
-    })
-    .catch((e) => {
-        options?.log?.({
-            level: LOG_LEVEL_ERROR,
-            type: "bind_throw",
-            message: e?.message,
-            username,
-        });
-        done(e);
+        handle_non_result(outcome, options, username);
+        done(new Error());
         return;
-    })
-    ;
+    }
+    const user: User = { username };
+    if (!options.related_info) {
+        done(null, user);
+        return;
+    }
+    const related_entries_arg = options.related_info.get_related_entries(dn);
+    if (!state.dap_client) {
+        state.dap_client = create_client(options);
+    }
+    assert(state.dap_client);
+    // We need to re-bind if disconnected. This might happen after a period of
+    // inactivity.
+    if (!state.dap_client.rose.is_bound) {
+        const bind_outcome = await bind(options, state.dap_client);
+        if (!("result" in bind_outcome)) {
+            done(new Error());
+            return;
+        }
+    }
+    const related_result = await state.dap_client.search(related_entries_arg);
+    if (!("result" in related_result)) {
+        handle_non_result(related_result, options, username);
+        done(new Error());
+        return;
+    }
+    const related_entries = Array.from(iterateOverSearchResults(related_result.result.parameter));
+    const final_user = options.related_info.calculate_user(user, related_entries);
+    done(null, final_user);
 }
 
 export
@@ -517,27 +468,40 @@ async function search_auth (
         ...search_arg_data,
         sizeLimit: 1,
     });
-    if ("result" in outcome) {
-        // TODO: Add iterateOverSearchResults() function to @wildboar/x500.
-        const result1 = iterateOverSearchResults(outcome.result.parameter).next();
-        if (!result1.value) {
-            options?.log?.({
-                level: LOG_LEVEL_WARN,
-                type: "no_results",
-                username,
-            });
-            done(new Error());
-            return;
-        }
-        const entry = result1.value;
-        assert("search" in options.substrategy);
-        const user = options.substrategy.search.entry_to_user(entry);
-        done(null, user);
-    }
-    else {
+    if (!("result" in outcome)) {
         handle_non_result(outcome, options, username);
         done(new Error());
+        return;
     }
+    // TODO: Add iterateOverSearchResults() function to @wildboar/x500.
+    const result1 = iterateOverSearchResults(outcome.result.parameter).next();
+    if (!result1.value) {
+        options?.log?.({
+            level: LOG_LEVEL_WARN,
+            type: "no_results",
+            username,
+        });
+        done(new Error());
+        return;
+    }
+    const entry = result1.value;
+    assert("search" in options.substrategy);
+    const user_info = options.substrategy.search.entry_to_user(entry);
+    const user: User = { username, ...user_info };
+    if (!options.related_info) {
+        done(null, user);
+        return;
+    }
+    const related_entries_arg = options.related_info.get_related_entries(search_arg_data.baseObject);
+    const related_result = await dap_client.search(related_entries_arg);
+    if (!("result" in related_result)) {
+        handle_non_result(related_result, options, username);
+        done(new Error());
+        return;
+    }
+    const related_entries = Array.from(iterateOverSearchResults(related_result.result.parameter));
+    const final_user = options.related_info.calculate_user(user, related_entries);
+    done(null, final_user);
 }
 
 export
@@ -606,7 +570,7 @@ async function compare_auth (
     const user_info = options.substrategy.compare.entry_to_user(read_data.entry);
     const user: User = { username, ...user_info };
     if (!options.related_info) {
-        done(null, { username, ...user_info });
+        done(null, user);
         return;
     }
     const related_entries_arg = options.related_info.get_related_entries(name);
@@ -630,7 +594,9 @@ function get_auth_function (options: X500PassportStrategyOptions): [ Promise<DAP
         bind(options),
         function (username: string, password: string, done: DoneCallback) {
             if ("direct" in options.substrategy) {
-                direct_auth(options, username, password, done);
+                direct_auth(state, options, username, password, done)
+                    .then()
+                    .catch((e) => done(e));
             } else if ("search" in options.substrategy) {
                 search_auth(state, options, username, password, done)
                     .then()
