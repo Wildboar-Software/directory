@@ -62,6 +62,7 @@ import {
 import { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
 import {
     AbortReason,
+    OperationOutcome,
     RejectReason,
 } from "@wildboar/rose-transport";
 import { DirectoryBindArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
@@ -207,8 +208,16 @@ Additional features:
 export type User = Record<string, unknown>;
 
 export
-interface PostAuthenticateReadable {
-    read_arg?: (dn: Name) => ReadOptions;
+interface IntoUser {
+    entry_to_user: (entry: EntryInformation) => User;
+}
+
+/**
+ * This extends `IntoUser`, because you have to convert the entry to the user.
+ */
+export
+interface PostAuthenticateReadable extends Partial<IntoUser> {
+    get_read_arg?: (dn: Name) => ReadOptions;
 }
 
 export
@@ -217,9 +226,8 @@ interface DirectSubstrategyOptions extends PostAuthenticateReadable {
 }
 
 export
-interface SearchSubstrategyOptions {
-    creds_to_arg: (username: string, password: string) => SearchArgumentData,
-    entry_to_user: (entry: EntryInformation) => User,
+interface SearchSubstrategyOptions extends IntoUser {
+    creds_to_arg: (username: string, password: string) => SearchArgumentData;
 }
 
 export
@@ -240,22 +248,34 @@ export type X500PassportSubstrategy =
     ;
 
 export
+interface RelatedInfoOptions {
+
+    /* TODO:
+        Is there some way to allow this to recurse so a user could fetch
+        user -> groups -> roles on groups -> permissions on roles -> etc...?
+        Theoretically, a savvy user could just fetch and cache the roles and
+        permissions per group up front, which would be the smart thing to do
+        anyway.
+     */
+    /**
+     * This can be used for getting group memberships, roles, devices, etc.
+     */
+     get_related_entries: (dn: Name) => SearchOptions;
+
+     calculate_user: (
+         user: User,
+         other_entries: EntryInformation[],
+     ) => User;
+}
+
+export
 interface X500PassportStrategyOptions extends DAPOptions {
     url: string | URL;
     timeout_ms?: number;
     bind_as?: () => DAPBindParameters;
     substrategy: X500PassportSubstrategy;
     log?: (event: LogEvent) => unknown;
-
-    /**
-     * This can be used for getting group memberships, roles, devices, etc.
-     */
-    get_related_entries?: (dn: Name) => SearchOptions,
-
-    calculate_user?: (
-        user: User,
-        other_entries: EntryInformation[],
-    ) => User,
+    related_info?: RelatedInfoOptions;
 }
 
 export
@@ -291,6 +311,57 @@ function bind (options: X500PassportStrategyOptions, dap_client?: DAPClient): Pr
         ...bind_arg ?? {},
         protocol_id: id_ac_directoryAccessAC,
     });
+}
+
+export
+function handle_non_result (
+    outcome: OperationOutcome<any>,
+    options: X500PassportStrategyOptions,
+    username: string,
+): void {
+    if ("result" in outcome) {
+        return;
+    }
+    else if ("error" in outcome) {
+        // TODO: Add extract problem function to @wildboar/x500.
+        options?.log?.({
+            level: LOG_LEVEL_WARN,
+            type: "error",
+            username,
+            error_code: outcome.error.code,
+        });
+    }
+    else if ("reject" in outcome) {
+        options?.log?.({
+            level: LOG_LEVEL_WARN,
+            type: "reject",
+            error_problem_str: rejectReasonToString[outcome.reject.problem],
+            username,
+        });
+    }
+    else if ("abort" in outcome) {
+        options?.log?.({
+            level: LOG_LEVEL_WARN,
+            type: "abort",
+            error_problem_str: abortReasonToString[outcome.abort],
+            username,
+        });
+    }
+    else if ("timeout" in outcome) {
+        options?.log?.({
+            level: LOG_LEVEL_WARN,
+            type: "timeout",
+            username,
+        });
+    }
+    else {
+        options?.log?.({
+            level: LOG_LEVEL_WARN,
+            type: "other",
+            username,
+            other: outcome.other,
+        });
+    }
 }
 
 export
@@ -463,49 +534,8 @@ async function search_auth (
         const user = options.substrategy.search.entry_to_user(entry);
         done(null, user);
     }
-    else if ("error" in outcome) {
-        // TODO: Add extract problem function to @wildboar/x500.
-        options?.log?.({
-            level: LOG_LEVEL_WARN,
-            type: "error",
-            username,
-            error_code: outcome.error.code,
-        });
-        done(new Error());
-    }
-    else if ("reject" in outcome) {
-        options?.log?.({
-            level: LOG_LEVEL_WARN,
-            type: "reject",
-            error_problem_str: rejectReasonToString[outcome.reject.problem],
-            username,
-        });
-        done(new Error());
-    }
-    else if ("abort" in outcome) {
-        options?.log?.({
-            level: LOG_LEVEL_WARN,
-            type: "abort",
-            error_problem_str: abortReasonToString[outcome.abort],
-            username,
-        });
-        done(new Error());
-    }
-    else if ("timeout" in outcome) {
-        options?.log?.({
-            level: LOG_LEVEL_WARN,
-            type: "timeout",
-            username,
-        });
-        done(new Error());
-    }
     else {
-        options?.log?.({
-            level: LOG_LEVEL_WARN,
-            type: "other",
-            username,
-            other: outcome.other,
-        });
+        handle_non_result(outcome, options, username);
         done(new Error());
     }
 }
@@ -545,67 +575,50 @@ async function compare_auth (
         timeLimit: 15,
     };
     const outcome = await dap_client.compare(compare_arg);
-    if ("result" in outcome) {
-        const data = getOptionallyProtectedValue(outcome.result.parameter);
-        if (data.matched) {
-            done(null, { username });
-        } else {
-            // WARNING: This MUST be the same behavior taken if
-            // the entry does not exist, otherwise, it could
-            // lead to information disclosure vulnerabilities.
-            done();
-        }
+    if (!("result" in outcome)) {
+        handle_non_result(outcome, options, username);
+        done(new Error());
         return;
     }
-    else if ("error" in outcome) {
-        options?.log?.({
-            level: LOG_LEVEL_WARN,
-            type: "error",
-            username,
-            error_code: outcome.error.code,
-        });
+    const data = getOptionallyProtectedValue(outcome.result.parameter);
+    if (!data.matched) {
+        // WARNING: This MUST be the same behavior taken if
+        // the entry does not exist, otherwise, it could
+        // lead to information disclosure vulnerabilities.
         done();
         return;
     }
-    else if ("reject" in outcome) {
-        options?.log?.({
-            level: LOG_LEVEL_WARN,
-            type: "reject",
-            error_problem_str: rejectReasonToString[outcome.reject.problem],
-            username,
-        });
+    if (
+        !options.substrategy.compare.get_read_arg
+        || !options.substrategy.compare.entry_to_user
+    ) {
+        done(null, { username });
+        return;
+    }
+
+    const read_arg = options.substrategy.compare.get_read_arg(name);
+    const read_outcome = await dap_client.read(read_arg);
+    if (!("result" in read_outcome)) {
         done(new Error());
         return;
     }
-    else if ("abort" in outcome) {
-        options?.log?.({
-            level: LOG_LEVEL_WARN,
-            type: "abort",
-            error_problem_str: abortReasonToString[outcome.abort],
-            username,
-        });
+    const read_data = getOptionallyProtectedValue(read_outcome.result.parameter);
+    const user_info = options.substrategy.compare.entry_to_user(read_data.entry);
+    const user: User = { username, ...user_info };
+    if (!options.related_info) {
+        done(null, { username, ...user_info });
+        return;
+    }
+    const related_entries_arg = options.related_info.get_related_entries(name);
+    const related_result = await dap_client.search(related_entries_arg);
+    if (!("result" in related_result)) {
+        handle_non_result(related_result, options, username);
         done(new Error());
         return;
     }
-    else if ("timeout" in outcome) {
-        options?.log?.({
-            level: LOG_LEVEL_WARN,
-            type: "timeout",
-            username,
-        });
-        done(new Error());
-        return;
-    }
-    else {
-        options?.log?.({
-            level: LOG_LEVEL_WARN,
-            type: "other",
-            username,
-            other: outcome.other,
-        });
-        done(new Error());
-        return;
-    }
+    const related_entries = Array.from(iterateOverSearchResults(related_result.result.parameter));
+    const final_user = options.related_info.calculate_user(user, related_entries);
+    done(null, final_user);
 }
 
 export
