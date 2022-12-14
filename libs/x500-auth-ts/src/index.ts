@@ -7,6 +7,7 @@ import {
     CompareOptions,
     SearchOptions,
     ReadOptions,
+    DAPBindOutcome,
 } from "@wildboar/x500-client-ts";
 import { URL } from "node:url";
 import type {
@@ -257,11 +258,16 @@ interface X500PassportStrategyOptions extends DAPOptions {
     ) => User,
 }
 
+export
+interface AuthFunctionState {
+    dap_client?: DAPClient | null | undefined;
+};
+
 export type DoneCallback = (err?: any, user?: User | null) => unknown;
 export type AuthFunction = (username: string, password: string, done: DoneCallback) => void;
 
 export
-function get_auth_function (options: X500PassportStrategyOptions): AuthFunction {
+function create_client (options: X500PassportStrategyOptions) {
     const rose = rose_from_url(options.url);
     if (!rose) {
         throw new Error(
@@ -270,409 +276,376 @@ function get_auth_function (options: X500PassportStrategyOptions): AuthFunction 
             + `Your (invalid) URL was: ${options.url}`
         );
     }
-    const dap_client: DAPClient = create_dap_client(rose);
+    return create_dap_client(rose);
+}
+
+export
+function bind (options: X500PassportStrategyOptions, dap_client?: DAPClient): Promise<DAPBindOutcome> {
+    const dap = dap_client ?? create_client(options);
     const bind_arg = options.bind_as?.();
-    dap_client.bind({
+    return dap.bind({
         parameter: new DirectoryBindArgument(
             undefined,
             new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT ]),
         ),
         ...bind_arg ?? {},
         protocol_id: id_ac_directoryAccessAC,
+    });
+}
+
+export
+function direct_auth (
+    options: X500PassportStrategyOptions,
+    username: string,
+    password: string,
+    done: DoneCallback,
+) {
+    assert("direct" in options.substrategy);
+    const dn = options.substrategy.direct.get_directory_name_from_username(username);
+    if (!dn) {
+        done(new Error("4fa0a1e0-2571-4a05-aae4-b24042e42ce6"));
+        return;
+    }
+    const rose = rose_from_url(options.url);
+    if (!rose) {
+        done(new Error("435ed6db-3bb8-469f-9dab-d247943030d3"));
+        return;
+    }
+    const dap = create_dap_client(rose);
+    dap.bind({
+        protocol_id: id_ac_directoryAccessAC,
+        parameter: {
+            credentials: {
+                simple: new SimpleCredentials(
+                    dn.rdnSequence,
+                    undefined,
+                    {
+                        unprotected: Buffer.from(password),
+                    },
+                ),
+            },
+            versions: new Uint8ClampedArray([
+                TRUE_BIT,
+                TRUE_BIT,
+            ]),
+            _unrecognizedExtensionsList: [],
+        },
     })
-        .then((outcome) => {
-            if ("result" in outcome) {
-                options.log?.({
-                    level: LOG_LEVEL_INFO,
-                    type: "bind",
-                });
+    .then((outcome) => {
+        if ("result" in outcome) {
+            done(null, { username });
+            return;
+        }
+        else if ("error" in outcome) {
+            if (outcome.error.code) { // Not understood error type.
+                done(new Error());
                 return;
             }
-            else if ("error" in outcome) {
-                if (outcome.error.code) { // Not understood error type.
-                    options.log?.({
-                        level: LOG_LEVEL_ERROR,
-                        type: "bind",
-                    });
-                    return;
-                }
-                const dirBindError = directoryBindError.decoderFor["&ParameterType"]!(outcome.error.parameter);
-                const data = getOptionallyProtectedValue(dirBindError);
-                if ("serviceError" in data.error) {
-                    options?.log?.({
-                        level: LOG_LEVEL_ERROR,
-                        type: "bind_error/service/error",
-                        error_problem_num: Number(data.error.serviceError),
-                        error_problem_str: serviceProblemToMessage[data.error.serviceError as number],
-                    });
-                }
-                else if ("securityError" in data.error) {
-                    options?.log?.({
-                        level: LOG_LEVEL_ERROR,
-                        type: "bind_error/security_error",
-                        error_problem_num: Number(data.error.securityError),
-                        error_problem_str: securityProblemToMessage[data.error.securityError as number],
-                    });
-                }
-                else {
-                    options?.log?.({
-                        level: LOG_LEVEL_ERROR,
-                        type: "bind_error/other_error",
-                    });
-                }
-                return;
-            }
-            else if ("abort" in outcome) {
+            const dirBindError = directoryBindError.decoderFor["&ParameterType"]!(outcome.error.parameter);
+            const data = getOptionallyProtectedValue(dirBindError);
+            if ("serviceError" in data.error) {
                 options?.log?.({
-                    level: LOG_LEVEL_ERROR,
-                    type: "bind_abort",
-                    error_problem_str: abortReasonToString[outcome.abort],
+                    level: LOG_LEVEL_WARN,
+                    type: "bind_error/service_error",
+                    error_problem_num: Number(data.error.serviceError),
+                    error_problem_str: serviceProblemToMessage[data.error.serviceError as number],
+                    username,
                 });
+                done(new Error());
                 return;
             }
-            else if ("timeout" in outcome) {
+            else if ("securityError" in data.error) {
                 options?.log?.({
-                    level: LOG_LEVEL_ERROR,
-                    type: "bind_timeout",
+                    level: LOG_LEVEL_WARN,
+                    type: "bind_error/security_error",
+                    error_problem_num: Number(data.error.securityError),
+                    error_problem_str: securityProblemToMessage[data.error.securityError as number],
+                    username,
                 });
+                done(new Error());
                 return;
             }
             else {
                 options?.log?.({
-                    level: LOG_LEVEL_ERROR,
-                    type: "bind_other",
+                    level: LOG_LEVEL_WARN,
+                    type: "bind_error/other_error",
+                    username,
+                });
+                done(new Error());
+                return;
+            }
+        }
+        else if ("abort" in outcome) {
+            options?.log?.({
+                level: LOG_LEVEL_WARN,
+                type: "bind_abort",
+                error_problem_str: abortReasonToString[outcome.abort],
+                username,
+            });
+            done(new Error());
+            return;
+        }
+        else if ("timeout" in outcome) {
+            options?.log?.({
+                level: LOG_LEVEL_WARN,
+                type: "bind_timeout",
+                username,
+            });
+            done(new Error());
+            return;
+        }
+        else {
+            options?.log?.({
+                level: LOG_LEVEL_WARN,
+                type: "bind_other",
+                username,
+                other: outcome.other,
+            });
+            done(new Error());
+            return;
+        }
+    })
+    .catch((e) => {
+        options?.log?.({
+            level: LOG_LEVEL_ERROR,
+            type: "bind_throw",
+            message: e?.message,
+            username,
+        });
+        done(e);
+        return;
+    })
+    ;
+}
+
+export
+async function search_auth (
+    state: AuthFunctionState,
+    options: X500PassportStrategyOptions,
+    username: string,
+    password: string,
+    done: DoneCallback,
+): Promise<void> {
+    assert("search" in options.substrategy);
+    if (!state.dap_client) {
+        state.dap_client = create_client(options);
+    }
+    assert(state.dap_client);
+    // We need to re-bind if disconnected. This might happen after a period of
+    // inactivity.
+    if (!state.dap_client.rose.is_bound) {
+        const bind_outcome = await bind(options, state.dap_client);
+        if (!("result" in bind_outcome)) {
+            done(new Error());
+            return;
+        }
+    }
+    const dap_client = state.dap_client;
+    const search_arg_data = options.substrategy.search.creds_to_arg(username, password);
+    const outcome = await dap_client.search({
+        ...search_arg_data,
+        sizeLimit: 1,
+    });
+    if ("result" in outcome) {
+        // TODO: Add iterateOverSearchResults() function to @wildboar/x500.
+        const result1 = iterateOverSearchResults(outcome.result.parameter).next();
+        if (!result1.value) {
+            options?.log?.({
+                level: LOG_LEVEL_WARN,
+                type: "no_results",
+                username,
+            });
+            done(new Error());
+            return;
+        }
+        const entry = result1.value;
+        assert("search" in options.substrategy);
+        const user = options.substrategy.search.entry_to_user(entry);
+        done(null, user);
+    }
+    else if ("error" in outcome) {
+        // TODO: Add extract problem function to @wildboar/x500.
+        options?.log?.({
+            level: LOG_LEVEL_WARN,
+            type: "error",
+            username,
+            error_code: outcome.error.code,
+        });
+        done(new Error());
+    }
+    else if ("reject" in outcome) {
+        options?.log?.({
+            level: LOG_LEVEL_WARN,
+            type: "reject",
+            error_problem_str: rejectReasonToString[outcome.reject.problem],
+            username,
+        });
+        done(new Error());
+    }
+    else if ("abort" in outcome) {
+        options?.log?.({
+            level: LOG_LEVEL_WARN,
+            type: "abort",
+            error_problem_str: abortReasonToString[outcome.abort],
+            username,
+        });
+        done(new Error());
+    }
+    else if ("timeout" in outcome) {
+        options?.log?.({
+            level: LOG_LEVEL_WARN,
+            type: "timeout",
+            username,
+        });
+        done(new Error());
+    }
+    else {
+        options?.log?.({
+            level: LOG_LEVEL_WARN,
+            type: "other",
+            username,
+            other: outcome.other,
+        });
+        done(new Error());
+    }
+}
+
+export
+async function compare_auth (
+    state: AuthFunctionState,
+    options: X500PassportStrategyOptions,
+    username: string,
+    password: string,
+    done: DoneCallback,
+): Promise<void> {
+    assert("compare" in options.substrategy);
+    if (!state.dap_client) {
+        state.dap_client = create_client(options);
+    }
+    assert(state.dap_client);
+    // We need to re-bind if disconnected. This might happen after a period of
+    // inactivity.
+    if (!state.dap_client.rose.is_bound) {
+        const bind_outcome = await bind(options, state.dap_client);
+        if (!("result" in bind_outcome)) {
+            done(new Error());
+            return;
+        }
+    }
+    const dap_client = state.dap_client;
+    const [ name, calculated_compare_arg ] = options.substrategy.compare.get_compare_arg(username, password);
+    const compare_arg: CompareOptions = calculated_compare_arg ?? {
+        object: name,
+        purported: new AttributeValueAssertion(
+            userPwd["&id"],
+            userPwd.encoderFor["&Type"]!({
+                clear: password,
+            }, BER),
+        ),
+        timeLimit: 15,
+    };
+    dap_client.compare(compare_arg)
+        .then((outcome) => {
+            if ("result" in outcome) {
+                const data = getOptionallyProtectedValue(outcome.result.parameter);
+                if (data.matched) {
+                    done(null, { username });
+                } else {
+                    // WARNING: This MUST be the same behavior taken if
+                    // the entry does not exist, otherwise, it could
+                    // lead to information disclosure vulnerabilities.
+                    done();
+                }
+                return;
+            }
+            else if ("error" in outcome) {
+                options?.log?.({
+                    level: LOG_LEVEL_WARN,
+                    type: "error",
+                    username,
+                    error_code: outcome.error.code,
+                });
+                done();
+                return;
+            }
+            else if ("reject" in outcome) {
+                options?.log?.({
+                    level: LOG_LEVEL_WARN,
+                    type: "reject",
+                    error_problem_str: rejectReasonToString[outcome.reject.problem],
+                    username,
+                });
+                done(new Error());
+                return;
+            }
+            else if ("abort" in outcome) {
+                options?.log?.({
+                    level: LOG_LEVEL_WARN,
+                    type: "abort",
+                    error_problem_str: abortReasonToString[outcome.abort],
+                    username,
+                });
+                done(new Error());
+                return;
+            }
+            else if ("timeout" in outcome) {
+                options?.log?.({
+                    level: LOG_LEVEL_WARN,
+                    type: "timeout",
+                    username,
+                });
+                done(new Error());
+                return;
+            }
+            else {
+                options?.log?.({
+                    level: LOG_LEVEL_WARN,
+                    type: "other",
+                    username,
                     other: outcome.other,
                 });
+                done(new Error());
                 return;
             }
         })
         .catch((e) => {
             options?.log?.({
                 level: LOG_LEVEL_ERROR,
-                type: "bind_throw",
+                type: "compare_throw",
                 message: e?.message,
+                username,
+                other: {
+                    "warning": "You should NOT log this entire object. It could contain passwords.",
+                    ...compare_arg,
+                },
             });
+            done(e);
+            return;
         })
         ;
+}
 
-    return function (username: string, password: string, done: DoneCallback) {
-        if ("direct" in options.substrategy) {
-            const dn = options.substrategy.direct.get_directory_name_from_username(username);
-            if (!dn) {
-                done(new Error("4fa0a1e0-2571-4a05-aae4-b24042e42ce6"));
-                return;
-            }
-            const rose = rose_from_url(options.url);
-            if (!rose) {
-                done(new Error("435ed6db-3bb8-469f-9dab-d247943030d3"));
-                return;
-            }
-            const dap = create_dap_client(rose);
-            dap.bind({
-                protocol_id: id_ac_directoryAccessAC,
-                parameter: {
-                    credentials: {
-                        simple: new SimpleCredentials(
-                            dn.rdnSequence,
-                            undefined,
-                            {
-                                unprotected: Buffer.from(password),
-                            },
-                        ),
-                    },
-                    versions: new Uint8ClampedArray([
-                        TRUE_BIT,
-                        TRUE_BIT,
-                    ]),
-                    _unrecognizedExtensionsList: [],
-                },
-            })
-            .then((outcome) => {
-                if ("result" in outcome) {
-                    done(null, { username });
-                    return;
-                }
-                else if ("error" in outcome) {
-                    if (outcome.error.code) { // Not understood error type.
-                        done(new Error());
-                        return;
-                    }
-                    const dirBindError = directoryBindError.decoderFor["&ParameterType"]!(outcome.error.parameter);
-                    const data = getOptionallyProtectedValue(dirBindError);
-                    if ("serviceError" in data.error) {
-                        options?.log?.({
-                            level: LOG_LEVEL_WARN,
-                            type: "bind_error/service_error",
-                            error_problem_num: Number(data.error.serviceError),
-                            error_problem_str: serviceProblemToMessage[data.error.serviceError as number],
-                            username,
-                        });
-                        done(new Error());
-                        return;
-                    }
-                    else if ("securityError" in data.error) {
-                        options?.log?.({
-                            level: LOG_LEVEL_WARN,
-                            type: "bind_error/security_error",
-                            error_problem_num: Number(data.error.securityError),
-                            error_problem_str: securityProblemToMessage[data.error.securityError as number],
-                            username,
-                        });
-                        done(new Error());
-                        return;
-                    }
-                    else {
-                        options?.log?.({
-                            level: LOG_LEVEL_WARN,
-                            type: "bind_error/other_error",
-                            username,
-                        });
-                        done(new Error());
-                        return;
-                    }
-                }
-                else if ("abort" in outcome) {
-                    options?.log?.({
-                        level: LOG_LEVEL_WARN,
-                        type: "bind_abort",
-                        error_problem_str: abortReasonToString[outcome.abort],
-                        username,
-                    });
-                    done(new Error());
-                    return;
-                }
-                else if ("timeout" in outcome) {
-                    options?.log?.({
-                        level: LOG_LEVEL_WARN,
-                        type: "bind_timeout",
-                        username,
-                    });
-                    done(new Error());
-                    return;
-                }
-                else {
-                    options?.log?.({
-                        level: LOG_LEVEL_WARN,
-                        type: "bind_other",
-                        username,
-                        other: outcome.other,
-                    });
-                    done(new Error());
-                    return;
-                }
-            })
-            .catch((e) => {
-                options?.log?.({
-                    level: LOG_LEVEL_ERROR,
-                    type: "bind_throw",
-                    message: e?.message,
-                    username,
-                });
-                done(e);
-                return;
-            })
-            ;
-        } else if ("search" in options.substrategy) {
-            if (!dap_client.rose.is_bound) {
-                options?.log?.({
-                    level: LOG_LEVEL_WARN,
-                    type: "rose_unbound",
-                });
-                done(new Error());
-                return;
-            }
-            const search_arg_data = options.substrategy.search.creds_to_arg(username, password);
-            dap_client.search({
-                ...search_arg_data,
-                sizeLimit: 1,
-            })
-                .then((outcome) => {
-                    if ("result" in outcome) {
-                        // TODO: Add iterateOverSearchResults() function to @wildboar/x500.
-                        const result1 = iterateOverSearchResults(outcome.result.parameter).next();
-                        if (!result1.value) {
-                            options?.log?.({
-                                level: LOG_LEVEL_WARN,
-                                type: "no_results",
-                                username,
-                            });
-                            done(new Error());
-                            return;
-                        }
-                        const entry = result1.value;
-                        assert("search" in options.substrategy);
-                        const user = options.substrategy.search.entry_to_user(entry);
-                        done(null, user);
-                        return;
-                    }
-                    else if ("error" in outcome) {
-                        // TODO: Add extract problem function to @wildboar/x500.
-                        options?.log?.({
-                            level: LOG_LEVEL_WARN,
-                            type: "error",
-                            username,
-                            error_code: outcome.error.code,
-                        });
-                        done(new Error());
-                        return;
-                    }
-                    else if ("reject" in outcome) {
-                        options?.log?.({
-                            level: LOG_LEVEL_WARN,
-                            type: "reject",
-                            error_problem_str: rejectReasonToString[outcome.reject.problem],
-                            username,
-                        });
-                        done(new Error());
-                        return;
-                    }
-                    else if ("abort" in outcome) {
-                        options?.log?.({
-                            level: LOG_LEVEL_WARN,
-                            type: "abort",
-                            error_problem_str: abortReasonToString[outcome.abort],
-                            username,
-                        });
-                        done(new Error());
-                        return;
-                    }
-                    else if ("timeout" in outcome) {
-                        options?.log?.({
-                            level: LOG_LEVEL_WARN,
-                            type: "timeout",
-                            username,
-                        });
-                        done(new Error());
-                        return;
-                    }
-                    else {
-                        options?.log?.({
-                            level: LOG_LEVEL_WARN,
-                            type: "other",
-                            username,
-                            other: outcome.other,
-                        });
-                        done(new Error());
-                        return;
-                    }
-                })
-                .catch((e) => {
-                    options?.log?.({
-                        level: LOG_LEVEL_ERROR,
-                        type: "search_throw",
-                        message: e?.message,
-                        username,
-                        other: {
-                            "warning": "You should NOT log this entire object. It could contain passwords.",
-                            ...search_arg_data,
-                        },
-                    });
-                    done(e);
-                    return;
-                })
-                ;
-        } else if ("compare" in options.substrategy) {
-            if (!dap_client.rose.is_bound) {
-                options?.log?.({
-                    level: LOG_LEVEL_WARN,
-                    type: "rose_unbound",
-                });
-                done(new Error());
-                return;
-            }
-            const [ name, calculated_compare_arg ] = options.substrategy.compare.get_compare_arg(username, password);
-            const compare_arg: CompareOptions = calculated_compare_arg ?? {
-                object: name,
-                purported: new AttributeValueAssertion(
-                    userPwd["&id"],
-                    userPwd.encoderFor["&Type"]!({
-                        clear: password,
-                    }, BER),
-                ),
-                timeLimit: 15,
-            };
-            dap_client.compare(compare_arg)
-                .then((outcome) => {
-                    if ("result" in outcome) {
-                        const data = getOptionallyProtectedValue(outcome.result.parameter);
-                        if (data.matched) {
-                            done(null, { username });
-                        } else {
-                            // WARNING: This MUST be the same behavior taken if
-                            // the entry does not exist, otherwise, it could
-                            // lead to information disclosure vulnerabilities.
-                            done();
-                        }
-                        return;
-                    }
-                    else if ("error" in outcome) {
-                        options?.log?.({
-                            level: LOG_LEVEL_WARN,
-                            type: "error",
-                            username,
-                            error_code: outcome.error.code,
-                        });
-                        done();
-                        return;
-                    }
-                    else if ("reject" in outcome) {
-                        options?.log?.({
-                            level: LOG_LEVEL_WARN,
-                            type: "reject",
-                            error_problem_str: rejectReasonToString[outcome.reject.problem],
-                            username,
-                        });
-                        done(new Error());
-                        return;
-                    }
-                    else if ("abort" in outcome) {
-                        options?.log?.({
-                            level: LOG_LEVEL_WARN,
-                            type: "abort",
-                            error_problem_str: abortReasonToString[outcome.abort],
-                            username,
-                        });
-                        done(new Error());
-                        return;
-                    }
-                    else if ("timeout" in outcome) {
-                        options?.log?.({
-                            level: LOG_LEVEL_WARN,
-                            type: "timeout",
-                            username,
-                        });
-                        done(new Error());
-                        return;
-                    }
-                    else {
-                        options?.log?.({
-                            level: LOG_LEVEL_WARN,
-                            type: "other",
-                            username,
-                            other: outcome.other,
-                        });
-                        done(new Error());
-                        return;
-                    }
-                })
-                .catch((e) => {
-                    options?.log?.({
-                        level: LOG_LEVEL_ERROR,
-                        type: "compare_throw",
-                        message: e?.message,
-                        username,
-                        other: {
-                            "warning": "You should NOT log this entire object. It could contain passwords.",
-                            ...compare_arg,
-                        },
-                    });
-                    done(e);
-                    return;
-                })
-                ;
-        } else {
-            done(new Error());
-            return;
-        }
+export
+function get_auth_function (options: X500PassportStrategyOptions): [ Promise<DAPBindOutcome>, AuthFunction ] {
+    const state: AuthFunctionState = {
+        dap_client: null,
     };
+    return [
+        bind(options),
+        function (username: string, password: string, done: DoneCallback) {
+            if ("direct" in options.substrategy) {
+                direct_auth(options, username, password, done);
+            } else if ("search" in options.substrategy) {
+                search_auth(state, options, username, password, done)
+                    .then()
+                    .catch((e) => done(e));
+            } else if ("compare" in options.substrategy) {
+                compare_auth(state, options, username, password, done)
+                    .then()
+                    .catch((e) => done(e));
+            } else {
+                done(new Error());
+            }
+        }
+    ];
 }
