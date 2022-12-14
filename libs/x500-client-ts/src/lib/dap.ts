@@ -252,8 +252,9 @@ interface ListOptions extends CommonArguments, DAPOperationOptions, TargetsObjec
 }
 
 export
-interface SearchOptions extends CommonArguments, DAPOperationOptions, TargetsObject {
-    subset?: "base" | "level" | "subtree" | 0 | 1 | 2,
+interface SearchOptions extends CommonArguments, DAPOperationOptions, Partial<TargetsObject> {
+    baseObject: TargetsObject["object"],
+    subset?: "base" | "level" | "subtree" | 0 | 1 | 2 | SearchArgumentData["subset"],
     filter?: Filter;
     searchAliases?: boolean;
     selection?: SelectionOptions;
@@ -262,7 +263,7 @@ interface SearchOptions extends CommonArguments, DAPOperationOptions, TargetsObj
     extendedFilter?: Filter;
     checkOverspecified?: boolean;
     relaxation?: RelaxationOptions;
-    extendedArea?: number;
+    extendedArea?: SearchArgumentData["extendedArea"];
     hierarchySelection?: HierarchySelectionOptions;
     searchControls?: SearchControls;
     joinArguments?: JoinArgumentOptions[];
@@ -583,7 +584,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
             }
         },
         search: async (params: SearchOptions): Promise<OperationOutcome<typeof search["&ResultType"]>> => {
-            const name = name_option_to_name(params.object);
+            const name = name_option_to_name(params.baseObject ?? params.object);
             if (!name) {
                 return {
                     other: {
@@ -627,7 +628,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                         0: SearchArgumentData_subset_baseObject,
                         1: SearchArgumentData_subset_oneLevel,
                         2: SearchArgumentData_subset_wholeSubtree,
-                    })[params.subset]
+                    })[typeof params.subset === "string" ? params.subset : Number()]
                     : undefined,
                 params.filter,
                 params.searchAliases,

@@ -8,6 +8,7 @@ import {
     FALSE_BIT,
     TRUE_BIT,
     BERElement,
+    INTEGER,
 } from "asn1-ts";
 import destringifyLDAPDN from "@wildboar/ldap/src/lib/destringifiers/RDNSequence";
 import type {
@@ -426,10 +427,13 @@ export type ReferenceType =
     ;
 
 export
-function ref_type_from (rt?: ReferenceType): ENUMERATED | undefined {
+function ref_type_from (rt?: ReferenceType | INTEGER): ENUMERATED | undefined {
     if (!rt) {
         return undefined;
     }
+    const key = typeof rt === "bigint"
+        ? Number(rt)
+        : rt;
     return ({
         "superior": ReferenceType_superior,
         "supr": ReferenceType_superior,
@@ -454,7 +458,7 @@ function ref_type_from (rt?: ReferenceType): ENUMERATED | undefined {
         7: ReferenceType_immediateSuperior,
         8: ReferenceType_self,
         9: ReferenceType_ditBridge,
-    })[rt];
+    })[key];
 }
 
 export
@@ -505,7 +509,7 @@ interface CommonArguments extends ServiceOptions, SecurityOptions {
     requestor?: CommonArgumentsSeq["requestor"];
     operationProgress?: CommonArgumentsSeq["operationProgress"];
     aliasedRDNs?: CommonArgumentsSeq["aliasedRDNs"];
-    referenceType?: ReferenceType;
+    referenceType?: ReferenceType | INTEGER;
     entryOnly?: CommonArgumentsSeq["entryOnly"];
     exclusions?: CommonArgumentsSeq["exclusions"];
     nameResolveOnMaster?: CommonArgumentsSeq["nameResolveOnMaster"];

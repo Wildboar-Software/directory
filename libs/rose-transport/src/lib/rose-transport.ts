@@ -87,7 +87,7 @@ interface BindResultParameters <ParameterType = ASN1Element> {
 export
 interface BindErrorParameters <ParameterType = ASN1Element>
     extends BindResultParameters<ParameterType> {
-
+        code?: Code;
 }
 
 export

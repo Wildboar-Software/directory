@@ -307,6 +307,7 @@
         },
         "parity-schema": "libs/parity-schema",
         "rose-transport": "libs/rose-transport",
+        "x500-auth-ts": "libs/x500-auth-ts",
         "x500-cli": {
             "$schema": "../../node_modules/nx/schemas/project-schema.json",
             "root": "apps/x500-cli",
