@@ -201,5 +201,6 @@
     "no_pwd_slots": "No remaining password history slots to update the password at this time.",
     "pwd_in_history": "This password cannot be reused right now.",
     "pwd_quality": "Insufficient password quality.",
-    "inappropriate_algs": "Password was pre-encrypted with an algorithm not supported by this DSA."
+    "inappropriate_algs": "Password was pre-encrypted with an algorithm not supported by this DSA.",
+    "multiple_passwords_supplied": "Multiple password attributes or values supplied in operation."
 }

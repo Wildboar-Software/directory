@@ -72,9 +72,6 @@ import type {
 import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
-
-const USER_PASSWORD_OID: string = userPassword["&id"].toString();
-const USER_PWD_OID: string = userPwd["&id"].toString();
 import {
     id_ar_pwdAdminSpecificArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-pwdAdminSpecificArea.va";
@@ -93,6 +90,9 @@ import {
     CHECK_PWD_QUALITY_REUSE,
 } from "../password/checkPasswordQuality";
 import { EncPwdInfo } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EncPwdInfo.ta";
+
+const USER_PASSWORD_OID: string = userPassword["&id"].toString();
+const USER_PWD_OID: string = userPwd["&id"].toString();
 
 /**
  * @summary The changePassword operation, as specified in ITU Recommendation X.511.
