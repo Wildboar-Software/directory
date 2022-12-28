@@ -26,5 +26,6 @@ function getScryptAlgorithmIdentifier () {
         ), DER),
     );
 }
+// TODO: I would like a security audit of the above parameters. Are they future-proof?
 
 export default getScryptAlgorithmIdentifier;
