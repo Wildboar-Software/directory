@@ -72,6 +72,7 @@ import {
     OBJECT_IDENTIFIER,
     TRUE_BIT,
     unpackBits,
+    TRUE,
 } from "asn1-ts";
 import {
     DER,
@@ -258,6 +259,12 @@ import { stringifyDN } from "../x500/stringifyDN";
 import { printInvokeId } from "../utils/printInvokeId";
 import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
 import { getEntryExistsFilter } from "../database/entryExistsFilter";
+import {
+    pwdModifyEntryAllowed,
+} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdModifyEntryAllowed.oa";
+import { getAdministrativePoints } from "../dit/getAdministrativePoints";
+import { id_ar_pwdAdminSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-pwdAdminSpecificArea.va";
+import { pwdAdminSubentry } from "@wildboar/x500/src/lib/collections/objectClasses";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -601,6 +608,32 @@ function checkPermissionToAddValues (
             );
         }
     }
+}
+
+// TODO: Password policy applies _per password attribute_. This is something I'll
+// have to change when I re-write Meerkat DSA entirely.
+async function checkPermissionToModifyPassword (
+    ctx: Context,
+    entry: Vertex,
+    targetDN: DistinguishedName,
+): Promise<boolean> {
+    const pwdAdminPoint = getAdministrativePoints(entry)
+        .find((ap) => ap.dse.admPoint?.administrativeRole.has(id_ar_pwdAdminSpecificArea.toString()));
+    if (!pwdAdminPoint) {
+        // If there is no password admin point defined, you can do whatever you want.
+        return true;
+    }
+    const pwdAdminSubentries = (await getRelevantSubentries(ctx, entry, targetDN, pwdAdminPoint))
+        .filter((s) => s.dse.objectClass.has(pwdAdminSubentry["&id"].toString()));
+
+    /**
+     * Technically, there is supposed to be only one password admin subentry per
+     * password attribute, but we just check that all of them permit password
+     * changes via modifyEntry. In Meerkat DSA, there is one hard-coded password
+     * attribute.
+     */
+    return pwdAdminSubentries
+        .every((pas) => pas.dse.subentry?.pwdModifyEntryAllowed ?? false);
 }
 
 /**
@@ -2174,6 +2207,39 @@ async function executeEntryModification (
         signErrors,
     );
 
+    const checkPassword = async (attributeType: AttributeType) => {
+        // In the coming re-write, this should use the `pwdAttribute` attribute to determine this.
+        const modifyingAPasswordAttribute: boolean = (
+            attributeType.isEqualTo(userPwd["&id"])
+            || attributeType.isEqualTo(userPassword["&id"])
+        );
+        const permitted: boolean = !modifyingAPasswordAttribute
+            || await checkPermissionToModifyPassword(ctx, entry, targetDN);
+        if (!permitted) {
+            throw new errors.SecurityError(
+                ctx.i18n.t("err:not_authz_mpw", { context: "pwd_admin" }),
+                new SecurityErrorData(
+                    SecurityProblem_insufficientAccessRights,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        securityError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    aliasDereferenced,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
+
+    };
+
     const checkContextRule = (attribute: Attribute): Attribute => handleContextRule(
         ctx,
         assn,
@@ -2216,6 +2282,7 @@ async function executeEntryModification (
 
     if ("addAttribute" in mod) {
         check(mod.addAttribute.type_, false);
+        checkPassword(mod.addAttribute.type_);
         checkPreclusion(mod.addAttribute.type_);
         const attrWithDefaultContexts = checkContextRule(mod.addAttribute);
         return executeAddAttribute(attrWithDefaultContexts, ...commonArguments);
@@ -2226,6 +2293,7 @@ async function executeEntryModification (
     }
     else if ("addValues" in mod) {
         check(mod.addValues.type_, false);
+        checkPassword(mod.addValues.type_);
         checkPreclusion(mod.addValues.type_);
         const attrWithDefaultContexts = checkContextRule(mod.addValues);
         return executeAddValues(attrWithDefaultContexts, ...commonArguments);
@@ -2276,6 +2344,7 @@ async function executeEntryModification (
     }
     else if ("replaceValues" in mod) {
         check(mod.replaceValues.type_, false);
+        checkPassword(mod.replaceValues.type_);
         checkPreclusion(mod.replaceValues.type_);
         const attrWithDefaultContexts = checkContextRule(mod.replaceValues);
         return executeReplaceValues(attrWithDefaultContexts, ...commonArguments);

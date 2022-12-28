@@ -74,6 +74,15 @@ import {
 
 const USER_PASSWORD_OID: string = userPassword["&id"].toString();
 const USER_PWD_OID: string = userPwd["&id"].toString();
+import {
+    pwdChangeAllowed,
+} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdChangeAllowed.oa";
+import {
+    id_ar_pwdAdminSpecificArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-pwdAdminSpecificArea.va";
+import {
+    pwdAdminSubentry,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAdminSubentry.oa";
 
 /**
  * @summary The changePassword operation, as specified in ITU Recommendation X.511.
@@ -113,7 +122,7 @@ async function changePassword (
         });
     if (!passwordIsPermittedOnThisEntry) {
         throw new errors.SecurityError(
-            ctx.i18n.t("err:not_authz_cpw"),
+            ctx.i18n.t("err:not_authz_cpw", { context: "pwd_admin" }),
             new SecurityErrorData(
                 SecurityProblem_insufficientAccessRights,
                 undefined,
@@ -133,6 +142,50 @@ async function changePassword (
             signErrors,
         );
     }
+
+    const relevantSubentries: Vertex[] = (await Promise.all(
+        state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
+    )).flat();
+
+    // TODO: Password policy applies _per password attribute_. This is something I'll
+    // have to change when I re-write Meerkat DSA entirely.
+    const pwdAdminPoint = state.admPoints
+        .find((ap) => ap.dse.admPoint?.administrativeRole.has(id_ar_pwdAdminSpecificArea.toString()));
+    if (pwdAdminPoint) {
+        const pwdAdminSubentries = relevantSubentries
+            .filter((s) => s.dse.objectClass.has(pwdAdminSubentry["&id"].toString()));
+        /**
+         * Technically, there is supposed to be only one password admin subentry per
+         * password attribute, but we just check that all of them permit password
+         * changes via modifyEntry. In Meerkat DSA, there is one hard-coded password
+         * attribute.
+         */
+        const allowed: boolean = pwdAdminSubentries
+            .some((pas) => pas.dse.subentry?.pwdModifyEntryAllowed);
+        if (!allowed) {
+            throw new errors.SecurityError(
+                ctx.i18n.t("err:not_authz_cpw"),
+                new SecurityErrorData(
+                    SecurityProblem_insufficientAccessRights,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        securityError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
+    } // If there is no password admin point defined, you can do whatever you want.
+
     const argument: ChangePasswordArgument = _decode_ChangePasswordArgument(state.operationArgument);
     // #region Signature validation
     /**
@@ -159,9 +212,7 @@ async function changePassword (
             state.chainingArguments.uniqueIdentifier,
         )
         : undefined;
-    const relevantSubentries: Vertex[] = (await Promise.all(
-        state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
-    )).flat();
+
     const accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
         .reverse()
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;

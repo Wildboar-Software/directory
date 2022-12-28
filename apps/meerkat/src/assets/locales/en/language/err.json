@@ -35,6 +35,8 @@
     "abandoned": "Abandoned.",
     "not_authz_apw": "Not authorized to administer the password of this entry.",
     "not_authz_cpw": "Not authorized to change the password of this entry.",
+    "not_authz_cpw@pwd_admin": "Not authorized to change the password of this entry, because the target is in a password administrative area that does not permit use of the changePassword operation.",
+    "not_authz_mpw@pwd_admin": "Not authorized to modify the password of this entry, because the target is in a password administrative area that does not permit use of the modifyEntry operation to change a password.",
     "loop_detected": "Loop detected.",
     "old_password_incorrect": "Old password incorrect.",
     "not_authz_read_or_compare_attr": "Not authorized to read or compare attribute type {{oid}}.",
