@@ -1,5 +1,9 @@
 import type { Context, ClientAssociation, Vertex } from "@wildboar/meerkat-types";
-import type { UserPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
+import {
+    UserPwd,
+    UserPwd_encrypted,
+    _encode_UserPwd,
+} from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
 import encryptPassword from "../x500/encryptPassword";
 import getScryptAlgorithmIdentifier from "../x500/getScryptAlgorithmIdentifier";
 import { PrismaPromise } from "@prisma/client";
@@ -115,6 +119,18 @@ async function setEntryPassword (
                     jer: nowElement.toJSON() as string,
                 },
             }),
+            ctx.db.passwordHistory.create({
+                data: {
+                    entry_id: vertex.dse.id,
+                    password: Buffer.from(_encode_UserPwd({
+                        encrypted: new UserPwd_encrypted(
+                            algid,
+                            encrypted,
+                        ),
+                    }, DER).toBytes().buffer),
+                    time: new Date(),
+                },
+            }),
         ];
     } else if ("encrypted" in pwd) {
         if (assn) {
@@ -177,6 +193,13 @@ async function setEntryPassword (
                     tag_number: nowElement.tagNumber,
                     ber: Buffer.from(nowElement.toBytes().buffer),
                     jer: nowElement.toJSON() as string,
+                },
+            }),
+            ctx.db.passwordHistory.create({
+                data: {
+                    entry_id: vertex.dse.id,
+                    password: Buffer.from(_encode_UserPwd(pwd, DER).toBytes().buffer),
+                    time: new Date(),
                 },
             }),
         ];
