@@ -192,11 +192,12 @@ model PasswordHistory {
   entry_id Int
   entry    Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
   time     DateTime
-  password Bytes // BER
+  password Bytes // BER encoding of UserPwd with encrypted alternative, using Scrypt.
 
   @@unique([entry_id, time])
 }
 
+// TODO: Delete this table in v2. You still need a driver that returns Scrypt for non-shadowed subentries.
 // This only exists for shadowing. Otherwise, it's value is always Meerkat DSA's
 // hard-coded algorithm, which is currently scrypt.
 model PasswordEncryptionAlgorithm {
