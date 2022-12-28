@@ -196,5 +196,10 @@
     "mismatch_sec_params_opcode_chaining_args": "Operation code does not match operation code indicated in security parameters of the chaining arguments.",
     "aliased_rdns_lt0": "aliasedRDNs field was less than zero.",
     "not_authz_chaining@add_entry_target_system": "Association {{aid}} not authorized for chaining via the addEntry targetSystem parameter.",
-    "tls_auth_failure": "TLS authentication of {{url}} failed with error {{e}}. The socket has been closed."
+    "tls_auth_failure": "TLS authentication of {{url}} failed with error {{e}}. The socket has been closed.",
+    "cannot_verify_pwd_quality": "Refused to update password because it's quality is regulated by a password administrative area, but it's quality could not be verified because it was pre-encrypted. Please retry the operation with an unencrypted password.",
+    "no_pwd_slots": "No remaining password history slots to update the password at this time.",
+    "pwd_in_history": "This password cannot be reused right now.",
+    "pwd_quality": "Insufficient password quality.",
+    "inappropriate_algs": "Password was pre-encrypted with an algorithm not supported by this DSA."
 }

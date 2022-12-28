@@ -50,26 +50,46 @@ administrators from misconfiguring Meerkat DSA and leaking all of their users'
 passwords, the passwords are simply never returned, even if queried directly,
 and even if access controls permit it. An empty string is returned as the value
 so that directory users can at least know _if_ an entry has a password. In other
-words, passwords are _write-only_ in Meerkat DSA.
+words, passwords are _write-only_ in Meerkat DSA. This also applies to the
+encrypted variants of passwords: they are never returned so that they can never
+be used for
+[offline password cracking](https://csrc.nist.gov/glossary/term/offline_attack).
+
+:::note
+
+The web administration console is an exception to the above. It _does_ return the
+encrypted user passwords. This is yet another reason why the web administration
+console should only be enabled when needed, and why it should be configured with
+authentication and TLS!
+
+:::
 
 The password is stored in the database. If password is supplied using cleartext,
 it will be salted and hashed using the Scrypt algorithm and stored in the
 database. If the password is already encrypted / hashed, it will be stored using
 the algorithm that was used to encrypt it.
 
-## How to Change Passwords
+## How to Set or Change Passwords
+
+You may set or modify a password for an entry in four ways:
+
+- At creation time, by including password attributes in the `addEntry` operation.
+- By modifying the entry via the `modifyEntry` operation.
+  - If this is performed within a password administrative area, this requires
+    the `pwdModifyEntryAllowed` operational attribute for the applicable
+    subentry to have a value of `TRUE`.
+- By modifying the entry via the `changePassword` operation
+  - If this is performed within a password administrative area, this requires
+    the `pwdChangeAllowed` operational attribute for the applicable subentry to
+    have a value of `TRUE`.
+- By modifying the entry via the `administerPassword` operation
+  - In addition to requiring permission to add / modify / delete the `userPwd`
+    and `userPassword` values, as is the case for the other three, this option
+    also requires the same permissions for the `userPwdHistory` attribute.
 
 It is recommended to use the `administerPassword` and/or `changePassword`
-operations to modify an entry's password.
-
-## Password Policy
-
-Password policy, as specified in
-[ITU Recommendation X.509](https://www.itu.int/rec/T-REC-X.509/en) is not
-currently supported. Future editions of Meerkat DSA will support X.509 Password
-Policies, though there may only be a subset of these features available for the
-free edition of Meerkat DSA (which is not to imply that _all_ of these features
-will be available in the paid version).
+operations to modify an entry's password, rather than the `modifyEntry` or
+`addEntry` operations.
 
 ## Strong Authentication
 

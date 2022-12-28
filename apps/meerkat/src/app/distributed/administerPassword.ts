@@ -25,6 +25,7 @@ import setEntryPassword from "../database/setEntryPassword";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
     SecurityProblem_insufficientAccessRights,
+    SecurityProblem_inappropriateAlgorithms,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import getDistinguishedName from "../x500/getDistinguishedName";
@@ -68,6 +69,24 @@ import type {
 import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
+import { compareAlgorithmIdentifier } from "@wildboar/x500";
+import getScryptAlgorithmIdentifier from "../x500/getScryptAlgorithmIdentifier";
+import {
+    UpdateErrorData,
+    UpdateProblem_insufficientPasswordQuality,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
+import { updateError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
+import {
+    checkPasswordQualityAndHistory,
+    CHECK_PWD_QUALITY_NO_SLOTS,
+    CHECK_PWD_QUALITY_TOO_SOON,
+    CHECK_PWD_QUALITY_OK,
+    CHECK_PWD_QUALITY_REUSE,
+} from "../password/checkPasswordQuality";
+import { EncPwdInfo } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EncPwdInfo.ta";
+import { pwdAdminSubentry } from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAdminSubentry.oa";
+import { id_ar_pwdAdminSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-pwdAdminSpecificArea.va";
+import { userPwdHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdHistory.oa";
 
 const USER_PASSWORD_OID: string = userPassword["&id"].toString();
 const USER_PWD_OID: string = userPwd["&id"].toString();
@@ -147,6 +166,40 @@ async function administerPassword (
     }
     // #endregion Signature validation
     const data = getOptionallyProtectedValue(argument);
+    if (
+        ("encrypted" in data.newPwd)
+        && !compareAlgorithmIdentifier(
+            data.newPwd.encrypted.algorithmIdentifier,
+            getScryptAlgorithmIdentifier(),
+        )
+    ) { // If the new password is encrypted using an algorithm other than Meerkat DSA's algorithm, throw an error.
+        throw new errors.SecurityError(
+            ctx.i18n.t("err:inappropriate_algs"),
+            new SecurityErrorData(
+                SecurityProblem_inappropriateAlgorithms,
+                undefined,
+                new EncPwdInfo(
+                    [
+                        getScryptAlgorithmIdentifier(),
+                    ],
+                    undefined,
+                    undefined,
+                ),
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+            signErrors,
+        );
+    }
     const targetDN = getDistinguishedName(target);
     const requestor: DistinguishedName | undefined = state.chainingArguments.originator
         ?? assn.boundNameAndUID?.dn;
@@ -228,10 +281,27 @@ async function administerPassword (
             bacSettings,
             true,
         );
+        // Permission to modify the user password history is required for administerPassword (in Meerkat DSA).
+        const { authorized: authorizedToModifyPwdHistory } = bacACDF(
+            relevantTuples,
+            user,
+            {
+                attributeType: userPwdHistory["&id"],
+                operational: true,
+            },
+            [
+                PERMISSION_CATEGORY_ADD,
+                PERMISSION_CATEGORY_REMOVE,
+                PERMISSION_CATEGORY_MODIFY,
+            ],
+            bacSettings,
+            true,
+        );
         if (
             !authorizedToModifyEntry
             || !authorizedToModifyUserPassword
             || !authorizedToModifyUserPwd
+            || !authorizedToModifyPwdHistory
         ) {
             throw new errors.SecurityError(
                 ctx.i18n.t("err:not_authz_apw"),
@@ -255,6 +325,115 @@ async function administerPassword (
             );
         }
     }
+
+    // #region Password Policy Verification
+    // TODO: Password policy applies _per password attribute_. This is something I'll
+    // have to change when I re-write Meerkat DSA entirely.
+    const pwdAdminPoint = state.admPoints
+        .find((ap) => ap.dse.admPoint?.administrativeRole.has(id_ar_pwdAdminSpecificArea.toString()));
+    if (pwdAdminPoint) {
+        const pwdAdminSubentries = relevantSubentries
+            .filter((s) => s.dse.objectClass.has(pwdAdminSubentry["&id"].toString()));
+        const passwordQualityIsAdministered: boolean = pwdAdminSubentries
+            .some((pwsub) => (
+                pwsub.dse.subentry?.pwdAlphabet
+                || pwsub.dse.subentry?.pwdVocabulary
+                || pwsub.dse.subentry?.pwdMinLength
+                || pwsub.dse.subentry?.pwdHistorySlots
+            ));
+
+        if (("encrypted" in data.newPwd) && passwordQualityIsAdministered) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:cannot_verify_pwd_quality"),
+                new UpdateErrorData(
+                    UpdateProblem_insufficientPasswordQuality,
+                    undefined,
+                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+                signErrors,
+            );
+        } else if ("clear" in data.newPwd) {
+
+            // #region Ensure at least two slots in password history
+            // This is a requirement for administerPassword.
+            const minPasswordHistorySlots: number | undefined = Number(pwdAdminSubentries
+                .map((s) => s.dse.subentry?.pwdHistorySlots ?? Infinity)
+                .sort()[0] ?? Infinity);
+            const oldestPasswordTimeInHistory = Number.isSafeInteger(minPasswordHistorySlots)
+                ? (await ctx.db.passwordHistory.findMany({
+                    where: {
+                        entry_id: target.dse.id,
+                    },
+                    orderBy: [
+                        {
+                            time: "desc",
+                        },
+                    ],
+                    take: Math.max(minPasswordHistorySlots - 2, 0),
+                    select: {
+                        time: true,
+                    },
+                })).pop()?.time
+                : undefined;
+            if (oldestPasswordTimeInHistory) {
+                await ctx.db.passwordHistory.deleteMany({
+                    where: {
+                        entry_id: target.dse.id,
+                        time: {
+                            lt: oldestPasswordTimeInHistory,
+                        },
+                    },
+                });
+            }
+            // #endregion Ensure at least two slots in password history
+
+            for (const pwsub of pwdAdminSubentries) {
+                const checkPwdResult = await checkPasswordQualityAndHistory(ctx, target.dse.id, data.newPwd.clear, pwsub);
+                if ([
+                    CHECK_PWD_QUALITY_OK,
+                    CHECK_PWD_QUALITY_TOO_SOON,
+                    CHECK_PWD_QUALITY_NO_SLOTS,
+                    CHECK_PWD_QUALITY_REUSE,
+                ].includes(checkPwdResult)) {
+                    // We just ignore these errors. Password administration gets to skip these.
+                    continue;
+                }
+                // Unfortunately, err:pwd_quality cannot contain more info, because the error message will be logged,
+                // disclosing information about the attempted password.
+                throw new errors.UpdateError(
+                    ctx.i18n.t("err:pwd_quality"),
+                    new UpdateErrorData(
+                        UpdateProblem_insufficientPasswordQuality,
+                        undefined,
+                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            updateError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                    signErrors,
+                );
+            }
+        }
+    } // If there is no password admin point defined, you can do whatever you want.
+    // #endregion Password Policy Verification
+
     const promises = await setEntryPassword(ctx, assn, target, data.newPwd);
     await ctx.db.$transaction(promises);
     /* Note that the specification says that we should update hierarchical
