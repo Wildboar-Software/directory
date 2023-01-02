@@ -172,6 +172,18 @@ noted below are nuances in Meerkat DSA:
   null result (a result with zero entries or RDNs).
 - The way Meerkat DSA handles invalid signed operations is complicated and is
   described [here](./distributed.md#handling-of-invalid-signatures).
+- The `userPwdHistory` attribute returns password history items that have fallen
+  out of history according to the `pwdMaxTimeInHistory` operational attribute.
+  When passwords are changed, they are still evaluated against the current,
+  valid password history.
+  - This is done for performance reasons. There is no practical way to keep
+    these attributes synced up with `pwdMaxTimeInHistory`.
+- Password history is never deleted unless `administerPassword` is used and only
+  if there are insufficient slots in the `userPwdHistory` to store the old and
+  new passwords.
+  - This is kind of a good thing: if you change `pwdMaxTimeInHistory` to a
+    higher value, the history items that would have been truncated from history
+    will flawlessly re-appear in history.
 
 ## The "Never Contributing" Bug
 
