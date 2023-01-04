@@ -58,6 +58,7 @@ import { subschema } from "@wildboar/x500/src/lib/collections/objectClasses";
 import { getLDAPSyntax } from "../x500/getLDAPSyntax";
 import { at } from "lodash";
 import { entryDN } from "@wildboar/parity-schema/src/lib/modules/RFC5020EntryDN/entryDN.oa";
+import { userPassword, userPwd } from "@wildboar/x500/src/lib/collections/attributes";
 
 const selectAllInfo = new EntryInformationSelection(
     {
@@ -308,14 +309,22 @@ export class DitController {
             selection: selectAllInfo,
         });
         const attributes: [ string, string, string ][] = [
-            ...userAttributes,
+            ...userAttributes
+                .filter((a) => (
+                    !a.type.isEqualTo(userPwd["&id"])
+                    && !a.type.isEqualTo(userPassword["&id"])
+                )),
             ...operationalAttributes
                 /**
                  * We don't display the entryDN attribute because the vertex's
                  * superior is not loaded in this controller, so this will
                  * display incorrectly.
                  */
-                .filter((a) => !a.type.isEqualTo(entryDN["&id"])),
+                .filter((a) => (
+                    !a.type.isEqualTo(entryDN["&id"])
+                    && !a.type.isEqualTo(userPwd["&id"])
+                    && !a.type.isEqualTo(userPassword["&id"])
+                )),
             ...collectiveValues,
         ]
             .map((attr) => [
