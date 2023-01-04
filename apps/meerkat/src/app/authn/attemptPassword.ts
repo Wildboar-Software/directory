@@ -30,7 +30,7 @@ import { strict as assert } from "node:assert";
 import { getAdministrativePoints } from "../dit/getAdministrativePoints";
 import { getRelevantSubentries } from "../dit/getRelevantSubentries";
 import { getDistinguishedName } from "../x500/getDistinguishedName";
-import { pwdEndTime, pwdExpiryTime, pwdGracesUsed, pwdRecentlyExpiredDuration } from "@wildboar/x500/src/lib/collections/attributes";
+import { pwdEndTime, pwdExpiryTime, pwdGracesUsed, pwdRecentlyExpiredDuration, pwdStartTime } from "@wildboar/x500/src/lib/collections/attributes";
 import { PwdResponseValue } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue.ta";
 import {
     PwdResponseValue_error_passwordExpired,
@@ -229,10 +229,15 @@ async function attemptPassword (
     }
 
     const now = new Date();
+    const startTimeValue: Value | undefined = (await readValuesOfType(ctx, vertex, pwdStartTime["&id"]))[0];
+    const startTime: Date | undefined = startTimeValue ? startTimeValue.value.generalizedTime : undefined;
     const endTimeValue: Value | undefined = (await readValuesOfType(ctx, vertex, pwdEndTime["&id"]))[0];
     const endTime: Date | undefined = endTimeValue ? endTimeValue.value.generalizedTime : undefined;
     const expiryTimeValue: Value | undefined = (await readValuesOfType(ctx, vertex, pwdExpiryTime["&id"]))[0];
     const expiryTime: Date | undefined = expiryTimeValue ? expiryTimeValue.value.generalizedTime : undefined;
+    if (startTime && (startTime > now)) {
+        return { authorized: false };
+    }
     /**
      * IMPORTANT: It is critical that we wait for the user to have supplied
      * the correct password before we can return a passwordExpired error.
@@ -240,7 +245,7 @@ async function attemptPassword (
      * credentials incorrectly, otherwise, these two errors could be used
      * to oracle for user accounts that are expired.
      */
-    if (endTime && (endTime > now)) {
+    if (endTime && (endTime <= now)) {
         // Actually, I don't think anything needs to be done here. Even the
         // compare operation will use `attemptPassword()`.
         // await ctx.db.password.delete({
@@ -277,7 +282,7 @@ async function attemptPassword (
             || sub.dse.subentry.pwdAttribute.isEqualTo(userPassword["&id"])
         ));
 
-    if (expiryTime && (expiryTime > now)) {
+    if (expiryTime && (expiryTime <= now)) {
         const pwdGraces: number | undefined = (await ctx.db.attributeValue.findMany({
             where: {
                 entry_id: {
