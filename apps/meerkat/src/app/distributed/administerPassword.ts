@@ -88,6 +88,7 @@ import { pwdAdminSubentry } from "@wildboar/x500/src/lib/modules/InformationFram
 import { id_ar_pwdAdminSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-pwdAdminSpecificArea.va";
 import { userPwdHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdHistory.oa";
 import { pwdReset } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdReset.oa";
+import { pwdHistorySlots } from "@wildboar/x500/src/lib/collections/attributes";
 
 const USER_PASSWORD_OID: string = userPassword["&id"].toString();
 const USER_PWD_OID: string = userPwd["&id"].toString();
@@ -339,13 +340,7 @@ async function administerPassword (
     if (pwdAdminPoint) {
         const pwdAdminSubentries = relevantSubentries
             .filter((s) => s.dse.objectClass.has(pwdAdminSubentry["&id"].toString()));
-        const passwordQualityIsAdministered: boolean = pwdAdminSubentries
-            .some((pwsub) => (
-                pwsub.dse.subentry?.pwdAlphabet
-                || pwsub.dse.subentry?.pwdVocabulary
-                || pwsub.dse.subentry?.pwdMinLength
-                || pwsub.dse.subentry?.pwdHistorySlots
-            ));
+        const passwordQualityIsAdministered: boolean = (pwdAdminSubentries.length > 0);
 
         if (("encrypted" in data.newPwd) && passwordQualityIsAdministered) {
             throw new errors.UpdateError(
@@ -371,9 +366,23 @@ async function administerPassword (
 
             // #region Ensure at least two slots in password history
             // This is a requirement for administerPassword.
-            const minPasswordHistorySlots: number | undefined = Number(pwdAdminSubentries
-                .map((s) => s.dse.subentry?.pwdHistorySlots ?? Infinity)
-                .sort()[0] ?? Infinity);
+
+            const minPasswordHistorySlots: number = (await ctx.db.attributeValue.findMany({
+                where: {
+                    entry_id: {
+                        in: pwdAdminSubentries.map((s) => s.dse.id),
+                    },
+                    type: pwdHistorySlots["&id"].toString(),
+                    operational: true,
+                },
+                select: {
+                    jer: true,
+                },
+            }))
+                .map(({ jer }) => jer as number)
+                // Do not reduce with initialValue = 0! Use undefined, then default to a large number.
+                .reduce((acc, curr) => Math.min(Number(acc), Number(curr)), undefined)
+                ?? 10_000_000;
             const oldestPasswordTimeInHistory = Number.isSafeInteger(minPasswordHistorySlots)
                 ? (await ctx.db.passwordHistory.findMany({
                     where: {

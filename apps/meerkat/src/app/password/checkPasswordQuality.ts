@@ -4,7 +4,7 @@ import {
     PwdVocabulary_noGeographicalNames,
     PwdVocabulary_noPersonNames,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/PwdVocabulary.ta";
-import { BERElement, TRUE_BIT } from "asn1-ts";
+import { BERElement, BIT_STRING, TRUE_BIT } from "asn1-ts";
 import {
     _decode_UserPwd,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
@@ -14,6 +14,7 @@ import { strict as assert } from "node:assert";
 import { subSeconds, addSeconds } from "date-fns";
 import { compareAlgorithmIdentifier } from "@wildboar/x500";
 import { timingSafeEqual } from "node:crypto";
+import { pwdAlphabet, pwdHistorySlots, pwdMaxTimeInHistory, pwdMinLength, pwdMinTimeInHistory, pwdVocabulary } from "@wildboar/x500/src/lib/collections/attributes";
 
 export const CHECK_PWD_QUALITY_OK: number = 0;
 export const CHECK_PWD_QUALITY_LENGTH: number = -1;
@@ -36,17 +37,35 @@ async function checkPasswordQuality (
     if (!subentry.dse.subentry) {
         return CHECK_PWD_QUALITY_OK;
     }
-    if (
-        subentry.dse.subentry?.pwdMinLength
-        && password.length < Number(subentry.dse.subentry.pwdMinLength)
-    ) {
+
+    const minLength: number = (await ctx.db.attributeValue.findFirst({
+        where: {
+            entry_id: subentry.dse.id,
+            type: pwdMinLength["&id"].toString(),
+        },
+        select: {
+            jer: true,
+        },
+    }))?.jer as number ?? 0;
+
+    if (password.length < minLength) {
         return CHECK_PWD_QUALITY_LENGTH;
     }
+
+    const alphabet: string[] = (await ctx.db.attributeValue.findFirst({
+        where: {
+            entry_id: subentry.dse.id,
+            type: pwdAlphabet["&id"].toString(),
+        },
+        select: {
+            jer: true,
+        },
+    }))?.jer as string[] ?? [];
 
     const passwordCharacters: Set<string> = new Set(Array.from(password));
     // TODO: Unit testing to ensure the continue-to-label works as expected.
     alpha_str:
-    for (const str of subentry.dse.subentry?.pwdAlphabet ?? []) {
+    for (const str of alphabet) {
         for (const char of Array.from(str)) {
             if (passwordCharacters.has(char)) {
                 // This substring's requirements were met. Continue to the
@@ -59,19 +78,37 @@ async function checkPasswordQuality (
     // If we made it to this point, this particular subentry's password
     // alphabet requirements were met.
 
+    const vocabBER: Uint8Array | undefined = (await ctx.db.attributeValue.findFirst({
+        where: {
+            entry_id: subentry.dse.id,
+            type: pwdVocabulary["&id"].toString(),
+        },
+        select: {
+            ber: true,
+        },
+    }))?.ber;
+    const vocab: BIT_STRING = vocabBER
+        ? (() => {
+            const el = new BERElement();
+            el.fromBytes(vocabBER);
+            return el.bitString;
+        })()
+        : new Uint8ClampedArray();
+
     // We do the alphabet checks above first so we don't bother doing the more
     // computationally / I/O expensive work of querying the database if the
     // password is inadequate for simpler reasons.
-    if (!subentry.dse.subentry?.pwdVocabulary) {
+    if (!vocab.length) {
         return CHECK_PWD_QUALITY_OK;
     }
-    const no_words: boolean = (subentry.dse.subentry.pwdVocabulary[PwdVocabulary_noDictionaryWords] === TRUE_BIT);
-    const no_names: boolean = (subentry.dse.subentry.pwdVocabulary[PwdVocabulary_noPersonNames] === TRUE_BIT);
-    const no_geo: boolean = (subentry.dse.subentry.pwdVocabulary[PwdVocabulary_noGeographicalNames] === TRUE_BIT);
+    const no_words: boolean = (vocab[PwdVocabulary_noDictionaryWords] === TRUE_BIT);
+    const no_names: boolean = (vocab[PwdVocabulary_noPersonNames] === TRUE_BIT);
+    const no_geo: boolean   = (vocab[PwdVocabulary_noGeographicalNames] === TRUE_BIT);
 
     // FIXME: Document that these must be uppercased.
     const normalizedPassword: string = password.toUpperCase();
 
+    // TODO: Perform just one query and use the bit to determine which error to return.
     if (no_words) {
         const forbidden = await ctx.db.passwordDictionaryItem.findUnique({
             where: {
@@ -144,14 +181,32 @@ async function checkPasswordQualityAndHistory (
         return qualityResult;
     }
 
-    const slots = subentry.dse.subentry.pwdHistorySlots
-        ? Number(subentry.dse.subentry.pwdHistorySlots)
-        : MAX_HISTORY_ITEMS; // Just to short circuit the number of results.
+    const slots: number = (await ctx.db.attributeValue.findFirst({
+        where: {
+            entry_id: subentry.dse.id,
+            type: pwdHistorySlots["&id"].toString(),
+        },
+        select: {
+            jer: true,
+        },
+    }))?.jer as number ?? MAX_HISTORY_ITEMS; // Just to short circuit the number of results.
+
     const algid = getScryptAlgorithmIdentifier();
     const encrypted = encryptPassword(algid, Buffer.from(password));
     assert(encrypted); // This should not happen, since we are using Meerkat DSA's self-specified encryption algorithm.
-    const historyStart: Date | undefined = subentry.dse.subentry.pwdMaxTimeInHistory
-        ? subSeconds(new Date(), Number(subentry.dse.subentry.pwdMaxTimeInHistory))
+
+    const maxTimeInHistory: number | undefined = (await ctx.db.attributeValue.findFirst({
+        where: {
+            entry_id: subentry.dse.id,
+            type: pwdMaxTimeInHistory["&id"].toString(),
+        },
+        select: {
+            jer: true,
+        },
+    }))?.jer as number | undefined; // Just to short circuit the number of results.
+
+    const historyStart: Date | undefined = maxTimeInHistory
+        ? subSeconds(new Date(), maxTimeInHistory)
         : undefined;
 
     /**
@@ -206,9 +261,18 @@ async function checkPasswordQualityAndHistory (
         }
     }
 
+    const minTimeInHistory: number | undefined = (await ctx.db.attributeValue.findFirst({
+        where: {
+            entry_id: subentry.dse.id,
+            type: pwdMinTimeInHistory["&id"].toString(),
+        },
+        select: {
+            jer: true,
+        },
+    }))?.jer as number | undefined; // Just to short circuit the number of results.
     const newestPasswordAge = previousPasswords.length && previousPasswords[previousPasswords.length - 1].time;
-    if (newestPasswordAge && subentry.dse.subentry.pwdMinTimeInHistory) {
-        const newestPasswordMayBeReplacedAfter: Date = addSeconds(newestPasswordAge, Number(subentry.dse.subentry.pwdMinTimeInHistory));
+    if (newestPasswordAge && minTimeInHistory) {
+        const newestPasswordMayBeReplacedAfter: Date = addSeconds(newestPasswordAge, minTimeInHistory);
         if ((new Date()).getTime() <= newestPasswordMayBeReplacedAfter.getTime()) {
             return CHECK_PWD_QUALITY_TOO_SOON;
         }

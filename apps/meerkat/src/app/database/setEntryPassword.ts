@@ -31,6 +31,7 @@ import { getAdministrativePoints } from "../dit/getAdministrativePoints";
 import { getRelevantSubentries } from "../dit/getRelevantSubentries";
 import { getDistinguishedName } from "../x500/getDistinguishedName";
 import { addSeconds } from "date-fns";
+import { pwdExpiryAge, pwdMaxAge } from "@wildboar/x500/src/lib/collections/attributes";
 
 /**
  * @summary Set the password of an entry
@@ -74,17 +75,49 @@ async function setEntryPassword (
     const relevantSubentries: Vertex[] = (await Promise.all(
         admPoints.map((ap) => getRelevantSubentries(ctx, vertex, targetDN, ap)),
     )).flat();
-    const pwdExpiryAge: number = Number(relevantSubentries
-        .map((sub) => sub.dse.subentry?.pwdExpiryAge ?? Infinity)
-        .reduce((acc, curr) => Math.min(Number(acc), Number(curr)), Infinity));
-    const pwdMaxAge: number = Number(relevantSubentries
-        .map((sub) => sub.dse.subentry?.pwdMaxAge ?? Infinity)
-        .reduce((acc, curr) => Math.min(Number(acc), Number(curr)), Infinity));
-    const expTime: Date | null = (Number.isSafeInteger(pwdExpiryAge))
-        ? addSeconds(now, pwdExpiryAge)
+
+    // TODO: Combine the two into a single query.
+    const expiryAge: number | undefined = (await ctx.db.attributeValue.findMany({
+        where: {
+            entry_id: {
+                in: relevantSubentries.map((s) => s.dse.id),
+            },
+            type: pwdExpiryAge["&id"].toString(),
+            operational: true,
+        },
+        select: {
+            jer: true,
+        },
+    }))
+        .map(({ jer }) => jer as number)
+        // Do not reduce with initialValue = 0! Use undefined, then default to 0.
+        .reduce((acc, curr) => Math.min(Number(acc ?? Infinity), Number(curr)), undefined);
+
+    const maxAge: number | undefined = (await ctx.db.attributeValue.findMany({
+        where: {
+            entry_id: {
+                in: relevantSubentries.map((s) => s.dse.id),
+            },
+            type: pwdMaxAge["&id"].toString(),
+            operational: true,
+        },
+        select: {
+            jer: true,
+        },
+    }))
+        .map(({ jer }) => jer as number)
+        // Do not reduce with initialValue = 0! Use undefined, then default to 0.
+        .reduce((acc, curr) => Math.min(Number(acc ?? Infinity), Number(curr)), undefined);
+
+
+    // const pwdMaxAge: number = Number(relevantSubentries
+    //     .map((sub) => sub.dse.subentry?.pwdMaxAge ?? Infinity)
+    //     .reduce((acc, curr) => Math.min(Number(acc), Number(curr)), Infinity));
+    const expTime: Date | null = expiryAge
+        ? addSeconds(now, expiryAge)
         : null;
-    const endTime: Date | null = (Number.isSafeInteger(pwdMaxAge))
-        ? addSeconds(now, pwdMaxAge)
+    const endTime: Date | null = maxAge
+        ? addSeconds(now, maxAge)
         : null;
 
     // We don't use `addValues()` or `removeAttribute()` in these DB commands,

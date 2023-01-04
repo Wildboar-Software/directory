@@ -30,7 +30,7 @@ import { strict as assert } from "node:assert";
 import { getAdministrativePoints } from "../dit/getAdministrativePoints";
 import { getRelevantSubentries } from "../dit/getRelevantSubentries";
 import { getDistinguishedName } from "../x500/getDistinguishedName";
-import { pwdEndTime, pwdExpiryTime, pwdGracesUsed } from "@wildboar/x500/src/lib/collections/attributes";
+import { pwdEndTime, pwdExpiryTime, pwdGracesUsed, pwdRecentlyExpiredDuration } from "@wildboar/x500/src/lib/collections/attributes";
 import { PwdResponseValue } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue.ta";
 import {
     PwdResponseValue_error_passwordExpired,
@@ -40,6 +40,11 @@ import { addValues } from "../database/entry/addValues";
 import { pwdGraceUseTime } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdGraceUseTime.oa";
 import { pwdLastSuccess } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLastSuccess.oa";
 import { subSeconds, differenceInSeconds, addSeconds } from "date-fns";
+import { userPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
+import { userPassword } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
+import { id_oa_pwdGraces } from "@wildboar/x500/src/lib/modules/PasswordPolicy/id-oa-pwdGraces.va";
+import { pwdExpireWarning } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdExpireWarning.oa";
+
 
 function compareUserPwd (a: UserPwd, b: UserPwd): boolean | undefined {
     if ("clear" in a && "clear" in b) {
@@ -264,20 +269,48 @@ async function attemptPassword (
     const admPoints = getAdministrativePoints(vertex);
     const relevantSubentries: Vertex[] = (await Promise.all(
         admPoints.map((ap) => getRelevantSubentries(ctx, vertex, targetDN, ap)),
-    )).flat();
+    ))
+        .flat()
+        .filter((sub) => (
+            !sub.dse.subentry?.pwdAttribute
+            || sub.dse.subentry.pwdAttribute.isEqualTo(userPwd["&id"])
+            || sub.dse.subentry.pwdAttribute.isEqualTo(userPassword["&id"])
+        ));
 
     if (expiryTime && (expiryTime > now)) {
-        const pwdGraces: number | undefined = Number(relevantSubentries
-            .map((sub) => sub.dse.subentry?.pwdGraces ?? 0)
+        const pwdGraces: number | undefined = (await ctx.db.attributeValue.findMany({
+            where: {
+                entry_id: {
+                    in: relevantSubentries.map((s) => s.dse.id),
+                },
+                type: id_oa_pwdGraces.toString(),
+                operational: true,
+            },
+            select: {
+                jer: true,
+            },
+        }))
+            .map(({ jer }) => jer as number)
             // Do not reduce with initialValue = 0! Use undefined, then default to 0.
-            .reduce((acc, curr) => Math.min(Number(acc ?? 10_000_000), Number(curr)), undefined))
+            .reduce((acc, curr) => Math.min(Number(acc ?? 10_000_000), Number(curr)), undefined)
             ?? 0;
         const gracesUsedValue: Value | undefined = (await readValuesOfType(ctx, vertex, pwdGracesUsed["&id"]))[0];
         const gracesUsed: number = gracesUsedValue ? Number(gracesUsedValue.value.integer) : 0;
-        const expired_pwd_duration: number | undefined = Number(relevantSubentries
-            .map((sub) => sub.dse.subentry?.pwdRecentlyExpiredDuration ?? 0)
+        const expired_pwd_duration: number | undefined = (await ctx.db.attributeValue.findMany({
+            where: {
+                entry_id: {
+                    in: relevantSubentries.map((s) => s.dse.id),
+                },
+                type: pwdRecentlyExpiredDuration["&id"].toString(),
+                operational: true,
+            },
+            select: {
+                jer: true,
+            },
+        }))
+            .map(({ jer }) => jer as number)
             // Do not reduce with initialValue = 0! Use undefined, then default to 0.
-            .reduce((acc, curr) => Math.min(Number(acc ?? 10_000_000), Number(curr)), undefined))
+            .reduce((acc, curr) => Math.min(Number(acc ?? 10_000_000), Number(curr)), undefined)
             ?? 0;
 
         const expiredPasswordExpirationTime = addSeconds(expiryTime, expired_pwd_duration);
@@ -359,11 +392,24 @@ async function attemptPassword (
         }),
     ]);
 
-    const expirationWarning: number = expiryTime
-        ? Number(relevantSubentries
-            .map((sub) => sub.dse.subentry?.pwdExpiryWarning ?? 0)
-            .reduce((acc, curr) => Math.max(Number(acc), Number(curr)), 0))
-        : 0;
+    // TODO: Combine this with the above queries so all three attributes can be
+    // be fetched with a single DB query.
+    const expirationWarning: number = (await ctx.db.attributeValue.findMany({
+        where: {
+            entry_id: {
+                in: relevantSubentries.map((s) => s.dse.id),
+            },
+            type: pwdExpireWarning["&id"].toString(),
+            operational: true,
+        },
+        select: {
+            jer: true,
+        },
+    }))
+        .map(({ jer }) => jer as number)
+        // Do not reduce with initialValue = 0! Use undefined, then default to 0.
+        .reduce((acc, curr) => Math.max(Number(acc), Number(curr)), 0);
+
     const expirationWarningStart: Date | null = expiryTime
         ? subSeconds(expiryTime, expirationWarning)
         : null;

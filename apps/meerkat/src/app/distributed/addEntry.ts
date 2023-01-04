@@ -1316,13 +1316,7 @@ async function addEntry (
     if (pwdAdminPoint && password) {
         const pwdAdminSubentries = relevantSubentries
             .filter((s) => s.dse.objectClass.has(pwdAdminSubentry["&id"].toString()));
-        const passwordQualityIsAdministered: boolean = pwdAdminSubentries
-            .some((pwsub) => (
-                pwsub.dse.subentry?.pwdAlphabet
-                || pwsub.dse.subentry?.pwdVocabulary
-                || pwsub.dse.subentry?.pwdMinLength
-                || pwsub.dse.subentry?.pwdHistorySlots
-            ));
+        const passwordQualityIsAdministered: boolean = (pwdAdminSubentries.length > 0);
 
         if (("encrypted" in password) && passwordQualityIsAdministered) {
             throw new errors.UpdateError(

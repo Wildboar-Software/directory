@@ -638,8 +638,20 @@ async function checkPermissionToModifyPassword (
      * changes via modifyEntry. In Meerkat DSA, there is one hard-coded password
      * attribute.
      */
-    return pwdAdminSubentries
-        .every((pas) => pas.dse.subentry?.pwdModifyEntryAllowed ?? false);
+    return (await ctx.db.attributeValue.findMany({
+        where: {
+            entry_id: {
+                in: pwdAdminSubentries.map((s) => s.dse.id),
+            },
+            type: pwdModifyEntryAllowed["&id"].toString(),
+            operational: true,
+        },
+        select: {
+            jer: true,
+        },
+    }))
+        .map(({ jer }) => jer as boolean)
+        .every((x) => x);
 }
 
 /**
@@ -2272,13 +2284,7 @@ async function executeEntryModification (
         }
         const pwdAdminSubentries = relevantSubentries
             .filter((s) => s.dse.objectClass.has(pwdAdminSubentry["&id"].toString()));
-        const passwordQualityIsAdministered: boolean = pwdAdminSubentries
-            .some((pwsub) => (
-                pwsub.dse.subentry?.pwdAlphabet
-                || pwsub.dse.subentry?.pwdVocabulary
-                || pwsub.dse.subentry?.pwdMinLength
-                || pwsub.dse.subentry?.pwdHistorySlots
-            ));
+        const passwordQualityIsAdministered: boolean = (pwdAdminSubentries.length > 0);
 
         if (("encrypted" in password) && passwordQualityIsAdministered) {
             throw new errors.UpdateError(

@@ -26,7 +26,7 @@ import type {
 import type {
     ContextMatcher,
 } from "@wildboar/x500/src/lib/types/ContextMatcher";
-import type { ASN1Element, OBJECT_IDENTIFIER, BIT_STRING, INTEGER, BOOLEAN } from "asn1-ts";
+import type { ASN1Element, OBJECT_IDENTIFIER, BIT_STRING, BOOLEAN } from "asn1-ts";
 import type {
     PagedResultsRequest_newRequest,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
@@ -48,9 +48,6 @@ import type {
 import type {
     SearchRuleDescription,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/SearchRuleDescription.ta";
-import type {
-    PwdEncAlg,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/PwdEncAlg.ta";
 import type {
     AttributeType,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
@@ -652,63 +649,6 @@ interface SubentryDSE {
 
     /** The single value of the `pwdAttribute` operational attribute */
     pwdAttribute?: OBJECT_IDENTIFIER;
-
-    /** The single value of the `pwdModifyEntryAllowed` operational attribute */
-    pwdModifyEntryAllowed?: BOOLEAN;
-
-    /** The single value of the `pwdChangeAllowed` operational attribute */
-    pwdChangeAllowed?: BOOLEAN;
-
-    /** The single value of the `pwdMaxAge` operational attribute */
-    pwdMaxAge?: INTEGER;
-
-    /** The single value of the `pwdExpiryAge` operational attribute */
-    pwdExpiryAge?: INTEGER;
-
-    /** The single value of the `pwdMinLength` operational attribute */
-    pwdMinLength?: INTEGER;
-
-    /** The single value of the `pwdMaxLength` operational attribute */
-    pwdMaxLength?: INTEGER;
-
-    /** The single value of the `pwdVocabulary` operational attribute */
-    pwdVocabulary?: BIT_STRING;
-
-    /** Values of the `pwdAlphabet` operational attribute */
-    pwdAlphabet?: string[];
-
-    /** Values of the `pwdDictionaries` operational attribute */
-    pwdDictionaries?: string[];
-
-    /** The single value of the `pwdExpiryWarning` operational attribute */
-    pwdExpiryWarning?: INTEGER;
-
-    /** The single value of the `pwdGraces` operational attribute */
-    pwdGraces?: INTEGER;
-
-    /** The single value of the `pwdFailureDuration` operational attribute */
-    pwdFailureDuration?: INTEGER;
-
-    /** The single value of the `pwdLockoutDuration` operational attribute */
-    pwdLockoutDuration?: INTEGER;
-
-    /** The single value of the `pwdMaxFailures` operational attribute */
-    pwdMaxFailures?: INTEGER;
-
-    /** The single value of the `pwdMaxTimeInHistory` operational attribute */
-    pwdMaxTimeInHistory?: INTEGER;
-
-    /** The single value of the `pwdMinTimeInHistory` operational attribute */
-    pwdMinTimeInHistory?: INTEGER;
-
-    /** The single value of the `pwdHistorySlots` operational attribute */
-    pwdHistorySlots?: INTEGER;
-
-    /** The single value of the `pwdRecentlyExpiredDuration` operational attribute */
-    pwdRecentlyExpiredDuration?: INTEGER;
-
-    /** The single value of the `pwdEncAlg` operational attribute */
-    pwdEncAlg?: PwdEncAlg;
 
 }
 

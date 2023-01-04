@@ -93,6 +93,7 @@ import { EncPwdInfo } from "@wildboar/x500/src/lib/modules/DirectoryAbstractServ
 import {
     PwdResponseValue_error_passwordExpired,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue-error.ta";
+import { pwdChangeAllowed } from "@wildboar/x500/src/lib/collections/attributes";
 
 const USER_PASSWORD_OID: string = userPassword["&id"].toString();
 const USER_PWD_OID: string = userPwd["&id"].toString();
@@ -377,8 +378,21 @@ async function changePassword (
          * changes via modifyEntry. In Meerkat DSA, there is one hard-coded password
          * attribute.
          */
-        const allowed: boolean = pwdAdminSubentries
-            .some((pas) => pas.dse.subentry?.pwdChangeAllowed);
+        const allowed: boolean = (await ctx.db.attributeValue.findMany({
+            where: {
+                entry_id: {
+                    in: pwdAdminSubentries.map((s) => s.dse.id),
+                },
+                type: pwdChangeAllowed["&id"].toString(),
+                operational: true,
+            },
+            select: {
+                jer: true,
+            },
+        }))
+            .map(({ jer }) => jer as boolean)
+            .every((x) => x);
+
         if (!allowed) {
             throw new errors.SecurityError(
                 ctx.i18n.t("err:not_authz_cpw"),
@@ -402,14 +416,7 @@ async function changePassword (
             );
         }
 
-        const passwordQualityIsAdministered: boolean = pwdAdminSubentries
-            .some((pwsub) => (
-                pwsub.dse.subentry?.pwdAlphabet
-                || pwsub.dse.subentry?.pwdVocabulary
-                || pwsub.dse.subentry?.pwdMinLength
-                || pwsub.dse.subentry?.pwdHistorySlots
-            ));
-
+        const passwordQualityIsAdministered: boolean = (pwdAdminSubentries.length > 0);
         if (("encrypted" in data.newPwd) && passwordQualityIsAdministered) {
             throw new errors.UpdateError(
                 ctx.i18n.t("err:cannot_verify_pwd_quality"),
