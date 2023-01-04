@@ -32,6 +32,13 @@ import { getRelevantSubentries } from "../dit/getRelevantSubentries";
 import { getDistinguishedName } from "../x500/getDistinguishedName";
 import { addSeconds } from "date-fns";
 import { pwdExpiryAge, pwdMaxAge } from "@wildboar/x500/src/lib/collections/attributes";
+import { AlgorithmIdentifier } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
+import {
+    ASN1Construction,
+    ASN1Element,
+    DERElement,
+    ObjectIdentifier,
+} from "asn1-ts";
 
 /**
  * @summary Set the password of an entry
@@ -120,6 +127,32 @@ async function setEntryPassword (
         ? addSeconds(now, maxAge)
         : null;
 
+    const oldPassword = await ctx.db.password.findUnique({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+    });
+    const oldUserPwd: UserPwd | undefined = oldPassword
+        ? {
+            encrypted: new UserPwd_encrypted(
+                new AlgorithmIdentifier(
+                    ObjectIdentifier.fromString(oldPassword.algorithm_oid),
+                    oldPassword.algorithm_parameters_der
+                        ? ((): DERElement => {
+                            const el = new DERElement();
+                            el.fromBytes(oldPassword.algorithm_parameters_der);
+                            return el;
+                        })()
+                        : undefined,
+                ),
+                oldPassword.encrypted,
+            ),
+        }
+        : undefined;
+    const encodedOldPwd: ASN1Element | undefined = oldUserPwd
+        ? _encode_UserPwd(oldUserPwd, DER)
+        : undefined;
+
     // We don't use `addValues()` or `removeAttribute()` in these DB commands,
     // purely because of performance. Much of what we have to do can be done
     // in two queries: delete attributes and create attributes.
@@ -184,6 +217,23 @@ async function setEntryPassword (
                         tag_number: nowElement.tagNumber,
                         ber: Buffer.from(_encodeGeneralizedTime(endTime, DER).toBytes().buffer),
                         jer: nowElement.toJSON() as string,
+                    }]
+                    : []),
+                /**
+                 * I think `userPwdRecentlyExpired` is a really poorly named
+                 * attribute, because its real purpose is to store the previous
+                 * password, which needs to stick around for a little while to
+                 * compensate for replication latency.
+                 */
+                ...(encodedOldPwd
+                    ? [{
+                        entry_id: vertex.dse.id,
+                        type: userPwdRecentlyExpired["&id"].toString(),
+                        operational: true,
+                        tag_class: encodedOldPwd.tagClass,
+                        constructed: (encodedOldPwd.construction === ASN1Construction.constructed),
+                        tag_number: encodedOldPwd.tagNumber,
+                        ber: Buffer.from(encodedOldPwd.toBytes().buffer),
                     }]
                     : []),
             ],
