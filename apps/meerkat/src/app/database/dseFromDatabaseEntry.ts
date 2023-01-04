@@ -59,16 +59,14 @@ import {
 import {
     contextAssertionSubentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/contextAssertionSubentry.oa";
-// import {
-//     pwdAdminSubentry,
-// } from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAdminSubentry.oa";
-// import {
-//     serviceAdminSubentry,
-// } from "@wildboar/x500/src/lib/modules/InformationFramework/serviceAdminSubentry.oa";
+import {
+    pwdAdminSubentry,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAdminSubentry.oa";
 import {
     subschema,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
 import _ from "lodash";
+import { pwdAttribute } from "@wildboar/x500/src/lib/collections/attributes";
 
 
 function toACIItem (dbaci: DatabaseACIItem): ACIItem {
@@ -83,7 +81,7 @@ const CHILD: string = child["&id"].toString();
 // const SUBENTRY_AC: string = accessControlSubentry["&id"].toString();
 const SUBENTRY_CA: string = collectiveAttributeSubentry["&id"].toString();
 const SUBENTRY_CAD: string = contextAssertionSubentry["&id"].toString();
-// const SUBENTRY_PWD: string = pwdAdminSubentry["&id"].toString();
+const SUBENTRY_PWD: string = pwdAdminSubentry["&id"].toString();
 // const SUBENTRY_SVC: string = serviceAdminSubentry["&id"].toString();
 const SUBSCHEMA: string = subschema["&id"].toString();
 
@@ -514,7 +512,22 @@ async function dseFromDatabaseEntry (
                 return _decode_TypeAndContextAssertion(el);
             }));
         }
-        // TODO: Load Service Administration Data.
+        if (ret.objectClass.has(SUBENTRY_PWD)) {
+            const pwd_attr = await ctx.db.attributeValue.findFirst({
+                where: {
+                    entry_id: dbe.id,
+                    type: pwdAttribute["&id"].toString(),
+                },
+                select: {
+                    ber: true,
+                },
+            });
+            if (pwd_attr) {
+                const el = new BERElement();
+                el.fromBytes(pwd_attr.ber);
+                ret.subentry.pwdAttribute = el.objectIdentifier;
+            }
+        }
     }
 
     if (dbe.shadow) {

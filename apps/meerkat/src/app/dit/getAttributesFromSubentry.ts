@@ -94,14 +94,6 @@ function getAttributesFromSubentry (subentry: Vertex): Attribute[] {
             undefined,
         ));
     }
-    if (subentry.dse.subentry.searchRules) {
-        subentryAttributes.push(new Attribute(
-            searchRules["&id"],
-            subentry.dse.subentry.searchRules
-                .map((sr) => _encode_SearchRuleDescription(sr, DER)),
-            undefined,
-        ));
-    }
 
     if (subentry.dse.subentry.pwdAttribute) {
         subentryAttributes.push(new Attribute(

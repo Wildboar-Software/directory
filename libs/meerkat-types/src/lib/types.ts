@@ -627,9 +627,6 @@ interface SubentryDSE {
     /** Values of the `contextAssertionDefaults` operational attribute */
     contextAssertionDefaults?: TypeAndContextAssertion[];
 
-    /** Values of the `searchRules` operational attribute */
-    searchRules?: SearchRuleDescription[];
-
     /** Values of the `ditStructureRules` operational attribute */
     ditStructureRules?: DITStructureRuleDescription[];
 
