@@ -28,6 +28,9 @@ import {
 import {
     NameAndOptionalUID,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+import {
+    PwdResponseValue_error_passwordExpired,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue-error.ta";
 
 export
 interface LDAPBindReturn extends BindReturn {
@@ -191,10 +194,13 @@ async function bind (
             ctx.log.warn(ctx.i18n.t("log:invalid_credentials", logInfo), logInfo);
             return invalidCredentials;
         }
-        const authenticated = await attemptPassword(ctx, entry, {
+        const {
+            authorized,
+            pwdResponse,
+        } = await attemptPassword(ctx, entry, {
             unprotected: suppliedPassword,
         });
-        if (authenticated) {
+        if (authorized) {
             return {
                 ...ret,
                 authLevel: {
@@ -207,7 +213,11 @@ async function bind (
                 result: simpleSuccess(successMessage, encodedDN),
             };
         } else {
-            ctx.log.warn(invalidCredentialsMessage);
+            if (pwdResponse?.error === PwdResponseValue_error_passwordExpired) {
+                ctx.log.info(ctx.i18n.t("log:dua_bind_pwd_end", logInfo), logInfo);
+            } else {
+                ctx.log.warn(invalidCredentialsMessage);
+            }
             return invalidCredentials;
         }
     } else if ("sasl" in req.authentication) {

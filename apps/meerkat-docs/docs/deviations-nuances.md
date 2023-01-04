@@ -184,6 +184,21 @@ noted below are nuances in Meerkat DSA:
   - This is kind of a good thing: if you change `pwdMaxTimeInHistory` to a
     higher value, the history items that would have been truncated from history
     will flawlessly re-appear in history.
+- Meerkat DSA can enforce mandatory password resets as described (mentioned in
+  passing, really) in ITU Recommendation X.511. As it is unclear how this is to
+  be recorded in the X.500 specifications, Meerkat DSA uses the `pwdReset`
+  attribute defined [here](https://datatracker.ietf.org/doc/html/draft-behera-ldap-password-policy-10)
+  and commonly used in LDAP servers. In addition to this, the X.500
+  specifications say that the only allowed operation should be `changePassword`,
+  but Meerkat DSA is much more generous than this, allowing `modifyEntry`
+  (since it can also be used to change an entry's password),
+  `administerPassword` (since theoretically, an administrator could administer
+  their own password), and `search` and `list`, since many DUA implementations
+  might present an interactive "tree-like" representation of the directory that
+  automatically performs these operations and which cease to work if these
+  operations are unavailable. In LDAP, the only operations available when a
+  password is pending a change are `search`, `modifyEntry`, and the LDAP
+  `changePassword` extended request.
 
 ## The "Never Contributing" Bug
 

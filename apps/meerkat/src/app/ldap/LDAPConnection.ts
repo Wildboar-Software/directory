@@ -3,7 +3,15 @@ import * as errors from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
 import * as net from "net";
 import * as tls from "tls";
-import { BERElement, ASN1TruncationError, DERElement, ASN1TagClass, ASN1Construction, ASN1UniversalType } from "asn1-ts";
+import {
+    BERElement,
+    ASN1TruncationError,
+    DERElement,
+    ASN1TagClass,
+    ASN1Construction,
+    ASN1UniversalType,
+    FALSE,
+} from "asn1-ts";
 import { BER } from "asn1-ts/dist/node/functional";
 import {
     LDAPMessage,
@@ -80,6 +88,26 @@ import decodeLDAPDN from "./decodeLDAPDN";
 import {
     stringifyFilter,
 } from "@wildboar/ldap/src/lib/stringifiers/Filter";
+import readValuesOfType from "../utils/readValuesOfType";
+import { pwdReset } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdReset.oa";
+import {
+    SecurityErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import {
+    SecurityProblem_insufficientAccessRights,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+import { createSecurityParameters } from "../x500/createSecurityParameters";
+import { compareCode } from "@wildboar/x500";
+import {
+    administerPassword,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
+import {
+    changePassword,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
+import { list, modifyEntry, search } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
+import {
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 
 const UNIVERSAL_SEQUENCE_TAG: number = 0x30;
 
@@ -209,6 +237,38 @@ async function handleRequest (
     if (!dapRequest) {
         // Not all requests--such as abandon--warrant a response.
         return;
+    }
+    if (this.pwdReset) {
+        const operation_can_be_used_to_change_password: boolean = (
+            compareCode(dapRequest.opCode!, administerPassword["&operationCode"]!)
+            || compareCode(dapRequest.opCode!, changePassword["&operationCode"]!)
+            || compareCode(dapRequest.opCode!, modifyEntry["&operationCode"]!)
+            // Search and list are included, because a lot of DUAs will probably
+            // automatically do these operations, and become unusable if they
+            // don't work.
+            || compareCode(dapRequest.opCode!, search["&operationCode"]!)
+            || compareCode(dapRequest.opCode!, list["&operationCode"]!)
+        );
+        if (!operation_can_be_used_to_change_password) {
+            throw new errors.SecurityError(
+                ctx.i18n.t("err:pwd_must_change"),
+                new SecurityErrorData(
+                    SecurityProblem_insufficientAccessRights,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        FALSE,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        securityError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                ),
+                FALSE,
+            );
+        }
     }
     if ("present" in dapRequest.invokeId) {
         assn.messageIDToInvokeID.set(Number(message.messageID), Number(dapRequest.invokeId.present));
@@ -734,6 +794,13 @@ class LDAPAssociation extends ClientAssociation {
                             this.boundEntry = outcome.boundVertex;
                             this.authLevel = outcome.authLevel;
                             this.status = Status.BOUND;
+                            const password_must_be_reset: boolean = this.boundEntry
+                                ? await (async (): Promise<boolean> => {
+                                    const pwd_reset_value = (await readValuesOfType(ctx, this.boundEntry!, pwdReset["&id"]))[0];
+                                    return pwd_reset_value?.value.boolean;
+                                })()
+                                : false;
+                            this.pwdReset = password_must_be_reset;
                             const remoteHostIdentifier = `${this.socket.remoteFamily}://${this.socket.remoteAddress}/${this.socket.remotePort}`;
                             if (
                                 ("basicLevels" in outcome.authLevel)

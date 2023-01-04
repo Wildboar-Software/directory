@@ -117,6 +117,9 @@ import type {
 import type {
     AttributeCertificationPath,
 } from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/AttributeCertificationPath.ta";
+import type {
+    PwdResponseValue,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue.ta";
 
 type EventReceiver<T> = (params: T) => void;
 
@@ -664,6 +667,9 @@ interface SubentryDSE {
 
     /** The single value of the `pwdMinLength` operational attribute */
     pwdMinLength?: INTEGER;
+
+    /** The single value of the `pwdMaxLength` operational attribute */
+    pwdMaxLength?: INTEGER;
 
     /** The single value of the `pwdVocabulary` operational attribute */
     pwdVocabulary?: BIT_STRING;
@@ -3210,6 +3216,15 @@ abstract class ClientAssociation implements WithIntegerProtocolVersion {
      * @function
      */
     public abstract attemptBind (arg: ASN1Element): Promise<void>;
+
+    /**
+     * @summary Whether the user must change their password
+     * @description
+     *
+     * If `true`, the association peer will not be able to perform any
+     * operations other than those related to changing the password.
+     */
+    pwdReset?: boolean;
 }
 
 /**
@@ -3246,6 +3261,12 @@ interface BindReturn {
      * asymmetric cryptography will be represented here.
      */
     authLevel: AuthenticationLevel;
+
+    /**
+     * Information about a user password to return in the bind response or
+     * error.
+     */
+    pwdResponse?: PwdResponseValue;
 
 }
 

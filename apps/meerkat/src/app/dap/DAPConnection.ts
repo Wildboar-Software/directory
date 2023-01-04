@@ -19,7 +19,7 @@ import {
     DirectoryBindResult,
     _encode_DirectoryBindResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindResult.ta";
-import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
+import { dap_ip, list, modifyEntry, search } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
 import {
     _encode_Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
@@ -58,7 +58,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
 import isDebugging from "is-debugging";
 import printCode from "../utils/printCode";
-import { ASN1Element } from "asn1-ts";
+import { ASN1Element, FALSE } from "asn1-ts";
 import {
     _decode_DirectoryBindArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
@@ -101,6 +101,15 @@ import {
     _encode_DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as _encode_DBE_Param,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
 import stringifyDN from "../x500/stringifyDN";
+import readValuesOfType from "../utils/readValuesOfType";
+import { pwdReset } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdReset.oa";
+import {
+    SecurityErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import {
+    SecurityProblem_insufficientAccessRights,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+import { createSecurityParameters } from "../x500/createSecurityParameters";
 
 /**
  * @summary The handles a request, but not errors
@@ -124,6 +133,38 @@ async function handleRequest (
 ): Promise<void> {
     if (!("local" in request.code)) {
         throw new MistypedPDUError();
+    }
+    if (this.pwdReset) {
+        const operation_can_be_used_to_change_password: boolean = (
+            compareCode(request.code, administerPassword["&operationCode"]!)
+            || compareCode(request.code, changePassword["&operationCode"]!)
+            || compareCode(request.code, modifyEntry["&operationCode"]!)
+            // Search and list are included, because a lot of DUAs will probably
+            // automatically do these operations, and become unusable if they
+            // don't work.
+            || compareCode(request.code, search["&operationCode"]!)
+            || compareCode(request.code, list["&operationCode"]!)
+        );
+        if (!operation_can_be_used_to_change_password) {
+            throw new errors.SecurityError(
+                ctx.i18n.t("err:pwd_must_change"),
+                new SecurityErrorData(
+                    SecurityProblem_insufficientAccessRights,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        FALSE,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        securityError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                ),
+                FALSE,
+            );
+        }
     }
     const result = await OperationDispatcher.dispatchDAPRequest(
         ctx,
@@ -684,6 +725,13 @@ class DAPAssociation extends ClientAssociation {
         ) {
             this.authorizedForSignedErrors = true;
         }
+        const password_must_be_reset: boolean = this.boundEntry
+            ? await (async (): Promise<boolean> => {
+                const pwd_reset_value = (await readValuesOfType(ctx, this.boundEntry!, pwdReset["&id"]))[0];
+                return pwd_reset_value?.value.boolean;
+            })()
+            : false;
+        this.pwdReset = password_must_be_reset;
         const bindResult = new DirectoryBindResult(
             undefined, // TODO: Supply return credentials. NOTE that the specification says that this must be the same CHOICE that the user supplied.
             versions,

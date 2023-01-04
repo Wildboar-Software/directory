@@ -1,4 +1,4 @@
-import type { Context, Vertex } from "@wildboar/meerkat-types";
+import type { Context, Vertex, Value } from "@wildboar/meerkat-types";
 import type {
     UserPwd,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
@@ -15,7 +15,7 @@ import {
     ObjectIdentifier,
     ASN1TagClass,
     ASN1UniversalType,
-    BERElement,
+    packBits,
 } from "asn1-ts";
 import {
     pwdFails,
@@ -24,7 +24,86 @@ import {
     pwdFailureTime,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFailureTime.oa";
 import { DER, _encodeInteger, _encodeGeneralizedTime } from "asn1-ts/dist/node/functional";
+import readValuesOfType from "../utils/readValuesOfType";
+import { userPwdRecentlyExpired } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdRecentlyExpired.oa";
+import { strict as assert } from "node:assert";
+import { getAdministrativePoints } from "../dit/getAdministrativePoints";
+import { getRelevantSubentries } from "../dit/getRelevantSubentries";
+import { getDistinguishedName } from "../x500/getDistinguishedName";
+import { pwdEndTime, pwdExpiryTime, pwdGracesUsed } from "@wildboar/x500/src/lib/collections/attributes";
+import { PwdResponseValue } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue.ta";
+import {
+    PwdResponseValue_error_passwordExpired,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue-error.ta";
+import { removeAttribute } from "../database/entry/removeAttribute";
+import { addValues } from "../database/entry/addValues";
+import { pwdGraceUseTime } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdGraceUseTime.oa";
+import { pwdLastSuccess } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLastSuccess.oa";
+import { subSeconds, differenceInSeconds, addSeconds } from "date-fns";
 
+function compareUserPwd (a: UserPwd, b: UserPwd): boolean | undefined {
+    if ("clear" in a && "clear" in b) {
+        return a.clear === b.clear;
+    }
+    if (("encrypted" in a) && ("encrypted" in b)) {
+        return (
+            (a.encrypted.encryptedString.length === b.encrypted.encryptedString.length)
+            && crypto.timingSafeEqual(a.encrypted.encryptedString, b.encrypted.encryptedString)
+            && compareAlgorithmIdentifier(a.encrypted.algorithmIdentifier, b.encrypted.algorithmIdentifier)
+        );
+    }
+    if (("tagNumber" in a) || ("tagNumber" in b)) {
+        // There is some unrecognized alternative in use.
+        return undefined;
+    }
+    const [ already_encrypted, not_encrypted ] = ("encrypted" in a)
+        ? [ a, b ]
+        : [ b, a ];
+    assert("encrypted" in already_encrypted);
+    assert("clear" in not_encrypted);
+
+    const alg = already_encrypted.encrypted.algorithmIdentifier;
+    const newly_encrypted = encryptPassword(alg, Buffer.from(not_encrypted.clear, "utf-8"));
+    if (!newly_encrypted) {
+        return undefined; // Algorithm not understood.
+    }
+    return (
+        (newly_encrypted.length === already_encrypted.encrypted.encryptedString.length)
+        && crypto.timingSafeEqual(newly_encrypted, already_encrypted.encrypted.encryptedString)
+    );
+}
+
+function simpleCredsToUserPwd (creds: SimpleCredentials_password): UserPwd | undefined {
+    if ("unprotected" in creds) {
+        return {
+            clear: Buffer.from(creds.unprotected.buffer).toString("utf-8"),
+        };
+    } else if ("protected_" in creds) {
+        return {
+            encrypted: new UserPwd_encrypted(
+                creds.protected_.algorithmIdentifier,
+                packBits(creds.protected_.hashValue),
+            ),
+        }
+    } else if ("userPwd" in creds) {
+        return creds.userPwd;
+    } else {
+        return undefined;
+    }
+}
+
+export
+interface AttemptPasswordReturn {
+    authorized: boolean | undefined;
+    pwdResponse?: PwdResponseValue;
+}
+
+/* TODO: When this is re-written, it should return an enum instead.
+- Valid
+- Invalid
+- Expired
+- Ended
+*/
 /**
  * @summary Attempts a password for a bind operation.
  * @description
@@ -46,119 +125,64 @@ async function attemptPassword (
     ctx: Context,
     vertex: Vertex,
     attemptedPassword: SimpleCredentials_password,
-): Promise<boolean | undefined> {
-    const password = await ctx.db.password.findUnique({
+): Promise<AttemptPasswordReturn> {
+    const password1 = await ctx.db.password.findUnique({
         where: {
             entry_id: vertex.dse.id,
         },
     });
-    if (!password) {
-        return undefined;
-    }
-    const failsRow = await ctx.db.attributeValue.findFirst({
-        where: {
-            entry_id: vertex.dse.id,
-            type: pwdFails["&id"].toString(),
-        },
-        select: {
-            ber: true,
-        },
-    });
-    const fails = failsRow
-        ? (() => {
-            const el = new BERElement();
-            el.fromBytes(failsRow.ber);
-            return Number(el.integer);
-        })()
-        : 0;
-    const userPwd: UserPwd = {
-        encrypted: new UserPwd_encrypted(
-            new AlgorithmIdentifier(
-                ObjectIdentifier.fromString(password.algorithm_oid),
-                password.algorithm_parameters_der
-                    ? ((): DERElement => {
-                        const el = new DERElement();
-                        el.fromBytes(password.algorithm_parameters_der);
-                        return el;
-                    })()
-                    : undefined,
-            ),
-            password.encrypted,
-        ),
-    };
-    let passwordIsCorrect: boolean = false;
-    if ("unprotected" in attemptedPassword) {
-        const attemptedClearPassword = attemptedPassword.unprotected;
-        const encryptedAttemptedPassword = encryptPassword(
-            userPwd.encrypted.algorithmIdentifier,
-            attemptedClearPassword,
-        );
-        if (!encryptedAttemptedPassword) {
-            return undefined;
-        }
-        passwordIsCorrect = (
-            (userPwd.encrypted.encryptedString.length === encryptedAttemptedPassword.length)
-            && crypto.timingSafeEqual(userPwd.encrypted.encryptedString, encryptedAttemptedPassword)
-        );
-    } else if ("protected_" in attemptedPassword) {
-        const encryptedAttemptedPassword = attemptedPassword.protected_.hashValue;
-        const storedAlgID = userPwd.encrypted.algorithmIdentifier;
-        const attemptedAlgID = attemptedPassword.protected_.algorithmIdentifier;
-        passwordIsCorrect = (
-            compareAlgorithmIdentifier(storedAlgID, attemptedAlgID)
-            && (userPwd.encrypted.encryptedString.length === encryptedAttemptedPassword.length)
-            && crypto.timingSafeEqual(userPwd.encrypted.encryptedString, encryptedAttemptedPassword)
-        );
-    } else if ("userPwd" in attemptedPassword) {
-        // This code was copied from @wildboar/x500/src/lib/matching/equality/userPwdMatch.ts.
-        const a = attemptedPassword.userPwd;
-        const v = userPwd;
-        if ("encrypted" in a) {
-            passwordIsCorrect = (
-                (a.encrypted.encryptedString.length === v.encrypted.encryptedString.length)
-                && crypto.timingSafeEqual(userPwd.encrypted.encryptedString, v.encrypted.encryptedString)
-                && compareAlgorithmIdentifier(a.encrypted.algorithmIdentifier, v.encrypted.algorithmIdentifier)
-            );
-        } else if ("clear" in a) {
-            const alg = v.encrypted.algorithmIdentifier;
-            const result = encryptPassword(alg, Buffer.from(a.clear, "utf-8"));
-            if (!result) {
-                return undefined; // Algorithm not understood.
-            }
-            passwordIsCorrect = (
-                (result.length === v.encrypted.encryptedString.length)
-                && crypto.timingSafeEqual(result, v.encrypted.encryptedString)
-            );
-        } else {
-            return undefined;
-        }
-    } else {
-        return undefined;
-    }
 
-    if (passwordIsCorrect) {
-        await ctx.db.$transaction([
-            ctx.db.attributeValue.deleteMany({
-                where: {
-                    entry_id: vertex.dse.id,
-                    type: pwdFails["&id"].toString(),
-                },
-            }),
-            ctx.db.attributeValue.create({
-                data: {
-                    entry_id: vertex.dse.id,
-                    type: pwdFails["&id"].toString(),
-                    operational: true,
-                    tag_class: ASN1TagClass.universal,
-                    constructed: false,
-                    tag_number: ASN1UniversalType.integer,
-                    ber: Buffer.from(_encodeInteger(0, DER).toBytes()),
-                    jer: 0,
-                },
-            }),
-        ]);
-    } else {
-        const nowElement = _encodeGeneralizedTime(new Date(), DER);
+    const passwordRecentlyExpiredValue: Value | undefined
+        = (await readValuesOfType(ctx, vertex, userPwdRecentlyExpired["&id"]))[0];
+    const password2 = passwordRecentlyExpiredValue
+        ? userPwdRecentlyExpired.decoderFor["&Type"]!(passwordRecentlyExpiredValue.value)
+        : undefined;
+    if (!password1 && !password2) {
+        return { authorized: undefined };
+    }
+    const failsValue: Value | undefined = (await readValuesOfType(ctx, vertex, pwdFails["&id"]))[0];
+    const fails: number = failsValue ? Number(failsValue.value.integer) : 0;
+
+    const userPwd1: UserPwd | undefined = password1
+        ? {
+            encrypted: new UserPwd_encrypted(
+                new AlgorithmIdentifier(
+                    ObjectIdentifier.fromString(password1.algorithm_oid),
+                    password1.algorithm_parameters_der
+                        ? ((): DERElement => {
+                            const el = new DERElement();
+                            el.fromBytes(password1.algorithm_parameters_der);
+                            return el;
+                        })()
+                        : undefined,
+                ),
+                password1.encrypted,
+            ),
+        }
+        : undefined;
+    const userPwd2: UserPwd | undefined = password2;
+
+    const asserted_pwd = simpleCredsToUserPwd(attemptedPassword);
+    if (!asserted_pwd) {
+        return { authorized: undefined };
+    }
+    let passwordIsCorrect: boolean = false;
+    let expiredPasswordUsed: boolean = false;
+    for (const valid_pwd of [ userPwd1, userPwd2 ]) {
+        if (!valid_pwd) {
+            continue;
+        }
+        if (compareUserPwd(asserted_pwd, valid_pwd) === true) {
+            passwordIsCorrect = true;
+            if (valid_pwd === userPwd2) {
+                expiredPasswordUsed = true;
+            }
+            break;
+        }
+    }
+    const nowElement = _encodeGeneralizedTime(new Date(), DER);
+
+    if (!passwordIsCorrect) {
         await ctx.db.$transaction([
             ctx.db.attributeValue.deleteMany({
                 where: {
@@ -196,9 +220,164 @@ async function attemptPassword (
                 },
             }),
         ]);
+        return { authorized: false };
     }
 
-    return passwordIsCorrect;
+    const now = new Date();
+    const endTimeValue: Value | undefined = (await readValuesOfType(ctx, vertex, pwdEndTime["&id"]))[0];
+    const endTime: Date | undefined = endTimeValue ? endTimeValue.value.generalizedTime : undefined;
+    const expiryTimeValue: Value | undefined = (await readValuesOfType(ctx, vertex, pwdExpiryTime["&id"]))[0];
+    const expiryTime: Date | undefined = expiryTimeValue ? expiryTimeValue.value.generalizedTime : undefined;
+    /**
+     * IMPORTANT: It is critical that we wait for the user to have supplied
+     * the correct password before we can return a passwordExpired error.
+     * InvalidCredentials MUST be returned to the user if they guess the
+     * credentials incorrectly, otherwise, these two errors could be used
+     * to oracle for user accounts that are expired.
+     */
+    if (endTime && (endTime > now)) {
+        // Actually, I don't think anything needs to be done here. Even the
+        // compare operation will use `attemptPassword()`.
+        // await ctx.db.password.delete({
+        //     where: {
+        //         entry_id: vertex.dse.id,
+        //     },
+        // });
+        // await ctx.db.attributeValue.deleteMany({
+        //     where: {
+        //         entry_id: vertex.dse.id,
+        //         type: userPwdRecentlyExpired["&id"].toString(),
+        //     },
+        // });
+
+        // This should result in a directoryBindError with securityproblem.passwordExpired.
+        return {
+            authorized: false,
+            pwdResponse: new PwdResponseValue(
+                undefined,
+                PwdResponseValue_error_passwordExpired,
+            ),
+        };
+    }
+
+    const targetDN = getDistinguishedName(vertex);
+    const admPoints = getAdministrativePoints(vertex);
+    const relevantSubentries: Vertex[] = (await Promise.all(
+        admPoints.map((ap) => getRelevantSubentries(ctx, vertex, targetDN, ap)),
+    )).flat();
+
+    if (expiryTime && (expiryTime > now)) {
+        const pwdGraces: number | undefined = Number(relevantSubentries
+            .map((sub) => sub.dse.subentry?.pwdGraces ?? 0)
+            // Do not reduce with initialValue = 0! Use undefined, then default to 0.
+            .reduce((acc, curr) => Math.min(Number(acc ?? 10_000_000), Number(curr)), undefined))
+            ?? 0;
+        const gracesUsedValue: Value | undefined = (await readValuesOfType(ctx, vertex, pwdGracesUsed["&id"]))[0];
+        const gracesUsed: number = gracesUsedValue ? Number(gracesUsedValue.value.integer) : 0;
+        const expired_pwd_duration: number | undefined = Number(relevantSubentries
+            .map((sub) => sub.dse.subentry?.pwdRecentlyExpiredDuration ?? 0)
+            // Do not reduce with initialValue = 0! Use undefined, then default to 0.
+            .reduce((acc, curr) => Math.min(Number(acc ?? 10_000_000), Number(curr)), undefined))
+            ?? 0;
+
+        const expiredPasswordExpirationTime = addSeconds(expiryTime, expired_pwd_duration);
+        if ((expiredPasswordExpirationTime > now) && expiredPasswordUsed) {
+            return {
+                authorized: false,
+                pwdResponse: new PwdResponseValue(
+                    {
+                        graceRemaining: (pwdGraces - gracesUsed),
+                    },
+                    PwdResponseValue_error_passwordExpired,
+                ),
+            };
+        }
+
+        const newPwdGracesUsedValue: Value = {
+            type: pwdGracesUsed["&id"],
+            value: _encodeInteger(gracesUsed + 1, DER),
+        };
+        const newPwdGracesUsedTimeValue: Value = {
+            type: pwdGraceUseTime["&id"],
+            value: _encodeGeneralizedTime(now, DER),
+        };
+
+        await ctx.db.$transaction([
+            ...(await removeAttribute(ctx, vertex, pwdGracesUsed["&id"])),
+            ...(await addValues(ctx, vertex, [newPwdGracesUsedValue], undefined, false, false)),
+        ]);
+        await ctx.db.$transaction(
+            await addValues(ctx, vertex, [newPwdGracesUsedTimeValue], undefined, false, false),
+        );
+
+        return {
+            authorized: (gracesUsed <= pwdGraces),
+            pwdResponse: new PwdResponseValue(
+                {
+                    graceRemaining: (pwdGraces - (gracesUsed + 1)),
+                },
+                PwdResponseValue_error_passwordExpired,
+            ),
+        };
+    }
+    // TODO: If password has expired, return error. Make assn changePassword only.
+    await ctx.db.$transaction([
+        ctx.db.attributeValue.deleteMany({
+            where: {
+                entry_id: vertex.dse.id,
+                type: {
+                    in: [
+                        pwdFails["&id"].toString(),
+                        pwdLastSuccess["&id"].toString(),
+                    ],
+                },
+            },
+        }),
+        ctx.db.attributeValue.createMany({
+            data: [
+                {
+                    entry_id: vertex.dse.id,
+                    type: pwdFails["&id"].toString(),
+                    operational: true,
+                    tag_class: ASN1TagClass.universal,
+                    constructed: false,
+                    tag_number: ASN1UniversalType.integer,
+                    ber: Buffer.from(_encodeInteger(0, DER).toBytes().buffer),
+                    jer: 0,
+                },
+                {
+                    entry_id: vertex.dse.id,
+                    type: pwdLastSuccess["&id"].toString(),
+                    operational: true,
+                    tag_class: ASN1TagClass.universal,
+                    constructed: false,
+                    tag_number: ASN1UniversalType.generalizedTime,
+                    ber: Buffer.from(nowElement.toBytes().buffer),
+                    jer: now.toISOString(),
+                },
+            ],
+        }),
+    ]);
+
+    const expirationWarning: number = expiryTime
+        ? Number(relevantSubentries
+            .map((sub) => sub.dse.subentry?.pwdExpiryWarning ?? 0)
+            .reduce((acc, curr) => Math.max(Number(acc), Number(curr)), 0))
+        : 0;
+    const expirationWarningStart: Date | null = expiryTime
+        ? subSeconds(expiryTime, expirationWarning)
+        : null;
+
+    return {
+        authorized: true,
+        pwdResponse: (expirationWarningStart && (expirationWarningStart <= now))
+            ? new PwdResponseValue(
+                {
+                    timeLeft: Math.abs(differenceInSeconds(now, expiryTime!)),
+                },
+            )
+            : undefined,
+    };
 }
 
 export default attemptPassword;

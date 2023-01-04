@@ -1,5 +1,5 @@
 import type { Context, Vertex, ClientAssociation, OperationReturn } from "@wildboar/meerkat-types";
-import { ObjectIdentifier, unpackBits } from "asn1-ts";
+import { ASN1TagClass, ASN1UniversalType, ObjectIdentifier, unpackBits } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
@@ -87,6 +87,7 @@ import { EncPwdInfo } from "@wildboar/x500/src/lib/modules/DirectoryAbstractServ
 import { pwdAdminSubentry } from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAdminSubentry.oa";
 import { id_ar_pwdAdminSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-pwdAdminSpecificArea.va";
 import { userPwdHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdHistory.oa";
+import { pwdReset } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdReset.oa";
 
 const USER_PASSWORD_OID: string = userPassword["&id"].toString();
 const USER_PWD_OID: string = userPwd["&id"].toString();
@@ -98,6 +99,10 @@ const USER_PWD_OID: string = userPwd["&id"].toString();
  * The `administerPassword` operation, as specified in ITU Recommendation X.511 (2016),
  * Section 12.6. per the recommended implementation in ITU Recommendation X.518
  * (2016), Section 19.1.3.
+ *
+ * This implementation sets the `pwdReset` operational attribute value to `TRUE`
+ * to signal that the user must change his or her password upon logging in
+ * again.
  *
  * @param ctx The context object
  * @param assn The client association
@@ -435,7 +440,27 @@ async function administerPassword (
     // #endregion Password Policy Verification
 
     const promises = await setEntryPassword(ctx, assn, target, data.newPwd);
-    await ctx.db.$transaction(promises);
+    await ctx.db.$transaction([
+        ...promises,
+        ctx.db.attributeValue.deleteMany({
+            where: {
+                entry_id: target.dse.id,
+                type: pwdReset["&id"].toString(),
+            },
+        }),
+        ctx.db.attributeValue.create({
+            data: {
+                entry_id: target.dse.id,
+                type: pwdReset["&id"].toString(),
+                operational: true,
+                tag_class: ASN1TagClass.universal,
+                constructed: false,
+                tag_number: ASN1UniversalType.boolean,
+                ber: Buffer.from([ 0xFF ]),
+                jer: true,
+            },
+        }),
+    ]);
     /* Note that the specification says that we should update hierarchical
     operational bindings, but really, no other DSA should have the passwords for
     entries in this DSA. Meerkat DSA will take a principled stance and refuse

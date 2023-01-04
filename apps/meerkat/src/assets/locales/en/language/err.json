@@ -202,5 +202,7 @@
     "pwd_in_history": "This password cannot be reused right now.",
     "pwd_quality": "Insufficient password quality.",
     "inappropriate_algs": "Password was pre-encrypted with an algorithm not supported by this DSA.",
-    "multiple_passwords_supplied": "Multiple password attributes or values supplied in operation."
+    "multiple_passwords_supplied": "Multiple password attributes or values supplied in operation.",
+    "pwd_must_change": "You must change your password before performing this operation.",
+    "pwd_end": "Your password expired beyond the point after which you cannot reset it yourself. You will need administrator intervention."
 }

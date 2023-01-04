@@ -90,6 +90,9 @@ import {
     CHECK_PWD_QUALITY_REUSE,
 } from "../password/checkPasswordQuality";
 import { EncPwdInfo } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EncPwdInfo.ta";
+import {
+    PwdResponseValue_error_passwordExpired,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue-error.ta";
 
 const USER_PASSWORD_OID: string = userPassword["&id"].toString();
 const USER_PWD_OID: string = userPwd["&id"].toString();
@@ -314,22 +317,32 @@ async function changePassword (
             );
         }
     }
-    const oldPasswordIsCorrect: boolean | undefined = await attemptPassword(ctx, target, {
+    const {
+        authorized: oldPasswordIsCorrect,
+        pwdResponse,
+    } = await attemptPassword(ctx, target, {
         userPwd: data.oldPwd,
     });
     if (!oldPasswordIsCorrect) {
-        ctx.log.warn(ctx.i18n.t("log:change_password_incorrect", {
-            cid: assn.id,
-            uuid: target.dse.uuid,
-        }), {
+        const logInfo = {
             remoteFamily: assn.socket.remoteFamily,
             remoteAddress: assn.socket.remoteAddress,
             remotePort: assn.socket.remotePort,
             association_id: assn.id,
             invokeID: printInvokeId(state.invokeId),
-        });
+        };
+        if (pwdResponse?.error === PwdResponseValue_error_passwordExpired) {
+            ctx.log.info(ctx.i18n.t("log:cpw_pwd_end", { aid: assn.id }), logInfo);
+        } else {
+            ctx.log.warn(ctx.i18n.t("log:change_password_incorrect", {
+                cid: assn.id,
+                uuid: target.dse.uuid,
+            }), logInfo);
+        }
         throw new errors.SecurityError(
-            ctx.i18n.t("err:old_password_incorrect"),
+            (pwdResponse?.error === PwdResponseValue_error_passwordExpired)
+                ? ctx.i18n.t("err:pwd_end")
+                : ctx.i18n.t("err:old_password_incorrect"),
             new SecurityErrorData(
                 SecurityProblem_invalidCredentials,
                 undefined,
