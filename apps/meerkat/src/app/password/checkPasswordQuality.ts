@@ -15,6 +15,7 @@ import { subSeconds, addSeconds } from "date-fns";
 import { compareAlgorithmIdentifier } from "@wildboar/x500";
 import { timingSafeEqual } from "node:crypto";
 import { pwdAlphabet, pwdHistorySlots, pwdMaxTimeInHistory, pwdMinLength, pwdMinTimeInHistory, pwdVocabulary } from "@wildboar/x500/src/lib/collections/attributes";
+import { pwdMaxLength } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMaxLength.oa";
 
 export const CHECK_PWD_QUALITY_OK: number = 0;
 export const CHECK_PWD_QUALITY_LENGTH: number = -1;
@@ -47,8 +48,17 @@ async function checkPasswordQuality (
             jer: true,
         },
     }))?.jer as number ?? 0;
+    const maxLength: number = (await ctx.db.attributeValue.findFirst({
+        where: {
+            entry_id: subentry.dse.id,
+            type: pwdMaxLength["&id"].toString(),
+        },
+        select: {
+            jer: true,
+        },
+    }))?.jer as number ?? 100_000;
 
-    if (password.length < minLength) {
+    if ((password.length < minLength) || (password.length > maxLength)) {
         return CHECK_PWD_QUALITY_LENGTH;
     }
 
