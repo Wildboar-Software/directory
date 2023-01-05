@@ -155,6 +155,7 @@ function simpleCredsToUserPwd (creds: SimpleCredentials_password): UserPwd | und
             clear: Buffer.from(creds.unprotected.buffer).toString("utf-8"),
         };
     } else if ("protected_" in creds) {
+        // FIXME: This is WRONG!
         return {
             encrypted: new UserPwd_encrypted(
                 creds.protected_.algorithmIdentifier,

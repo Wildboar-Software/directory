@@ -45,6 +45,8 @@ import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstr
 import {
     SecurityProblem_insufficientAccessRights,
     SecurityProblem_invalidSignature,
+    SecurityProblem_passwordExpired,
+    SecurityProblem_invalidCredentials,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
@@ -127,6 +129,25 @@ import type {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import { printInvokeId } from "../utils/printInvokeId";
 import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
+import { userPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
+import { userPassword } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
+import { EqualityMatcher } from "@wildboar/x500";
+import attemptPassword from "../authn/attemptPassword";
+import { SimpleCredentials_password } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials-password.ta";
+import {
+    PwdResponseValue_error_passwordExpired,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue-error.ta";
+import {
+    Attribute,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+import { PwdResponseValue, _encode_PwdResponseValue } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue.ta";
+import {
+    pwdResponseValue,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/pwdResponseValue.oa";
+import {
+    PwdResponse,
+    _encode_PwdResponse,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PwdResponse.ta";
 
 /**
  * @summary The compare operation, as specified in ITU Recommendation X.511.
@@ -405,7 +426,34 @@ async function compare (
             }
         }
     }
-    const matcher = EQUALITY_MATCHER(data.purported.type_);
+    const comparingPassword: boolean = (
+        data.purported.type_.isEqualTo(userPwd["&id"])
+        || data.purported.type_.isEqualTo(userPassword["&id"])
+    );
+    const familyGrouping = data.familyGrouping ?? CompareArgumentData._default_value_for_familyGrouping;
+    if (comparingPassword && (familyGrouping !== FamilyGrouping_entryOnly)) {
+        throw new errors.ServiceError(
+            ctx.i18n.t("err:compare_pwd_compound_entry"),
+            new ServiceErrorData(
+                ServiceProblem_unwillingToPerform,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    serviceError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+            signErrors,
+        );
+    }
+    const matcher: EqualityMatcher | undefined = comparingPassword
+        ? () => false // We just put a NOOP in here for type safety. We won't use this later on.
+        : EQUALITY_MATCHER(data.purported.type_);
     if (!matcher) {
         throw new errors.ServiceError(
             ctx.i18n.t("err:no_equality_matching_rule_defined_for_type", {
@@ -429,7 +477,6 @@ async function compare (
         );
     }
 
-    const familyGrouping = data.familyGrouping ?? CompareArgumentData._default_value_for_familyGrouping;
     const familySubsetGetter: (vertex: Vertex) => IterableIterator<Vertex[]> = (() => {
         switch (familyGrouping) {
         case (FamilyGrouping_entryOnly): return readEntryOnly;
@@ -491,6 +538,8 @@ async function compare (
     const acs = data.purported.assertedContexts;
     let matchedType: AttributeType | undefined;
     let matched: boolean = false;
+    let notification: Attribute[] | undefined;
+    let pwdResponse: PwdResponseValue | undefined;
     for (const familySubset of familySubsets) {
         const familySubsetValues: Value[] = (await Promise.all(
             familySubset.map(readMemberValues),
@@ -518,10 +567,54 @@ async function compare (
                 );
             }
             try {
-                if (!matcher(data.purported.assertion, value.value)) {
+                if (comparingPassword) {
+                    const asserted_pwd: SimpleCredentials_password = data.purported.type_.isEqualTo(userPwd["&id"])
+                        ? {
+                            userPwd: userPwd.decoderFor["&Type"]!(data.purported.assertion),
+                        }
+                        : {
+                            unprotected: userPassword.decoderFor["&Type"]!(data.purported.assertion),
+                        };
+                    const pwd_result = await attemptPassword(ctx, target, asserted_pwd);
+                    if (pwd_result.unbind) {
+                        throw new errors.SecurityError(
+                            (pwd_result.pwdResponse?.error === PwdResponseValue_error_passwordExpired)
+                                ? ctx.i18n.t("err:pwd_end")
+                                : ctx.i18n.t("err:old_password_incorrect"),
+                            new SecurityErrorData(
+                                (pwd_result.pwdResponse?.error === PwdResponseValue_error_passwordExpired)
+                                    ? SecurityProblem_passwordExpired
+                                    : SecurityProblem_invalidCredentials,
+                                undefined,
+                                undefined,
+                                [],
+                                createSecurityParameters(
+                                    ctx,
+                                    signErrors,
+                                    assn.boundNameAndUID?.dn,
+                                    undefined,
+                                    securityError["&errorCode"],
+                                ),
+                                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                                state.chainingArguments.aliasDereferenced,
+                                undefined,
+                            ),
+                            signErrors,
+                            pwd_result.unbind,
+                        );
+                    }
+                    if (!pwd_result.authorized) {
+                        continue;
+                    }
+                    if (pwd_result.pwdResponse) {
+                        pwdResponse = pwd_result.pwdResponse;
+                    }
+                }
+                else if (!matcher(data.purported.assertion, value.value)) {
                     continue;
                 }
             } catch {
+                // TODO: Log error.
                 continue;
             }
 
@@ -641,6 +734,21 @@ async function compare (
         op.pointOfNoReturnTime = new Date();
     }
 
+    if (pwdResponse) {
+        notification = [
+            new Attribute(
+                pwdResponseValue["&id"],
+                [
+                    // NOTE: PwdResponse is technically a different assignment, but it has the exact same syntax.
+                    _encode_PwdResponseValue(new PwdResponseValue(
+                        pwdResponse.warning,
+                        pwdResponse.error,
+                    ), DER),
+                ],
+            ),
+        ];
+    }
+
     const signResults: boolean = (
         (data.securityParameters?.target === ProtectionRequest_signed)
         && assn.authorizedForSignedResults
@@ -661,7 +769,7 @@ async function compare (
         ),
         ctx.dsa.accessPoint.ae_title.rdnSequence,
         state.chainingArguments.aliasDereferenced,
-        undefined,
+        notification,
     );
     const result: CompareResult = signResults
         ? (() => {

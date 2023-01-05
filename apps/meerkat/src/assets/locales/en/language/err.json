@@ -204,5 +204,6 @@
     "inappropriate_algs": "Password was pre-encrypted with an algorithm not supported by this DSA.",
     "multiple_passwords_supplied": "Multiple password attributes or values supplied in operation.",
     "pwd_must_change": "You must change your password before performing this operation.",
-    "pwd_end": "Your password expired beyond the point after which you cannot reset it yourself. You will need administrator intervention."
+    "pwd_end": "Your password expired beyond the point after which you cannot reset it yourself. You will need administrator intervention.",
+    "compare_pwd_compound_entry": "You cannot compare passwords for a whole compound entry. The familyGrouping option must be set to entryOnly when using compare to assert passwords."
 }
