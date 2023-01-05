@@ -16,6 +16,8 @@ import {
     ASN1TagClass,
     ASN1UniversalType,
     packBits,
+    GeneralizedTime,
+    BERElement,
 } from "asn1-ts";
 import {
     pwdFails,
@@ -23,14 +25,21 @@ import {
 import {
     pwdFailureTime,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFailureTime.oa";
-import { DER, _encodeInteger, _encodeGeneralizedTime } from "asn1-ts/dist/node/functional";
-import readValuesOfType from "../utils/readValuesOfType";
+import { DER, _encodeInteger, _encodeGeneralizedTime, _decodeGeneralizedTime, _decodeInteger } from "asn1-ts/dist/node/functional";
 import { userPwdRecentlyExpired } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdRecentlyExpired.oa";
 import { strict as assert } from "node:assert";
 import { getAdministrativePoints } from "../dit/getAdministrativePoints";
 import { getRelevantSubentries } from "../dit/getRelevantSubentries";
 import { getDistinguishedName } from "../x500/getDistinguishedName";
-import { pwdEndTime, pwdExpiryTime, pwdGracesUsed, pwdMaxFailures, pwdRecentlyExpiredDuration, pwdStartTime } from "@wildboar/x500/src/lib/collections/attributes";
+import {
+    pwdEndTime,
+    pwdExpiryTime,
+    pwdGracesUsed,
+    pwdLockoutDuration,
+    pwdMaxFailures,
+    pwdRecentlyExpiredDuration,
+    pwdStartTime,
+} from "@wildboar/x500/src/lib/collections/attributes";
 import { PwdResponseValue } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue.ta";
 import {
     PwdResponseValue_error_changeAfterReset,
@@ -49,7 +58,64 @@ import { PrismaPromise, Prisma } from "@prisma/client";
 import { pwdLockout } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLockout.oa";
 import { pwdAccountLockedTime } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdAccountLockedTime.oa";
 import { pwdReset } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdReset.oa";
+import { groupByOID } from "../utils/groupByOID";
 
+// // Subentry (All have integer syntax)
+// pwdExpireWarning
+// id_oa_pwdGraces
+// pwdLockoutDuration
+// pwdMaxFailures
+// pwdRecentlyExpiredDuration
+// // You could sort by JSON to fetch the smallest values.
+
+// // Entry
+// userPwdRecentlyExpired
+// pwdFails
+// pwdGracesUsed
+// pwdLockout
+// pwdReset
+
+// // Entry Times
+// pwdFailureTime
+// pwdAccountLockedTime
+// pwdStartTime
+// pwdGraceUseTime
+// pwdEndTime
+// pwdLastSuccess
+// pwdExpiryTime
+
+
+const START_TIME_OID: string = pwdStartTime["&id"].toString();
+const EXPIRY_TIME_OID: string = pwdExpiryTime["&id"].toString();
+const LOCKED_TIME_OID: string = pwdAccountLockedTime["&id"].toString();
+// const GRACE_USE_TIME_OID: string = pwdGraceUseTime["&id"].toString();
+// const FAIL_TIME_OID: string = pwdFailureTime["&id"].toString();
+// const SUCCESS_TIME_OID: string = pwdLastSuccess["&id"].toString();
+const END_TIME_OID: string = pwdEndTime["&id"].toString();
+
+const ID_EXPIRE_WARNING: string = pwdExpireWarning["&id"].toString();
+const ID_GRACES: string = id_oa_pwdGraces.toString();
+const ID_LOCKOUT_DURATION: string = pwdLockoutDuration["&id"].toString();
+const ID_MAX_FAILURES: string = pwdMaxFailures["&id"].toString();
+const ID_RECENTLY_EXPIRED_DURATION: string = pwdRecentlyExpiredDuration["&id"].toString();
+
+function decodeGeneralizedTime (bytes?: Uint8Array): GeneralizedTime | undefined {
+    if (!bytes) {
+        return undefined;
+    }
+    const el = new BERElement();
+    el.fromBytes(bytes);
+    return _decodeGeneralizedTime(el);
+}
+
+function decodeInt (bytes?: Uint8Array): number | undefined {
+    if (!bytes) {
+        return undefined;
+    }
+    const el = new BERElement();
+    el.fromBytes(bytes);
+    return Number(_decodeInteger(el));
+}
 
 function compareUserPwd (a: UserPwd, b: UserPwd): boolean | undefined {
     if ("clear" in a && "clear" in b) {
@@ -150,23 +216,124 @@ async function attemptPassword (
         },
     });
 
-    const lockedOut: boolean = !!(await readValuesOfType(ctx, vertex, pwdLockout["&id"])[0]?.value.value[0]);
+    const entry_value_rows = await ctx.db.attributeValue.findMany({
+        where: {
+            entry_id: vertex.dse.id,
+            type: {
+                in: [
+                    userPwdRecentlyExpired["&id"].toString(),
+                    pwdFails["&id"].toString(),
+                    pwdGracesUsed["&id"].toString(),
+                    pwdLockout["&id"].toString(),
+                    pwdReset["&id"].toString(),
+
+                    // GeneralizedTime syntaxes
+                    START_TIME_OID,
+                    EXPIRY_TIME_OID,
+                    LOCKED_TIME_OID,
+                    END_TIME_OID,
+                ],
+            },
+        },
+        select: {
+            type: true,
+            ber: true,
+        },
+    });
+    const entry_attrs = groupByOID(entry_value_rows, (r) => r.type);
+    const start_time = decodeGeneralizedTime(entry_attrs[START_TIME_OID]?.[0]?.ber);
+    const expiry_time = decodeGeneralizedTime(entry_attrs[EXPIRY_TIME_OID]?.[0]?.ber);
+    const locked_time = decodeGeneralizedTime(entry_attrs[LOCKED_TIME_OID]?.[0]?.ber);
+    const end_time = decodeGeneralizedTime(entry_attrs[END_TIME_OID]?.[0]?.ber);
+
+    const targetDN = getDistinguishedName(vertex);
+    const admPoints = getAdministrativePoints(vertex);
+    const relevantSubentries: Vertex[] = (await Promise.all(
+        admPoints.map((ap) => getRelevantSubentries(ctx, vertex, targetDN, ap)),
+    ))
+        .flat()
+        .filter((sub) => (
+            !sub.dse.subentry?.pwdAttribute
+            || sub.dse.subentry.pwdAttribute.isEqualTo(userPwd["&id"])
+            || sub.dse.subentry.pwdAttribute.isEqualTo(userPassword["&id"])
+        ));
+
+    const subentry_value_rows = await ctx.db.attributeValue.findMany({
+        where: {
+            entry_id: {
+                in: relevantSubentries.map((s) => s.dse.id),
+            },
+            type: {
+                in: [
+                    ID_EXPIRE_WARNING,
+                    ID_GRACES,
+                    ID_LOCKOUT_DURATION,
+                    ID_MAX_FAILURES,
+                    ID_RECENTLY_EXPIRED_DURATION,
+                ],
+            },
+        },
+        select: {
+            type: true,
+            ber: true,
+        },
+    });
+
+    const subentry_attrs = groupByOID(subentry_value_rows, (r) => r.type);
+    const warning_time: number = subentry_attrs[ID_EXPIRE_WARNING]
+        ?.map((row) => decodeInt(row.ber)).sort().pop() // Highest warning time
+        ?? 0;
+    const graces = subentry_attrs[ID_GRACES]
+        ?.map((row) => decodeInt(row.ber)).sort()[0] // Lowest number of graces.
+        ?? 0;
+    // TODO: Cautiously check for overflow.
+    const lockout_duration = subentry_attrs[ID_LOCKOUT_DURATION]
+        ?.map((row) => decodeInt(row.ber)).sort().pop() // Highest lockout duration
+        ?? Number.MAX_SAFE_INTEGER; // Default is infinity, but this is effectively close enough.
+    const max_failures = subentry_attrs[ID_MAX_FAILURES]
+        ?.map((row) => decodeInt(row.ber)).sort()[0] // Lowest number of max failures.
+        ?? Number.MAX_SAFE_INTEGER; // Default is no maximum on failures, but this is close enough.
+    const recently_expired_duration = subentry_attrs[ID_RECENTLY_EXPIRED_DURATION]
+        ?.map((row) => decodeInt(row.ber)).sort()[0] // Lowest recently expired duration.
+        ?? 0;
+
+    const now = new Date();
+    const lockedOut: boolean = (entry_attrs[pwdLockout["&id"].toString()]?.[0]?.ber[2] ?? 0) > 0;
     if (lockedOut) {
-        return {
-            authorized: false,
-            unbind: true,
-        };
+        const lockout_end_time = locked_time && addSeconds(locked_time, lockout_duration);
+        if (lockout_end_time && (now < lockout_end_time)) {
+            return {
+                authorized: false,
+                unbind: true,
+            };
+        }
+        // If the lockout has expired, we delete it, and continue.
+        ctx.db.attributeValue.deleteMany({
+            where: {
+                entry_id: vertex.dse.id,
+                type: {
+                    in: [
+                        pwdLockout["&id"].toString(),
+                        pwdAccountLockedTime["&id"].toString(),
+                    ],
+                },
+            }
+        })
+            .then() // INTENTIONAL_NO_AWAIT
+            .catch(); // If we fail, we just let it fail. // TODO: Log this.
     }
-    const passwordRecentlyExpiredValue: Value | undefined
-        = (await readValuesOfType(ctx, vertex, userPwdRecentlyExpired["&id"]))[0];
+    const passwordRecentlyExpiredValue: Buffer | undefined = entry_attrs[userPwdRecentlyExpired["&id"].toString()]?.[0].ber;
     const password2 = passwordRecentlyExpiredValue
-        ? userPwdRecentlyExpired.decoderFor["&Type"]!(passwordRecentlyExpiredValue.value)
+        ? (() => {
+            const el = new BERElement();
+            el.fromBytes(passwordRecentlyExpiredValue);
+            return userPwdRecentlyExpired.decoderFor["&Type"]!(el);
+        })()
         : undefined;
     if (!password1 && !password2) {
         return { authorized: undefined };
     }
-    const failsValue: Value | undefined = (await readValuesOfType(ctx, vertex, pwdFails["&id"]))[0];
-    const fails: number = failsValue ? Number(failsValue.value.integer) : 0;
+    const fails: number = decodeInt(entry_attrs[pwdFails["&id"].toString()]?.[0]?.ber) ?? 0;
 
     const userPwd1: UserPwd | undefined = password1
         ? {
@@ -206,36 +373,7 @@ async function attemptPassword (
         }
     }
     const nowElement = _encodeGeneralizedTime(new Date(), DER);
-
-    const targetDN = getDistinguishedName(vertex);
-    const admPoints = getAdministrativePoints(vertex);
-    const relevantSubentries: Vertex[] = (await Promise.all(
-        admPoints.map((ap) => getRelevantSubentries(ctx, vertex, targetDN, ap)),
-    ))
-        .flat()
-        .filter((sub) => (
-            !sub.dse.subentry?.pwdAttribute
-            || sub.dse.subentry.pwdAttribute.isEqualTo(userPwd["&id"])
-            || sub.dse.subentry.pwdAttribute.isEqualTo(userPassword["&id"])
-        ));
-
     if (!passwordIsCorrect) {
-        const maxFails: number | undefined = (await ctx.db.attributeValue.findMany({
-            where: {
-                entry_id: {
-                    in: relevantSubentries.map((s) => s.dse.id),
-                },
-                type: pwdMaxFailures.toString(),
-                operational: true,
-            },
-            select: {
-                jer: true,
-            },
-        }))
-            .map(({ jer }) => jer as number)
-            // Do not reduce with initialValue = 0! Use undefined, then default to 0.
-            .reduce((acc, curr) => Math.min(Number(acc ?? 10_000_000), Number(curr)), undefined)
-            ?? Infinity;
         const new_attrs: Prisma.AttributeValueUncheckedCreateInput[] = [
             {
                 entry_id: vertex.dse.id,
@@ -259,7 +397,7 @@ async function attemptPassword (
             },
         ];
 
-        if (fails + 1 > maxFails) {
+        if (fails + 1 > max_failures) {
             new_attrs.push({
                 entry_id: vertex.dse.id,
                 type: pwdLockout["&id"].toString(),
@@ -305,14 +443,7 @@ async function attemptPassword (
         };
     }
 
-    const now = new Date();
-    const startTimeValue: Value | undefined = (await readValuesOfType(ctx, vertex, pwdStartTime["&id"]))[0];
-    const startTime: Date | undefined = startTimeValue ? startTimeValue.value.generalizedTime : undefined;
-    const endTimeValue: Value | undefined = (await readValuesOfType(ctx, vertex, pwdEndTime["&id"]))[0];
-    const endTime: Date | undefined = endTimeValue ? endTimeValue.value.generalizedTime : undefined;
-    const expiryTimeValue: Value | undefined = (await readValuesOfType(ctx, vertex, pwdExpiryTime["&id"]))[0];
-    const expiryTime: Date | undefined = expiryTimeValue ? expiryTimeValue.value.generalizedTime : undefined;
-    if (startTime && (startTime > now)) {
+    if (start_time && (start_time > now)) {
         return { authorized: false };
     }
     /**
@@ -322,7 +453,7 @@ async function attemptPassword (
      * credentials incorrectly, otherwise, these two errors could be used
      * to oracle for user accounts that are expired.
      */
-    if (endTime && (endTime <= now)) {
+    if (end_time && (end_time <= now)) {
         // This should result in a directoryBindError with securityproblem.passwordExpired.
         return {
             authorized: false,
@@ -333,49 +464,15 @@ async function attemptPassword (
         };
     }
 
-    if (expiryTime && (expiryTime <= now)) {
-        const pwdGraces: number | undefined = (await ctx.db.attributeValue.findMany({
-            where: {
-                entry_id: {
-                    in: relevantSubentries.map((s) => s.dse.id),
-                },
-                type: id_oa_pwdGraces.toString(),
-                operational: true,
-            },
-            select: {
-                jer: true,
-            },
-        }))
-            .map(({ jer }) => jer as number)
-            // Do not reduce with initialValue = 0! Use undefined, then default to 0.
-            .reduce((acc, curr) => Math.min(Number(acc ?? 10_000_000), Number(curr)), undefined)
-            ?? 0;
-        const gracesUsedValue: Value | undefined = (await readValuesOfType(ctx, vertex, pwdGracesUsed["&id"]))[0];
-        const gracesUsed: number = gracesUsedValue ? Number(gracesUsedValue.value.integer) : 0;
-        const expired_pwd_duration: number | undefined = (await ctx.db.attributeValue.findMany({
-            where: {
-                entry_id: {
-                    in: relevantSubentries.map((s) => s.dse.id),
-                },
-                type: pwdRecentlyExpiredDuration["&id"].toString(),
-                operational: true,
-            },
-            select: {
-                jer: true,
-            },
-        }))
-            .map(({ jer }) => jer as number)
-            // Do not reduce with initialValue = 0! Use undefined, then default to 0.
-            .reduce((acc, curr) => Math.min(Number(acc ?? 10_000_000), Number(curr)), undefined)
-            ?? 0;
-
-        const expiredPasswordExpirationTime = addSeconds(expiryTime, expired_pwd_duration);
+    if (expiry_time && (expiry_time <= now)) {
+        const gracesUsed: number = decodeInt(entry_attrs[pwdGracesUsed["&id"].toString()]?.[0]?.ber) ?? 0;
+        const expiredPasswordExpirationTime = addSeconds(expiry_time, recently_expired_duration);
         if ((expiredPasswordExpirationTime > now) && expiredPasswordUsed) {
             return {
                 authorized: false,
                 pwdResponse: new PwdResponseValue(
                     {
-                        graceRemaining: (pwdGraces - gracesUsed),
+                        graceRemaining: (graces - gracesUsed),
                     },
                     PwdResponseValue_error_passwordExpired,
                 ),
@@ -400,16 +497,15 @@ async function attemptPassword (
         );
 
         return {
-            authorized: (gracesUsed <= pwdGraces),
+            authorized: (gracesUsed <= graces),
             pwdResponse: new PwdResponseValue(
                 {
-                    graceRemaining: (pwdGraces - (gracesUsed + 1)),
+                    graceRemaining: (graces - (gracesUsed + 1)),
                 },
                 PwdResponseValue_error_passwordExpired,
             ),
         };
     }
-    // TODO: If password has expired, return error. Make assn changePassword only.
     await ctx.db.$transaction([
         ctx.db.attributeValue.deleteMany({
             where: {
@@ -448,41 +544,18 @@ async function attemptPassword (
         }),
     ]);
 
-    // TODO: Combine this with the above queries so all three attributes can be
-    // be fetched with a single DB query.
-    const expirationWarning: number = (await ctx.db.attributeValue.findMany({
-        where: {
-            entry_id: {
-                in: relevantSubentries.map((s) => s.dse.id),
-            },
-            type: pwdExpireWarning["&id"].toString(),
-            operational: true,
-        },
-        select: {
-            jer: true,
-        },
-    }))
-        .map(({ jer }) => jer as number)
-        // Do not reduce with initialValue = 0! Use undefined, then default to 0.
-        .reduce((acc, curr) => Math.max(Number(acc), Number(curr)), 0);
-
-    const expirationWarningStart: Date | null = expiryTime
-        ? subSeconds(expiryTime, expirationWarning)
+    const expirationWarningStart: Date | null = expiry_time
+        ? subSeconds(expiry_time, warning_time)
         : null;
 
-    const password_must_be_reset: boolean = this.boundEntry
-        ? await (async (): Promise<boolean> => {
-            const pwd_reset_value = (await readValuesOfType(ctx, this.boundEntry!, pwdReset["&id"]))[0];
-            return pwd_reset_value?.value.boolean;
-        })()
-        : false;
+    const password_must_be_reset: boolean = (entry_attrs[pwdReset["&id"].toString()]?.[0]?.ber[2] ?? 0) > 0;
 
     return {
         authorized: true,
         pwdResponse: new PwdResponseValue(
             (expirationWarningStart && (expirationWarningStart <= now))
                 ? {
-                    timeLeft: Math.abs(differenceInSeconds(now, expiryTime!)),
+                    timeLeft: Math.abs(differenceInSeconds(now, expiry_time!)),
                 }
                 : undefined,
             password_must_be_reset
