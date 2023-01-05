@@ -30,9 +30,10 @@ import { strict as assert } from "node:assert";
 import { getAdministrativePoints } from "../dit/getAdministrativePoints";
 import { getRelevantSubentries } from "../dit/getRelevantSubentries";
 import { getDistinguishedName } from "../x500/getDistinguishedName";
-import { pwdEndTime, pwdExpiryTime, pwdGracesUsed, pwdRecentlyExpiredDuration, pwdStartTime } from "@wildboar/x500/src/lib/collections/attributes";
+import { pwdEndTime, pwdExpiryTime, pwdGracesUsed, pwdMaxFailures, pwdRecentlyExpiredDuration, pwdStartTime } from "@wildboar/x500/src/lib/collections/attributes";
 import { PwdResponseValue } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue.ta";
 import {
+    PwdResponseValue_error_changeAfterReset,
     PwdResponseValue_error_passwordExpired,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue-error.ta";
 import { removeAttribute } from "../database/entry/removeAttribute";
@@ -44,6 +45,10 @@ import { userPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.o
 import { userPassword } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
 import { id_oa_pwdGraces } from "@wildboar/x500/src/lib/modules/PasswordPolicy/id-oa-pwdGraces.va";
 import { pwdExpireWarning } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdExpireWarning.oa";
+import { PrismaPromise, Prisma } from "@prisma/client";
+import { pwdLockout } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLockout.oa";
+import { pwdAccountLockedTime } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdAccountLockedTime.oa";
+import { pwdReset } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdReset.oa";
 
 
 function compareUserPwd (a: UserPwd, b: UserPwd): boolean | undefined {
@@ -108,6 +113,7 @@ interface AttemptPasswordReturn {
 - Invalid
 - Expired
 - Ended
+- Blocked
 */
 /**
  * @summary Attempts a password for a bind operation.
@@ -115,6 +121,12 @@ interface AttemptPasswordReturn {
  *
  * Attempts a password as a part of a bind operation. This function updates the
  * failed attempts count, failure timestamp, and other operational attributes.
+ *
+ * This function also does not disclose whether an account is locked for
+ * security reasons: if it is disclosed when the credentials are invalid, it
+ * risks discovery of entry names, and if the credentials are valid, nefarious
+ * users could repeatedly guess passwords until they get a "blocked" error to
+ * discover what the correct password was prior to the lock.
  *
  * @param ctx The context object
  * @param vertex The entry which is attempting to be bound
@@ -137,6 +149,10 @@ async function attemptPassword (
         },
     });
 
+    const lockedOut: boolean = !!(await readValuesOfType(ctx, vertex, pwdLockout["&id"])[0]?.value.value[0]);
+    if (lockedOut) {
+        return { authorized: false };
+    }
     const passwordRecentlyExpiredValue: Value | undefined
         = (await readValuesOfType(ctx, vertex, userPwdRecentlyExpired["&id"]))[0];
     const password2 = passwordRecentlyExpiredValue
@@ -187,8 +203,82 @@ async function attemptPassword (
     }
     const nowElement = _encodeGeneralizedTime(new Date(), DER);
 
+    const targetDN = getDistinguishedName(vertex);
+    const admPoints = getAdministrativePoints(vertex);
+    const relevantSubentries: Vertex[] = (await Promise.all(
+        admPoints.map((ap) => getRelevantSubentries(ctx, vertex, targetDN, ap)),
+    ))
+        .flat()
+        .filter((sub) => (
+            !sub.dse.subentry?.pwdAttribute
+            || sub.dse.subentry.pwdAttribute.isEqualTo(userPwd["&id"])
+            || sub.dse.subentry.pwdAttribute.isEqualTo(userPassword["&id"])
+        ));
+
     if (!passwordIsCorrect) {
-        await ctx.db.$transaction([
+        const maxFails: number | undefined = (await ctx.db.attributeValue.findMany({
+            where: {
+                entry_id: {
+                    in: relevantSubentries.map((s) => s.dse.id),
+                },
+                type: pwdMaxFailures.toString(),
+                operational: true,
+            },
+            select: {
+                jer: true,
+            },
+        }))
+            .map(({ jer }) => jer as number)
+            // Do not reduce with initialValue = 0! Use undefined, then default to 0.
+            .reduce((acc, curr) => Math.min(Number(acc ?? 10_000_000), Number(curr)), undefined)
+            ?? Infinity;
+        const new_attrs: Prisma.AttributeValueUncheckedCreateInput[] = [
+            {
+                entry_id: vertex.dse.id,
+                type: pwdFails["&id"].toString(),
+                operational: true,
+                tag_class: ASN1TagClass.universal,
+                constructed: false,
+                tag_number: ASN1UniversalType.integer,
+                ber: Buffer.from(_encodeInteger(fails + 1, DER).toBytes()),
+                jer: 0,
+            },
+            {
+                entry_id: vertex.dse.id,
+                type: pwdFailureTime["&id"].toString(),
+                operational: true,
+                tag_class: nowElement.tagClass,
+                constructed: false,
+                tag_number: nowElement.tagNumber,
+                ber: Buffer.from(nowElement.toBytes()),
+                jer: nowElement.toJSON() as string,
+            },
+        ];
+
+        if (fails + 1 > maxFails) {
+            new_attrs.push({
+                entry_id: vertex.dse.id,
+                type: pwdLockout["&id"].toString(),
+                operational: false,
+                tag_class: ASN1TagClass.universal,
+                constructed: false,
+                tag_number: ASN1UniversalType.boolean,
+                ber: Buffer.from([ 0xFF ]),
+                jer: true,
+            });
+            new_attrs.push({
+                entry_id: vertex.dse.id,
+                type: pwdAccountLockedTime["&id"].toString(),
+                operational: true,
+                tag_class: nowElement.tagClass,
+                constructed: false,
+                tag_number: nowElement.tagNumber,
+                ber: Buffer.from(nowElement.toBytes().buffer),
+                jer: nowElement.toJSON() as string,
+            });
+        }
+
+        const dbPromises: PrismaPromise<any>[] = [
             ctx.db.attributeValue.deleteMany({
                 where: {
                     entry_id: vertex.dse.id,
@@ -200,31 +290,11 @@ async function attemptPassword (
                     },
                 },
             }),
-            ctx.db.attributeValue.create({
-                data: {
-                    entry_id: vertex.dse.id,
-                    type: pwdFails["&id"].toString(),
-                    operational: true,
-                    tag_class: ASN1TagClass.universal,
-                    constructed: false,
-                    tag_number: ASN1UniversalType.integer,
-                    ber: Buffer.from(_encodeInteger(fails + 1, DER).toBytes()),
-                    jer: 0,
-                },
+            ctx.db.attributeValue.createMany({
+                data: new_attrs,
             }),
-            ctx.db.attributeValue.create({
-                data: {
-                    entry_id: vertex.dse.id,
-                    type: pwdFailureTime["&id"].toString(),
-                    operational: true,
-                    tag_class: nowElement.tagClass,
-                    constructed: false,
-                    tag_number: nowElement.tagNumber,
-                    ber: Buffer.from(nowElement.toBytes()),
-                    jer: nowElement.toJSON() as string,
-                },
-            }),
-        ]);
+        ];
+        await ctx.db.$transaction(dbPromises);
         return { authorized: false };
     }
 
@@ -246,20 +316,6 @@ async function attemptPassword (
      * to oracle for user accounts that are expired.
      */
     if (endTime && (endTime <= now)) {
-        // Actually, I don't think anything needs to be done here. Even the
-        // compare operation will use `attemptPassword()`.
-        // await ctx.db.password.delete({
-        //     where: {
-        //         entry_id: vertex.dse.id,
-        //     },
-        // });
-        // await ctx.db.attributeValue.deleteMany({
-        //     where: {
-        //         entry_id: vertex.dse.id,
-        //         type: userPwdRecentlyExpired["&id"].toString(),
-        //     },
-        // });
-
         // This should result in a directoryBindError with securityproblem.passwordExpired.
         return {
             authorized: false,
@@ -269,18 +325,6 @@ async function attemptPassword (
             ),
         };
     }
-
-    const targetDN = getDistinguishedName(vertex);
-    const admPoints = getAdministrativePoints(vertex);
-    const relevantSubentries: Vertex[] = (await Promise.all(
-        admPoints.map((ap) => getRelevantSubentries(ctx, vertex, targetDN, ap)),
-    ))
-        .flat()
-        .filter((sub) => (
-            !sub.dse.subentry?.pwdAttribute
-            || sub.dse.subentry.pwdAttribute.isEqualTo(userPwd["&id"])
-            || sub.dse.subentry.pwdAttribute.isEqualTo(userPassword["&id"])
-        ));
 
     if (expiryTime && (expiryTime <= now)) {
         const pwdGraces: number | undefined = (await ctx.db.attributeValue.findMany({
@@ -419,15 +463,25 @@ async function attemptPassword (
         ? subSeconds(expiryTime, expirationWarning)
         : null;
 
+    const password_must_be_reset: boolean = this.boundEntry
+        ? await (async (): Promise<boolean> => {
+            const pwd_reset_value = (await readValuesOfType(ctx, this.boundEntry!, pwdReset["&id"]))[0];
+            return pwd_reset_value?.value.boolean;
+        })()
+        : false;
+
     return {
         authorized: true,
-        pwdResponse: (expirationWarningStart && (expirationWarningStart <= now))
-            ? new PwdResponseValue(
-                {
+        pwdResponse: new PwdResponseValue(
+            (expirationWarningStart && (expirationWarningStart <= now))
+                ? {
                     timeLeft: Math.abs(differenceInSeconds(now, expiryTime!)),
-                },
-            )
-            : undefined,
+                }
+                : undefined,
+            password_must_be_reset
+                ? PwdResponseValue_error_changeAfterReset
+                : undefined,
+        ),
     };
 }
 

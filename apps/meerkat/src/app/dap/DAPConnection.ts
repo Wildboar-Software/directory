@@ -101,8 +101,6 @@ import {
     _encode_DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as _encode_DBE_Param,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
 import stringifyDN from "../x500/stringifyDN";
-import readValuesOfType from "../utils/readValuesOfType";
-import { pwdReset } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdReset.oa";
 import {
     SecurityErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
@@ -110,6 +108,9 @@ import {
     SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import { createSecurityParameters } from "../x500/createSecurityParameters";
+import {
+    PwdResponseValue_error_changeAfterReset,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue-error.ta";
 
 /**
  * @summary The handles a request, but not errors
@@ -725,17 +726,14 @@ class DAPAssociation extends ClientAssociation {
         ) {
             this.authorizedForSignedErrors = true;
         }
-        const password_must_be_reset: boolean = this.boundEntry
-            ? await (async (): Promise<boolean> => {
-                const pwd_reset_value = (await readValuesOfType(ctx, this.boundEntry!, pwdReset["&id"]))[0];
-                return pwd_reset_value?.value.boolean;
-            })()
-            : false;
-        this.pwdReset = password_must_be_reset;
+        this.pwdReset = !!(
+            outcome.pwdResponse?.error
+            && (outcome.pwdResponse.error === PwdResponseValue_error_changeAfterReset)
+        );
         const bindResult = new DirectoryBindResult(
             undefined, // TODO: Supply return credentials. NOTE that the specification says that this must be the same CHOICE that the user supplied.
             versions,
-            undefined,
+            outcome.pwdResponse,
         );
         this.rose.write_bind_result({
             protocol_id: dap_ip["&id"]!,

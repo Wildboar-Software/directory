@@ -199,6 +199,17 @@ noted below are nuances in Meerkat DSA:
   operations are unavailable. In LDAP, the only operations available when a
   password is pending a change are `search`, `modifyEntry`, and the LDAP
   `changePassword` extended request.
+- A `securityError` with a `problem` of `blockedCredentials` will never be
+  returned, even if the account is blocked. This is for security reasons:
+  - If the asserted credentials are invalid, it risks disclosing whether an
+    entry exists. A nefarious user could guess distinguished names until they
+    get a `blockedCredentials` error instead of `invalidCredentials`, which will
+    reveal the existence of entries they were not supposed to know about.
+  - If the asserted credentials are valid, it risks disclosing the correct
+    password for a locked account. Nefarious users could guess passwords for a
+    locked account until they receive a `blockedCredentials` error instead of
+    `invalidCredentials`, which will reveal that they guessed the password that
+    was in place prior to the block.
 
 ## The "Never Contributing" Bug
 
