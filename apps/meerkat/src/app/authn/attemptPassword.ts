@@ -106,6 +106,7 @@ export
 interface AttemptPasswordReturn {
     authorized: boolean | undefined;
     pwdResponse?: PwdResponseValue;
+    unbind?: boolean;
 }
 
 /* TODO: When this is re-written, it should return an enum instead.
@@ -151,7 +152,10 @@ async function attemptPassword (
 
     const lockedOut: boolean = !!(await readValuesOfType(ctx, vertex, pwdLockout["&id"])[0]?.value.value[0]);
     if (lockedOut) {
-        return { authorized: false };
+        return {
+            authorized: false,
+            unbind: true,
+        };
     }
     const passwordRecentlyExpiredValue: Value | undefined
         = (await readValuesOfType(ctx, vertex, userPwdRecentlyExpired["&id"]))[0];
@@ -295,7 +299,10 @@ async function attemptPassword (
             }),
         ];
         await ctx.db.$transaction(dbPromises);
-        return { authorized: false };
+        return {
+            authorized: false,
+            unbind: true,
+        };
     }
 
     const now = new Date();

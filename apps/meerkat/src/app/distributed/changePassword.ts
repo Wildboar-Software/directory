@@ -28,6 +28,7 @@ import {
     SecurityProblem_invalidCredentials,
     SecurityProblem_insufficientAccessRights,
     SecurityProblem_inappropriateAlgorithms,
+    SecurityProblem_passwordExpired,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import getDistinguishedName from "../x500/getDistinguishedName";
@@ -321,6 +322,7 @@ async function changePassword (
     const {
         authorized: oldPasswordIsCorrect,
         pwdResponse,
+        unbind,
     } = await attemptPassword(ctx, target, {
         userPwd: data.oldPwd,
     });
@@ -345,7 +347,9 @@ async function changePassword (
                 ? ctx.i18n.t("err:pwd_end")
                 : ctx.i18n.t("err:old_password_incorrect"),
             new SecurityErrorData(
-                SecurityProblem_invalidCredentials,
+                (pwdResponse?.error === PwdResponseValue_error_passwordExpired)
+                    ? SecurityProblem_passwordExpired
+                    : SecurityProblem_invalidCredentials,
                 undefined,
                 undefined,
                 [],
@@ -361,6 +365,7 @@ async function changePassword (
                 undefined,
             ),
             signErrors,
+            unbind,
         );
     }
 

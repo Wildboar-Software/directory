@@ -182,6 +182,7 @@ async function bind (
         const {
             authorized,
             pwdResponse,
+            unbind,
         } = await attemptPassword(ctx, foundEntry, arg.credentials.simple.password);
         if (!authorized) {
             if (pwdResponse?.error === PwdResponseValue_error_passwordExpired) {
@@ -192,6 +193,7 @@ async function bind (
                     ctx.i18n.t("err:pwd_end"),
                     invalidCredentialsData,
                     signErrors,
+                    unbind,
                 );
             }
             ctx.log.warn(ctx.i18n.t("log:invalid_credentials", logInfo), logInfo);

@@ -170,6 +170,7 @@ class DirectoryBindError extends BindError {
         readonly message: string,
         readonly data: DirectoryBindErrorData,
         readonly shouldBeSigned: boolean = false,
+        readonly unbind: boolean = false,
     ) {
         super(message, shouldBeSigned);
         Object.setPrototypeOf(this, DirectoryBindError.prototype);
@@ -188,6 +189,7 @@ class DSABindError extends BindError {
         readonly message: string,
         readonly data: DirectoryBindErrorData,
         readonly shouldBeSigned: boolean = false,
+        readonly unbind: boolean = false,
     ) {
         super(message, shouldBeSigned);
         Object.setPrototypeOf(this, DSABindError.prototype);
@@ -399,6 +401,7 @@ class SecurityError extends DirectoryError {
         readonly message: string,
         readonly data: SecurityErrorData,
         readonly shouldBeSigned: boolean = false,
+        readonly unbind: boolean = false,
     ) {
         super(message, shouldBeSigned);
         Object.setPrototypeOf(this, SecurityError.prototype);

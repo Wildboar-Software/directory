@@ -1003,18 +1003,7 @@ class LDAPAssociation extends ClientAssociation {
     ) {
         super();
         this.socket = tcp;
-        this.socket.on("close", () => {
-            ctx.db.enqueuedSearchResult.deleteMany({
-                where: {
-                    connection_uuid: this.id,
-                },
-            }).then().catch();
-            ctx.db.enqueuedListResult.deleteMany({
-                where: {
-                    connection_uuid: this.id,
-                },
-            }).then().catch();
-        });
+        this.socket.on("close", this.reset.bind(this));
         this.socket.on("data", (data: Buffer): void => this.handleData(ctx, data));
     }
 
