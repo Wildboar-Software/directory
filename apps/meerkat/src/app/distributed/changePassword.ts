@@ -79,7 +79,6 @@ import {
 import {
     pwdAdminSubentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAdminSubentry.oa";
-import { compareAlgorithmIdentifier } from "@wildboar/x500";
 import getScryptAlgorithmIdentifier from "../x500/getScryptAlgorithmIdentifier";
 import { UpdateErrorData, UpdateProblem, UpdateProblem_insufficientPasswordQuality, UpdateProblem_noPasswordSlot, UpdateProblem_passwordInHistory } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
 import { updateError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
@@ -97,6 +96,7 @@ import {
 import { pwdChangeAllowed } from "@wildboar/x500/src/lib/collections/attributes";
 import { id_scrypt } from "@wildboar/scrypt-0";
 import { SimpleCredentials } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
+import { validateAlgorithmParameters } from "../authn/validateAlgorithmParameters";
 
 const USER_PASSWORD_OID: string = userPassword["&id"].toString();
 const USER_PWD_OID: string = userPwd["&id"].toString();
@@ -183,7 +183,10 @@ async function changePassword (
     const data = getOptionallyProtectedValue(argument);
     if (
         ("encrypted" in data.newPwd)
-        && !data.newPwd.encrypted.algorithmIdentifier.algorithm.isEqualTo(id_scrypt)
+        && (
+            !data.newPwd.encrypted.algorithmIdentifier.algorithm.isEqualTo(id_scrypt)
+            || !validateAlgorithmParameters(data.newPwd.encrypted.algorithmIdentifier)
+        )
     ) { // If the new password is encrypted using an algorithm other than Meerkat DSA's algorithm, throw an error.
         throw new errors.SecurityError(
             ctx.i18n.t("err:inappropriate_algs"),

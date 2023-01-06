@@ -89,6 +89,7 @@ import { userPwdHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/us
 import { pwdReset } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdReset.oa";
 import { pwdHistorySlots } from "@wildboar/x500/src/lib/collections/attributes";
 import { id_scrypt } from "@wildboar/scrypt-0";
+import { validateAlgorithmParameters } from "../authn/validateAlgorithmParameters";
 
 const USER_PASSWORD_OID: string = userPassword["&id"].toString();
 const USER_PWD_OID: string = userPwd["&id"].toString();
@@ -174,7 +175,10 @@ async function administerPassword (
     const data = getOptionallyProtectedValue(argument);
     if (
         ("encrypted" in data.newPwd)
-        && !data.newPwd.encrypted.algorithmIdentifier.algorithm.isEqualTo(id_scrypt)
+        && (
+            !data.newPwd.encrypted.algorithmIdentifier.algorithm.isEqualTo(id_scrypt)
+            || !validateAlgorithmParameters(data.newPwd.encrypted.algorithmIdentifier)
+        )
     ) { // If the new password is encrypted using an algorithm other than Meerkat DSA's algorithm, throw an error.
         throw new errors.SecurityError(
             ctx.i18n.t("err:inappropriate_algs"),
