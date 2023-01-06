@@ -183,7 +183,7 @@ async function bind (
             authorized,
             pwdResponse,
             unbind,
-        } = await attemptPassword(ctx, foundEntry, arg.credentials.simple.password);
+        } = await attemptPassword(ctx, foundEntry, arg.credentials.simple);
         if (!authorized) {
             if (pwdResponse?.error === PwdResponseValue_error_passwordExpired) {
                 ctx.log.warn(ctx.i18n.t("log:dsa_bind_pwd_end", {

@@ -55,19 +55,50 @@ encrypted variants of passwords: they are never returned so that they can never
 be used for
 [offline password cracking](https://csrc.nist.gov/glossary/term/offline_attack).
 
-:::note
-
-The web administration console is an exception to the above. It _does_ return the
-encrypted user passwords. This is yet another reason why the web administration
-console should only be enabled when needed, and why it should be configured with
-authentication and TLS!
-
-:::
-
 The password is stored in the database. If password is supplied using cleartext,
 it will be salted and hashed using the Scrypt algorithm and stored in the
 database. If the password is already encrypted / hashed, it will be stored using
 the algorithm that was used to encrypt it.
+
+## Simple Protected Passwords
+
+Simple authentication allows users to supply a `protected` password. Unlike the
+`unprotected` and `userPwd` variants of the simple credentials password, this
+variation can be protected against
+[replay attacks](https://en.wikipedia.org/wiki/Replay_attack), and it provides
+a form of eavesdropping-mitigating encryption, even when TLS is not used to
+secure the connection.
+
+There is no specified algorithm for producing a `protected` password, although
+[ITU Recommendation X.511 (2019)](https://www.itu.int/rec/T-REC-X.511/en),
+Annex E, provides a suggested algorith. Meerkat DSA deviates from this
+algorithm slightly for security reasons. The entirety of the procedures used by
+Meerkat DSA are documented [here](./deviations-nuances.md#protected-passwords).
+
+In short, to produce a protected password, a client must produce a DER-encoded
+value of an ASN.1 value having the following type:
+
+```asn1
+Meerkats-Actual-Hashable1 ::= SEQUENCE {
+    name        DistinguishedName,
+    time1       GeneralizedTime,
+    random1     BIT STRING OPTIONAL,
+    password    encrypted < UserPwd -- This is an ASN.1 "selection type." -- }
+```
+
+In the above type, `name` is the distinguished name to which the user is
+attempting to bind, `time1` is a time a few seconds into the future, `random1`
+is a sequence of randomly-generated bits of any length (preferrably at least 64
+bits), and `password` is the `UserPwd` construction of the user's password,
+which _must_ use the `encrypted` alternative, and
+
+
+:::tip
+
+It is strongly advised to use protected passwords whenever simple authentication
+is used, since they are immune to replay attacks.
+
+:::
 
 ## How to Set or Change Passwords
 

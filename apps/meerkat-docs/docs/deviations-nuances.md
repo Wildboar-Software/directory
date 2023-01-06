@@ -229,6 +229,91 @@ This was probably not intentional, so I reported it. In early January of 2022.
 Until I get clarification, Meerkat DSA will mark every entry as a contributing
 member if there is a match, but no identified contributing members.
 
+## Protected Passwords
+
+Annex E of
+[ITU Recommendation X.511 (2019)](https://www.itu.int/rec/T-REC-X.511/en)
+defines a _proposed_ algorithm for producing protected passwords as used by
+simple authentication. This is a non-normative section of the specification, and
+as such, it is not technically a deviation from the X.500 specifications.
+
+The Annex E solution incorporates the raw, _unhashed_ password into the data
+structure that will be used to produce the hash that is evaluated. This means
+that the password would have to be stored _unhashed_ to make this possible,
+which goes against all modern expectations for the secure storage of passwords
+in software architecture. For this reason, Meerkat DSA uses a procedure similar
+to the Annex E procedure, but by redefining the first hash input to replace the
+raw user password with a `UserPwd` (and, unrelated, to make the `random1`
+`BIT STRING` optional):
+
+```asn1
+-- This is the data structure described in ITU Rec. X.511, Annex E.
+X511-AnnexE-Hashable1 ::= SEQUENCE {
+    name        DistinguishedName,
+    time1       GeneralizedTime,
+    random1     BIT STRING,
+    password    OCTET STRING }
+
+-- This is what Meerkat DSA actually hashes to produce f1.
+Meerkats-Actual-Hashable1 ::= SEQUENCE {
+    name        DistinguishedName,
+    time1       GeneralizedTime,
+    random1     BIT STRING OPTIONAL,
+    password    encrypted < UserPwd -- This is an ASN.1 "selection type." -- }
+```
+
+The `password` field MUST use the `encrypted` alternative of `UserPwd`. The
+encrypted value MUST use the exact algorithm that can be found the `pwdEncAlg`
+operational attribute. The reason for this is that the password is stored
+encrypted / hashed in the database and cannot be "re-encrypted" using some other
+algorithm. Clients must first read the algorithm used for this password before
+attempting to produce a protected password, because they need the exact
+algorithm _and parameters_ to produce an identical encrypted / hashed value.
+
+Unrelated to the problems above, Meerkat DSA also makes `random1` and `random2`
+optional for protected passwords. You will notice that the above
+`Meerkats-Actual-Hashable1` that `random1` is `OPTIONAL`. In addition to this,
+the second hashable defined in Annex E is also modified as such:
+
+```asn1
+-- This is the data structure described in ITU Rec. X.511, Annex E.
+X511-AnnexE-Hashable2 ::= SEQUENCE {
+    f1          OCTET STRING, -- hashed octet string from above
+    time2       GeneralizedTime,
+    random2     BIT STRING }
+
+-- This is what Meerkat DSA actually hashes to locally produce the hash value.
+Meerkats-Actual-Hashable2 ::= SEQUENCE {
+    f1          OCTET STRING, -- hashed octet string from above
+    time2       GeneralizedTime,
+    random2     BIT STRING OPTIONAL }
+```
+
+It is also worth noting that Meerkat DSA does not support every hash
+algorithm under the sun. These are the ones that are supported at the time of
+writing:
+
+- `sha1`
+- `sha224`
+- `sha256`
+- `sha384`
+- `sha512`
+- `sha3-244`
+- `sha3-256`
+- `sha3-384`
+- `sha3-512`
+- `shake128`
+- `shake256`
+
+If a user produces a protected password with an algorithm not listed above, the
+password authentication will simply fail as though the password had been wrong.
+
+Finally, if a user provides simple credentials using the `protected`
+alternative, but does not supply a `time1` value, the `protected` password will
+be used to construct a `UserPwd` value (using the `encrypted` alternative), and
+that will be asserted. To reiterate, this does not violate the specifications,
+since this behavior is explicitly undefined therein.
+
 ## Other Deviations
 
 There are other deviations that haven't been mentioned here. Most deviations

@@ -1,12 +1,12 @@
 import type { Context, Vertex, Value } from "@wildboar/meerkat-types";
-import type {
-    UserPwd,
+import {
+    UserPwd, _encode_UserPwd,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
 import * as crypto from "crypto";
 import encryptPassword from "./encryptPassword";
 import type {
-    SimpleCredentials_password,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials-password.ta";
+    SimpleCredentials,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
 import compareAlgorithmIdentifier from "@wildboar/x500/src/lib/comparators/compareAlgorithmIdentifier";
 import { UserPwd_encrypted } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd-encrypted.ta";
 import { AlgorithmIdentifier } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
@@ -18,6 +18,7 @@ import {
     packBits,
     GeneralizedTime,
     BERElement,
+    ASN1Element,
 } from "asn1-ts";
 import {
     pwdFails,
@@ -25,7 +26,7 @@ import {
 import {
     pwdFailureTime,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFailureTime.oa";
-import { DER, _encodeInteger, _encodeGeneralizedTime, _decodeGeneralizedTime, _decodeInteger } from "asn1-ts/dist/node/functional";
+import { DER, _encodeInteger, _encodeGeneralizedTime, _decodeGeneralizedTime, _decodeInteger, _encodeBitString, _encodeOctetString } from "asn1-ts/dist/node/functional";
 import { userPwdRecentlyExpired } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdRecentlyExpired.oa";
 import { strict as assert } from "node:assert";
 import { getAdministrativePoints } from "../dit/getAdministrativePoints";
@@ -59,31 +60,14 @@ import { pwdLockout } from "@wildboar/parity-schema/src/lib/modules/LDAPPassword
 import { pwdAccountLockedTime } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdAccountLockedTime.oa";
 import { pwdReset } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdReset.oa";
 import { groupByOID } from "../utils/groupByOID";
-
-// // Subentry (All have integer syntax)
-// pwdExpireWarning
-// id_oa_pwdGraces
-// pwdLockoutDuration
-// pwdMaxFailures
-// pwdRecentlyExpiredDuration
-// // You could sort by JSON to fetch the smallest values.
-
-// // Entry
-// userPwdRecentlyExpired
-// pwdFails
-// pwdGracesUsed
-// pwdLockout
-// pwdReset
-
-// // Entry Times
-// pwdFailureTime
-// pwdAccountLockedTime
-// pwdStartTime
-// pwdGraceUseTime
-// pwdEndTime
-// pwdLastSuccess
-// pwdExpiryTime
-
+import {
+    _encode_DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import {
+    SimpleCredentials_validity_time1,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials-validity-time1.ta";
+import { SimpleCredentials_validity_time2 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials-validity-time2.ta";
+import { digestOIDToNodeHash } from "../pki/digestOIDToNodeHash";
 
 const START_TIME_OID: string = pwdStartTime["&id"].toString();
 const EXPIRY_TIME_OID: string = pwdExpiryTime["&id"].toString();
@@ -149,21 +133,126 @@ function compareUserPwd (a: UserPwd, b: UserPwd): boolean | undefined {
     );
 }
 
-function simpleCredsToUserPwd (creds: SimpleCredentials_password): UserPwd | undefined {
-    if ("unprotected" in creds) {
-        return {
-            clear: Buffer.from(creds.unprotected.buffer).toString("utf-8"),
+type ValidityTime =
+    | SimpleCredentials_validity_time1
+    | SimpleCredentials_validity_time2;
+
+function getTimeFromValidity (v?: ValidityTime): Date | undefined {
+    if (!v) {
+        return undefined;
+    }
+    if ("utc" in v) {
+        return v.utc;
+    } else if ("gt" in v) {
+        return v.gt;
+    } else {
+        return undefined;
+    }
+}
+
+function assertSimpleCreds (asserted_creds: SimpleCredentials, correct_pw: UserPwd): boolean | undefined {
+    const asserted_pw = asserted_creds.password;
+    if (!asserted_pw) {
+        return undefined;
+    }
+    if ("userPwd" in asserted_pw) {
+        return compareUserPwd(asserted_pw.userPwd, correct_pw);
+    }
+    else if ("unprotected" in asserted_pw) {
+        const a: UserPwd = {
+            clear: Buffer.from(asserted_pw.unprotected).toString("utf8"),
         };
-    } else if ("protected_" in creds) {
-        // FIXME: This is WRONG!
-        return {
-            encrypted: new UserPwd_encrypted(
-                creds.protected_.algorithmIdentifier,
-                packBits(creds.protected_.hashValue),
-            ),
+        return compareUserPwd(a, correct_pw);
+    }
+    else if ("protected_" in asserted_pw) {
+        const v = asserted_creds.validity;
+        if (!v || !v.time1) {
+            // If there's no validity supplied, or no time1, we assume the protected
+            // password is just hashed directly, so we convert it to a UserPwd
+            // and give that a shot.
+            const a: UserPwd = {
+                encrypted: new UserPwd_encrypted(
+                    asserted_pw.protected_.algorithmIdentifier,
+                    packBits(asserted_pw.protected_.hashValue),
+                ),
+            };
+            return compareUserPwd(a, correct_pw);
         }
-    } else if ("userPwd" in creds) {
-        return creds.userPwd;
+        // Otherwise, we assume it is encoded according to ITU Recommendation
+        // X.511 (2019), Annex E.
+        const time1 = getTimeFromValidity(v.time1);
+        if (!time1) {
+            return undefined;
+        }
+        const now = new Date();
+        if (now > time1) {
+            return false;
+        }
+        const hash_name = digestOIDToNodeHash.get(asserted_pw.protected_.algorithmIdentifier.algorithm.toString());
+        if (!hash_name) {
+            return undefined;
+        }
+        // X511-AnnexE-Hashable1 ::= SEQUENCE {
+        //     name        DistinguishedName,
+        //     time1       GeneralizedTime,
+        //     random1     BIT STRING,
+        //     password    OCTET STRING }
+        // Meerkats-Actual-Hashable1 ::= SEQUENCE {
+        //     name        DistinguishedName,
+        //     time1       GeneralizedTime,
+        //     random1     BIT STRING OPTIONAL,
+        //     password    UserPwd }
+        const components1: ASN1Element[] = [
+            _encode_DistinguishedName(asserted_creds.name, DER),
+            _encodeGeneralizedTime(time1, DER),
+        ];
+        if (v.random1) {
+            components1.push(_encodeBitString(v.random1, DER));
+        }
+        components1.push(_encode_UserPwd(correct_pw, DER));
+        const hashable1 = DERElement.fromSequence(components1).toBytes();
+        const hasher1 = crypto.createHash(hash_name);
+        hasher1.update(hashable1);
+        const f1 = hasher1.digest();
+        const asserted_hash = packBits(asserted_pw.protected_.hashValue);
+        if (!v.time2) {
+            // If there is no time2 defined, we assume that the user used
+            // Protected1, so now we are ready to compare hashes.
+            return (
+                (f1.length === asserted_hash.length)
+                && crypto.timingSafeEqual(f1, asserted_hash)
+            );
+        }
+
+        const time2 = getTimeFromValidity(v.time2);
+        if (!time2) {
+            return undefined;
+        }
+
+        // X511-AnnexE-Hashable2 ::= SEQUENCE {
+        //     f1          OCTET STRING, -- hashed octet string from above
+        //     time2       GeneralizedTime,
+        //     random2     BIT STRING }
+        // Meerkats-Actual-Hashable2 ::= SEQUENCE {
+        //     f1          OCTET STRING, -- hashed octet string from above
+        //     time2       GeneralizedTime,
+        //     random2     BIT STRING OPTIONAL }
+        const components2: ASN1Element[] = [
+            _encodeOctetString(f1, DER),
+            _encodeGeneralizedTime(time2, DER),
+        ];
+        if (v.random2) {
+            components2.push(_encodeBitString(v.random2, DER));
+        }
+
+        const hashable2 = DERElement.fromSequence(components1).toBytes();
+        const hasher2 = crypto.createHash(hash_name);
+        hasher2.update(hashable2);
+        const f2 = hasher2.digest();
+        return (
+            (f2.length === asserted_hash.length)
+            && crypto.timingSafeEqual(f2, asserted_hash)
+        );
     } else {
         return undefined;
     }
@@ -209,7 +298,7 @@ export
 async function attemptPassword (
     ctx: Context,
     vertex: Vertex,
-    attemptedPassword: SimpleCredentials_password,
+    attemptedCreds: SimpleCredentials,
 ): Promise<AttemptPasswordReturn> {
     const password1 = await ctx.db.password.findUnique({
         where: {
@@ -355,17 +444,13 @@ async function attemptPassword (
         : undefined;
     const userPwd2: UserPwd | undefined = password2;
 
-    const asserted_pwd = simpleCredsToUserPwd(attemptedPassword);
-    if (!asserted_pwd) {
-        return { authorized: undefined };
-    }
     let passwordIsCorrect: boolean = false;
     let expiredPasswordUsed: boolean = false;
     for (const valid_pwd of [ userPwd1, userPwd2 ]) {
         if (!valid_pwd) {
             continue;
         }
-        if (compareUserPwd(asserted_pwd, valid_pwd) === true) {
+        if (assertSimpleCreds(attemptedCreds, valid_pwd) === true) {
             passwordIsCorrect = true;
             if (valid_pwd === userPwd2) {
                 expiredPasswordUsed = true;

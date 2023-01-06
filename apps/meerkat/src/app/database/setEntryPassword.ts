@@ -1,4 +1,4 @@
-import type { Context, ClientAssociation, Vertex } from "@wildboar/meerkat-types";
+import { Context, ClientAssociation, Vertex, MistypedArgumentError } from "@wildboar/meerkat-types";
 import {
     UserPwd,
     UserPwd_encrypted,
@@ -31,11 +31,13 @@ import { getAdministrativePoints } from "../dit/getAdministrativePoints";
 import { getRelevantSubentries } from "../dit/getRelevantSubentries";
 import { getDistinguishedName } from "../x500/getDistinguishedName";
 import { addSeconds } from "date-fns";
-import { pwdExpiryAge, pwdMaxAge } from "@wildboar/x500/src/lib/collections/attributes";
-import { AlgorithmIdentifier } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
+import { pwdEncAlg, pwdExpiryAge, pwdMaxAge } from "@wildboar/x500/src/lib/collections/attributes";
+import { AlgorithmIdentifier, _encode_AlgorithmIdentifier } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
 import {
     ASN1Construction,
     ASN1Element,
+    ASN1TagClass,
+    ASN1UniversalType,
     DERElement,
     ObjectIdentifier,
 } from "asn1-ts";
@@ -153,6 +155,13 @@ async function setEntryPassword (
         ? _encode_UserPwd(oldUserPwd, DER)
         : undefined;
 
+    const encAlg: AlgorithmIdentifier = ("clear" in pwd)
+        ? getScryptAlgorithmIdentifier()
+        : ("encrypted" in pwd)
+            ? pwd.encrypted.algorithmIdentifier
+            : getScryptAlgorithmIdentifier();
+    const encoded_enc_alg = _encode_AlgorithmIdentifier(encAlg, DER);
+
     // We don't use `addValues()` or `removeAttribute()` in these DB commands,
     // purely because of performance. Much of what we have to do can be done
     // in two queries: delete attributes and create attributes.
@@ -187,13 +196,13 @@ async function setEntryPassword (
                 },
                 {
                     entry_id: vertex.dse.id,
-                    type: pwdStartTime["&id"].toString(),
+                    type: pwdEncAlg["&id"].toString(),
                     operational: true,
-                    tag_class: nowElement.tagClass,
-                    constructed: false,
-                    tag_number: nowElement.tagNumber,
-                    ber: Buffer.from(nowElement.toBytes().buffer),
-                    jer: nowElement.toJSON() as string,
+                    tag_class: ASN1TagClass.universal,
+                    constructed: true,
+                    tag_number: ASN1UniversalType.sequence,
+                    ber: Buffer.from(encoded_enc_alg.toBytes().buffer),
+                    jer: encoded_enc_alg.toJSON() as object,
                 },
                 ...(expTime
                     ? [{
@@ -248,9 +257,8 @@ async function setEntryPassword (
             : [ makeTopLevelAdmin ]),
     ];
     if ("clear" in pwd) {
-        const algid = getScryptAlgorithmIdentifier();
         const clear = Buffer.from(pwd.clear, "utf-8");
-        const encrypted = encryptPassword(algid, clear);
+        const encrypted = encryptPassword(encAlg, clear);
         if (!encrypted) {
             throw new Error("fc8872c3-067e-4d91-995a-28c94ed8ec08");
         }
@@ -273,16 +281,16 @@ async function setEntryPassword (
                 create: {
                     entry_id: vertex.dse.id,
                     encrypted: Buffer.from(encrypted),
-                    algorithm_oid: algid.algorithm.toString(),
-                    algorithm_parameters_der: algid.parameters
-                        ? Buffer.from(algid.parameters.toBytes().buffer)
+                    algorithm_oid: encAlg.algorithm.toString(),
+                    algorithm_parameters_der: encAlg.parameters
+                        ? Buffer.from(encAlg.parameters.toBytes().buffer)
                         : undefined,
                 },
                 update: {
                     encrypted: Buffer.from(encrypted),
-                    algorithm_oid: algid.algorithm.toString(),
-                    algorithm_parameters_der: algid.parameters
-                        ? Buffer.from(algid.parameters.toBytes().buffer)
+                    algorithm_oid: encAlg.algorithm.toString(),
+                    algorithm_parameters_der: encAlg.parameters
+                        ? Buffer.from(encAlg.parameters.toBytes().buffer)
                         : undefined,
                 },
             }),
@@ -291,7 +299,7 @@ async function setEntryPassword (
                     entry_id: vertex.dse.id,
                     password: Buffer.from(_encode_UserPwd({
                         encrypted: new UserPwd_encrypted(
-                            algid,
+                            encAlg,
                             encrypted,
                         ),
                     }, DER).toBytes().buffer),
@@ -301,6 +309,7 @@ async function setEntryPassword (
             ...otherUpdates,
         ];
     } else if ("encrypted" in pwd) {
+        // TODO: Error if the algorithm is not scrypt, and return a notification parameter, if possible.
         if (assn) {
             ctx.log.info(ctx.i18n.t("log:password_changed", {
                 cid: assn.id,
@@ -343,7 +352,7 @@ async function setEntryPassword (
             ...otherUpdates,
         ];
     } else {
-        throw new Error("f69e3540-7629-478f-957d-c2957ee42655");
+        throw new MistypedArgumentError(ctx.i18n.t("err:unrecognized_user_pwd_alt"));
     }
 }
 

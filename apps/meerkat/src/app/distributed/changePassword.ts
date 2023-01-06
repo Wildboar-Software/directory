@@ -95,6 +95,8 @@ import {
     PwdResponseValue_error_passwordExpired,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue-error.ta";
 import { pwdChangeAllowed } from "@wildboar/x500/src/lib/collections/attributes";
+import { id_scrypt } from "@wildboar/scrypt-0";
+import { SimpleCredentials } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
 
 const USER_PASSWORD_OID: string = userPassword["&id"].toString();
 const USER_PWD_OID: string = userPwd["&id"].toString();
@@ -181,10 +183,7 @@ async function changePassword (
     const data = getOptionallyProtectedValue(argument);
     if (
         ("encrypted" in data.newPwd)
-        && !compareAlgorithmIdentifier(
-            data.newPwd.encrypted.algorithmIdentifier,
-            getScryptAlgorithmIdentifier(),
-        )
+        && !data.newPwd.encrypted.algorithmIdentifier.algorithm.isEqualTo(id_scrypt)
     ) { // If the new password is encrypted using an algorithm other than Meerkat DSA's algorithm, throw an error.
         throw new errors.SecurityError(
             ctx.i18n.t("err:inappropriate_algs"),
@@ -323,9 +322,13 @@ async function changePassword (
         authorized: oldPasswordIsCorrect,
         pwdResponse,
         unbind,
-    } = await attemptPassword(ctx, target, {
-        userPwd: data.oldPwd,
-    });
+    } = await attemptPassword(ctx, target, new SimpleCredentials(
+        targetDN,
+        undefined,
+        {
+            userPwd: data.oldPwd,
+        },
+    ));
     if (!oldPasswordIsCorrect) {
         const logInfo = {
             remoteFamily: assn.socket.remoteFamily,

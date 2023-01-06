@@ -148,6 +148,7 @@ import {
     PwdResponse,
     _encode_PwdResponse,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PwdResponse.ta";
+import { SimpleCredentials } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
 
 /**
  * @summary The compare operation, as specified in ITU Recommendation X.511.
@@ -575,7 +576,11 @@ async function compare (
                         : {
                             unprotected: userPassword.decoderFor["&Type"]!(data.purported.assertion),
                         };
-                    const pwd_result = await attemptPassword(ctx, target, asserted_pwd);
+                    const pwd_result = await attemptPassword(ctx, target, new SimpleCredentials(
+                        targetDN,
+                        undefined,
+                        asserted_pwd,
+                    ));
                     if (pwd_result.unbind) {
                         throw new errors.SecurityError(
                             (pwd_result.pwdResponse?.error === PwdResponseValue_error_passwordExpired)

@@ -31,6 +31,7 @@ import {
 import {
     PwdResponseValue_error_passwordExpired,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue-error.ta";
+import { SimpleCredentials } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
 
 export
 interface LDAPBindReturn extends BindReturn {
@@ -197,9 +198,13 @@ async function bind (
         const {
             authorized,
             pwdResponse,
-        } = await attemptPassword(ctx, entry, {
-            unprotected: suppliedPassword,
-        });
+        } = await attemptPassword(ctx, entry, new SimpleCredentials(
+            dn,
+            undefined,
+            {
+                unprotected: suppliedPassword,
+            },
+        ));
         if (authorized) {
             return {
                 ...ret,
@@ -237,9 +242,13 @@ async function bind (
                 if (!pwd) {
                     return invalidCredentials;
                 }
-                const authenticated = await attemptPassword(ctx, entry, {
-                    unprotected: Buffer.from(passwd),
-                });
+                const authenticated = await attemptPassword(ctx, entry, new SimpleCredentials(
+                    dn,
+                    undefined,
+                    {
+                        unprotected: Buffer.from(passwd),
+                    },
+                ));
                 if (authenticated) {
                     return {
                         ...ret,
