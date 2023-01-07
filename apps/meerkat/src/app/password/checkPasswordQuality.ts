@@ -14,8 +14,18 @@ import { strict as assert } from "node:assert";
 import { subSeconds, addSeconds } from "date-fns";
 import { compareAlgorithmIdentifier } from "@wildboar/x500";
 import { timingSafeEqual } from "node:crypto";
-import { pwdAlphabet, pwdHistorySlots, pwdMaxTimeInHistory, pwdMinLength, pwdMinTimeInHistory, pwdVocabulary } from "@wildboar/x500/src/lib/collections/attributes";
-import { pwdMaxLength } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMaxLength.oa";
+import {
+    pwdAlphabet,
+    pwdHistorySlots,
+    pwdMaxTimeInHistory,
+    pwdMinLength,
+    pwdMinTimeInHistory,
+    pwdVocabulary,
+} from "@wildboar/x500/src/lib/collections/attributes";
+import {
+    pwdMaxLength,
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMaxLength.oa";
+import { groupByOID } from "../utils/groupByOID";
 
 export const CHECK_PWD_QUALITY_OK: number = 0;
 export const CHECK_PWD_QUALITY_LENGTH: number = -1;
@@ -27,6 +37,12 @@ export const CHECK_PWD_QUALITY_TOO_SOON: number = -6;
 
 export const MAX_HISTORY_ITEMS: number = 100000;
 
+const ID_HISTORY_SLOTS: string = pwdHistorySlots["&id"].toString();
+const ID_MAX_TIH: string = pwdMaxTimeInHistory["&id"].toString();
+const ID_MIN_TIH: string = pwdMinTimeInHistory["&id"].toString();
+const ID_MIN_LEN: string = pwdMinLength["&id"].toString();
+const IN_MAX_LEN: string = pwdMaxLength["&id"].toString();
+
 // NOTE: This was refactored out of `checkPasswordQualityAndHistory()` since
 // `addEntry` needs to check password quality, but not history.
 export
@@ -34,12 +50,13 @@ async function checkPasswordQuality (
     ctx: Context,
     password: string,
     subentry: Vertex,
+    length_constraints?: [ min?: number, max?: number ],
 ): Promise<number> {
     if (!subentry.dse.subentry) {
         return CHECK_PWD_QUALITY_OK;
     }
 
-    const minLength: number = (await ctx.db.attributeValue.findFirst({
+    const minLength: number = length_constraints?.[0] ?? (await ctx.db.attributeValue.findFirst({
         where: {
             entry_id: subentry.dse.id,
             type: pwdMinLength["&id"].toString(),
@@ -48,7 +65,7 @@ async function checkPasswordQuality (
             jer: true,
         },
     }))?.jer as number ?? 0;
-    const maxLength: number = (await ctx.db.attributeValue.findFirst({
+    const maxLength: number = length_constraints?.[1] ?? (await ctx.db.attributeValue.findFirst({
         where: {
             entry_id: subentry.dse.id,
             type: pwdMaxLength["&id"].toString(),
@@ -185,37 +202,49 @@ async function checkPasswordQualityAndHistory (
     if (!subentry.dse.subentry) {
         return CHECK_PWD_QUALITY_OK;
     }
-    const qualityResult = await checkPasswordQuality(ctx, password, subentry);
+
+    const subentry_value_rows = await ctx.db.attributeValue.findMany({
+        where: {
+            entry_id: subentry.dse.id,
+            type: {
+                in: [
+                    ID_HISTORY_SLOTS,
+                    ID_MAX_TIH,
+                    ID_MIN_TIH,
+                    ID_MIN_LEN,
+                    IN_MAX_LEN,
+                ],
+            },
+        },
+        select: {
+            type: true,
+            jer: true,
+        },
+    });
+
+    const subentry_attrs = groupByOID(subentry_value_rows, (r) => r.type);
+    const slots: number | undefined = subentry_attrs[ID_HISTORY_SLOTS]?.[0].jer as number;
+    const max_tih: number | undefined = subentry_attrs[ID_MAX_TIH]?.[0].jer as number;
+    const min_tih: number | undefined = subentry_attrs[ID_MIN_TIH]?.[0].jer as number;
+    const min_len: number | undefined = subentry_attrs[ID_MIN_LEN]?.[0].jer as number;
+    const max_len: number | undefined = subentry_attrs[IN_MAX_LEN]?.[0].jer as number;
+
+    const qualityResult = await checkPasswordQuality(
+        ctx,
+        password,
+        subentry,
+        [ min_len, max_len ],
+    );
     if (qualityResult !== CHECK_PWD_QUALITY_OK) {
         return qualityResult;
     }
-
-    const slots: number = (await ctx.db.attributeValue.findFirst({
-        where: {
-            entry_id: subentry.dse.id,
-            type: pwdHistorySlots["&id"].toString(),
-        },
-        select: {
-            jer: true,
-        },
-    }))?.jer as number ?? MAX_HISTORY_ITEMS; // Just to short circuit the number of results.
 
     const algid = getScryptAlgorithmIdentifier();
     const encrypted = encryptPassword(algid, Buffer.from(password));
     assert(encrypted); // This should not happen, since we are using Meerkat DSA's self-specified encryption algorithm.
 
-    const maxTimeInHistory: number | undefined = (await ctx.db.attributeValue.findFirst({
-        where: {
-            entry_id: subentry.dse.id,
-            type: pwdMaxTimeInHistory["&id"].toString(),
-        },
-        select: {
-            jer: true,
-        },
-    }))?.jer as number | undefined; // Just to short circuit the number of results.
-
-    const historyStart: Date | undefined = maxTimeInHistory
-        ? subSeconds(new Date(), maxTimeInHistory)
+    const historyStart: Date | undefined = max_tih
+        ? subSeconds(new Date(), max_tih)
         : undefined;
 
     /**
@@ -270,18 +299,9 @@ async function checkPasswordQualityAndHistory (
         }
     }
 
-    const minTimeInHistory: number | undefined = (await ctx.db.attributeValue.findFirst({
-        where: {
-            entry_id: subentry.dse.id,
-            type: pwdMinTimeInHistory["&id"].toString(),
-        },
-        select: {
-            jer: true,
-        },
-    }))?.jer as number | undefined; // Just to short circuit the number of results.
     const newestPasswordAge = previousPasswords.length && previousPasswords[previousPasswords.length - 1].time;
-    if (newestPasswordAge && minTimeInHistory) {
-        const newestPasswordMayBeReplacedAfter: Date = addSeconds(newestPasswordAge, minTimeInHistory);
+    if (newestPasswordAge && min_tih) {
+        const newestPasswordMayBeReplacedAfter: Date = addSeconds(newestPasswordAge, min_tih);
         if ((new Date()).getTime() <= newestPasswordMayBeReplacedAfter.getTime()) {
             return CHECK_PWD_QUALITY_TOO_SOON;
         }
