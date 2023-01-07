@@ -178,6 +178,7 @@ async function setEntryPassword (
                         pwdGraceUseTime["&id"].toString(),
                         pwdExpiryTime["&id"].toString(),
                         pwdEndTime["&id"].toString(),
+                        pwdEncAlg["&id"].toString(),
                     ],
                 },
             },
