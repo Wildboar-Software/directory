@@ -19,7 +19,7 @@ import {
     DirectoryBindResult,
     _encode_DirectoryBindResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindResult.ta";
-import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
+import { dap_ip, list, modifyEntry, search } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
 import {
     _encode_Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
@@ -58,7 +58,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
 import isDebugging from "is-debugging";
 import printCode from "../utils/printCode";
-import { ASN1Element } from "asn1-ts";
+import { ASN1Element, FALSE } from "asn1-ts";
 import {
     _decode_DirectoryBindArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
@@ -101,6 +101,16 @@ import {
     _encode_DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as _encode_DBE_Param,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
 import stringifyDN from "../x500/stringifyDN";
+import {
+    SecurityErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import {
+    SecurityProblem_insufficientAccessRights,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+import { createSecurityParameters } from "../x500/createSecurityParameters";
+import {
+    PwdResponseValue_error_changeAfterReset,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue-error.ta";
 
 /**
  * @summary The handles a request, but not errors
@@ -124,6 +134,38 @@ async function handleRequest (
 ): Promise<void> {
     if (!("local" in request.code)) {
         throw new MistypedPDUError();
+    }
+    if (this.pwdReset) {
+        const operation_can_be_used_to_change_password: boolean = (
+            compareCode(request.code, administerPassword["&operationCode"]!)
+            || compareCode(request.code, changePassword["&operationCode"]!)
+            || compareCode(request.code, modifyEntry["&operationCode"]!)
+            // Search and list are included, because a lot of DUAs will probably
+            // automatically do these operations, and become unusable if they
+            // don't work.
+            || compareCode(request.code, search["&operationCode"]!)
+            || compareCode(request.code, list["&operationCode"]!)
+        );
+        if (!operation_can_be_used_to_change_password) {
+            throw new errors.SecurityError(
+                ctx.i18n.t("err:pwd_must_change"),
+                new SecurityErrorData(
+                    SecurityProblem_insufficientAccessRights,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        FALSE,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        securityError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                ),
+                FALSE,
+            );
+        }
     }
     const result = await OperationDispatcher.dispatchDAPRequest(
         ctx,
@@ -403,6 +445,11 @@ async function handleRequestAndErrors (
                 parameter: payload,
             });
             stats.outcome.error.problem = Number(e.data.problem);
+            if (e.unbind) {
+                assn.rose.write_unbind();
+                assn.reset();
+                assn.socket.destroy();
+            }
         } else if (e instanceof errors.ServiceError) {
             const code = _encode_Code(errors.ServiceError.errcode, BER);
             const signError: boolean = (e.shouldBeSigned && assn.authorizedForSignedErrors);
@@ -536,7 +583,6 @@ class DAPAssociation extends ClientAssociation {
      * @async
      */
     public async attemptBind (arg: ASN1Element): Promise<void> {
-        await sleep(1000);
         const arg_ = _decode_DirectoryBindArgument(arg);
         const ctx = this.ctx;
         const remoteHostIdentifier = `${this.socket.remoteFamily}://${this.socket.remoteAddress}/${this.socket.remotePort}`;
@@ -598,6 +644,11 @@ class DAPAssociation extends ClientAssociation {
                     protocol_id: dap_ip["&id"]!, // FIXME:
                     parameter: error,
                 });
+                if (e.unbind) {
+                    this.rose.write_unbind();
+                    this.reset();
+                    this.socket.destroy();
+                }
                 const serviceProblem = ("serviceError" in e.data.error)
                     ? e.data.error.serviceError
                     : undefined;
@@ -684,10 +735,11 @@ class DAPAssociation extends ClientAssociation {
         ) {
             this.authorizedForSignedErrors = true;
         }
+        this.pwdReset = (outcome.pwdResponse?.error === PwdResponseValue_error_changeAfterReset);
         const bindResult = new DirectoryBindResult(
             undefined, // TODO: Supply return credentials. NOTE that the specification says that this must be the same CHOICE that the user supplied.
             versions,
-            undefined,
+            outcome.pwdResponse,
         );
         this.rose.write_bind_result({
             protocol_id: dap_ip["&id"]!,
@@ -716,7 +768,7 @@ class DAPAssociation extends ClientAssociation {
         handleRequestAndErrors(this.ctx, this, request).catch();
     }
 
-    private reset (): void {
+    public reset (): void {
         for (const invocation of this.invocations.values()) {
             invocation.abandonTime = new Date();
             this.invocations.clear();
@@ -796,18 +848,7 @@ class DAPAssociation extends ClientAssociation {
         super();
         this.socket = rose.socket!;
         assert(ctx.config.dap.enabled, "User somehow bound via DAP when it was disabled.");
-        this.socket.on("close", () => {
-            this.ctx.db.enqueuedListResult.deleteMany({ // INTENTIONAL_NO_AWAIT
-                where: {
-                    connection_uuid: this.id,
-                },
-            }).then().catch();
-            this.ctx.db.enqueuedSearchResult.deleteMany({ // INTENTIONAL_NO_AWAIT
-                where: {
-                    connection_uuid: this.id,
-                },
-            }).then().catch();
-        });
+        this.socket.on("close", this.reset.bind(this));
         const logInfo = {
             remoteFamily: this.socket.remoteFamily,
             remoteAddress: this.socket.remoteAddress,

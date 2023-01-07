@@ -172,6 +172,44 @@ noted below are nuances in Meerkat DSA:
   null result (a result with zero entries or RDNs).
 - The way Meerkat DSA handles invalid signed operations is complicated and is
   described [here](./distributed.md#handling-of-invalid-signatures).
+- The `userPwdHistory` attribute returns password history items that have fallen
+  out of history according to the `pwdMaxTimeInHistory` operational attribute.
+  When passwords are changed, they are still evaluated against the current,
+  valid password history.
+  - This is done for performance reasons. There is no practical way to keep
+    these attributes synced up with `pwdMaxTimeInHistory`.
+- Password history is never deleted unless `administerPassword` is used and only
+  if there are insufficient slots in the `userPwdHistory` to store the old and
+  new passwords.
+  - This is kind of a good thing: if you change `pwdMaxTimeInHistory` to a
+    higher value, the history items that would have been truncated from history
+    will flawlessly re-appear in history.
+- Meerkat DSA can enforce mandatory password resets as described (mentioned in
+  passing, really) in ITU Recommendation X.511. As it is unclear how this is to
+  be recorded in the X.500 specifications, Meerkat DSA uses the `pwdReset`
+  attribute defined [here](https://datatracker.ietf.org/doc/html/draft-behera-ldap-password-policy-10)
+  and commonly used in LDAP servers. In addition to this, the X.500
+  specifications say that the only allowed operation should be `changePassword`,
+  but Meerkat DSA is much more generous than this, allowing `modifyEntry`
+  (since it can also be used to change an entry's password),
+  `administerPassword` (since theoretically, an administrator could administer
+  their own password), and `search` and `list`, since many DUA implementations
+  might present an interactive "tree-like" representation of the directory that
+  automatically performs these operations and which cease to work if these
+  operations are unavailable. In LDAP, the only operations available when a
+  password is pending a change are `search`, `modifyEntry`, and the LDAP
+  `changePassword` extended request.
+- A `securityError` with a `problem` of `blockedCredentials` will never be
+  returned, even if the account is blocked. This is for security reasons:
+  - If the asserted credentials are invalid, it risks disclosing whether an
+    entry exists. A nefarious user could guess distinguished names until they
+    get a `blockedCredentials` error instead of `invalidCredentials`, which will
+    reveal the existence of entries they were not supposed to know about.
+  - If the asserted credentials are valid, it risks disclosing the correct
+    password for a locked account. Nefarious users could guess passwords for a
+    locked account until they receive a `blockedCredentials` error instead of
+    `invalidCredentials`, which will reveal that they guessed the password that
+    was in place prior to the block.
 
 ## The "Never Contributing" Bug
 
@@ -190,6 +228,91 @@ X.500 specifications are observed strictly.
 This was probably not intentional, so I reported it. In early January of 2022.
 Until I get clarification, Meerkat DSA will mark every entry as a contributing
 member if there is a match, but no identified contributing members.
+
+## Protected Passwords
+
+Annex E of
+[ITU Recommendation X.511 (2019)](https://www.itu.int/rec/T-REC-X.511/en)
+defines a _proposed_ algorithm for producing protected passwords as used by
+simple authentication. This is a non-normative section of the specification, and
+as such, it is not technically a deviation from the X.500 specifications.
+
+The Annex E solution incorporates the raw, _unhashed_ password into the data
+structure that will be used to produce the hash that is evaluated. This means
+that the password would have to be stored _unhashed_ to make this possible,
+which goes against all modern expectations for the secure storage of passwords
+in software architecture. For this reason, Meerkat DSA uses a procedure similar
+to the Annex E procedure, but by redefining the first hash input to replace the
+raw user password with a `UserPwd` (and, unrelated, to make the `random1`
+`BIT STRING` optional):
+
+```asn1
+-- This is the data structure described in ITU Rec. X.511, Annex E.
+X511-AnnexE-Hashable1 ::= SEQUENCE {
+    name        DistinguishedName,
+    time1       GeneralizedTime,
+    random1     BIT STRING,
+    password    OCTET STRING }
+
+-- This is what Meerkat DSA actually hashes to produce f1.
+Meerkats-Actual-Hashable1 ::= SEQUENCE {
+    name        DistinguishedName,
+    time1       GeneralizedTime,
+    random1     BIT STRING OPTIONAL,
+    password    encrypted < UserPwd -- This is an ASN.1 "selection type." -- }
+```
+
+The `password` field MUST use the `encrypted` alternative of `UserPwd`. The
+encrypted value MUST use the exact algorithm that can be found the `pwdEncAlg`
+operational attribute. The reason for this is that the password is stored
+encrypted / hashed in the database and cannot be "re-encrypted" using some other
+algorithm. Clients must first read the algorithm used for this password before
+attempting to produce a protected password, because they need the exact
+algorithm _and parameters_ to produce an identical encrypted / hashed value.
+
+Unrelated to the problems above, Meerkat DSA also makes `random1` and `random2`
+optional for protected passwords. You will notice that the above
+`Meerkats-Actual-Hashable1` that `random1` is `OPTIONAL`. In addition to this,
+the second hashable defined in Annex E is also modified as such:
+
+```asn1
+-- This is the data structure described in ITU Rec. X.511, Annex E.
+X511-AnnexE-Hashable2 ::= SEQUENCE {
+    f1          OCTET STRING, -- hashed octet string from above
+    time2       GeneralizedTime,
+    random2     BIT STRING }
+
+-- This is what Meerkat DSA actually hashes to locally produce the hash value.
+Meerkats-Actual-Hashable2 ::= SEQUENCE {
+    f1          OCTET STRING, -- hashed octet string from above
+    time2       GeneralizedTime,
+    random2     BIT STRING OPTIONAL }
+```
+
+It is also worth noting that Meerkat DSA does not support every hash
+algorithm under the sun. These are the ones that are supported at the time of
+writing:
+
+- `sha1`
+- `sha224`
+- `sha256`
+- `sha384`
+- `sha512`
+- `sha3-244`
+- `sha3-256`
+- `sha3-384`
+- `sha3-512`
+- `shake128`
+- `shake256`
+
+If a user produces a protected password with an algorithm not listed above, the
+password authentication will simply fail as though the password had been wrong.
+
+Finally, if a user provides simple credentials using the `protected`
+alternative, but does not supply a `time1` value, the `protected` password will
+be used to construct a `UserPwd` value (using the `encrypted` alternative), and
+that will be asserted. To reiterate, this does not violate the specifications,
+since this behavior is explicitly undefined therein.
 
 ## Other Deviations
 

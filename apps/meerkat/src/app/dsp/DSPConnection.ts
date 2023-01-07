@@ -406,6 +406,11 @@ async function handleRequestAndErrors (
                 parameter: payload,
             });
             stats.outcome.error.problem = Number(e.data.problem);
+            if (e.unbind) {
+                assn.rose.write_unbind();
+                assn.reset();
+                assn.socket.destroy();
+            }
         } else if (e instanceof errors.ServiceError) {
             const code = _encode_Code(errors.ServiceError.errcode, BER);
             const signError: boolean = (e.shouldBeSigned && assn.authorizedForSignedErrors);
@@ -600,6 +605,11 @@ class DSPAssociation extends ClientAssociation {
                     protocol_id: dsp_ip["&id"]!, // FIXME:
                     parameter: error,
                 });
+                if (e.unbind) {
+                    this.rose.write_unbind();
+                    this.reset();
+                    this.socket.destroy();
+                }
                 const serviceProblem = ("serviceError" in e.data.error)
                     ? e.data.error.serviceError
                     : undefined;
@@ -718,7 +728,7 @@ class DSPAssociation extends ClientAssociation {
         handleRequestAndErrors(this.ctx, this, request);
     }
 
-    private reset (): void {
+    public reset (): void {
         for (const invocation of this.invocations.values()) {
             invocation.abandonTime = new Date();
             this.invocations.clear();
@@ -798,18 +808,7 @@ class DSPAssociation extends ClientAssociation {
         super();
         this.socket = rose.socket!;
         assert(ctx.config.dsp.enabled, "User somehow bound via DSP when it was disabled.");
-        this.socket.on("close", () => {
-            this.ctx.db.enqueuedListResult.deleteMany({ // INTENTIONAL_NO_AWAIT
-                where: {
-                    connection_uuid: this.id,
-                },
-            }).then().catch();
-            this.ctx.db.enqueuedSearchResult.deleteMany({ // INTENTIONAL_NO_AWAIT
-                where: {
-                    connection_uuid: this.id,
-                },
-            }).then().catch();
-        });
+        this.socket.on("close", this.reset.bind(this));
         const logInfo = {
             remoteFamily: this.socket.remoteFamily,
             remoteAddress: this.socket.remoteAddress,

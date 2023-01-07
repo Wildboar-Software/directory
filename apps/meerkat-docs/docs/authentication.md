@@ -50,26 +50,139 @@ administrators from misconfiguring Meerkat DSA and leaking all of their users'
 passwords, the passwords are simply never returned, even if queried directly,
 and even if access controls permit it. An empty string is returned as the value
 so that directory users can at least know _if_ an entry has a password. In other
-words, passwords are _write-only_ in Meerkat DSA.
+words, passwords are _write-only_ in Meerkat DSA. This also applies to the
+encrypted variants of passwords: they are never returned so that they can never
+be used for
+[offline password cracking](https://csrc.nist.gov/glossary/term/offline_attack).
 
 The password is stored in the database. If password is supplied using cleartext,
 it will be salted and hashed using the Scrypt algorithm and stored in the
 database. If the password is already encrypted / hashed, it will be stored using
 the algorithm that was used to encrypt it.
 
-## How to Change Passwords
+## Simple Protected Passwords
+
+Simple authentication allows users to supply a `protected` password. Unlike the
+`unprotected` and `userPwd` variants of the simple credentials password, this
+variation can be protected against
+[replay attacks](https://en.wikipedia.org/wiki/Replay_attack), and it provides
+a form of eavesdropping-mitigating encryption, even when TLS is not used to
+secure the connection.
+
+There is no specified algorithm for producing a `protected` password, although
+[ITU Recommendation X.511 (2019)](https://www.itu.int/rec/T-REC-X.511/en),
+Annex E, provides a suggested algorith. Meerkat DSA deviates from this
+algorithm slightly for security reasons. The entirety of the procedures used by
+Meerkat DSA are documented [here](./deviations-nuances.md#protected-passwords).
+
+In short, to produce a protected password, a client must produce a DER-encoded
+value of an ASN.1 value having the following type:
+
+```asn1
+Meerkats-Actual-Hashable1 ::= SEQUENCE {
+    name        DistinguishedName,
+    time1       GeneralizedTime,
+    random1     BIT STRING OPTIONAL,
+    password    encrypted < UserPwd -- This is an ASN.1 "selection type." -- }
+```
+
+In the above type, `name` is the distinguished name to which the user is
+attempting to bind, `time1` is a time a few seconds into the future, `random1`
+is a sequence of randomly-generated bits of any length (preferrably at least 64
+bits), and `password` is the `UserPwd` construction of the user's password,
+which _must_ use the `encrypted` alternative, and
+
+
+:::tip
+
+It is strongly advised to use protected passwords whenever simple authentication
+is used, since they are immune to replay attacks.
+
+:::
+
+## How to Set or Change Passwords
+
+You may set or modify a password for an entry in four ways:
+
+- At creation time, by including password attributes in the `addEntry` operation.
+- By modifying the entry via the `modifyEntry` operation.
+  - If this is performed within a password administrative area, this requires
+    the `pwdModifyEntryAllowed` operational attribute for the applicable
+    subentry to have a value of `TRUE`.
+- By modifying the entry via the `changePassword` operation
+  - If this is performed within a password administrative area, this requires
+    the `pwdChangeAllowed` operational attribute for the applicable subentry to
+    have a value of `TRUE`.
+- By modifying the entry via the `administerPassword` operation
+  - In addition to requiring permission to add / modify / delete the `userPwd`
+    and `userPassword` values, as is the case for the other three, this option
+    also requires the same permissions for the `userPwdHistory` attribute.
+  - Note that, when this operation is used, the user will have to reset his or
+    her password upon logging in again.
 
 It is recommended to use the `administerPassword` and/or `changePassword`
-operations to modify an entry's password.
+operations to modify an entry's password, rather than the `modifyEntry` or
+`addEntry` operations.
 
 ## Password Policy
 
-Password policy, as specified in
-[ITU Recommendation X.509](https://www.itu.int/rec/T-REC-X.509/en) is not
-currently supported. Future editions of Meerkat DSA will support X.509 Password
-Policies, though there may only be a subset of these features available for the
-free edition of Meerkat DSA (which is not to imply that _all_ of these features
-will be available in the paid version).
+Meerkat DSA allows you to configure password policy exactly as described in ITU
+Recommendations X.501 and X.520.
+
+### Password Dictionaries
+
+You can configure password vocabulary by adding entries to the
+`passwordDictionaryItem` table in the database (usually MySQL), along with a
+"bit number" indicating the category in which the vocabulary item appears,
+according to the syntax of the `pwdVocabulary` operational attribute, which is:
+
+```asn1
+PwdVocabulary ::= BIT STRING {
+  noDictionaryWords (0),
+  noPersonNames (1),
+  noGeographicalNames (2) }
+```
+
+This means that, if you set the `bit` to `2`, the row that you create will be
+considered a "geographical name." **Password dictionary items inserted into the
+database MUST be upper-cased, or they will have no effect.**
+
+There is no way to configure password dictionaries via DAP, currently. The
+`pwdDictionaries` is purely informative and is not used by the directory in any
+way.
+
+:::tip
+
+It is recommended that you DO NOT use this operational attribute, as it goes
+against modern guidance on password-based authentication. Namely, it is actually
+recommended to construct passwords from four or more dictionary words, as such
+passwords are more memorable, yet provide much more entropy than the
+prior guidance of the "8 characters minimum, at least one digit, at least one
+symbol, etc." password.
+
+:::
+
+### Password Lockouts
+
+Meerkat DSA fully supports password lockouts, as described in
+[ITU Recommendation X.511 (2019)](https://www.itu.int/rec/T-REC-X.511/en). This
+means that administrators can configure their directories to "lock out" users
+after so many failed authentication attempts.
+
+To enable password lockouts, just set the `pwdMaxFailures` operational attribute
+on the applicable password administration subentries. You can make the lockout
+temporary using the `pwdLockoutDuration` operational attribute, if desired.
+
+:::caution
+
+Enabling password lockouts might not be a good idea. This feature can allow
+nefarious users to purposefully guess wrong passwords for other users to lock
+them out of their accounts. It may be a good idea to refrain from enabling this
+unless you are having problems with brute-force attacks, and even then, the
+`pwdLockoutDuration` should be set to a low value to ensure that accounts are
+automatically unlocked after a short period of time.
+
+:::
 
 ## Strong Authentication
 

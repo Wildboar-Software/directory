@@ -20,6 +20,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd-encrypted.ta";
 import readEntryPassword from "../readEntryPassword";
 import setEntryPassword from "../setEntryPassword";
+import { validateAlgorithmParameters } from "../../authn/validateAlgorithmParameters";
 
 // Returns an empty password, so the user can at least see if one exists or not.
 export
@@ -69,6 +70,11 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
     const decoded = userPwd.decoderFor["&Type"]!(value.value);
+    if (("encrypted" in decoded) && !validateAlgorithmParameters(decoded.encrypted.algorithmIdentifier)) {
+        // The algorithm parameters are unacceptable. This is to prevent
+        // denial of service by chosen algorithm attacks.
+        throw new Error("9e441c6c-5399-4b42-9558-9de30598fedb");
+    }
     pendingUpdates.otherWrites.push(...await setEntryPassword(ctx, undefined, vertex, decoded));
 };
 

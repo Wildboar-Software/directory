@@ -28,6 +28,10 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
 import versions from "../versions";
 import { attemptStrongAuth } from "../authn/attemptStrongAuth";
+import {
+    PwdResponseValue_error_passwordExpired,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue-error.ta";
+import stringifyDN from "../x500/stringifyDN";
 
 /**
  * @summary X.500 Directory System Protocol (DSP) bind operation
@@ -174,14 +178,30 @@ async function bind (
                 );
             }
         }
-        // NOTE: Validity has no well-established meaning.
-        const passwordIsCorrect: boolean | undefined = await attemptPassword(ctx, foundEntry, arg.credentials.simple.password);
-        if (!passwordIsCorrect) {
+        const {
+            authorized,
+            pwdResponse,
+            unbind,
+        } = await attemptPassword(ctx, foundEntry, arg.credentials.simple);
+        if (!authorized) {
+            if (pwdResponse?.error === PwdResponseValue_error_passwordExpired) {
+                ctx.log.warn(ctx.i18n.t("log:dsa_bind_pwd_end", {
+                    ...logInfo,
+                    dsa: stringifyDN(ctx, arg.credentials.simple.name).slice(0, 500),
+                }), logInfo);
+                throw new DSABindError(
+                    ctx.i18n.t("err:pwd_end"),
+                    invalidCredentialsData,
+                    signErrors,
+                    unbind,
+                );
+            }
             ctx.log.warn(ctx.i18n.t("log:invalid_credentials", logInfo), logInfo);
             throw new DSABindError(
                 ctx.i18n.t("err:invalid_credentials"),
                 invalidCredentialsData,
                 signErrors,
+                unbind,
             );
         }
         return {

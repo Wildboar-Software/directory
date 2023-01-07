@@ -31,6 +31,9 @@ import {
 import versions from "../versions";
 import dnToVertex from "../dit/dnToVertex";
 import { attemptStrongAuth } from "../authn/attemptStrongAuth";
+import {
+    PwdResponseValue_error_passwordExpired,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue-error.ta";
 
 /**
  * @summary X.500 Directory Access Protocol (DSP) bind operation
@@ -175,14 +178,29 @@ async function bind (
                 );
             }
         }
-        // NOTE: Validity has no well-established meaning.
-        const passwordIsCorrect: boolean | undefined = await attemptPassword(ctx, foundEntry, arg.credentials.simple.password);
-        if (!passwordIsCorrect) {
+        const {
+            authorized,
+            pwdResponse,
+            unbind,
+        } = await attemptPassword(ctx, foundEntry, arg.credentials.simple);
+        if (!authorized) {
+            if (pwdResponse?.error === PwdResponseValue_error_passwordExpired) {
+                ctx.log.info(ctx.i18n.t("log:dua_bind_pwd_end", {
+                    ...logInfo,
+                }), logInfo);
+                throw new DirectoryBindError(
+                    ctx.i18n.t("err:pwd_end"),
+                    invalidCredentialsData,
+                    signErrors,
+                    unbind,
+                );
+            }
             ctx.log.warn(ctx.i18n.t("log:invalid_credentials", logInfo), logInfo);
             throw new DirectoryBindError(
                 ctx.i18n.t("err:invalid_credentials"),
                 invalidCredentialsData,
                 signErrors,
+                unbind,
             );
         }
         return {
@@ -198,6 +216,7 @@ async function bind (
                     undefined,
                 ),
             },
+            pwdResponse,
         };
     } else if ("strong" in arg.credentials) {
         return attemptStrongAuth(

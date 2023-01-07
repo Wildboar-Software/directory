@@ -158,9 +158,10 @@ const isPresent: SpecialAttributeDetector = async (
         return false;
     }
     if (vertex.dse.shadow) {
-        return !!(await ctx.db.passwordEncryptionAlgorithm.findFirst({
+        return !!(await ctx.db.attributeValue.findFirst({
             where: {
                 entry_id: vertex.dse.id,
+                type: TYPE_OID,
             },
             select: {
                 id: true,
