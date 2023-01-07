@@ -19,24 +19,34 @@ import * as crypto from "crypto";
  * @link https://datatracker.ietf.org/doc/html/rfc7914
  */
 export
-function encryptPassword (algId: AlgorithmIdentifier, password: Uint8Array): Uint8Array | null {
-    if (algId.algorithm.isEqualTo(scrypt["&id"]!) && algId.parameters) {
-        const parameters: typeof scrypt["&Type"] = scrypt.decoderFor["&Type"]!(algId.parameters);
-        return crypto.scryptSync(
-            password,
-            parameters.salt,
-            parameters.keyLength
-                ? Number(parameters.keyLength)
-                : 128,
-            {
-                cost: Number(parameters.costParameter),
-                blockSize: Number(parameters.blockSize),
-                parallelization: Number(parameters.parallelizationParameter),
-            },
-        );
-    } else {
-        return null;
-    }
+function encryptPassword (algId: AlgorithmIdentifier, password: Uint8Array): Promise<Uint8Array | null> {
+    return new Promise((resolve, reject) => {
+        if (algId.algorithm.isEqualTo(scrypt["&id"]!) && algId.parameters) {
+            const parameters: typeof scrypt["&Type"] = scrypt.decoderFor["&Type"]!(algId.parameters);
+            return crypto.scrypt(
+                password,
+                parameters.salt,
+                parameters.keyLength
+                    ? Number(parameters.keyLength)
+                    : 128,
+                {
+                    cost: Number(parameters.costParameter),
+                    blockSize: Number(parameters.blockSize),
+                    parallelization: Number(parameters.parallelizationParameter),
+                    maxmem: 64 * 1024 * 1024, // This makes a cost of 32768 possible.
+                },
+                (e, k) => {
+                    if (e) {
+                        reject(e);
+                        return;
+                    }
+                    resolve(k);
+                },
+            );
+        } else {
+            return null;
+        }
+    });
 }
 
 export default encryptPassword;

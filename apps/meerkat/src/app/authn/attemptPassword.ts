@@ -101,7 +101,7 @@ function decodeInt (bytes?: Uint8Array): number | undefined {
     return Number(_decodeInteger(el));
 }
 
-function compareUserPwd (a: UserPwd, b: UserPwd): boolean | undefined {
+async function compareUserPwd (a: UserPwd, b: UserPwd): Promise<boolean | undefined> {
     if ("clear" in a && "clear" in b) {
         return a.clear === b.clear;
     }
@@ -123,7 +123,7 @@ function compareUserPwd (a: UserPwd, b: UserPwd): boolean | undefined {
     assert("clear" in not_encrypted);
 
     const alg = already_encrypted.encrypted.algorithmIdentifier;
-    const newly_encrypted = encryptPassword(alg, Buffer.from(not_encrypted.clear, "utf-8"));
+    const newly_encrypted = await encryptPassword(alg, Buffer.from(not_encrypted.clear, "utf-8"));
     if (!newly_encrypted) {
         return undefined; // Algorithm not understood.
     }
@@ -150,7 +150,7 @@ function getTimeFromValidity (v?: ValidityTime): Date | undefined {
     }
 }
 
-function assertSimpleCreds (asserted_creds: SimpleCredentials, correct_pw: UserPwd): boolean | undefined {
+async function assertSimpleCreds (asserted_creds: SimpleCredentials, correct_pw: UserPwd): Promise<boolean | undefined> {
     const asserted_pw = asserted_creds.password;
     if (!asserted_pw) {
         return undefined;
@@ -450,7 +450,7 @@ async function attemptPassword (
         if (!valid_pwd) {
             continue;
         }
-        if (assertSimpleCreds(attemptedCreds, valid_pwd) === true) {
+        if ((await assertSimpleCreds(attemptedCreds, valid_pwd)) === true) {
             passwordIsCorrect = true;
             if (valid_pwd === userPwd2) {
                 expiredPasswordUsed = true;
