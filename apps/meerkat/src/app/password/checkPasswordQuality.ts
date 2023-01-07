@@ -97,25 +97,24 @@ async function checkPasswordQuality (
             ber: true,
         },
     }))?.ber;
-    const vocab: BIT_STRING = vocabBER
+    const vocab: BIT_STRING | null = vocabBER
         ? (() => {
             const el = new BERElement();
             el.fromBytes(vocabBER);
             return el.bitString;
         })()
-        : new Uint8ClampedArray();
+        : null;
 
     // We do the alphabet checks above first so we don't bother doing the more
     // computationally / I/O expensive work of querying the database if the
     // password is inadequate for simpler reasons.
-    if (!vocab.length) {
+    if (!vocab) {
         return CHECK_PWD_QUALITY_OK;
     }
     const no_words: boolean = (vocab[PwdVocabulary_noDictionaryWords] === TRUE_BIT);
     const no_names: boolean = (vocab[PwdVocabulary_noPersonNames] === TRUE_BIT);
     const no_geo: boolean   = (vocab[PwdVocabulary_noGeographicalNames] === TRUE_BIT);
 
-    // FIXME: Document that these must be uppercased.
     const normalizedPassword: string = password.toUpperCase();
 
     // TODO: Perform just one query and use the bit to determine which error to return.

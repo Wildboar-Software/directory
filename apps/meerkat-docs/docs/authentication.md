@@ -117,10 +117,72 @@ You may set or modify a password for an entry in four ways:
   - In addition to requiring permission to add / modify / delete the `userPwd`
     and `userPassword` values, as is the case for the other three, this option
     also requires the same permissions for the `userPwdHistory` attribute.
+  - Note that, when this operation is used, the user will have to reset his or
+    her password upon logging in again.
 
 It is recommended to use the `administerPassword` and/or `changePassword`
 operations to modify an entry's password, rather than the `modifyEntry` or
 `addEntry` operations.
+
+## Password Policy
+
+Meerkat DSA allows you to configure password policy exactly as described in ITU
+Recommendations X.501 and X.520.
+
+### Password Dictionaries
+
+You can configure password vocabulary by adding entries to the
+`passwordDictionaryItem` table in the database (usually MySQL), along with a
+"bit number" indicating the category in which the vocabulary item appears,
+according to the syntax of the `pwdVocabulary` operational attribute, which is:
+
+```asn1
+PwdVocabulary ::= BIT STRING {
+  noDictionaryWords (0),
+  noPersonNames (1),
+  noGeographicalNames (2) }
+```
+
+This means that, if you set the `bit` to `2`, the row that you create will be
+considered a "geographical name." **Password dictionary items inserted into the
+database MUST be upper-cased, or they will have no effect.**
+
+There is no way to configure password dictionaries via DAP, currently. The
+`pwdDictionaries` is purely informative and is not used by the directory in any
+way.
+
+:::tip
+
+It is recommended that you DO NOT use this operational attribute, as it goes
+against modern guidance on password-based authentication. Namely, it is actually
+recommended to construct passwords from four or more dictionary words, as such
+passwords are more memorable, yet provide much more entropy than the
+prior guidance of the "8 characters minimum, at least one digit, at least one
+symbol, etc." password.
+
+:::
+
+### Password Lockouts
+
+Meerkat DSA fully supports password lockouts, as described in
+[ITU Recommendation X.511 (2019)](https://www.itu.int/rec/T-REC-X.511/en). This
+means that administrators can configure their directories to "lock out" users
+after so many failed authentication attempts.
+
+To enable password lockouts, just set the `pwdMaxFailures` operational attribute
+on the applicable password administration subentries. You can make the lockout
+temporary using the `pwdLockoutDuration` operational attribute, if desired.
+
+:::caution
+
+Enabling password lockouts might not be a good idea. This feature can allow
+nefarious users to purposefully guess wrong passwords for other users to lock
+them out of their accounts. It may be a good idea to refrain from enabling this
+unless you are having problems with brute-force attacks, and even then, the
+`pwdLockoutDuration` should be set to a low value to ensure that accounts are
+automatically unlocked after a short period of time.
+
+:::
 
 ## Strong Authentication
 
