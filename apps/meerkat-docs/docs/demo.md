@@ -35,6 +35,7 @@ web browser:
 You may log in as the administrator account with these credentials:
 
 Bind DN: `cn=admin`
+
 Password: `asdf`
 
 ## Permissions
@@ -70,4 +71,3 @@ These will not be formal rules, per se, but please:
 
 If these rules are abused often enough, the demo environment will be removed, so
 play nice!
-
