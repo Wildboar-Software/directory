@@ -309,22 +309,14 @@ export class DitController {
             selection: selectAllInfo,
         });
         const attributes: [ string, string, string ][] = [
-            ...userAttributes
-                .filter((a) => (
-                    !a.type.isEqualTo(userPwd["&id"])
-                    && !a.type.isEqualTo(userPassword["&id"])
-                )),
+            ...userAttributes,
             ...operationalAttributes
                 /**
                  * We don't display the entryDN attribute because the vertex's
                  * superior is not loaded in this controller, so this will
                  * display incorrectly.
                  */
-                .filter((a) => (
-                    !a.type.isEqualTo(entryDN["&id"])
-                    && !a.type.isEqualTo(userPwd["&id"])
-                    && !a.type.isEqualTo(userPassword["&id"])
-                )),
+                .filter((a) => !a.type.isEqualTo(entryDN["&id"])),
             ...collectiveValues,
         ]
             .map((attr) => [
