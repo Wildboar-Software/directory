@@ -240,7 +240,7 @@ async function checkPasswordQualityAndHistory (
     }
 
     const algid = getScryptAlgorithmIdentifier();
-    const encrypted = encryptPassword(algid, Buffer.from(password));
+    const encrypted = await encryptPassword(algid, Buffer.from(password));
     assert(encrypted); // This should not happen, since we are using Meerkat DSA's self-specified encryption algorithm.
 
     const historyStart: Date | undefined = max_tih
