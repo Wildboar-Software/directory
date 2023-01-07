@@ -160,6 +160,7 @@ async function changePassword (
         );
     }
 
+    const targetDN = getDistinguishedName(target);
     const relevantSubentries: Vertex[] = (await Promise.all(
         state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
     )).flat();
@@ -215,7 +216,6 @@ async function changePassword (
             signErrors,
         );
     }
-    const targetDN = getDistinguishedName(target);
     const requestor: DistinguishedName | undefined = state.chainingArguments.originator
         ?? assn.boundNameAndUID?.dn;
     const user = requestor
