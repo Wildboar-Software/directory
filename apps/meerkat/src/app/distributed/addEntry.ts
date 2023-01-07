@@ -31,6 +31,7 @@ import {
     UpdateProblem_entryAlreadyExists,
     UpdateProblem_namingViolation,
     UpdateProblem_affectsMultipleDSAs,
+    UpdateProblem_insufficientPasswordQuality,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import {
     ServiceControlOptions_manageDSAIT,
@@ -135,7 +136,7 @@ import {
 import {
     id_ar_accessControlInnerArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlInnerArea.va";
-import { dseType } from "@wildboar/x500/src/lib/collections/attributes";
+import { dseType, userPassword, userPwd } from "@wildboar/x500/src/lib/collections/attributes";
 import {
     objectClass,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
@@ -179,6 +180,23 @@ import {
     _encode_SuperiorToSubordinate,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinate.ta";
 import { compareAuthenticationLevel } from "@wildboar/x500";
+import { UserPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
+import {
+    id_ar_pwdAdminSpecificArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-pwdAdminSpecificArea.va";
+import {
+    pwdAdminSubentry,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAdminSubentry.oa";
+import {
+    checkPasswordQuality,
+    CHECK_PWD_QUALITY_OK,
+} from "../password/checkPasswordQuality";
+import { AttributeErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
+import { AttributeErrorData_problems_Item } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData-problems-Item.ta";
+import { attributeError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/attributeError.oa";
+import {
+    AttributeProblem_constraintViolation,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
 
 const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
 const ID_AC_SPECIFIC: string = id_ar_accessControlSpecificArea.toString();
@@ -1238,6 +1256,119 @@ async function addEntry (
             }
         };
     }
+
+    // #region Password Policy Verification
+    let password: UserPwd | undefined;
+    for (const attr of data.entry) {
+        if (
+            !attr.type_.isEqualTo(userPwd["&id"])
+            && !attr.type_.isEqualTo(userPassword["&id"])
+        ) {
+            continue;
+        }
+        const values = [
+            ...attr.values,
+            ...attr.valuesWithContext?.map((vwc) => vwc.value) ?? [],
+        ];
+        // userPassword is not technically single-valued, but its usage for
+        // the other values are for password history, which a new entry
+        // should not have.
+        if (password || (values.length !== 1)) {
+            throw new errors.AttributeError(
+                ctx.i18n.t("err:multiple_passwords_supplied"),
+                new AttributeErrorData(
+                    {
+                        rdnSequence: targetDN,
+                    },
+                    [
+                        new AttributeErrorData_problems_Item(
+                            AttributeProblem_constraintViolation,
+                            attr.type_,
+                            undefined,
+                        ),
+                    ],
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        undefined,
+                        undefined,
+                        attributeError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
+        const encoded = values[0];
+        password = attr.type_.isEqualTo(userPwd["&id"])
+            ? userPwd.decoderFor["&Type"]!(encoded)
+            : {
+                clear: Buffer.from(encoded.octetString.buffer).toString("utf-8"),
+            };
+    }
+    // TODO: Password policy applies _per password attribute_. This is something I'll
+    // have to change when I re-write Meerkat DSA entirely.
+    const pwdAdminPoint = state.admPoints
+        .find((ap) => ap.dse.admPoint?.administrativeRole.has(id_ar_pwdAdminSpecificArea.toString()));
+    if (pwdAdminPoint && password) {
+        const pwdAdminSubentries = relevantSubentries
+            .filter((s) => s.dse.objectClass.has(pwdAdminSubentry["&id"].toString()));
+        const passwordQualityIsAdministered: boolean = (pwdAdminSubentries.length > 0);
+
+        if (("encrypted" in password) && passwordQualityIsAdministered) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:cannot_verify_pwd_quality"),
+                new UpdateErrorData(
+                    UpdateProblem_insufficientPasswordQuality,
+                    undefined,
+                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+                signErrors,
+            );
+        } else if ("clear" in password) {
+            for (const pwsub of pwdAdminSubentries) {
+                const checkPwdResult = await checkPasswordQuality(ctx, password.clear, pwsub);
+                if (checkPwdResult === CHECK_PWD_QUALITY_OK) {
+                    continue;
+                }
+                // Unfortunately, err:pwd_quality cannot contain more info, because the error message will be logged,
+                // disclosing information about the attempted password.
+                throw new errors.UpdateError(
+                    ctx.i18n.t("err:pwd_quality"),
+                    new UpdateErrorData(
+                        UpdateProblem_insufficientPasswordQuality,
+                        undefined,
+                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            updateError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                    signErrors,
+                );
+            }
+        }
+    } // If there is no password admin point defined, you can do whatever you want.
+    // #endregion Password Policy Verification
 
     if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
         throw new errors.ServiceError(

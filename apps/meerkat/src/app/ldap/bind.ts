@@ -28,6 +28,10 @@ import {
 import {
     NameAndOptionalUID,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+import {
+    PwdResponseValue_error_passwordExpired,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue-error.ta";
+import { SimpleCredentials } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
 
 export
 interface LDAPBindReturn extends BindReturn {
@@ -191,10 +195,17 @@ async function bind (
             ctx.log.warn(ctx.i18n.t("log:invalid_credentials", logInfo), logInfo);
             return invalidCredentials;
         }
-        const authenticated = await attemptPassword(ctx, entry, {
-            unprotected: suppliedPassword,
-        });
-        if (authenticated) {
+        const {
+            authorized,
+            pwdResponse,
+        } = await attemptPassword(ctx, entry, new SimpleCredentials(
+            dn,
+            undefined,
+            {
+                unprotected: suppliedPassword,
+            },
+        ));
+        if (authorized) {
             return {
                 ...ret,
                 authLevel: {
@@ -207,7 +218,11 @@ async function bind (
                 result: simpleSuccess(successMessage, encodedDN),
             };
         } else {
-            ctx.log.warn(invalidCredentialsMessage);
+            if (pwdResponse?.error === PwdResponseValue_error_passwordExpired) {
+                ctx.log.info(ctx.i18n.t("log:dua_bind_pwd_end", logInfo), logInfo);
+            } else {
+                ctx.log.warn(invalidCredentialsMessage);
+            }
             return invalidCredentials;
         }
     } else if ("sasl" in req.authentication) {
@@ -227,9 +242,13 @@ async function bind (
                 if (!pwd) {
                     return invalidCredentials;
                 }
-                const authenticated = await attemptPassword(ctx, entry, {
-                    unprotected: Buffer.from(passwd),
-                });
+                const authenticated = await attemptPassword(ctx, entry, new SimpleCredentials(
+                    dn,
+                    undefined,
+                    {
+                        unprotected: Buffer.from(passwd),
+                    },
+                ));
                 if (authenticated) {
                     return {
                         ...ret,

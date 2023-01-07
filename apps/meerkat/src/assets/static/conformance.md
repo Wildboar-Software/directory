@@ -1,7 +1,7 @@
 # Conformance
 
-In the statements below, the term "Meerkat DSA" refers to version 1.3.0 of
-Meerkat DSA, hence these statements are only claimed for version 1.3.0 of
+In the statements below, the term "Meerkat DSA" refers to version 2.0.0 of
+Meerkat DSA, hence these statements are only claimed for version 2.0.0 of
 Meerkat DSA.
 
 ## X.519 Conformance Statement
@@ -16,14 +16,21 @@ Recommendation X.519 (2016), Section 13.
 
 Meerkat DSA does not support any application contexts.
 
-The following table indicates Meerkat DSA's IDM protocol support.
+The following is an exhaustive list of all Internet-Directly-Mapped (IDM) protocols supported:
 
-| Supported? | Protocol                                                | Object Identifier  |
-|------------|---------------------------------------------------------|--------------------|
-| Yes        | Directory Access Protocol (DAP)                         | 2.5.33.0           |
-| Yes        | Directory System Protocol (DSP)                         | 2.5.33.1           |
-| No         | Directory Information Shadowing Protocol (DISP)         | 2.5.33.2           |
-| Yes        | Directory Operational Binding Management Protocol (DOP) | 2.5.33.3           |
+| Protocol                                                | Object Identifier  |
+|---------------------------------------------------------|--------------------|
+| Directory Access Protocol (DAP)                         | 2.5.33.0           |
+| Directory System Protocol (DSP)                         | 2.5.33.1           |
+| Directory Operational Binding Management Protocol (DOP) | 2.5.33.3           |
+
+The following is an exhaustive list of all ISO Transport Over TCP (ITOT) application contexts supported:
+
+| Protocol                                                | Object Identifier  |
+|---------------------------------------------------------|--------------------|
+| Directory Access Protocol (DAP)                         | 2.5.3.1            |
+| Directory System Protocol (DSP)                         | 2.5.3.2            |
+| Directory Operational Binding Management Protocol (DOP) | 2.5.3.3            |
 
 #### B. Operational Binding Support
 
@@ -128,7 +135,7 @@ Recommendation X.511 (2016), Section 7.3.1.
 | Extra Attributes                                   | 4          | Yes        |
 | Modify Rights Request                              | 5          | Yes        |
 | Paged Results Request                              | 6          | Yes        |
-| Matched Values Only                                | 7          | No         |
+| Matched Values Only                                | 7          | Yes        |
 | Extended Filter                                    | 8          | No         |
 | Target System                                      | 9          | Yes        |
 | Use Alias On Update                                | 10         | No         |

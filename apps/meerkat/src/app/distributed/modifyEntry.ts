@@ -32,6 +32,7 @@ import {
     UpdateProblem_familyRuleViolation,
     UpdateProblem_notAllowedOnRDN,
     UpdateProblem_namingViolation,
+    UpdateProblem_insufficientPasswordQuality,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import {
     objectClass,
@@ -72,6 +73,7 @@ import {
     OBJECT_IDENTIFIER,
     TRUE_BIT,
     unpackBits,
+    TRUE,
 } from "asn1-ts";
 import {
     DER,
@@ -258,6 +260,17 @@ import { stringifyDN } from "../x500/stringifyDN";
 import { printInvokeId } from "../utils/printInvokeId";
 import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
 import { getEntryExistsFilter } from "../database/entryExistsFilter";
+import {
+    pwdModifyEntryAllowed,
+} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdModifyEntryAllowed.oa";
+import { getAdministrativePoints } from "../dit/getAdministrativePoints";
+import { id_ar_pwdAdminSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-pwdAdminSpecificArea.va";
+import { pwdAdminSubentry } from "@wildboar/x500/src/lib/collections/objectClasses";
+import { UserPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
+import {
+    checkPasswordQuality,
+    CHECK_PWD_QUALITY_OK,
+} from "../password/checkPasswordQuality";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -601,6 +614,44 @@ function checkPermissionToAddValues (
             );
         }
     }
+}
+
+// TODO: Password policy applies _per password attribute_. This is something I'll
+// have to change when I re-write Meerkat DSA entirely.
+async function checkPermissionToModifyPassword (
+    ctx: Context,
+    entry: Vertex,
+    targetDN: DistinguishedName,
+): Promise<boolean> {
+    const pwdAdminPoint = getAdministrativePoints(entry)
+        .find((ap) => ap.dse.admPoint?.administrativeRole.has(id_ar_pwdAdminSpecificArea.toString()));
+    if (!pwdAdminPoint) {
+        // If there is no password admin point defined, you can do whatever you want.
+        return true;
+    }
+    const pwdAdminSubentries = (await getRelevantSubentries(ctx, entry, targetDN, pwdAdminPoint))
+        .filter((s) => s.dse.objectClass.has(pwdAdminSubentry["&id"].toString()));
+
+    /**
+     * Technically, there is supposed to be only one password admin subentry per
+     * password attribute, but we just check that all of them permit password
+     * changes via modifyEntry. In Meerkat DSA, there is one hard-coded password
+     * attribute.
+     */
+    return (await ctx.db.attributeValue.findMany({
+        where: {
+            entry_id: {
+                in: pwdAdminSubentries.map((s) => s.dse.id),
+            },
+            type: pwdModifyEntryAllowed["&id"].toString(),
+            operational: true,
+        },
+        select: {
+            jer: true,
+        },
+    }))
+        .map(({ jer }) => jer as boolean)
+        .every((x) => x);
 }
 
 /**
@@ -2102,6 +2153,9 @@ function handleContextRule (
  * > e) will not attempt to evaluate AVAs using values of such an attribute type.
  *
  * @param ctx The context object
+ * @param state The operation dispatcher state
+ * @param relevantSubentries Subentries that were determined to apply to the
+ *  target entry
  * @param assn The client association
  * @param user The requestor (not the bound user, because the request could have
  *  been chained)
@@ -2130,6 +2184,8 @@ function handleContextRule (
  */
 async function executeEntryModification (
     ctx: Context,
+    state: OperationDispatcherState,
+    relevantSubentries: Vertex[],
     assn: ClientAssociation,
     user: NameAndOptionalUID | undefined | null,
     entry: Vertex,
@@ -2174,6 +2230,115 @@ async function executeEntryModification (
         signErrors,
     );
 
+    const checkPassword = async (attr: Attribute) => {
+        // In the coming re-write, this should use the `pwdAttribute` attribute to determine this.
+        const modifyingAPasswordAttribute: boolean = (
+            attr.type_.isEqualTo(userPwd["&id"])
+            || attr.type_.isEqualTo(userPassword["&id"])
+        );
+        if (!modifyingAPasswordAttribute) {
+            return;
+        }
+        const permitted: boolean = !modifyingAPasswordAttribute
+            || await checkPermissionToModifyPassword(ctx, entry, targetDN);
+        if (!permitted) {
+            throw new errors.SecurityError(
+                ctx.i18n.t("err:not_authz_mpw", { context: "pwd_admin" }),
+                new SecurityErrorData(
+                    SecurityProblem_insufficientAccessRights,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        securityError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    aliasDereferenced,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
+        // #region Password Policy Verification
+
+        const values = [
+            ...attr.values,
+            ...attr.valuesWithContext?.map((vwc) => vwc.value) ?? [],
+        ];
+        const encoded = values[0];
+        const password: UserPwd = attr.type_.isEqualTo(userPwd["&id"])
+            ? userPwd.decoderFor["&Type"]!(encoded)
+            : {
+                clear: Buffer.from(encoded.octetString.buffer).toString("utf-8"),
+            };
+        // TODO: Password policy applies _per password attribute_. This is something I'll
+        // have to change when I re-write Meerkat DSA entirely.
+        const pwdAdminPoint = state.admPoints
+            .find((ap) => ap.dse.admPoint?.administrativeRole.has(id_ar_pwdAdminSpecificArea.toString()));
+        if (!pwdAdminPoint) {
+            return;
+        }
+        const pwdAdminSubentries = relevantSubentries
+            .filter((s) => s.dse.objectClass.has(pwdAdminSubentry["&id"].toString()));
+        const passwordQualityIsAdministered: boolean = (pwdAdminSubentries.length > 0);
+
+        if (("encrypted" in password) && passwordQualityIsAdministered) {
+            throw new errors.UpdateError(
+                ctx.i18n.t("err:cannot_verify_pwd_quality"),
+                new UpdateErrorData(
+                    UpdateProblem_insufficientPasswordQuality,
+                    undefined,
+                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        updateError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    aliasDereferenced,
+                    undefined,
+                ),
+                signErrors,
+            );
+        } else if ("clear" in password) {
+            for (const pwsub of pwdAdminSubentries) {
+                const checkPwdResult = await checkPasswordQuality(ctx, password.clear, pwsub);
+                if (checkPwdResult === CHECK_PWD_QUALITY_OK) {
+                    return;
+                }
+                // Unfortunately, err:pwd_quality cannot contain more info,
+                // because the error message will be logged,
+                // disclosing information about the attempted password.
+                throw new errors.UpdateError(
+                    ctx.i18n.t("err:pwd_quality"),
+                    new UpdateErrorData(
+                        UpdateProblem_insufficientPasswordQuality,
+                        undefined,
+                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            updateError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        aliasDereferenced,
+                        undefined,
+                    ),
+                    signErrors,
+                );
+            }
+        } // If there is no password admin point defined, you can do whatever you want.
+        // #endregion Password Policy Verification
+    };
+
     const checkContextRule = (attribute: Attribute): Attribute => handleContextRule(
         ctx,
         assn,
@@ -2216,6 +2381,7 @@ async function executeEntryModification (
 
     if ("addAttribute" in mod) {
         check(mod.addAttribute.type_, false);
+        await checkPassword(mod.addAttribute);
         checkPreclusion(mod.addAttribute.type_);
         const attrWithDefaultContexts = checkContextRule(mod.addAttribute);
         return executeAddAttribute(attrWithDefaultContexts, ...commonArguments);
@@ -2226,6 +2392,7 @@ async function executeEntryModification (
     }
     else if ("addValues" in mod) {
         check(mod.addValues.type_, false);
+        await checkPassword(mod.addValues);
         checkPreclusion(mod.addValues.type_);
         const attrWithDefaultContexts = checkContextRule(mod.addValues);
         return executeAddValues(attrWithDefaultContexts, ...commonArguments);
@@ -2276,6 +2443,7 @@ async function executeEntryModification (
     }
     else if ("replaceValues" in mod) {
         check(mod.replaceValues.type_, false);
+        await checkPassword(mod.replaceValues);
         checkPreclusion(mod.replaceValues.type_);
         const attrWithDefaultContexts = checkContextRule(mod.replaceValues);
         return executeReplaceValues(attrWithDefaultContexts, ...commonArguments);
@@ -2581,6 +2749,8 @@ async function modifyEntry (
         pendingUpdates.push(
             ...(await executeEntryModification(
                 ctx,
+                state,
+                relevantSubentries,
                 assn,
                 user,
                 target,

@@ -21,6 +21,16 @@ import {
 import NOOP from "./NOOP";
 import { subSeconds } from "date-fns";
 
+/**
+ * NOTE: This implementation does NOT honor the `pwdMaxTimeInHistory` attribute.
+ * It just returns all passwords in the history. It would be a performance
+ * disaster to observe the `pwdMaxTimeInHistory` value every time this attribute
+ * is read.
+ *
+ * @param ctx
+ * @param vertex
+ * @returns
+ */
 export
 const readValues: SpecialAttributeDatabaseReader = async (
     ctx: Readonly<Context>,

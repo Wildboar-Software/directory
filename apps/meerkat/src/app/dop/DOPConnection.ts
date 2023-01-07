@@ -468,6 +468,11 @@ async function handleRequestAndErrors (
                 parameter: payload,
             });
             stats.outcome.error.problem = Number(e.data.problem);
+            if (e.unbind) {
+                assn.rose.write_unbind();
+                assn.reset();
+                assn.socket.destroy();
+            }
         } else if (e instanceof UnknownOperationError) {
             assn.rose.write_reject({
                 invoke_id: request.invoke_id,
@@ -621,6 +626,11 @@ class DOPAssociation extends ClientAssociation {
                     protocol_id: dop_ip["&id"]!, // FIXME:
                     parameter: error,
                 });
+                if (e.unbind) {
+                    this.rose.write_unbind();
+                    this.reset();
+                    this.socket.destroy();
+                }
                 const serviceProblem = ("serviceError" in e.data.error)
                     ? e.data.error.serviceError
                     : undefined;
@@ -741,7 +751,7 @@ class DOPAssociation extends ClientAssociation {
         handleRequestAndErrors(this.ctx, this, request); // INTENTIONAL_NO_AWAIT
     }
 
-    private reset (): void {
+    public reset (): void {
         for (const invocation of this.invocations.values()) {
             invocation.abandonTime = new Date();
             this.invocations.clear();
@@ -824,6 +834,7 @@ class DOPAssociation extends ClientAssociation {
             remotePort: this.socket.remotePort,
             association_id: this.id,
         };
+        this.socket.on("close", this.reset.bind(this));
         this.rose.events.prependListener("unbind", this.handleUnbind.bind(this));
         this.rose.events.removeAllListeners("request");
         this.rose.events.on("request", (request) => {
