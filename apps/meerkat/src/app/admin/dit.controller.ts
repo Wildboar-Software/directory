@@ -56,9 +56,7 @@ import stringifyDN from "../x500/stringifyDN";
 import readSubordinates from "../dit/readSubordinates";
 import { subschema } from "@wildboar/x500/src/lib/collections/objectClasses";
 import { getLDAPSyntax } from "../x500/getLDAPSyntax";
-import { at } from "lodash";
 import { entryDN } from "@wildboar/parity-schema/src/lib/modules/RFC5020EntryDN/entryDN.oa";
-import { userPassword, userPwd } from "@wildboar/x500/src/lib/collections/attributes";
 
 const selectAllInfo = new EntryInformationSelection(
     {
