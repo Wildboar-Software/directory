@@ -8,6 +8,12 @@
     text-align: center;
     position: relative;
     overflow: hidden;
+    /* background: url("../../static/img/bert-b-rhNff6hB41s-unsplash.jpg"); */
+    background: url("../../static/img/cassi-josh-lhnOvu72BM8-unsplash.jpg");
+    /* background: url("../../static/img/pawel-czerwinski-S3egExGajoc-unsplash.jpg"); */
+    /* background: url("../../static/img/richard-horvath-RAZU_R66vUc-unsplash.jpg"); */
+    background-size: cover; /* Resize the background image to cover the entire container */
+    color: white;
 }
 
 @media screen and (max-width: 966px) {
