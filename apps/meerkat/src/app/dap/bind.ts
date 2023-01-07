@@ -178,7 +178,6 @@ async function bind (
                 );
             }
         }
-        // NOTE: Validity has no well-established meaning.
         const {
             authorized,
             pwdResponse,
@@ -201,6 +200,7 @@ async function bind (
                 ctx.i18n.t("err:invalid_credentials"),
                 invalidCredentialsData,
                 signErrors,
+                unbind,
             );
         }
         return {
