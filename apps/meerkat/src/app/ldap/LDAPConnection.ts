@@ -239,7 +239,7 @@ async function handleRequest (
         // Not all requests--such as abandon--warrant a response.
         return;
     }
-    if (this.pwdReset) {
+    if (assn.pwdReset) {
         const operation_can_be_used_to_change_password: boolean = (
             compareCode(dapRequest.opCode!, administerPassword["&operationCode"]!)
             || compareCode(dapRequest.opCode!, changePassword["&operationCode"]!)
