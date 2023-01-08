@@ -26,28 +26,16 @@ import type {
 import type {
     ContextMatcher,
 } from "@wildboar/x500/src/lib/types/ContextMatcher";
-import type { ASN1Element, OBJECT_IDENTIFIER, BIT_STRING, BOOLEAN } from "asn1-ts";
+import type { ASN1Element, OBJECT_IDENTIFIER, BOOLEAN } from "asn1-ts";
 import type {
     PagedResultsRequest_newRequest,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
-import type {
-    SubtreeSpecification,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";3
-import type {
-    ACIItem,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
 import type {
     AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 import type {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import type {
-    TypeAndContextAssertion,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
-import type {
-    SearchRuleDescription,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/SearchRuleDescription.ta";
 import type {
     AttributeType,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
@@ -101,9 +89,6 @@ import type { i18n } from "i18next";
 import {
     Context as X500Context,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
-import type {
-    Clearance,
-} from "@wildboar/x500/src/lib/modules/EnhancedSecurity/Clearance.ta";
 import type { TlsOptions } from "tls";
 import type {
     CertificateList,
