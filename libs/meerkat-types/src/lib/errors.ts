@@ -61,7 +61,7 @@ import {
 import {
     id_errcode_shadowError,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-shadowError.va";
-import { ASN1Element } from "asn1-ts";
+import { ASN1Element, INTEGER } from "asn1-ts";
 import {
     DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as DirectoryBindErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
@@ -608,7 +608,7 @@ class ChainedError extends Error {
        * @param reason The reason for the Reject
        */
       constructor (
-          readonly invokeId: Extract<InvokeId, { present }>["present"],
+          readonly invokeId: Extract<InvokeId, { present: INTEGER }>["present"],
           readonly reason: IdmReject_reason,
       ) {
           super();

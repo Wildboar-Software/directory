@@ -388,7 +388,8 @@ async function addEntry (
     const accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
         .reverse()
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-    const relevantACIItems = getACIItems(
+    const relevantACIItems = await getACIItems(
+        ctx,
         accessControlScheme,
         immediateSuperior,
         undefined,
@@ -481,7 +482,8 @@ async function addEntry (
             && accessControlScheme
             && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
         ) {
-            const relevantACIItemsForSuperior = getACIItems(
+            const relevantACIItemsForSuperior = await getACIItems(
+                ctx,
                 accessControlScheme,
                 immediateSuperior.immediateSuperior,
                 immediateSuperior,
@@ -763,7 +765,8 @@ async function addEntry (
             } else if (existing.dse.admPoint?.administrativeRole.has(ID_AC_INNER)) {
                 effectiveRelevantSubentries.push(...(await getRelevantSubentries(ctx, existing, targetDN, existing)));
             }
-            const subordinateACI = getACIItems(
+            const subordinateACI = await getACIItems(
+                ctx,
                 effectiveAccessControlScheme,
                 existing.immediateSuperior,
                 existing,

@@ -1,36 +1,22 @@
-import type { Vertex } from "@wildboar/meerkat-types";
+import type { Vertex, Context } from "@wildboar/meerkat-types";
 import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+import { readAttributes } from "../database/entry/readAttributes";
 import {
-    commonName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
+    EntryInformationSelection,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
+import * as x500at from "@wildboar/x500/src/lib/collections/attributes";
 import {
-    subtreeSpecification,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/subtreeSpecification.oa";
+    entryUUID,
+} from "@wildboar/parity-schema/src/lib/modules/UUID/entryUUID.oa";
 import {
-    AttributeTypeAndValue,
-} from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttributeTypeAndValue.ta";
+    entryDN,
+} from "@wildboar/parity-schema/src/lib/modules/RFC5020EntryDN/entryDN.oa";
 import {
-    prescriptiveACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/prescriptiveACI.oa";
-import {
-    entryACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/entryACI.oa";
-import {
-    contextAssertionDefaults,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/contextAssertionDefaults.oa";
-import {
-    searchRules,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/searchRules.oa";
-import {
-    _encode_TypeAndContextAssertion,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
-import {
-    _encode_SearchRuleDescription,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/SearchRuleDescription.ta";
-import { pwdAttribute } from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAttribute.oa";
-import { DER } from "asn1-ts/dist/node/functional";
+    superiorUUID,
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/superiorUUID.oa";
+import { TRUE } from "asn1-ts";
 
 /**
  * @summary Reads a specific subset of attributes from a subentry
@@ -46,65 +32,84 @@ import { DER } from "asn1-ts/dist/node/functional";
  * @function
  */
 export
-function getAttributesFromSubentry (subentry: Vertex): Attribute[] {
+async function getAttributesFromSubentry (ctx: Context, subentry: Vertex): Promise<Attribute[]> {
     if (!subentry.dse.subentry) {
         return [];
     }
-    const cn: AttributeTypeAndValue | undefined = subentry.dse.rdn
-        .find((atav) => (atav.type_.isEqualTo(commonName!["&id"])));
-    const subentryAttributes: Attribute[] = [
-        new Attribute(
-            subtreeSpecification["&id"],
-            subentry.dse.subentry.subtreeSpecification
-                .map((sts) => subtreeSpecification.encoderFor["&Type"]!(sts, DER)),
+
+    const {
+        userAttributes,
+        operationalAttributes,
+    } = await readAttributes(ctx, subentry, {
+        selection: new EntryInformationSelection(
+            {
+                select: [
+                    x500at.commonName["&id"],
+                    x500at.pwdAttribute["&id"],
+                    x500at.objectClass["&id"],
+                ],
+            },
+            undefined,
+            {
+                select: [
+                    x500at.attributeTypes["&id"],
+                    x500at.contextAssertionDefaults["&id"],
+                    x500at.contextTypes["&id"],
+                    x500at.createTimestamp["&id"],
+                    x500at.dITContentRules["&id"],
+                    x500at.dITContextUse["&id"],
+                    x500at.dITStructureRules["&id"],
+                    x500at.dseType["&id"],
+                    x500at.entryACI["&id"],
+                    x500at.friends["&id"],
+                    x500at.governingStructureRule["&id"],
+                    x500at.ldapSyntaxes["&id"],
+                    x500at.matchingRules["&id"],
+                    x500at.matchingRuleUse["&id"],
+                    x500at.modifyTimestamp["&id"],
+                    x500at.nameForms["&id"],
+                    x500at.objectClasses["&id"],
+                    x500at.prescriptiveACI["&id"],
+                    x500at.pwdAlphabet["&id"],
+                    x500at.pwdChangeAllowed["&id"],
+                    x500at.pwdDictionaries["&id"],
+                    x500at.pwdEncAlg["&id"],
+                    x500at.pwdExpiryAge["&id"],
+                    x500at.pwdExpiryWarning["&id"],
+                    x500at.pwdFailureDuration["&id"],
+                    x500at.pwdGraces["&id"],
+                    x500at.pwdHistorySlots["&id"],
+                    x500at.pwdLockoutDuration["&id"],
+                    x500at.pwdMaxAge["&id"],
+                    x500at.pwdMaxFailures["&id"],
+                    x500at.pwdMaxTimeInHistory["&id"],
+                    x500at.pwdMinLength["&id"],
+                    x500at.pwdMinTimeInHistory["&id"],
+                    x500at.pwdModifyEntryAllowed["&id"],
+                    x500at.pwdRecentlyExpiredDuration["&id"],
+                    x500at.pwdVocabulary["&id"],
+                    x500at.searchRules["&id"],
+                    x500at.structuralObjectClass["&id"],
+                    x500at.subschemaTimestamp["&id"],
+                    x500at.subtreeSpecification["&id"],
+                    entryUUID["&id"],
+                    entryDN["&id"],
+                    superiorUUID["&id"],
+                ],
+            },
+            {
+                allContexts: null,
+            },
+            TRUE,
             undefined,
         ),
-    ];
-    if (cn) {
-        subentryAttributes.push(new Attribute(
-            commonName["&id"],
-            [cn.value],
-            undefined,
-        ));
-    }
-    if (subentry.dse.entryACI) {
-        subentryAttributes.push(new Attribute(
-            entryACI["&id"],
-            subentry.dse.entryACI
-                .map((aci) => entryACI.encoderFor["&Type"]!(aci, DER)),
-            undefined,
-        ));
-    }
-    if (subentry.dse.subentry.prescriptiveACI) {
-        subentryAttributes.push(new Attribute(
-            prescriptiveACI["&id"],
-            subentry.dse.subentry.prescriptiveACI
-                .map((aci) => prescriptiveACI.encoderFor["&Type"]!(aci, DER)),
-            undefined,
-        ));
-    }
-    if (subentry.dse.subentry.collectiveAttributes) {
-        subentryAttributes.push(...subentry.dse.subentry.collectiveAttributes);
-    }
-    if (subentry.dse.subentry.contextAssertionDefaults) {
-        subentryAttributes.push(new Attribute(
-            contextAssertionDefaults["&id"],
-            subentry.dse.subentry.contextAssertionDefaults
-                .map((cad) => _encode_TypeAndContextAssertion(cad, DER)),
-            undefined,
-        ));
-    }
+    });
 
-    if (subentry.dse.subentry.pwdAttribute) {
-        subentryAttributes.push(new Attribute(
-            pwdAttribute["&id"],
-            [
-                pwdAttribute.encoderFor["&Type"]!(subentry.dse.subentry.pwdAttribute, DER),
-            ],
-            undefined,
-        ));
-    }
-    return subentryAttributes;
+    return [
+        ...userAttributes,
+        ...operationalAttributes,
+        ...subentry.dse.subentry.collectiveAttributes ?? [],
+    ];
 }
 
 export default getAttributesFromSubentry;

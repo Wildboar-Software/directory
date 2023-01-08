@@ -20,7 +20,7 @@ function metaphone (value: string): string {
    *
    * @param characters
    */
-  function phonize(characters) {
+  function phonize(characters: string) {
     phonized += characters
   }
 

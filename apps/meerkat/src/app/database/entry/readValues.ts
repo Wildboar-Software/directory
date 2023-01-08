@@ -288,7 +288,7 @@ async function readValues (
     options?: ReadValuesOptions,
 ): Promise<ReadValuesReturn> {
     const cads: TypeAndContextAssertion[] = options?.relevantSubentries
-        ? getContextAssertionDefaults(ctx, entry, options.relevantSubentries)
+        ? await getContextAssertionDefaults(ctx, entry, options.relevantSubentries)
         : [];
     /**
      * EIS contexts > operationContexts > CAD subentries > locally-defined default > no context assertion.
@@ -453,7 +453,7 @@ async function readValues (
      * values listed as both its collective values and user values.
      */
     let collectiveValues: Value[] = ((options?.relevantSubentries && entry.dse.entry && !entry.dse.subentry)
-        ? readCollectiveValues(ctx, entry, options?.relevantSubentries)
+        ? await readCollectiveValues(ctx, entry, options?.relevantSubentries)
         : [])
             .filter((attr) => {
                 if (!selectedUserAttributes) {

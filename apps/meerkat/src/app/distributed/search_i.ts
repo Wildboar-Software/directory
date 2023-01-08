@@ -265,6 +265,7 @@ import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import { printInvokeId } from "../utils/printInvokeId";
+import { entryACI, prescriptiveACI, subentryACI } from "@wildboar/x500/src/lib/collections/attributes";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 
@@ -961,7 +962,8 @@ async function search_i (
     const accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
         .reverse()
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-    const targetACI = getACIItems(
+    const targetACI = await getACIItems(
+        ctx,
         accessControlScheme,
         target.immediateSuperior,
         target,
@@ -2336,19 +2338,30 @@ async function search_i (
                 if ( // If an access control scheme is defined, and...
                     subAccessControlScheme
                     && ( // ...if there are any attributes that suggest that this DSE is subject to access control...
-                        subordinate.dse.entryACI?.length
-                        || subordinate.dse.subentry?.prescriptiveACI?.length
-                        || subordinate.dse.admPoint?.subentryACI?.length
+                        !!(await ctx.db.attributeValue.findFirst(({
+                            where: {
+                                entry_id: subordinate.dse.id,
+                                type: {
+                                    in: [
+                                        entryACI["&id"].toString(),
+                                        subentryACI["&id"].toString(),
+                                        prescriptiveACI["&id"].toString(),
+                                    ],
+                                },
+                            },
+                            select: { id: true },
+                        })))
                         // Rule-based access control is not supported yet, so if
                         // this next line were enabled, it would simply make the
                         // subr DSE unavailable to all users.
-                        // || subordinate.dse.clearances?.length 
+                        // || subordinate.dse.clearances?.length
                     )
                 ) {
                     const relevantSubentries: Vertex[] = (await Promise.all(
                         adminPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
                     )).flat();
-                    const targetACI = getACIItems(
+                    const targetACI = await getACIItems(
+                        ctx,
                         subAccessControlScheme,
                         target,
                         subordinate,
@@ -2384,7 +2397,7 @@ async function search_i (
                         continue;
                     }
                 }
-                
+
                 const cr = new ContinuationReference(
                     {
                         /**

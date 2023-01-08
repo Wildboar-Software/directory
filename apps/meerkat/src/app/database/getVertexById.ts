@@ -44,43 +44,6 @@ async function getVertexById (
                     object_class: true,
                 },
             },
-            UniqueIdentifier: {
-                select: {
-                    uniqueIdentifier: true,
-                },
-            },
-            ACIItem: {
-                where: {
-                    active: true,
-                },
-                select: {
-                    scope: true,
-                    ber: true,
-                },
-            },
-            Clearance: {
-                where: {
-                    active: true,
-                },
-                select: {
-                    ber: true,
-                },
-            },
-            EntryAdministrativeRole: {
-                select: {
-                    administrativeRole: true,
-                },
-            },
-            SubtreeSpecification: {
-                select: {
-                    ber: true,
-                },
-            },
-            EntryCollectiveExclusion: {
-                select: {
-                    collectiveExclusion: true,
-                },
-            },
         },
     });
     if (!dbEntry) {

@@ -32,6 +32,7 @@ import {
     PwdResponseValue_error_passwordExpired,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue-error.ta";
 import { SimpleCredentials } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
+import { read_unique_id } from "../database/utils";
 
 export
 interface LDAPBindReturn extends BindReturn {
@@ -134,10 +135,11 @@ async function bind (
         + ((tlsProtocol === "TLSv1.2") ? ctx.config.localQualifierPointsFor.usingTLSv1_2 : 0)
         + ((tlsProtocol === "TLSv1.3") ? ctx.config.localQualifierPointsFor.usingTLSv1_3 : 0)
     );
+    const unique_id = entry && await read_unique_id(ctx, entry);
     const ret = {
         boundNameAndUID: new NameAndOptionalUID(
             decodeLDAPDN(ctx, req.name),
-            entry.dse.uniqueIdentifier?.[0], // We just use the first one, whatever that is.
+            unique_id, // We just use the first one, whatever that is.
         ),
         boundVertex: entry,
     };

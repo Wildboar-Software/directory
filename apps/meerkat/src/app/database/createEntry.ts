@@ -122,12 +122,6 @@ async function createEntry (
     const vertex = await vertexFromDatabaseEntry(ctx, superior, {
         ...createdEntry,
         EntryObjectClass: [],
-        UniqueIdentifier: [],
-        ACIItem: [],
-        Clearance: [],
-        SubtreeSpecification: [],
-        EntryAdministrativeRole: [],
-        EntryCollectiveExclusion: [],
     });
     await ctx.db.$transaction([
         ...await addValues(
