@@ -609,9 +609,6 @@ interface SubentryDSE {
     /** Values of the `collectiveAttributes` operational attribute */
     collectiveAttributes?: Attribute[];
 
-    /** Values of the `contextAssertionDefaults` operational attribute */
-    contextAssertionDefaults?: TypeAndContextAssertion[];
-
     /** Values of the `ditStructureRules` operational attribute */
     ditStructureRules?: DITStructureRuleDescription[];
 

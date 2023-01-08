@@ -288,7 +288,7 @@ async function readValues (
     options?: ReadValuesOptions,
 ): Promise<ReadValuesReturn> {
     const cads: TypeAndContextAssertion[] = options?.relevantSubentries
-        ? getContextAssertionDefaults(ctx, entry, options.relevantSubentries)
+        ? await getContextAssertionDefaults(ctx, entry, options.relevantSubentries)
         : [];
     /**
      * EIS contexts > operationContexts > CAD subentries > locally-defined default > no context assertion.

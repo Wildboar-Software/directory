@@ -1,5 +1,5 @@
 import type { Entry as DatabaseEntry } from "@prisma/client";
-import { ObjectIdentifier, BERElement } from "asn1-ts";
+import { ObjectIdentifier, BERElement, OBJECT_IDENTIFIER } from "asn1-ts";
 import type { Context, DSE } from "@wildboar/meerkat-types";
 import rdnFromJson from "../x500/rdnFromJson";
 import {
@@ -33,23 +33,11 @@ import readDITStructureRuleDescriptions from "./readers/readDITStructureRuleDesc
 import readFriendsDescriptions from "./readers/readFriendsDescriptions";
 import readMatchingRuleUseDescriptions from "./readers/readMatchingRuleUseDescriptions";
 import {
-    contextAssertionDefaults,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/contextAssertionDefaults.oa";
-import {
-    _decode_TypeAndContextAssertion,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
-import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
-// import {
-//     accessControlSubentry,
-// } from "@wildboar/x500/src/lib/modules/InformationFramework/accessControlSubentry.oa";
 import {
     collectiveAttributeSubentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/collectiveAttributeSubentry.oa";
-import {
-    contextAssertionSubentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/contextAssertionSubentry.oa";
 import {
     pwdAdminSubentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAdminSubentry.oa";
@@ -57,20 +45,24 @@ import {
     subschema,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
 import _ from "lodash";
-import { pwdAttribute } from "@wildboar/x500/src/lib/collections/attributes";
+import { accessControlScheme, administrativeRole, pwdAttribute } from "@wildboar/x500/src/lib/collections/attributes";
+import { _decodeObjectIdentifier } from "asn1-ts/dist/node/functional";
 
 
 const ALIAS: string = alias["&id"].toString();
 const PARENT: string = parent["&id"].toString();
 const CHILD: string = child["&id"].toString();
-// const SUBENTRY_AC: string = accessControlSubentry["&id"].toString();
 const SUBENTRY_CA: string = collectiveAttributeSubentry["&id"].toString();
-const SUBENTRY_CAD: string = contextAssertionSubentry["&id"].toString();
 const SUBENTRY_PWD: string = pwdAdminSubentry["&id"].toString();
-// const SUBENTRY_SVC: string = serviceAdminSubentry["&id"].toString();
 const SUBSCHEMA: string = subschema["&id"].toString();
 
 let collectiveAttributeTypes: string[] = [];
+
+function oidFromBytes (bytes: Uint8Array): OBJECT_IDENTIFIER {
+    const el = new BERElement();
+    el.fromBytes(bytes);
+    return _decodeObjectIdentifier(el);
+}
 
 /**
  * @summary Produce an in-memory DSE from the Prisma `Entry` model
@@ -363,25 +355,6 @@ async function dseFromDatabaseEntry (
             ret.subentry.friendships = await readFriendsDescriptions(ctx, dbe.id);
             ret.subentry.matchingRuleUse = await readMatchingRuleUseDescriptions(ctx, dbe.id);
         }
-        if (ret.objectClass.has(SUBENTRY_CAD)) {
-            const cads = await ctx.db.attributeValue.findMany({
-                where: {
-                    entry_id: dbe.id,
-                    type: contextAssertionDefaults["&id"].toString(),
-                },
-                select: {
-                    ber: true,
-                },
-            });
-            if (!ret.subentry.contextAssertionDefaults) {
-                ret.subentry.contextAssertionDefaults = [];
-            }
-            ret.subentry.contextAssertionDefaults.push(...cads.map((cad) => {
-                const el = new BERElement();
-                el.fromBytes(cad.ber);
-                return _decode_TypeAndContextAssertion(el);
-            }));
-        }
         if (ret.objectClass.has(SUBENTRY_PWD)) {
             const pwd_attr = await ctx.db.attributeValue.findFirst({
                 where: {
@@ -466,6 +439,34 @@ async function dseFromDatabaseEntry (
                 : undefined,
             top: Array.isArray(dbe.hierarchyTopDN)
                 ? dbe.hierarchyTopDN.map(rdnFromJson)
+                : undefined,
+        };
+    }
+
+    const administrativeRoles = await ctx.db.attributeValue.findMany({
+        where: {
+            entry_id: dbe.id,
+            type: administrativeRole["&id"].toString(),
+        },
+        select: {
+            ber: true,
+        },
+    });
+
+    if (administrativeRoles.length > 0) {
+        const acSchemeBER = (await ctx.db.attributeValue.findFirst({
+            where: {
+                entry_id: dbe.id,
+                type: accessControlScheme["&id"].toString(),
+            },
+            select: {
+                ber: true,
+            },
+        }))?.ber;
+        ret.admPoint = {
+            administrativeRole: new Set(administrativeRoles.map((ar) => oidFromBytes(ar.ber).toString())),
+            accessControlScheme: acSchemeBER
+                ? oidFromBytes(acSchemeBER)
                 : undefined,
         };
     }
