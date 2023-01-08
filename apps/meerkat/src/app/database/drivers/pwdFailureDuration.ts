@@ -11,7 +11,7 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
-import { BERElement, ASN1Construction } from "asn1-ts";
+import { ASN1Construction } from "asn1-ts";
 import { DER, _encodeInteger } from "asn1-ts/dist/node/functional";
 import {
     pwdFailureDuration,
@@ -20,6 +20,7 @@ import {
     pwdAdminSubentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAdminSubentry.oa";
 import type { Prisma } from "@prisma/client";
+import { attributeValueFromDB } from "../attributeValueFromDB";
 
 const ID_PWD_SUBENTRY: string = pwdAdminSubentry["&id"].toString();
 const TYPE_OID: string = pwdFailureDuration["&id"].toString();
@@ -39,14 +40,16 @@ const readValues: SpecialAttributeDatabaseReader = async (
                 type: TYPE_OID,
             },
             select: {
-                ber: true,
+                tag_class: true,
+                constructed: true,
+                tag_number: true,
+                content_octets: true,
             },
         });
         if (!row) {
             return [];
         }
-        const el = new BERElement();
-        el.fromBytes(row.ber);
+        const el = attributeValueFromDB(row);
         return [
             {
                 type: pwdFailureDuration["&id"],
@@ -86,7 +89,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             tag_class: value.value.tagClass,
             constructed: (value.value.construction === ASN1Construction.constructed),
             tag_number: value.value.tagNumber,
-            ber: Buffer.from(value.value.toBytes().buffer),
+            content_octets: Buffer.from(value.value.value.buffer),
             jer: value.value.toJSON() as Prisma.InputJsonValue,
         },
     }));
@@ -106,7 +109,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
         where: {
             entry_id: vertex.dse.id,
             type: TYPE_OID,
-            ber: Buffer.from(value.value.toBytes().buffer),
+            content_octets: Buffer.from(value.value.value.buffer),
         },
     }));
 }
@@ -185,7 +188,7 @@ const hasValue: SpecialAttributeValueDetector = async (
             where: {
                 entry_id: vertex.dse.id,
                 type: TYPE_OID,
-                ber: Buffer.from(value.value.toBytes().buffer),
+                content_octets: Buffer.from(value.value.value.buffer),
             },
             select: {
                 id: true,

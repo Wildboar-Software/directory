@@ -467,7 +467,7 @@ async function administerPassword (
                 tag_class: ASN1TagClass.universal,
                 constructed: false,
                 tag_number: ASN1UniversalType.boolean,
-                ber: Buffer.from([ 0xFF ]),
+                content_octets: Buffer.from([ 0xFF ]),
                 jer: true,
             },
         }),

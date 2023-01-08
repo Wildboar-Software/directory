@@ -19,8 +19,8 @@ import {
     id_ar_collectiveAttributeInnerArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-collectiveAttributeInnerArea.va";
 import { collectiveExclusions } from "@wildboar/x500/src/lib/collections/attributes";
-import { BERElement } from "asn1-ts";
 import { _decodeObjectIdentifier } from "asn1-ts/dist/node/functional";
+import { attributeValueFromDB } from "../attributeValueFromDB";
 
 const CA_SUBENTRY: string = collectiveAttributeSubentry["&id"].toString();
 const ID_CASA: string = id_ar_collectiveAttributeSpecificArea.toString();
@@ -55,10 +55,14 @@ async function readCollectiveAttributes (
                 type: collectiveExclusions["&id"].toString(),
                 // ber: Buffer.from([ 6, 3, 0x55, 18, 0 ]), // 2.5.18.0
             },
-            select: { ber: true },
-        })).map(({ ber }) => {
-            const el = new BERElement();
-            el.fromBytes(ber);
+            select: {
+                tag_class: true,
+                constructed: true,
+                tag_number: true,
+                content_octets: true,
+            },
+        })).map((row) => {
+            const el = attributeValueFromDB(row);
             return _decodeObjectIdentifier(el).toString();
         }),
     );

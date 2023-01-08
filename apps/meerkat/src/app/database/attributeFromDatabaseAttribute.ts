@@ -1,10 +1,10 @@
 import type { Context, Value } from "@wildboar/meerkat-types";
-import type { ContextValue } from "@prisma/client";
 import { ObjectIdentifier, BERElement } from "asn1-ts";
 import groupByOID from "../utils/groupByOID";
 import {
     Context as X500Context,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
+import { attributeValueFromDB, DBAttributeValue } from "../database/attributeValueFromDB";
 
 // TODO: Use the Node-API to speed up this function a lot.
 // - Create BERElement even faster.
@@ -21,10 +21,9 @@ import {
 export
 function attributeFromDatabaseAttribute (
     ctx: Context,
-    attr: { type: string, ber: Buffer, ContextValue?: { type: string; ber: Buffer; fallback: boolean; }[] },
+    attr: { type: string, ContextValue?: { type: string; ber: Buffer; fallback: boolean; }[] } & DBAttributeValue,
 ): Value {
-    const value = new BERElement();
-    value.fromBytes(attr.ber);
+    const value = attributeValueFromDB(attr);
     const contexts = groupByOID(attr.ContextValue ?? [], (cv) => cv.type);
     return {
         type: ObjectIdentifier.fromString(attr.type),

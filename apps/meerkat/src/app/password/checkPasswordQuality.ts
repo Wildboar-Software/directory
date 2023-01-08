@@ -26,6 +26,7 @@ import {
     pwdMaxLength,
 } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMaxLength.oa";
 import { groupByOID } from "../utils/groupByOID";
+import { attributeValueFromDB } from "../database/attributeValueFromDB";
 
 export const CHECK_PWD_QUALITY_OK: number = 0;
 export const CHECK_PWD_QUALITY_LENGTH: number = -1;
@@ -105,21 +106,20 @@ async function checkPasswordQuality (
     // If we made it to this point, this particular subentry's password
     // alphabet requirements were met.
 
-    const vocabBER: Uint8Array | undefined = (await ctx.db.attributeValue.findFirst({
+    const vocabBER = (await ctx.db.attributeValue.findFirst({
         where: {
             entry_id: subentry.dse.id,
             type: pwdVocabulary["&id"].toString(),
         },
         select: {
-            ber: true,
+            tag_class: true,
+            constructed: true,
+            tag_number: true,
+            content_octets: true,
         },
-    }))?.ber;
+    }));
     const vocab: BIT_STRING | null = vocabBER
-        ? (() => {
-            const el = new BERElement();
-            el.fromBytes(vocabBER);
-            return el.bitString;
-        })()
+        ? attributeValueFromDB(vocabBER).bitString
         : null;
 
     // We do the alphabet checks above first so we don't bother doing the more
