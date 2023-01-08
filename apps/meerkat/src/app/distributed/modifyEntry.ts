@@ -3612,7 +3612,7 @@ async function modifyEntry (
                     tag_class: ASN1TagClass.universal,
                     constructed: false,
                     tag_number: ASN1UniversalType.objectIdentifier,
-                    content_octets: Buffer.from(_encodeObjectIdentifier(id_ar_autonomousArea, DER).value.buffer),
+                    content_octets: Buffer.from(_encodeObjectIdentifier(id_ar_autonomousArea, DER).value),
                     jer: id_ar_autonomousArea.toJSON(),
                 },
             }),

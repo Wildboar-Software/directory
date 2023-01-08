@@ -149,7 +149,11 @@ async function validateValues(
                         tag_class: value.value.tagClass,
                         constructed: (value.value.construction === ASN1Construction.constructed),
                         tag_number: value.value.tagNumber,
-                        content_octets: Buffer.from(value.value.value.buffer), // Lol. Sorry.
+                        content_octets: Buffer.from(
+                            value.value.value.buffer,
+                            value.value.value.byteOffset,
+                            value.value.value.byteLength,
+                        ), // Lol. Sorry.
                     },
                     select: {
                         id: true,
@@ -332,7 +336,11 @@ async function addValues(
                     tag_class: attr.value.tagClass,
                     constructed: (attr.value.construction === ASN1Construction.constructed),
                     tag_number: attr.value.tagNumber,
-                    content_octets: Buffer.from(attr.value.value.buffer),
+                    content_octets: Buffer.from(
+                        attr.value.value.buffer,
+                        attr.value.value.byteOffset,
+                        attr.value.value.byteLength,
+                    ),
                     jer: attr.value.toJSON() as Prisma.InputJsonValue,
                     ContextValue: {
                         createMany: {

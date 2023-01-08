@@ -1732,7 +1732,11 @@ async function modifyDN (
                     tag_class: atav.value.tagClass,
                     tag_number: atav.value.tagNumber,
                     constructed: (atav.value.construction === ASN1Construction.constructed),
-                    content_octets: Buffer.from(atav.value.value.buffer),
+                    content_octets: Buffer.from(
+                        atav.value.value.buffer,
+                        atav.value.value.byteOffset,
+                        atav.value.value.byteLength,
+                    ),
                 },
             }));
             if (!hasValue) {
