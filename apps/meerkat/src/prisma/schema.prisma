@@ -196,14 +196,8 @@ model AttributeValue {
   constructed                Boolean
   tag_number                 Int
   index_key                  Int? // Not currently used, but will store an int that "summarizes" the value.
-  ber                        Bytes
+  content_octets             Bytes
   jer                        Json?
-  // attributeValueSecurityLabelContext
-  // At most one security label context can be assigned to an attribute value
-  security_label             Bytes?
-  security_policy_identifier String?
-  security_classification    Int?    @db.SmallInt
-  privacy_mark               String?
 
   ContextValue ContextValue[]
 

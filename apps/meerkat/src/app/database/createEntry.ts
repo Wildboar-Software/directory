@@ -106,7 +106,6 @@ async function createEntry (
             RDN: {
                 createMany: {
                     data: rdn.map((atav, i) => ({
-                        // entry_id: createdEntry.id,
                         type: atav.type_.toString(),
                         value: Buffer.from(atav.value.toBytes().buffer),
                         str: atav.value.toString(),

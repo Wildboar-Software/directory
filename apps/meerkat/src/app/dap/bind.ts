@@ -143,14 +143,6 @@ async function bind (
                 },
             };
         }
-        if (!foundEntry) {
-            ctx.log.warn(ctx.i18n.t("log:invalid_credentials", logInfo), logInfo);
-            throw new DirectoryBindError(
-                ctx.i18n.t("err:invalid_credentials"),
-                invalidCredentialsData,
-                signErrors,
-            );
-        }
         if (arg.credentials.simple.validity) {
             const now = new Date();
             const minimumTime = arg.credentials.simple.validity.time1
@@ -179,6 +171,15 @@ async function bind (
                     signErrors,
                 );
             }
+        }
+        if (!foundEntry) {
+            // FIXME: X.511 compare password.
+            ctx.log.warn(ctx.i18n.t("log:invalid_credentials", logInfo), logInfo);
+            throw new DirectoryBindError(
+                ctx.i18n.t("err:invalid_credentials"),
+                invalidCredentialsData,
+                signErrors,
+            );
         }
         const {
             authorized,

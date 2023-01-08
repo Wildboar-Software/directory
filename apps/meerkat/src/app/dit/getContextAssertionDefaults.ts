@@ -9,7 +9,7 @@ import {
 import {
     TypeAndContextAssertion, _decode_TypeAndContextAssertion,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
-import { BERElement } from "asn1-ts";
+import { attributeValueFromDB } from "../database/attributeValueFromDB";
 
 const CAD_SUBENTRY: string = contextAssertionSubentry["&id"].toString();
 
@@ -57,12 +57,14 @@ async function getContextAssertionDefaults (
             type: contextAssertionDefaults["&id"].toString(),
         },
         select: {
-            ber: true,
+            tag_class: true,
+            constructed: true,
+            tag_number: true,
+            content_octets: true,
         },
     }))
-        .map(({ ber }) => {
-            const el = new BERElement();
-            el.fromBytes(ber);
+        .map((row) => {
+            const el = attributeValueFromDB(row);
             return _decode_TypeAndContextAssertion(el);
         });
 }

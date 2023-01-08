@@ -24,7 +24,8 @@
     "workspace-generator": "nx workspace-generator",
     "dep-graph": "nx dep-graph",
     "help": "nx help",
-    "line-count": "npx sloc --exclude 'node_modules/.*' libs apps"
+    "line-count": "npx sloc --exclude 'node_modules/.*' libs apps",
+    "pgen": "npx prisma generate --schema apps/meerkat/src/prisma/schema.prisma"
   },
   "private": true,
   "dependencies": {

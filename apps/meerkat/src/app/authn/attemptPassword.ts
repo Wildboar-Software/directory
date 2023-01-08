@@ -17,7 +17,6 @@ import {
     ASN1UniversalType,
     packBits,
     GeneralizedTime,
-    BERElement,
     ASN1Element,
 } from "asn1-ts";
 import {
@@ -68,6 +67,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials-validity-time1.ta";
 import { SimpleCredentials_validity_time2 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials-validity-time2.ta";
 import { digestOIDToNodeHash } from "../pki/digestOIDToNodeHash";
+import { attributeValueFromDB, DBAttributeValue } from "../database/attributeValueFromDB";
 
 const START_TIME_OID: string = pwdStartTime["&id"].toString();
 const EXPIRY_TIME_OID: string = pwdExpiryTime["&id"].toString();
@@ -83,21 +83,19 @@ const ID_LOCKOUT_DURATION: string = pwdLockoutDuration["&id"].toString();
 const ID_MAX_FAILURES: string = pwdMaxFailures["&id"].toString();
 const ID_RECENTLY_EXPIRED_DURATION: string = pwdRecentlyExpiredDuration["&id"].toString();
 
-function decodeGeneralizedTime (bytes?: Uint8Array): GeneralizedTime | undefined {
-    if (!bytes) {
+function decodeGeneralizedTime (row?: DBAttributeValue): GeneralizedTime | undefined {
+    if (!row) {
         return undefined;
     }
-    const el = new BERElement();
-    el.fromBytes(bytes);
+    const el = attributeValueFromDB(row);
     return _decodeGeneralizedTime(el);
 }
 
-function decodeInt (bytes?: Uint8Array): number | undefined {
-    if (!bytes) {
+function decodeInt (row?: DBAttributeValue): number | undefined {
+    if (!row) {
         return undefined;
     }
-    const el = new BERElement();
-    el.fromBytes(bytes);
+    const el = attributeValueFromDB(row);
     return Number(_decodeInteger(el));
 }
 
@@ -327,14 +325,17 @@ async function attemptPassword (
         },
         select: {
             type: true,
-            ber: true,
+            tag_class: true,
+            constructed: true,
+            tag_number: true,
+            content_octets: true,
         },
     });
     const entry_attrs = groupByOID(entry_value_rows, (r) => r.type);
-    const start_time = decodeGeneralizedTime(entry_attrs[START_TIME_OID]?.[0]?.ber);
-    const expiry_time = decodeGeneralizedTime(entry_attrs[EXPIRY_TIME_OID]?.[0]?.ber);
-    const locked_time = decodeGeneralizedTime(entry_attrs[LOCKED_TIME_OID]?.[0]?.ber);
-    const end_time = decodeGeneralizedTime(entry_attrs[END_TIME_OID]?.[0]?.ber);
+    const start_time = decodeGeneralizedTime(entry_attrs[START_TIME_OID]?.[0]);
+    const expiry_time = decodeGeneralizedTime(entry_attrs[EXPIRY_TIME_OID]?.[0]);
+    const locked_time = decodeGeneralizedTime(entry_attrs[LOCKED_TIME_OID]?.[0]);
+    const end_time = decodeGeneralizedTime(entry_attrs[END_TIME_OID]?.[0]);
 
     const targetDN = getDistinguishedName(vertex);
     const admPoints = getAdministrativePoints(vertex);
@@ -365,30 +366,33 @@ async function attemptPassword (
         },
         select: {
             type: true,
-            ber: true,
+            tag_class: true,
+            constructed: true,
+            tag_number: true,
+            content_octets: true,
         },
     });
 
     const subentry_attrs = groupByOID(subentry_value_rows, (r) => r.type);
     const warning_time: number = subentry_attrs[ID_EXPIRE_WARNING]
-        ?.map((row) => decodeInt(row.ber)).sort().pop() // Highest warning time
+        ?.map((row) => decodeInt(row)).sort().pop() // Highest warning time
         ?? 0;
     const graces = subentry_attrs[ID_GRACES]
-        ?.map((row) => decodeInt(row.ber)).sort()[0] // Lowest number of graces.
+        ?.map((row) => decodeInt(row)).sort()[0] // Lowest number of graces.
         ?? 0;
     // TODO: Cautiously check for overflow.
     const lockout_duration = subentry_attrs[ID_LOCKOUT_DURATION]
-        ?.map((row) => decodeInt(row.ber)).sort().pop() // Highest lockout duration
+        ?.map((row) => decodeInt(row)).sort().pop() // Highest lockout duration
         ?? Number.MAX_SAFE_INTEGER; // Default is infinity, but this is effectively close enough.
     const max_failures = subentry_attrs[ID_MAX_FAILURES]
-        ?.map((row) => decodeInt(row.ber)).sort()[0] // Lowest number of max failures.
+        ?.map((row) => decodeInt(row)).sort()[0] // Lowest number of max failures.
         ?? Number.MAX_SAFE_INTEGER; // Default is no maximum on failures, but this is close enough.
     const recently_expired_duration = subentry_attrs[ID_RECENTLY_EXPIRED_DURATION]
-        ?.map((row) => decodeInt(row.ber)).sort()[0] // Lowest recently expired duration.
+        ?.map((row) => decodeInt(row)).sort()[0] // Lowest recently expired duration.
         ?? 0;
 
     const now = new Date();
-    const lockedOut: boolean = (entry_attrs[pwdLockout["&id"].toString()]?.[0]?.ber[2] ?? 0) > 0;
+    const lockedOut: boolean = (entry_attrs[pwdLockout["&id"].toString()]?.[0]?.content_octets[0] ?? 0) > 0;
     if (lockedOut) {
         const lockout_end_time = locked_time && addSeconds(locked_time, lockout_duration);
         if (lockout_end_time && (now < lockout_end_time)) {
@@ -412,18 +416,17 @@ async function attemptPassword (
             .then() // INTENTIONAL_NO_AWAIT
             .catch(); // If we fail, we just let it fail. // TODO: Log this.
     }
-    const passwordRecentlyExpiredValue: Buffer | undefined = entry_attrs[userPwdRecentlyExpired["&id"].toString()]?.[0].ber;
+    const passwordRecentlyExpiredValue = entry_attrs[userPwdRecentlyExpired["&id"].toString()]?.[0];
     const password2 = passwordRecentlyExpiredValue
         ? (() => {
-            const el = new BERElement();
-            el.fromBytes(passwordRecentlyExpiredValue);
+            const el = attributeValueFromDB(passwordRecentlyExpiredValue);
             return userPwdRecentlyExpired.decoderFor["&Type"]!(el);
         })()
         : undefined;
     if (!password1 && !password2) {
         return { authorized: undefined };
     }
-    const fails: number = decodeInt(entry_attrs[pwdFails["&id"].toString()]?.[0]?.ber) ?? 0;
+    const fails: number = decodeInt(entry_attrs[pwdFails["&id"].toString()]?.[0]) ?? 0;
 
     const userPwd1: UserPwd | undefined = password1
         ? {
@@ -468,7 +471,7 @@ async function attemptPassword (
                 tag_class: ASN1TagClass.universal,
                 constructed: false,
                 tag_number: ASN1UniversalType.integer,
-                ber: Buffer.from(_encodeInteger(fails + 1, DER).toBytes()),
+                content_octets: Buffer.from(_encodeInteger(fails + 1, DER).value),
                 jer: 0,
             },
             {
@@ -478,7 +481,7 @@ async function attemptPassword (
                 tag_class: nowElement.tagClass,
                 constructed: false,
                 tag_number: nowElement.tagNumber,
-                ber: Buffer.from(nowElement.toBytes()),
+                content_octets: Buffer.from(nowElement.value),
                 jer: nowElement.toJSON() as string,
             },
         ];
@@ -491,7 +494,7 @@ async function attemptPassword (
                 tag_class: ASN1TagClass.universal,
                 constructed: false,
                 tag_number: ASN1UniversalType.boolean,
-                ber: Buffer.from([ 0xFF ]),
+                content_octets: Buffer.from([ 0xFF ]),
                 jer: true,
             });
             new_attrs.push({
@@ -501,7 +504,7 @@ async function attemptPassword (
                 tag_class: nowElement.tagClass,
                 constructed: false,
                 tag_number: nowElement.tagNumber,
-                ber: Buffer.from(nowElement.toBytes().buffer),
+                content_octets: Buffer.from(nowElement.value),
                 jer: nowElement.toJSON() as string,
             });
         }
@@ -551,7 +554,7 @@ async function attemptPassword (
     }
 
     if (expiry_time && (expiry_time <= now)) {
-        const gracesUsed: number = decodeInt(entry_attrs[pwdGracesUsed["&id"].toString()]?.[0]?.ber) ?? 0;
+        const gracesUsed: number = decodeInt(entry_attrs[pwdGracesUsed["&id"].toString()]?.[0]) ?? 0;
         const expiredPasswordExpirationTime = addSeconds(expiry_time, recently_expired_duration);
         if ((expiredPasswordExpirationTime > now) && expiredPasswordUsed) {
             return {
@@ -613,7 +616,7 @@ async function attemptPassword (
                     tag_class: ASN1TagClass.universal,
                     constructed: false,
                     tag_number: ASN1UniversalType.integer,
-                    ber: Buffer.from(_encodeInteger(0, DER).toBytes().buffer),
+                    content_octets: Buffer.from(_encodeInteger(0, DER).value),
                     jer: 0,
                 },
                 {
@@ -623,7 +626,7 @@ async function attemptPassword (
                     tag_class: ASN1TagClass.universal,
                     constructed: false,
                     tag_number: ASN1UniversalType.generalizedTime,
-                    ber: Buffer.from(nowElement.toBytes().buffer),
+                    content_octets: Buffer.from(nowElement.value),
                     jer: now.toISOString(),
                 },
             ],
@@ -634,7 +637,7 @@ async function attemptPassword (
         ? subSeconds(expiry_time, warning_time)
         : null;
 
-    const password_must_be_reset: boolean = (entry_attrs[pwdReset["&id"].toString()]?.[0]?.ber[2] ?? 0) > 0;
+    const password_must_be_reset: boolean = (entry_attrs[pwdReset["&id"].toString()]?.[0]?.content_octets[0] ?? 0) > 0;
 
     return {
         authorized: true,

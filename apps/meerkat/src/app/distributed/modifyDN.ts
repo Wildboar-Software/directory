@@ -1,5 +1,5 @@
 import { Context, Vertex, Value, ClientAssociation, OperationReturn, IndexableOID } from "@wildboar/meerkat-types";
-import { OBJECT_IDENTIFIER, ObjectIdentifier, INTEGER, unpackBits } from "asn1-ts";
+import { OBJECT_IDENTIFIER, ObjectIdentifier, INTEGER, unpackBits, ASN1Construction } from "asn1-ts";
 import type { MeerkatContext } from "../ctx";
 import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
 import * as errors from "@wildboar/meerkat-types";
@@ -1729,7 +1729,14 @@ async function modifyDN (
                 where: {
                     entry_id: target.dse.id,
                     type: atav.type_.toString(),
-                    ber: Buffer.from(atav.value.toBytes().buffer),
+                    tag_class: atav.value.tagClass,
+                    tag_number: atav.value.tagNumber,
+                    constructed: (atav.value.construction === ASN1Construction.constructed),
+                    content_octets: Buffer.from(
+                        atav.value.value.buffer,
+                        atav.value.value.byteOffset,
+                        atav.value.value.byteLength,
+                    ),
                 },
             }));
             if (!hasValue) {

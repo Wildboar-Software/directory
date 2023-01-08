@@ -1,5 +1,5 @@
 import type { Entry as DatabaseEntry } from "@prisma/client";
-import { ObjectIdentifier, BERElement, OBJECT_IDENTIFIER } from "asn1-ts";
+import { ObjectIdentifier, BERElement } from "asn1-ts";
 import type { Context, DSE } from "@wildboar/meerkat-types";
 import rdnFromJson from "../x500/rdnFromJson";
 import {
@@ -46,7 +46,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
 import _ from "lodash";
 import { accessControlScheme, administrativeRole, pwdAttribute } from "@wildboar/x500/src/lib/collections/attributes";
-import { _decodeObjectIdentifier } from "asn1-ts/dist/node/functional";
+import { attributeValueFromDB } from "./attributeValueFromDB";
 
 
 const ALIAS: string = alias["&id"].toString();
@@ -57,12 +57,6 @@ const SUBENTRY_PWD: string = pwdAdminSubentry["&id"].toString();
 const SUBSCHEMA: string = subschema["&id"].toString();
 
 let collectiveAttributeTypes: string[] = [];
-
-function oidFromBytes (bytes: Uint8Array): OBJECT_IDENTIFIER {
-    const el = new BERElement();
-    el.fromBytes(bytes);
-    return _decodeObjectIdentifier(el);
-}
 
 /**
  * @summary Produce an in-memory DSE from the Prisma `Entry` model
@@ -342,7 +336,12 @@ async function dseFromDatabaseEntry (
                             in: collectiveAttributeTypes,
                         },
                     },
-                    include: {
+                    select: {
+                        type: true,
+                        tag_class: true,
+                        constructed: true,
+                        tag_number: true,
+                        content_octets: true,
                         ContextValue: true,
                     },
                 }))
@@ -362,12 +361,14 @@ async function dseFromDatabaseEntry (
                     type: pwdAttribute["&id"].toString(),
                 },
                 select: {
-                    ber: true,
+                    tag_class: true,
+                    constructed: true,
+                    tag_number: true,
+                    content_octets: true,
                 },
             });
             if (pwd_attr) {
-                const el = new BERElement();
-                el.fromBytes(pwd_attr.ber);
+                const el = attributeValueFromDB(pwd_attr);
                 ret.subentry.pwdAttribute = el.objectIdentifier;
             }
         }
@@ -449,7 +450,10 @@ async function dseFromDatabaseEntry (
             type: administrativeRole["&id"].toString(),
         },
         select: {
-            ber: true,
+            tag_class: true,
+            constructed: true,
+            tag_number: true,
+            content_octets: true,
         },
     });
 
@@ -460,13 +464,20 @@ async function dseFromDatabaseEntry (
                 type: accessControlScheme["&id"].toString(),
             },
             select: {
-                ber: true,
+                tag_class: true,
+                constructed: true,
+                tag_number: true,
+                content_octets: true,
             },
-        }))?.ber;
+        }));
         ret.admPoint = {
-            administrativeRole: new Set(administrativeRoles.map((ar) => oidFromBytes(ar.ber).toString())),
+            administrativeRole: new Set(administrativeRoles
+                .map((ar) => attributeValueFromDB(ar)
+                    .objectIdentifier
+                    .toString()
+                )),
             accessControlScheme: acSchemeBER
-                ? oidFromBytes(acSchemeBER)
+                ? attributeValueFromDB(acSchemeBER).objectIdentifier
                 : undefined,
         };
     }

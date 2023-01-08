@@ -192,7 +192,7 @@ async function setEntryPassword (
                     tag_class: nowElement.tagClass,
                     constructed: false,
                     tag_number: nowElement.tagNumber,
-                    ber: Buffer.from(nowElement.toBytes().buffer),
+                    content_octets: Buffer.from(nowElement.value.buffer),
                     jer: nowElement.toJSON() as string,
                 },
                 {
@@ -202,7 +202,7 @@ async function setEntryPassword (
                     tag_class: ASN1TagClass.universal,
                     constructed: true,
                     tag_number: ASN1UniversalType.sequence,
-                    ber: Buffer.from(encoded_enc_alg.toBytes().buffer),
+                    content_octets: Buffer.from(encoded_enc_alg.value.buffer),
                     jer: encoded_enc_alg.toJSON() as object,
                 },
                 ...(expTime
@@ -213,7 +213,7 @@ async function setEntryPassword (
                         tag_class: nowElement.tagClass,
                         constructed: false,
                         tag_number: nowElement.tagNumber,
-                        ber: Buffer.from(_encodeGeneralizedTime(expTime, DER).toBytes().buffer),
+                        content_octets: Buffer.from(_encodeGeneralizedTime(expTime, DER).value.buffer),
                         jer: nowElement.toJSON() as string,
                     }]
                     : []),
@@ -225,7 +225,7 @@ async function setEntryPassword (
                         tag_class: nowElement.tagClass,
                         constructed: false,
                         tag_number: nowElement.tagNumber,
-                        ber: Buffer.from(_encodeGeneralizedTime(endTime, DER).toBytes().buffer),
+                        content_octets: Buffer.from(_encodeGeneralizedTime(endTime, DER).value.buffer),
                         jer: nowElement.toJSON() as string,
                     }]
                     : []),
@@ -243,7 +243,7 @@ async function setEntryPassword (
                         tag_class: encodedOldPwd.tagClass,
                         constructed: (encodedOldPwd.construction === ASN1Construction.constructed),
                         tag_number: encodedOldPwd.tagNumber,
-                        ber: Buffer.from(encodedOldPwd.toBytes().buffer),
+                        content_octets: Buffer.from(encodedOldPwd.value.buffer),
                     }]
                     : []),
             ],
