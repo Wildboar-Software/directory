@@ -271,6 +271,7 @@ import {
     checkPasswordQuality,
     CHECK_PWD_QUALITY_OK,
 } from "../password/checkPasswordQuality";
+import { attributeValueFromDB } from "../database/attributeValueFromDB";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -1702,12 +1703,14 @@ async function executeResetValue (
         const rows = await ctx.db.attributeValue.findMany({
             where,
             select: {
-                ber: true,
+                tag_class: true,
+                constructed: true,
+                tag_number: true,
+                content_octets: true,
             },
         });
         for (const row of rows) {
-            const el = new BERElement();
-            el.fromBytes(row.ber);
+            const el = attributeValueFromDB(row);
             const {
                 authorized: authorizedForAttributeType,
             } = bacACDF(
@@ -3609,7 +3612,7 @@ async function modifyEntry (
                     tag_class: ASN1TagClass.universal,
                     constructed: false,
                     tag_number: ASN1UniversalType.objectIdentifier,
-                    ber: Buffer.from(_encodeObjectIdentifier(id_ar_autonomousArea, DER).toBytes().buffer),
+                    content_octets: Buffer.from(_encodeObjectIdentifier(id_ar_autonomousArea, DER).value.buffer),
                     jer: id_ar_autonomousArea.toJSON(),
                 },
             }),

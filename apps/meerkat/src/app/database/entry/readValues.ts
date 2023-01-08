@@ -373,7 +373,10 @@ async function readValues (
             },
             select: {
                 type: true,
-                ber: true,
+                tag_class: true,
+                constructed: true,
+                tag_number: true,
+                content_octets: true,
                 ContextValue: (
                     contextSelection
                     || options?.selection?.returnContexts
@@ -424,7 +427,10 @@ async function readValues (
             },
             select: {
                 type: true,
-                ber: true,
+                tag_class: true,
+                constructed: true,
+                tag_number: true,
+                content_octets: true,
             },
             distinct: (options?.selection?.infoTypes === typesOnly)
                 ? ["type"]

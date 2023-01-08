@@ -3,7 +3,7 @@ import {
     Value,
 } from "@wildboar/meerkat-types";
 import EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
-import { BERElement } from "asn1-ts";
+import { attributeValueFromDB } from "../attributeValueFromDB";
 
 /**
  * Multiple database trips will take a toll on performance. However, it is not
@@ -68,7 +68,10 @@ async function hasValueWithoutDriver (
             },
             select: {
                 id: true,
-                ber: true,
+                tag_class: true,
+                constructed: true,
+                tag_number: true,
+                content_octets: true,
             },
         });
         if (results.length === 0) {
@@ -76,12 +79,12 @@ async function hasValueWithoutDriver (
         }
         let totalSize: number = 0;
         for (const result of results) {
-            const el = new BERElement();
-            el.fromBytes(result.ber);
+            const el = attributeValueFromDB(result);
             if (matcher(el, value.value)) {
                 return true;
             }
-            totalSize += result.ber.length;
+            // +2 is just approximate for the tag and length. It could be more.
+            totalSize += result.content_octets.length + 2;
         }
         cursorId = results[results.length - 1].id;
         if (totalSize < TARGET_MEMORY_USAGE) {

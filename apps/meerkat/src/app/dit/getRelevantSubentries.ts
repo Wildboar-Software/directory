@@ -1,17 +1,13 @@
 import type { Context, Vertex } from "@wildboar/meerkat-types";
-import {
-    id_sc_subentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-sc-subentry.va";
 import dnWithinSubtreeSpecification from "@wildboar/x500/src/lib/utils/dnWithinSubtreeSpecification";
 import getDistinguishedName from "../x500/getDistinguishedName";
-import { OBJECT_IDENTIFIER, ObjectIdentifier, BERElement } from "asn1-ts";
+import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import readSubordinates from "./readSubordinates";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import { subtreeSpecification } from "@wildboar/x500/src/lib/collections/attributes";
 import { _decode_SubtreeSpecification } from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
-
-const SUBENTRY: string = id_sc_subentry.toString();
+import { attributeValueFromDB } from "../database/attributeValueFromDB";
 
 /**
  * @summary Get the subentries whose subtree specification select for an entry
@@ -56,13 +52,15 @@ async function getRelevantSubentries (
         },
         select: {
             entry_id: true,
-            ber: true,
+            tag_class: true,
+            constructed: true,
+            tag_number: true,
+            content_octets: true,
         },
     });
     const relevant_sub_ids: Set<number> = new Set();
-    for (const { entry_id, ber } of subtree_rows) {
-        const el = new BERElement();
-        el.fromBytes(ber);
+    for (const row of subtree_rows) {
+        const el = attributeValueFromDB(row);
         const subtree = _decode_SubtreeSpecification(el);
         if (dnWithinSubtreeSpecification(
             entryDN,
@@ -71,7 +69,7 @@ async function getRelevantSubentries (
             getDistinguishedName(admPoint),
             NAMING_MATCHER,
         )) {
-            relevant_sub_ids.add(entry_id);
+            relevant_sub_ids.add(row.entry_id);
         }
     }
     const ret: Vertex[] = [];
