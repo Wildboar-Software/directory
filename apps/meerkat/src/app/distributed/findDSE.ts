@@ -861,43 +861,6 @@ async function findDSE (
                             object_class: true,
                         },
                     },
-                    UniqueIdentifier: {
-                        select: {
-                            uniqueIdentifier: true,
-                        },
-                    },
-                    ACIItem: {
-                        where: {
-                            active: true,
-                        },
-                        select: {
-                            scope: true,
-                            ber: true,
-                        },
-                    },
-                    Clearance: {
-                        where: {
-                            active: true,
-                        },
-                        select: {
-                            ber: true,
-                        },
-                    },
-                    EntryAdministrativeRole: {
-                        select: {
-                            administrativeRole: true,
-                        },
-                    },
-                    SubtreeSpecification: {
-                        select: {
-                            ber: true,
-                        },
-                    },
-                    EntryCollectiveExclusion: {
-                        select: {
-                            collectiveExclusion: true,
-                        },
-                    },
                 },
             });
             /**
@@ -929,7 +892,8 @@ async function findDSE (
                     const relevantSubentries: Vertex[] = (await Promise.all(
                         relevantAdmPoints.map((ap) => getRelevantSubentries(ctx, matchedVertex, childDN, ap)),
                     )).flat();
-                    const targetACI = getACIItems(
+                    const targetACI = await getACIItems(
+                        ctx,
                         accessControlScheme,
                         matchedVertex.immediateSuperior,
                         matchedVertex,
@@ -1085,7 +1049,8 @@ async function findDSE (
                         const relevantSubentries: Vertex[] = (await Promise.all(
                             relevantAdmPoints.map((ap) => getRelevantSubentries(ctx, child, childDN, ap)),
                         )).flat();
-                        const targetACI = getACIItems(
+                        const targetACI = await getACIItems(
+                            ctx,
                             accessControlScheme,
                             dse_i,
                             child,
@@ -1204,7 +1169,8 @@ async function findDSE (
             const relevantSubentries: Vertex[] = (await Promise.all(
                 state.admPoints.map((ap) => getRelevantSubentries(ctx, dse_i, currentDN, ap)),
             )).flat();
-            const targetACI = getACIItems(
+            const targetACI = await getACIItems(
+                ctx,
                 accessControlScheme,
                 dse_i.immediateSuperior,
                 dse_i,

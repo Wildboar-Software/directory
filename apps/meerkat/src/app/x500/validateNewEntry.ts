@@ -387,7 +387,7 @@ async function validateEntry (
                         attribute: new Attribute(
                             id_at_objectClass,
                             [
-                                _encodeObjectIdentifier(parent["&id"], DER),
+                                _encodeObjectIdentifier(id_oc_parent, DER),
                             ],
                             undefined,
                         ),

@@ -1,15 +1,7 @@
 import type { Entry as DatabaseEntry } from "@prisma/client";
-import { ObjectIdentifier, BERElement } from "asn1-ts";
+import { ObjectIdentifier, BERElement, OBJECT_IDENTIFIER } from "asn1-ts";
 import type { Context, DSE } from "@wildboar/meerkat-types";
 import rdnFromJson from "../x500/rdnFromJson";
-import { ACIScope, ACIItem as DatabaseACIItem } from "@prisma/client";
-import {
-    ACIItem,
-    _decode_ACIItem,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
-import {
-    _decode_SubtreeSpecification,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
 import {
     _decode_AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
@@ -40,25 +32,12 @@ import readDITContextUseDescriptions from "./readers/readDITContextUseDescriptio
 import readDITStructureRuleDescriptions from "./readers/readDITStructureRuleDescriptions";
 import readFriendsDescriptions from "./readers/readFriendsDescriptions";
 import readMatchingRuleUseDescriptions from "./readers/readMatchingRuleUseDescriptions";
-import { _decode_Clearance } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/Clearance.ta";
-import {
-    contextAssertionDefaults,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/contextAssertionDefaults.oa";
-import {
-    _decode_TypeAndContextAssertion,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
-// import {
-//     accessControlSubentry,
-// } from "@wildboar/x500/src/lib/modules/InformationFramework/accessControlSubentry.oa";
 import {
     collectiveAttributeSubentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/collectiveAttributeSubentry.oa";
-import {
-    contextAssertionSubentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/contextAssertionSubentry.oa";
 import {
     pwdAdminSubentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAdminSubentry.oa";
@@ -66,26 +45,24 @@ import {
     subschema,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
 import _ from "lodash";
-import { pwdAttribute } from "@wildboar/x500/src/lib/collections/attributes";
+import { accessControlScheme, administrativeRole, pwdAttribute } from "@wildboar/x500/src/lib/collections/attributes";
+import { _decodeObjectIdentifier } from "asn1-ts/dist/node/functional";
 
-
-function toACIItem (dbaci: DatabaseACIItem): ACIItem {
-    const el = new BERElement();
-    el.fromBytes(dbaci.ber);
-    return _decode_ACIItem(el);
-}
 
 const ALIAS: string = alias["&id"].toString();
 const PARENT: string = parent["&id"].toString();
 const CHILD: string = child["&id"].toString();
-// const SUBENTRY_AC: string = accessControlSubentry["&id"].toString();
 const SUBENTRY_CA: string = collectiveAttributeSubentry["&id"].toString();
-const SUBENTRY_CAD: string = contextAssertionSubentry["&id"].toString();
 const SUBENTRY_PWD: string = pwdAdminSubentry["&id"].toString();
-// const SUBENTRY_SVC: string = serviceAdminSubentry["&id"].toString();
 const SUBSCHEMA: string = subschema["&id"].toString();
 
 let collectiveAttributeTypes: string[] = [];
+
+function oidFromBytes (bytes: Uint8Array): OBJECT_IDENTIFIER {
+    const el = new BERElement();
+    el.fromBytes(bytes);
+    return _decodeObjectIdentifier(el);
+}
 
 /**
  * @summary Produce an in-memory DSE from the Prisma `Entry` model
@@ -109,55 +86,15 @@ async function dseFromDatabaseEntry (
     ctx: Context,
     dbe: (DatabaseEntry & { // You can supply these relations ahead of time...
         // which will save multiple queries to the database.
-        UniqueIdentifier?: {
-            uniqueIdentifier: Buffer;
-        }[];
-        ACIItem?: {
-            scope: ACIScope;
-            ber: Buffer;
-        }[];
-        Clearance?: {
-            ber: Buffer;
-        }[];
-        SubtreeSpecification?: {
-            ber: Buffer;
-        }[];
         EntryObjectClass?: {
             object_class: string;
-        }[];
-        EntryAdministrativeRole?: {
-            administrativeRole: string;
         }[];
         RDN?: {
             type: string;
             value: Buffer;
         }[];
-        EntryCollectiveExclusion?: {
-            collectiveExclusion: string;
-        }[];
     }),
 ): Promise<DSE> {
-    const acis = ctx.config.bulkInsertMode
-        ? []
-        : (dbe.ACIItem
-            ? dbe.ACIItem
-            : (await ctx.db.aCIItem.findMany({
-                where: {
-                    entry_id: dbe.id,
-                    active: true,
-                },
-                select: {
-                    scope: true,
-                    ber: true,
-                },
-            })));
-    const entryACI = acis.filter((aci) => aci.scope === ACIScope.ENTRY).map(toACIItem);
-    const prescriptiveACI = dbe.subentry
-        ? acis.filter((aci) => aci.scope === ACIScope.PRESCRIPTIVE).map(toACIItem)
-        : [];
-    const subentryACI = dbe.admPoint
-        ? acis.filter((aci) => aci.scope === ACIScope.SUBENTRY).map(toACIItem)
-        : [];
     const rdn = dbe.RDN?.map((atav) => new AttributeTypeAndValue(
         ObjectIdentifier.fromString(atav.type),
         (() => {
@@ -175,38 +112,6 @@ async function dseFromDatabaseEntry (
             object_class: true,
         },
     }));
-    const clearances = dbe.Clearance ?? (await ctx.db.clearance.findMany({
-        where: {
-            entry_id: dbe.id,
-            active: true,
-        },
-        select: {
-            ber: true,
-        },
-    }));
-    const administrativeRoles = dbe.EntryAdministrativeRole
-        ?? (await ctx.db.entryAdministrativeRole.findMany({
-            where: {
-                entry_id: dbe.id,
-            },
-            select: {
-                administrativeRole: true,
-            },
-        }));
-    const uniqueIdentifiers = (dbe.UniqueIdentifier
-        ?? (await ctx.db.uniqueIdentifier.findMany({
-            where: {
-                entry_id: dbe.id,
-            },
-            select: {
-                uniqueIdentifier: true,
-            },
-        })))
-        .map(({ uniqueIdentifier }) => {
-            const el = new BERElement();
-            el.value = uniqueIdentifier;
-            return el.bitString;
-        });
     const ret: DSE = {
         id: dbe.id,
         materializedPath: dbe.materialized_path,
@@ -214,12 +119,6 @@ async function dseFromDatabaseEntry (
         entryUUID: dbe.entryUUID ?? undefined,
         rdn,
         objectClass: new Set(objectClasses.map(({ object_class }) => object_class)),
-        clearances: clearances.map((c) => {
-            const el = new BERElement();
-            el.fromBytes(c.ber);
-            return _decode_Clearance(el);
-        }),
-        uniqueIdentifier: uniqueIdentifiers,
         structuralObjectClass: dbe.structuralObjectClass
             ? ObjectIdentifier.fromString(dbe.structuralObjectClass)
             : undefined,
@@ -236,7 +135,6 @@ async function dseFromDatabaseEntry (
         },
         createTimestamp: dbe.createTimestamp ?? undefined,
         modifyTimestamp: dbe.modifyTimestamp ?? undefined,
-        entryACI,
         glue: dbe.glue,
     };
 
@@ -430,44 +328,8 @@ async function dseFromDatabaseEntry (
         };
     }
 
-    if (administrativeRoles.length > 0) {
-        const accessControlScheme = await ctx.db.entryAccessControlScheme.findFirst({
-            where: {
-                entry_id: dbe.id,
-            },
-            select: {
-                accessControlScheme: true,
-            },
-        });
-        ret.admPoint = {
-            administrativeRole: new Set(administrativeRoles.map((ar) => ar.administrativeRole)),
-            accessControlScheme: accessControlScheme
-                ? ObjectIdentifier.fromString(accessControlScheme.accessControlScheme)
-                : undefined,
-            subentryACI,
-        };
-    }
-
     if (dbe.subentry) {
-        const subtreeRows = dbe.SubtreeSpecification ?? (await ctx.db.subtreeSpecification.findMany({
-            where: {
-                entry_id: dbe.id,
-            },
-            select: {
-                ber: true,
-            },
-        }));
-        const subtreeSpecification = subtreeRows
-            .map((s) => {
-                const el = new BERElement();
-                el.fromBytes(s.ber);
-                return _decode_SubtreeSpecification(el);
-            });
-
-        ret.subentry = {
-            subtreeSpecification,
-            prescriptiveACI,
-        };
+        ret.subentry = {};
         if (ret.objectClass.has(SUBENTRY_CA)) {
             if (collectiveAttributeTypes.length === 0) {
                 collectiveAttributeTypes = Array.from(ctx.collectiveAttributes);
@@ -492,25 +354,6 @@ async function dseFromDatabaseEntry (
             ret.subentry.ditContextUse = await readDITContextUseDescriptions(ctx, dbe.id);
             ret.subentry.friendships = await readFriendsDescriptions(ctx, dbe.id);
             ret.subentry.matchingRuleUse = await readMatchingRuleUseDescriptions(ctx, dbe.id);
-        }
-        if (ret.objectClass.has(SUBENTRY_CAD)) {
-            const cads = await ctx.db.attributeValue.findMany({
-                where: {
-                    entry_id: dbe.id,
-                    type: contextAssertionDefaults["&id"].toString(),
-                },
-                select: {
-                    ber: true,
-                },
-            });
-            if (!ret.subentry.contextAssertionDefaults) {
-                ret.subentry.contextAssertionDefaults = [];
-            }
-            ret.subentry.contextAssertionDefaults.push(...cads.map((cad) => {
-                const el = new BERElement();
-                el.fromBytes(cad.ber);
-                return _decode_TypeAndContextAssertion(el);
-            }));
         }
         if (ret.objectClass.has(SUBENTRY_PWD)) {
             const pwd_attr = await ctx.db.attributeValue.findFirst({
@@ -582,20 +425,7 @@ async function dseFromDatabaseEntry (
     }
 
     if (dbe.entry) {
-        const collectiveExclusions = dbe.EntryCollectiveExclusion
-            ?? (await ctx.db.entryCollectiveExclusion.findMany({
-                where: {
-                    entry_id: dbe.id,
-                },
-                select: {
-                    collectiveExclusion: true,
-                },
-            }));
-        ret.entry = {
-            collectiveExclusions: new Set(
-                collectiveExclusions.map((ce) => ce.collectiveExclusion),
-            ),
-        };
+        ret.entry = {};
     }
 
     if (typeof dbe.hierarchyPath === "string") {
@@ -609,6 +439,34 @@ async function dseFromDatabaseEntry (
                 : undefined,
             top: Array.isArray(dbe.hierarchyTopDN)
                 ? dbe.hierarchyTopDN.map(rdnFromJson)
+                : undefined,
+        };
+    }
+
+    const administrativeRoles = await ctx.db.attributeValue.findMany({
+        where: {
+            entry_id: dbe.id,
+            type: administrativeRole["&id"].toString(),
+        },
+        select: {
+            ber: true,
+        },
+    });
+
+    if (administrativeRoles.length > 0) {
+        const acSchemeBER = (await ctx.db.attributeValue.findFirst({
+            where: {
+                entry_id: dbe.id,
+                type: accessControlScheme["&id"].toString(),
+            },
+            select: {
+                ber: true,
+            },
+        }))?.ber;
+        ret.admPoint = {
+            administrativeRole: new Set(administrativeRoles.map((ar) => oidFromBytes(ar.ber).toString())),
+            accessControlScheme: acSchemeBER
+                ? oidFromBytes(acSchemeBER)
                 : undefined,
         };
     }

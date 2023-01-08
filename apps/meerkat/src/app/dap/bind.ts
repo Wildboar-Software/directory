@@ -34,6 +34,7 @@ import { attemptStrongAuth } from "../authn/attemptStrongAuth";
 import {
     PwdResponseValue_error_passwordExpired,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue-error.ta";
+import { read_unique_id } from "../database/utils";
 
 /**
  * @summary X.500 Directory Access Protocol (DSP) bind operation
@@ -126,11 +127,12 @@ async function bind (
                     signErrors,
                 );
             }
+            const unique_id = foundEntry && await read_unique_id(ctx, foundEntry);
             return {
                 boundVertex: foundEntry,
                 boundNameAndUID: new NameAndOptionalUID(
                     arg.credentials.simple.name,
-                    foundEntry?.dse.uniqueIdentifier?.[0],
+                    unique_id,
                 ),
                 authLevel: {
                     basicLevels: new AuthenticationLevel_basicLevels(
@@ -203,11 +205,12 @@ async function bind (
                 unbind,
             );
         }
+        const unique_id = foundEntry && await read_unique_id(ctx, foundEntry);
         return {
             boundVertex: foundEntry,
             boundNameAndUID: new NameAndOptionalUID(
                 getDistinguishedName(foundEntry),
-                foundEntry.dse.uniqueIdentifier?.[0], // We just use the first unique identifier.
+                unique_id, // We just use the first unique identifier.
             ),
             authLevel: {
                 basicLevels: new AuthenticationLevel_basicLevels(

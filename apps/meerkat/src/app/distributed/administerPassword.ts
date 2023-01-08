@@ -226,7 +226,8 @@ async function administerPassword (
         accessControlScheme
         && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
     ) {
-        const relevantACIItems = getACIItems(
+        const relevantACIItems = await getACIItems(
+            ctx,
             accessControlScheme,
             target.immediateSuperior,
             target,

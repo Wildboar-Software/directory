@@ -469,7 +469,8 @@ async function modifyDN (
     const accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
         .reverse()
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-    const relevantACIItems = getACIItems(
+    const relevantACIItems = await getACIItems(
+        ctx,
         accessControlScheme,
         target.immediateSuperior,
         target,
@@ -711,7 +712,8 @@ async function modifyDN (
             newAccessControlScheme
             && accessControlSchemesThatUseACIItems.has(newAccessControlScheme.toString())
         ) {
-            const relevantACIItems = getACIItems(
+            const relevantACIItems = await getACIItems(
+                ctx,
                 accessControlScheme,
                 superior,
                 undefined,
@@ -895,7 +897,8 @@ async function modifyDN (
             && accessControlScheme
             && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
         ) {
-            const relevantACIItemsForSuperior = getACIItems(
+            const relevantACIItemsForSuperior = await getACIItems(
+                ctx,
                 accessControlScheme,
                 superior.immediateSuperior,
                 superior,

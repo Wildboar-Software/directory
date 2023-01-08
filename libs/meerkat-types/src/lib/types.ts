@@ -26,28 +26,16 @@ import type {
 import type {
     ContextMatcher,
 } from "@wildboar/x500/src/lib/types/ContextMatcher";
-import type { ASN1Element, OBJECT_IDENTIFIER, BIT_STRING, BOOLEAN } from "asn1-ts";
+import type { ASN1Element, OBJECT_IDENTIFIER, BOOLEAN } from "asn1-ts";
 import type {
     PagedResultsRequest_newRequest,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
-import type {
-    SubtreeSpecification,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";3
-import type {
-    ACIItem,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
 import type {
     AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 import type {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import type {
-    TypeAndContextAssertion,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
-import type {
-    SearchRuleDescription,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/SearchRuleDescription.ta";
 import type {
     AttributeType,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
@@ -101,9 +89,6 @@ import type { i18n } from "i18next";
 import {
     Context as X500Context,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
-import type {
-    Clearance,
-} from "@wildboar/x500/src/lib/modules/EnhancedSecurity/Clearance.ta";
 import type { TlsOptions } from "tls";
 import type {
     CertificateList,
@@ -489,12 +474,6 @@ interface ContextPrefixDSE {
 export
 interface EntryDSE {
 
-    /**
-     * A set of dot-delimited string representations of object identifiers of
-     * the collective attribute exclusions for this entry.
-     */
-    collectiveExclusions: Set<IndexableOID>;
-
 }
 
 /**
@@ -599,9 +578,6 @@ interface AdministrativePointDSE {
     /** The object identifier of the access control scheme */
     accessControlScheme?: OBJECT_IDENTIFIER;
 
-    /** Values of the `subentryACI` operational attribute */
-    subentryACI?: ACIItem[];
-
 }
 
 /**
@@ -615,17 +591,8 @@ interface AdministrativePointDSE {
 export
 interface SubentryDSE {
 
-    /** Values of the `subtreeSpecification` operational attribute */
-    subtreeSpecification: SubtreeSpecification[];
-
-    /** Values of the `prescriptiveACI` operational attribute */
-    prescriptiveACI?: ACIItem[];
-
     /** Values of the `collectiveAttributes` operational attribute */
     collectiveAttributes?: Attribute[];
-
-    /** Values of the `contextAssertionDefaults` operational attribute */
-    contextAssertionDefaults?: TypeAndContextAssertion[];
 
     /** Values of the `ditStructureRules` operational attribute */
     ditStructureRules?: DITStructureRuleDescription[];
@@ -782,13 +749,6 @@ interface DSE {
     /** The single value of the `entryUUID` operational attribute. */
     entryUUID?: UUID;
 
-    /**
-     * Values of the `uniqueIdentifier` attribute for this DSE. Even though
-     * `uniqueIdentifier` is technically not an operational attribute, it is
-     * used for some operational purposes, namely authentication.
-     */
-    uniqueIdentifier?: BIT_STRING[];
-
     /** The relative distinguished name (RDN) of the DSE. */
     rdn: RelativeDistinguishedName;
 
@@ -828,12 +788,6 @@ interface DSE {
      * [IETF RFC 2589](https://www.rfc-editor.org/rfc/rfc2589.html).
      */
     expiresTimestamp?: Date;
-
-    /** Values of the `entryACI` operational attribute. */
-    entryACI?: ACIItem[];
-
-    /** Values of the `clearance` operational attribute. */
-    clearances?: Clearance[];
 
     /**
      * Cached attributes, which are not limited to only operational attributes.
