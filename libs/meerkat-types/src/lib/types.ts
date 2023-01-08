@@ -489,12 +489,6 @@ interface ContextPrefixDSE {
 export
 interface EntryDSE {
 
-    /**
-     * A set of dot-delimited string representations of object identifiers of
-     * the collective attribute exclusions for this entry.
-     */
-    collectiveExclusions: Set<IndexableOID>;
-
 }
 
 /**
@@ -599,9 +593,6 @@ interface AdministrativePointDSE {
     /** The object identifier of the access control scheme */
     accessControlScheme?: OBJECT_IDENTIFIER;
 
-    /** Values of the `subentryACI` operational attribute */
-    subentryACI?: ACIItem[];
-
 }
 
 /**
@@ -614,12 +605,6 @@ interface AdministrativePointDSE {
  */
 export
 interface SubentryDSE {
-
-    /** Values of the `subtreeSpecification` operational attribute */
-    subtreeSpecification: SubtreeSpecification[];
-
-    /** Values of the `prescriptiveACI` operational attribute */
-    prescriptiveACI?: ACIItem[];
 
     /** Values of the `collectiveAttributes` operational attribute */
     collectiveAttributes?: Attribute[];
@@ -782,13 +767,6 @@ interface DSE {
     /** The single value of the `entryUUID` operational attribute. */
     entryUUID?: UUID;
 
-    /**
-     * Values of the `uniqueIdentifier` attribute for this DSE. Even though
-     * `uniqueIdentifier` is technically not an operational attribute, it is
-     * used for some operational purposes, namely authentication.
-     */
-    uniqueIdentifier?: BIT_STRING[];
-
     /** The relative distinguished name (RDN) of the DSE. */
     rdn: RelativeDistinguishedName;
 
@@ -828,12 +806,6 @@ interface DSE {
      * [IETF RFC 2589](https://www.rfc-editor.org/rfc/rfc2589.html).
      */
     expiresTimestamp?: Date;
-
-    /** Values of the `entryACI` operational attribute. */
-    entryACI?: ACIItem[];
-
-    /** Values of the `clearance` operational attribute. */
-    clearances?: Clearance[];
 
     /**
      * Cached attributes, which are not limited to only operational attributes.

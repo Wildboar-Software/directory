@@ -114,30 +114,21 @@ model Entry {
 
   subordinates                Entry[]                      @relation("superior")
   hierarchicalChildren        Entry[]                      @relation("parent")
-  ACIItem                     ACIItem[]
-  Clearance                   Clearance[]
   MatchingRuleUse             MatchingRuleUse[]
   AttributeValue              AttributeValue[]
   AccessPoint                 AccessPoint[]
-  SubtreeSpecification        SubtreeSpecification[]
   Password                    Password[]
   RDN                         DistinguishedValue[]
   EntryObjectClass            EntryObjectClass[]
   AliasEntry                  Alias[]                      @relation("alias_entry")
   AliasedEntry                Alias?                       @relation("aliased_entry")
-  EntryAdministrativeRole     EntryAdministrativeRole[]
-  EntryCollectiveExclusion    EntryCollectiveExclusion[]
-  EntryAccessControlScheme    EntryAccessControlScheme[]
   DITStructureRule            DITStructureRule[]
   ContentRule                 ContentRule[]
   ContextUseRule              ContextUseRule[]
   Friendship                  Friendship[]
-  SearchRule                  SearchRule[]
-  UniqueIdentifier            UniqueIdentifier[]
   OperationalBinding          OperationalBinding[]
   PasswordHistory             PasswordHistory[]
   Entry                       Entry[]                      @relation("top")
-  PasswordEncryptionAlgorithm PasswordEncryptionAlgorithm?
   EnqueuedSearchResult        EnqueuedSearchResult[]
   EnqueuedListResult          EnqueuedListResult[]
 
@@ -154,26 +145,6 @@ model Entry {
   NameForm           NameForm[]
   ContextDescription ContextDescription[]
 }
-
-// Technically a userApplications attribute, but still has operational uses.
-// It is also multi-valued.
-model UniqueIdentifier {
-  id               Int   @id @default(autoincrement())
-  entry_id         Int
-  entry            Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  uniqueIdentifier Bytes // DER-encoded bitstring value (not tag and length bytes)
-
-  // This cannot be a unique index right now, just because Prisma does not yet support index key length specification.
-  @@index([entry_id])
-}
-
-// model UtmCoordinate {
-//     id       Int     @id @default(autoincrement())
-//     zone     String
-//     easting  Int
-//     northing Int
-//     Entry    Entry[]
-// }
 
 // There may be only one password per entry
 model Password {
@@ -195,19 +166,6 @@ model PasswordHistory {
   password Bytes // BER encoding of UserPwd with encrypted alternative, using Scrypt.
 
   @@unique([entry_id, time])
-}
-
-// TODO: Delete this table in v2. You still need a driver that returns Scrypt for non-shadowed subentries.
-// This only exists for shadowing. Otherwise, it's value is always Meerkat DSA's
-// hard-coded algorithm, which is currently scrypt.
-model PasswordEncryptionAlgorithm {
-  id         Int    @id @default(autoincrement())
-  entry_id   Int
-  entry      Entry  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  oid        String @db.VarChar(128) // OID
-  parameters Bytes? // BER
-
-  @@unique([entry_id])
 }
 
 // This table defines what constitutes dictionary words, person names, and
@@ -268,70 +226,6 @@ model ContextValue {
   fallback    Boolean
 
   @@index([value_id])
-}
-
-// Should there be a separate Attribute Types table? No, because these have a functional aspect.
-// Should there be a separate Context Types table? No, because these have a functional aspect.
-
-enum ACIScope {
-  PRESCRIPTIVE
-  ENTRY
-  SUBENTRY
-}
-
-model ACIItem {
-  id                               Int      @id @default(autoincrement())
-  entry_id                         Int
-  entry                            Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  tag                              String
-  precedence                       Int
-  auth_level_basic_level           Int?
-  auth_level_basic_local_qualifier Int?
-  auth_level_basic_signed          Boolean?
-  auth_level_other_dir_ref         String?  @db.VarChar(128) // OID
-  auth_level_other_indir_ref       Int?
-  auth_level_other_descriptor      String?
-  auth_level_other_encoding_type   Int?
-  auth_level_other_encoding        Bytes?
-  ber                              Bytes
-  // The "other" alternative shall not be supported.
-  scope                            ACIScope
-
-  // For disabling ACI items in the database for debugging purposes.
-  active     Boolean  @default(true)
-  created_at DateTime @default(now())
-
-  @@index([entry_id, active, precedence])
-}
-
-model Clearance {
-  id                        Int                         @id @default(autoincrement())
-  entry_id                  Int
-  entry                     Entry                       @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  policy_id                 String                      @db.VarChar(128) // OID
-  // From classList
-  unmarked                  Boolean                     @default(false)
-  unclassified              Boolean                     @default(false)
-  restricted                Boolean                     @default(false)
-  confidential              Boolean                     @default(false)
-  secret                    Boolean                     @default(false)
-  topSecret                 Boolean                     @default(false)
-  ber                       Bytes
-  active                    Boolean                     @default(true)
-  created_at                DateTime                    @default(now())
-  ClearanceSecurityCategory ClearanceSecurityCategory[]
-
-  @@index([entry_id, active, policy_id])
-}
-
-model ClearanceSecurityCategory {
-  id           Int       @id @default(autoincrement())
-  clearance_id Int
-  clearance    Clearance @relation(fields: [clearance_id], references: [id], onDelete: Cascade)
-  type         String    @db.VarChar(128) // OID
-  value        Bytes
-
-  @@index([clearance_id, type])
 }
 
 enum Knowledge {
@@ -404,20 +298,6 @@ model NetworkServiceAccessPoint {
   access_point    AccessPoint @relation(fields: [access_point_id], references: [id], onDelete: Cascade)
 
   @@index([access_point_id])
-}
-
-model SubtreeSpecification {
-  id                   Int   @id @default(autoincrement())
-  base                 Json? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
-  specific_exclusions  Json? // [{"chopBefore": [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]}]
-  minimum              Int   @default(0)
-  maximum              Int?
-  specification_filter Json? // {"and": [{"item": "2.5.4.10"}]}
-  ber                  Bytes
-  entry_id             Int
-  entry                Entry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-
-  @@index([entry_id])
 }
 
 model DitBridgeKnowledge {
@@ -671,43 +551,6 @@ model ContextDescription {
   @@unique([entry_id, identifier])
 }
 
-// This also satisfies SearchRuleDescription
-model SearchRule {
-  id                          Int     @id @default(autoincrement())
-  rule_id                     Int     @unique
-  dmd_id                      String  @db.VarChar(128) // OID
-  service_type                String? @db.VarChar(128) // OID
-  user_class                  Int?
-  // inputAttributeTypes
-  // attributeCombination
-  // outputAttributeTypes
-  family_grouping             Int?
-  family_return_member_select Int?
-  // relaxation
-  relaxation_minimum          Int     @default(1)
-  relaxation_maximum          Int?
-  additionalControl           String? @db.Text // OIDs
-  base_object_allowed         Boolean @default(true)
-  one_level_allowed           Boolean @default(true)
-  whole_subtree_allowed       Boolean @default(true)
-  imposed_subset              Int?
-  entry_limit_default         Int?
-  entry_limit_max             Int?
-  ber                         Bytes
-  name                        String?
-  description                 String?
-
-  entry_id   Int
-  entry      Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  active     Boolean  @default(true)
-  created_at DateTime @default(now())
-
-  @@unique([dmd_id, rule_id])
-  @@index([rule_id])
-  @@index([user_class])
-  @@index([entry_id])
-}
-
 enum OperationalBindingInitiator {
   SYMMETRIC
   ROLE_A
@@ -839,36 +682,6 @@ model Alias {
 
   @@unique([alias_entry_id])
   @@index([aliased_entry_id])
-}
-
-model EntryAdministrativeRole {
-  id                 Int      @id @default(autoincrement())
-  entry_id           Int
-  entry              Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  administrativeRole String   @db.VarChar(128) // OID
-  created_at         DateTime @default(now())
-
-  @@unique([entry_id, administrativeRole])
-}
-
-model EntryCollectiveExclusion {
-  id                  Int      @id @default(autoincrement())
-  entry_id            Int
-  entry               Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  collectiveExclusion String   @db.VarChar(128) // OID
-  created_at          DateTime @default(now())
-
-  @@unique([entry_id, collectiveExclusion])
-}
-
-model EntryAccessControlScheme {
-  id                  Int      @id @default(autoincrement())
-  entry_id            Int
-  entry               Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  accessControlScheme String   @db.VarChar(128) // OID
-  created_at          DateTime @default(now())
-
-  @@unique([entry_id])
 }
 
 model EntryAttributeValuesIncomplete {

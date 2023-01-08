@@ -232,7 +232,8 @@ async function read (
     const accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
         .reverse()
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-    const relevantACIItems = getACIItems(
+    const relevantACIItems = await getACIItems(
+        ctx,
         accessControlScheme,
         target.immediateSuperior,
         target,

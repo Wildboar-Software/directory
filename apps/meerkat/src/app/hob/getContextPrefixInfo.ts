@@ -19,22 +19,9 @@ import {
 import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import {
-    administrativeRole,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
-import {
-    accessControlScheme,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/accessControlScheme.oa";
-import {
-    subentryACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/subentryACI.oa";
-import {
-    _encode_ACIItem,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
 import readSubordinates from "../dit/readSubordinates";
-import { ASN1Construction, ASN1TagClass, ASN1UniversalType, DERElement, ObjectIdentifier } from "asn1-ts";
 import getAttributesFromSubentry from "../dit/getAttributesFromSubentry";
-import { DER } from "asn1-ts/dist/node/functional";
+import { getEntryAttributesToShareInOpBinding } from "../dit/getEntryAttributesToShareInOpBinding";
 
 /**
  * @summary Given a vertex, produce a `DITcontext` per ITU Recommendation X.518.
@@ -67,51 +54,16 @@ async function getContextPrefixInfo (
         let contextPrefixEncountered: boolean = false;
 
         if (current.dse.admPoint) {
-            admPointInfo.push(new Attribute(
-                administrativeRole["&id"],
-                Array.from(current.dse.admPoint.administrativeRole)
-                    .map((oidStr) => ObjectIdentifier.fromString(oidStr))
-                    .map((oid) => new DERElement(
-                        ASN1TagClass.universal,
-                        ASN1Construction.primitive,
-                        ASN1UniversalType.objectIdentifier,
-                        oid,
-                    )),
-                undefined,
-            ));
-            if (current.dse.admPoint.accessControlScheme) {
-                admPointInfo.push(new Attribute(
-                    accessControlScheme["&id"],
-                    [
-                        new DERElement(
-                            ASN1TagClass.universal,
-                            ASN1Construction.primitive,
-                            ASN1UniversalType.objectIdentifier,
-                            current.dse.admPoint.accessControlScheme,
-                        ),
-                    ],
-                    undefined,
-                ));
-            }
-            if (current.dse.admPoint.subentryACI) {
-                admPointInfo.push(new Attribute(
-                    subentryACI["&id"],
-                    current.dse.admPoint.subentryACI
-                        .map((aci) => _encode_ACIItem(aci, DER)),
-                    undefined,
-                ));
-            }
-
-            (await readSubordinates(ctx, current, undefined, undefined, undefined, {
+            admPointInfo.push(...await getEntryAttributesToShareInOpBinding(ctx, current));
+            const subentries = await readSubordinates(ctx, current, undefined, undefined, undefined, {
                 subentry: true,
-            }))
-                .filter((sub) => sub.dse.subentry)
-                .forEach((sub): void => {
-                    subentryInfos.push(new SubentryInfo(
-                        sub.dse.rdn,
-                        getAttributesFromSubentry(sub),
-                    ));
-                });
+            });
+            for (const sub of subentries) {
+                subentryInfos.push(new SubentryInfo(
+                    sub.dse.rdn,
+                    await getAttributesFromSubentry(ctx, sub),
+                ));
+            }
 
             // The DIT context should only contain one CP.
             if (!contextPrefixEncountered && current.dse.cp) {

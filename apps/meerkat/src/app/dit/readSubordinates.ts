@@ -65,43 +65,6 @@ async function readSubordinates (
                             object_class: true,
                         },
                     },
-                    UniqueIdentifier: {
-                        select: {
-                            uniqueIdentifier: true,
-                        },
-                    },
-                    ACIItem: {
-                        where: {
-                            active: true,
-                        },
-                        select: {
-                            scope: true,
-                            ber: true,
-                        },
-                    },
-                    Clearance: {
-                        where: {
-                            active: true,
-                        },
-                        select: {
-                            ber: true,
-                        },
-                    },
-                    EntryAdministrativeRole: {
-                        select: {
-                            administrativeRole: true,
-                        },
-                    },
-                    SubtreeSpecification: {
-                        select: {
-                            ber: true,
-                        },
-                    },
-                    EntryCollectiveExclusion: {
-                        select: {
-                            collectiveExclusion: true,
-                        },
-                    },
                 },
                 orderBy: {
                     id: "desc", // Theory: newer IDs are more likely to be queried.

@@ -211,7 +211,6 @@ import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesTh
 import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs";
 import { MINIMUM_MAX_ATTR_SIZE } from "../constants";
 import updateSuperiorDSA from "../dop/updateSuperiorDSA";
-import { addValue } from "../database/drivers/administrativeRole";
 import {
     id_ar_autonomousArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
@@ -242,6 +241,7 @@ import {
     subtreeSpecification,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/subtreeSpecification.oa";
 import {
+    SubtreeSpecification,
     _decode_SubtreeSpecification,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
 import {
@@ -2617,7 +2617,8 @@ async function modifyEntry (
     const accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
         .reverse()
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-    const relevantACIItems = getACIItems(
+    const relevantACIItems = await getACIItems(
+        ctx,
         accessControlScheme,
         target.immediateSuperior,
         target,
@@ -2932,9 +2933,10 @@ async function modifyEntry (
         const subtreeSpecAdded = patch.addedValues.get(subtreeSpecification["&id"].toString());
         const subtreeSpecRemoved = patch.removedValues.get(subtreeSpecification["&id"].toString());
         if (subtreeSpecAdded || subtreeSpecRemoved) {
-            const existingSubtrees = await ctx.db.subtreeSpecification.count({
+            const existingSubtrees = await ctx.db.attributeValue.count({
                 where: {
                     entry_id: target.dse.id,
+                    type: subtreeSpecification["&id"].toString(),
                 },
             });
             const totalSubtrees = (existingSubtrees + (subtreeSpecAdded?.length ?? 0) - (subtreeSpecRemoved?.length ?? 0));
@@ -3590,22 +3592,27 @@ async function modifyEntry (
      * are no longer administrative points, but it gets the job done.
      */
     if (!target.dse.admPoint && target.immediateSuperior?.dse.root) {
-        const addAdministrativeRoleUpdates: PendingUpdates = {
-            entryUpdate: {},
-            otherWrites: [],
-        };
-        await addValue(ctx, target, {
-            type: administrativeRole["&id"],
-            value: _encodeObjectIdentifier(id_ar_autonomousArea, DER),
-        }, addAdministrativeRoleUpdates);
         await ctx.db.$transaction([
             ctx.db.entry.update({
                 where: {
                     id: target.dse.id,
                 },
-                data: addAdministrativeRoleUpdates.entryUpdate,
+                data: {
+                    admPoint: true,
+                },
             }),
-            ...addAdministrativeRoleUpdates.otherWrites,
+            ctx.db.attributeValue.create({
+                data: {
+                    entry_id: target.dse.id,
+                    type: administrativeRole["&id"].toString(),
+                    operational: true,
+                    tag_class: ASN1TagClass.universal,
+                    constructed: false,
+                    tag_number: ASN1UniversalType.objectIdentifier,
+                    ber: Buffer.from(_encodeObjectIdentifier(id_ar_autonomousArea, DER).toBytes().buffer),
+                    jer: id_ar_autonomousArea.toJSON(),
+                },
+            }),
         ]);
         const dbe = await ctx.db.entry.findUnique({
             where: {

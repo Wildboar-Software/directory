@@ -42,7 +42,7 @@ import {
     VT_RETURN_CODE_OK,
     VT_RETURN_CODE_MALFORMED,
     VT_RETURN_CODE_INVALID_SIG,
-    VT_RETURN_CODE_UNTRUSTED,
+    VT_RETURN_CODE_UNTRUSTED, // FIXME: Why is this not used?
 } from "../pki/verifyToken";
 import { strict as assert } from "assert";
 import type {
@@ -50,6 +50,7 @@ import type {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/StrongCredentials.ta";
 import type { Socket } from "node:net";
 import type { TLSSocket } from "node:tls";
+import { read_unique_id } from "../database/utils";
 
 const ID_OC_PKI_CERT_PATH: string = id_oc_pkiCertPath.toString();
 
@@ -197,11 +198,12 @@ async function attemptStrongAuth (
         switch (tokenResult) {
             case (VT_RETURN_CODE_OK): {
                 const foundEntry = await dnToVertex(ctx, ctx.dit.root, effectiveName);
+                const unique_id = foundEntry && await read_unique_id(ctx, foundEntry);
                 return {
                     boundVertex: foundEntry,
                     boundNameAndUID: new NameAndOptionalUID(
                         effectiveName,
-                        foundEntry?.dse.uniqueIdentifier?.[0], // We just use the first unique identifier.
+                        unique_id, // We just use the first unique identifier.
                     ),
                     authLevel: {
                         basicLevels: new AuthenticationLevel_basicLevels(
@@ -268,11 +270,12 @@ async function attemptStrongAuth (
             );
             const tokenResult = await verifyToken(ctx, certPath, bind_token);
             if (tokenResult === VT_RETURN_CODE_OK) {
+                const unique_id = attemptedVertex && await read_unique_id(ctx, attemptedVertex);
                 return {
                     boundVertex: attemptedVertex,
                     boundNameAndUID: new NameAndOptionalUID(
                         name,
-                        attemptedVertex?.dse.uniqueIdentifier?.[0], // We just use the first unique identifier.
+                        unique_id, // We just use the first unique identifier.
                     ),
                     authLevel: {
                         basicLevels: new AuthenticationLevel_basicLevels(

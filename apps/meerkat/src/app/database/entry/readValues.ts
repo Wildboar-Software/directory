@@ -453,7 +453,7 @@ async function readValues (
      * values listed as both its collective values and user values.
      */
     let collectiveValues: Value[] = ((options?.relevantSubentries && entry.dse.entry && !entry.dse.subentry)
-        ? readCollectiveValues(ctx, entry, options?.relevantSubentries)
+        ? await readCollectiveValues(ctx, entry, options?.relevantSubentries)
         : [])
             .filter((attr) => {
                 if (!selectedUserAttributes) {

@@ -2,14 +2,6 @@ import type { Entry as DatabaseEntry } from "@prisma/client";
 import { ObjectIdentifier, BERElement } from "asn1-ts";
 import type { Context, DSE } from "@wildboar/meerkat-types";
 import rdnFromJson from "../x500/rdnFromJson";
-import { ACIScope, ACIItem as DatabaseACIItem } from "@prisma/client";
-import {
-    ACIItem,
-    _decode_ACIItem,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
-import {
-    _decode_SubtreeSpecification,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
 import {
     _decode_AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
@@ -40,7 +32,6 @@ import readDITContextUseDescriptions from "./readers/readDITContextUseDescriptio
 import readDITStructureRuleDescriptions from "./readers/readDITStructureRuleDescriptions";
 import readFriendsDescriptions from "./readers/readFriendsDescriptions";
 import readMatchingRuleUseDescriptions from "./readers/readMatchingRuleUseDescriptions";
-import { _decode_Clearance } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/Clearance.ta";
 import {
     contextAssertionDefaults,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/contextAssertionDefaults.oa";
@@ -68,12 +59,6 @@ import {
 import _ from "lodash";
 import { pwdAttribute } from "@wildboar/x500/src/lib/collections/attributes";
 
-
-function toACIItem (dbaci: DatabaseACIItem): ACIItem {
-    const el = new BERElement();
-    el.fromBytes(dbaci.ber);
-    return _decode_ACIItem(el);
-}
 
 const ALIAS: string = alias["&id"].toString();
 const PARENT: string = parent["&id"].toString();
@@ -109,55 +94,15 @@ async function dseFromDatabaseEntry (
     ctx: Context,
     dbe: (DatabaseEntry & { // You can supply these relations ahead of time...
         // which will save multiple queries to the database.
-        UniqueIdentifier?: {
-            uniqueIdentifier: Buffer;
-        }[];
-        ACIItem?: {
-            scope: ACIScope;
-            ber: Buffer;
-        }[];
-        Clearance?: {
-            ber: Buffer;
-        }[];
-        SubtreeSpecification?: {
-            ber: Buffer;
-        }[];
         EntryObjectClass?: {
             object_class: string;
-        }[];
-        EntryAdministrativeRole?: {
-            administrativeRole: string;
         }[];
         RDN?: {
             type: string;
             value: Buffer;
         }[];
-        EntryCollectiveExclusion?: {
-            collectiveExclusion: string;
-        }[];
     }),
 ): Promise<DSE> {
-    const acis = ctx.config.bulkInsertMode
-        ? []
-        : (dbe.ACIItem
-            ? dbe.ACIItem
-            : (await ctx.db.aCIItem.findMany({
-                where: {
-                    entry_id: dbe.id,
-                    active: true,
-                },
-                select: {
-                    scope: true,
-                    ber: true,
-                },
-            })));
-    const entryACI = acis.filter((aci) => aci.scope === ACIScope.ENTRY).map(toACIItem);
-    const prescriptiveACI = dbe.subentry
-        ? acis.filter((aci) => aci.scope === ACIScope.PRESCRIPTIVE).map(toACIItem)
-        : [];
-    const subentryACI = dbe.admPoint
-        ? acis.filter((aci) => aci.scope === ACIScope.SUBENTRY).map(toACIItem)
-        : [];
     const rdn = dbe.RDN?.map((atav) => new AttributeTypeAndValue(
         ObjectIdentifier.fromString(atav.type),
         (() => {
@@ -175,38 +120,6 @@ async function dseFromDatabaseEntry (
             object_class: true,
         },
     }));
-    const clearances = dbe.Clearance ?? (await ctx.db.clearance.findMany({
-        where: {
-            entry_id: dbe.id,
-            active: true,
-        },
-        select: {
-            ber: true,
-        },
-    }));
-    const administrativeRoles = dbe.EntryAdministrativeRole
-        ?? (await ctx.db.entryAdministrativeRole.findMany({
-            where: {
-                entry_id: dbe.id,
-            },
-            select: {
-                administrativeRole: true,
-            },
-        }));
-    const uniqueIdentifiers = (dbe.UniqueIdentifier
-        ?? (await ctx.db.uniqueIdentifier.findMany({
-            where: {
-                entry_id: dbe.id,
-            },
-            select: {
-                uniqueIdentifier: true,
-            },
-        })))
-        .map(({ uniqueIdentifier }) => {
-            const el = new BERElement();
-            el.value = uniqueIdentifier;
-            return el.bitString;
-        });
     const ret: DSE = {
         id: dbe.id,
         materializedPath: dbe.materialized_path,
@@ -214,12 +127,6 @@ async function dseFromDatabaseEntry (
         entryUUID: dbe.entryUUID ?? undefined,
         rdn,
         objectClass: new Set(objectClasses.map(({ object_class }) => object_class)),
-        clearances: clearances.map((c) => {
-            const el = new BERElement();
-            el.fromBytes(c.ber);
-            return _decode_Clearance(el);
-        }),
-        uniqueIdentifier: uniqueIdentifiers,
         structuralObjectClass: dbe.structuralObjectClass
             ? ObjectIdentifier.fromString(dbe.structuralObjectClass)
             : undefined,
@@ -236,7 +143,6 @@ async function dseFromDatabaseEntry (
         },
         createTimestamp: dbe.createTimestamp ?? undefined,
         modifyTimestamp: dbe.modifyTimestamp ?? undefined,
-        entryACI,
         glue: dbe.glue,
     };
 
@@ -430,44 +336,8 @@ async function dseFromDatabaseEntry (
         };
     }
 
-    if (administrativeRoles.length > 0) {
-        const accessControlScheme = await ctx.db.entryAccessControlScheme.findFirst({
-            where: {
-                entry_id: dbe.id,
-            },
-            select: {
-                accessControlScheme: true,
-            },
-        });
-        ret.admPoint = {
-            administrativeRole: new Set(administrativeRoles.map((ar) => ar.administrativeRole)),
-            accessControlScheme: accessControlScheme
-                ? ObjectIdentifier.fromString(accessControlScheme.accessControlScheme)
-                : undefined,
-            subentryACI,
-        };
-    }
-
     if (dbe.subentry) {
-        const subtreeRows = dbe.SubtreeSpecification ?? (await ctx.db.subtreeSpecification.findMany({
-            where: {
-                entry_id: dbe.id,
-            },
-            select: {
-                ber: true,
-            },
-        }));
-        const subtreeSpecification = subtreeRows
-            .map((s) => {
-                const el = new BERElement();
-                el.fromBytes(s.ber);
-                return _decode_SubtreeSpecification(el);
-            });
-
-        ret.subentry = {
-            subtreeSpecification,
-            prescriptiveACI,
-        };
+        ret.subentry = {};
         if (ret.objectClass.has(SUBENTRY_CA)) {
             if (collectiveAttributeTypes.length === 0) {
                 collectiveAttributeTypes = Array.from(ctx.collectiveAttributes);
@@ -582,20 +452,7 @@ async function dseFromDatabaseEntry (
     }
 
     if (dbe.entry) {
-        const collectiveExclusions = dbe.EntryCollectiveExclusion
-            ?? (await ctx.db.entryCollectiveExclusion.findMany({
-                where: {
-                    entry_id: dbe.id,
-                },
-                select: {
-                    collectiveExclusion: true,
-                },
-            }));
-        ret.entry = {
-            collectiveExclusions: new Set(
-                collectiveExclusions.map((ce) => ce.collectiveExclusion),
-            ),
-        };
+        ret.entry = {};
     }
 
     if (typeof dbe.hierarchyPath === "string") {
