@@ -2,12 +2,12 @@ name: Meerkat DSA Workflow
 
 on:
   push:
-    tags:
-      - v2.*
-      - v1.*
+    # tags:
+    #   - v2.*
+    #   - v1.*
     # Temporary, so I don't have to keep adding BS tags.
-    # branches:
-    #   - master
+    branches:
+      - master
 
 env:
   CLUSTER_NAME: production
@@ -217,7 +217,7 @@ jobs:
         timeout-minutes: 10
         with:
           push: true
-          tags: ghcr.io/wildboar-software/meerkat-dsa:latest,ghcr.io/wildboar-software/meerkat-dsa:${{ env.PUBLISHING_MEERKAT_VERSION }}
+          tags: ghcr.io/wildboar-software/meerkat-dsa:latest,ghcr.io/wildboar-software/meerkat-dsa:${{ env.PUBLISHING_MEERKAT_VERSION }},ghcr.io/wildboar-software/meerkat-dsa:${{ env.GITHUB_SHA }}
           context: ./
           file: ./meerkat.dockerfile
 

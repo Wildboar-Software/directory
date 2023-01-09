@@ -8,7 +8,8 @@ metadata:
   labels:
     {{- include "meerkat-dsa.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  # Meerkat DSA can't handle multiple replicas, sorry!
+  replicas: 1
   selector:
     matchLabels:
       {{- include "meerkat-dsa.selectorLabels" . | nindent 6 }}

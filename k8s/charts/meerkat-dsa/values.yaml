@@ -1,4 +1,3 @@
-replicaCount: 1
 image:
   repository: ghcr.io/wildboar-software/meerkat-dsa
   pullPolicy: Always # TODO: Change this to IfNotPresent after Beta is over.
