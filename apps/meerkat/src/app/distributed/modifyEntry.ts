@@ -3595,6 +3595,7 @@ async function modifyEntry (
      * are no longer administrative points, but it gets the job done.
      */
     if (!target.dse.admPoint && target.immediateSuperior?.dse.root) {
+        const autonomousId = _encodeObjectIdentifier(id_ar_autonomousArea, DER);
         await ctx.db.$transaction([
             ctx.db.entry.update({
                 where: {
@@ -3612,7 +3613,11 @@ async function modifyEntry (
                     tag_class: ASN1TagClass.universal,
                     constructed: false,
                     tag_number: ASN1UniversalType.objectIdentifier,
-                    content_octets: Buffer.from(_encodeObjectIdentifier(id_ar_autonomousArea, DER).value),
+                    content_octets: Buffer.from(
+                        autonomousId.value.buffer,
+                        autonomousId.value.byteOffset,
+                        autonomousId.value.byteLength,
+                    ),
                     jer: id_ar_autonomousArea.toJSON(),
                 },
             }),

@@ -330,7 +330,7 @@ model NameForm {
   ldapDesc            String?  @db.Text
   identifier          String   @db.VarChar(128) // OID
   name                String?
-  description         String?
+  description         String?  @db.Text
   obsolete            Boolean  @default(false)
   created_at          DateTime @default(now())
 
@@ -356,7 +356,7 @@ model DITStructureRule {
   nameForm               String   @db.VarChar(128) // OID
   superiorStructureRules String?  @db.Text // OIDs
   name                   String?
-  description            String?
+  description            String?  @db.Text
   obsolete               Boolean  @default(false)
   entry_id               Int
   entry                  Entry    @relation(fields: [entry_id], references: [id])
@@ -386,7 +386,7 @@ model ContentRule {
   optional_attributes  String?  @db.Text // OIDs
   precluded_attributes String?  @db.Text // OIDs
   name                 String?
-  description          String?
+  description          String?  @db.Text
   obsolete             Boolean  @default(false)
   entry_id             Int
   entry                Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
@@ -410,7 +410,7 @@ model ContextUseRule {
   mandatory     String?  @db.Text // OIDs
   optional      String?  @db.Text // OIDs
   name          String?
-  description   String?
+  description   String?  @db.Text
   obsolete      Boolean  @default(false)
   entry_id      Int
   entry         Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
@@ -431,7 +431,7 @@ model Friendship {
   anchor      String   @db.VarChar(128) // OID
   friends     String   @db.Text // OIDs
   name        String?
-  description String?
+  description String?  @db.Text
   obsolete    Boolean  @default(false)
   entry_id    Int
   entry       Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
@@ -452,7 +452,7 @@ model MatchingRuleUse {
   id          Int      @id @default(autoincrement())
   identifier  String   @db.VarChar(128) // OID
   name        String?
-  description String?
+  description String?  @db.Text
   obsolete    Boolean  @default(false)
   information String   @db.Text // OIDs
   entry_id    Int
@@ -473,13 +473,13 @@ model AttributeTypeDescription {
   id              Int            @id @default(autoincrement())
   identifier      String         @db.VarChar(128) // OID
   name            String?
-  description     String?
+  description     String?        @db.Text
   obsolete        Boolean        @default(false)
   derivation      String?        @db.VarChar(128) // OID
   equalityMatch   String?        @db.VarChar(128) // OID
   orderingMatch   String?        @db.VarChar(128) // OID
   substringsMatch String?        @db.VarChar(128) // OID
-  attributeSyntax String?
+  attributeSyntax String?        @db.Text
   multiValued     Boolean        @default(true)
   collective      Boolean        @default(false)
   userModifiable  Boolean        @default(true)
@@ -488,7 +488,7 @@ model AttributeTypeDescription {
   // Fields not present in AttributeTypeDescription
   ldapSyntax      String?  @db.VarChar(128) // OID
   ldapNames       String?
-  ldapDescription String?
+  ldapDescription String?  @db.Text
   dummy           Boolean  @default(false)
   created_at      DateTime @default(now())
 
@@ -504,14 +504,14 @@ model ObjectClassDescription {
   id              Int             @id @default(autoincrement())
   identifier      String          @db.VarChar(128) // OID
   name            String?
-  description     String?
+  description     String?         @db.Text
   obsolete        Boolean         @default(false)
   subclassOf      String?         @db.Text // OIDs
   kind            ObjectClassKind @default(STRUCTURAL)
   mandatories     String?         @db.Text // OIDs
   optionals       String?         @db.Text // OIDs
   ldapNames       String?
-  ldapDescription String?
+  ldapDescription String?         @db.Text
   created_at      DateTime        @default(now())
 
   // Why entry_id if object classes are universal? So schema shadowed from
@@ -526,10 +526,10 @@ model ContextDescription {
   id              Int      @id @default(autoincrement())
   identifier      String   @db.VarChar(128) // OID
   name            String?
-  description     String?
+  description     String?  @db.Text
   obsolete        Boolean  @default(false)
-  syntax          String
-  assertionSyntax String?
+  syntax          String   @db.Text
+  assertionSyntax String?  @db.Text
   created_at      DateTime @default(now())
 
   // For some reason, these are not present in the ASN.1 definition for

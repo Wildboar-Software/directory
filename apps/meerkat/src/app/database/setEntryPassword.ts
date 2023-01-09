@@ -161,7 +161,8 @@ async function setEntryPassword (
             ? pwd.encrypted.algorithmIdentifier
             : getScryptAlgorithmIdentifier();
     const encoded_enc_alg = _encode_AlgorithmIdentifier(encAlg, DER);
-
+    const exp_time_el = expTime && _encodeGeneralizedTime(expTime, DER);
+    const end_time_el = endTime && _encodeGeneralizedTime(endTime, DER);
     // We don't use `addValues()` or `removeAttribute()` in these DB commands,
     // purely because of performance. Much of what we have to do can be done
     // in two queries: delete attributes and create attributes.
@@ -192,7 +193,11 @@ async function setEntryPassword (
                     tag_class: nowElement.tagClass,
                     constructed: false,
                     tag_number: nowElement.tagNumber,
-                    content_octets: Buffer.from(nowElement.value.buffer),
+                    content_octets: Buffer.from(
+                        nowElement.value.buffer,
+                        nowElement.value.byteOffset,
+                        nowElement.value.byteLength,
+                    ),
                     jer: nowElement.toJSON() as string,
                 },
                 {
@@ -202,30 +207,42 @@ async function setEntryPassword (
                     tag_class: ASN1TagClass.universal,
                     constructed: true,
                     tag_number: ASN1UniversalType.sequence,
-                    content_octets: Buffer.from(encoded_enc_alg.value.buffer),
+                    content_octets: Buffer.from(
+                        encoded_enc_alg.value.buffer,
+                        encoded_enc_alg.value.byteOffset,
+                        encoded_enc_alg.value.byteLength,
+                    ),
                     jer: encoded_enc_alg.toJSON() as object,
                 },
-                ...(expTime
+                ...(exp_time_el
                     ? [{
                         entry_id: vertex.dse.id,
                         type: pwdExpiryTime["&id"].toString(),
                         operational: true,
-                        tag_class: nowElement.tagClass,
+                        tag_class: ASN1TagClass.universal,
                         constructed: false,
-                        tag_number: nowElement.tagNumber,
-                        content_octets: Buffer.from(_encodeGeneralizedTime(expTime, DER).value.buffer),
+                        tag_number: ASN1UniversalType.generalizedTime,
+                        content_octets: Buffer.from(
+                            exp_time_el.value.buffer,
+                            exp_time_el.value.byteOffset,
+                            exp_time_el.value.byteLength,
+                        ),
                         jer: nowElement.toJSON() as string,
                     }]
                     : []),
-                ...(endTime
+                ...(end_time_el
                     ? [{
                         entry_id: vertex.dse.id,
                         type: pwdEndTime["&id"].toString(),
                         operational: true,
-                        tag_class: nowElement.tagClass,
+                        tag_class: ASN1TagClass.universal,
                         constructed: false,
-                        tag_number: nowElement.tagNumber,
-                        content_octets: Buffer.from(_encodeGeneralizedTime(endTime, DER).value.buffer),
+                        tag_number: ASN1UniversalType.generalizedTime,
+                        content_octets: Buffer.from(
+                            end_time_el.value.buffer,
+                            end_time_el.value.byteOffset,
+                            end_time_el.value.byteLength,
+                        ),
                         jer: nowElement.toJSON() as string,
                     }]
                     : []),
@@ -243,7 +260,11 @@ async function setEntryPassword (
                         tag_class: encodedOldPwd.tagClass,
                         constructed: (encodedOldPwd.construction === ASN1Construction.constructed),
                         tag_number: encodedOldPwd.tagNumber,
-                        content_octets: Buffer.from(encodedOldPwd.value.buffer),
+                        content_octets: Buffer.from(
+                            encodedOldPwd.value.buffer,
+                            encodedOldPwd.value.byteOffset,
+                            encodedOldPwd.value.byteLength,
+                        ),
                     }]
                     : []),
             ],
@@ -284,14 +305,14 @@ async function setEntryPassword (
                     encrypted: Buffer.from(encrypted),
                     algorithm_oid: encAlg.algorithm.toString(),
                     algorithm_parameters_der: encAlg.parameters
-                        ? Buffer.from(encAlg.parameters.toBytes().buffer)
+                        ? Buffer.from(encAlg.parameters.toBytes())
                         : undefined,
                 },
                 update: {
                     encrypted: Buffer.from(encrypted),
                     algorithm_oid: encAlg.algorithm.toString(),
                     algorithm_parameters_der: encAlg.parameters
-                        ? Buffer.from(encAlg.parameters.toBytes().buffer)
+                        ? Buffer.from(encAlg.parameters.toBytes())
                         : undefined,
                 },
             }),
@@ -332,14 +353,14 @@ async function setEntryPassword (
                     encrypted: Buffer.from(pwd.encrypted.encryptedString),
                     algorithm_oid: pwd.encrypted.algorithmIdentifier.algorithm.toString(),
                     algorithm_parameters_der: pwd.encrypted.algorithmIdentifier.parameters
-                        ? Buffer.from(pwd.encrypted.algorithmIdentifier.parameters.toBytes().buffer)
+                        ? Buffer.from(pwd.encrypted.algorithmIdentifier.parameters.toBytes())
                         : undefined,
                 },
                 update: {
                     encrypted: Buffer.from(pwd.encrypted.encryptedString),
                     algorithm_oid: pwd.encrypted.algorithmIdentifier.algorithm.toString(),
                     algorithm_parameters_der: pwd.encrypted.algorithmIdentifier.parameters
-                        ? Buffer.from(pwd.encrypted.algorithmIdentifier.parameters.toBytes().buffer)
+                        ? Buffer.from(pwd.encrypted.algorithmIdentifier.parameters.toBytes())
                         : undefined,
                 },
             }),

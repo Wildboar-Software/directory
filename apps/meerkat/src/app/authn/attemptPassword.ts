@@ -463,6 +463,7 @@ async function attemptPassword (
     }
     const nowElement = _encodeGeneralizedTime(new Date(), DER);
     if (!passwordIsCorrect) {
+        const newFailsEl = _encodeInteger(fails + 1, DER);
         const new_attrs: Prisma.AttributeValueUncheckedCreateInput[] = [
             {
                 entry_id: vertex.dse.id,
@@ -471,7 +472,11 @@ async function attemptPassword (
                 tag_class: ASN1TagClass.universal,
                 constructed: false,
                 tag_number: ASN1UniversalType.integer,
-                content_octets: Buffer.from(_encodeInteger(fails + 1, DER).value),
+                content_octets: Buffer.from(
+                    newFailsEl.value.buffer,
+                    newFailsEl.value.byteOffset,
+                    newFailsEl.value.byteLength,
+                ),
                 jer: fails + 1,
             },
             {
@@ -481,7 +486,11 @@ async function attemptPassword (
                 tag_class: nowElement.tagClass,
                 constructed: false,
                 tag_number: nowElement.tagNumber,
-                content_octets: Buffer.from(nowElement.value),
+                content_octets: Buffer.from(
+                    nowElement.value.buffer,
+                    nowElement.value.byteOffset,
+                    nowElement.value.byteLength,
+                ),
                 jer: nowElement.toJSON() as string,
             },
         ];
@@ -504,7 +513,11 @@ async function attemptPassword (
                 tag_class: nowElement.tagClass,
                 constructed: false,
                 tag_number: nowElement.tagNumber,
-                content_octets: Buffer.from(nowElement.value),
+                content_octets: Buffer.from(
+                    nowElement.value.buffer,
+                    nowElement.value.byteOffset,
+                    nowElement.value.byteLength,
+                ),
                 jer: nowElement.toJSON() as string,
             });
         }
@@ -595,6 +608,7 @@ async function attemptPassword (
             ),
         };
     }
+    const zeroFailsEl = _encodeInteger(0, DER);
     await ctx.db.$transaction([
         ctx.db.attributeValue.deleteMany({
             where: {
@@ -616,7 +630,11 @@ async function attemptPassword (
                     tag_class: ASN1TagClass.universal,
                     constructed: false,
                     tag_number: ASN1UniversalType.integer,
-                    content_octets: Buffer.from(_encodeInteger(0, DER).value),
+                    content_octets: Buffer.from(
+                        zeroFailsEl.value.buffer,
+                        zeroFailsEl.value.byteOffset,
+                        zeroFailsEl.value.byteLength,
+                    ),
                     jer: 0,
                 },
                 {
@@ -626,7 +644,11 @@ async function attemptPassword (
                     tag_class: ASN1TagClass.universal,
                     constructed: false,
                     tag_number: ASN1UniversalType.generalizedTime,
-                    content_octets: Buffer.from(nowElement.value),
+                    content_octets: Buffer.from(
+                        nowElement.value.buffer,
+                        nowElement.value.byteOffset,
+                        nowElement.value.byteLength,
+                    ),
                     jer: now.toISOString(),
                 },
             ],
@@ -639,18 +661,29 @@ async function attemptPassword (
 
     const password_must_be_reset: boolean = (entry_attrs[pwdReset["&id"].toString()]?.[0]?.content_octets[0] ?? 0) > 0;
 
+    const returnPwdResponse = (
+        (expirationWarningStart && (expirationWarningStart <= now))
+        || password_must_be_reset
+    );
     return {
         authorized: true,
-        pwdResponse: new PwdResponseValue(
-            (expirationWarningStart && (expirationWarningStart <= now))
-                ? {
-                    timeLeft: Math.abs(differenceInSeconds(now, expiry_time!)),
-                }
-                : undefined,
-            password_must_be_reset
-                ? PwdResponseValue_error_changeAfterReset
-                : undefined,
-        ),
+        /**
+         * We don't want to display this if it is empty, because WireShark does
+         * not recognize the [2] tag, so it fails to display the bind result if
+         * this is present.
+         */
+        pwdResponse: returnPwdResponse
+            ? new PwdResponseValue(
+                (expirationWarningStart && (expirationWarningStart <= now))
+                    ? {
+                        timeLeft: Math.abs(differenceInSeconds(now, expiry_time!)),
+                    }
+                    : undefined,
+                password_must_be_reset
+                    ? PwdResponseValue_error_changeAfterReset
+                    : undefined,
+            )
+            : undefined,
     };
 }
 
