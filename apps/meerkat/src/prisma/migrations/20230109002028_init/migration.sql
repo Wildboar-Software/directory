@@ -41,23 +41,13 @@ CREATE TABLE `Entry` (
     `hierarchyPath` VARCHAR(191) NULL,
     `otherData` JSON NULL,
 
-    INDEX `Entry_immediate_superior_id_deleteTimestamp_subentry_idx`(`immediate_superior_id`, `deleteTimestamp`, `subentry`),
+    INDEX `Entry_immediate_superior_id_deleteTimestamp_expiresTimestamp_idx`(`immediate_superior_id`, `deleteTimestamp`, `expiresTimestamp`, `subentry`),
     INDEX `Entry_materialized_path_idx`(`materialized_path`),
     INDEX `Entry_hierarchyTop_id_idx`(`hierarchyTop_id`),
     INDEX `Entry_hierarchyParent_id_idx`(`hierarchyParent_id`),
     INDEX `Entry_hierarchyPath_idx`(`hierarchyPath`),
     UNIQUE INDEX `Entry_dseUUID_key`(`dseUUID`),
     UNIQUE INDEX `Entry_entryUUID_key`(`entryUUID`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `UniqueIdentifier` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `uniqueIdentifier` LONGBLOB NOT NULL,
-
-    INDEX `UniqueIdentifier_entry_id_idx`(`entry_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -85,17 +75,6 @@ CREATE TABLE `PasswordHistory` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `PasswordEncryptionAlgorithm` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `oid` VARCHAR(128) NOT NULL,
-    `parameters` LONGBLOB NULL,
-
-    UNIQUE INDEX `PasswordEncryptionAlgorithm_entry_id_key`(`entry_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
 CREATE TABLE `PasswordDictionaryItem` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `bit` SMALLINT NOT NULL,
@@ -115,12 +94,8 @@ CREATE TABLE `AttributeValue` (
     `constructed` BOOLEAN NOT NULL,
     `tag_number` INTEGER NOT NULL,
     `index_key` INTEGER NULL,
-    `ber` LONGBLOB NOT NULL,
+    `content_octets` LONGBLOB NOT NULL,
     `jer` JSON NULL,
-    `security_label` LONGBLOB NULL,
-    `security_policy_identifier` VARCHAR(191) NULL,
-    `security_classification` SMALLINT NULL,
-    `privacy_mark` VARCHAR(191) NULL,
 
     INDEX `AttributeValue_entry_id_type_index_key_idx`(`entry_id`, `type`, `index_key`),
     INDEX `AttributeValue_entry_id_type_tag_class_constructed_tag_numbe_idx`(`entry_id`, `type`, `tag_class`, `constructed`, `tag_number`),
@@ -146,59 +121,6 @@ CREATE TABLE `ContextValue` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `ACIItem` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `tag` VARCHAR(191) NOT NULL,
-    `precedence` INTEGER NOT NULL,
-    `auth_level_basic_level` INTEGER NULL,
-    `auth_level_basic_local_qualifier` INTEGER NULL,
-    `auth_level_basic_signed` BOOLEAN NULL,
-    `auth_level_other_dir_ref` VARCHAR(128) NULL,
-    `auth_level_other_indir_ref` INTEGER NULL,
-    `auth_level_other_descriptor` VARCHAR(191) NULL,
-    `auth_level_other_encoding_type` INTEGER NULL,
-    `auth_level_other_encoding` LONGBLOB NULL,
-    `ber` LONGBLOB NOT NULL,
-    `scope` ENUM('PRESCRIPTIVE', 'ENTRY', 'SUBENTRY') NOT NULL,
-    `active` BOOLEAN NOT NULL DEFAULT true,
-    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-
-    INDEX `ACIItem_entry_id_active_precedence_idx`(`entry_id`, `active`, `precedence`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `Clearance` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `policy_id` VARCHAR(128) NOT NULL,
-    `unmarked` BOOLEAN NOT NULL DEFAULT false,
-    `unclassified` BOOLEAN NOT NULL DEFAULT false,
-    `restricted` BOOLEAN NOT NULL DEFAULT false,
-    `confidential` BOOLEAN NOT NULL DEFAULT false,
-    `secret` BOOLEAN NOT NULL DEFAULT false,
-    `topSecret` BOOLEAN NOT NULL DEFAULT false,
-    `ber` LONGBLOB NOT NULL,
-    `active` BOOLEAN NOT NULL DEFAULT true,
-    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-
-    INDEX `Clearance_entry_id_active_policy_id_idx`(`entry_id`, `active`, `policy_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `ClearanceSecurityCategory` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `clearance_id` INTEGER NOT NULL,
-    `type` VARCHAR(128) NOT NULL,
-    `value` LONGBLOB NOT NULL,
-
-    INDEX `ClearanceSecurityCategory_clearance_id_type_idx`(`clearance_id`, `type`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
 CREATE TABLE `AccessPoint` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `ber` LONGBLOB NOT NULL,
@@ -211,6 +133,8 @@ CREATE TABLE `AccessPoint` (
     `is_consumer_of_id` INTEGER NULL,
     `entry_id` INTEGER NULL,
     `nsk_group` BIGINT NULL,
+    `trust_ibra` BOOLEAN NOT NULL DEFAULT false,
+    `disclose_cross_refs` BOOLEAN NOT NULL DEFAULT false,
     `active` BOOLEAN NOT NULL DEFAULT true,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
@@ -228,21 +152,6 @@ CREATE TABLE `NetworkServiceAccessPoint` (
     `access_point_id` INTEGER NOT NULL,
 
     INDEX `NetworkServiceAccessPoint_access_point_id_idx`(`access_point_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `SubtreeSpecification` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `base` JSON NULL,
-    `specific_exclusions` JSON NULL,
-    `minimum` INTEGER NOT NULL DEFAULT 0,
-    `maximum` INTEGER NULL,
-    `specification_filter` JSON NULL,
-    `ber` LONGBLOB NOT NULL,
-    `entry_id` INTEGER NOT NULL,
-
-    INDEX `SubtreeSpecification_entry_id_idx`(`entry_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -421,39 +330,6 @@ CREATE TABLE `ContextDescription` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `SearchRule` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `rule_id` INTEGER NOT NULL,
-    `dmd_id` VARCHAR(128) NOT NULL,
-    `service_type` VARCHAR(128) NULL,
-    `user_class` INTEGER NULL,
-    `family_grouping` INTEGER NULL,
-    `family_return_member_select` INTEGER NULL,
-    `relaxation_minimum` INTEGER NOT NULL DEFAULT 1,
-    `relaxation_maximum` INTEGER NULL,
-    `additionalControl` TEXT NULL,
-    `base_object_allowed` BOOLEAN NOT NULL DEFAULT true,
-    `one_level_allowed` BOOLEAN NOT NULL DEFAULT true,
-    `whole_subtree_allowed` BOOLEAN NOT NULL DEFAULT true,
-    `imposed_subset` INTEGER NULL,
-    `entry_limit_default` INTEGER NULL,
-    `entry_limit_max` INTEGER NULL,
-    `ber` LONGBLOB NOT NULL,
-    `name` VARCHAR(191) NULL,
-    `description` VARCHAR(191) NULL,
-    `entry_id` INTEGER NOT NULL,
-    `active` BOOLEAN NOT NULL DEFAULT true,
-    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-
-    UNIQUE INDEX `SearchRule_rule_id_key`(`rule_id`),
-    INDEX `SearchRule_rule_id_idx`(`rule_id`),
-    INDEX `SearchRule_user_class_idx`(`user_class`),
-    INDEX `SearchRule_entry_id_idx`(`entry_id`),
-    UNIQUE INDEX `SearchRule_dmd_id_rule_id_key`(`dmd_id`, `rule_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
 CREATE TABLE `OperationalBinding` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `entry_id` INTEGER NULL,
@@ -565,39 +441,6 @@ CREATE TABLE `Alias` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `EntryAdministrativeRole` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `administrativeRole` VARCHAR(128) NOT NULL,
-    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-
-    UNIQUE INDEX `EntryAdministrativeRole_entry_id_administrativeRole_key`(`entry_id`, `administrativeRole`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `EntryCollectiveExclusion` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `collectiveExclusion` VARCHAR(128) NOT NULL,
-    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-
-    UNIQUE INDEX `EntryCollectiveExclusion_entry_id_collectiveExclusion_key`(`entry_id`, `collectiveExclusion`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `EntryAccessControlScheme` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `entry_id` INTEGER NOT NULL,
-    `accessControlScheme` VARCHAR(128) NOT NULL,
-    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-
-    UNIQUE INDEX `EntryAccessControlScheme_entry_id_key`(`entry_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
 CREATE TABLE `EntryAttributeValuesIncomplete` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `entry_id` INTEGER NOT NULL,
@@ -681,16 +524,10 @@ ALTER TABLE `Entry` ADD CONSTRAINT `Entry_hierarchyParent_id_fkey` FOREIGN KEY (
 ALTER TABLE `Entry` ADD CONSTRAINT `Entry_hierarchyTop_id_fkey` FOREIGN KEY (`hierarchyTop_id`) REFERENCES `Entry`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `UniqueIdentifier` ADD CONSTRAINT `UniqueIdentifier_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE `Password` ADD CONSTRAINT `Password_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `PasswordHistory` ADD CONSTRAINT `PasswordHistory_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `PasswordEncryptionAlgorithm` ADD CONSTRAINT `PasswordEncryptionAlgorithm_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `AttributeValue` ADD CONSTRAINT `AttributeValue_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -699,28 +536,16 @@ ALTER TABLE `AttributeValue` ADD CONSTRAINT `AttributeValue_entry_id_fkey` FOREI
 ALTER TABLE `ContextValue` ADD CONSTRAINT `ContextValue_value_id_fkey` FOREIGN KEY (`value_id`) REFERENCES `AttributeValue`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `ACIItem` ADD CONSTRAINT `ACIItem_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `Clearance` ADD CONSTRAINT `Clearance_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `ClearanceSecurityCategory` ADD CONSTRAINT `ClearanceSecurityCategory_clearance_id_fkey` FOREIGN KEY (`clearance_id`) REFERENCES `Clearance`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `AccessPoint` ADD CONSTRAINT `AccessPoint_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE `AccessPoint` ADD CONSTRAINT `AccessPoint_non_supplying_master_id_fkey` FOREIGN KEY (`non_supplying_master_id`) REFERENCES `AccessPoint`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `AccessPoint` ADD CONSTRAINT `AccessPoint_is_consumer_of_id_fkey` FOREIGN KEY (`is_consumer_of_id`) REFERENCES `AccessPoint`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `NetworkServiceAccessPoint` ADD CONSTRAINT `NetworkServiceAccessPoint_access_point_id_fkey` FOREIGN KEY (`access_point_id`) REFERENCES `AccessPoint`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `AccessPoint` ADD CONSTRAINT `AccessPoint_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `SubtreeSpecification` ADD CONSTRAINT `SubtreeSpecification_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `NetworkServiceAccessPoint` ADD CONSTRAINT `NetworkServiceAccessPoint_access_point_id_fkey` FOREIGN KEY (`access_point_id`) REFERENCES `AccessPoint`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `NameForm` ADD CONSTRAINT `NameForm_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -750,19 +575,16 @@ ALTER TABLE `ObjectClassDescription` ADD CONSTRAINT `ObjectClassDescription_entr
 ALTER TABLE `ContextDescription` ADD CONSTRAINT `ContextDescription_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `SearchRule` ADD CONSTRAINT `SearchRule_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `OperationalBinding` ADD CONSTRAINT `OperationalBinding_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `OperationalBinding` ADD CONSTRAINT `OperationalBinding_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `OperationalBinding` ADD CONSTRAINT `OperationalBinding_previous_id_fkey` FOREIGN KEY (`previous_id`) REFERENCES `OperationalBinding`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `OperationalBinding` ADD CONSTRAINT `OperationalBinding_access_point_id_fkey` FOREIGN KEY (`access_point_id`) REFERENCES `AccessPoint`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `OperationalBinding` ADD CONSTRAINT `OperationalBinding_master_access_point_id_fkey` FOREIGN KEY (`master_access_point_id`) REFERENCES `AccessPoint`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `OperationalBinding` ADD CONSTRAINT `OperationalBinding_previous_id_fkey` FOREIGN KEY (`previous_id`) REFERENCES `OperationalBinding`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `DistinguishedValue` ADD CONSTRAINT `DistinguishedValue_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -775,15 +597,6 @@ ALTER TABLE `Alias` ADD CONSTRAINT `Alias_alias_entry_id_fkey` FOREIGN KEY (`ali
 
 -- AddForeignKey
 ALTER TABLE `Alias` ADD CONSTRAINT `Alias_aliased_entry_id_fkey` FOREIGN KEY (`aliased_entry_id`) REFERENCES `Entry`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `EntryAdministrativeRole` ADD CONSTRAINT `EntryAdministrativeRole_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `EntryCollectiveExclusion` ADD CONSTRAINT `EntryCollectiveExclusion_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `EntryAccessControlScheme` ADD CONSTRAINT `EntryAccessControlScheme_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `EntryAttributeValuesIncomplete` ADD CONSTRAINT `EntryAttributeValuesIncomplete_entry_id_fkey` FOREIGN KEY (`entry_id`) REFERENCES `Entry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
