@@ -371,7 +371,7 @@ async function handleRequestAndErrors (
             messageID: message.messageID.toString(),
         };
         ctx.log.info(`${assn.id}#${message.messageID}: ${e.constructor?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
-        if (isDebugging) {
+        if (isDebugging || (ctx.log.level === "debug")) {
             console.error(e);
         }
         if (!stats.outcome) {

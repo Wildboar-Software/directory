@@ -323,7 +323,11 @@ async function addValues(
                 tag_class: attr.value.tagClass,
                 constructed: (attr.value.construction === ASN1Construction.constructed),
                 tag_number: attr.value.tagNumber,
-                content_octets: Buffer.from(attr.value.value.buffer),
+                content_octets: Buffer.from(
+                    attr.value.value.buffer,
+                    attr.value.value.byteOffset,
+                    attr.value.value.byteLength,
+                ),
                 jer: attr.value.toJSON() as Prisma.InputJsonValue,
             })),
         }),

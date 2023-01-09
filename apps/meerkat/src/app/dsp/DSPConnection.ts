@@ -284,7 +284,7 @@ async function handleRequestAndErrors (
             },
         });
         ctx.log.info(`${assn.id}#${invoke_id}: ${e?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
-        if (isDebugging) {
+        if (isDebugging || (ctx.log.level === "debug")) {
             console.error(e);
         }
         if (!stats.outcome) {
