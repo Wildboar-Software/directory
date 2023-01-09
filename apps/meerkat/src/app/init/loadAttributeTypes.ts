@@ -1600,12 +1600,12 @@ import {
 import {
     pwdInHistory,
 } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdInHistory.oa";
-// import {
-//     pwdLastSuccess,
-// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLastSuccess.oa";
-// import {
-//     pwdLockout,
-// } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLockout.oa";
+import {
+    pwdLastSuccess,
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLastSuccess.oa";
+import {
+    pwdLockout,
+} from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLockout.oa";
 // import {
 //     pwdLockoutDuration,
 // } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLockoutDuration.oa";
@@ -4290,7 +4290,8 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         // pwdHistory,
         pwdInHistory,
         // pwdHistory,
-        // pwdLockout,
+        pwdLastSuccess,
+        pwdLockout,
         // pwdLockoutDuration,
         // pwdMaxAge,
         pwdMaxDelay,

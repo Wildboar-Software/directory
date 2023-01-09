@@ -266,6 +266,7 @@ async function modifyOperationalBinding (
             agreement_ber: true,
             access_point: {
                 select: {
+                    id: true,
                     ber: true,
                 },
             },
@@ -407,6 +408,7 @@ async function modifyOperationalBinding (
         : undefined;
 
     const sp = data.securityParameters;
+    const previous_ap_id: number | undefined = createdAccessPoint ?? opBinding.access_point?.id;
     const created = await ctx.db.operationalBinding.create({
         data: {
             accepted: true,
@@ -422,11 +424,15 @@ async function modifyOperationalBinding (
             agreement_ber: data.newAgreement
                 ? Buffer.from(data.newAgreement.toBytes().buffer)
                 : opBinding.agreement_ber,
-            access_point: {
-                connect: {
-                    id: createdAccessPoint ?? opBinding.id,
-                },
-            },
+            ...(previous_ap_id
+                ? {
+                    access_point: {
+                        connect: {
+                            id: previous_ap_id,
+                        },
+                    },
+                }
+                : {}),
             initiator: data.initiator
                 ? getInitiator(data.initiator)
                 : opBinding.initiator,

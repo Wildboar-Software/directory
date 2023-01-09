@@ -30,6 +30,9 @@ const readValues: SpecialAttributeDatabaseReader = async (
     if (!vertex.dse.root) {
         return [];
     }
+    if (ctx.config.vendorName?.length === 0) {
+        return [];
+    }
     const vname: string = ctx.config.vendorName ?? VENDOR_NAME;
     return [
         {

@@ -20,7 +20,7 @@ import {
     _decode_UnboundedDirectoryString,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UnboundedDirectoryString.ta";
 
-const VENDOR_VERSION: string = "Meerkat DSA";
+const PRODUCT_NAME: string = "Meerkat DSA";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -30,9 +30,18 @@ const readValues: SpecialAttributeDatabaseReader = async (
     if (!vertex.dse.root) {
         return [];
     }
-    
-    const vversion: string = (ctx.config.vendorVersion ?? VENDOR_VERSION)
-        + (ctx.dsa.version ? `, ${ctx.dsa.version}` : "");
+
+    if (
+        (ctx.config.vendorVersion?.length === 0)
+        || (ctx.config.vendorName?.length === 0)
+    ) {
+        return []; // Vendor version is disabled.
+    }
+
+    const vversion = ctx.config.vendorVersion
+        ?? (ctx.dsa.version
+            ? `${PRODUCT_NAME}, ${ctx.dsa.version}`
+            : PRODUCT_NAME);
     return [
         {
             type: vendorVersion["&id"],
@@ -72,9 +81,17 @@ const hasValue: SpecialAttributeValueDetector = async (
     vertex: Vertex,
     value: Value,
 ): Promise<boolean> => {
+    if (
+        (ctx.config.vendorVersion?.length === 0)
+        || (ctx.config.vendorName?.length === 0)
+    ) {
+        return false; // Vendor version is disabled.
+    }
     const asserted: string = directoryStringToString(_decode_UnboundedDirectoryString(value.value));
-    const vversion: string = (ctx.config.vendorVersion ?? VENDOR_VERSION)
-        + (ctx.dsa.version ? `, ${ctx.dsa.version}` : "");
+    const vversion = ctx.config.vendorVersion
+        ?? (ctx.dsa.version
+            ? `${PRODUCT_NAME}, ${ctx.dsa.version}`
+            : PRODUCT_NAME);
     return (asserted.toUpperCase() === vversion.toUpperCase());
 };
 

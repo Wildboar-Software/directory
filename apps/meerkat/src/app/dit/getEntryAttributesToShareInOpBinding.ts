@@ -41,7 +41,6 @@ async function getEntryAttributesToShareInOpBinding (ctx: Context, vertex: Verte
                     x500at.accessControlScheme["&id"],
                     x500at.administrativeRole["&id"],
                     x500at.createTimestamp["&id"],
-                    x500at.dseType["&id"],
                     x500at.entryACI["&id"],
                     x500at.governingStructureRule["&id"],
                     x500at.modifyTimestamp["&id"],

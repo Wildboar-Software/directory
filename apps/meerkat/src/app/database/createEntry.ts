@@ -84,8 +84,8 @@ async function createEntry (
             entryUUID: randomUUID(),
             creatorsName: [],
             modifiersName: [],
-            createTimestamp: now,
-            modifyTimestamp: now,
+            createTimestamp: entryInit.createTimestamp ?? now,
+            modifyTimestamp: entryInit.modifyTimestamp ?? now,
             // This entry is intentionally created as deleted first, in case the transaction fails.
             deleteTimestamp: now,
             glue: entryInit.glue,
@@ -128,12 +128,14 @@ async function createEntry (
             vertex,
             values,
             modifier,
-            undefined,
+            false, // Don't check for existing values.
             signErrors,
         ),
         ctx.db.entry.update({
             where: {
                 id: createdEntry.id,
+                dseUUID: entryInit.dseUUID,
+                entryUUID: entryInit.entryUUID ?? undefined,
             },
             data: {
                 deleteTimestamp: null,

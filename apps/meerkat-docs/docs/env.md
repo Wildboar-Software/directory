@@ -1991,13 +1991,13 @@ by OpenDJ.
 
 :::caution
 
-Revealing that you are using a specific version of Meerkat DSA instance may make it easier for
-malicious users to profile your DSA in cyberattack attempts. For instance, if it
-is known that there is a new security vulnerability in Meerkat DSA, malicious
-users may search for DSAs whose `vendorVersion` attribute indicates that the DSA
-is still susceptible to the security vulnerability. To disable the `vendorName`
-from displaying the version, set the `MEERKAT_VENDOR_VERSION` environment variable
-to an empty string (`""`).
+Revealing that you are using a specific version of Meerkat DSA instance may make
+it easier for malicious users to profile your DSA in cyberattack attempts. For
+instance, if it is known that there is a new security vulnerability in Meerkat
+DSA, malicious users may search for DSAs whose `vendorVersion` attribute
+indicates that the DSA is still susceptible to the security vulnerability. To
+disable the `vendorName` from displaying the version, set the
+`MEERKAT_VENDOR_VERSION` environment variable to an empty string (`""`).
 
 :::
 

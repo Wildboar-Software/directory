@@ -223,7 +223,7 @@ async function updateLocalSubr (
                 },
             }),
             ...deletions,
-            ...await addAttributes(ctx, oldSubordinate, sub2sup.entryInfo, undefined, false),
+            ...await addAttributes(ctx, oldSubordinate, sub2sup.entryInfo, undefined, false, signErrors),
         ]);
     }
 
@@ -239,6 +239,8 @@ async function updateLocalSubr (
                     rhob: true,
                 },
                 subentry.info.flatMap((attr) => valuesFromAttribute(attr)),
+                undefined,
+                signErrors,
             );
         } else {
             const deletions = (
@@ -254,7 +256,7 @@ async function updateLocalSubr (
                     },
                 }),
                 ...deletions,
-                ...await addAttributes(ctx, existingSubentry, subentry.info, undefined, false),
+                ...await addAttributes(ctx, existingSubentry, subentry.info, undefined, false, signErrors),
             ]);
         }
     }

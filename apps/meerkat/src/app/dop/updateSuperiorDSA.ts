@@ -211,6 +211,7 @@ async function updateSuperiorDSA (
                     signErrors,
                 );
             }
+            // TODO: Use this.
             const timeRemainingForOperation: number | undefined = timeoutTime
                 ? differenceInMilliseconds(timeoutTime, new Date())
                 : undefined;
