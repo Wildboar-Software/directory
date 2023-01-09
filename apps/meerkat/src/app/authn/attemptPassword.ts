@@ -472,7 +472,7 @@ async function attemptPassword (
                 constructed: false,
                 tag_number: ASN1UniversalType.integer,
                 content_octets: Buffer.from(_encodeInteger(fails + 1, DER).value),
-                jer: 0,
+                jer: fails + 1,
             },
             {
                 entry_id: vertex.dse.id,

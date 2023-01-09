@@ -303,7 +303,7 @@ async function setEntryPassword (
                             encAlg,
                             encrypted,
                         ),
-                    }, DER).toBytes().buffer),
+                    }, DER).toBytes()),
                     time: new Date(),
                 },
             }),
@@ -346,7 +346,7 @@ async function setEntryPassword (
             ctx.db.passwordHistory.create({
                 data: {
                     entry_id: vertex.dse.id,
-                    password: Buffer.from(_encode_UserPwd(pwd, DER).toBytes().buffer),
+                    password: Buffer.from(_encode_UserPwd(pwd, DER).toBytes()),
                     time: new Date(),
                 },
             }),
