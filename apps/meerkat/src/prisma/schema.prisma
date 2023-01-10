@@ -195,15 +195,13 @@ model AttributeValue {
   tag_class                  Int     @db.SmallInt
   constructed                Boolean
   tag_number                 Int
-  index_key                  Int? // Not currently used, but will store an int that "summarizes" the value.
   content_octets             Bytes
   jer                        Json?
 
   ContextValue ContextValue[]
 
-  @@index([entry_id, type_oid, index_key])
-  @@index([entry_id, type_oid, tag_class, constructed, tag_number])
-  @@index([entry_id, operational, type_oid])
+  @@index([entry_id, type_oid(length: 32), tag_class, constructed, tag_number])
+  @@index([entry_id, operational, type_oid(length: 32)])
 }
 
 model ContextValue {
@@ -215,7 +213,6 @@ model ContextValue {
   constructed Boolean
   tag_number  Int
   ber         Bytes
-  hint        BigInt?
   jer         Json?
   fallback    Boolean
 
