@@ -90,7 +90,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import getDistinguishedName from "../x500/getDistinguishedName";
-import type { PrismaPromise } from "@prisma/client";
+import type { PrismaPromise, Prisma } from "@prisma/client";
 import addValues from "../database/entry/addValues";
 import removeValues from "../database/entry/removeValues";
 import removeAttribute from "../database/entry/removeAttribute";
@@ -1685,9 +1685,9 @@ async function executeResetValue (
     aliasDereferenced?: boolean,
     signErrors: boolean = false,
 ): Promise<PrismaPromise<any>[]> {
-    const where = {
+    const where: Prisma.AttributeValueWhereInput = {
         entry_id: entry.dse.id,
-        type: mod.toString(),
+        type_oid: mod.toBytes(),
         ContextValue: {
             some: {
                 fallback: false,
