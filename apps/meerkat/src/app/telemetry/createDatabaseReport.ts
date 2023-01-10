@@ -111,7 +111,7 @@ async function createDatabaseReport (ctx: Context): Promise<Record<string, any>>
         values: {
             total: await ctx.db.attributeValue.count(),
             byType: await ctx.db.attributeValue.groupBy({
-                by: ["type"],
+                by: ["type_oid"],
                 _count: true,
             }),
         },

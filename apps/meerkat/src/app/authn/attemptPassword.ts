@@ -307,31 +307,32 @@ async function attemptPassword (
     const entry_value_rows = await ctx.db.attributeValue.findMany({
         where: {
             entry_id: vertex.dse.id,
-            type: {
+            type_oid: {
                 in: [
-                    userPwdRecentlyExpired["&id"].toString(),
-                    pwdFails["&id"].toString(),
-                    pwdGracesUsed["&id"].toString(),
-                    pwdLockout["&id"].toString(),
-                    pwdReset["&id"].toString(),
+                    userPwdRecentlyExpired["&id"].toBytes(),
+                    pwdFails["&id"].toBytes(),
+                    pwdGracesUsed["&id"].toBytes(),
+                    pwdLockout["&id"].toBytes(),
+                    pwdReset["&id"].toBytes(),
 
                     // GeneralizedTime syntaxes
-                    START_TIME_OID,
-                    EXPIRY_TIME_OID,
-                    LOCKED_TIME_OID,
-                    END_TIME_OID,
+                    pwdStartTime["&id"].toBytes(),
+                    pwdExpiryTime["&id"].toBytes(),
+                    pwdAccountLockedTime["&id"].toBytes(),
+                    pwdEndTime["&id"].toBytes(),
+
                 ],
             },
         },
         select: {
-            type: true,
+            type_oid: true,
             tag_class: true,
             constructed: true,
             tag_number: true,
             content_octets: true,
         },
     });
-    const entry_attrs = groupByOID(entry_value_rows, (r) => r.type);
+    const entry_attrs = groupByOID(entry_value_rows, (r) => ObjectIdentifier.fromBytes(r.type_oid).toString());
     const start_time = decodeGeneralizedTime(entry_attrs[START_TIME_OID]?.[0]);
     const expiry_time = decodeGeneralizedTime(entry_attrs[EXPIRY_TIME_OID]?.[0]);
     const locked_time = decodeGeneralizedTime(entry_attrs[LOCKED_TIME_OID]?.[0]);
@@ -354,18 +355,18 @@ async function attemptPassword (
             entry_id: {
                 in: relevantSubentries.map((s) => s.dse.id),
             },
-            type: {
+            type_oid: {
                 in: [
-                    ID_EXPIRE_WARNING,
-                    ID_GRACES,
-                    ID_LOCKOUT_DURATION,
-                    ID_MAX_FAILURES,
-                    ID_RECENTLY_EXPIRED_DURATION,
+                    pwdExpireWarning["&id"].toBytes(),
+                    id_oa_pwdGraces.toBytes(),
+                    pwdLockoutDuration["&id"].toBytes(),
+                    pwdMaxFailures["&id"].toBytes(),
+                    pwdRecentlyExpiredDuration["&id"].toBytes(),
                 ],
             },
         },
         select: {
-            type: true,
+            type_oid: true,
             tag_class: true,
             constructed: true,
             tag_number: true,
@@ -373,7 +374,7 @@ async function attemptPassword (
         },
     });
 
-    const subentry_attrs = groupByOID(subentry_value_rows, (r) => r.type);
+    const subentry_attrs = groupByOID(subentry_value_rows, (r) => ObjectIdentifier.fromBytes(r.type_oid).toString());
     const warning_time: number = subentry_attrs[ID_EXPIRE_WARNING]
         ?.map((row) => decodeInt(row)).sort().pop() // Highest warning time
         ?? 0;
@@ -405,10 +406,10 @@ async function attemptPassword (
         ctx.db.attributeValue.deleteMany({
             where: {
                 entry_id: vertex.dse.id,
-                type: {
+                type_oid: {
                     in: [
-                        pwdLockout["&id"].toString(),
-                        pwdAccountLockedTime["&id"].toString(),
+                        pwdLockout["&id"].toBytes(),
+                        pwdAccountLockedTime["&id"].toBytes(),
                     ],
                 },
             }
@@ -467,7 +468,7 @@ async function attemptPassword (
         const new_attrs: Prisma.AttributeValueUncheckedCreateInput[] = [
             {
                 entry_id: vertex.dse.id,
-                type: pwdFails["&id"].toString(),
+                type_oid: pwdFails["&id"].toBytes(),
                 operational: true,
                 tag_class: ASN1TagClass.universal,
                 constructed: false,
@@ -481,7 +482,7 @@ async function attemptPassword (
             },
             {
                 entry_id: vertex.dse.id,
-                type: pwdFailureTime["&id"].toString(),
+                type_oid: pwdFailureTime["&id"].toBytes(),
                 operational: true,
                 tag_class: nowElement.tagClass,
                 constructed: false,
@@ -498,7 +499,7 @@ async function attemptPassword (
         if (fails + 1 > max_failures) {
             new_attrs.push({
                 entry_id: vertex.dse.id,
-                type: pwdLockout["&id"].toString(),
+                type_oid: pwdLockout["&id"].toBytes(),
                 operational: false,
                 tag_class: ASN1TagClass.universal,
                 constructed: false,
@@ -508,7 +509,7 @@ async function attemptPassword (
             });
             new_attrs.push({
                 entry_id: vertex.dse.id,
-                type: pwdAccountLockedTime["&id"].toString(),
+                type_oid: pwdAccountLockedTime["&id"].toBytes(),
                 operational: true,
                 tag_class: nowElement.tagClass,
                 constructed: false,
@@ -526,10 +527,10 @@ async function attemptPassword (
             ctx.db.attributeValue.deleteMany({
                 where: {
                     entry_id: vertex.dse.id,
-                    type: {
+                    type_oid: {
                         in: [
-                            pwdFails["&id"].toString(),
-                            pwdFailureTime["&id"].toString(),
+                            pwdFails["&id"].toBytes(),
+                            pwdFailureTime["&id"].toBytes(),
                         ],
                     },
                 },
@@ -613,10 +614,10 @@ async function attemptPassword (
         ctx.db.attributeValue.deleteMany({
             where: {
                 entry_id: vertex.dse.id,
-                type: {
+                type_oid: {
                     in: [
-                        pwdFails["&id"].toString(),
-                        pwdLastSuccess["&id"].toString(),
+                        pwdFails["&id"].toBytes(),
+                        pwdLastSuccess["&id"].toBytes(),
                     ],
                 },
             },
@@ -625,7 +626,7 @@ async function attemptPassword (
             data: [
                 {
                     entry_id: vertex.dse.id,
-                    type: pwdFails["&id"].toString(),
+                    type_oid: pwdFails["&id"].toBytes(),
                     operational: true,
                     tag_class: ASN1TagClass.universal,
                     constructed: false,
@@ -639,7 +640,7 @@ async function attemptPassword (
                 },
                 {
                     entry_id: vertex.dse.id,
-                    type: pwdLastSuccess["&id"].toString(),
+                    type_oid: pwdLastSuccess["&id"].toBytes(),
                     operational: true,
                     tag_class: ASN1TagClass.universal,
                     constructed: false,

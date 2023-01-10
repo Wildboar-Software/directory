@@ -60,7 +60,7 @@ async function removeValues (
             .map((attr) => ctx.db.attributeValue.deleteMany({
                 where: {
                     entry_id: entry.dse.id,
-                    type: attr.type.toString(),
+                    type_oid: attr.type.toBytes(),
                     tag_class: attr.value.tagClass,
                     constructed: (attr.value.construction === ASN1Construction.constructed),
                     tag_number: attr.value.tagNumber,

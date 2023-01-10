@@ -67,7 +67,7 @@ async function getACIItems (
                     ? (await ctx.db.attributeValue.findMany({
                         where: {
                             entry_id: immediateSuperior.dse.id,
-                            type: subentryACI["&id"].toString(),
+                            type_oid: subentryACI["&id"].toBytes(),
                         },
                         select: {
                             tag_class: true,
@@ -83,7 +83,7 @@ async function getACIItems (
                     ? (await ctx.db.attributeValue.findMany({
                         where: {
                             entry_id: vertex.dse.id,
-                            type: entryACI["&id"].toString(),
+                            type_oid: entryACI["&id"].toBytes(),
                         },
                         select: {
                             tag_class: true,
@@ -139,7 +139,7 @@ async function getACIItems (
                         entry_id: {
                             in: accessControlSubentriesWithinScope.map((s) => s.dse.id),
                         },
-                        type: prescriptiveACI["&id"].toString(),
+                        type_oid: prescriptiveACI["&id"].toBytes(),
                     },
                     select: {
                         tag_class: true,
@@ -154,7 +154,7 @@ async function getACIItems (
                 ? (await ctx.db.attributeValue.findMany({
                     where: {
                         entry_id: vertex.dse.id,
-                        type: entryACI["&id"].toString(),
+                        type_oid: entryACI["&id"].toBytes(),
                     },
                     select: {
                         tag_class: true,

@@ -91,7 +91,7 @@ async function setEntryPassword (
             entry_id: {
                 in: relevantSubentries.map((s) => s.dse.id),
             },
-            type: pwdExpiryAge["&id"].toString(),
+            type_oid: pwdExpiryAge["&id"].toBytes(),
             operational: true,
         },
         select: {
@@ -107,7 +107,7 @@ async function setEntryPassword (
             entry_id: {
                 in: relevantSubentries.map((s) => s.dse.id),
             },
-            type: pwdMaxAge["&id"].toString(),
+            type_oid: pwdMaxAge["&id"].toBytes(),
             operational: true,
         },
         select: {
@@ -171,15 +171,15 @@ async function setEntryPassword (
     const otherUpdates: PrismaPromise<any>[] = [
         ctx.db.attributeValue.deleteMany({
             where: {
-                type: {
+                type_oid: {
                     in: [
-                        pwdStartTime["&id"].toString(),
-                        userPwdRecentlyExpired["&id"].toString(),
-                        pwdGracesUsed["&id"].toString(),
-                        pwdGraceUseTime["&id"].toString(),
-                        pwdExpiryTime["&id"].toString(),
-                        pwdEndTime["&id"].toString(),
-                        pwdEncAlg["&id"].toString(),
+                        pwdStartTime["&id"].toBytes(),
+                        userPwdRecentlyExpired["&id"].toBytes(),
+                        pwdGracesUsed["&id"].toBytes(),
+                        pwdGraceUseTime["&id"].toBytes(),
+                        pwdExpiryTime["&id"].toBytes(),
+                        pwdEndTime["&id"].toBytes(),
+                        pwdEncAlg["&id"].toBytes(),
                     ],
                 },
             },
@@ -188,7 +188,7 @@ async function setEntryPassword (
             data: [
                 {
                     entry_id: vertex.dse.id,
-                    type: pwdStartTime["&id"].toString(),
+                    type_oid: pwdStartTime["&id"].toBytes(),
                     operational: true,
                     tag_class: nowElement.tagClass,
                     constructed: false,
@@ -202,7 +202,7 @@ async function setEntryPassword (
                 },
                 {
                     entry_id: vertex.dse.id,
-                    type: pwdEncAlg["&id"].toString(),
+                    type_oid: pwdEncAlg["&id"].toBytes(),
                     operational: true,
                     tag_class: ASN1TagClass.universal,
                     constructed: true,
@@ -217,7 +217,7 @@ async function setEntryPassword (
                 ...(exp_time_el
                     ? [{
                         entry_id: vertex.dse.id,
-                        type: pwdExpiryTime["&id"].toString(),
+                        type_oid: pwdExpiryTime["&id"].toBytes(),
                         operational: true,
                         tag_class: ASN1TagClass.universal,
                         constructed: false,
@@ -233,7 +233,7 @@ async function setEntryPassword (
                 ...(end_time_el
                     ? [{
                         entry_id: vertex.dse.id,
-                        type: pwdEndTime["&id"].toString(),
+                        type_oid: pwdEndTime["&id"].toBytes(),
                         operational: true,
                         tag_class: ASN1TagClass.universal,
                         constructed: false,
@@ -255,7 +255,7 @@ async function setEntryPassword (
                 ...(encodedOldPwd
                     ? [{
                         entry_id: vertex.dse.id,
-                        type: userPwdRecentlyExpired["&id"].toString(),
+                        type_oid: userPwdRecentlyExpired["&id"].toBytes(),
                         operational: true,
                         tag_class: encodedOldPwd.tagClass,
                         constructed: (encodedOldPwd.construction === ASN1Construction.constructed),

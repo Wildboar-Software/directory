@@ -65,7 +65,7 @@ async function removeAttribute (
             ctx.db.attributeValue.deleteMany({
                 where: {
                     entry_id: entry.dse.id,
-                    type: type_.toString(),
+                    type_oid: type_.toBytes(),
                 },
             }),
         ]

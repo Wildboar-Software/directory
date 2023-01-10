@@ -23,7 +23,7 @@ import type { Prisma } from "@prisma/client";
 import { attributeValueFromDB } from "../attributeValueFromDB";
 
 const ID_PWD_SUBENTRY: string = pwdAdminSubentry["&id"].toString();
-const TYPE_OID: string = pwdFailureDuration["&id"].toString();
+const TYPE_OID = pwdFailureDuration["&id"].toBytes();
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -37,7 +37,7 @@ const readValues: SpecialAttributeDatabaseReader = async (
         const row = await ctx.db.attributeValue.findFirst({
             where: {
                 entry_id: vertex.dse.id,
-                type: TYPE_OID,
+                type_oid: TYPE_OID,
             },
             select: {
                 tag_class: true,
@@ -84,7 +84,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates.otherWrites.push(ctx.db.attributeValue.create({
         data: {
             entry_id: vertex.dse.id,
-            type: TYPE_OID,
+            type_oid: TYPE_OID,
             operational: true,
             tag_class: value.value.tagClass,
             constructed: (value.value.construction === ASN1Construction.constructed),
@@ -112,7 +112,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates.otherWrites.push(ctx.db.attributeValue.deleteMany({
         where: {
             entry_id: vertex.dse.id,
-            type: TYPE_OID,
+            type_oid: TYPE_OID,
             content_octets: Buffer.from(
                 value.value.value.buffer,
                 value.value.value.byteOffset,
@@ -134,7 +134,7 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
     pendingUpdates.otherWrites.push(ctx.db.attributeValue.deleteMany({
         where: {
             entry_id: vertex.dse.id,
-            type: TYPE_OID,
+            type_oid: TYPE_OID,
         },
     }));
 };
@@ -151,7 +151,7 @@ const countValues: SpecialAttributeCounter = async (
         return ctx.db.attributeValue.count({
             where: {
                 entry_id: vertex.dse.id,
-                type: TYPE_OID,
+                type_oid: TYPE_OID,
             },
         });
     }
@@ -172,7 +172,7 @@ const isPresent: SpecialAttributeDetector = async (
         return !!(await ctx.db.attributeValue.findFirst({
             where: {
                 entry_id: vertex.dse.id,
-                type: TYPE_OID,
+                type_oid: TYPE_OID,
             },
             select: {
                 id: true,
@@ -195,7 +195,7 @@ const hasValue: SpecialAttributeValueDetector = async (
         return !!(await ctx.db.attributeValue.findFirst({
             where: {
                 entry_id: vertex.dse.id,
-                type: TYPE_OID,
+                type_oid: TYPE_OID,
                 content_octets: Buffer.from(
                     value.value.value.buffer,
                     value.value.value.byteOffset,

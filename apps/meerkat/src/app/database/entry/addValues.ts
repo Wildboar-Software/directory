@@ -54,8 +54,8 @@ async function validateValues(
     signErrors: boolean = false,
 ): Promise<void> {
     for (const value of values) {
-        const TYPE_OID: string = value.type.toString();
-        const attrSpec = ctx.attributeTypes.get(TYPE_OID);
+        const TYPE_OID = value.type.toBytes();
+        const attrSpec = ctx.attributeTypes.get(value.type.toString());
         if (attrSpec?.validator) {
             try {
                 attrSpec.validator(value.value);
@@ -98,7 +98,7 @@ async function validateValues(
                     : !!(await ctx.db.attributeValue.findFirst({
                         where: {
                             entry_id: entry.dse.id,
-                            type: TYPE_OID,
+                            type_oid: TYPE_OID,
                         },
                     }));
                 if (attributeExists) {
@@ -145,7 +145,7 @@ async function validateValues(
                 : !!(await ctx.db.attributeValue.findFirst({
                     where: {
                         entry_id: entry.dse.id,
-                        type: TYPE_OID,
+                        type_oid: value.type.toBytes(),
                         tag_class: value.value.tagClass,
                         constructed: (value.value.construction === ASN1Construction.constructed),
                         tag_number: value.value.tagNumber,
@@ -318,7 +318,7 @@ async function addValues(
         ctx.db.attributeValue.createMany({
             data: unspecialValuesWithNoContexts.map((attr) => ({
                 entry_id: entry.dse.id,
-                type: attr.type.toString(),
+                type_oid: attr.type.toBytes(),
                 operational: ((ctx.attributeTypes.get(attr.type.toString())?.usage ?? userApplications) !== userApplications),
                 tag_class: attr.value.tagClass,
                 constructed: (attr.value.construction === ASN1Construction.constructed),
@@ -335,7 +335,7 @@ async function addValues(
             .map((attr) => ctx.db.attributeValue.create({
                 data: {
                     entry_id: entry.dse.id,
-                    type: attr.type.toString(),
+                    type_oid: attr.type.toBytes(),
                     operational: ((ctx.attributeTypes.get(attr.type.toString())?.usage ?? userApplications) !== userApplications),
                     tag_class: attr.value.tagClass,
                     constructed: (attr.value.construction === ASN1Construction.constructed),

@@ -1728,7 +1728,7 @@ async function modifyDN (
             hasValue = !!(await ctx.db.attributeValue.findFirst({
                 where: {
                     entry_id: target.dse.id,
-                    type: atav.type_.toString(),
+                    type_oid: atav.type_.toBytes(),
                     tag_class: atav.value.tagClass,
                     tag_number: atav.value.tagNumber,
                     constructed: (atav.value.construction === ASN1Construction.constructed),

@@ -54,7 +54,7 @@ async function getContextAssertionDefaults (
             entry_id: {
                 in: cadSubentries.slice(0, i).map((c) => c.dse.id),
             },
-            type: contextAssertionDefaults["&id"].toString(),
+            type_oid: contextAssertionDefaults["&id"].toBytes(),
         },
         select: {
             tag_class: true,

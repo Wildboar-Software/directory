@@ -52,7 +52,7 @@ async function readCollectiveAttributes (
         (await ctx.db.attributeValue.findMany({
             where: {
                 entry_id: vertex.dse.id,
-                type: collectiveExclusions["&id"].toString(),
+                type_oid: collectiveExclusions["&id"].toBytes(),
                 // ber: Buffer.from([ 6, 3, 0x55, 18, 0 ]), // 2.5.18.0
             },
             select: {

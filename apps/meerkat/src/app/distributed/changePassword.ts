@@ -395,7 +395,7 @@ async function changePassword (
                 entry_id: {
                     in: pwdAdminSubentries.map((s) => s.dse.id),
                 },
-                type: pwdChangeAllowed["&id"].toString(),
+                type_oid: pwdChangeAllowed["&id"].toBytes(),
                 operational: true,
             },
             select: {

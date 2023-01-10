@@ -46,7 +46,7 @@ async function hasValueWithoutDriver (
     value: Value,
     matcher: EqualityMatcher,
 ): Promise<boolean> {
-    const TYPE_OID: string = value.type.toString();
+    const TYPE_OID = value.type.toBytes();
     let cursorId: number | undefined;
     let i = 0;
     let take: number = 1;
@@ -61,7 +61,7 @@ async function hasValueWithoutDriver (
                 : undefined,
             where: {
                 entry_id,
-                type: TYPE_OID,
+                type_oid: TYPE_OID,
             },
             orderBy: {
                 id: "asc",

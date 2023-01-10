@@ -48,7 +48,7 @@ async function getRelevantSubentries (
             entry_id: {
                 in: subentries.map((c) => c.dse.id),
             },
-            type: subtreeSpecification["&id"].toString(),
+            type_oid: subtreeSpecification["&id"].toBytes(),
         },
         select: {
             entry_id: true,

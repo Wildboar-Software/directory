@@ -702,11 +702,11 @@ async function list_i (
                         !!(await ctx.db.attributeValue.findFirst(({
                             where: {
                                 entry_id: subordinate.dse.id,
-                                type: {
+                                type_oid: {
                                     in: [
-                                        entryACI["&id"].toString(),
-                                        subentryACI["&id"].toString(),
-                                        prescriptiveACI["&id"].toString(),
+                                        entryACI["&id"].toBytes(),
+                                        subentryACI["&id"].toBytes(),
+                                        prescriptiveACI["&id"].toBytes(),
                                     ],
                                 },
                             },

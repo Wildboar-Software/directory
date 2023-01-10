@@ -21,12 +21,12 @@ import { attributeValueFromDB, DBAttributeValue } from "../database/attributeVal
 export
 function attributeFromDatabaseAttribute (
     ctx: Context,
-    attr: { type: string, ContextValue?: { type: string; ber: Buffer; fallback: boolean; }[] } & DBAttributeValue,
+    attr: { type_oid: Buffer, ContextValue?: { type: string; ber: Buffer; fallback: boolean; }[] } & DBAttributeValue,
 ): Value {
     const value = attributeValueFromDB(attr);
     const contexts = groupByOID(attr.ContextValue ?? [], (cv) => cv.type);
     return {
-        type: ObjectIdentifier.fromString(attr.type),
+        type: ObjectIdentifier.fromBytes(attr.type_oid),
         value,
         contexts: Object.entries(contexts)
             .map(([ key, value ]) => new X500Context(

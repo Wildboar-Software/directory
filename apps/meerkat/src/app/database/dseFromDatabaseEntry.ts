@@ -56,7 +56,7 @@ const SUBENTRY_CA: string = collectiveAttributeSubentry["&id"].toString();
 const SUBENTRY_PWD: string = pwdAdminSubentry["&id"].toString();
 const SUBSCHEMA: string = subschema["&id"].toString();
 
-let collectiveAttributeTypes: string[] = [];
+let collectiveAttributeTypes: Buffer[] = [];
 
 /**
  * @summary Produce an in-memory DSE from the Prisma `Entry` model
@@ -326,18 +326,19 @@ async function dseFromDatabaseEntry (
         ret.subentry = {};
         if (ret.objectClass.has(SUBENTRY_CA)) {
             if (collectiveAttributeTypes.length === 0) {
-                collectiveAttributeTypes = Array.from(ctx.collectiveAttributes);
+                collectiveAttributeTypes = Array.from(ctx.collectiveAttributes)
+                    .map((oid) => ObjectIdentifier.fromString(oid).toBytes());
             }
             ret.subentry.collectiveAttributes = attributesFromValues(
                 (await ctx.db.attributeValue.findMany({
                     where: {
                         entry_id: dbe.id,
-                        type: {
+                        type_oid: {
                             in: collectiveAttributeTypes,
                         },
                     },
                     select: {
-                        type: true,
+                        type_oid: true,
                         tag_class: true,
                         constructed: true,
                         tag_number: true,
@@ -358,7 +359,7 @@ async function dseFromDatabaseEntry (
             const pwd_attr = await ctx.db.attributeValue.findFirst({
                 where: {
                     entry_id: dbe.id,
-                    type: pwdAttribute["&id"].toString(),
+                    type_oid: pwdAttribute["&id"].toBytes(),
                 },
                 select: {
                     tag_class: true,
@@ -447,7 +448,7 @@ async function dseFromDatabaseEntry (
     const administrativeRoles = await ctx.db.attributeValue.findMany({
         where: {
             entry_id: dbe.id,
-            type: administrativeRole["&id"].toString(),
+            type_oid: administrativeRole["&id"].toBytes(),
         },
         select: {
             tag_class: true,
@@ -461,7 +462,7 @@ async function dseFromDatabaseEntry (
         const acSchemeBER = (await ctx.db.attributeValue.findFirst({
             where: {
                 entry_id: dbe.id,
-                type: accessControlScheme["&id"].toString(),
+                type_oid: accessControlScheme["&id"].toBytes(),
             },
             select: {
                 tag_class: true,

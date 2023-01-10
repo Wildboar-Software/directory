@@ -513,7 +513,7 @@ async function checkAttributePresence (
     return !!(await ctx.db.attributeValue.findFirst({
         where: {
             entry_id: target.dse.id,
-            type: TYPE_OID,
+            type_oid: type_.toBytes(),
         },
         select: {
             id: true,
@@ -644,7 +644,7 @@ async function checkPermissionToModifyPassword (
             entry_id: {
                 in: pwdAdminSubentries.map((s) => s.dse.id),
             },
-            type: pwdModifyEntryAllowed["&id"].toString(),
+            type_oid: pwdModifyEntryAllowed["&id"].toBytes(),
             operational: true,
         },
         select: {
@@ -2852,7 +2852,7 @@ async function modifyEntry (
             : await ctx.db.attributeValue.count({
                 where: {
                     entry_id: target.dse.id,
-                    type: type_,
+                    type_oid: spec?.id.toBytes() ?? removedValues[0].type.toBytes(),
                 },
             });
         if (removedValues.length < alreadyPresentValues) {
@@ -2939,7 +2939,7 @@ async function modifyEntry (
             const existingSubtrees = await ctx.db.attributeValue.count({
                 where: {
                     entry_id: target.dse.id,
-                    type: subtreeSpecification["&id"].toString(),
+                    type_oid: subtreeSpecification["&id"].toBytes(),
                 },
             });
             const totalSubtrees = (existingSubtrees + (subtreeSpecAdded?.length ?? 0) - (subtreeSpecRemoved?.length ?? 0));
@@ -3204,7 +3204,7 @@ async function modifyEntry (
                     : await ctx.db.attributeValue.count({
                         where: {
                             entry_id: target.dse.id,
-                            type: ra,
+                            type_oid: ObjectIdentifier.fromString(ra).toBytes(),
                         },
                     });
                 if (alreadyPresentValues === 0) {
@@ -3608,7 +3608,7 @@ async function modifyEntry (
             ctx.db.attributeValue.create({
                 data: {
                     entry_id: target.dse.id,
-                    type: administrativeRole["&id"].toString(),
+                    type_oid: administrativeRole["&id"].toBytes(),
                     operational: true,
                     tag_class: ASN1TagClass.universal,
                     constructed: false,

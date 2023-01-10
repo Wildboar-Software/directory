@@ -56,7 +56,7 @@
     "@wildboar/x500": "^1.0.55",
     "@wildboar/x700": "^1.0.4",
     "applicationinsights": "^2.3.6",
-    "asn1-ts": "^7.0.17",
+    "asn1-ts": "^7.1.0",
     "basic-ftp": "^5.0.2",
     "bluebird": "^3.7.2",
     "chalk": "^5.1.2",

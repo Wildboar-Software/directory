@@ -190,7 +190,7 @@ model AttributeValue {
   id                         Int     @id @default(autoincrement())
   entry_id                   Int
   entry                      Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  type                       String  @db.VarChar(128) // OID
+  type_oid                   Bytes // BinaryOID
   operational                Boolean @default(false) // True if attribute type is not userApplications
   tag_class                  Int     @db.SmallInt
   constructed                Boolean
@@ -201,9 +201,9 @@ model AttributeValue {
 
   ContextValue ContextValue[]
 
-  @@index([entry_id, type, index_key])
-  @@index([entry_id, type, tag_class, constructed, tag_number])
-  @@index([entry_id, operational, type])
+  @@index([entry_id, type_oid, index_key])
+  @@index([entry_id, type_oid, tag_class, constructed, tag_number])
+  @@index([entry_id, operational, type_oid])
 }
 
 model ContextValue {

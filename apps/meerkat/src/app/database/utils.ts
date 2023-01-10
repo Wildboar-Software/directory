@@ -7,7 +7,7 @@ async function read_unique_id (ctx: Context, vertex: Vertex): Promise<typeof uni
     const unique_id_ber = (await ctx.db.attributeValue.findFirst({
         where: {
             entry_id: vertex.dse.id,
-            type: uniqueIdentifier["&id"].toString(),
+            type_oid: uniqueIdentifier["&id"].toBytes(),
         },
         select: {
             tag_class: true,
