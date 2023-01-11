@@ -798,6 +798,52 @@ This is important for the prevention of
 
 :::
 
+## MEERKAT_MRU_VERTEX_TTL
+
+The number of seconds (the "time to live" or "TTL") during which the most
+recently used vertex remains cached in memory along with the connection.
+
+Meerkat DSA caches the most recently used (MRU) vertex in memory along with the
+association. This was implemented because users typically "statefully" navigate
+the directory, like folders in a file system--they don't bounce around the DIT
+randomly. Since there is a strong chance that the next operation a user performs
+will be the last-used vertex or one of its subordinates, caching the most
+recently used vertex can dramatically reduce the number of database queries and
+make many operations extremely fast.
+
+However, these cached vertices MUST eventually expire, otherwise, users could
+have out-of-date information or perform operations on entries to which they have
+had their permissions revoked since the last operation.
+
+:::caution
+
+To be clear, use of the most recent vertex **bypasses access controls**,
+regarding `Browse` and `ReturnDN` permissions. It is assumed that, if the user had
+`Browse` and `ReturnDN` permissions on the entry, say, three seconds ago, they
+still do. This is a small abridgement of access controls made for the sake of
+extreme performance gains.
+
+Unless you are frequently modifying access controls, virtually any number should
+be fine. The higher a higher cache TTL will give you better performance, but
+slower-to-react access controls and potential for data inconsistency.
+
+Note that the cached vertex lifespan is renewed on every operation, so if a user
+browses an entry, then you define access controls that prohibit that user from
+discovering that entry, the user can still discover it indefinitely for as long
+as they:
+
+1. Remain associated
+2. Periodically rejuvenate this cache by performing an operation with this entry
+3. Do not perform any operation with any other entry on the same association
+
+:::
+
+To disable this behavior entirely, set this to `0`. Otherwise, this defaults to
+`300` (five minutes).
+
+The MRU vertex is cached whenever a `removeEntry` or `modifyDN` operation is
+performed, since these can invalidate the cache.
+
 ## MEERKAT_MY_ACCESS_POINT_NSAPS
 
 Whitespace-separated NSAP URLs that locate this DSA. This is important for

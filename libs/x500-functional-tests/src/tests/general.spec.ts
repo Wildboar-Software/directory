@@ -8379,7 +8379,6 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    // it("If an entry has hierarchical children its hierarchyBelow attribute has a value of TRUE", async () => {
     it("Hierarchy attributes are correct for entries in a hierarchy", async () => {
         const testId = `hierarchy-${(new Date()).toISOString()}`;
         { // Setup

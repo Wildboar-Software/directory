@@ -1521,6 +1521,31 @@ interface Configuration {
      */
     signing: SigningInfo;
 
+    /**
+     * The number of seconds that the most recently used vertex remains cached
+     * in memory along with the connection.
+     *
+     * This was implemented because users typically "statefully" navigate the
+     * directory, like folders in a file system--they don't bounce around the
+     * DIT randomly. Since there is a strong chance that the next operation a
+     * user performs will be the last-used vertex or one of its subordinates,
+     * caching the most recently used vertex can dramatically reduce the number
+     * of database queries and make many operations extremely fast.
+     *
+     * However, these cached vertices MUST eventually expire, otherwise, users
+     * could have out-of-date information or perform operations on entries to
+     * which they have had their permissions revoked since the last operation.
+     *
+     * To be clear, use of the most recent vertex **bypasses access controls**.
+     * It is assumed that, if the user had Browse and ReturnDN permissions on
+     * the entry, say, three seconds, ago, they still do. This is a small
+     * abridgement of access controls made for the sake of extreme performance
+     * gains.
+     *
+     * To disable this behavior entirely, set this to 0.
+     */
+    mostRecentVertexTTL: number;
+
     tcp: {
 
         /**
@@ -3119,7 +3144,7 @@ abstract class ClientAssociation implements WithIntegerProtocolVersion {
 
     public mostRecentVertex?: {
         since: Date;
-        path: [ RelativeDistinguishedName, number ][];
+        path: Vertex[];
     };
 }
 

@@ -587,6 +587,9 @@ const config: Configuration = {
     maxConcurrentOperationsPerConnection: process.env.MEERKAT_MAX_CONCURRENT_OPERATIONS_PER_CONNECTION
         ? Number.parseInt(process.env.MEERKAT_MAX_CONCURRENT_OPERATIONS_PER_CONNECTION)
         : Infinity,
+    mostRecentVertexTTL: process.env.MEERKAT_MRU_VERTEX_TTL
+        ? Number.parseInt(process.env.MEERKAT_MRU_VERTEX_TTL, 10)
+        : 300,
     tcp: {
         noDelay: (process.env.MEERKAT_TCP_NO_DELAY === "1"),
         timeoutInSeconds: process.env.MEERKAT_TCP_TIMEOUT_IN_SECONDS

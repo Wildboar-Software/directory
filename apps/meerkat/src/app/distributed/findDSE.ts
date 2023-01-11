@@ -817,35 +817,29 @@ async function findDSE (
          * optimization used by Meerkat DSA.
          */
         if (assn?.mostRecentVertex) {
-            // TODO: Make the expiration configurable.
-            if (Math.abs(differenceInSeconds(assn.mostRecentVertex.since, new Date())) < 300) {
-                const mostRecentPathItem = assn.mostRecentVertex.path[i];
-                if (mostRecentPathItem) {
-                    const [ mostRecentRDN, id ] = mostRecentPathItem;
+            const since = assn.mostRecentVertex.since;
+            const now = new Date();
+            const timeLived = Math.abs(differenceInSeconds(since, now));
+            if (timeLived < ctx.config.mostRecentVertexTTL) {
+                const mostRecentVertex = assn.mostRecentVertex.path[i];
+                if (mostRecentVertex) {
                     rdnMatched = compareRDN(
                         needleRDN,
-                        mostRecentRDN,
+                        mostRecentVertex.dse.rdn,
                         getNamingMatcherGetter(ctx),
                     );
                     if (rdnMatched) {
-                        // TODO: Just keep the whole vertexes in memory.
-                        const matchedVertex = await getVertexById(ctx, dse_i, id);
-                        if (matchedVertex) {
-                            i++;
-                            dse_i = matchedVertex;
-                            state.rdnsResolved++;
-                            // If we are performing an operation that could invalidate the
-                            // entry cache, we need to clear it.
-                            // This is critical if you delete an entry, then recreate it.
-                            // The cached one will have the database ID of the old one.
-                            if (
-                                compareCode(state.operationCode, removeEntry["&operationCode"]!)
-                                || compareCode(state.operationCode, modifyDN["&operationCode"]!)
-                            ) {
-                                assn.mostRecentVertex = undefined;
-                            }
-                        } else {
-                            rdnMatched = false;
+                        i++;
+                        dse_i = mostRecentVertex;
+                        state.rdnsResolved++;
+                        // If we are performing an operation that could invalidate the
+                        // entry cache, we need to clear it.
+                        // This is critical if you delete an entry, then recreate it.
+                        // The cached one will have the database ID of the old one.
+                        if (
+                            compareCode(state.operationCode, removeEntry["&operationCode"]!)
+                            || compareCode(state.operationCode, modifyDN["&operationCode"]!)
+                        ) {
                             assn.mostRecentVertex = undefined;
                         }
                     }
