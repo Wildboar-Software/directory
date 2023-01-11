@@ -84,6 +84,7 @@ data:
   min_auth_local_qualifier_for_chaining: {{ .Values.min_auth_local_qualifier_for_chaining | default 0 | quote }}
   min_auth_local_qualifier_for_ob: {{ .Values.min_auth_local_qualifier_for_ob | default 0 | quote }}
   min_transfer_speed_bytes_per_minute: {{ .Values.min_transfer_speed_bytes_per_minute | default 1000 | quote }}
+  mru_vertex_ttl: {{ .Values.mru_vertex_ttl | default 500 | quote }}
   {{- if .Values.my_access_point_nsaps }}
   # NOTE: The `join` function is not documented currently.
   # See: https://stackoverflow.com/questions/47668793/helm-generate-comma-separated-list

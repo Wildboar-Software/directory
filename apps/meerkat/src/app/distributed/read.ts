@@ -98,7 +98,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
 import getACIItems from "../authz/getACIItems";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
-import { INTERNAL_ASSOCIATON_ID, MINIMUM_MAX_ATTR_SIZE, UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
+import { MINIMUM_MAX_ATTR_SIZE, UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
 import {
     ServiceControlOptions_noSubtypeSelection,
     ServiceControlOptions_dontSelectFriends,
@@ -124,6 +124,7 @@ import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import { printInvokeId } from "../utils/printInvokeId";
+import dseFromDatabaseEntry from "../database/dseFromDatabaseEntry";
 
 /**
  * @summary The read operation, as specified in ITU Recommendation X.511.
@@ -330,6 +331,31 @@ async function read (
         data.serviceControls?.options?.[ServiceControlOptions_noSubtypeSelection] === TRUE_BIT);
     const dontSelectFriends: boolean = (
         data.serviceControls?.options?.[ServiceControlOptions_dontSelectFriends] === TRUE_BIT);
+
+    /**
+     * This is a hack to ensure that `read` returns up-to-date information
+     * despite caching of the most-recently-used vertex. If we see that we have
+     * read the vertex from the cache, we update the cache and the vertex.
+     *
+     * Notice that the vertexes are compared by reference, not by value. This is
+     * just to prevent mistaken refreshes from slowing down the `read` operation.
+     */
+    if (assn?.mostRecentVertex?.path?.length) {
+        const path = assn.mostRecentVertex.path;
+        const mruVertex = path[path.length - 1];
+        if (mruVertex === target) {
+            const dbe = await ctx.db.entry.findUnique({
+                where: {
+                    id: target.dse.id,
+                },
+            });
+            // This should always be true, but we just ignore it if the entry
+            // could not be found. This is not a high-stakes operation.
+            if (dbe) {
+                target.dse = await dseFromDatabaseEntry(ctx, dbe);
+            }
+        }
+    }
 
     const permittedEntryInfo = await readPermittedEntryInformation(
         ctx,

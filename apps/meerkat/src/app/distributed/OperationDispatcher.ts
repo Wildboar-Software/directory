@@ -123,13 +123,12 @@ import { addSeconds } from "date-fns";
 import { randomInt } from "crypto";
 import { CommonArguments } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArguments.ta";
 import LDAPAssociation from "../ldap/LDAPConnection";
-import { RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
 
-function getPathFromVersion (vertex: Vertex): [ RelativeDistinguishedName, number ][] {
-    const ret: [ RelativeDistinguishedName, number ][] = [];
+function getPathFromVersion (vertex: Vertex): Vertex[] {
+    const ret: Vertex[] = [];
     let v: Vertex | undefined = vertex;
     while (v) {
-        ret.push([ v.dse.rdn, v.dse.id ]);
+        ret.push(v);
         v = v.immediateSuperior;
         if (v?.dse.root) {
             break;
@@ -811,6 +810,10 @@ class OperationDispatcher {
         if (
             state.entrySuitable
             && (targetObject.length > 0)
+            // If we are performing an operation that could invalidate the
+            // MRU vertex cache, we cannot save the MRU vertex.
+            // This is critical if you delete an entry, then recreate it.
+            // The cached one will have the database ID of the old one.
             && !compareCode(state.operationCode, removeEntry["&operationCode"]!)
             && !compareCode(state.operationCode, modifyDN["&operationCode"]!)
         ) {

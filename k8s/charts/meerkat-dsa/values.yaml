@@ -162,6 +162,7 @@ min_auth_level_for_ob: 1
 min_auth_local_qualifier_for_chaining: 0
 min_auth_local_qualifier_for_ob: 0
 min_transfer_speed_bytes_per_minute: 1000
+mru_vertex_ttl: 500
 # my_access_point_nsaps:
 #   - "itot://example.com:1707"
 no_color: false
