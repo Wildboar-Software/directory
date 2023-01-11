@@ -2995,7 +2995,7 @@ export
 abstract class ClientAssociation implements WithIntegerProtocolVersion {
 
     /** The version number of the protocol in use. */
-    protocolVersion?: number | undefined;
+    public protocolVersion?: number | undefined;
 
     /** The underlying TCP socket */
     public socket!: Socket;
@@ -3115,7 +3115,12 @@ abstract class ClientAssociation implements WithIntegerProtocolVersion {
      * If `true`, the association peer will not be able to perform any
      * operations other than those related to changing the password.
      */
-    pwdReset?: boolean;
+    public pwdReset?: boolean;
+
+    public mostRecentVertex?: {
+        since: Date;
+        path: [ RelativeDistinguishedName, number ][];
+    };
 }
 
 /**
