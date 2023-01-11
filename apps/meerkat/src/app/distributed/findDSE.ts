@@ -133,6 +133,9 @@ import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
 import DSPAssociation from "../dsp/DSPConnection";
+import { differenceInSeconds } from "date-fns";
+import { removeEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/removeEntry.oa";
+import { modifyDN } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -764,7 +767,8 @@ async function findDSE (
     while (iterations < MAX_DEPTH) {
         iterations++;
         if (i === m) {
-            const nameResolutionPhase = state.chainingArguments.operationProgress?.nameResolutionPhase;
+            const nameResolutionPhase = state.chainingArguments.operationProgress?.nameResolutionPhase
+                ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
             // I pretty much don't understand this entire section.
             if (nameResolutionPhase !== OperationProgress_nameResolutionPhase_completed) {
                 await targetNotFoundSubprocedure();
@@ -808,6 +812,51 @@ async function findDSE (
                 .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
         let cursorId: number | undefined;
         /**
+         * This is where we use the cached most recent vertex, if it is a prefix of
+         * the target object. This is not part of the ITU specifications: just an
+         * optimization used by Meerkat DSA.
+         */
+        if (assn?.mostRecentVertex) {
+            // TODO: Make the expiration configurable.
+            if (Math.abs(differenceInSeconds(assn.mostRecentVertex.since, new Date())) < 300) {
+                const mostRecentPathItem = assn.mostRecentVertex.path[i];
+                if (mostRecentPathItem) {
+                    const [ mostRecentRDN, id ] = mostRecentPathItem;
+                    rdnMatched = compareRDN(
+                        needleRDN,
+                        mostRecentRDN,
+                        getNamingMatcherGetter(ctx),
+                    );
+                    if (rdnMatched) {
+                        // TODO: Just keep the whole vertexes in memory.
+                        const matchedVertex = await getVertexById(ctx, dse_i, id);
+                        if (matchedVertex) {
+                            i++;
+                            dse_i = matchedVertex;
+                            state.rdnsResolved++;
+                            // If we are performing an operation that could invalidate the
+                            // entry cache, we need to clear it.
+                            // This is critical if you delete an entry, then recreate it.
+                            // The cached one will have the database ID of the old one.
+                            if (
+                                compareCode(state.operationCode, removeEntry["&operationCode"]!)
+                                || compareCode(state.operationCode, modifyDN["&operationCode"]!)
+                            ) {
+                                assn.mostRecentVertex = undefined;
+                            }
+                        } else {
+                            rdnMatched = false;
+                            assn.mostRecentVertex = undefined;
+                        }
+                    }
+                } else {
+                    assn.mostRecentVertex = undefined;
+                }
+            } else {
+                assn.mostRecentVertex = undefined;
+            }
+        }
+        /**
          * What follows in this if statement is a byte-for-byte check for an
          * entry having the exact RDN supplied by the query. This is intended to
          * be a performance improvement by making the database do the work of
@@ -826,7 +875,13 @@ async function findDSE (
          * case-insensitive strings. To make matters worse, they are also often
          * `DirectoryString`, which has multiple encoding variants.
          */
-        if (!dse_i.subordinates || (dse_i.subordinates.length > ctx.config.useDatabaseWhenThereAreXSubordinates)) {
+        if (
+            !rdnMatched
+            && (
+                !dse_i.subordinates
+                || (dse_i.subordinates.length > ctx.config.useDatabaseWhenThereAreXSubordinates)
+            )
+        ) {
             const match = await ctx.db.entry.findFirst({
                 where: {
                     AND: [
@@ -990,7 +1045,7 @@ async function findDSE (
             );
         };
         let subordinatesInBatch = await getNextBatchOfSubordinates();
-        while (subordinatesInBatch.length) {
+        while (!rdnMatched && subordinatesInBatch.length) {
             for (const subordinate of subordinatesInBatch) {
                 cursorId = subordinate.id;
                 if (op?.abandonTime) {
@@ -1148,9 +1203,6 @@ async function findDSE (
                     state.rdnsResolved++;
                     break;
                 }
-            }
-            if (rdnMatched) {
-                break;
             }
             subordinatesInBatch = await getNextBatchOfSubordinates();
         }

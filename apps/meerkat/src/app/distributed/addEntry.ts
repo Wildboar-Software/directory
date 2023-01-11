@@ -1426,6 +1426,13 @@ async function addEntry (
         structuralObjectClass: structuralObjectClass.toString(),
     }, values, user?.dn);
     immediateSuperior.subordinates?.push(newEntry);
+    ctx.log.debug(ctx.i18n.t("log:add_entry", {
+        aid: assn.id,
+        dn: stringifyDN(ctx, targetDN),
+        id: newEntry.dse.id,
+        uuid: newEntry.dse.uuid,
+        euuid: newEntry.dse.entryUUID,
+    }));
 
     /**
      * Because the structure rules, name forms, etc. may have been specified all

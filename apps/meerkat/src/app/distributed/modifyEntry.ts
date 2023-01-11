@@ -3566,6 +3566,13 @@ async function modifyEntry (
             invokeID: printInvokeId(state.invokeId),
         });
     }
+    ctx.log.debug(ctx.i18n.t("log:mod_entry", {
+        aid: assn.id,
+        dn: stringifyDN(ctx, targetDN),
+        id: target.dse.id,
+        uuid: target.dse.uuid,
+        euuid: target.dse.entryUUID,
+    }));
 
     if (
         patch.addedValues.has(USER_PASSWORD)

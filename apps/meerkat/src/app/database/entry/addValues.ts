@@ -62,7 +62,7 @@ async function validateValues(
             } catch (e) {
                 throw new AttributeError(
                     ctx.i18n.t("err:invalid_attribute_syntax", {
-                        type: TYPE_OID,
+                        type: value.type.toString(),
                     }),
                     new AttributeErrorData(
                         {
@@ -100,12 +100,15 @@ async function validateValues(
                             entry_id: entry.dse.id,
                             type_oid: TYPE_OID,
                         },
+                        select: {
+                            id: true,
+                        },
                     }));
                 if (attributeExists) {
                     throw new AttributeError(
                         ctx.i18n.t("err:single_valued", {
                             context: "added",
-                            oid: TYPE_OID,
+                            oid: value.type.toString(),
                         }),
                         new AttributeErrorData(
                             {
@@ -179,7 +182,7 @@ async function validateValues(
             if (valueExists) {
                 throw new AttributeError(
                     ctx.i18n.t("err:value_already_exists", {
-                        type: TYPE_OID,
+                        type: value.type.toString(),
                     }),
                     new AttributeErrorData(
                         {
