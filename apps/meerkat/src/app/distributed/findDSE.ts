@@ -826,7 +826,7 @@ async function findDSE (
                     rdnMatched = compareRDN(
                         needleRDN,
                         mostRecentVertex.dse.rdn,
-                        getNamingMatcherGetter(ctx),
+                        NAMING_MATCHER,
                     );
                     if (rdnMatched) {
                         i++;
