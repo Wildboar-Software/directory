@@ -52,7 +52,10 @@ async function readSubordinates (
                     RDN: {
                         select: {
                             type_oid: true,
-                            value: true,
+                            tag_class: true,
+                            constructed: true,
+                            tag_number: true,
+                            content_octets: true,
                         },
                         orderBy: { // So the RDNs appear in the order in which they were entered.
                             // This prevents an undesirable scenario where some users might show

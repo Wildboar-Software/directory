@@ -431,7 +431,7 @@ describe("Meerkat DSA Authentication", () => {
             ),
         })).rejects.toBeInstanceOf(IdmBindError);
 
-        await sleep(1000);
+        await sleep(2000);
 
         const authenticatedConnection = await connect({
             simple: new SimpleCredentials(

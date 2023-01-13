@@ -22,6 +22,7 @@ import {
 import {
     entryTtl,
 } from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa";
+import { ASN1Construction } from "asn1-ts";
 
 /**
  * @summary Create a DSE
@@ -107,7 +108,14 @@ async function createEntry (
                 createMany: {
                     data: rdn.map((atav, i) => ({
                         type_oid: atav.type_.toBytes(),
-                        value: Buffer.from(atav.value.toBytes().buffer),
+                        tag_class: atav.value.tagClass,
+                        constructed: (atav.value.construction === ASN1Construction.constructed),
+                        tag_number: atav.value.tagNumber,
+                        content_octets: Buffer.from(
+                            atav.value.value.buffer,
+                            atav.value.value.byteOffset,
+                            atav.value.value.byteLength,
+                        ),
                         str: atav.value.toString(),
                         order_index: i,
                     })),
@@ -118,7 +126,10 @@ async function createEntry (
             RDN: {
                 select: {
                     type_oid: true,
-                    value: true,
+                    tag_class: true,
+                    constructed: true,
+                    tag_number: true,
+                    content_octets: true,
                 },
             },
         },

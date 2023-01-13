@@ -1,5 +1,5 @@
 import type { Entry as DatabaseEntry } from "@prisma/client";
-import { ObjectIdentifier, BERElement } from "asn1-ts";
+import { ObjectIdentifier, BERElement, ASN1Construction } from "asn1-ts";
 import type { Context, DSE } from "@wildboar/meerkat-types";
 import rdnFromJson from "../x500/rdnFromJson";
 import {
@@ -85,7 +85,10 @@ async function dseFromDatabaseEntry (
         }[];
         RDN?: {
             type_oid: Buffer;
-            value: Buffer;
+            tag_class: number,
+            constructed: boolean,
+            tag_number: number,
+            content_octets: Buffer,
         }[];
     }),
 ): Promise<DSE> {
@@ -93,7 +96,12 @@ async function dseFromDatabaseEntry (
         const type_el = new BERElement();
         const value_el = new BERElement();
         type_el.value = atav.type_oid;
-        value_el.fromBytes(atav.value);
+        value_el.tagClass = atav.tag_class;
+        value_el.construction = atav.constructed
+            ? ASN1Construction.constructed
+            : ASN1Construction.primitive;
+        value_el.tagNumber = atav.tag_number;
+        value_el.value = atav.content_octets;
         return new AttributeTypeAndValue(
             type_el.objectIdentifier,
             value_el,

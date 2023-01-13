@@ -403,10 +403,14 @@ CREATE TABLE `DistinguishedValue` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `entry_id` INTEGER NOT NULL,
     `type_oid` LONGBLOB NOT NULL,
-    `value` LONGBLOB NOT NULL,
+    `tag_class` SMALLINT NOT NULL,
+    `constructed` BOOLEAN NOT NULL,
+    `tag_number` INTEGER NOT NULL,
+    `content_octets` LONGBLOB NOT NULL,
     `str` VARCHAR(191) NULL,
     `order_index` INTEGER NOT NULL,
 
+    INDEX `DistinguishedValue_type_oid_tag_class_tag_number_constructed_idx`(`type_oid`(32), `tag_class`, `tag_number`, `constructed`, `content_octets`(128)),
     UNIQUE INDEX `DistinguishedValue_entry_id_type_oid_key`(`entry_id`, `type_oid`(32)),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

@@ -1953,7 +1953,14 @@ async function modifyDN (
                 data: newRDN.map((atav, i) => ({
                     entry_id: target.dse.id,
                     type_oid: atav.type_.toBytes(),
-                    value: Buffer.from(atav.value.toBytes().buffer),
+                    tag_class: atav.value.tagClass,
+                    constructed: (atav.value.construction === ASN1Construction.constructed),
+                    tag_number: atav.value.tagNumber,
+                    content_octets: Buffer.from(
+                        atav.value.value.buffer,
+                        atav.value.value.byteOffset,
+                        atav.value.value.byteLength,
+                    ),
                     order_index: i,
                 })),
             }),
@@ -1983,7 +1990,10 @@ async function modifyDN (
                 RDN: {
                     select: {
                         type_oid: true,
-                        value: true,
+                        tag_class: true,
+                        constructed: true,
+                        tag_number: true,
+                        content_octets: true,
                     },
                 },
                 EntryObjectClass: {

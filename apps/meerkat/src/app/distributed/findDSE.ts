@@ -40,7 +40,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
-import { TRUE_BIT, TRUE, FALSE, ObjectIdentifier, OBJECT_IDENTIFIER, BERElement } from "asn1-ts";
+import { TRUE_BIT, TRUE, FALSE, ObjectIdentifier, OBJECT_IDENTIFIER, BERElement, ASN1Construction } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import {
     ServiceProblem_timeLimitExceeded,
@@ -154,7 +154,7 @@ const MAX_DEPTH: number = 10000;
  *
  * @function
  */
-async function someSubordinatesAreCP (
+async function someSubordinatesAreCP(
     ctx: Context,
     vertex: Vertex,
 ): Promise<boolean> {
@@ -189,7 +189,7 @@ async function someSubordinatesAreCP (
  *
  * @function
  */
-function makeContinuationRefFromSupplierKnowledge (
+function makeContinuationRefFromSupplierKnowledge(
     cp: Vertex,
     needleDN: DistinguishedName,
     nextRDNToBeResolved: number | undefined,
@@ -259,14 +259,14 @@ function makeContinuationRefFromSupplierKnowledge (
  * @async
  */
 export
-async function findDSE (
-    ctx: Context,
-    assn: ClientAssociation | undefined,
-    haystackVertex: DIT,
-    needleDN: DistinguishedName, // N
-    state: OperationDispatcherState,
-    common?: CommonArguments,
-): Promise<void> {
+    async function findDSE(
+        ctx: Context,
+        assn: ClientAssociation | undefined,
+        haystackVertex: DIT,
+        needleDN: DistinguishedName, // N
+        state: OperationDispatcherState,
+        common?: CommonArguments,
+    ): Promise<void> {
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
         : undefined;
@@ -400,7 +400,7 @@ async function findDSE (
                 ReferenceType_nonSpecificSubordinate,
                 dse_lastEntryFound?.dse.nssr.nonSpecificKnowledge
                     .map((nsk) => {
-                        const [ masters, shadows ] = splitIntoMastersAndShadows(nsk);
+                        const [masters, shadows] = splitIntoMastersAndShadows(nsk);
                         const recommendedAP = shadows[0] ?? masters[0];
                         if (!recommendedAP) {
                             return undefined;
@@ -411,7 +411,7 @@ async function findDSE (
                             recommendedAP.protocolInformation,
                             recommendedAP.category,
                             recommendedAP.chainingRequired,
-                            [ ...shadows.slice(1), ...masters.slice(1) ],
+                            [...shadows.slice(1), ...masters.slice(1)],
                         );
                     })
                     .filter((ap): ap is AccessPointInformation => !!ap),
@@ -559,7 +559,7 @@ async function findDSE (
                     // In a first-level DSA, the root DSE should have an NSSR.
                     // Basically, a root DSE will always have a type of either subr or nssr.
                     (ctx.dit.root.dse.nssr?.nonSpecificKnowledge ?? []).forEach((knowledge): void => {
-                        const [ masters, shadows ] = splitIntoMastersAndShadows(knowledge);
+                        const [masters, shadows] = splitIntoMastersAndShadows(knowledge);
                         const recommendedAP = shadows[0] ?? masters[0];
                         if (!recommendedAP) {
                             return;
@@ -582,7 +582,7 @@ async function findDSE (
                                     recommendedAP.protocolInformation,
                                     recommendedAP.category,
                                     recommendedAP.chainingRequired,
-                                    [ ...shadows.slice(1), ...masters.slice(1) ],
+                                    [...shadows.slice(1), ...masters.slice(1)],
                                 ),
                             ],
                             undefined,
@@ -806,10 +806,10 @@ async function findDSE (
         const needleRDN = needleDN[i];
         let rdnMatched: boolean = false;
         accessControlScheme = (dse_i.dse.admPoint
-            ? [ ...state.admPoints, dse_i ]
-            : [ ...state.admPoints ])
-                .reverse()
-                .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
+            ? [...state.admPoints, dse_i]
+            : [...state.admPoints])
+            .reverse()
+            .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
         let cursorId: number | undefined;
         /**
          * This is where we use the cached most recent vertex, if it is a prefix of
@@ -886,8 +886,15 @@ async function findDSE (
                         ...needleRDN.map((atav) => ({
                             RDN: {
                                 some: {
-                                    type: atav.type_.toString(),
-                                    value: Buffer.from(atav.value.toBytes().buffer),
+                                    type_oid: atav.type_.toBytes(),
+                                    tag_class: atav.value.tagClass,
+                                    constructed: (atav.value.construction === ASN1Construction.constructed),
+                                    tag_number: atav.value.tagNumber,
+                                    content_octets: Buffer.from(
+                                        atav.value.value.buffer,
+                                        atav.value.value.byteOffset,
+                                        atav.value.value.byteLength,
+                                    ),
                                 },
                             },
                         })),
@@ -897,7 +904,10 @@ async function findDSE (
                     RDN: {
                         select: {
                             type_oid: true,
-                            value: true,
+                            tag_class: true,
+                            constructed: true,
+                            tag_number: true,
+                            content_octets: true,
                         },
                         orderBy: { // So the RDNs appear in the order in which they were entered.
                             // This prevents an undesirable scenario where some users might show
@@ -936,8 +946,8 @@ async function findDSE (
                     const childDN = getDistinguishedName(matchedVertex);
                     // Without this, all first-level DSEs are discoverable.
                     const relevantAdmPoints: Vertex[] = matchedVertex.dse.admPoint
-                        ? [ ...state.admPoints, matchedVertex ]
-                        : [ ...state.admPoints ];
+                        ? [...state.admPoints, matchedVertex]
+                        : [...state.admPoints];
                     const relevantSubentries: Vertex[] = (await Promise.all(
                         relevantAdmPoints.map((ap) => getRelevantSubentries(ctx, matchedVertex, childDN, ap)),
                     )).flat();
@@ -956,8 +966,8 @@ async function findDSE (
                         acdfTuples,
                         user,
                         state.chainingArguments.authenticationLevel
-                            ?? assn?.authLevel
-                            ?? UNTRUSTED_REQ_AUTH_LEVEL,
+                        ?? assn?.authLevel
+                        ?? UNTRUSTED_REQ_AUTH_LEVEL,
                         childDN,
                         isMemberOfGroup,
                         NAMING_MATCHER,
@@ -1068,7 +1078,12 @@ async function findDSE (
                     const type_el = new BERElement();
                     const value_el = new BERElement();
                     type_el.value = atav.type_oid;
-                    value_el.fromBytes(atav.value);
+                    value_el.tagClass = atav.tag_class;
+                    value_el.construction = atav.constructed
+                        ? ASN1Construction.constructed
+                        : ASN1Construction.primitive;
+                    value_el.tagNumber = atav.tag_number;
+                    value_el.value = atav.content_octets;
                     return new AttributeTypeAndValue(
                         type_el.objectIdentifier,
                         value_el,
@@ -1095,8 +1110,8 @@ async function findDSE (
                         const childDN = getDistinguishedName(child);
                         // Without this, all first-level DSEs are discoverable.
                         const relevantAdmPoints: Vertex[] = child.dse.admPoint
-                            ? [ ...state.admPoints, child ]
-                            : [ ...state.admPoints ];
+                            ? [...state.admPoints, child]
+                            : [...state.admPoints];
                         const relevantSubentries: Vertex[] = (await Promise.all(
                             relevantAdmPoints.map((ap) => getRelevantSubentries(ctx, child, childDN, ap)),
                         )).flat();
@@ -1115,8 +1130,8 @@ async function findDSE (
                             acdfTuples,
                             user,
                             state.chainingArguments.authenticationLevel
-                                ?? assn?.authLevel
-                                ?? UNTRUSTED_REQ_AUTH_LEVEL,
+                            ?? assn?.authLevel
+                            ?? UNTRUSTED_REQ_AUTH_LEVEL,
                             childDN,
                             isMemberOfGroup,
                             NAMING_MATCHER,
@@ -1232,8 +1247,8 @@ async function findDSE (
                 acdfTuples,
                 user,
                 state.chainingArguments.authenticationLevel
-                    ?? assn?.authLevel
-                    ?? UNTRUSTED_REQ_AUTH_LEVEL,
+                ?? assn?.authLevel
+                ?? UNTRUSTED_REQ_AUTH_LEVEL,
                 currentDN,
                 isMemberOfGroup,
                 NAMING_MATCHER,
@@ -1367,7 +1382,7 @@ async function findDSE (
                         mainAP.protocolInformation,
                         mainAP.category,
                         mainAP.chainingRequired,
-                        [ ...shadows, ...masters ]
+                        [...shadows, ...masters]
                             .map((ap) => new MasterOrShadowAccessPoint(
                                 ap.ae_title,
                                 ap.address,

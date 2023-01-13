@@ -44,6 +44,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
 import { operationalBindingError } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
 import saveAccessPoint from "../../database/saveAccessPoint";
+import { ASN1Construction } from "asn1-ts";
 
 /**
  * @summary Update an update to a local subr DSE given by a subordinate DSA
@@ -175,7 +176,14 @@ async function updateLocalSubr (
                 data: newAgreement.rdn.map((atav, i) => ({
                     entry_id: oldSubordinate.dse.id,
                     type_oid: atav.type_.toBytes(),
-                    value: Buffer.from(atav.value.toBytes().buffer),
+                    tag_class: atav.value.tagClass,
+                    constructed: (atav.value.construction === ASN1Construction.constructed),
+                    tag_number: atav.value.tagNumber,
+                    content_octets: Buffer.from(
+                        atav.value.value.buffer,
+                        atav.value.value.byteOffset,
+                        atav.value.value.byteLength,
+                    ),
                     order_index: i,
                 })),
             }),

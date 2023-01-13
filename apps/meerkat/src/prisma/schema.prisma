@@ -112,29 +112,32 @@ model Entry {
   // For storing other arbitrary data in the entry.
   otherData Json?
 
-  subordinates                Entry[]                      @relation("superior")
-  hierarchicalChildren        Entry[]                      @relation("parent")
-  MatchingRuleUse             MatchingRuleUse[]
-  AttributeValue              AttributeValue[]
-  AccessPoint                 AccessPoint[]
-  Password                    Password[]
-  RDN                         DistinguishedValue[]
-  EntryObjectClass            EntryObjectClass[]
-  AliasEntry                  Alias[]                      @relation("alias_entry")
-  AliasedEntry                Alias?                       @relation("aliased_entry")
-  DITStructureRule            DITStructureRule[]
-  ContentRule                 ContentRule[]
-  ContextUseRule              ContextUseRule[]
-  Friendship                  Friendship[]
-  OperationalBinding          OperationalBinding[]
-  PasswordHistory             PasswordHistory[]
-  Entry                       Entry[]                      @relation("top")
-  EnqueuedSearchResult        EnqueuedSearchResult[]
-  EnqueuedListResult          EnqueuedListResult[]
+  subordinates         Entry[]                @relation("superior")
+  hierarchicalChildren Entry[]                @relation("parent")
+  MatchingRuleUse      MatchingRuleUse[]
+  AttributeValue       AttributeValue[]
+  AccessPoint          AccessPoint[]
+  Password             Password[]
+  RDN                  DistinguishedValue[]
+  EntryObjectClass     EntryObjectClass[]
+  AliasEntry           Alias[]                @relation("alias_entry")
+  AliasedEntry         Alias?                 @relation("aliased_entry")
+  DITStructureRule     DITStructureRule[]
+  ContentRule          ContentRule[]
+  ContextUseRule       ContextUseRule[]
+  Friendship           Friendship[]
+  OperationalBinding   OperationalBinding[]
+  PasswordHistory      PasswordHistory[]
+  Entry                Entry[]                @relation("top")
+  EnqueuedSearchResult EnqueuedSearchResult[]
+  EnqueuedListResult   EnqueuedListResult[]
 
   EntryAttributeValuesIncomplete EntryAttributeValuesIncomplete[]
   AttributeTypeDescription       AttributeTypeDescription[]
   ObjectClassDescription         ObjectClassDescription[]
+  NameForm                       NameForm[]
+  ContextDescription             ContextDescription[]
+
   @@unique([dseUUID])
   @@unique([entryUUID])
   @@index([immediate_superior_id, deleteTimestamp, expiresTimestamp, subentry])
@@ -142,8 +145,6 @@ model Entry {
   @@index([hierarchyTop_id])
   @@index([hierarchyParent_id])
   @@index([hierarchyPath])
-  NameForm           NameForm[]
-  ContextDescription ContextDescription[]
 }
 
 // There may be only one password per entry
@@ -187,16 +188,16 @@ model PasswordDictionaryItem {
 //     ... }
 
 model AttributeValue {
-  id                         Int     @id @default(autoincrement())
-  entry_id                   Int
-  entry                      Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  type_oid                   Bytes // BinaryOID
-  operational                Boolean @default(false) // True if attribute type is not userApplications
-  tag_class                  Int     @db.SmallInt
-  constructed                Boolean
-  tag_number                 Int
-  content_octets             Bytes
-  jer                        Json?
+  id             Int     @id @default(autoincrement())
+  entry_id       Int
+  entry          Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  type_oid       Bytes // BinaryOID
+  operational    Boolean @default(false) // True if attribute type is not userApplications
+  tag_class      Int     @db.SmallInt
+  constructed    Boolean
+  tag_number     Int
+  content_octets Bytes
+  jer            Json?
 
   ContextValue ContextValue[]
 
@@ -531,8 +532,8 @@ model ContextDescription {
 
   // For some reason, these are not present in the ASN.1 definition for
   // `ContextDescription`.
-  absentMatch     Boolean @default(true)
-  defaultValue    Bytes?
+  absentMatch  Boolean @default(true)
+  defaultValue Bytes?
 
   // Why entry_id if context types are universal? So schema shadowed from
   // other DSAs does not overwrite this DSA's conception of the same schema objects.
@@ -624,6 +625,7 @@ model OperationalBinding {
   last_shadow_problem Int?      @db.SmallInt
 
   next_version OperationalBinding[] @relation("previous")
+
   @@unique([uuid])
   @@unique([binding_type, binding_identifier, binding_version, terminated_time])
   @@index([validity_end, validity_start])
@@ -640,15 +642,19 @@ model NamedObjectIdentifier {
 }
 
 model DistinguishedValue {
-  id          BigInt  @id @default(autoincrement())
-  entry_id    Int
-  entry       Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  type_oid    Bytes // BinaryOID
-  value       Bytes
-  str         String?
-  order_index Int
+  id             BigInt  @id @default(autoincrement())
+  entry_id       Int
+  entry          Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  type_oid       Bytes // BinaryOID
+  tag_class      Int     @db.SmallInt
+  constructed    Boolean
+  tag_number     Int
+  content_octets Bytes
+  str            String?
+  order_index    Int
 
   @@unique([entry_id, type_oid(length: 32)])
+  @@index([type_oid(length: 32), tag_class, tag_number, constructed, content_octets(length: 128)])
 }
 
 model EntryObjectClass {

@@ -3542,7 +3542,10 @@ async function modifyEntry (
                 RDN: {
                     select: {
                         type_oid: true,
-                        value: true,
+                        tag_class: true,
+                        constructed: true,
+                        tag_number: true,
+                        content_octets: true,
                     },
                 },
                 EntryObjectClass: {
@@ -3570,7 +3573,10 @@ async function modifyEntry (
             RDN: {
                 select: {
                     type_oid: true,
-                    value: true,
+                    tag_class: true,
+                    constructed: true,
+                    tag_number: true,
+                    content_octets: true,
                 },
             },
             EntryObjectClass: {
@@ -3666,7 +3672,10 @@ async function modifyEntry (
                 RDN: {
                     select: {
                         type_oid: true,
-                        value: true,
+                        tag_class: true,
+                        constructed: true,
+                        tag_number: true,
+                        content_octets: true,
                     },
                 },
                 EntryObjectClass: {
