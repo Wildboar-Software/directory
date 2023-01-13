@@ -168,6 +168,15 @@ async function establishOperationalBinding (
         new Promise<undefined>((resolve) => setTimeout(() => resolve(undefined), 300_000)),
         new Promise<boolean>((resolve) => {
             if (ctx.config.ob.autoAccept) {
+                ctx.log.info(ctx.i18n.t("log:auto_accepted_ob", {
+                    type: data.bindingType.toString(),
+                    obid: data.bindingID?.identifier.toString(),
+                    uuid,
+                }), {
+                    type: data.bindingType.toString(),
+                    obid: data.bindingID?.identifier.toString(),
+                    uuid,
+                });
                 resolve(true);
             }
         }),
