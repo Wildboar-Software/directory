@@ -222,7 +222,7 @@ async function updateContextPrefix (
                 include: {
                     RDN: {
                         select: {
-                            type: true,
+                            type_oid: true,
                             value: true,
                         },
                     },

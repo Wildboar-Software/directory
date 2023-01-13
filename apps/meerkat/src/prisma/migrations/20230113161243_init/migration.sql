@@ -402,12 +402,12 @@ CREATE TABLE `NamedObjectIdentifier` (
 CREATE TABLE `DistinguishedValue` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `entry_id` INTEGER NOT NULL,
-    `type` VARCHAR(128) NOT NULL,
+    `type_oid` LONGBLOB NOT NULL,
     `value` LONGBLOB NOT NULL,
     `str` VARCHAR(191) NULL,
     `order_index` INTEGER NOT NULL,
 
-    UNIQUE INDEX `DistinguishedValue_entry_id_type_key`(`entry_id`, `type`),
+    UNIQUE INDEX `DistinguishedValue_entry_id_type_oid_key`(`entry_id`, `type_oid`(32)),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 

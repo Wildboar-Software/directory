@@ -74,7 +74,7 @@ async function rdnToID (
                 AND: rdn.map((atav) => ({
                     RDN: {
                         some: {
-                            type: atav.type_.toString(),
+                            type_oid: atav.type_.toBytes(),
                         },
                     },
                 })),
@@ -85,14 +85,16 @@ async function rdnToID (
     while (subordinatesInBatch.length) {
         for (const subordinate of subordinatesInBatch) {
             cursorId = subordinate.id;
-            const subordinateRDN = subordinate.RDN.map((atav) => new AttributeTypeAndValue(
-                ObjectIdentifier.fromString(atav.type),
-                (() => {
-                    const el = new BERElement();
-                    el.fromBytes(atav.value);
-                    return el;
-                })(),
-            ));
+            const subordinateRDN = subordinate.RDN.map((atav) => {
+                const type_el = new BERElement();
+                const value_el = new BERElement();
+                type_el.value = atav.type_oid;
+                value_el.fromBytes(atav.value);
+                return new AttributeTypeAndValue(
+                    type_el.objectIdentifier,
+                    value_el,
+                );
+            });
             rdnMatched = compareRDN(
                 rdn,
                 subordinateRDN,

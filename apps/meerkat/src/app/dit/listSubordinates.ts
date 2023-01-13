@@ -49,7 +49,7 @@ async function listSubordinates (
             id: true,
             RDN: {
                 select: {
-                    type: true,
+                    type_oid: true,
                     value: true,
                 },
             },

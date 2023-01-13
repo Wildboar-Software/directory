@@ -351,7 +351,7 @@ async function read (
                 include: {
                     RDN: {
                         select: {
-                            type: true,
+                            type_oid: true,
                             value: true,
                         },
                     },

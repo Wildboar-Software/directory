@@ -84,19 +84,21 @@ async function dseFromDatabaseEntry (
             object_class: string;
         }[];
         RDN?: {
-            type: string;
+            type_oid: Buffer;
             value: Buffer;
         }[];
     }),
 ): Promise<DSE> {
-    const rdn = dbe.RDN?.map((atav) => new AttributeTypeAndValue(
-        ObjectIdentifier.fromString(atav.type),
-        (() => {
-            const el = new BERElement();
-            el.fromBytes(atav.value);
-            return el;
-        })(),
-    )) ?? await getRDNFromEntryId(ctx, dbe.id);
+    const rdn = dbe.RDN?.map((atav) => {
+        const type_el = new BERElement();
+        const value_el = new BERElement();
+        type_el.value = atav.type_oid;
+        value_el.fromBytes(atav.value);
+        return new AttributeTypeAndValue(
+            type_el.objectIdentifier,
+            value_el,
+        );
+    }) ?? await getRDNFromEntryId(ctx, dbe.id);
     //
     const objectClasses = dbe.EntryObjectClass ?? (await ctx.db.entryObjectClass.findMany({
         where: {

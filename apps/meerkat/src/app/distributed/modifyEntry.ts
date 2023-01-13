@@ -3541,7 +3541,7 @@ async function modifyEntry (
             include: {
                 RDN: {
                     select: {
-                        type: true,
+                        type_oid: true,
                         value: true,
                     },
                 },
@@ -3569,7 +3569,7 @@ async function modifyEntry (
         include: {
             RDN: {
                 select: {
-                    type: true,
+                    type_oid: true,
                     value: true,
                 },
             },
@@ -3665,7 +3665,7 @@ async function modifyEntry (
             include: {
                 RDN: {
                     select: {
-                        type: true,
+                        type_oid: true,
                         value: true,
                     },
                 },

@@ -1952,7 +1952,7 @@ async function modifyDN (
             ctx.db.distinguishedValue.createMany({
                 data: newRDN.map((atav, i) => ({
                     entry_id: target.dse.id,
-                    type: atav.type_.toString(),
+                    type_oid: atav.type_.toBytes(),
                     value: Buffer.from(atav.value.toBytes().buffer),
                     order_index: i,
                 })),
@@ -1982,7 +1982,7 @@ async function modifyDN (
             include: {
                 RDN: {
                     select: {
-                        type: true,
+                        type_oid: true,
                         value: true,
                     },
                 },

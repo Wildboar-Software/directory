@@ -51,7 +51,7 @@ async function readSubordinates (
                 include: {
                     RDN: {
                         select: {
-                            type: true,
+                            type_oid: true,
                             value: true,
                         },
                         orderBy: { // So the RDNs appear in the order in which they were entered.

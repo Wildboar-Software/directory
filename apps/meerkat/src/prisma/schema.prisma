@@ -643,12 +643,12 @@ model DistinguishedValue {
   id          BigInt  @id @default(autoincrement())
   entry_id    Int
   entry       Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  type        String  @db.VarChar(128) // OID
+  type_oid    Bytes // BinaryOID
   value       Bytes
   str         String?
   order_index Int
 
-  @@unique([entry_id, type])
+  @@unique([entry_id, type_oid(length: 32)])
 }
 
 model EntryObjectClass {

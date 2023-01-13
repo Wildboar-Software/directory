@@ -896,7 +896,7 @@ async function findDSE (
                 include: {
                     RDN: {
                         select: {
-                            type: true,
+                            type_oid: true,
                             value: true,
                         },
                         orderBy: { // So the RDNs appear in the order in which they were entered.
@@ -1031,7 +1031,7 @@ async function findDSE (
                     AND: needleRDN.map((atav) => ({
                         RDN: {
                             some: {
-                                type: atav.type_.toString(),
+                                type_oid: atav.type_.toBytes(),
                             },
                         },
                     })),
@@ -1064,14 +1064,16 @@ async function findDSE (
                     );
                 }
                 checkTimeLimit();
-                const childRDN = subordinate.RDN.map((atav) => new AttributeTypeAndValue(
-                    ObjectIdentifier.fromString(atav.type),
-                    (() => {
-                        const el = new BERElement();
-                        el.fromBytes(atav.value);
-                        return el;
-                    })(),
-                ));
+                const childRDN = subordinate.RDN.map((atav) => {
+                    const type_el = new BERElement();
+                    const value_el = new BERElement();
+                    type_el.value = atav.type_oid;
+                    value_el.fromBytes(atav.value);
+                    return new AttributeTypeAndValue(
+                        type_el.objectIdentifier,
+                        value_el,
+                    );
+                });
                 rdnMatched = compareRDN(
                     needleRDN,
                     childRDN,

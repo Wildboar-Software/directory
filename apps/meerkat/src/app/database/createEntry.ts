@@ -106,7 +106,7 @@ async function createEntry (
             RDN: {
                 createMany: {
                     data: rdn.map((atav, i) => ({
-                        type: atav.type_.toString(),
+                        type_oid: atav.type_.toBytes(),
                         value: Buffer.from(atav.value.toBytes().buffer),
                         str: atav.value.toString(),
                         order_index: i,
@@ -117,7 +117,7 @@ async function createEntry (
         include: {
             RDN: {
                 select: {
-                    type: true,
+                    type_oid: true,
                     value: true,
                 },
             },
