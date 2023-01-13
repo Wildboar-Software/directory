@@ -20,6 +20,12 @@ import {
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdHistory.oa";
 import NOOP from "./NOOP";
 import { subSeconds } from "date-fns";
+import {
+    UserPwd,
+    UserPwd_encrypted,
+    _decode_UserPwd,
+    _encode_UserPwd,
+} from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
 
 /**
  * NOTE: This implementation does NOT honor the `pwdMaxTimeInHistory` attribute.
@@ -48,11 +54,22 @@ const readValues: SpecialAttributeDatabaseReader = async (
         .map((row) => {
             const passwordElement = new BERElement();
             passwordElement.fromBytes(row.password);
+            const pwd = _decode_UserPwd(passwordElement);
+            const redacted: UserPwd = ("encrypted" in pwd)
+                ? {
+                    encrypted: new UserPwd_encrypted(
+                        pwd.encrypted.algorithmIdentifier,
+                        new Uint8Array(),
+                    ),
+                }
+                : {
+                    clear: "",
+                };
             return {
                 type: userPwdHistory["&id"],
                 value: DERElement.fromSequence([
                     _encodeGeneralizedTime(row.time, DER),
-                    passwordElement,
+                    _encode_UserPwd(redacted, DER),
                 ]),
             };
         });
