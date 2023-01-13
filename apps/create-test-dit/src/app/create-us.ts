@@ -207,10 +207,8 @@ function securityParameters (): SecurityParameters {
     return new SecurityParameters(
         undefined,
         undefined, // DSA name
-        {
-            generalizedTime: new Date(),
-        },
-        unpackBits(randomBytes(16)),
+        undefined,
+        undefined,
         ProtectionRequest_none,
         addEntry["&operationCode"]!,
         ErrorProtectionRequest_none,
