@@ -1221,7 +1221,7 @@ async function seedGB (
         newEntryArgs,
         ([cn, arg]) => idempotentAddEntry(ctx, conn, `C=GB,L=London,CN=${cn}`, arg),
         {
-            concurrency: 5,
+            concurrency: 10,
         },
     );
 }

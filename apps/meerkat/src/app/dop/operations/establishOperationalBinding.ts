@@ -549,7 +549,7 @@ async function establishOperationalBinding (
                 data: {
                     accepted: approved,
                 },
-                select: null,
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             });
             if (approved === undefined) {
                 throw new errors.OperationalBindingError(
@@ -679,7 +679,7 @@ async function establishOperationalBinding (
                             accepted: false,
                             last_ob_problem: e.data.problem,
                         },
-                        select: null,
+                        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
                     }).then().catch();
                 } else {
                     ctx.db.operationalBinding.update({
@@ -689,7 +689,7 @@ async function establishOperationalBinding (
                         data: {
                             accepted: false,
                         },
-                        select: null,
+                        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
                     }).then().catch();
                 }
                 throw e;

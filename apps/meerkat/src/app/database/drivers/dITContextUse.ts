@@ -87,7 +87,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                 ?.map((oid) => oid.toString())
                 .join(" "),
         },
-        select: null,
+        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
     }));
     if (vertex.dse.subentry) {
         if (vertex.dse.subentry.ditContextUse) {

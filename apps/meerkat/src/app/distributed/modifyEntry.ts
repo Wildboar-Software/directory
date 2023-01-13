@@ -2720,7 +2720,7 @@ async function modifyEntry (
                 modifiersName: user?.dn.map(rdnToJson),
                 modifyTimestamp: new Date(),
             },
-            select: null,
+            select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
         }),
     ];
     const patch: Patch = {
@@ -3638,7 +3638,7 @@ async function modifyEntry (
                 data: {
                     admPoint: true,
                 },
-                select: null,
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),
             ctx.db.attributeValue.create({
                 data: {
@@ -3655,7 +3655,7 @@ async function modifyEntry (
                     ),
                     jer: id_ar_autonomousArea.toJSON(),
                 },
-                select: null,
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),
         ]);
         const dbe = await ctx.db.entry.findUnique({

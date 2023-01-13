@@ -538,7 +538,7 @@ async function modifyOperationalBinding (
                 new_context_prefix_rdn: rdnToJson(newAgreement.rdn),
                 immediate_superior: newAgreement.immediateSuperior.map(rdnToJson),
             },
-            select: null,
+            select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
         });
 
         if (!data.initiator) {

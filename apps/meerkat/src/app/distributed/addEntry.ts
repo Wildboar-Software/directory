@@ -1194,7 +1194,7 @@ async function addEntry (
                 data: {
                     accepted: false,
                 },
-                select: null,
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }).then().catch();
             throw e;
         }
@@ -1215,7 +1215,7 @@ async function addEntry (
                 data: {
                     accepted: false,
                 },
-                select: null,
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }).then().catch();
             throw new errors.UnknownError(ctx.i18n.t("err:could_not_find_new_subr"));
         }
@@ -1234,7 +1234,7 @@ async function addEntry (
             data: {
                 entry_id: createdSubrId,
             },
-            select: null,
+            select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
         });
         const signDSPResult: boolean = (
             (state.chainingArguments.securityParameters?.target === ProtectionRequest_signed)
@@ -1498,7 +1498,7 @@ async function addEntry (
                 data: {
                     governingStructureRule: Number(structuralRuleThatAppliesToImmediateSuperior.ruleIdentifier),
                 },
-                select: null,
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }).catch(); // TODO: Log
         }
     }

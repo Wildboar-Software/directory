@@ -47,7 +47,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
         data: {
             uri: value.value.ia5String,
         },
-        select: null,
+        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
     }));
 };
 

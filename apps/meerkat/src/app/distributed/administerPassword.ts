@@ -470,7 +470,7 @@ async function administerPassword (
                 content_octets: Buffer.from([ 0xFF ]),
                 jer: true,
             },
-            select: null,
+            select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
         }),
     ]);
     /* Note that the specification says that we should update hierarchical

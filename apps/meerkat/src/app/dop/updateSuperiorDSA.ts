@@ -347,7 +347,7 @@ async function updateSuperiorDSA (
                                 ? Number(sp.errorProtection)
                                 : undefined,
                         },
-                        select: null,
+                        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
                     });
                     assn.unbind().then().catch(); // INTENTIONAL_NO_AWAIT
                     return response.result;

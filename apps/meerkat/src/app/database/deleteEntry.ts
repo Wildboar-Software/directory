@@ -88,7 +88,7 @@ async function deleteEntry (
                 data: {
                     deleteTimestamp: new Date(),
                 },
-                select: null,
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),
         ]);
         if (entry.immediateSuperior?.subordinates?.length) {

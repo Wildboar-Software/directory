@@ -76,7 +76,7 @@ async function setEntryPassword (
         data: {
             may_add_top_level_dse: true,
         },
-        select: null,
+        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
     });
     const now = new Date();
     const nowElement = _encodeGeneralizedTime(now, DER);
@@ -321,7 +321,7 @@ async function setEntryPassword (
                         ? Buffer.from(encAlg.parameters.toBytes())
                         : undefined,
                 },
-                select: null,
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),
             ctx.db.passwordHistory.create({
                 data: {
@@ -334,7 +334,7 @@ async function setEntryPassword (
                     }, DER).toBytes()),
                     time: new Date(),
                 },
-                select: null,
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),
             ...otherUpdates,
         ];
@@ -371,7 +371,7 @@ async function setEntryPassword (
                         ? Buffer.from(pwd.encrypted.algorithmIdentifier.parameters.toBytes())
                         : undefined,
                 },
-                select: null,
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),
             ctx.db.passwordHistory.create({
                 data: {
@@ -379,7 +379,7 @@ async function setEntryPassword (
                     password: Buffer.from(_encode_UserPwd(pwd, DER).toBytes()),
                     time: new Date(),
                 },
-                select: null,
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),
             ...otherUpdates,
         ];

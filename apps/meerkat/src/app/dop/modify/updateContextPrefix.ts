@@ -182,7 +182,7 @@ async function updateContextPrefix (
             deleteTimestamp: new Date(),
             immediate_superior_id: null,
         },
-        select: null,
+        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
     });
 
     // Mark the subordinate DSE / CP as "deleted" and set its immediate_superior_id to `null`.
@@ -370,7 +370,7 @@ async function updateContextPrefix (
             deleteTimestamp: null,
             immediate_superior_id: currentRoot.dse.id,
         },
-        select: null,
+        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
     }).then(); // INTENTIONAL_NO_AWAIT
 
     (immSuprAccessPoints ?? [])

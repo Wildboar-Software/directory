@@ -316,7 +316,7 @@ async function addValues(
                 id: entry.dse.id,
             },
             data: pendingUpdates.entryUpdate,
-            select: null,
+            select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
         }),
         ...pendingUpdates.otherWrites,
         ctx.db.attributeValue.createMany({
@@ -364,7 +364,7 @@ async function addValues(
                         },
                     },
                 },
-                select: null,
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             })),
     ];
 }

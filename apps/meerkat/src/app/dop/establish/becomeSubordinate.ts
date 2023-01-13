@@ -178,7 +178,7 @@ async function becomeSubordinate (
                 data: {
                     deleteTimestamp: new Date(),
                 },
-                select: null,
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),
             ...await addValues(
                 ctx,
@@ -231,7 +231,7 @@ async function becomeSubordinate (
                 data: {
                     ...pendingUpdates.entryUpdate,
                 },
-                select: null,
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),
             ...pendingUpdates.otherWrites,
         ]);

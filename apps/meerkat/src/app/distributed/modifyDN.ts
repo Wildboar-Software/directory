@@ -1942,7 +1942,7 @@ async function modifyDN (
                         : undefined,
                     materialized_path: newMaterializedPath,
                 },
-                select: null,
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),
             ctx.db.distinguishedValue.deleteMany({
                 where: {
@@ -1969,7 +1969,7 @@ async function modifyDN (
                             : target.dse.id.toString() + ".",
                     ),
                 },
-                select: null,
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             })),
         ]);
     } catch (e) {

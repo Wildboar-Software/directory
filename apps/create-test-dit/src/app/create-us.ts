@@ -704,7 +704,7 @@ async function seedUS (
         newEntryArgs,
         ([cn, arg]) => idempotentAddEntry(ctx, conn, `C=US,ST=FL,L=HIL,L=Tampa,L=Westchase,CN=${cn}`, arg),
         {
-            concurrency: 10,
+            concurrency: 5,
         },
     );
 
