@@ -573,6 +573,8 @@ jobs:
             --set max_connections=100 \
             --set max_connections_per_address=50 \
             --set max_concurrent_operations_per_connection=50 \
+            --set tcp_timeout_in_seconds=300 \
+            --set min_transfer_speed_bytes_per_minute=10 \
             --atomic \
             --namespace=${{ env.NAMESPACE }}
         timeout-minutes: 10
@@ -796,6 +798,8 @@ jobs:
             --set administrator_email_public=true \
             --set vendor_version='2.0.0' \
             --set signing_required_for_chaining=false \
+            --set tcp_timeout_in_seconds=300 \
+            --set min_transfer_speed_bytes_per_minute=10 \
             --atomic \
             --namespace=${{ env.NAMESPACE }}
       - name: Wait 30 Seconds for Public IP to be Allocated
