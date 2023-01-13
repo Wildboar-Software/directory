@@ -348,6 +348,19 @@ async function read (
                 where: {
                     id: target.dse.id,
                 },
+                include: {
+                    RDN: {
+                        select: {
+                            type: true,
+                            value: true,
+                        },
+                    },
+                    EntryObjectClass: {
+                        select: {
+                            object_class: true,
+                        },
+                    },
+                },
             });
             // This should always be true, but we just ignore it if the entry
             // could not be found. This is not a high-stakes operation.

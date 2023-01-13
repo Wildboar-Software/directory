@@ -148,6 +148,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             hierarchyPath: parentRow?.hierarchyPath ?? "",
             hierarchyTopDN: top.map(rdnToJson),
         },
+        select: null,
     }));
     parent.dse.hierarchy = {
         top,

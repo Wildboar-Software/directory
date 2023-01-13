@@ -145,6 +145,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
         update: {
             ...create,
         },
+        select: null,
     }));
     /**
      * If the name form is being added to a DSE that is owned by this DSA, it
@@ -173,6 +174,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                 data: {
                     ...create,
                 },
+                select: null,
             })
                 .then()
                 .catch(); // TODO: Log something.

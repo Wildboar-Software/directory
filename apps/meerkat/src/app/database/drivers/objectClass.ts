@@ -77,6 +77,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                 object_class: PARENT,
             },
             update: {},
+            select: null,
         }));
         vertex.immediateSuperior.dse.objectClass.add(PARENT);
         vertex.immediateSuperior.dse.familyMember = true;
@@ -93,6 +94,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             object_class: value.value.objectIdentifier.toString(),
         },
         update: {},
+        select: null,
     }));
 };
 

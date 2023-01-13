@@ -182,6 +182,7 @@ async function updateContextPrefix (
             deleteTimestamp: new Date(),
             immediate_superior_id: null,
         },
+        select: null,
     });
 
     // Mark the subordinate DSE / CP as "deleted" and set its immediate_superior_id to `null`.
@@ -217,6 +218,19 @@ async function updateContextPrefix (
             const dbe = await ctx.db.entry.findUnique({
                 where: {
                     id: createdEntry.dse.id,
+                },
+                include: {
+                    RDN: {
+                        select: {
+                            type: true,
+                            value: true,
+                        },
+                    },
+                    EntryObjectClass: {
+                        select: {
+                            object_class: true,
+                        },
+                    },
                 },
             });
             assert(dbe);
@@ -356,6 +370,7 @@ async function updateContextPrefix (
             deleteTimestamp: null,
             immediate_superior_id: currentRoot.dse.id,
         },
+        select: null,
     }).then(); // INTENTIONAL_NO_AWAIT
 
     (immSuprAccessPoints ?? [])

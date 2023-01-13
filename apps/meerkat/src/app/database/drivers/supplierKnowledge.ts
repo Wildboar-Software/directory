@@ -57,6 +57,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             data: {
                 entry_id: vertex.dse.id,
             },
+            select: null,
         }));
     }
     const supplierId = await saveAccessPoint(ctx, decoded, Knowledge.SUPPLIER);
@@ -68,6 +69,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             entry_id: vertex.dse.id,
             non_supplying_master_id: nsmId,
         },
+        select: null,
     }));
 };
 

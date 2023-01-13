@@ -704,6 +704,19 @@ async function addEntry (
                 where: {
                     id: existingEntryId,
                 },
+                include: {
+                    RDN: {
+                        select: {
+                            type: true,
+                            value: true,
+                        },
+                    },
+                    EntryObjectClass: {
+                        select: {
+                            object_class: true,
+                        },
+                    },
+                },
             });
             // This could happen if the entry is deleted within the tiny span of
             // time between us finding the entry's ID and querying it.
@@ -1181,6 +1194,7 @@ async function addEntry (
                 data: {
                     accepted: false,
                 },
+                select: null,
             }).then().catch();
             throw e;
         }
@@ -1201,6 +1215,7 @@ async function addEntry (
                 data: {
                     accepted: false,
                 },
+                select: null,
             }).then().catch();
             throw new errors.UnknownError(ctx.i18n.t("err:could_not_find_new_subr"));
         }
@@ -1219,6 +1234,7 @@ async function addEntry (
             data: {
                 entry_id: createdSubrId,
             },
+            select: null,
         });
         const signDSPResult: boolean = (
             (state.chainingArguments.securityParameters?.target === ProtectionRequest_signed)
@@ -1482,6 +1498,7 @@ async function addEntry (
                 data: {
                     governingStructureRule: Number(structuralRuleThatAppliesToImmediateSuperior.ruleIdentifier),
                 },
+                select: null,
             }).catch(); // TODO: Log
         }
     }

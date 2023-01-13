@@ -115,7 +115,12 @@ async function createEntry (
             },
         },
         include: {
-            RDN: true,
+            RDN: {
+                select: {
+                    type: true,
+                    value: true,
+                },
+            },
         },
     });
     const vertex = await vertexFromDatabaseEntry(ctx, superior, {
@@ -140,6 +145,7 @@ async function createEntry (
             data: {
                 deleteTimestamp: null,
             },
+            select: null,
         }),
     ]);
     const ret = await getVertexById(ctx, superior, createdEntry.id);

@@ -47,6 +47,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
         data: {
             uri: value.value.ia5String,
         },
+        select: null,
     }));
 };
 

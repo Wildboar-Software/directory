@@ -316,6 +316,7 @@ async function addValues(
                 id: entry.dse.id,
             },
             data: pendingUpdates.entryUpdate,
+            select: null,
         }),
         ...pendingUpdates.otherWrites,
         ctx.db.attributeValue.createMany({
@@ -363,6 +364,7 @@ async function addValues(
                         },
                     },
                 },
+                select: null,
             })),
     ];
 }

@@ -2720,6 +2720,7 @@ async function modifyEntry (
                 modifiersName: user?.dn.map(rdnToJson),
                 modifyTimestamp: new Date(),
             },
+            select: null,
         }),
     ];
     const patch: Patch = {
@@ -3537,6 +3538,19 @@ async function modifyEntry (
             where: {
                 id: target.dse.id,
             },
+            include: {
+                RDN: {
+                    select: {
+                        type: true,
+                        value: true,
+                    },
+                },
+                EntryObjectClass: {
+                    select: {
+                        object_class: true,
+                    },
+                },
+            },
         });
         if (dbe) {
             try {
@@ -3551,6 +3565,19 @@ async function modifyEntry (
     const dbe = await ctx.db.entry.findUnique({
         where: {
             id: target.dse.id,
+        },
+        include: {
+            RDN: {
+                select: {
+                    type: true,
+                    value: true,
+                },
+            },
+            EntryObjectClass: {
+                select: {
+                    object_class: true,
+                },
+            },
         },
     });
     if (dbe) {
@@ -3611,6 +3638,7 @@ async function modifyEntry (
                 data: {
                     admPoint: true,
                 },
+                select: null,
             }),
             ctx.db.attributeValue.create({
                 data: {
@@ -3627,11 +3655,25 @@ async function modifyEntry (
                     ),
                     jer: id_ar_autonomousArea.toJSON(),
                 },
+                select: null,
             }),
         ]);
         const dbe = await ctx.db.entry.findUnique({
             where: {
                 id: target.dse.id,
+            },
+            include: {
+                RDN: {
+                    select: {
+                        type: true,
+                        value: true,
+                    },
+                },
+                EntryObjectClass: {
+                    select: {
+                        object_class: true,
+                    },
+                },
             },
         });
         if (dbe) {

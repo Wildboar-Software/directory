@@ -470,6 +470,7 @@ async function administerPassword (
                 content_octets: Buffer.from([ 0xFF ]),
                 jer: true,
             },
+            select: null,
         }),
     ]);
     /* Note that the specification says that we should update hierarchical

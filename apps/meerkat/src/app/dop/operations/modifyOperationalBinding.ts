@@ -538,6 +538,7 @@ async function modifyOperationalBinding (
                 new_context_prefix_rdn: rdnToJson(newAgreement.rdn),
                 immediate_superior: newAgreement.immediateSuperior.map(rdnToJson),
             },
+            select: null,
         });
 
         if (!data.initiator) {

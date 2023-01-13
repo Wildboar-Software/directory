@@ -76,6 +76,7 @@ async function setEntryPassword (
         data: {
             may_add_top_level_dse: true,
         },
+        select: null,
     });
     const now = new Date();
     const nowElement = _encodeGeneralizedTime(now, DER);
@@ -132,6 +133,11 @@ async function setEntryPassword (
     const oldPassword = await ctx.db.password.findUnique({
         where: {
             entry_id: vertex.dse.id,
+        },
+        select: {
+            algorithm_oid: true,
+            algorithm_parameters_der: true,
+            encrypted: true,
         },
     });
     const oldUserPwd: UserPwd | undefined = oldPassword
@@ -315,6 +321,7 @@ async function setEntryPassword (
                         ? Buffer.from(encAlg.parameters.toBytes())
                         : undefined,
                 },
+                select: null,
             }),
             ctx.db.passwordHistory.create({
                 data: {
@@ -327,6 +334,7 @@ async function setEntryPassword (
                     }, DER).toBytes()),
                     time: new Date(),
                 },
+                select: null,
             }),
             ...otherUpdates,
         ];
@@ -363,6 +371,7 @@ async function setEntryPassword (
                         ? Buffer.from(pwd.encrypted.algorithmIdentifier.parameters.toBytes())
                         : undefined,
                 },
+                select: null,
             }),
             ctx.db.passwordHistory.create({
                 data: {
@@ -370,6 +379,7 @@ async function setEntryPassword (
                     password: Buffer.from(_encode_UserPwd(pwd, DER).toBytes()),
                     time: new Date(),
                 },
+                select: null,
             }),
             ...otherUpdates,
         ];

@@ -77,6 +77,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             obsolete: decoded.obsolete,
             friends: decoded.friends.map((oid) => oid.toString()).join(" "),
         },
+        select: null,
     }));
     if (vertex.dse.subentry) {
         if (vertex.dse.subentry.friendships) {

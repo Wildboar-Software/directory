@@ -58,6 +58,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
         data: {
             entry_id: vertex.dse.id,
         },
+        select: null,
     }));
 };
 

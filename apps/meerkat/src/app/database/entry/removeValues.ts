@@ -53,6 +53,7 @@ async function removeValues (
                 id: entry.dse.id,
             },
             data: pendingUpdates.entryUpdate,
+            select: null,
         }),
         ...pendingUpdates.otherWrites,
         ...values

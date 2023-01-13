@@ -302,6 +302,11 @@ async function attemptPassword (
         where: {
             entry_id: vertex.dse.id,
         },
+        select: {
+            algorithm_oid: true,
+            algorithm_parameters_der: true,
+            encrypted: true,
+        },
     });
 
     const entry_value_rows = await ctx.db.attributeValue.findMany({

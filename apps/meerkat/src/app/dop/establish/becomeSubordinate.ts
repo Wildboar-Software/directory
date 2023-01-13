@@ -178,6 +178,7 @@ async function becomeSubordinate (
                 data: {
                     deleteTimestamp: new Date(),
                 },
+                select: null,
             }),
             ...await addValues(
                 ctx,
@@ -230,6 +231,7 @@ async function becomeSubordinate (
                 data: {
                     ...pendingUpdates.entryUpdate,
                 },
+                select: null,
             }),
             ...pendingUpdates.otherWrites,
         ]);

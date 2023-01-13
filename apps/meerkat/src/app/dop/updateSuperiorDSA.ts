@@ -347,6 +347,7 @@ async function updateSuperiorDSA (
                                 ? Number(sp.errorProtection)
                                 : undefined,
                         },
+                        select: null,
                     });
                     assn.unbind().then().catch(); // INTENTIONAL_NO_AWAIT
                     return response.result;

@@ -60,6 +60,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                 : undefined,
             ber: Buffer.from(value.value.toBytes().buffer),
         },
+        select: null,
     }));
 };
 

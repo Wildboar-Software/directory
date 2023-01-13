@@ -203,6 +203,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
         update: {
             ...create,
         },
+        select: null,
     }));
 
     /**
@@ -232,6 +233,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                 data: {
                     ...create,
                 },
+                select: null,
             })
                 .then()
                 .catch(); // TODO: Log something.

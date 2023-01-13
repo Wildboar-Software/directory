@@ -83,6 +83,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                 : undefined,
             obsolete: decoded.obsolete,
         },
+        select: null,
     }));
     if (vertex.dse.subentry) {
         if (vertex.dse.subentry.ditContentRules) {

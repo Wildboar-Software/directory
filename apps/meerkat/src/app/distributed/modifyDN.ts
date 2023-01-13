@@ -1942,6 +1942,7 @@ async function modifyDN (
                         : undefined,
                     materialized_path: newMaterializedPath,
                 },
+                select: null,
             }),
             ctx.db.distinguishedValue.deleteMany({
                 where: {
@@ -1968,6 +1969,7 @@ async function modifyDN (
                             : target.dse.id.toString() + ".",
                     ),
                 },
+                select: null,
             })),
         ]);
     } catch (e) {
@@ -1976,6 +1978,19 @@ async function modifyDN (
         const dbe = await ctx.db.entry.findUnique({
             where: {
                 id: target.dse.id,
+            },
+            include: {
+                RDN: {
+                    select: {
+                        type: true,
+                        value: true,
+                    },
+                },
+                EntryObjectClass: {
+                    select: {
+                        object_class: true,
+                    },
+                },
             },
         });
         if (dbe) {

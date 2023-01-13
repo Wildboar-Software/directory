@@ -87,6 +87,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                 ?.map((oid) => oid.toString())
                 .join(" "),
         },
+        select: null,
     }));
     if (vertex.dse.subentry) {
         if (vertex.dse.subentry.ditContextUse) {

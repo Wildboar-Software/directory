@@ -56,6 +56,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             aliased_entry_name: decodedName.map(rdnToJson),
             aliased_entry_id: aliasedEntryId,
         },
+        select: null,
     }));
     pendingUpdates.entryUpdate.alias = true;
 };

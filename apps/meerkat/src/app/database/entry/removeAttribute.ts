@@ -51,6 +51,7 @@ async function removeAttribute (
                     id: entry.dse.id,
                 },
                 data: pendingUpdates.entryUpdate,
+                select: null,
             }),
             ...pendingUpdates.otherWrites,
         ];
@@ -61,6 +62,7 @@ async function removeAttribute (
                     id: entry.dse.id,
                 },
                 data: pendingUpdates.entryUpdate,
+                select: null,
             }),
             ctx.db.attributeValue.deleteMany({
                 where: {

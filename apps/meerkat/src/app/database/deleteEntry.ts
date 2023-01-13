@@ -88,6 +88,7 @@ async function deleteEntry (
                 data: {
                     deleteTimestamp: new Date(),
                 },
+                select: null,
             }),
         ]);
         if (entry.immediateSuperior?.subordinates?.length) {

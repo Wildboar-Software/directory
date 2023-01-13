@@ -96,6 +96,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             ),
             jer: value.value.toJSON() as Prisma.InputJsonValue,
         },
+        select: null,
     }));
 }
 

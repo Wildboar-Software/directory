@@ -540,6 +540,7 @@ async function establishOperationalBinding (
                 data: {
                     accepted: approved,
                 },
+                select: null,
             });
             if (approved === undefined) {
                 throw new errors.OperationalBindingError(
@@ -669,6 +670,7 @@ async function establishOperationalBinding (
                             accepted: false,
                             last_ob_problem: e.data.problem,
                         },
+                        select: null,
                     }).then().catch();
                 } else {
                     ctx.db.operationalBinding.update({
@@ -678,6 +680,7 @@ async function establishOperationalBinding (
                         data: {
                             accepted: false,
                         },
+                        select: null,
                     }).then().catch();
                 }
                 throw e;
