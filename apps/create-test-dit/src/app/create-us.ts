@@ -184,6 +184,7 @@ import {
 import {
     ExtensionAttribute,
 } from "@wildboar/x400/src/lib/modules/MTSAbstractService/ExtensionAttribute.ta";
+import { Promise as bPromise } from "bluebird";
 
 
 const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
@@ -356,7 +357,7 @@ async function seedUS (
 
     const gucciGang: DistinguishedName[] = [];
     const peepantsGang: DistinguishedName[] = [];
-
+    const newEntryArgs: [cn: string, arg: AddEntryArgument][] = [];
     // Create random people
     for (let i = 1; i < 1000; i++) {
         // TODO: pgpKeyInfo
@@ -698,8 +699,16 @@ async function seedUS (
             gucciGang.push(dn);
         }
         const arg = createAddEntryArgument(dn, attributes);
-        await idempotentAddEntry(ctx, conn, `C=US,ST=FL,L=HIL,L=Tampa,L=Westchase,CN=${cn}`, arg);
+        newEntryArgs.push([cn, arg]);
     }
+
+    await bPromise.map(
+        newEntryArgs,
+        ([cn, arg]) => idempotentAddEntry(ctx, conn, `C=US,ST=FL,L=HIL,L=Tampa,L=Westchase,CN=${cn}`, arg),
+        {
+            concurrency: 5,
+        },
+    );
 
     { // Create C=US,CN=Directory Engineers
         const name: string = "Directory Engineers";
