@@ -1,34 +1,49 @@
 {
-  "implicitDependencies": {
-    "workspace.json": "*",
-    "package.json": {
-      "dependencies": "*",
-      "devDependencies": "*"
+    "affected": {
+        "defaultBase": "master"
     },
-    "tsconfig.base.json": "*",
-    "tslint.json": "*",
-    ".eslintrc.json": "*",
-    "nx.json": "*"
-  },
-  "affected": {
-    "defaultBase": "master"
-  },
-  "npmScope": "directory",
-  "tasksRunnerOptions": {
-    "default": {
-      "runner": "@nrwl/nx-cloud",
-      "options": {
-        "cacheableOperations": [
-          "build",
-          "lint",
-          "test",
-          "e2e"
+    "npmScope": "directory",
+    "tasksRunnerOptions": {
+        "default": {
+            "runner": "@nrwl/nx-cloud",
+            "options": {
+                "cacheableOperations": ["build", "lint", "test", "e2e"],
+                "accessToken": "Y2Y4NGI2OTctODY3OS00ZmU3LWI0MTctMmYwZTY4ZDhmYjNhfHJlYWQtd3JpdGU=",
+                "parallel": 1
+            }
+        }
+    },
+    "defaultProject": "meerkat",
+    "$schema": "./node_modules/nx/schemas/nx-schema.json",
+    "namedInputs": {
+        "default": ["{projectRoot}/**/*", "sharedGlobals"],
+        "sharedGlobals": [
+            "{workspaceRoot}/workspace.json",
+            "{workspaceRoot}/tsconfig.base.json",
+            "{workspaceRoot}/tslint.json",
+            "{workspaceRoot}/nx.json"
         ],
-        "accessToken": "Y2Y4NGI2OTctODY3OS00ZmU3LWI0MTctMmYwZTY4ZDhmYjNhfHJlYWQtd3JpdGU=",
-        "parallel": 1
-      }
+        "production": [
+            "default",
+            "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+            "!{projectRoot}/tsconfig.spec.json",
+            "!{projectRoot}/jest.config.[jt]s",
+            "!{projectRoot}/.eslintrc.json"
+        ]
+    },
+    "targetDefaults": {
+        "build": {
+            "inputs": ["production", "^production"]
+        },
+        "test": {
+            "inputs": [
+                "default",
+                "^production",
+                "{workspaceRoot}/jest.preset.js"
+            ]
+        },
+        "lint": {
+            "inputs": ["default", "{workspaceRoot}/.eslintrc.json"]
+        }
     }
-  },
-  "defaultProject": "meerkat",
-  "$schema": "./node_modules/nx/schemas/nx-schema.json"
 }

@@ -1,3 +1,4 @@
+/* eslint-disable */
 module.exports = {
     displayName: 'itot',
     preset: '../../jest.preset.js',
@@ -12,5 +13,5 @@ module.exports = {
     },
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
     coverageDirectory: '../../coverage/libs/itot',
-    verbose: process.env.CI === "true",
+    verbose: process.env.CI === 'true',
 };
