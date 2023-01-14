@@ -31,7 +31,7 @@ import { ASN1Element, BERElement, ObjectIdentifier } from "asn1-ts";
 export
 function rdnFromJson (rdn: Record<string, string>): RDN {
     return Object.entries(rdn).map(([ oidStr, value ]) => new AttributeTypeAndValue(
-        new ObjectIdentifier(oidStr.split(".").map((num) => Number.parseInt(num))),
+        ObjectIdentifier.fromString(oidStr),
         ((): ASN1Element => {
             const el = new BERElement();
             el.fromBytes(Buffer.from(value.slice(1), "hex"));

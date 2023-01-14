@@ -2711,18 +2711,7 @@ async function modifyEntry (
         contextUseRules.forEach((rule) => contextRulesIndex.set(rule.identifier.toString(), rule));
     }
 
-    const pendingUpdates: PrismaPromise<any>[] = [
-        ctx.db.entry.update({
-            where: {
-                id: target.dse.id,
-            },
-            data: {
-                modifiersName: user?.dn.map(rdnToJson),
-                modifyTimestamp: new Date(),
-            },
-            select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-        }),
-    ];
+    const pendingUpdates: PrismaPromise<any>[] = [];
     const patch: Patch = {
         addedValues: new Map(),
         removedValues: new Map(),
@@ -3528,6 +3517,18 @@ async function modifyEntry (
     if (op) {
         op.pointOfNoReturnTime = new Date();
     }
+    const isAdmPoint: boolean = patch.addedValues.has(administrativeRole["&id"].toString());
+    pendingUpdates.unshift(ctx.db.entry.update({
+        where: {
+            id: target.dse.id,
+        },
+        data: {
+            modifiersName: user?.dn.map(rdnToJson),
+            modifyTimestamp: new Date(),
+            admPoint: isAdmPoint || undefined, // Even if no new admin roles were added, it could already be an admin point.
+        },
+        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
+    }));
     checkTimeLimit();
     try {
         await ctx.db.$transaction(pendingUpdates);

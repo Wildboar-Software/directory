@@ -23,6 +23,7 @@ import {
     entryTtl,
 } from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa";
 import { ASN1Construction } from "asn1-ts";
+import { administrativeRole } from "@wildboar/x500/src/lib/collections/attributes";
 
 /**
  * @summary Create a DSE
@@ -73,6 +74,7 @@ async function createEntry (
             value: entryTtl.encoderFor["&Type"]!(ctx.config.defaultEntryTTL, DER),
         });
     }
+    const isAdmPoint = values.some((v) => v.type.isEqualTo(administrativeRole["&id"]));
     const now = new Date();
     const createdEntry = await ctx.db.entry.create({
         data: {
@@ -100,6 +102,7 @@ async function createEntry (
             immSupr: entryInit.immSupr,
             rhob: entryInit.rhob,
             sa: entryInit.sa,
+            admPoint: entryInit.admPoint ?? isAdmPoint,
             dsSubentry: entryInit.dsSubentry,
             structuralObjectClass: entryInit.structuralObjectClass
                 ?? getStructuralObjectClass(ctx, objectClasses).toString(),

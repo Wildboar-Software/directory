@@ -455,20 +455,20 @@ async function dseFromDatabaseEntry (
         };
     }
 
-    const administrativeRoles = await ctx.db.attributeValue.findMany({
-        where: {
-            entry_id: dbe.id,
-            type_oid: administrativeRole["&id"].toBytes(),
-        },
-        select: {
-            tag_class: true,
-            constructed: true,
-            tag_number: true,
-            content_octets: true,
-        },
-    });
 
-    if (administrativeRoles.length > 0) {
+    if (dbe.admPoint) {
+        const administrativeRoles = await ctx.db.attributeValue.findMany({
+            where: {
+                entry_id: dbe.id,
+                type_oid: administrativeRole["&id"].toBytes(),
+            },
+            select: {
+                tag_class: true,
+                constructed: true,
+                tag_number: true,
+                content_octets: true,
+            },
+        });
         const acSchemeBER = (await ctx.db.attributeValue.findFirst({
             where: {
                 entry_id: dbe.id,
