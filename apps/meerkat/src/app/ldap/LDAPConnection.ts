@@ -671,7 +671,7 @@ class LDAPAssociation extends ClientAssociation {
             }
             if ((numberOfLengthOctets + 2) >= data.length) { // If we have all length bytes.
                 const lengthBytes = Buffer.alloc(4);
-                lengthBytes.set(data.slice(2, 2 + numberOfLengthOctets), 4 - numberOfLengthOctets);
+                lengthBytes.set(data.subarray(2, 2 + numberOfLengthOctets), 4 - numberOfLengthOctets);
                 const length = lengthBytes.readUInt32BE();
                 if (length > ctx.config.ldap.bufferSize) {
                     const source: string = `${this.socket.remoteFamily}:${this.socket.remoteAddress}:${this.socket.remotePort}`;
@@ -872,7 +872,7 @@ class LDAPAssociation extends ClientAssociation {
                  * buffer (a pseudo-packet) to continue processing enqueued
                  * messages.
                  */
-                this.buffer = this.buffer.slice(bytesRead);
+                this.buffer = this.buffer.subarray(bytesRead);
                 break;
             } else if ("unbindRequest" in message.protocolOp) {
                 this.reset();
@@ -983,7 +983,7 @@ class LDAPAssociation extends ClientAssociation {
                 // Specifically, this.buffer will be indeterminate.
                 handleRequestAndErrors(ctx, this, message);
             }
-            this.buffer = this.buffer.slice(bytesRead);
+            this.buffer = this.buffer.subarray(bytesRead);
         }
     }
 

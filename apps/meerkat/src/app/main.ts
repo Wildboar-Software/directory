@@ -405,7 +405,7 @@ function attachUnboundEventListenersToIDMConnection (
         ctx.log.debug(ctx.i18n.t("log:idm_error", {
             code: printCode(e.errcode),
             source,
-            bytes: Buffer.from(e.error.toBytes().slice(0, 16)).toString("hex"),
+            bytes: Buffer.from(e.error.toBytes().subarray(0, 16)).toString("hex"),
         }), properties);
     });
     idm.events.on("reject", (r) => {

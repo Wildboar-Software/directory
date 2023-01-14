@@ -633,7 +633,7 @@ const caseIgnoreSortKeyGetter: SortKeyGetter = (element: ASN1Element): SortKey |
     const ds = _decode_UnboundedDirectoryString(element);
     const str = directoryStringToString(ds).toUpperCase();
     const buf = Buffer.from([ 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF ]);
-    buf.set(Buffer.from(str, "utf-8").slice(0, 7), 1);
+    buf.set(Buffer.from(str, "utf-8").subarray(0, 7), 1);
     return buf.readBigUInt64BE();
 };
 
@@ -641,7 +641,7 @@ const caseExactSortKeyGetter: SortKeyGetter = (element: ASN1Element): SortKey | 
     const ds = _decode_UnboundedDirectoryString(element);
     const str = directoryStringToString(ds);
     const buf = Buffer.from([ 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF ]);
-    buf.set(Buffer.from(str, "utf-8").slice(0, 7), 1);
+    buf.set(Buffer.from(str, "utf-8").subarray(0, 7), 1);
     return buf.readBigUInt64BE();
 };
 
