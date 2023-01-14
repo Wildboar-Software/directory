@@ -224,7 +224,7 @@ async function bind (
                 );
             }
             assert(ctx.config.authn.remotePaswordCompareTimeLimit > 0);
-            ctx.log.debug(ctx.i18n.t("log:checking_remote_pwd"), { source }, logInfo);
+            ctx.log.debug(ctx.i18n.t("log:checking_remote_pwd", { source }), logInfo);
             /**
              * The X.511 Remote Password Checking Procedure as describe in
              * [ITU Recommendation X.511 (2019)](https://www.itu.int/rec/T-REC-X.511/en),
@@ -299,7 +299,7 @@ async function bind (
                     );
                 }
             } catch (e) {
-                ctx.log.info(ctx.i18n.t("log:error_checking_remote_pwd"), { source, e }, logInfo);
+                ctx.log.info(ctx.i18n.t("log:error_checking_remote_pwd", { source, e }), logInfo);
                 matched = false;
                 // Intentional fall through to the !matched case.
             }

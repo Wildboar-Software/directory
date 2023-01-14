@@ -51,7 +51,7 @@ import { abandon } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService
 import { administerPassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
 import { addEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
 import { changePassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
-import { compare, CompareArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa";
+import { compare, CompareArgument, _encode_CompareArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa";
 import { modifyDN } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
 import { modifyEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
 import { ldapTransport } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ldapTransport.oa";
@@ -1331,7 +1331,7 @@ class OperationDispatcher {
         // Request validation not needed.
         const data = getOptionallyProtectedValue(argument);
         const signErrors: boolean = (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed);
-        const encodedArgument = _encode_ReadArgument(argument, BER);
+        const encodedArgument = _encode_CompareArgument(argument, BER);
         const targetObject = data.object.rdnSequence;
         const timeLimitDate = addSeconds(new Date(), data.serviceControls?.timeLimit
             ? Number(data.serviceControls.timeLimit)
