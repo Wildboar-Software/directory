@@ -2242,7 +2242,7 @@ async function search_i (
     }
 
     const entriesPerSubordinatesPage: number = (
-        entryOnly
+        !entryOnly
         && (data.subset === SearchArgumentData_subset_oneLevel)
         && isMatchAllFilter(data.filter)
     )
