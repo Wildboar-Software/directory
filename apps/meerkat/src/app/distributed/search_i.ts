@@ -776,6 +776,22 @@ function getFamilyMembersToReturnById (
 //     }
 // }
 
+function isMatchAllFilter (filter?: Filter): boolean {
+    if (!filter) {
+        return true;
+    }
+    if ("item" in filter) {
+        return (("present" in filter.item)
+            && filter.item.present.isEqualTo(objectClass["&id"]));
+    } else if ("and" in filter) {
+        return filter.and.every(isMatchAllFilter);
+    } else if ("or" in filter) {
+        return filter.or.some(isMatchAllFilter);
+    } else {
+        return false;
+    }
+}
+
 /**
  * @summary The Search (I) Procedure, as specified in ITU Recommendation X.518.
  * @description
@@ -2225,9 +2241,18 @@ async function search_i (
         state.SRcontinuationList.push(cr);
     }
 
+    const entriesPerSubordinatesPage: number = (
+        entryOnly
+        && (data.subset === SearchArgumentData_subset_oneLevel)
+        && isMatchAllFilter(data.filter)
+    )
+        ? Math.min(sizeLimit, ctx.config.entriesPerSubordinatesPage * 10)
+        : ctx.config.entriesPerSubordinatesPage;
+
     const getNextBatchOfSubordinates = async (): Promise<Vertex[]> => readSubordinates(
         ctx,
         target,
+        // TODO: If oneLevel and empty filter, just query MIN(the exact sizeLimit.
         /** 9967C6CD-DE0D-4F76-97D3-6D1686C39677
          * "Why don't you just fetch `pageSize` number of entries?"
          *
@@ -2238,7 +2263,7 @@ async function search_i (
          * request could consume considerably higher memory than expected. To prevent
          * this, a fixed page size is used. In the future, this may be configurable.
          */
-        ctx.config.entriesPerSubordinatesPage,
+        entriesPerSubordinatesPage,
         undefined,
         cursorId,
         {
