@@ -555,6 +555,9 @@ const config: Configuration = {
     authn: {
         lookupPkiPathForUncertifiedStrongAuth: (process.env.MEERKAT_LOOKUP_UNCERT_STRONG_AUTH === "1"),
         attributeCertificationPath,
+        remotePaswordCompareTimeLimit: process.env.MEERKAT_REMOTE_PWD_TIME_LIMIT
+            ? Number.parseInt(process.env.MEERKAT_REMOTE_PWD_TIME_LIMIT, 10)
+            : 0, // 0 disables this procedure.
     },
     log: {
         boundDN: (process.env.MEERKAT_LOG_BOUND_DN === "1"),

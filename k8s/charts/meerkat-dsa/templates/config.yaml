@@ -99,6 +99,7 @@ data:
   private_key_engine: {{ .Values.private_key_engine }}
   {{- end }}
   prohibit_chaining: {{ .Values.prohibit_chaining | ternary 1 0 | quote }}
+  remote_pwd_time_limit: {{ .Values.remote_pwd_time_limit | default 0 | quote }}
   reveal_user_pwd: {{ .Values.reveal_user_pwd | default false | ternary 1 0 | quote }}
   scr_parallelism: {{ .Values.scr_parallelism | default 0 | quote }}
   {{- if .Values.scvp_attr_cert_checks }}

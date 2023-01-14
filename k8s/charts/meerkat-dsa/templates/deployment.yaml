@@ -505,6 +505,12 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: prohibit_chaining
                   optional: true
+            - name: MEERKAT_REMOTE_PWD_TIME_LIMIT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: remote_pwd_time_limit
+                  optional: true
             - name: MEERKAT_REVEAL_USER_PWD
               valueFrom:
                 configMapKeyRef:

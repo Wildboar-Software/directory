@@ -931,6 +931,42 @@ If set to `1`, Meerkat DSA will not chain any requests. If you expect to operate
 your DSA instance in isolation from all other DSAs, it is recommended to enable
 this (meaning that chaining would be disabled).
 
+## MEERKAT_REMOTE_PWD_TIME_LIMIT
+
+The number of seconds before the remote password checking procedure (described
+in [ITU Recommendation X.511 (2019)](https://www.itu.int/rec/T-REC-X.511/en),
+Section 10.2.7) times out. If this is set to 0, this procedure is never used.
+
+This defaults to 0, meaning that this procedure is disabled by default.
+
+:::warning
+
+It is strongly recommended to avoid enabling this feature unless the names
+of most or all entries in your DSA are NOT a secret. That is because a remote
+password assertion will introduce significant latency into the bind operation,
+which can be used to oracle which entries exist.
+
+In other words, a nefarious
+user could guess common relative distinguished names, such as `CN=John Smith`,
+and see if the bind response (or error) for that entry returns significantly
+faster than a known non-existent entry (the nefarious user could just guess a
+random RDN, such as `CN=qtuihqjoitjoqpoj1` for this purpose) to determine whether
+`CN=John Smith` exists locally in that DSA, even if this nefarious user does not
+have the proper permissions to discover that entry.
+
+If this feature is enabled, it is recommended that you increase the values of
+the
+[`MEERKAT_BIND_MIN_SLEEP_MS`](#meerkat_bind_min_sleep_ms) and
+[`MEERKAT_BIND_SLEEP_RANGE_MS`](#meerkat_bind_sleep_range_ms) configuration
+options, which will help to obscure when asserted credentials are chained to a
+remote DSA.
+
+In addition to the above concern, enabling this feature can slow down bind
+operations. If you are under regular brute-force attacks or are generally under
+resource strain, you may want to leave this feature disabled.
+
+:::
+
 ## MEERKAT_REVEAL_USER_PWD
 
 If set to `1`, Meerkat DSA will return non-zero-length `OCTET STRING`s in the

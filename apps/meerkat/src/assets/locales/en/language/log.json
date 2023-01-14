@@ -225,5 +225,7 @@
     "cpw_pwd_end": "Association {{aid}} attempted to change their password, and their password was correct, but their password expired beyond the point after which they cannot reset it themselves. Your administrative intervention may be needed to assist this user.",
     "add_entry": "Association {{aid}} created new entry: DB_ID={{id}}, DSE_UUID={{uuid}}, ENTRY_UUID={{euuid}}, DN='{{dn}}'",
     "mod_entry": "Association {{aid}} modified entry: DB_ID={{id}}, DSE_UUID={{uuid}}, ENTRY_UUID={{euuid}}, DN='{{dn}}'",
-    "auto_accepted_ob": "Automatically-accepted operational binding because you have MEERKAT_OB_AUTO_ACCEPT=1: OB_TYPE={{type}} OB_ID={{obid}} UUID={{uuid}}."
+    "auto_accepted_ob": "Automatically-accepted operational binding because you have MEERKAT_OB_AUTO_ACCEPT=1: OB_TYPE={{type}} OB_ID={{obid}} UUID={{uuid}}.",
+    "checking_remote_pwd": "Checking remote password asserted by {{source}} via chained compare operation.",
+    "error_checking_remote_pwd": "Error checking remote password asserted by {{source}} via chained compare operation: {{e}}"
 }

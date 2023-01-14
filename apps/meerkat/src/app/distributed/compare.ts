@@ -145,10 +145,8 @@ import {
     pwdResponseValue,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/pwdResponseValue.oa";
 import {
-    PwdResponse,
-    _encode_PwdResponse,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PwdResponse.ta";
-import { SimpleCredentials } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
+    SimpleCredentials,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
 
 /**
  * @summary The compare operation, as specified in ITU Recommendation X.511.
@@ -168,7 +166,7 @@ import { SimpleCredentials } from "@wildboar/x500/src/lib/modules/DirectoryAbstr
 export
 async function compare (
     ctx: MeerkatContext,
-    assn: ClientAssociation,
+    assn: ClientAssociation | undefined,
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
     const target = state.foundDSE;
@@ -176,7 +174,7 @@ async function compare (
     const data = getOptionallyProtectedValue(argument);
     const signErrors: boolean = (
         (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
-        && (assn.authorizedForSignedErrors)
+        && (assn?.authorizedForSignedErrors ?? true)
     );
     const requestor: DistinguishedName | undefined = data
         .securityParameters
@@ -187,7 +185,7 @@ async function compare (
         .rdnSequence
         ?? state.chainingArguments.originator
         ?? data.requestor
-        ?? assn.boundNameAndUID?.dn;
+        ?? assn?.boundNameAndUID?.dn;
 
     // #region Signature validation
     /**
@@ -210,11 +208,13 @@ async function compare (
         && ("basicLevels" in state.chainingArguments.authenticationLevel)
         && !state.chainingArguments.authenticationLevel.basicLevels.signed
     ) {
-        const remoteHostIdentifier = `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`;
+        const remoteHostIdentifier = assn
+            ? `${assn.socket.remoteFamily}://${assn.socket.remoteAddress}/${assn.socket.remotePort}`
+            : "LOCAL";
         const logInfo = {
             context: "arg",
             host: remoteHostIdentifier,
-            aid: assn.id,
+            aid: assn?.id ?? "LOCAL",
             iid: printInvokeId(state.invokeId),
             ap: stringifyDN(ctx, requestor ?? []),
         };
@@ -242,7 +242,7 @@ async function compare (
     }
     // #endregion Signature validation
     const op = ("present" in state.invokeId)
-        ? assn.invocations.get(Number(state.invokeId.present))
+        ? assn?.invocations.get(Number(state.invokeId.present))
         : undefined;
     const noSubtypeMatch: boolean = (
         data.serviceControls?.options?.[ServiceControlOptions_noSubtypeMatch] === TRUE_BIT);
@@ -314,7 +314,7 @@ async function compare (
                     createSecurityParameters(
                         ctx,
                         signErrors,
-                        assn.boundNameAndUID?.dn,
+                        assn?.boundNameAndUID?.dn,
                         undefined,
                         securityError["&errorCode"],
                     ),
@@ -336,7 +336,7 @@ async function compare (
                         createSecurityParameters(
                             ctx,
                             signErrors,
-                            assn.boundNameAndUID?.dn,
+                            assn?.boundNameAndUID?.dn,
                             undefined,
                             abandoned["&errorCode"],
                         ),
@@ -386,7 +386,7 @@ async function compare (
                             createSecurityParameters(
                                 ctx,
                                 signErrors,
-                                assn.boundNameAndUID?.dn,
+                                assn?.boundNameAndUID?.dn,
                                 undefined,
                                 securityError["&errorCode"],
                             ),
@@ -415,7 +415,7 @@ async function compare (
                         createSecurityParameters(
                             ctx,
                             signErrors,
-                            assn.boundNameAndUID?.dn,
+                            assn?.boundNameAndUID?.dn,
                             undefined,
                             abandoned["&errorCode"],
                         ),
@@ -442,7 +442,7 @@ async function compare (
                 createSecurityParameters(
                     ctx,
                     signErrors,
-                    assn.boundNameAndUID?.dn,
+                    assn?.boundNameAndUID?.dn,
                     undefined,
                     serviceError["&errorCode"],
                 ),
@@ -467,7 +467,7 @@ async function compare (
                 createSecurityParameters(
                     ctx,
                     signErrors,
-                    assn.boundNameAndUID?.dn,
+                    assn?.boundNameAndUID?.dn,
                     undefined,
                     serviceError["&errorCode"],
                 ),
@@ -493,7 +493,7 @@ async function compare (
                     createSecurityParameters(
                         ctx,
                         signErrors,
-                        assn.boundNameAndUID?.dn,
+                        assn?.boundNameAndUID?.dn,
                         undefined,
                         serviceError["&errorCode"],
                     ),
@@ -557,7 +557,7 @@ async function compare (
                         createSecurityParameters(
                             ctx,
                             signErrors,
-                            assn.boundNameAndUID?.dn,
+                            assn?.boundNameAndUID?.dn,
                             undefined,
                             abandoned["&errorCode"],
                         ),
@@ -597,7 +597,7 @@ async function compare (
                                 createSecurityParameters(
                                     ctx,
                                     signErrors,
-                                    assn.boundNameAndUID?.dn,
+                                    assn?.boundNameAndUID?.dn,
                                     undefined,
                                     securityError["&errorCode"],
                                 ),
@@ -757,7 +757,7 @@ async function compare (
 
     const signResults: boolean = (
         (data.securityParameters?.target === ProtectionRequest_signed)
-        && assn.authorizedForSignedResults
+        && (assn?.authorizedForSignedResults ?? true)
     );
     const resultData: CompareResultData = new CompareResultData(
         {
@@ -770,7 +770,7 @@ async function compare (
         createSecurityParameters(
             ctx,
             signResults,
-            assn.boundNameAndUID?.dn,
+            assn?.boundNameAndUID?.dn,
             id_opcode_compare,
         ),
         ctx.dsa.accessPoint.ae_title.rdnSequence,
@@ -808,7 +808,7 @@ async function compare (
         };
     const signDSPResult: boolean = (
         (state.chainingArguments.securityParameters?.target === ProtectionRequest_signed)
-        && assn.authorizedForSignedResults
+        && (assn?.authorizedForSignedResults ?? true)
     );
     return {
         result: {
@@ -819,7 +819,7 @@ async function compare (
                     createSecurityParameters(
                         ctx,
                         signDSPResult,
-                        assn.boundNameAndUID?.dn,
+                        assn?.boundNameAndUID?.dn,
                         id_opcode_compare,
                     ),
                     undefined,

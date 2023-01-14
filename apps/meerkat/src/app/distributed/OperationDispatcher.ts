@@ -51,7 +51,7 @@ import { abandon } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService
 import { administerPassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
 import { addEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
 import { changePassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
-import { compare } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa";
+import { compare, CompareArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa";
 import { modifyDN } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
 import { modifyEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
 import { ldapTransport } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ldapTransport.oa";
@@ -1303,6 +1303,122 @@ class OperationDispatcher {
             }
         }
         return doRead(ctx, undefined, state);
+    }
+
+
+/**
+     * @summary Dispatch a local read operation
+     * @description
+     *
+     * This function exists for the DSA to compare passwords per the
+     *
+     * @param ctx The context object
+     * @param argument The read argument
+     * @param timeLimit The number of seconds the request is permitted to take.
+     *
+     * @public
+     * @static
+     * @function
+     * @async
+     */
+    public static async dispatchLocalCompareRequest (
+        ctx: MeerkatContext,
+        argument: CompareArgument,
+    ): ReturnType<typeof doCompare> {
+        const invokeId: InvokeId = { // TODO: Refactor.
+            present: randomInt(1, 10_000_000),
+        };
+        // Request validation not needed.
+        const data = getOptionallyProtectedValue(argument);
+        const signErrors: boolean = (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed);
+        const encodedArgument = _encode_ReadArgument(argument, BER);
+        const targetObject = data.object.rdnSequence;
+        const timeLimitDate = addSeconds(new Date(), data.serviceControls?.timeLimit
+            ? Number(data.serviceControls.timeLimit)
+            : 5000);
+        // TODO: Log iid, target, timeLimit
+        const chainingResults = new ChainingResults(
+            undefined,
+            undefined,
+            createSecurityParameters(
+                ctx,
+                false, // Not to be signed, since this is a locally-issued request.
+                undefined,
+                compare["&operationCode"],
+            ),
+            undefined,
+        );
+        const state: OperationDispatcherState = {
+            NRcontinuationList: [],
+            SRcontinuationList: [],
+            admPoints: [],
+            referralRequests: [],
+            emptyHierarchySelect: false,
+            invokeId: invokeId,
+            operationCode: compare["&operationCode"]!,
+            operationArgument: encodedArgument, // Why is this needed?
+            chainingArguments: new ChainingArguments(
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                data.object.rdnSequence,
+                undefined,
+                [],
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                {
+                    generalizedTime: timeLimitDate,
+                },
+            ),
+            chainingResults,
+            foundDSE: ctx.dit.root,
+            entrySuitable: false,
+            partialName: false,
+            rdnsResolved: 0,
+            aliasesEncounteredById: new Set(),
+        };
+        await findDSE(
+            ctx,
+            undefined,
+            ctx.dit.root,
+            targetObject,
+            state,
+            data,
+        );
+        if (!state.entrySuitable) {
+            const serviceControlOptions = data.serviceControls?.options;
+            const chainingProhibited = (
+                (serviceControlOptions?.[chainingProhibitedBit] === TRUE_BIT)
+                || (serviceControlOptions?.[manageDSAITBit] === TRUE_BIT)
+            );
+            const partialNameResolution = (serviceControlOptions?.[partialNameResolutionBit] === TRUE_BIT);
+            const nrcrResult = await nrcrProcedure(
+                ctx,
+                undefined,
+                new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(
+                    state.chainingArguments,
+                    encodedArgument,
+                ),
+                state,
+                chainingProhibited,
+                partialNameResolution,
+                signErrors,
+            );
+            if ("invoke_id" in nrcrResult) {
+                throw new errors.ChainedError(
+                    ctx.i18n.t("err:chained_error"),
+                    nrcrResult.parameter,
+                    nrcrResult.code,
+                );
+            } else {
+                return {
+                    result: nrcrResult,
+                    stats: {},
+                };
+            }
+        }
+        return doCompare(ctx, undefined, state);
     }
 
 }

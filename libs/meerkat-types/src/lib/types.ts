@@ -1420,6 +1420,13 @@ interface AuthenticationConfiguration extends PrivilegeManagementInfrastructureC
      */
     lookupPkiPathForUncertifiedStrongAuth: boolean;
 
+    /**
+     * The number of seconds before the remote password checking procedure
+     * (described in [ITU Recommendation X.511 (2019)](https://www.itu.int/rec/T-REC-X.511/en), Section 10.2.7)
+     * times out. If this is set to 0, this procedure is never used.
+     */
+    remotePaswordCompareTimeLimit: number;
+
 }
 
 /**

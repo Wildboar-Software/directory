@@ -2252,7 +2252,6 @@ async function search_i (
     const getNextBatchOfSubordinates = async (): Promise<Vertex[]> => readSubordinates(
         ctx,
         target,
-        // TODO: If oneLevel and empty filter, just query MIN(the exact sizeLimit.
         /** 9967C6CD-DE0D-4F76-97D3-6D1686C39677
          * "Why don't you just fetch `pageSize` number of entries?"
          *
