@@ -69,7 +69,9 @@ const readValues: SpecialAttributeDatabaseReader = async (
                 type: userPwdHistory["&id"],
                 value: DERElement.fromSequence([
                     _encodeGeneralizedTime(row.time, DER),
-                    _encode_UserPwd(redacted, DER),
+                    ctx.config.revealUserPwdEncryptedValues
+                        ? passwordElement
+                        : _encode_UserPwd(redacted, DER),
                 ]),
             };
         });
