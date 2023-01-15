@@ -1,0 +1,97 @@
+name: Quipu
+on:
+  schedule:
+  # 17:00 UTC every day
+  - cron: "0 17 * * *"
+
+env:
+  CLUSTER_NAME: production
+  RESOURCE_GROUP: production
+  NAMESPACE: demo
+  ZONE: mkdemo.wildboar.software
+  STORAGE_ACCOUNT_NAME: wildboarprod
+  CHART_CONTAINER: helm-charts
+  CHART_REPO: wildboar
+  CHART_NAME: quipu
+
+jobs:
+
+  ensure_k8s_namespaces:
+    name: Create Kubernetes ${{ env.NAMESPACE }} Namespace
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    environment: production
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Login to Azure
+        uses: azure/login@v1
+        timeout-minutes: 2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Setup Kubectl
+        uses: azure/setup-kubectl@v3
+        timeout-minutes: 2
+      - name: Set Kubernetes Context
+        uses: azure/aks-set-context@v3
+        timeout-minutes: 2
+        with:
+          creds: '${{ secrets.AZURE_CREDENTIALS }}'
+          cluster-name: ${{ env.CLUSTER_NAME }}
+          resource-group: ${{ env.RESOURCE_GROUP }}
+      - name: Create Kubernetes Namespace
+        run: kubectl create ns ${{ env.NAMESPACE }}
+        timeout-minutes: 2
+        continue-on-error: true
+
+  deploy_demo:
+    name: Deploy Demo Environment
+    runs-on: ubuntu-latest
+    needs:
+      - ensure_k8s_namespaces
+    environment: production
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Setup Kubectl
+        uses: azure/setup-kubectl@v3
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+      - name: Set Kubernetes Context
+        uses: azure/aks-set-context@v3
+        with:
+          creds: '${{ secrets.AZURE_CREDENTIALS }}'
+          cluster-name: ${{ env.CLUSTER_NAME }}
+          resource-group: ${{ env.RESOURCE_GROUP }}
+      - name: Add Wildboar Helm Repo
+        run: helm repo add ${{ env.CHART_REPO }} https://${{ env.STORAGE_ACCOUNT_NAME }}.blob.core.windows.net/${{ env.CHART_CONTAINER }}
+      - name: Update Helm Repo Index
+        run: helm repo update
+      - name: Deploy Quipu DSA via Helm
+        # Set log_level to "info" because logging slows down Meerkat DSA
+        # considerably, even though it would be nice to have more output.
+        run: |
+          helm install quipu-demo ${{ env.CHART_REPO }}/${{ env.CHART_NAME }} \
+            -f values_override.yaml \
+            --set fullnameOverride=quipu-demo \
+            --service.type=LoadBalancer \
+            --atomic \
+            --namespace=${{ env.NAMESPACE }}
+      - name: Wait 30 Seconds for Public IP to be Allocated
+        run: sleep 30
+      - name: Save Directory Service IP Address
+        run: |
+          echo 'DIRECTORY_SERVICE_IP=$(kubectl get svc -n ${{ env.NAMESPACE }} quipu-demo-quipu-dsa --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")' >> $GITHUB_ENV
+      - name: Create DSA DNS Record
+        run: |
+          az network dns record-set a add-record \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --zone-name ${{ env.ZONE }} \
+            --ttl 60 \
+            --record-set-name quipu \
+            --ipv4-address ${{ env.DIRECTORY_SERVICE_IP }}
+

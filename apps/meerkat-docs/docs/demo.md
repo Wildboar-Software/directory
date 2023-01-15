@@ -38,6 +38,52 @@ Bind DN: `cn=admin`
 
 Password: `asdf`
 
+## Demo DIT Overview
+
+Currently, the first level contains just four entries:
+
+- `C=US`
+- `C=GB`
+- `C=RU`
+- `CN=admin`
+
+`C=US,ST=FL,L=HIL,L=Tampa,L=Westchase` contains approximately 1000 entries. This
+includes dynamic objects that expire and disappear from the directory. This is
+also true of `C=GB,L=Yorkshire and the Humber`.
+
+`C=US,CN=Directory Engineers` is a group with multiple members (multiple
+`member` attribute values). All of these members come from
+`C=US,ST=FL,L=HIL,L=Tampa,L=Westchase`.
+
+`C=US,ST=FL,L=HIL,L=Tampa,O=Wildboar Software` is an organization. Beneath it is
+one or more `organizationalRole` entries and one or more `cRLDistributionPoint`
+entries. `C=US,ST=FL,L=HIL,L=Tampa,O=Wildboar Software,CN=Code Peasants` is an
+`organizationalRole` that contains multiple members from
+`C=US,ST=FL,L=HIL,L=Tampa,L=Westchase`.
+
+The `L=Westchase` contains an assortment of people entries, some of which have
+passwords and a multitude of auxiliary object classes.
+
+`C=GB,CN=Prince Harry` is a compound entry.
+
+`C=RU,dmdName=Sputnik DMD` contains a handful of entries of object class `dSA`.
+
+## Quipu DSA
+
+Quipu DSA, the X.500 directory in the
+[ISO Development Environment](https://en.wikipedia.org/wiki/ISO_Development_Environment),
+is now a part of the demo environment. It is accessible at:
+
+`itot://quipu.mkdemo.wildboar.software:17003`
+
+As the URL implies, it is only accessible via ISO Transport Over TCP (ITOT).
+Note that Quipu is a version 1 DSA, so it will not support many features, such
+as contexts and hierarchy selection.
+
+There are no credentials for this DSA. There is hardly any data in it, but it
+might be nice for testing ITOT clients. List operations under the Root DSE have
+been confirmed to work.
+
 ## Permissions
 
 You may read and write all you want to these DSAs. They exist specifically so
