@@ -15,7 +15,6 @@ import type {
     RelativeDistinguishedName as RDN,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
 import dnToVertex from "../../dit/dnToVertex";
-import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import { Knowledge } from "@prisma/client";
 import deleteEntry from "../../database/deleteEntry";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -209,7 +208,7 @@ async function updateContextPrefix (
                     rhob: Boolean(vertex.admPointInfo),
                     immSupr,
                 },
-                vertex.admPointInfo?.flatMap(valuesFromAttribute) ?? [],
+                vertex.admPointInfo ?? [],
                 [],
             );
             for (const ap of vertex.accessPoints ?? []) {
@@ -247,7 +246,7 @@ async function updateContextPrefix (
                         subentry: true,
                         rhob: true,
                     },
-                    subentry.info?.flatMap(valuesFromAttribute) ?? [],
+                    subentry.info ?? [],
                     [],
                 );
             }
@@ -286,7 +285,7 @@ async function updateContextPrefix (
                                 subentry: true,
                                 rhob: true,
                             },
-                            subentry.info?.flatMap(valuesFromAttribute) ?? [],
+                            subentry.info ?? [],
                             [],
                         );
                         continue;

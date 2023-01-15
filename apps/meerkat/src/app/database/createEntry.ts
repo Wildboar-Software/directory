@@ -1,29 +1,39 @@
-import type { Context, Vertex, Value } from "@wildboar/meerkat-types";
+import type { Context, Vertex, IndexableOID } from "@wildboar/meerkat-types";
 import { DER } from "asn1-ts/dist/node/functional";
 import { Prisma } from "@prisma/client";
 import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry";
-import type {
-    DistinguishedName,
+import {
+    DistinguishedName, _decode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import type {
     RelativeDistinguishedName as RDN,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
-import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
-import { subentry } from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa";
-import { alias } from "@wildboar/x500/src/lib/modules/InformationFramework/alias.oa";
+import { top } from "@wildboar/x500/src/lib/modules/InformationFramework/alias.oa";
 import addValues from "./entry/addValues";
 import { strict as assert } from "assert";
 import { randomUUID } from "crypto";
 import getStructuralObjectClass from "../x500/getStructuralObjectClass";
-import getVertexById from "./getVertexById";
-import {
-    id_oc_dynamicObject,
-} from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/dynamicObject.oa";
 import {
     entryTtl,
 } from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa";
-import { ASN1Construction } from "asn1-ts";
-import { administrativeRole } from "@wildboar/x500/src/lib/collections/attributes";
+import { ASN1Construction, OBJECT_IDENTIFIER } from "asn1-ts";
+import {
+    Attribute,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+import { groupByOID } from "@wildboar/x500";
+import valuesFromAttribute from "../x500/valuesFromAttribute";
+import {
+    ID_OC,
+    ID_AEN,
+    ID_SUBENTRY,
+    ID_PARENT,
+    ID_CHILD,
+    ID_ADMIN_ROLE,
+    ID_ALIAS,
+    ID_DYNOBJ,
+    ID_TTL,
+    ID_ACS,
+} from "../../oidstr";
 
 /**
  * @summary Create a DSE
@@ -35,7 +45,7 @@ import { administrativeRole } from "@wildboar/x500/src/lib/collections/attribute
  * @param superior The superior to the created entry
  * @param rdn The relative distinguished name of the new entry
  * @param entryInit Properties of the new entry
- * @param values Initial values of the entry
+ * @param attributes Initial attributes of the entry
  * @param modifier The distinguished name of the user that created the entry
  * @returns The newly created vertex
  *
@@ -48,15 +58,22 @@ async function createEntry (
     superior: Vertex,
     rdn: RDN,
     entryInit: Partial<Prisma.EntryCreateInput>,
-    values: Value[] = [],
+    attributes: Attribute[],
     modifier: DistinguishedName = [],
     signErrors: boolean = false,
 ): Promise<Vertex> {
-    const objectClasses = values
-        .filter((value) => value.type.isEqualTo(objectClass["&id"]))
-        .map((value) => value.value.objectIdentifier);
-    const isSubentry = objectClasses.some((oc) => oc.isEqualTo(subentry["&id"]));
-    const isAlias = objectClasses.some((oc) => oc.isEqualTo(alias["&id"]));
+    const groupedAttrs = groupByOID(attributes, attr => attr.type_);
+    const objectClasses: OBJECT_IDENTIFIER[] = [];
+    const objectClassIndex: Set<IndexableOID> = new Set();
+    for (const oc_attr of groupedAttrs[ID_OC]) {
+        for (const value of oc_attr.values) {
+            const oc_oid = value.objectIdentifier;
+            objectClasses.push(oc_oid);
+            objectClassIndex.add(oc_oid.toString());
+        }
+    }
+    const isSubentry = objectClassIndex.has(ID_SUBENTRY);
+    const isAlias = objectClassIndex.has(ID_ALIAS);
     const couldBeAnEntry = ( // I don't know for sure that this is exhaustive.
         !entryInit.subr
         && !entryInit.xr
@@ -66,24 +83,32 @@ async function createEntry (
         && !isAlias
         && !isSubentry
     );
-    // const isFamilyMember = objectClasses.some((oc) => (oc.isEqualTo(parent["&id"]) || oc.isEqualTo(child["&id"])));
-    const isDynamic = objectClasses.some((oc) => oc.isEqualTo(id_oc_dynamicObject));
-    if (isDynamic && !values.some((v) => v.type.isEqualTo(entryTtl["&id"]))) {
-        values.push({
-            type: entryTtl["&id"],
-            value: entryTtl.encoderFor["&Type"]!(ctx.config.defaultEntryTTL, DER),
-        });
+    const isFamilyMember = objectClassIndex.has(ID_PARENT) || objectClassIndex.has(ID_CHILD);
+    const isDynamic = objectClassIndex.has(ID_DYNOBJ);
+    if (isDynamic && !groupedAttrs[ID_TTL]?.length) {
+        // WARNING: This _does_ modify the attributes by reference, but it is an edge case.
+        attributes.push(new Attribute(
+            entryTtl["&id"],
+            [
+                entryTtl.encoderFor["&Type"]!(ctx.config.defaultEntryTTL, DER),
+            ],
+            undefined,
+        ));
     }
-    const isAdmPoint = values.some((v) => v.type.isEqualTo(administrativeRole["&id"]));
+    const adminRoles = groupedAttrs[ID_ADMIN_ROLE]
+        .flatMap((a) => a.values)
+        .map((v) => v.objectIdentifier);
+    const isAdmPoint = adminRoles.length > 0;
     const now = new Date();
+    const materialized_path = superior.dse.root
+        ? ""
+        : (superior.dse.materializedPath.length
+            ? `${superior.dse.materializedPath}${superior.dse.id.toString() + "."}`
+            : superior.dse.id.toString() + ".");
     const createdEntry = await ctx.db.entry.create({
         data: {
             immediate_superior_id: superior.dse.id,
-            materialized_path: superior.dse.root
-                ? ""
-                : (superior.dse.materializedPath.length
-                    ? `${superior.dse.materializedPath}${superior.dse.id.toString() + "."}`
-                    : superior.dse.id.toString() + "."),
+            materialized_path,
             entryUUID: randomUUID(),
             creatorsName: [],
             modifiersName: [],
@@ -137,15 +162,76 @@ async function createEntry (
             },
         },
     });
-    const vertex = await vertexFromDatabaseEntry(ctx, superior, {
-        ...createdEntry,
-        EntryObjectClass: [],
-    });
-    await ctx.db.$transaction([
+    const aliasedEntryValue = groupedAttrs[ID_AEN]?.[0].values[0];
+
+    // Rather than calling vertexFromDatabaseEntry(), we create a "good enough"
+    // vertex based on what we already know. This could save many database
+    // queries.
+    const vertex: Vertex = {
+        immediateSuperior: superior,
+        subordinates: null,
+        dse: {
+            id: createdEntry.id,
+            createTimestamp: new Date(),
+            modifyTimestamp: new Date(),
+            creatorsName: {
+                rdnSequence: modifier,
+            },
+            modifiersName: {
+                rdnSequence: modifier,
+            },
+            materializedPath: materialized_path,
+            objectClass: new Set(),
+            rdn,
+            uuid: createdEntry.dseUUID,
+            entryUUID: createdEntry.entryUUID ?? undefined,
+            structuralObjectClass: top["&id"],
+            glue: entryInit.glue,
+            entry: entryInit.entry ?? couldBeAnEntry,
+            rhob: entryInit.rhob,
+            sa: entryInit.sa,
+            dsSubentry: entryInit.dsSubentry,
+            admPoint: isAdmPoint
+                ? {
+                    administrativeRole: new Set(adminRoles.map((ar) => ar.toString())),
+                    accessControlScheme: groupedAttrs[ID_ACS]?.[0]?.values[0]?.objectIdentifier,
+                }
+                : undefined,
+            alias: isAlias && aliasedEntryValue
+                ? {
+                    aliasedEntryName:_decode_DistinguishedName(aliasedEntryValue),
+                }
+                : undefined,
+            cp: entryInit.cp ? {} : undefined,
+            familyMember: isFamilyMember,
+            immSupr: entryInit.immSupr
+                ? {
+                    specificKnowledge: [],
+                }
+                : undefined,
+            nssr: undefined, // Impossible, because this entry is just now being created.
+            shadow: entryInit.shadow
+                ? {
+                    attributeCompleteness: false,
+                    attributeValuesIncomplete: new Set(),
+                    subordinateCompleteness: false,
+                }
+                : undefined,
+            subentry: isSubentry ? {} : undefined,
+            subr: entryInit.subr
+                ? {
+                    specificKnowledge: [],
+                }
+                : undefined,
+            supr: undefined,
+            xr: undefined,
+        },
+    };
+    const txn = await ctx.db.$transaction([
         ...await addValues(
             ctx,
             vertex,
-            values,
+            attributes.flatMap(valuesFromAttribute),
             modifier,
             false, // Don't check for existing values.
             signErrors,
@@ -153,16 +239,35 @@ async function createEntry (
         ctx.db.entry.update({
             where: {
                 id: createdEntry.id,
-                dseUUID: entryInit.dseUUID,
-                entryUUID: entryInit.entryUUID ?? undefined,
             },
             data: {
                 deleteTimestamp: null,
             },
-            select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
+            include: {
+                RDN: {
+                    select: {
+                        type_oid: true,
+                        tag_class: true,
+                        constructed: true,
+                        tag_number: true,
+                        content_octets: true,
+                    },
+                    orderBy: { // So the RDNs appear in the order in which they were entered.
+                        // This prevents an undesirable scenario where some users might show
+                        // up as GN=Jonathan+SN=Wilbur or SN=Wilbur+GN=Jonathan.
+                        order_index: "asc",
+                    },
+                },
+                EntryObjectClass: {
+                    select: {
+                        object_class: true,
+                    },
+                },
+            },
         }),
     ]);
-    const ret = await getVertexById(ctx, superior, createdEntry.id);
+    const update_response = txn[txn.length - 1];
+    const ret = await vertexFromDatabaseEntry(ctx, superior, update_response);
     assert(ret);
     return ret;
 }

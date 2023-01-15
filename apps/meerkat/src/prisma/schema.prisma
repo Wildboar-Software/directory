@@ -201,8 +201,9 @@ model AttributeValue {
 
   ContextValue ContextValue[]
 
-  @@index([entry_id, type_oid(length: 32), tag_class, constructed, tag_number])
+  @@index([entry_id, type_oid(length: 32), tag_class, constructed, tag_number, content_octets(length: 64)])
   @@index([entry_id, operational, type_oid(length: 32)])
+  @@index([type_oid(length: 32), tag_class, constructed, tag_number, content_octets(length: 64)])
 }
 
 model ContextValue {

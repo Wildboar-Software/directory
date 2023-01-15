@@ -7,7 +7,6 @@ import {
     SubordinateToSuperior,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
 import dnToVertex from "../../dit/dnToVertex";
-import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import { Knowledge } from "@prisma/client";
 import * as errors from "@wildboar/meerkat-types";
 import {
@@ -246,7 +245,7 @@ async function updateLocalSubr (
                     subentry: true,
                     rhob: true,
                 },
-                subentry.info.flatMap((attr) => valuesFromAttribute(attr)),
+                subentry.info,
                 undefined,
                 signErrors,
             );

@@ -13,9 +13,6 @@ import {
     _encode_AddEntryResultData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryResultData.ta";
 import {
-    id_at_objectClass,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-at-objectClass.va";
-import {
     id_sc_subentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-sc-subentry.va";
 import {
@@ -343,8 +340,8 @@ async function addEntry (
     const immediateSuperior = state.foundDSE;
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const values: Value[] = data.entry.flatMap(valuesFromAttribute);
-    const objectClassValues = values.filter((attr) => attr.type.isEqualTo(id_at_objectClass));
-    const objectClasses: OBJECT_IDENTIFIER[] = objectClassValues.map((ocv) => ocv.value.objectIdentifier);
+    const objectClassValues = data.entry.filter((attr) => attr.type_.isEqualTo(objectClass["&id"]));
+    const objectClasses: OBJECT_IDENTIFIER[] = objectClassValues.flatMap((a) => a.values).map((ocv) => ocv.objectIdentifier);
     const objectClassesIndex: Set<IndexableOID> = new Set(objectClasses.map((oc) => oc.toString()));
     const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
 
@@ -1443,7 +1440,7 @@ async function addEntry (
             ? Number(governingStructureRule)
             : undefined,
         structuralObjectClass: structuralObjectClass.toString(),
-    }, values, user?.dn);
+    }, data.entry, user?.dn);
     immediateSuperior.subordinates?.push(newEntry);
     ctx.log.debug(ctx.i18n.t("log:add_entry", {
         aid: assn.id,
