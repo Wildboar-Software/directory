@@ -65,7 +65,7 @@ async function createEntry (
     const groupedAttrs = groupByOID(attributes, attr => attr.type_);
     const objectClasses: OBJECT_IDENTIFIER[] = [];
     const objectClassIndex: Set<IndexableOID> = new Set();
-    for (const oc_attr of groupedAttrs[ID_OC]) {
+    for (const oc_attr of groupedAttrs[ID_OC] ?? []) {
         for (const value of oc_attr.values) {
             const oc_oid = value.objectIdentifier;
             objectClasses.push(oc_oid);
@@ -96,8 +96,8 @@ async function createEntry (
         ));
     }
     const adminRoles = groupedAttrs[ID_ADMIN_ROLE]
-        .flatMap((a) => a.values)
-        .map((v) => v.objectIdentifier);
+        ?.flatMap((a) => a.values)
+        .map((v) => v.objectIdentifier) ?? [];
     const isAdmPoint = adminRoles.length > 0;
     const now = new Date();
     const materialized_path = superior.dse.root
