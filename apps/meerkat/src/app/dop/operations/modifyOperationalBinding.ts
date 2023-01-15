@@ -109,6 +109,7 @@ import {
 import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import stringifyDN from "../../x500/stringifyDN";
 
 function getInitiator (init: Initiator): OperationalBindingInitiator {
     // NOTE: Initiator is not extensible, so this is an exhaustive list.
@@ -319,6 +320,7 @@ async function modifyOperationalBinding (
                 ? ob.access_point.ae_title.map((rdn: Record<string, string>) => rdnFromJson(rdn))
                 : undefined;
             if (!authorized_ae_title) {
+                ctx.log.warn(ctx.i18n.t("log:ap_missing_ae_title", { id: ob.access_point.id }));
                 return false;
             }
             const modifier_is_originator: boolean = compareDistinguishedName(
@@ -326,6 +328,16 @@ async function modifyOperationalBinding (
                 assn.boundNameAndUID!.dn,
                 NAMING_MATCHER,
             );
+            if (!modifier_is_originator) {
+                const logInfo = {
+                    type: data.bindingType.toString(),
+                    obid: data.bindingID?.identifier.toString(),
+                    uuid: ob.uuid,
+                    owner: stringifyDN(ctx, authorized_ae_title),
+                    impostor: stringifyDN(ctx, assn.boundNameAndUID!.dn),
+                };
+                ctx.log.warn(ctx.i18n.t("log:ob_modify_attempt_by_other_ae", logInfo), logInfo);
+            }
             return modifier_is_originator;
         });
 
@@ -450,7 +462,7 @@ async function modifyOperationalBinding (
         : undefined;
 
     const sp = data.securityParameters;
-    const previous_ap_id: number | undefined = createdAccessPoint ?? opBinding.access_point?.id;
+    const access_point_id: number | undefined = createdAccessPoint ?? opBinding.access_point?.id;
     const created = await ctx.db.operationalBinding.create({
         data: {
             accepted: true,
@@ -466,11 +478,11 @@ async function modifyOperationalBinding (
             agreement_ber: data.newAgreement
                 ? Buffer.from(data.newAgreement.toBytes().buffer)
                 : opBinding.agreement_ber,
-            ...(previous_ap_id
+            ...(access_point_id
                 ? {
                     access_point: {
                         connect: {
-                            id: previous_ap_id,
+                            id: access_point_id,
                         },
                     },
                 }

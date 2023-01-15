@@ -227,5 +227,7 @@
     "mod_entry": "Association {{aid}} modified entry: DB_ID={{id}}, DSE_UUID={{uuid}}, ENTRY_UUID={{euuid}}, DN='{{dn}}'",
     "auto_accepted_ob": "Automatically-accepted operational binding because you have MEERKAT_OB_AUTO_ACCEPT=1: OB_TYPE={{type}} OB_ID={{obid}} UUID={{uuid}}.",
     "checking_remote_pwd": "Checking remote password asserted by {{source}} via chained compare operation.",
-    "error_checking_remote_pwd": "Error checking remote password asserted by {{source}} via chained compare operation: {{e}}"
+    "error_checking_remote_pwd": "Error checking remote password asserted by {{source}} via chained compare operation: {{e}}",
+    "ob_modify_attempt_by_other_ae": "There was an attempt by {{impostor}} to modify an operational binding owned by {{owner}}: OB_TYPE={{type}} OB_ID={{obid}} UUID={{uuid}}.",
+    "ap_missing_ae_title": "Access point with ID {{id}} is stored in the database with a malformed AE-title. It should be an array of JSON-encoded RDNs."
 }

@@ -307,7 +307,7 @@ function create_dop_client (rose: ROSETransport): DOPClient {
         return establishOperationalBinding_({
             ...params,
             bindingType: id_op_binding_hierarchical,
-            bindingID: undefined,
+            bindingID: params.bindingID,
             agreement,
             initiator,
             _unrecognizedExtensionsList: [],
@@ -321,7 +321,7 @@ function create_dop_client (rose: ROSETransport): DOPClient {
         return establishOperationalBinding_({
             ...params,
             bindingType: id_op_binding_hierarchical,
-            bindingID: undefined,
+            bindingID: params.bindingID,
             agreement,
             initiator,
             _unrecognizedExtensionsList: [],
@@ -335,7 +335,7 @@ function create_dop_client (rose: ROSETransport): DOPClient {
         return modifyOperationalBinding_({
             ...params,
             bindingType: id_op_binding_hierarchical,
-            accessPoint: undefined,
+            accessPoint: params.accessPoint,
             newAgreement,
             initiator,
             newBindingID: new OperationalBindingID(
@@ -353,7 +353,7 @@ function create_dop_client (rose: ROSETransport): DOPClient {
         return modifyOperationalBinding_({
             ...params,
             bindingType: id_op_binding_hierarchical,
-            accessPoint: undefined,
+            accessPoint: params.accessPoint,
             newAgreement,
             initiator,
             newBindingID: new OperationalBindingID(
@@ -371,7 +371,7 @@ function create_dop_client (rose: ROSETransport): DOPClient {
         return establishOperationalBinding_({
             ...params,
             bindingType: id_op_binding_non_specific_hierarchical,
-            bindingID: undefined,
+            bindingID: params.bindingID,
             agreement,
             initiator,
             _unrecognizedExtensionsList: [],
@@ -385,7 +385,7 @@ function create_dop_client (rose: ROSETransport): DOPClient {
         return establishOperationalBinding_({
             ...params,
             bindingType: id_op_binding_non_specific_hierarchical,
-            bindingID: undefined,
+            bindingID: params.bindingID,
             agreement,
             initiator,
             _unrecognizedExtensionsList: [],
@@ -399,7 +399,7 @@ function create_dop_client (rose: ROSETransport): DOPClient {
         return modifyOperationalBinding_({
             ...params,
             bindingType: id_op_binding_non_specific_hierarchical,
-            accessPoint: undefined,
+            accessPoint: params.accessPoint,
             newBindingID: new OperationalBindingID(
                 params.bindingID.identifier,
                 Number(params.bindingID.version ?? 0) + 1,
@@ -417,7 +417,7 @@ function create_dop_client (rose: ROSETransport): DOPClient {
         return modifyOperationalBinding_({
             ...params,
             bindingType: id_op_binding_non_specific_hierarchical,
-            accessPoint: undefined,
+            accessPoint: params.accessPoint,
             newBindingID: new OperationalBindingID(
                 params.bindingID.identifier,
                 Number(params.bindingID.version ?? 0) + 1,
@@ -432,7 +432,7 @@ function create_dop_client (rose: ROSETransport): DOPClient {
         return establishOperationalBinding_({
             ...params,
             bindingType: id_op_binding_shadow,
-            bindingID: undefined,
+            bindingID: params.bindingID,
             agreement,
             initiator: {
                 roleB_initiates: _encodeNull(null, BER),
@@ -445,7 +445,7 @@ function create_dop_client (rose: ROSETransport): DOPClient {
         return establishOperationalBinding_({
             ...params,
             bindingType: id_op_binding_shadow,
-            bindingID: undefined,
+            bindingID: params.bindingID,
             agreement,
             initiator: {
                 roleA_initiates: _encodeNull(null, BER),
@@ -458,7 +458,7 @@ function create_dop_client (rose: ROSETransport): DOPClient {
         return modifyOperationalBinding_({
             ...params,
             bindingType: id_op_binding_shadow,
-            accessPoint: undefined,
+            accessPoint: params.accessPoint,
             newBindingID: new OperationalBindingID(
                 params.bindingID.identifier,
                 Number(params.bindingID.version ?? 0) + 1,
@@ -475,7 +475,7 @@ function create_dop_client (rose: ROSETransport): DOPClient {
         return modifyOperationalBinding_({
             ...params,
             bindingType: id_op_binding_shadow,
-            accessPoint: undefined,
+            accessPoint: params.accessPoint,
             newBindingID: new OperationalBindingID(
                 params.bindingID.identifier,
                 Number(params.bindingID.version ?? 0) + 1,
