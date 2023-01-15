@@ -102,7 +102,8 @@ async function permittedToFindDSE (
             const relevantSubentries: Vertex[] = (await Promise.all(
                 relevantAdmPoints.map((ap) => getRelevantSubentries(ctx, dse_i, childDN, ap)),
             )).flat();
-            const targetACI = getACIItems(
+            const targetACI = await getACIItems(
+                ctx,
                 accessControlScheme,
                 dse_i.immediateSuperior,
                 dse_i,

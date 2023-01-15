@@ -76,6 +76,7 @@ async function setEntryPassword (
         data: {
             may_add_top_level_dse: true,
         },
+        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
     });
     const now = new Date();
     const nowElement = _encodeGeneralizedTime(now, DER);
@@ -91,7 +92,7 @@ async function setEntryPassword (
             entry_id: {
                 in: relevantSubentries.map((s) => s.dse.id),
             },
-            type: pwdExpiryAge["&id"].toString(),
+            type_oid: pwdExpiryAge["&id"].toBytes(),
             operational: true,
         },
         select: {
@@ -107,7 +108,7 @@ async function setEntryPassword (
             entry_id: {
                 in: relevantSubentries.map((s) => s.dse.id),
             },
-            type: pwdMaxAge["&id"].toString(),
+            type_oid: pwdMaxAge["&id"].toBytes(),
             operational: true,
         },
         select: {
@@ -132,6 +133,11 @@ async function setEntryPassword (
     const oldPassword = await ctx.db.password.findUnique({
         where: {
             entry_id: vertex.dse.id,
+        },
+        select: {
+            algorithm_oid: true,
+            algorithm_parameters_der: true,
+            encrypted: true,
         },
     });
     const oldUserPwd: UserPwd | undefined = oldPassword
@@ -161,7 +167,8 @@ async function setEntryPassword (
             ? pwd.encrypted.algorithmIdentifier
             : getScryptAlgorithmIdentifier();
     const encoded_enc_alg = _encode_AlgorithmIdentifier(encAlg, DER);
-
+    const exp_time_el = expTime && _encodeGeneralizedTime(expTime, DER);
+    const end_time_el = endTime && _encodeGeneralizedTime(endTime, DER);
     // We don't use `addValues()` or `removeAttribute()` in these DB commands,
     // purely because of performance. Much of what we have to do can be done
     // in two queries: delete attributes and create attributes.
@@ -170,15 +177,15 @@ async function setEntryPassword (
     const otherUpdates: PrismaPromise<any>[] = [
         ctx.db.attributeValue.deleteMany({
             where: {
-                type: {
+                type_oid: {
                     in: [
-                        pwdStartTime["&id"].toString(),
-                        userPwdRecentlyExpired["&id"].toString(),
-                        pwdGracesUsed["&id"].toString(),
-                        pwdGraceUseTime["&id"].toString(),
-                        pwdExpiryTime["&id"].toString(),
-                        pwdEndTime["&id"].toString(),
-                        pwdEncAlg["&id"].toString(),
+                        pwdStartTime["&id"].toBytes(),
+                        userPwdRecentlyExpired["&id"].toBytes(),
+                        pwdGracesUsed["&id"].toBytes(),
+                        pwdGraceUseTime["&id"].toBytes(),
+                        pwdExpiryTime["&id"].toBytes(),
+                        pwdEndTime["&id"].toBytes(),
+                        pwdEncAlg["&id"].toBytes(),
                     ],
                 },
             },
@@ -187,45 +194,61 @@ async function setEntryPassword (
             data: [
                 {
                     entry_id: vertex.dse.id,
-                    type: pwdStartTime["&id"].toString(),
+                    type_oid: pwdStartTime["&id"].toBytes(),
                     operational: true,
                     tag_class: nowElement.tagClass,
                     constructed: false,
                     tag_number: nowElement.tagNumber,
-                    ber: Buffer.from(nowElement.toBytes().buffer),
+                    content_octets: Buffer.from(
+                        nowElement.value.buffer,
+                        nowElement.value.byteOffset,
+                        nowElement.value.byteLength,
+                    ),
                     jer: nowElement.toJSON() as string,
                 },
                 {
                     entry_id: vertex.dse.id,
-                    type: pwdEncAlg["&id"].toString(),
+                    type_oid: pwdEncAlg["&id"].toBytes(),
                     operational: true,
                     tag_class: ASN1TagClass.universal,
                     constructed: true,
                     tag_number: ASN1UniversalType.sequence,
-                    ber: Buffer.from(encoded_enc_alg.toBytes().buffer),
+                    content_octets: Buffer.from(
+                        encoded_enc_alg.value.buffer,
+                        encoded_enc_alg.value.byteOffset,
+                        encoded_enc_alg.value.byteLength,
+                    ),
                     jer: encoded_enc_alg.toJSON() as object,
                 },
-                ...(expTime
+                ...(exp_time_el
                     ? [{
                         entry_id: vertex.dse.id,
-                        type: pwdExpiryTime["&id"].toString(),
+                        type_oid: pwdExpiryTime["&id"].toBytes(),
                         operational: true,
-                        tag_class: nowElement.tagClass,
+                        tag_class: ASN1TagClass.universal,
                         constructed: false,
-                        tag_number: nowElement.tagNumber,
-                        ber: Buffer.from(_encodeGeneralizedTime(expTime, DER).toBytes().buffer),
+                        tag_number: ASN1UniversalType.generalizedTime,
+                        content_octets: Buffer.from(
+                            exp_time_el.value.buffer,
+                            exp_time_el.value.byteOffset,
+                            exp_time_el.value.byteLength,
+                        ),
                         jer: nowElement.toJSON() as string,
                     }]
                     : []),
-                ...(endTime
+                ...(end_time_el
                     ? [{
                         entry_id: vertex.dse.id,
-                        type: pwdEndTime["&id"].toString(),
+                        type_oid: pwdEndTime["&id"].toBytes(),
                         operational: true,
-                        tag_class: nowElement.tagClass,
+                        tag_class: ASN1TagClass.universal,
                         constructed: false,
-                        tag_number: nowElement.tagNumber,
-                        ber: Buffer.from(_encodeGeneralizedTime(endTime, DER).toBytes().buffer),
+                        tag_number: ASN1UniversalType.generalizedTime,
+                        content_octets: Buffer.from(
+                            end_time_el.value.buffer,
+                            end_time_el.value.byteOffset,
+                            end_time_el.value.byteLength,
+                        ),
                         jer: nowElement.toJSON() as string,
                     }]
                     : []),
@@ -238,12 +261,16 @@ async function setEntryPassword (
                 ...(encodedOldPwd
                     ? [{
                         entry_id: vertex.dse.id,
-                        type: userPwdRecentlyExpired["&id"].toString(),
+                        type_oid: userPwdRecentlyExpired["&id"].toBytes(),
                         operational: true,
                         tag_class: encodedOldPwd.tagClass,
                         constructed: (encodedOldPwd.construction === ASN1Construction.constructed),
                         tag_number: encodedOldPwd.tagNumber,
-                        ber: Buffer.from(encodedOldPwd.toBytes().buffer),
+                        content_octets: Buffer.from(
+                            encodedOldPwd.value.buffer,
+                            encodedOldPwd.value.byteOffset,
+                            encodedOldPwd.value.byteLength,
+                        ),
                     }]
                     : []),
             ],
@@ -284,16 +311,17 @@ async function setEntryPassword (
                     encrypted: Buffer.from(encrypted),
                     algorithm_oid: encAlg.algorithm.toString(),
                     algorithm_parameters_der: encAlg.parameters
-                        ? Buffer.from(encAlg.parameters.toBytes().buffer)
+                        ? Buffer.from(encAlg.parameters.toBytes())
                         : undefined,
                 },
                 update: {
                     encrypted: Buffer.from(encrypted),
                     algorithm_oid: encAlg.algorithm.toString(),
                     algorithm_parameters_der: encAlg.parameters
-                        ? Buffer.from(encAlg.parameters.toBytes().buffer)
+                        ? Buffer.from(encAlg.parameters.toBytes())
                         : undefined,
                 },
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),
             ctx.db.passwordHistory.create({
                 data: {
@@ -303,9 +331,10 @@ async function setEntryPassword (
                             encAlg,
                             encrypted,
                         ),
-                    }, DER).toBytes().buffer),
+                    }, DER).toBytes()),
                     time: new Date(),
                 },
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),
             ...otherUpdates,
         ];
@@ -332,23 +361,25 @@ async function setEntryPassword (
                     encrypted: Buffer.from(pwd.encrypted.encryptedString),
                     algorithm_oid: pwd.encrypted.algorithmIdentifier.algorithm.toString(),
                     algorithm_parameters_der: pwd.encrypted.algorithmIdentifier.parameters
-                        ? Buffer.from(pwd.encrypted.algorithmIdentifier.parameters.toBytes().buffer)
+                        ? Buffer.from(pwd.encrypted.algorithmIdentifier.parameters.toBytes())
                         : undefined,
                 },
                 update: {
                     encrypted: Buffer.from(pwd.encrypted.encryptedString),
                     algorithm_oid: pwd.encrypted.algorithmIdentifier.algorithm.toString(),
                     algorithm_parameters_der: pwd.encrypted.algorithmIdentifier.parameters
-                        ? Buffer.from(pwd.encrypted.algorithmIdentifier.parameters.toBytes().buffer)
+                        ? Buffer.from(pwd.encrypted.algorithmIdentifier.parameters.toBytes())
                         : undefined,
                 },
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),
             ctx.db.passwordHistory.create({
                 data: {
                     entry_id: vertex.dse.id,
-                    password: Buffer.from(_encode_UserPwd(pwd, DER).toBytes().buffer),
+                    password: Buffer.from(_encode_UserPwd(pwd, DER).toBytes()),
                     time: new Date(),
                 },
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),
             ...otherUpdates,
         ];

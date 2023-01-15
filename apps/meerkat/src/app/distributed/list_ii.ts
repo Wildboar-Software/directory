@@ -558,7 +558,8 @@ async function list_ii (
                 } else if (subordinate.dse.admPoint?.administrativeRole.has(ID_AC_INNER)) {
                     effectiveRelevantSubentries.push(...(await getRelevantSubentries(ctx, subordinate, subordinateDN, subordinate)));
                 }
-                const subordinateACI = getACIItems(
+                const subordinateACI = await getACIItems(
+                    ctx,
                     effectiveAccessControlScheme,
                     subordinate.immediateSuperior,
                     subordinate,

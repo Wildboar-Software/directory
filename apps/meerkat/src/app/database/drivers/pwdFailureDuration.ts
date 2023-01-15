@@ -11,7 +11,7 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
-import { BERElement, ASN1Construction } from "asn1-ts";
+import { ASN1Construction } from "asn1-ts";
 import { DER, _encodeInteger } from "asn1-ts/dist/node/functional";
 import {
     pwdFailureDuration,
@@ -20,9 +20,10 @@ import {
     pwdAdminSubentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAdminSubentry.oa";
 import type { Prisma } from "@prisma/client";
+import { attributeValueFromDB } from "../attributeValueFromDB";
 
 const ID_PWD_SUBENTRY: string = pwdAdminSubentry["&id"].toString();
-const TYPE_OID: string = pwdFailureDuration["&id"].toString();
+const TYPE_OID = pwdFailureDuration["&id"].toBytes();
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -36,17 +37,19 @@ const readValues: SpecialAttributeDatabaseReader = async (
         const row = await ctx.db.attributeValue.findFirst({
             where: {
                 entry_id: vertex.dse.id,
-                type: TYPE_OID,
+                type_oid: TYPE_OID,
             },
             select: {
-                ber: true,
+                tag_class: true,
+                constructed: true,
+                tag_number: true,
+                content_octets: true,
             },
         });
         if (!row) {
             return [];
         }
-        const el = new BERElement();
-        el.fromBytes(row.ber);
+        const el = attributeValueFromDB(row);
         return [
             {
                 type: pwdFailureDuration["&id"],
@@ -81,14 +84,19 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates.otherWrites.push(ctx.db.attributeValue.create({
         data: {
             entry_id: vertex.dse.id,
-            type: TYPE_OID,
+            type_oid: TYPE_OID,
             operational: true,
             tag_class: value.value.tagClass,
             constructed: (value.value.construction === ASN1Construction.constructed),
             tag_number: value.value.tagNumber,
-            ber: Buffer.from(value.value.toBytes().buffer),
+            content_octets: Buffer.from(
+                value.value.value.buffer,
+                value.value.value.byteOffset,
+                value.value.value.byteLength,
+            ),
             jer: value.value.toJSON() as Prisma.InputJsonValue,
         },
+        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
     }));
 }
 
@@ -105,8 +113,12 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates.otherWrites.push(ctx.db.attributeValue.deleteMany({
         where: {
             entry_id: vertex.dse.id,
-            type: TYPE_OID,
-            ber: Buffer.from(value.value.toBytes().buffer),
+            type_oid: TYPE_OID,
+            content_octets: Buffer.from(
+                value.value.value.buffer,
+                value.value.value.byteOffset,
+                value.value.value.byteLength,
+            ),
         },
     }));
 }
@@ -123,7 +135,7 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
     pendingUpdates.otherWrites.push(ctx.db.attributeValue.deleteMany({
         where: {
             entry_id: vertex.dse.id,
-            type: TYPE_OID,
+            type_oid: TYPE_OID,
         },
     }));
 };
@@ -140,7 +152,7 @@ const countValues: SpecialAttributeCounter = async (
         return ctx.db.attributeValue.count({
             where: {
                 entry_id: vertex.dse.id,
-                type: TYPE_OID,
+                type_oid: TYPE_OID,
             },
         });
     }
@@ -161,7 +173,7 @@ const isPresent: SpecialAttributeDetector = async (
         return !!(await ctx.db.attributeValue.findFirst({
             where: {
                 entry_id: vertex.dse.id,
-                type: TYPE_OID,
+                type_oid: TYPE_OID,
             },
             select: {
                 id: true,
@@ -184,8 +196,12 @@ const hasValue: SpecialAttributeValueDetector = async (
         return !!(await ctx.db.attributeValue.findFirst({
             where: {
                 entry_id: vertex.dse.id,
-                type: TYPE_OID,
-                ber: Buffer.from(value.value.toBytes().buffer),
+                type_oid: TYPE_OID,
+                content_octets: Buffer.from(
+                    value.value.value.buffer,
+                    value.value.value.byteOffset,
+                    value.value.value.byteLength,
+                ),
             },
             select: {
                 id: true,

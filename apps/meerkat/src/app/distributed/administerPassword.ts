@@ -226,7 +226,8 @@ async function administerPassword (
         accessControlScheme
         && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
     ) {
-        const relevantACIItems = getACIItems(
+        const relevantACIItems = await getACIItems(
+            ctx,
             accessControlScheme,
             target.immediateSuperior,
             target,
@@ -373,7 +374,7 @@ async function administerPassword (
                     entry_id: {
                         in: pwdAdminSubentries.map((s) => s.dse.id),
                     },
-                    type: pwdHistorySlots["&id"].toString(),
+                    type_oid: pwdHistorySlots["&id"].toBytes(),
                     operational: true,
                 },
                 select: {
@@ -455,20 +456,21 @@ async function administerPassword (
         ctx.db.attributeValue.deleteMany({
             where: {
                 entry_id: target.dse.id,
-                type: pwdReset["&id"].toString(),
+                type_oid: pwdReset["&id"].toBytes(),
             },
         }),
         ctx.db.attributeValue.create({
             data: {
                 entry_id: target.dse.id,
-                type: pwdReset["&id"].toString(),
+                type_oid: pwdReset["&id"].toBytes(),
                 operational: true,
                 tag_class: ASN1TagClass.universal,
                 constructed: false,
                 tag_number: ASN1UniversalType.boolean,
-                ber: Buffer.from([ 0xFF ]),
+                content_octets: Buffer.from([ 0xFF ]),
                 jer: true,
             },
+            select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
         }),
     ]);
     /* Note that the specification says that we should update hierarchical

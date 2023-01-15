@@ -87,6 +87,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                     data: {
                         governingStructureRule: newGSR,
                     },
+                    select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
                 }));
                 /**
                  * We log this at a debug level here, because it looks like the
@@ -141,6 +142,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                 : undefined,
             obsolete: decoded.obsolete,
         },
+        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
     }));
     if (vertex.dse.subentry) {
         if (vertex.dse.subentry.ditStructureRules) {
@@ -198,6 +200,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
                 data: {
                     governingStructureRule: Number(decoded.ruleIdentifier),
                 },
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }));
         } else {
             vertex.immediateSuperior.dse.governingStructureRule = undefined;
@@ -208,6 +211,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
                 data: {
                     governingStructureRule: null,
                 },
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }));
         }
         ctx.log.warn(ctx.i18n.t("log:admpoint_gsr_recalculated", {
@@ -241,6 +245,7 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
             data: {
                 governingStructureRule: null,
             },
+            select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
         }));
         ctx.log.warn(ctx.i18n.t("log:admpoint_gsr_recalculated", {
             uuid: vertex.immediateSuperior.dse.uuid,

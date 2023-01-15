@@ -1,14 +1,6 @@
 import { Vertex, ServiceError, UpdateError } from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
-import {
-    ASN1Construction,
-    ASN1TagClass,
-    ASN1UniversalType,
-    DERElement,
-    BERElement,
-    ObjectIdentifier,
-    packBits,
-} from "asn1-ts";
+import { BERElement, packBits } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import { bindForOBM } from "../net/bindToOtherDSA";
 import dnToVertex from "../dit/dnToVertex";
@@ -49,21 +41,6 @@ import {
 import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import {
-    administrativeRole,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
-import {
-    accessControlScheme,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/accessControlScheme.oa";
-import {
-    subentryACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/subentryACI.oa";
-import {
-    entryACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/entryACI.oa";
-import {
-    _encode_ACIItem,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
 import readSubordinates from "../dit/readSubordinates";
 import getAttributesFromSubentry from "../dit/getAttributesFromSubentry";
 import {
@@ -106,11 +83,11 @@ import type {
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { sleep } from "../utils/sleep";
-// import {  } from "@wildboar/x500-client-ts";
 import { ResultParameters } from "@wildboar/rose-transport";
 import {
     ModifyOperationalBindingResult,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingResult.ta";
+import { getEntryAttributesToShareInOpBinding } from "../dit/getEntryAttributesToShareInOpBinding";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -234,65 +211,23 @@ async function updateSuperiorDSA (
                     signErrors,
                 );
             }
+            // TODO: Use this.
             const timeRemainingForOperation: number | undefined = timeoutTime
                 ? differenceInMilliseconds(timeoutTime, new Date())
                 : undefined;
             const cpInfo: Attribute[] = [];
             const subentryInfos: SubentryInfo[] = [];
-            if (newCP.dse.admPoint?.accessControlScheme) {
-                cpInfo.push(new Attribute(
-                    accessControlScheme["&id"],
-                    [
-                        new DERElement(
-                            ASN1TagClass.universal,
-                            ASN1Construction.primitive,
-                            ASN1UniversalType.objectIdentifier,
-                            newCP.dse.admPoint.accessControlScheme,
-                        ),
-                    ],
-                    undefined,
-                ));
-            }
-            if (newCP.dse.admPoint?.administrativeRole) {
-                cpInfo.push(new Attribute(
-                    administrativeRole["&id"],
-                    Array.from(newCP.dse.admPoint.administrativeRole)
-                        .map((oidStr) => ObjectIdentifier.fromString(oidStr))
-                        .map((oid) => new DERElement(
-                            ASN1TagClass.universal,
-                            ASN1Construction.primitive,
-                            ASN1UniversalType.objectIdentifier,
-                            oid,
-                        )),
-                    undefined,
-                ));
-            }
-            if (newCP.dse.admPoint?.subentryACI) {
-                cpInfo.push(new Attribute(
-                    subentryACI["&id"],
-                    newCP.dse.admPoint.subentryACI
-                        .map((aci) => _encode_ACIItem(aci, DER)),
-                    undefined,
-                ));
-            }
-            if (newCP.dse.entryACI) {
-                cpInfo.push(new Attribute(
-                    entryACI["&id"],
-                    newCP.dse.entryACI
-                        .map((aci) => _encode_ACIItem(aci, DER)),
-                    undefined,
-                ));
-            }
-            (await readSubordinates(ctx, newCP, undefined, undefined, undefined, {
+
+            cpInfo.push(...await getEntryAttributesToShareInOpBinding(ctx, newCP));
+            const subentries = await readSubordinates(ctx, newCP, undefined, undefined, undefined, {
                 subentry: true,
-            }))
-                .filter((sub) => sub.dse.subentry)
-                .forEach((sub): void => {
-                    subentryInfos.push(new SubentryInfo(
-                        sub.dse.rdn,
-                        getAttributesFromSubentry(sub),
-                    ));
-                });
+            });
+            for (const sub of subentries) {
+                subentryInfos.push(new SubentryInfo(
+                    sub.dse.rdn,
+                    await getAttributesFromSubentry(ctx, sub),
+                ));
+            }
             const myAccessPoint = ctx.dsa.accessPoint;
             const sub2sup: SubordinateToSuperior = new SubordinateToSuperior(
                 [
@@ -412,6 +347,7 @@ async function updateSuperiorDSA (
                                 ? Number(sp.errorProtection)
                                 : undefined,
                         },
+                        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
                     });
                     assn.unbind().then().catch(); // INTENTIONAL_NO_AWAIT
                     return response.result;

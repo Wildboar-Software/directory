@@ -30,6 +30,12 @@ async function terminate (
         where: {
             id,
         },
+        select: {
+            agreement_ber: true,
+            initiator: true,
+            outbound: true,
+            binding_type: true,
+        },
     });
     if (!ob) {
         return;

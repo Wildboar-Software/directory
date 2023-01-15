@@ -8,13 +8,15 @@
             "projectType": "application",
             "targets": {
                 "build": {
-                    "executor": "@nrwl/node:webpack",
+                    "executor": "@nrwl/webpack:webpack",
                     "outputs": ["{options.outputPath}"],
                     "options": {
                         "outputPath": "dist/apps/create-test-dit",
                         "main": "apps/create-test-dit/src/main.ts",
                         "tsConfig": "apps/create-test-dit/tsconfig.app.json",
-                        "assets": ["apps/create-test-dit/src/assets"]
+                        "assets": ["apps/create-test-dit/src/assets"],
+                        "target": "node",
+                        "compiler": "tsc"
                     },
                     "configurations": {
                         "production": {
@@ -39,7 +41,9 @@
                 },
                 "test": {
                     "executor": "@nrwl/jest:jest",
-                    "outputs": ["coverage/apps/create-test-dit"],
+                    "outputs": [
+                        "{workspaceRoot}/coverage/apps/create-test-dit"
+                    ],
                     "options": {
                         "jestConfig": "apps/create-test-dit/jest.config.ts",
                         "passWithNoTests": true
@@ -74,7 +78,7 @@
                 },
                 "test": {
                     "executor": "@nrwl/jest:jest",
-                    "outputs": ["coverage/libs/idm"],
+                    "outputs": ["{workspaceRoot}/coverage/libs/idm"],
                     "options": {
                         "jestConfig": "libs/idm/jest.config.ts",
                         "passWithNoTests": true
@@ -109,7 +113,7 @@
                 },
                 "test": {
                     "executor": "@nrwl/jest:jest",
-                    "outputs": ["coverage/libs/ldap-socket"],
+                    "outputs": ["{workspaceRoot}/coverage/libs/ldap-socket"],
                     "options": {
                         "jestConfig": "libs/ldap-socket/jest.config.ts",
                         "passWithNoTests": true
@@ -125,7 +129,7 @@
             "projectType": "application",
             "targets": {
                 "build": {
-                    "executor": "@nrwl/node:webpack",
+                    "executor": "@nrwl/webpack:webpack",
                     "outputs": ["{options.outputPath}"],
                     "options": {
                         "outputPath": "dist/apps/meerkat",
@@ -140,7 +144,9 @@
                         "memoryLimit": 4096,
                         "maxWorkers": 4,
                         "generatePackageJson": true,
-                        "sourceMap": true
+                        "sourceMap": true,
+                        "target": "node",
+                        "compiler": "tsc"
                     },
                     "configurations": {
                         "production": {
@@ -171,7 +177,7 @@
                 },
                 "test": {
                     "executor": "@nrwl/jest:jest",
-                    "outputs": ["coverage/apps/meerkat"],
+                    "outputs": ["{workspaceRoot}/coverage/apps/meerkat"],
                     "options": {
                         "jestConfig": "apps/meerkat/jest.config.ts",
                         "passWithNoTests": true
@@ -227,7 +233,7 @@
                 },
                 "test": {
                     "executor": "@nrwl/jest:jest",
-                    "outputs": ["coverage/libs/meerkat-types"],
+                    "outputs": ["{workspaceRoot}/coverage/libs/meerkat-types"],
                     "options": {
                         "jestConfig": "libs/meerkat-types/jest.config.ts",
                         "passWithNoTests": true
@@ -262,7 +268,7 @@
                 },
                 "test": {
                     "executor": "@nrwl/jest:jest",
-                    "outputs": ["coverage/libs/ocsp-client"],
+                    "outputs": ["{workspaceRoot}/coverage/libs/ocsp-client"],
                     "options": {
                         "jestConfig": "libs/ocsp-client/jest.config.ts",
                         "passWithNoTests": true
@@ -296,9 +302,9 @@
                 },
                 "test": {
                     "executor": "@nrwl/jest:jest",
-                    "outputs": ["coverage/libs/osi-net"],
+                    "outputs": ["{workspaceRoot}/coverage/libs/osi-net"],
                     "options": {
-                        "jestConfig": "libs/osi-net/jest.config.js",
+                        "jestConfig": "libs/osi-net/jest.config.ts",
                         "passWithNoTests": true
                     }
                 }
@@ -370,7 +376,7 @@
             "projectType": "application",
             "targets": {
                 "build": {
-                    "executor": "@nrwl/node:webpack",
+                    "executor": "@nrwl/webpack:webpack",
                     "outputs": ["{options.outputPath}"],
                     "options": {
                         "outputPath": "dist/apps/x500-cli",
@@ -384,7 +390,9 @@
                         "maxWorkers": 1,
                         "generatePackageJson": true,
                         "webpackConfig": "apps/x500-cli/webpack.config.js",
-                        "externalDependencies": "none"
+                        "externalDependencies": "none",
+                        "target": "node",
+                        "compiler": "tsc"
                     },
                     "configurations": {
                         "production": {
@@ -409,7 +417,7 @@
                 },
                 "test": {
                     "executor": "@nrwl/jest:jest",
-                    "outputs": ["coverage/apps/x500-cli"],
+                    "outputs": ["{workspaceRoot}/coverage/apps/x500-cli"],
                     "options": {
                         "jestConfig": "apps/x500-cli/jest.config.ts",
                         "passWithNoTests": true
@@ -444,7 +452,9 @@
                 },
                 "test": {
                     "executor": "@nrwl/jest:jest",
-                    "outputs": ["coverage/libs/x500-cli-config"],
+                    "outputs": [
+                        "{workspaceRoot}/coverage/libs/x500-cli-config"
+                    ],
                     "options": {
                         "jestConfig": "libs/x500-cli-config/jest.config.ts",
                         "passWithNoTests": true
@@ -471,7 +481,9 @@
                 },
                 "test": {
                     "executor": "@nrwl/jest:jest",
-                    "outputs": ["coverage/libs/x500-functional-tests"],
+                    "outputs": [
+                        "{workspaceRoot}/coverage/libs/x500-functional-tests"
+                    ],
                     "options": {
                         "jestConfig": "libs/x500-functional-tests/jest.config.ts",
                         "passWithNoTests": true

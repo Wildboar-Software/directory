@@ -16,7 +16,7 @@ import type { Response } from "express";
 import rdnToString from "@wildboar/ldap/src/lib/stringifiers/RelativeDistinguishedName";
 import type StringEncoderGetter from "@wildboar/ldap/src/lib/types/StringEncoderGetter";
 import type StringEncoder from "@wildboar/ldap/src/lib/types/StringEncoder";
-import { OBJECT_IDENTIFIER, ASN1Element, ASN1TagClass, ASN1UniversalType } from "asn1-ts";
+import { OBJECT_IDENTIFIER, ASN1Element, ASN1TagClass, ASN1UniversalType, BIT_STRING, TRUE_BIT } from "asn1-ts";
 import type {
     RelativeDistinguishedName
 } from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
@@ -57,6 +57,27 @@ import readSubordinates from "../dit/readSubordinates";
 import { subschema } from "@wildboar/x500/src/lib/collections/objectClasses";
 import { getLDAPSyntax } from "../x500/getLDAPSyntax";
 import { entryDN } from "@wildboar/parity-schema/src/lib/modules/RFC5020EntryDN/entryDN.oa";
+import { dseType } from "@wildboar/x500/src/lib/collections/attributes";
+import {
+    DSEType_admPoint,
+    DSEType_alias,
+    DSEType_cp,
+    DSEType_ditBridge,
+    DSEType_dsSubentry,
+    DSEType_entry,
+    DSEType_familyMember,
+    DSEType_glue,
+    DSEType_immSupr,
+    DSEType_nssr,
+    DSEType_rhob,
+    DSEType_root,
+    DSEType_sa,
+    DSEType_shadow,
+    DSEType_subentry,
+    DSEType_subr,
+    DSEType_supr,
+    DSEType_xr,
+} from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/DSEType.ta";
 
 const selectAllInfo = new EntryInformationSelection(
     {
@@ -267,6 +288,64 @@ function defaultEncoder (value: ASN1Element): string {
     return value.toString();
 }
 
+function printDseType (bits: BIT_STRING): string[] {
+    const ret: string[] = [];
+    if (bits[DSEType_admPoint] === TRUE_BIT) {
+        ret.push("admPoint");
+    }
+    if (bits[DSEType_alias] === TRUE_BIT) {
+        ret.push("alias");
+    }
+    if (bits[DSEType_cp] === TRUE_BIT) {
+        ret.push("cp");
+    }
+    if (bits[DSEType_ditBridge] === TRUE_BIT) {
+        ret.push("ditBridge");
+    }
+    if (bits[DSEType_dsSubentry] === TRUE_BIT) {
+        ret.push("dsSubentry");
+    }
+    if (bits[DSEType_entry] === TRUE_BIT) {
+        ret.push("entry");
+    }
+    if (bits[DSEType_familyMember] === TRUE_BIT) {
+        ret.push("familyMember");
+    }
+    if (bits[DSEType_glue] === TRUE_BIT) {
+        ret.push("glue");
+    }
+    if (bits[DSEType_immSupr] === TRUE_BIT) {
+        ret.push("immSupr");
+    }
+    if (bits[DSEType_nssr] === TRUE_BIT) {
+        ret.push("nssr");
+    }
+    if (bits[DSEType_rhob] === TRUE_BIT) {
+        ret.push("rhob");
+    }
+    if (bits[DSEType_root] === TRUE_BIT) {
+        ret.push("root");
+    }
+    if (bits[DSEType_sa] === TRUE_BIT) {
+        ret.push("sa");
+    }
+    if (bits[DSEType_shadow] === TRUE_BIT) {
+        ret.push("shadow");
+    }
+    if (bits[DSEType_subentry] === TRUE_BIT) {
+        ret.push("subentry");
+    }
+    if (bits[DSEType_subr] === TRUE_BIT) {
+        ret.push("subr");
+    }
+    if (bits[DSEType_supr] === TRUE_BIT) {
+        ret.push("supr");
+    }
+    if (bits[DSEType_xr] === TRUE_BIT) {
+        ret.push("xr");
+    }
+    return ret;
+}
 
 @Controller()
 export class DitController {
@@ -323,6 +402,26 @@ export class DitController {
                     return spec?.name?.[0] ?? spec?.ldapNames?.[0] ?? attr.type.toString();
                 })(),
                 ((): string => {
+                    if (attr.type.isEqualTo(dseType["&id"])) {
+                        return printDseType(attr.value.bitString).join(" & ");
+                    }
+                    if (attr.value.tagClass === ASN1TagClass.universal) {
+                        if (attr.value.tagNumber === ASN1UniversalType.generalizedTime) {
+                            return attr.value.generalizedTime.toString();
+                        }
+                        else if (attr.value.tagNumber === ASN1UniversalType.utcTime) {
+                            return attr.value.utcTime.toString();
+                        }
+                        else if (attr.value.tagNumber === ASN1UniversalType.objectIdentifier) {
+                            const oid = attr.value.objectIdentifier.toString();
+                            const name = this.ctx.objectIdentifierToName.get(oid);
+                            if (name) {
+                                return `${oid} (${name})`;
+                            } else {
+                                return oid;
+                            }
+                        }
+                    }
                     const spec = this.ctx.attributeTypes.get(attr.type.toString());
                     if (spec?.equalityMatchingRule?.isEqualTo(distinguishedNameMatch["&id"])) {
                         const dn_ = _decode_DistinguishedName(attr.value);

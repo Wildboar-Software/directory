@@ -8,7 +8,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 const config = {
     title: 'Meerkat DSA',
     tagline: 'An X.500 Directory Server (DSA) and LDAP Server by Wildboar Software.',
-    url: 'https://docs.meerkat.wildboar.software',
+    url: 'https://wildboar-software.github.io/',
     baseUrl: '/directory/',
     onBrokenLinks: 'throw',
     onBrokenMarkdownLinks: 'warn',
@@ -101,7 +101,8 @@ const config = {
                 title: 'Meerkat DSA',
                 logo: {
                     alt: 'Wildboar Software Logo',
-                    src: 'img/boar-head-rune-circle.svg',
+                    src: 'img/boar-head-rune-circle-black.svg',
+                    srcDark: 'img/boar-head-rune-circle.svg',
                 },
                 items: [
                     {

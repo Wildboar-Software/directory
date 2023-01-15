@@ -145,6 +145,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
         update: {
             ...create,
         },
+        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
     }));
     /**
      * If the name form is being added to a DSE that is owned by this DSA, it
@@ -173,6 +174,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                 data: {
                     ...create,
                 },
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             })
                 .then()
                 .catch(); // TODO: Log something.

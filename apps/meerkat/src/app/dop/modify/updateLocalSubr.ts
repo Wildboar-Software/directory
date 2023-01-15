@@ -7,7 +7,6 @@ import {
     SubordinateToSuperior,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
 import dnToVertex from "../../dit/dnToVertex";
-import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import { Knowledge } from "@prisma/client";
 import * as errors from "@wildboar/meerkat-types";
 import {
@@ -44,6 +43,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
 import { operationalBindingError } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
 import saveAccessPoint from "../../database/saveAccessPoint";
+import { ASN1Construction } from "asn1-ts";
 
 /**
  * @summary Update an update to a local subr DSE given by a subordinate DSA
@@ -174,8 +174,15 @@ async function updateLocalSubr (
             ctx.db.distinguishedValue.createMany({
                 data: newAgreement.rdn.map((atav, i) => ({
                     entry_id: oldSubordinate.dse.id,
-                    type: atav.type_.toString(),
-                    value: Buffer.from(atav.value.toBytes().buffer),
+                    type_oid: atav.type_.toBytes(),
+                    tag_class: atav.value.tagClass,
+                    constructed: (atav.value.construction === ASN1Construction.constructed),
+                    tag_number: atav.value.tagNumber,
+                    content_octets: Buffer.from(
+                        atav.value.value.buffer,
+                        atav.value.value.byteOffset,
+                        atav.value.value.byteLength,
+                    ),
                     order_index: i,
                 })),
             }),
@@ -223,7 +230,7 @@ async function updateLocalSubr (
                 },
             }),
             ...deletions,
-            ...await addAttributes(ctx, oldSubordinate, sub2sup.entryInfo, undefined, false),
+            ...await addAttributes(ctx, oldSubordinate, sub2sup.entryInfo, undefined, false, signErrors),
         ]);
     }
 
@@ -238,7 +245,9 @@ async function updateLocalSubr (
                     subentry: true,
                     rhob: true,
                 },
-                subentry.info.flatMap((attr) => valuesFromAttribute(attr)),
+                subentry.info,
+                undefined,
+                signErrors,
             );
         } else {
             const deletions = (
@@ -254,7 +263,7 @@ async function updateLocalSubr (
                     },
                 }),
                 ...deletions,
-                ...await addAttributes(ctx, existingSubentry, subentry.info, undefined, false),
+                ...await addAttributes(ctx, existingSubentry, subentry.info, undefined, false, signErrors),
             ]);
         }
     }

@@ -1,4 +1,3 @@
-replicaCount: 1
 image:
   repository: ghcr.io/wildboar-software/meerkat-dsa
   pullPolicy: Always # TODO: Change this to IfNotPresent after Beta is over.
@@ -163,6 +162,7 @@ min_auth_level_for_ob: 1
 min_auth_local_qualifier_for_chaining: 0
 min_auth_local_qualifier_for_ob: 0
 min_transfer_speed_bytes_per_minute: 1000
+mru_vertex_ttl: 500
 # my_access_point_nsaps:
 #   - "itot://example.com:1707"
 no_color: false
@@ -172,6 +172,7 @@ ob_auto_accept: false
 open_top_level: false
 # private_key_engine: pkcs11
 prohibit_chaining: false
+remote_pwd_time_limit: 0
 reveal_user_pwd: false
 src_parallelism: 0
 # scvp_attr_cert_checks:

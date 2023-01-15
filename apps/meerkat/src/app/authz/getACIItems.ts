@@ -1,11 +1,11 @@
-import type { Vertex } from "@wildboar/meerkat-types";
-import type { OBJECT_IDENTIFIER } from "asn1-ts";
+import type { Vertex, Context } from "@wildboar/meerkat-types";
+import { OBJECT_IDENTIFIER } from "asn1-ts";
 import accessControlSchemesThatUseEntryACI from "./accessControlSchemesThatUseEntryACI";
 import accessControlSchemesThatUsePrescriptiveACI from "./accessControlSchemesThatUsePrescriptiveACI";
 import accessControlSchemesThatUseSubentryACI from "./accessControlSchemesThatUseSubentryACI";
 import accessControlSchemesThatUseInnerAreas from "./accessControlSchemesThatUseInnerAreas";
-import type {
-    ACIItem,
+import {
+    ACIItem, _decode_ACIItem,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
 import {
     accessControlSubentry,
@@ -16,10 +16,17 @@ import {
 import {
     id_ar_accessControlInnerArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlInnerArea.va";
+import { entryACI, prescriptiveACI, subentryACI } from "@wildboar/x500/src/lib/collections/attributes";
+import { attributeValueFromDB, DBAttributeValue } from "../database/attributeValueFromDB";
 
 const AC_SUBENTRY: string = accessControlSubentry["&id"].toString();
 const AC_SPECIFIC: string = id_ar_accessControlSpecificArea.toString();
 const AC_INNER: string = id_ar_accessControlInnerArea.toString();
+
+function aciFrom (row: DBAttributeValue): ACIItem {
+    const el = attributeValueFromDB(row);
+    return _decode_ACIItem(el);
+}
 
 /**
  * @summary Get the ACI items that apply to a given entry.
@@ -41,13 +48,14 @@ const AC_INNER: string = id_ar_accessControlInnerArea.toString();
  * @function
  */
 export
-function getACIItems (
+async function getACIItems (
+    ctx: Context,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
     immediateSuperior: Vertex | undefined,
     vertex: Vertex | undefined,
     relevantSubentries: Vertex[],
     isSubentry: boolean = false,
-): ACIItem[] {
+): Promise<ACIItem[]> {
     if (!accessControlScheme) {
         return [];
     }
@@ -55,10 +63,36 @@ function getACIItems (
     if (isSubentry || vertex?.dse.subentry) {
         return [
             ...(accessControlSchemesThatUseSubentryACI.has(AC_SCHEME)
-                ? (immediateSuperior?.dse.admPoint?.subentryACI ?? [])
+                ? immediateSuperior?.dse.admPoint
+                    ? (await ctx.db.attributeValue.findMany({
+                        where: {
+                            entry_id: immediateSuperior.dse.id,
+                            type_oid: subentryACI["&id"].toBytes(),
+                        },
+                        select: {
+                            tag_class: true,
+                            constructed: true,
+                            tag_number: true,
+                            content_octets: true,
+                        },
+                    })).map(aciFrom)
+                    : []
                 : []),
             ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
-                ? (vertex?.dse.entryACI ?? [])
+                ? vertex
+                    ? (await ctx.db.attributeValue.findMany({
+                        where: {
+                            entry_id: vertex.dse.id,
+                            type_oid: entryACI["&id"].toBytes(),
+                        },
+                        select: {
+                            tag_class: true,
+                            constructed: true,
+                            tag_number: true,
+                            content_octets: true,
+                        },
+                    })).map(aciFrom)
+                    : []
                 : []),
         ];
     }
@@ -100,10 +134,36 @@ function getACIItems (
         : [ accessControlSubentries[0] ];
     return [
         ...(accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME)
-            ? accessControlSubentriesWithinScope.flatMap((subentry) => subentry.dse.subentry!.prescriptiveACI ?? [])
+            ? (await ctx.db.attributeValue.findMany({
+                    where: {
+                        entry_id: {
+                            in: accessControlSubentriesWithinScope.map((s) => s.dse.id),
+                        },
+                        type_oid: prescriptiveACI["&id"].toBytes(),
+                    },
+                    select: {
+                        tag_class: true,
+                        constructed: true,
+                        tag_number: true,
+                        content_octets: true,
+                    },
+                })).map(aciFrom)
             : []),
         ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
-            ? (vertex?.dse.entryACI ?? [])
+            ? vertex
+                ? (await ctx.db.attributeValue.findMany({
+                    where: {
+                        entry_id: vertex.dse.id,
+                        type_oid: entryACI["&id"].toBytes(),
+                    },
+                    select: {
+                        tag_class: true,
+                        constructed: true,
+                        tag_number: true,
+                        content_octets: true,
+                    },
+                })).map(aciFrom)
+                : []
             : []),
     ];
 }

@@ -242,7 +242,7 @@ function loadLDAPSyntaxes (ctx: Context): void {
             ctx.ldapSyntaxToASN1Syntax.set(oid, syntax);
         });
 
-    ctx.ldapSyntaxes.set(uuid.toString(), {
+    ctx.ldapSyntaxes.set(uuid["&id"].toString(), {
         id: uuid["&id"],
         description: "UUID",
         decoder: decoders.uuid,

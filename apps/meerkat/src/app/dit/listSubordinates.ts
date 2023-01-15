@@ -49,8 +49,11 @@ async function listSubordinates (
             id: true,
             RDN: {
                 select: {
-                    type: true,
-                    value: true,
+                    type_oid: true,
+                    tag_class: true,
+                    constructed: true,
+                    tag_number: true,
+                    content_octets: true,
                 },
             },
         },

@@ -148,6 +148,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             hierarchyPath: parentRow?.hierarchyPath ?? "",
             hierarchyTopDN: top.map(rdnToJson),
         },
+        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
     }));
     parent.dse.hierarchy = {
         top,

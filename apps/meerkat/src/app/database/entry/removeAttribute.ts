@@ -51,6 +51,7 @@ async function removeAttribute (
                     id: entry.dse.id,
                 },
                 data: pendingUpdates.entryUpdate,
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),
             ...pendingUpdates.otherWrites,
         ];
@@ -61,11 +62,12 @@ async function removeAttribute (
                     id: entry.dse.id,
                 },
                 data: pendingUpdates.entryUpdate,
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),
             ctx.db.attributeValue.deleteMany({
                 where: {
                     entry_id: entry.dse.id,
-                    type: type_.toString(),
+                    type_oid: type_.toBytes(),
                 },
             }),
         ]

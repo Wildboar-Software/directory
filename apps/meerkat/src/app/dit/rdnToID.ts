@@ -1,5 +1,5 @@
 import type { Context } from "@wildboar/meerkat-types";
-import { ObjectIdentifier, BERElement } from "asn1-ts";
+import { ObjectIdentifier, BERElement, ASN1Construction } from "asn1-ts";
 import type {
     RelativeDistinguishedName as RDN,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
@@ -42,8 +42,15 @@ async function rdnToID (
             AND: rdn.map((atav) => ({
                 RDN: {
                     some: {
-                        type: atav.type_.toString(),
-                        value: Buffer.from(atav.value.toBytes().buffer),
+                        type_oid: atav.type_.toBytes(),
+                        tag_class: atav.value.tagClass,
+                        constructed: (atav.value.construction === ASN1Construction.constructed),
+                        tag_number: atav.value.tagNumber,
+                        content_octets: Buffer.from(
+                            atav.value.value.buffer,
+                            atav.value.value.byteOffset,
+                            atav.value.value.byteLength,
+                        ),
                     },
                 },
             })),
@@ -74,7 +81,7 @@ async function rdnToID (
                 AND: rdn.map((atav) => ({
                     RDN: {
                         some: {
-                            type: atav.type_.toString(),
+                            type_oid: atav.type_.toBytes(),
                         },
                     },
                 })),
@@ -85,14 +92,21 @@ async function rdnToID (
     while (subordinatesInBatch.length) {
         for (const subordinate of subordinatesInBatch) {
             cursorId = subordinate.id;
-            const subordinateRDN = subordinate.RDN.map((atav) => new AttributeTypeAndValue(
-                ObjectIdentifier.fromString(atav.type),
-                (() => {
-                    const el = new BERElement();
-                    el.fromBytes(atav.value);
-                    return el;
-                })(),
-            ));
+            const subordinateRDN = subordinate.RDN.map((atav) => {
+                const type_el = new BERElement();
+                const value_el = new BERElement();
+                type_el.value = atav.type_oid;
+                value_el.tagClass = atav.tag_class;
+                value_el.construction = atav.constructed
+                    ? ASN1Construction.constructed
+                    : ASN1Construction.primitive;
+                value_el.tagNumber = atav.tag_number;
+                value_el.value = atav.content_octets;
+                return new AttributeTypeAndValue(
+                    type_el.objectIdentifier,
+                    value_el,
+                );
+            });
             rdnMatched = compareRDN(
                 rdn,
                 subordinateRDN,

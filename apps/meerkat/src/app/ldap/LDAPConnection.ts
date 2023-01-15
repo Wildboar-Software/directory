@@ -239,7 +239,7 @@ async function handleRequest (
         // Not all requests--such as abandon--warrant a response.
         return;
     }
-    if (this.pwdReset) {
+    if (assn.pwdReset) {
         const operation_can_be_used_to_change_password: boolean = (
             compareCode(dapRequest.opCode!, administerPassword["&operationCode"]!)
             || compareCode(dapRequest.opCode!, changePassword["&operationCode"]!)
@@ -371,7 +371,7 @@ async function handleRequestAndErrors (
             messageID: message.messageID.toString(),
         };
         ctx.log.info(`${assn.id}#${message.messageID}: ${e.constructor?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
-        if (isDebugging) {
+        if (isDebugging || (ctx.log.level === "debug")) {
             console.error(e);
         }
         if (!stats.outcome) {
@@ -671,7 +671,7 @@ class LDAPAssociation extends ClientAssociation {
             }
             if ((numberOfLengthOctets + 2) >= data.length) { // If we have all length bytes.
                 const lengthBytes = Buffer.alloc(4);
-                lengthBytes.set(data.slice(2, 2 + numberOfLengthOctets), 4 - numberOfLengthOctets);
+                lengthBytes.set(data.subarray(2, 2 + numberOfLengthOctets), 4 - numberOfLengthOctets);
                 const length = lengthBytes.readUInt32BE();
                 if (length > ctx.config.ldap.bufferSize) {
                     const source: string = `${this.socket.remoteFamily}:${this.socket.remoteAddress}:${this.socket.remotePort}`;
@@ -872,7 +872,7 @@ class LDAPAssociation extends ClientAssociation {
                  * buffer (a pseudo-packet) to continue processing enqueued
                  * messages.
                  */
-                this.buffer = this.buffer.slice(bytesRead);
+                this.buffer = this.buffer.subarray(bytesRead);
                 break;
             } else if ("unbindRequest" in message.protocolOp) {
                 this.reset();
@@ -983,7 +983,7 @@ class LDAPAssociation extends ClientAssociation {
                 // Specifically, this.buffer will be indeterminate.
                 handleRequestAndErrors(ctx, this, message);
             }
-            this.buffer = this.buffer.slice(bytesRead);
+            this.buffer = this.buffer.subarray(bytesRead);
         }
     }
 

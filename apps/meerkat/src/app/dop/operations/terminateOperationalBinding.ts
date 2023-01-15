@@ -25,12 +25,8 @@ import {
     OpBindingErrorParam_problem_unsupportedBindingType,
     OpBindingErrorParam_problem_invalidID,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam-problem.ta";
-import {
-    _decode_PresentationAddress,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PresentationAddress.ta";
-import { BERElement, unpackBits } from "asn1-ts";
+import { FALSE, unpackBits } from "asn1-ts";
 import { differenceInMilliseconds } from "date-fns";
-import compareSocketToNSAP from "@wildboar/x500/src/lib/distributed/compareSocketToNSAP";
 import terminate from "../terminateByID";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import createSecurityParameters from "../../x500/createSecurityParameters";
@@ -51,7 +47,26 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
 import { generateSignature } from "../../pki/generateSignature";
 import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
-import { id_op_terminateOperationalBinding } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-op-terminateOperationalBinding.va";
+import {
+    id_op_terminateOperationalBinding,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-op-terminateOperationalBinding.va";
+import { rdnFromJson } from "../../x500/rdnFromJson";
+import type {
+    DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import {
+    compareDistinguishedName,
+} from "@wildboar/x500";
+import {
+    SecurityErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import {
+    SecurityProblem_insufficientAccessRights,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+import {
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 
 /**
  * @summary Terminates an operational binding, as described in ITU Recommendation X.501.
@@ -79,6 +94,28 @@ async function terminateOperationalBinding (
     // DOP associations are ALWAYS authorized to receive signed responses.
     const signResult: boolean = (data.securityParameters?.target === ProtectionRequest_signed);
     const signErrors: boolean = (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed);
+    if (!assn.boundNameAndUID?.dn) {
+        throw new errors.SecurityError(
+            ctx.i18n.t("err:anon_dop"),
+            new SecurityErrorData(
+                SecurityProblem_insufficientAccessRights,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn?.boundNameAndUID?.dn,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                FALSE,
+                undefined,
+            ),
+            signErrors,
+        );
+    }
     ctx.log.info(ctx.i18n.t("log:terminateOperationalBinding", {
         context: "started",
         type: data.bindingType.toString(),
@@ -116,7 +153,7 @@ async function terminateOperationalBinding (
     );
 
     const now = new Date();
-
+    const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const obs = (await ctx.db.operationalBinding.findMany({
         where: {
             accepted: true,
@@ -141,7 +178,7 @@ async function terminateOperationalBinding (
             id: true,
             access_point: {
                 select: {
-                    ber: true,
+                    ae_title: true,
                 },
             },
         },
@@ -150,15 +187,18 @@ async function terminateOperationalBinding (
             if (!ob.access_point) {
                 return false;
             }
-            const el = new BERElement();
-            el.fromBytes(ob.access_point.ber);
-            // This is a simpler way to get the address out of the AP type.
-            const address = el.set.find((component) => (component.tagNumber === 1));
-            if (!address) {
+            const authorized_ae_title: DistinguishedName | undefined = Array.isArray(ob.access_point.ae_title)
+                ? ob.access_point.ae_title.map((rdn: Record<string, string>) => rdnFromJson(rdn))
+                : undefined;
+            if (!authorized_ae_title) {
                 return false;
             }
-            const pa = _decode_PresentationAddress(address.inner);
-            return pa.nAddresses.some((naddr) => compareSocketToNSAP(assn.rose.socket!, naddr));
+            const modifier_is_originator: boolean = compareDistinguishedName(
+                authorized_ae_title,
+                assn.boundNameAndUID!.dn,
+                NAMING_MATCHER,
+            );
+            return modifier_is_originator;
         });
 
     if (obs.length === 0) {

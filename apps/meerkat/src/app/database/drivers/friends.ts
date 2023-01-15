@@ -77,6 +77,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             obsolete: decoded.obsolete,
             friends: decoded.friends.map((oid) => oid.toString()).join(" "),
         },
+        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
     }));
     if (vertex.dse.subentry) {
         if (vertex.dse.subentry.friendships) {

@@ -60,6 +60,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                 : undefined,
             ber: Buffer.from(value.value.toBytes().buffer),
         },
+        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
     }));
 };
 

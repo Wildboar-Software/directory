@@ -34,6 +34,39 @@ import { attemptStrongAuth } from "../authn/attemptStrongAuth";
 import {
     PwdResponseValue_error_passwordExpired,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue-error.ta";
+import { read_unique_id } from "../database/utils";
+import { OperationDispatcher } from "../distributed/OperationDispatcher";
+import type {
+    CompareArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgument.ta";
+import {
+    CompareArgumentData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgumentData.ta";
+import {
+    AttributeValueAssertion,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
+import { userPwd } from "@wildboar/x500/src/lib/collections/attributes";
+import { getOptionallyProtectedValue } from "@wildboar/x500";
+import {
+    _decode_CompareResult,
+    _encode_CompareResultData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareResult.ta";
+import { UserPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
+import { DER } from "asn1-ts/dist/node/functional";
+import {
+    ServiceControls,
+    ServiceControls_priority_high,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
+import { pwdResponseValue } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/pwdResponseValue.oa";
+import {
+    PwdResponseValue,
+    _decode_PwdResponseValue,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue.ta";
+import { verifySIGNED } from "../pki/verifySIGNED";
+import {
+    _encode_Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
+import { strict as assert } from "assert";
 
 /**
  * @summary X.500 Directory Access Protocol (DSP) bind operation
@@ -126,11 +159,12 @@ async function bind (
                     signErrors,
                 );
             }
+            const unique_id = foundEntry && await read_unique_id(ctx, foundEntry);
             return {
                 boundVertex: foundEntry,
                 boundNameAndUID: new NameAndOptionalUID(
                     arg.credentials.simple.name,
-                    foundEntry?.dse.uniqueIdentifier?.[0],
+                    unique_id,
                 ),
                 authLevel: {
                     basicLevels: new AuthenticationLevel_basicLevels(
@@ -140,14 +174,6 @@ async function bind (
                     ),
                 },
             };
-        }
-        if (!foundEntry) {
-            ctx.log.warn(ctx.i18n.t("log:invalid_credentials", logInfo), logInfo);
-            throw new DirectoryBindError(
-                ctx.i18n.t("err:invalid_credentials"),
-                invalidCredentialsData,
-                signErrors,
-            );
         }
         if (arg.credentials.simple.validity) {
             const now = new Date();
@@ -178,6 +204,134 @@ async function bind (
                 );
             }
         }
+        if (!foundEntry) {
+            let assertable_pwd: UserPwd | undefined;
+            if (arg.credentials.simple.password) {
+                if ("unprotected" in arg.credentials.simple.password) {
+                    assertable_pwd = {
+                        clear: Buffer.from(arg.credentials.simple.password.unprotected).toString("utf-8"),
+                    };
+                } else if ("userPwd" in arg.credentials.simple.password) {
+                    assertable_pwd = arg.credentials.simple.password.userPwd;
+                }
+            }
+            if (!assertable_pwd || (ctx.config.authn.remotePaswordCompareTimeLimit === 0)) {
+                ctx.log.warn(ctx.i18n.t("log:invalid_credentials", logInfo), logInfo);
+                throw new DirectoryBindError(
+                    ctx.i18n.t("err:invalid_credentials"),
+                    invalidCredentialsData,
+                    signErrors,
+                );
+            }
+            assert(ctx.config.authn.remotePaswordCompareTimeLimit > 0);
+            ctx.log.debug(ctx.i18n.t("log:checking_remote_pwd", { source }), logInfo);
+            /**
+             * The X.511 Remote Password Checking Procedure as describe in
+             * [ITU Recommendation X.511 (2019)](https://www.itu.int/rec/T-REC-X.511/en),
+             * Section 10.2.7.
+             *
+             * This variation does not query the remote DSA for the pwdAttribute.
+             * That would be very hard to fit into how Meerkat DSA works without
+             * a lot of complicated changes, and since userPwd is the
+             * standardized password attribute, no X.500 directories should be
+             * using anything else anyway.
+             */
+            const compareArg: CompareArgument = {
+                unsigned: new CompareArgumentData(
+                    {
+                        rdnSequence: arg.credentials.simple.name,
+                    },
+                    new AttributeValueAssertion(
+                        userPwd["&id"],
+                        userPwd.encoderFor["&Type"]!(assertable_pwd, DER),
+                    ),
+                    undefined,
+                    new ServiceControls(
+                        undefined, // default options are fine
+                        ServiceControls_priority_high, // High priority to minimize latency and make oracles less possible.
+                        ctx.config.authn.remotePaswordCompareTimeLimit,
+                    ),
+                ),
+            };
+            let matched: boolean = false;
+            let pwd_resp: PwdResponseValue | undefined;
+            try {
+                // TODO: Is it necessary to call this? Couldn't you just immediately call the NRCR procedure?
+                const outcome = await OperationDispatcher.dispatchLocalCompareRequest(ctx, compareArg);
+                const dspResultData = getOptionallyProtectedValue(outcome.result);
+                const dspCertPath = dspResultData.chainedResult.securityParameters?.certification_path;
+                if (("signed" in outcome.result) && dspCertPath) {
+                    await verifySIGNED(
+                        ctx,
+                        undefined,
+                        dspCertPath,
+                        {
+                            absent: null,
+                        },
+                        false,
+                        outcome.result.signed,
+                        _encode_Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1,
+                        false,
+                    );
+                }
+                const result = _decode_CompareResult(dspResultData.result);
+                const dapResultData = getOptionallyProtectedValue(result);
+                matched = dapResultData.matched;
+                const pwdResponseVal = dapResultData.notification
+                    ?.find((a) => a.type_.isEqualTo(pwdResponseValue["&id"]))
+                    ?.values[0];
+                pwd_resp = pwdResponseVal && _decode_PwdResponseValue!(pwdResponseVal);
+                // We only check the DAP signature if a match is reported, since
+                // it is more computationally expensive to verify the signature.
+                const dapCertPath = dapResultData.securityParameters?.certification_path;
+                if (matched && dapCertPath && ("signed" in result)) {
+                    await verifySIGNED(
+                        ctx,
+                        undefined,
+                        dapCertPath,
+                        {
+                            absent: null,
+                        },
+                        false,
+                        result.signed,
+                        _encode_CompareResultData,
+                        false,
+                    );
+                }
+            } catch (e) {
+                ctx.log.info(ctx.i18n.t("log:error_checking_remote_pwd", { source, e }), logInfo);
+                matched = false;
+                // Intentional fall through to the !matched case.
+            }
+            if (!matched) {
+                throw new DirectoryBindError(
+                    ctx.i18n.t("err:invalid_credentials"),
+                    invalidCredentialsData,
+                    signErrors,
+                );
+            }
+            const unique_id = foundEntry && await read_unique_id(ctx, foundEntry);
+            return {
+                boundVertex: foundEntry,
+                boundNameAndUID: new NameAndOptionalUID(
+                    arg.credentials.simple.name,
+                    unique_id, // We just use the first unique identifier.
+                ),
+                authLevel: {
+                    basicLevels: new AuthenticationLevel_basicLevels(
+                        AuthenticationLevel_basicLevels_level_simple,
+                        localQualifierPoints,
+                        undefined,
+                    ),
+                },
+                pwdResponse: pwd_resp
+                    ? new PwdResponseValue(
+                        pwd_resp.warning,
+                        pwd_resp.error,
+                    )
+                    : undefined,
+            };
+        }
         const {
             authorized,
             pwdResponse,
@@ -203,11 +357,12 @@ async function bind (
                 unbind,
             );
         }
+        const unique_id = foundEntry && await read_unique_id(ctx, foundEntry);
         return {
             boundVertex: foundEntry,
             boundNameAndUID: new NameAndOptionalUID(
                 getDistinguishedName(foundEntry),
-                foundEntry.dse.uniqueIdentifier?.[0], // We just use the first unique identifier.
+                unique_id, // We just use the first unique identifier.
             ),
             authLevel: {
                 basicLevels: new AuthenticationLevel_basicLevels(

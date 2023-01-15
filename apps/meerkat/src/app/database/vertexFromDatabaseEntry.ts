@@ -1,4 +1,3 @@
-import type { Entry as DatabaseEntry } from "@prisma/client";
 import type { Context, Vertex } from "@wildboar/meerkat-types";
 import dseFromDatabaseEntry from "./dseFromDatabaseEntry";
 

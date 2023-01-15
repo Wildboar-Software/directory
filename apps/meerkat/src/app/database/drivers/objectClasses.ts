@@ -174,6 +174,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
         update: {
             ...create,
         },
+        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
     }));
 
     /**
@@ -203,6 +204,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                 data: {
                     ...create,
                 },
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             })
                 .then()
                 .catch(); // TODO: Log something.

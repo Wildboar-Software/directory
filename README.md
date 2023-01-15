@@ -1,5 +1,7 @@
 # Wildboar X.500 Directory Applications
 
+![Are We Bun Yet?](https://github.com/Wildboar-Software/directory/actions/workflows/bun.yml/badge.svg)
+
 ## What is an X.500 Directory?
 
 An X.500 directory is a distributed, hierarchical database whose characteristics

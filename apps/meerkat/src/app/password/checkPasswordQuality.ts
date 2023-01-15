@@ -4,7 +4,7 @@ import {
     PwdVocabulary_noGeographicalNames,
     PwdVocabulary_noPersonNames,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/PwdVocabulary.ta";
-import { BERElement, BIT_STRING, TRUE_BIT } from "asn1-ts";
+import { BERElement, BIT_STRING, ObjectIdentifier, TRUE_BIT } from "asn1-ts";
 import {
     _decode_UserPwd,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
@@ -26,6 +26,7 @@ import {
     pwdMaxLength,
 } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMaxLength.oa";
 import { groupByOID } from "../utils/groupByOID";
+import { attributeValueFromDB } from "../database/attributeValueFromDB";
 
 export const CHECK_PWD_QUALITY_OK: number = 0;
 export const CHECK_PWD_QUALITY_LENGTH: number = -1;
@@ -59,7 +60,7 @@ async function checkPasswordQuality (
     const minLength: number = length_constraints?.[0] ?? (await ctx.db.attributeValue.findFirst({
         where: {
             entry_id: subentry.dse.id,
-            type: pwdMinLength["&id"].toString(),
+            type_oid: pwdMinLength["&id"].toBytes(),
         },
         select: {
             jer: true,
@@ -68,7 +69,7 @@ async function checkPasswordQuality (
     const maxLength: number = length_constraints?.[1] ?? (await ctx.db.attributeValue.findFirst({
         where: {
             entry_id: subentry.dse.id,
-            type: pwdMaxLength["&id"].toString(),
+            type_oid: pwdMaxLength["&id"].toBytes(),
         },
         select: {
             jer: true,
@@ -82,7 +83,7 @@ async function checkPasswordQuality (
     const alphabet: string[] = (await ctx.db.attributeValue.findFirst({
         where: {
             entry_id: subentry.dse.id,
-            type: pwdAlphabet["&id"].toString(),
+            type_oid: pwdAlphabet["&id"].toBytes(),
         },
         select: {
             jer: true,
@@ -105,21 +106,20 @@ async function checkPasswordQuality (
     // If we made it to this point, this particular subentry's password
     // alphabet requirements were met.
 
-    const vocabBER: Uint8Array | undefined = (await ctx.db.attributeValue.findFirst({
+    const vocabBER = (await ctx.db.attributeValue.findFirst({
         where: {
             entry_id: subentry.dse.id,
-            type: pwdVocabulary["&id"].toString(),
+            type_oid: pwdVocabulary["&id"].toBytes(),
         },
         select: {
-            ber: true,
+            tag_class: true,
+            constructed: true,
+            tag_number: true,
+            content_octets: true,
         },
-    }))?.ber;
+    }));
     const vocab: BIT_STRING | null = vocabBER
-        ? (() => {
-            const el = new BERElement();
-            el.fromBytes(vocabBER);
-            return el.bitString;
-        })()
+        ? attributeValueFromDB(vocabBER).bitString
         : null;
 
     // We do the alphabet checks above first so we don't bother doing the more
@@ -206,23 +206,23 @@ async function checkPasswordQualityAndHistory (
     const subentry_value_rows = await ctx.db.attributeValue.findMany({
         where: {
             entry_id: subentry.dse.id,
-            type: {
+            type_oid: {
                 in: [
-                    ID_HISTORY_SLOTS,
-                    ID_MAX_TIH,
-                    ID_MIN_TIH,
-                    ID_MIN_LEN,
-                    IN_MAX_LEN,
+                    pwdHistorySlots["&id"].toBytes(),
+                    pwdMaxTimeInHistory["&id"].toBytes(),
+                    pwdMinTimeInHistory["&id"].toBytes(),
+                    pwdMinLength["&id"].toBytes(),
+                    pwdMaxLength["&id"].toBytes(),
                 ],
             },
         },
         select: {
-            type: true,
+            type_oid: true,
             jer: true,
         },
     });
 
-    const subentry_attrs = groupByOID(subentry_value_rows, (r) => r.type);
+    const subentry_attrs = groupByOID(subentry_value_rows, (r) => ObjectIdentifier.fromBytes(r.type_oid).toString());
     const slots: number | undefined = subentry_attrs[ID_HISTORY_SLOTS]?.[0].jer as number;
     const max_tih: number | undefined = subentry_attrs[ID_MAX_TIH]?.[0].jer as number;
     const min_tih: number | undefined = subentry_attrs[ID_MIN_TIH]?.[0].jer as number;
@@ -240,7 +240,7 @@ async function checkPasswordQualityAndHistory (
     }
 
     const algid = getScryptAlgorithmIdentifier();
-    const encrypted = encryptPassword(algid, Buffer.from(password));
+    const encrypted = await encryptPassword(algid, Buffer.from(password));
     assert(encrypted); // This should not happen, since we are using Meerkat DSA's self-specified encryption algorithm.
 
     const historyStart: Date | undefined = max_tih

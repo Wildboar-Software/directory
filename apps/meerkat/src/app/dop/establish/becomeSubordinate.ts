@@ -105,7 +105,7 @@ async function becomeSubordinate (
                     rhob: Boolean(vertex.admPointInfo),
                     immSupr,
                 },
-                vertex.admPointInfo?.flatMap(valuesFromAttribute) ?? [],
+                vertex.admPointInfo ?? [],
                 [],
             );
             await Promise.all(
@@ -122,7 +122,7 @@ async function becomeSubordinate (
                         subentry: true,
                         rhob: true,
                     },
-                    subentry.info?.flatMap(valuesFromAttribute) ?? [],
+                    subentry.info ?? [],
                     [],
                 );
             }
@@ -146,7 +146,7 @@ async function becomeSubordinate (
                 ? Number(governingStructureRule)
                 : undefined,
         },
-        sup2sub.entryInfo?.flatMap(valuesFromAttribute) ?? [],
+        sup2sub.entryInfo ?? [],
     );
     /**
      * These steps below "swap out" an existing entry with the entry created by
@@ -178,6 +178,7 @@ async function becomeSubordinate (
                 data: {
                     deleteTimestamp: new Date(),
                 },
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),
             ...await addValues(
                 ctx,
@@ -230,6 +231,7 @@ async function becomeSubordinate (
                 data: {
                     ...pendingUpdates.entryUpdate,
                 },
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),
             ...pendingUpdates.otherWrites,
         ]);

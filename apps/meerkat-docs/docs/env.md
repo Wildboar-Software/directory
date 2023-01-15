@@ -798,6 +798,52 @@ This is important for the prevention of
 
 :::
 
+## MEERKAT_MRU_VERTEX_TTL
+
+The number of seconds (the "time to live" or "TTL") during which the most
+recently used vertex remains cached in memory along with the connection.
+
+Meerkat DSA caches the most recently used (MRU) vertex in memory along with the
+association. This was implemented because users typically "statefully" navigate
+the directory, like folders in a file system--they don't bounce around the DIT
+randomly. Since there is a strong chance that the next operation a user performs
+will be the last-used vertex or one of its subordinates, caching the most
+recently used vertex can dramatically reduce the number of database queries and
+make many operations extremely fast.
+
+However, these cached vertices MUST eventually expire, otherwise, users could
+have out-of-date information or perform operations on entries to which they have
+had their permissions revoked since the last operation.
+
+:::caution
+
+To be clear, use of the most recent vertex **bypasses access controls**,
+regarding `Browse` and `ReturnDN` permissions. It is assumed that, if the user had
+`Browse` and `ReturnDN` permissions on the entry, say, three seconds ago, they
+still do. This is a small abridgement of access controls made for the sake of
+extreme performance gains.
+
+Unless you are frequently modifying access controls, virtually any number should
+be fine. The higher a higher cache TTL will give you better performance, but
+slower-to-react access controls and potential for data inconsistency.
+
+Note that the cached vertex lifespan is renewed on every operation, so if a user
+browses an entry, then you define access controls that prohibit that user from
+discovering that entry, the user can still discover it indefinitely for as long
+as they:
+
+1. Remain associated
+2. Periodically rejuvenate this cache by performing an operation with this entry
+3. Do not perform any operation with any other entry on the same association
+
+:::
+
+To disable this behavior entirely, set this to `0`. Otherwise, this defaults to
+`300` (five minutes).
+
+The MRU vertex is cached whenever a `removeEntry` or `modifyDN` operation is
+performed, since these can invalidate the cache.
+
 ## MEERKAT_MY_ACCESS_POINT_NSAPS
 
 Whitespace-separated NSAP URLs that locate this DSA. This is important for
@@ -884,6 +930,42 @@ OpenSSL can use to obtain a private key.
 If set to `1`, Meerkat DSA will not chain any requests. If you expect to operate
 your DSA instance in isolation from all other DSAs, it is recommended to enable
 this (meaning that chaining would be disabled).
+
+## MEERKAT_REMOTE_PWD_TIME_LIMIT
+
+The number of seconds before the remote password checking procedure (described
+in [ITU Recommendation X.511 (2019)](https://www.itu.int/rec/T-REC-X.511/en),
+Section 10.2.7) times out. If this is set to 0, this procedure is never used.
+
+This defaults to 0, meaning that this procedure is disabled by default.
+
+:::warning
+
+It is strongly recommended to avoid enabling this feature unless the names
+of most or all entries in your DSA are NOT a secret. That is because a remote
+password assertion will introduce significant latency into the bind operation,
+which can be used to oracle which entries exist.
+
+In other words, a nefarious
+user could guess common relative distinguished names, such as `CN=John Smith`,
+and see if the bind response (or error) for that entry returns significantly
+faster than a known non-existent entry (the nefarious user could just guess a
+random RDN, such as `CN=qtuihqjoitjoqpoj1` for this purpose) to determine whether
+`CN=John Smith` exists locally in that DSA, even if this nefarious user does not
+have the proper permissions to discover that entry.
+
+If this feature is enabled, it is recommended that you increase the values of
+the
+[`MEERKAT_BIND_MIN_SLEEP_MS`](#meerkat_bind_min_sleep_ms) and
+[`MEERKAT_BIND_SLEEP_RANGE_MS`](#meerkat_bind_sleep_range_ms) configuration
+options, which will help to obscure when asserted credentials are chained to a
+remote DSA.
+
+In addition to the above concern, enabling this feature can slow down bind
+operations. If you are under regular brute-force attacks or are generally under
+resource strain, you may want to leave this feature disabled.
+
+:::
 
 ## MEERKAT_REVEAL_USER_PWD
 
@@ -1991,13 +2073,13 @@ by OpenDJ.
 
 :::caution
 
-Revealing that you are using a specific version of Meerkat DSA instance may make it easier for
-malicious users to profile your DSA in cyberattack attempts. For instance, if it
-is known that there is a new security vulnerability in Meerkat DSA, malicious
-users may search for DSAs whose `vendorVersion` attribute indicates that the DSA
-is still susceptible to the security vulnerability. To disable the `vendorName`
-from displaying the version, set the `MEERKAT_VENDOR_VERSION` environment variable
-to an empty string (`""`).
+Revealing that you are using a specific version of Meerkat DSA instance may make
+it easier for malicious users to profile your DSA in cyberattack attempts. For
+instance, if it is known that there is a new security vulnerability in Meerkat
+DSA, malicious users may search for DSAs whose `vendorVersion` attribute
+indicates that the DSA is still susceptible to the security vulnerability. To
+disable the `vendorName` from displaying the version, set the
+`MEERKAT_VENDOR_VERSION` environment variable to an empty string (`""`).
 
 :::
 

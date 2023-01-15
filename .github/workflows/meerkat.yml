@@ -3,6 +3,7 @@ name: Meerkat DSA Workflow
 on:
   push:
     tags:
+      - v3.*
       - v2.*
       - v1.*
     # Temporary, so I don't have to keep adding BS tags.
@@ -239,8 +240,15 @@ jobs:
         run: helm package .
         timeout-minutes: 2
         working-directory: ./k8s/charts/meerkat-dsa
+      - name: Download Existing Helm Chart index
+        run: curl https://${{ env.STORAGE_ACCOUNT_NAME }}.blob.core.windows.net/${{ env.CHART_CONTAINER }}/index.yaml > existing-index.yaml
+        working-directory: ./k8s/charts/meerkat-dsa
+        timeout-minutes: 2
       - name: Create the Helm Index
-        run: helm repo index . --url https://${{ env.STORAGE_ACCOUNT_NAME }}.blob.core.windows.net/${{ env.CHART_CONTAINER }}
+        run: |
+          helm repo index . \
+            --url https://${{ env.STORAGE_ACCOUNT_NAME }}.blob.core.windows.net/${{ env.CHART_CONTAINER }} \
+            --merge existing-index.yaml
         working-directory: ./k8s/charts/meerkat-dsa
         timeout-minutes: 2
       - name: Upload Helm Packages
@@ -547,13 +555,16 @@ jobs:
         run: echo "${{ env.VALUES_OVERRIDE }}" > values_override.yaml
         timeout-minutes: 1
       - name: Deploy Meerkat DSA via Helm
+        # Set log_level to "warn" because logging slows down Meerkat DSA
+        # considerably, and the logs from the test instance are so chaotic that
+        # they are basically useless.
         run: |
           helm install meerkat-dsa-test ${{ env.CHART_REPO }}/${{ env.CHART_NAME }} \
             -f values_override.yaml \
             --set fullnameOverride=meerkat-test \
             --set service.type=LoadBalancer \
             --set adminService.type=LoadBalancer \
-            --set log_level=debug \
+            --set log_level=warn \
             --set "my_access_point_nsaps={idm://dsa01.test.${{ env.ZONE }}:4632,ldap://dsa01.test.${{ env.ZONE }}:389}" \
             --set min_auth_level_for_chaining=0 \
             --set min_auth_local_qualifier_for_chaining=0 \
@@ -570,6 +581,8 @@ jobs:
             --set max_connections=100 \
             --set max_connections_per_address=50 \
             --set max_concurrent_operations_per_connection=50 \
+            --set tcp_timeout_in_seconds=300 \
+            --set min_transfer_speed_bytes_per_minute=10 \
             --atomic \
             --namespace=${{ env.NAMESPACE }}
         timeout-minutes: 10
@@ -761,6 +774,8 @@ jobs:
       - name: Create Values Override File
         run: echo "${{ env.VALUES_OVERRIDE }}" > values_override.yaml
       - name: Deploy Meerkat DSA via Helm
+        # Set log_level to "info" because logging slows down Meerkat DSA
+        # considerably, even though it would be nice to have more output.
         run: |
           helm install meerkat-dsa-${{ matrix.dmd }} ${{ env.CHART_REPO }}/${{ env.CHART_NAME }} \
             -f values_override.yaml \
@@ -769,7 +784,7 @@ jobs:
             --set fullnameOverride=meerkat-${{ matrix.dmd }} \
             --set service.type=LoadBalancer \
             --set adminService.type=LoadBalancer \
-            --set log_level=debug \
+            --set log_level=info \
             --set "my_access_point_nsaps={idms://dsa01.${{ matrix.dmd }}.${{ env.ZONE }}:44632,idm://dsa01.${{ matrix.dmd }}.${{ env.ZONE }}:4632,ldaps://dsa01.${{ matrix.dmd }}.${{ env.ZONE }}:636,ldap://dsa01.${{ matrix.dmd }}.${{ env.ZONE }}:389}" \
             --set min_auth_level_for_chaining=0 \
             --set min_auth_local_qualifier_for_chaining=0 \
@@ -791,6 +806,9 @@ jobs:
             --set administrator_email_public=true \
             --set vendor_version='2.0.0' \
             --set signing_required_for_chaining=false \
+            --set tcp_timeout_in_seconds=300 \
+            --set min_transfer_speed_bytes_per_minute=10 \
+            --set remote_pwd_time_limit=15 \
             --atomic \
             --namespace=${{ env.NAMESPACE }}
       - name: Wait 30 Seconds for Public IP to be Allocated

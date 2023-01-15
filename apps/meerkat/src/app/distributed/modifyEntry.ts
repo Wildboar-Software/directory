@@ -90,7 +90,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import getDistinguishedName from "../x500/getDistinguishedName";
-import type { PrismaPromise } from "@prisma/client";
+import type { PrismaPromise, Prisma } from "@prisma/client";
 import addValues from "../database/entry/addValues";
 import removeValues from "../database/entry/removeValues";
 import removeAttribute from "../database/entry/removeAttribute";
@@ -211,7 +211,6 @@ import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesTh
 import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs";
 import { MINIMUM_MAX_ATTR_SIZE } from "../constants";
 import updateSuperiorDSA from "../dop/updateSuperiorDSA";
-import { addValue } from "../database/drivers/administrativeRole";
 import {
     id_ar_autonomousArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
@@ -242,6 +241,7 @@ import {
     subtreeSpecification,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/subtreeSpecification.oa";
 import {
+    SubtreeSpecification,
     _decode_SubtreeSpecification,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
 import {
@@ -271,6 +271,7 @@ import {
     checkPasswordQuality,
     CHECK_PWD_QUALITY_OK,
 } from "../password/checkPasswordQuality";
+import { attributeValueFromDB } from "../database/attributeValueFromDB";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -512,7 +513,7 @@ async function checkAttributePresence (
     return !!(await ctx.db.attributeValue.findFirst({
         where: {
             entry_id: target.dse.id,
-            type: TYPE_OID,
+            type_oid: type_.toBytes(),
         },
         select: {
             id: true,
@@ -643,7 +644,7 @@ async function checkPermissionToModifyPassword (
             entry_id: {
                 in: pwdAdminSubentries.map((s) => s.dse.id),
             },
-            type: pwdModifyEntryAllowed["&id"].toString(),
+            type_oid: pwdModifyEntryAllowed["&id"].toBytes(),
             operational: true,
         },
         select: {
@@ -1684,9 +1685,9 @@ async function executeResetValue (
     aliasDereferenced?: boolean,
     signErrors: boolean = false,
 ): Promise<PrismaPromise<any>[]> {
-    const where = {
+    const where: Prisma.AttributeValueWhereInput = {
         entry_id: entry.dse.id,
-        type: mod.toString(),
+        type_oid: mod.toBytes(),
         ContextValue: {
             some: {
                 fallback: false,
@@ -1702,12 +1703,14 @@ async function executeResetValue (
         const rows = await ctx.db.attributeValue.findMany({
             where,
             select: {
-                ber: true,
+                tag_class: true,
+                constructed: true,
+                tag_number: true,
+                content_octets: true,
             },
         });
         for (const row of rows) {
-            const el = new BERElement();
-            el.fromBytes(row.ber);
+            const el = attributeValueFromDB(row);
             const {
                 authorized: authorizedForAttributeType,
             } = bacACDF(
@@ -2617,7 +2620,8 @@ async function modifyEntry (
     const accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
         .reverse()
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-    const relevantACIItems = getACIItems(
+    const relevantACIItems = await getACIItems(
+        ctx,
         accessControlScheme,
         target.immediateSuperior,
         target,
@@ -2707,17 +2711,7 @@ async function modifyEntry (
         contextUseRules.forEach((rule) => contextRulesIndex.set(rule.identifier.toString(), rule));
     }
 
-    const pendingUpdates: PrismaPromise<any>[] = [
-        ctx.db.entry.update({
-            where: {
-                id: target.dse.id,
-            },
-            data: {
-                modifiersName: user?.dn.map(rdnToJson),
-                modifyTimestamp: new Date(),
-            },
-        }),
-    ];
+    const pendingUpdates: PrismaPromise<any>[] = [];
     const patch: Patch = {
         addedValues: new Map(),
         removedValues: new Map(),
@@ -2848,7 +2842,7 @@ async function modifyEntry (
             : await ctx.db.attributeValue.count({
                 where: {
                     entry_id: target.dse.id,
-                    type: type_,
+                    type_oid: spec?.id.toBytes() ?? removedValues[0].type.toBytes(),
                 },
             });
         if (removedValues.length < alreadyPresentValues) {
@@ -2932,9 +2926,10 @@ async function modifyEntry (
         const subtreeSpecAdded = patch.addedValues.get(subtreeSpecification["&id"].toString());
         const subtreeSpecRemoved = patch.removedValues.get(subtreeSpecification["&id"].toString());
         if (subtreeSpecAdded || subtreeSpecRemoved) {
-            const existingSubtrees = await ctx.db.subtreeSpecification.count({
+            const existingSubtrees = await ctx.db.attributeValue.count({
                 where: {
                     entry_id: target.dse.id,
+                    type_oid: subtreeSpecification["&id"].toBytes(),
                 },
             });
             const totalSubtrees = (existingSubtrees + (subtreeSpecAdded?.length ?? 0) - (subtreeSpecRemoved?.length ?? 0));
@@ -3199,7 +3194,7 @@ async function modifyEntry (
                     : await ctx.db.attributeValue.count({
                         where: {
                             entry_id: target.dse.id,
-                            type: ra,
+                            type_oid: ObjectIdentifier.fromString(ra).toBytes(),
                         },
                     });
                 if (alreadyPresentValues === 0) {
@@ -3522,6 +3517,18 @@ async function modifyEntry (
     if (op) {
         op.pointOfNoReturnTime = new Date();
     }
+    const isAdmPoint: boolean = patch.addedValues.has(administrativeRole["&id"].toString());
+    pendingUpdates.unshift(ctx.db.entry.update({
+        where: {
+            id: target.dse.id,
+        },
+        data: {
+            modifiersName: user?.dn.map(rdnToJson),
+            modifyTimestamp: new Date(),
+            admPoint: isAdmPoint || undefined, // Even if no new admin roles were added, it could already be an admin point.
+        },
+        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
+    }));
     checkTimeLimit();
     try {
         await ctx.db.$transaction(pendingUpdates);
@@ -3531,6 +3538,22 @@ async function modifyEntry (
         const dbe = await ctx.db.entry.findUnique({
             where: {
                 id: target.dse.id,
+            },
+            include: {
+                RDN: {
+                    select: {
+                        type_oid: true,
+                        tag_class: true,
+                        constructed: true,
+                        tag_number: true,
+                        content_octets: true,
+                    },
+                },
+                EntryObjectClass: {
+                    select: {
+                        object_class: true,
+                    },
+                },
             },
         });
         if (dbe) {
@@ -3547,6 +3570,22 @@ async function modifyEntry (
         where: {
             id: target.dse.id,
         },
+        include: {
+            RDN: {
+                select: {
+                    type_oid: true,
+                    tag_class: true,
+                    constructed: true,
+                    tag_number: true,
+                    content_octets: true,
+                },
+            },
+            EntryObjectClass: {
+                select: {
+                    object_class: true,
+                },
+            },
+        },
     });
     if (dbe) {
         target.dse = await dseFromDatabaseEntry(ctx, dbe);
@@ -3561,6 +3600,13 @@ async function modifyEntry (
             invokeID: printInvokeId(state.invokeId),
         });
     }
+    ctx.log.debug(ctx.i18n.t("log:mod_entry", {
+        aid: assn.id,
+        dn: stringifyDN(ctx, targetDN),
+        id: target.dse.id,
+        uuid: target.dse.uuid,
+        euuid: target.dse.entryUUID,
+    }));
 
     if (
         patch.addedValues.has(USER_PASSWORD)
@@ -3590,26 +3636,54 @@ async function modifyEntry (
      * are no longer administrative points, but it gets the job done.
      */
     if (!target.dse.admPoint && target.immediateSuperior?.dse.root) {
-        const addAdministrativeRoleUpdates: PendingUpdates = {
-            entryUpdate: {},
-            otherWrites: [],
-        };
-        await addValue(ctx, target, {
-            type: administrativeRole["&id"],
-            value: _encodeObjectIdentifier(id_ar_autonomousArea, DER),
-        }, addAdministrativeRoleUpdates);
+        const autonomousId = _encodeObjectIdentifier(id_ar_autonomousArea, DER);
         await ctx.db.$transaction([
             ctx.db.entry.update({
                 where: {
                     id: target.dse.id,
                 },
-                data: addAdministrativeRoleUpdates.entryUpdate,
+                data: {
+                    admPoint: true,
+                },
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),
-            ...addAdministrativeRoleUpdates.otherWrites,
+            ctx.db.attributeValue.create({
+                data: {
+                    entry_id: target.dse.id,
+                    type_oid: administrativeRole["&id"].toBytes(),
+                    operational: true,
+                    tag_class: ASN1TagClass.universal,
+                    constructed: false,
+                    tag_number: ASN1UniversalType.objectIdentifier,
+                    content_octets: Buffer.from(
+                        autonomousId.value.buffer,
+                        autonomousId.value.byteOffset,
+                        autonomousId.value.byteLength,
+                    ),
+                    jer: id_ar_autonomousArea.toJSON(),
+                },
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
+            }),
         ]);
         const dbe = await ctx.db.entry.findUnique({
             where: {
                 id: target.dse.id,
+            },
+            include: {
+                RDN: {
+                    select: {
+                        type_oid: true,
+                        tag_class: true,
+                        constructed: true,
+                        tag_number: true,
+                        content_octets: true,
+                    },
+                },
+                EntryObjectClass: {
+                    select: {
+                        object_class: true,
+                    },
+                },
             },
         });
         if (dbe) {

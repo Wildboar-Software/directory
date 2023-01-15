@@ -14,6 +14,10 @@
         "skipLibCheck": true,
         "skipDefaultLibCheck": true,
         "strictNullChecks": true,
+        "strictPropertyInitialization": true,
+        "strictBindCallApply": true,
+        "noImplicitThis": true,
+        "alwaysStrict": true,
         "baseUrl": ".",
         "paths": {
             "@wildboar/idm": ["libs/idm/src/index.ts"],

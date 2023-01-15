@@ -265,6 +265,7 @@ import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import { printInvokeId } from "../utils/printInvokeId";
+import { entryACI, prescriptiveACI, subentryACI } from "@wildboar/x500/src/lib/collections/attributes";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 
@@ -775,6 +776,22 @@ function getFamilyMembersToReturnById (
 //     }
 // }
 
+function isMatchAllFilter (filter?: Filter): boolean {
+    if (!filter) {
+        return true;
+    }
+    if ("item" in filter) {
+        return (("present" in filter.item)
+            && filter.item.present.isEqualTo(objectClass["&id"]));
+    } else if ("and" in filter) {
+        return filter.and.every(isMatchAllFilter);
+    } else if ("or" in filter) {
+        return filter.or.some(isMatchAllFilter);
+    } else {
+        return false;
+    }
+}
+
 /**
  * @summary The Search (I) Procedure, as specified in ITU Recommendation X.518.
  * @description
@@ -961,7 +978,8 @@ async function search_i (
     const accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
         .reverse()
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-    const targetACI = getACIItems(
+    const targetACI = await getACIItems(
+        ctx,
         accessControlScheme,
         target.immediateSuperior,
         target,
@@ -2223,6 +2241,14 @@ async function search_i (
         state.SRcontinuationList.push(cr);
     }
 
+    const entriesPerSubordinatesPage: number = (
+        !entryOnly
+        && (data.subset === SearchArgumentData_subset_oneLevel)
+        && isMatchAllFilter(data.filter)
+    )
+        ? Math.min(sizeLimit, ctx.config.entriesPerSubordinatesPage * 10)
+        : ctx.config.entriesPerSubordinatesPage;
+
     const getNextBatchOfSubordinates = async (): Promise<Vertex[]> => readSubordinates(
         ctx,
         target,
@@ -2236,7 +2262,7 @@ async function search_i (
          * request could consume considerably higher memory than expected. To prevent
          * this, a fixed page size is used. In the future, this may be configurable.
          */
-        ctx.config.entriesPerSubordinatesPage,
+        entriesPerSubordinatesPage,
         undefined,
         cursorId,
         {
@@ -2336,19 +2362,30 @@ async function search_i (
                 if ( // If an access control scheme is defined, and...
                     subAccessControlScheme
                     && ( // ...if there are any attributes that suggest that this DSE is subject to access control...
-                        subordinate.dse.entryACI?.length
-                        || subordinate.dse.subentry?.prescriptiveACI?.length
-                        || subordinate.dse.admPoint?.subentryACI?.length
+                        !!(await ctx.db.attributeValue.findFirst(({
+                            where: {
+                                entry_id: subordinate.dse.id,
+                                type_oid: {
+                                    in: [
+                                        entryACI["&id"].toBytes(),
+                                        subentryACI["&id"].toBytes(),
+                                        prescriptiveACI["&id"].toBytes(),
+                                    ],
+                                },
+                            },
+                            select: { id: true },
+                        })))
                         // Rule-based access control is not supported yet, so if
                         // this next line were enabled, it would simply make the
                         // subr DSE unavailable to all users.
-                        // || subordinate.dse.clearances?.length 
+                        // || subordinate.dse.clearances?.length
                     )
                 ) {
                     const relevantSubentries: Vertex[] = (await Promise.all(
                         adminPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
                     )).flat();
-                    const targetACI = getACIItems(
+                    const targetACI = await getACIItems(
+                        ctx,
                         subAccessControlScheme,
                         target,
                         subordinate,
@@ -2384,7 +2421,7 @@ async function search_i (
                         continue;
                     }
                 }
-                
+
                 const cr = new ContinuationReference(
                     {
                         /**

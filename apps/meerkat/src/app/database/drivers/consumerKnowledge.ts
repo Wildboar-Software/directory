@@ -58,6 +58,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
         data: {
             entry_id: vertex.dse.id,
         },
+        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
     }));
 };
 

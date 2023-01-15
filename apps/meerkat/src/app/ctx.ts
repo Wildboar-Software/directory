@@ -555,6 +555,9 @@ const config: Configuration = {
     authn: {
         lookupPkiPathForUncertifiedStrongAuth: (process.env.MEERKAT_LOOKUP_UNCERT_STRONG_AUTH === "1"),
         attributeCertificationPath,
+        remotePaswordCompareTimeLimit: process.env.MEERKAT_REMOTE_PWD_TIME_LIMIT
+            ? Number.parseInt(process.env.MEERKAT_REMOTE_PWD_TIME_LIMIT, 10)
+            : 0, // 0 disables this procedure.
     },
     log: {
         boundDN: (process.env.MEERKAT_LOG_BOUND_DN === "1"),
@@ -587,6 +590,9 @@ const config: Configuration = {
     maxConcurrentOperationsPerConnection: process.env.MEERKAT_MAX_CONCURRENT_OPERATIONS_PER_CONNECTION
         ? Number.parseInt(process.env.MEERKAT_MAX_CONCURRENT_OPERATIONS_PER_CONNECTION)
         : Infinity,
+    mostRecentVertexTTL: process.env.MEERKAT_MRU_VERTEX_TTL
+        ? Number.parseInt(process.env.MEERKAT_MRU_VERTEX_TTL, 10)
+        : 300,
     tcp: {
         noDelay: (process.env.MEERKAT_TCP_NO_DELAY === "1"),
         timeoutInSeconds: process.env.MEERKAT_TCP_TIMEOUT_IN_SECONDS

@@ -51,8 +51,11 @@ async function readSubordinates (
                 include: {
                     RDN: {
                         select: {
-                            type: true,
-                            value: true,
+                            type_oid: true,
+                            tag_class: true,
+                            constructed: true,
+                            tag_number: true,
+                            content_octets: true,
                         },
                         orderBy: { // So the RDNs appear in the order in which they were entered.
                             // This prevents an undesirable scenario where some users might show
@@ -63,43 +66,6 @@ async function readSubordinates (
                     EntryObjectClass: {
                         select: {
                             object_class: true,
-                        },
-                    },
-                    UniqueIdentifier: {
-                        select: {
-                            uniqueIdentifier: true,
-                        },
-                    },
-                    ACIItem: {
-                        where: {
-                            active: true,
-                        },
-                        select: {
-                            scope: true,
-                            ber: true,
-                        },
-                    },
-                    Clearance: {
-                        where: {
-                            active: true,
-                        },
-                        select: {
-                            ber: true,
-                        },
-                    },
-                    EntryAdministrativeRole: {
-                        select: {
-                            administrativeRole: true,
-                        },
-                    },
-                    SubtreeSpecification: {
-                        select: {
-                            ber: true,
-                        },
-                    },
-                    EntryCollectiveExclusion: {
-                        select: {
-                            collectiveExclusion: true,
                         },
                     },
                 },

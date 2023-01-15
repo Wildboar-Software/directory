@@ -9,6 +9,7 @@ import type {
     SpecialAttributeCounter,
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
+    PendingUpdates,
 } from "@wildboar/meerkat-types";
 import NOOP from "./NOOP";
 import { DER, _encodeGeneralizedTime } from "asn1-ts/dist/node/functional";
@@ -33,7 +34,14 @@ const readValues: SpecialAttributeDatabaseReader = async (
 };
 
 export
-const addValue: SpecialAttributeDatabaseEditor = NOOP;
+const addValue: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.entryUpdate.createTimestamp = value.value.generalizedTime;
+};
 
 export
 const removeValue: SpecialAttributeDatabaseEditor = NOOP;

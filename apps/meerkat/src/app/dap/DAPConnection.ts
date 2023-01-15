@@ -135,7 +135,7 @@ async function handleRequest (
     if (!("local" in request.code)) {
         throw new MistypedPDUError();
     }
-    if (this.pwdReset) {
+    if (assn.pwdReset) {
         const operation_can_be_used_to_change_password: boolean = (
             compareCode(request.code, administerPassword["&operationCode"]!)
             || compareCode(request.code, changePassword["&operationCode"]!)
@@ -323,7 +323,7 @@ async function handleRequestAndErrors (
             },
         });
         ctx.log.info(`${assn.id}#${invoke_id}: ${e?.name ?? "?"}: ${e.message ?? e.msg ?? e.m}`, logInfo);
-        if (isDebugging) {
+        if (isDebugging || (ctx.log.level === "debug")) {
             console.error(e);
         }
         if (!stats.outcome) {

@@ -3,17 +3,15 @@ import type {
     Vertex,
 } from "@wildboar/meerkat-types";
 import {
+    contextAssertionDefaults,
     contextAssertionSubentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/contextAssertionSubentry.oa";
 import {
-    id_ar_contextDefaultSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-contextDefaultSpecificArea.va";
-import type {
-    TypeAndContextAssertion,
+    TypeAndContextAssertion, _decode_TypeAndContextAssertion,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
+import { attributeValueFromDB } from "../database/attributeValueFromDB";
 
 const CAD_SUBENTRY: string = contextAssertionSubentry["&id"].toString();
-const ID_CDSA: string = id_ar_contextDefaultSpecificArea.toString();
 
 /**
  * @summary Get the context assertion defaults for an entry
@@ -32,17 +30,43 @@ const ID_CDSA: string = id_ar_contextDefaultSpecificArea.toString();
  * @function
  */
 export
-function getContextAssertionDefaults (
+async function getContextAssertionDefaults (
     ctx: Context,
     entry: Vertex,
     relevantSubentries: Vertex[],
-): TypeAndContextAssertion[] {
+): Promise<TypeAndContextAssertion[]> {
     const cadSubentries = relevantSubentries
         .filter((sub) => sub.dse.objectClass.has(CAD_SUBENTRY))
         .reverse();
-    return cadSubentries
-        .find((sub) => sub.immediateSuperior?.dse.admPoint?.administrativeRole.has(ID_CDSA))
-        ?.dse.subentry?.contextAssertionDefaults ?? [];
+    if (cadSubentries.length === 0) {
+        return [];
+    }
+    const firstAdmPointUUID = cadSubentries[0].dse.uuid;
+    let i: number = 0;
+    for (const subentry of cadSubentries) {
+        i++;
+        if (subentry.immediateSuperior?.dse.uuid !== firstAdmPointUUID) {
+            break;
+        }
+    }
+    return (await ctx.db.attributeValue.findMany({
+        where: {
+            entry_id: {
+                in: cadSubentries.slice(0, i).map((c) => c.dse.id),
+            },
+            type_oid: contextAssertionDefaults["&id"].toBytes(),
+        },
+        select: {
+            tag_class: true,
+            constructed: true,
+            tag_number: true,
+            content_octets: true,
+        },
+    }))
+        .map((row) => {
+            const el = attributeValueFromDB(row);
+            return _decode_TypeAndContextAssertion(el);
+        });
 }
 
 export default getContextAssertionDefaults;

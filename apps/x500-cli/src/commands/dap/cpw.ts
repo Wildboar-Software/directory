@@ -37,11 +37,15 @@ async function do_changePassword (
             output: mutedOut,
             terminal: true,
         });
-        rl.question("Old Password: ", (answer: string): void => {
-            oldPassword = answer;
-            rl.close();
+        await new Promise<void>((resolve) => {
+            rl.question("Old Password: ", (answer: string): void => {
+                mutedOut.muted = true;
+                oldPassword = answer;
+                rl.close();
+                mutedOut.muted = false;
+                resolve();
+            });
         });
-        mutedOut.muted = true;
     }
 
     let newPassword: string | undefined = argv.newPassword;
@@ -51,11 +55,15 @@ async function do_changePassword (
             output: mutedOut,
             terminal: true,
         });
-        rl.question("New Password: ", (answer: string): void => {
-            newPassword = answer;
-            rl.close();
+        await new Promise<void>((resolve) => {
+            rl.question("New Password: ", (answer: string): void => {
+                mutedOut.muted = true;
+                newPassword = answer;
+                rl.close();
+                resolve();
+                mutedOut.muted = false;
+            });
         });
-        mutedOut.muted = true;
     }
 
     const objectName: DistinguishedName = destringifyDN(ctx, argv.object);

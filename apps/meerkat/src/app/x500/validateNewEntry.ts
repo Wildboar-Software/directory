@@ -270,9 +270,27 @@ async function validateEntry (
      */
     const isExemptFromSubschema: boolean = (isSubentry || isFirstLevel);
 
+    const gsr: number | undefined | null = immediateSuperior
+        ? (immediateSuperior.dse.governingStructureRule
+            ?? await (async () => {
+                const db_gsr = (await ctx.db.entry.findUnique({
+                    where: {
+                        id: immediateSuperior.dse.id,
+                    },
+                    select: {
+                        governingStructureRule: true,
+                    },
+                }))?.governingStructureRule;
+                if (db_gsr) {
+                    immediateSuperior.dse.governingStructureRule = db_gsr;
+                }
+                return db_gsr;
+            })())
+        : undefined;
+
     if (
         immediateSuperior
-        && (immediateSuperior.dse.governingStructureRule === undefined) // The immediate superior has no GSR, and...
+        && (typeof gsr !== "number") // The immediate superior has no GSR, and...
         && !isExemptFromSubschema
     ) {
         throw new errors.UpdateError(
@@ -387,7 +405,7 @@ async function validateEntry (
                         attribute: new Attribute(
                             id_at_objectClass,
                             [
-                                _encodeObjectIdentifier(parent["&id"], DER),
+                                _encodeObjectIdentifier(id_oc_parent, DER),
                             ],
                             undefined,
                         ),

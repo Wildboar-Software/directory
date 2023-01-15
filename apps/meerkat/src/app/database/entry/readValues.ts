@@ -288,7 +288,7 @@ async function readValues (
     options?: ReadValuesOptions,
 ): Promise<ReadValuesReturn> {
     const cads: TypeAndContextAssertion[] = options?.relevantSubentries
-        ? getContextAssertionDefaults(ctx, entry, options.relevantSubentries)
+        ? await getContextAssertionDefaults(ctx, entry, options.relevantSubentries)
         : [];
     /**
      * EIS contexts > operationContexts > CAD subentries > locally-defined default > no context assertion.
@@ -355,16 +355,16 @@ async function readValues (
         : (await ctx.db.attributeValue.findMany({
             where: {
                 entry_id: entry.dse.id,
-                type: selectedUserAttributes
+                type_oid: selectedUserAttributes
                     ? {
                         in: options?.noSubtypeSelection
-                            ? Array.from(selectedUserAttributes)
+                            ? Array.from(selectedUserAttributes).map((o) => ObjectIdentifier.fromString(o).toBytes())
                             : Array.from(selectedUserAttributes)
                                 .flatMap((type_) => {
                                     const subtypes = getAttributeSubtypes(ctx, ObjectIdentifier.fromString(type_));
                                     return [
-                                        type_,
-                                        ...subtypes.map((st) => st.toString()),
+                                        ObjectIdentifier.fromString(type_).toBytes(),
+                                        ...subtypes.map((st) => st.toBytes()),
                                     ];
                                 }),
                     }
@@ -372,8 +372,11 @@ async function readValues (
                 operational: false,
             },
             select: {
-                type: true,
-                ber: true,
+                type_oid: true,
+                tag_class: true,
+                constructed: true,
+                tag_number: true,
+                content_octets: true,
                 ContextValue: (
                     contextSelection
                     || options?.selection?.returnContexts
@@ -389,7 +392,7 @@ async function readValues (
                     : undefined,
             },
             distinct: (options?.selection?.infoTypes === typesOnly)
-                ? ["type"]
+                ? ["type_oid"]
                 : undefined,
         })).map((a) => attributeFromDatabaseAttribute(ctx, a));
 
@@ -406,16 +409,16 @@ async function readValues (
         : (await ctx.db.attributeValue.findMany({
             where: {
                 entry_id: entry.dse.id,
-                type: selectedOperationalAttributes
+                type_oid: selectedOperationalAttributes
                     ? {
                         in: options?.noSubtypeSelection
-                            ? Array.from(selectedOperationalAttributes)
+                            ? Array.from(selectedOperationalAttributes).map((o) => ObjectIdentifier.fromString(o).toBytes())
                             : Array.from(selectedOperationalAttributes)
                                 .flatMap((type_) => {
                                     const subtypes = getAttributeSubtypes(ctx, ObjectIdentifier.fromString(type_));
                                     return [
-                                        type_,
-                                        ...subtypes.map((st) => st.toString()),
+                                        ObjectIdentifier.fromString(type_).toBytes(),
+                                        ...subtypes.map((st) => st.toBytes()),
                                     ];
                                 }),
                     }
@@ -423,11 +426,14 @@ async function readValues (
                 operational: true,
             },
             select: {
-                type: true,
-                ber: true,
+                type_oid: true,
+                tag_class: true,
+                constructed: true,
+                tag_number: true,
+                content_octets: true,
             },
             distinct: (options?.selection?.infoTypes === typesOnly)
-                ? ["type"]
+                ? ["type_oid"]
                 : undefined,
         })).map((a) => attributeFromDatabaseAttribute(ctx, a)
     );
@@ -453,7 +459,7 @@ async function readValues (
      * values listed as both its collective values and user values.
      */
     let collectiveValues: Value[] = ((options?.relevantSubentries && entry.dse.entry && !entry.dse.subentry)
-        ? readCollectiveValues(ctx, entry, options?.relevantSubentries)
+        ? await readCollectiveValues(ctx, entry, options?.relevantSubentries)
         : [])
             .filter((attr) => {
                 if (!selectedUserAttributes) {

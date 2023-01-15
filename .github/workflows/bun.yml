@@ -1,0 +1,36 @@
+name: "Are we Bun yet?"
+on:
+  schedule:
+  # 04:05 on the first of every month
+  - cron: "4 5 1 * *"
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        timeout-minutes: 2
+      - name: Determine Meerkat DSA Version
+        timeout-minutes: 1
+        run: |
+            echo "PUBLISHING_MEERKAT_VERSION=$(cat k8s/charts/meerkat-dsa/Chart.yaml | grep appVersion | sed 's/appVersion: //' | sed 's/\r$//')" >> $GITHUB_ENV
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        timeout-minutes: 2
+        with:
+          node-version: '18'
+      - name: Install NPM Packages
+        run: npm ci
+        timeout-minutes: 5
+      - name: Generate Prisma Client
+        run: npx -q prisma generate --schema=apps/meerkat/src/prisma/schema.prisma
+        timeout-minutes: 1
+      - name: Compile Meerkat DSA
+        run: npx nx run meerkat:build:production --skip-nx-cache
+        timeout-minutes: 10
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        timeout-minutes: 10
+      - name: Attempt to Build the Bun Docker Image
+        run: docker build . -f ./meerkat.bun.dockerfile

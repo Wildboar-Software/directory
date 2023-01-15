@@ -15,7 +15,6 @@ import type {
     RelativeDistinguishedName as RDN,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
 import dnToVertex from "../../dit/dnToVertex";
-import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import { Knowledge } from "@prisma/client";
 import deleteEntry from "../../database/deleteEntry";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -182,6 +181,7 @@ async function updateContextPrefix (
             deleteTimestamp: new Date(),
             immediate_superior_id: null,
         },
+        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
     });
 
     // Mark the subordinate DSE / CP as "deleted" and set its immediate_superior_id to `null`.
@@ -208,7 +208,7 @@ async function updateContextPrefix (
                     rhob: Boolean(vertex.admPointInfo),
                     immSupr,
                 },
-                vertex.admPointInfo?.flatMap(valuesFromAttribute) ?? [],
+                vertex.admPointInfo ?? [],
                 [],
             );
             for (const ap of vertex.accessPoints ?? []) {
@@ -217,6 +217,22 @@ async function updateContextPrefix (
             const dbe = await ctx.db.entry.findUnique({
                 where: {
                     id: createdEntry.dse.id,
+                },
+                include: {
+                    RDN: {
+                        select: {
+                            type_oid: true,
+                            tag_class: true,
+                            constructed: true,
+                            tag_number: true,
+                            content_octets: true,
+                        },
+                    },
+                    EntryObjectClass: {
+                        select: {
+                            object_class: true,
+                        },
+                    },
                 },
             });
             assert(dbe);
@@ -230,7 +246,7 @@ async function updateContextPrefix (
                         subentry: true,
                         rhob: true,
                     },
-                    subentry.info?.flatMap(valuesFromAttribute) ?? [],
+                    subentry.info ?? [],
                     [],
                 );
             }
@@ -269,7 +285,7 @@ async function updateContextPrefix (
                                 subentry: true,
                                 rhob: true,
                             },
-                            subentry.info?.flatMap(valuesFromAttribute) ?? [],
+                            subentry.info ?? [],
                             [],
                         );
                         continue;
@@ -356,6 +372,7 @@ async function updateContextPrefix (
             deleteTimestamp: null,
             immediate_superior_id: currentRoot.dse.id,
         },
+        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
     }).then(); // INTENTIONAL_NO_AWAIT
 
     (immSuprAccessPoints ?? [])

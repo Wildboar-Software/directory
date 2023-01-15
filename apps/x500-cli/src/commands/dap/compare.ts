@@ -22,9 +22,9 @@ import destringifyDN from "../../utils/destringifyDN";
 import {
     AttributeValueAssertion,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
-import { DERElement } from "asn1-ts";
 import printError from "../../printers/Error_";
 import stringifyDN from "../../utils/stringifyDN";
+import { destringifyAttributeValue } from "../../utils/destringifyAttributeValue";
 
 export
 async function do_compare (
@@ -38,10 +38,14 @@ async function do_compare (
         ctx.log.warn(`Attribute type '${argv.type}' not understood.`);
         process.exit(1);
     }
-    // TODO: Blocked on @wildboar/ldap:destringifyElement
+    const value = destringifyAttributeValue(ctx, attrSpec.id, argv.value as string);
+    if (!value) {
+        ctx.log.warn(`Attribute value could not be decoded.`);
+        process.exit(2);
+    }
     const purported: AttributeValueAssertion = new AttributeValueAssertion(
         attrSpec.id,
-        new DERElement(), // FIXME:
+        value,
         {
             allContexts: null,
         },

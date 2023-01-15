@@ -168,6 +168,15 @@ async function establishOperationalBinding (
         new Promise<undefined>((resolve) => setTimeout(() => resolve(undefined), 300_000)),
         new Promise<boolean>((resolve) => {
             if (ctx.config.ob.autoAccept) {
+                ctx.log.info(ctx.i18n.t("log:auto_accepted_ob", {
+                    type: data.bindingType.toString(),
+                    obid: data.bindingID?.identifier.toString(),
+                    uuid,
+                }), {
+                    type: data.bindingType.toString(),
+                    obid: data.bindingID?.identifier.toString(),
+                    uuid,
+                });
                 resolve(true);
             }
         }),
@@ -540,6 +549,7 @@ async function establishOperationalBinding (
                 data: {
                     accepted: approved,
                 },
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             });
             if (approved === undefined) {
                 throw new errors.OperationalBindingError(
@@ -669,6 +679,7 @@ async function establishOperationalBinding (
                             accepted: false,
                             last_ob_problem: e.data.problem,
                         },
+                        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
                     }).then().catch();
                 } else {
                     ctx.db.operationalBinding.update({
@@ -678,6 +689,7 @@ async function establishOperationalBinding (
                         data: {
                             accepted: false,
                         },
+                        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
                     }).then().catch();
                 }
                 throw e;

@@ -77,6 +77,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                 object_class: PARENT,
             },
             update: {},
+            select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
         }));
         vertex.immediateSuperior.dse.objectClass.add(PARENT);
         vertex.immediateSuperior.dse.familyMember = true;
@@ -93,6 +94,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             object_class: value.value.objectIdentifier.toString(),
         },
         update: {},
+        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
     }));
 };
 

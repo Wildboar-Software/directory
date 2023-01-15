@@ -8,7 +8,8 @@ metadata:
   labels:
     {{- include "meerkat-dsa.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  # Meerkat DSA can't handle multiple replicas, sorry!
+  replicas: 1
   selector:
     matchLabels:
       {{- include "meerkat-dsa.selectorLabels" . | nindent 6 }}
@@ -450,6 +451,12 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: min_transfer_speed_bytes_per_minute
                   optional: true
+            - name: MEERKAT_MRU_VERTEX_TTL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: mru_vertex_ttl
+                  optional: true
             - name: MEERKAT_MY_ACCESS_POINT_NSAPS
               valueFrom:
                 configMapKeyRef:
@@ -497,6 +504,12 @@ spec:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: prohibit_chaining
+                  optional: true
+            - name: MEERKAT_REMOTE_PWD_TIME_LIMIT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: remote_pwd_time_limit
                   optional: true
             - name: MEERKAT_REVEAL_USER_PWD
               valueFrom:

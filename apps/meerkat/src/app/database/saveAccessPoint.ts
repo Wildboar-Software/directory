@@ -135,6 +135,9 @@ async function saveAccessPoint (
                 },
             },
         },
+        select: {
+            id: true,
+        },
     });
     if (("consumers" in ap) && ap.consumers) {
         await Promise.all(

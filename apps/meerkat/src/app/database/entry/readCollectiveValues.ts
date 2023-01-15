@@ -22,12 +22,13 @@ import valuesFromAttribute from "../../x500/valuesFromAttribute";
  * @function
  */
 export
-function readCollectiveValues (
+async function readCollectiveValues (
     ctx: Context,
     vertex: Vertex,
     relevantSubentries: Vertex[],
-): Value[] {
-    return readCollectiveAttributes(ctx, vertex, relevantSubentries).flatMap(valuesFromAttribute);
+): Promise<Value[]> {
+    return (await readCollectiveAttributes(ctx, vertex, relevantSubentries))
+        .flatMap(valuesFromAttribute);
 }
 
 export default readCollectiveValues;

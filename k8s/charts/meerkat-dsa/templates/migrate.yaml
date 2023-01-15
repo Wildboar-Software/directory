@@ -24,6 +24,7 @@ spec:
       containers:
       - name: apply-database-migrations
         image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
         env:
         - name: DATABASE_URL
           valueFrom:

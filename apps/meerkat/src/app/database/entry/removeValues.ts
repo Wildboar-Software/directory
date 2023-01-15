@@ -53,6 +53,7 @@ async function removeValues (
                 id: entry.dse.id,
             },
             data: pendingUpdates.entryUpdate,
+            select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
         }),
         ...pendingUpdates.otherWrites,
         ...values
@@ -60,11 +61,15 @@ async function removeValues (
             .map((attr) => ctx.db.attributeValue.deleteMany({
                 where: {
                     entry_id: entry.dse.id,
-                    type: attr.type.toString(),
+                    type_oid: attr.type.toBytes(),
                     tag_class: attr.value.tagClass,
                     constructed: (attr.value.construction === ASN1Construction.constructed),
                     tag_number: attr.value.tagNumber,
-                    ber: Buffer.from(attr.value.toBytes().buffer),
+                    content_octets: Buffer.from(
+                        attr.value.value.buffer,
+                        attr.value.value.byteOffset,
+                        attr.value.value.byteLength,
+                    ),
                 },
             })),
     ];

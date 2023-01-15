@@ -13,9 +13,6 @@ import {
     _encode_AddEntryResultData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryResultData.ta";
 import {
-    id_at_objectClass,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-at-objectClass.va";
-import {
     id_sc_subentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-sc-subentry.va";
 import {
@@ -343,8 +340,8 @@ async function addEntry (
     const immediateSuperior = state.foundDSE;
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const values: Value[] = data.entry.flatMap(valuesFromAttribute);
-    const objectClassValues = values.filter((attr) => attr.type.isEqualTo(id_at_objectClass));
-    const objectClasses: OBJECT_IDENTIFIER[] = objectClassValues.map((ocv) => ocv.value.objectIdentifier);
+    const objectClassValues = data.entry.filter((attr) => attr.type_.isEqualTo(objectClass["&id"]));
+    const objectClasses: OBJECT_IDENTIFIER[] = objectClassValues.flatMap((a) => a.values).map((ocv) => ocv.objectIdentifier);
     const objectClassesIndex: Set<IndexableOID> = new Set(objectClasses.map((oc) => oc.toString()));
     const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
 
@@ -388,7 +385,8 @@ async function addEntry (
     const accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
         .reverse()
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-    const relevantACIItems = getACIItems(
+    const relevantACIItems = await getACIItems(
+        ctx,
         accessControlScheme,
         immediateSuperior,
         undefined,
@@ -481,7 +479,8 @@ async function addEntry (
             && accessControlScheme
             && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
         ) {
-            const relevantACIItemsForSuperior = getACIItems(
+            const relevantACIItemsForSuperior = await getACIItems(
+                ctx,
                 accessControlScheme,
                 immediateSuperior.immediateSuperior,
                 immediateSuperior,
@@ -702,6 +701,22 @@ async function addEntry (
                 where: {
                     id: existingEntryId,
                 },
+                include: {
+                    RDN: {
+                        select: {
+                            type_oid: true,
+                            tag_class: true,
+                            constructed: true,
+                            tag_number: true,
+                            content_octets: true,
+                        },
+                    },
+                    EntryObjectClass: {
+                        select: {
+                            object_class: true,
+                        },
+                    },
+                },
             });
             // This could happen if the entry is deleted within the tiny span of
             // time between us finding the entry's ID and querying it.
@@ -763,7 +778,8 @@ async function addEntry (
             } else if (existing.dse.admPoint?.administrativeRole.has(ID_AC_INNER)) {
                 effectiveRelevantSubentries.push(...(await getRelevantSubentries(ctx, existing, targetDN, existing)));
             }
-            const subordinateACI = getACIItems(
+            const subordinateACI = await getACIItems(
+                ctx,
                 effectiveAccessControlScheme,
                 existing.immediateSuperior,
                 existing,
@@ -1178,6 +1194,7 @@ async function addEntry (
                 data: {
                     accepted: false,
                 },
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }).then().catch();
             throw e;
         }
@@ -1198,6 +1215,7 @@ async function addEntry (
                 data: {
                     accepted: false,
                 },
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }).then().catch();
             throw new errors.UnknownError(ctx.i18n.t("err:could_not_find_new_subr"));
         }
@@ -1216,6 +1234,7 @@ async function addEntry (
             data: {
                 entry_id: createdSubrId,
             },
+            select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
         });
         const signDSPResult: boolean = (
             (state.chainingArguments.securityParameters?.target === ProtectionRequest_signed)
@@ -1421,8 +1440,15 @@ async function addEntry (
             ? Number(governingStructureRule)
             : undefined,
         structuralObjectClass: structuralObjectClass.toString(),
-    }, values, user?.dn);
+    }, data.entry, user?.dn);
     immediateSuperior.subordinates?.push(newEntry);
+    ctx.log.debug(ctx.i18n.t("log:add_entry", {
+        aid: assn.id,
+        dn: stringifyDN(ctx, targetDN),
+        id: newEntry.dse.id,
+        uuid: newEntry.dse.uuid,
+        euuid: newEntry.dse.entryUUID,
+    }));
 
     /**
      * Because the structure rules, name forms, etc. may have been specified all
@@ -1472,6 +1498,7 @@ async function addEntry (
                 data: {
                     governingStructureRule: Number(structuralRuleThatAppliesToImmediateSuperior.ruleIdentifier),
                 },
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }).catch(); // TODO: Log
         }
     }

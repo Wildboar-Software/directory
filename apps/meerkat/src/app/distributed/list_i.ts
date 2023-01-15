@@ -149,6 +149,7 @@ import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 import DSPAssociation from "../dsp/DSPConnection";
+import { entryACI, prescriptiveACI, subentryACI } from "@wildboar/x500/src/lib/collections/attributes";
 
 const BYTES_IN_A_UUID: number = 16;
 const PARENT: string = parent["&id"].toString();
@@ -585,7 +586,8 @@ async function list_i (
                 } else if (subordinate.dse.admPoint?.administrativeRole.has(ID_AC_INNER)) {
                     effectiveRelevantSubentries.push(...(await getRelevantSubentries(ctx, subordinate, subordinateDN, subordinate)));
                 }
-                const subordinateACI = getACIItems(
+                const subordinateACI = await getACIItems(
+                    ctx,
                     effectiveAccessControlScheme,
                     subordinate.immediateSuperior,
                     subordinate,
@@ -676,7 +678,7 @@ async function list_i (
                 /**
                  * [ITU Recommendation X.518 (2019)](https://www.itu.int/rec/T-REC-X.518/en),
                  * Section 19.3.1.2.1, Bullet Point 3.b.i, states that:
-                 * 
+                 *
                  * > If e' is of type `subr`, then there are two cases. In the
                  * > first case, the subordinate entry's ACI and object class is
                  * > available locally, in which case, based on local policy and
@@ -684,7 +686,7 @@ async function list_i (
                  * > `listInfo.subordinates`... The other case is when the ACI
                  * > of the entry is not available in e', in which case add a
                  * > Continuation Reference to SRcontinuationList...
-                 * 
+                 *
                  * At this point in the code, the access controls were already
                  * checked: we just need to check if they were checked on the
                  * basis of ACI data that was replicated in the subordinate
@@ -697,13 +699,23 @@ async function list_i (
                 const aciAndObjectClassAvailableLocally: boolean = !!(
                     (subordinate.dse.objectClass.size > 0)
                     && ( // ...if there are any attributes that suggest that this DSE is subject to access control...
-                        subordinate.dse.entryACI?.length
-                        || subordinate.dse.subentry?.prescriptiveACI?.length
-                        || subordinate.dse.admPoint?.subentryACI?.length
+                        !!(await ctx.db.attributeValue.findFirst(({
+                            where: {
+                                entry_id: subordinate.dse.id,
+                                type_oid: {
+                                    in: [
+                                        entryACI["&id"].toBytes(),
+                                        subentryACI["&id"].toBytes(),
+                                        prescriptiveACI["&id"].toBytes(),
+                                    ],
+                                },
+                            },
+                            select: { id: true },
+                        })))
                         // Rule-based access control is not supported yet, so if
                         // this next line were enabled, it would simply make the
                         // subr DSE unavailable to all users.
-                        // || subordinate.dse.clearances?.length 
+                        // || subordinate.dse.clearances?.length
                     )
                 );
                 if (!aciAndObjectClassAvailableLocally) {

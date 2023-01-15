@@ -7,8 +7,7 @@ import { DER } from "asn1-ts/dist/node/functional";
  * @summary Create a new Scrypt `AlgorithmIdentifier`
  * @description
  *
- * Creates a new Scrypt `AlgorithmIdentifier`. The parameters chosen are based
- * off of https://github.com/golang/go/issues/22082.
+ * Creates a new Scrypt `AlgorithmIdentifier`.
  *
  * @returns A Scrypt `AlgorithmIdentifier`
  *
@@ -20,7 +19,7 @@ function getScryptAlgorithmIdentifier () {
         scrypt["&id"]!,
         scrypt.encoderFor["&Type"]!(new Scrypt_params(
             crypto.randomBytes(32),
-            32768,
+            16384,
             8,
             1,
             128,

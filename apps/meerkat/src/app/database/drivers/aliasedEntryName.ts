@@ -56,6 +56,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             aliased_entry_name: decodedName.map(rdnToJson),
             aliased_entry_id: aliasedEntryId,
         },
+        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
     }));
     pendingUpdates.entryUpdate.alias = true;
 };

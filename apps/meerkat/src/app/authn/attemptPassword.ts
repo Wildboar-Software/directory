@@ -17,7 +17,6 @@ import {
     ASN1UniversalType,
     packBits,
     GeneralizedTime,
-    BERElement,
     ASN1Element,
 } from "asn1-ts";
 import {
@@ -68,6 +67,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials-validity-time1.ta";
 import { SimpleCredentials_validity_time2 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials-validity-time2.ta";
 import { digestOIDToNodeHash } from "../pki/digestOIDToNodeHash";
+import { attributeValueFromDB, DBAttributeValue } from "../database/attributeValueFromDB";
 
 const START_TIME_OID: string = pwdStartTime["&id"].toString();
 const EXPIRY_TIME_OID: string = pwdExpiryTime["&id"].toString();
@@ -83,25 +83,23 @@ const ID_LOCKOUT_DURATION: string = pwdLockoutDuration["&id"].toString();
 const ID_MAX_FAILURES: string = pwdMaxFailures["&id"].toString();
 const ID_RECENTLY_EXPIRED_DURATION: string = pwdRecentlyExpiredDuration["&id"].toString();
 
-function decodeGeneralizedTime (bytes?: Uint8Array): GeneralizedTime | undefined {
-    if (!bytes) {
+function decodeGeneralizedTime (row?: DBAttributeValue): GeneralizedTime | undefined {
+    if (!row) {
         return undefined;
     }
-    const el = new BERElement();
-    el.fromBytes(bytes);
+    const el = attributeValueFromDB(row);
     return _decodeGeneralizedTime(el);
 }
 
-function decodeInt (bytes?: Uint8Array): number | undefined {
-    if (!bytes) {
+function decodeInt (row?: DBAttributeValue): number | undefined {
+    if (!row) {
         return undefined;
     }
-    const el = new BERElement();
-    el.fromBytes(bytes);
+    const el = attributeValueFromDB(row);
     return Number(_decodeInteger(el));
 }
 
-function compareUserPwd (a: UserPwd, b: UserPwd): boolean | undefined {
+async function compareUserPwd (a: UserPwd, b: UserPwd): Promise<boolean | undefined> {
     if ("clear" in a && "clear" in b) {
         return a.clear === b.clear;
     }
@@ -123,7 +121,7 @@ function compareUserPwd (a: UserPwd, b: UserPwd): boolean | undefined {
     assert("clear" in not_encrypted);
 
     const alg = already_encrypted.encrypted.algorithmIdentifier;
-    const newly_encrypted = encryptPassword(alg, Buffer.from(not_encrypted.clear, "utf-8"));
+    const newly_encrypted = await encryptPassword(alg, Buffer.from(not_encrypted.clear, "utf-8"));
     if (!newly_encrypted) {
         return undefined; // Algorithm not understood.
     }
@@ -150,7 +148,7 @@ function getTimeFromValidity (v?: ValidityTime): Date | undefined {
     }
 }
 
-function assertSimpleCreds (asserted_creds: SimpleCredentials, correct_pw: UserPwd): boolean | undefined {
+async function assertSimpleCreds (asserted_creds: SimpleCredentials, correct_pw: UserPwd): Promise<boolean | undefined> {
     const asserted_pw = asserted_creds.password;
     if (!asserted_pw) {
         return undefined;
@@ -304,37 +302,46 @@ async function attemptPassword (
         where: {
             entry_id: vertex.dse.id,
         },
+        select: {
+            algorithm_oid: true,
+            algorithm_parameters_der: true,
+            encrypted: true,
+        },
     });
 
     const entry_value_rows = await ctx.db.attributeValue.findMany({
         where: {
             entry_id: vertex.dse.id,
-            type: {
+            type_oid: {
                 in: [
-                    userPwdRecentlyExpired["&id"].toString(),
-                    pwdFails["&id"].toString(),
-                    pwdGracesUsed["&id"].toString(),
-                    pwdLockout["&id"].toString(),
-                    pwdReset["&id"].toString(),
+                    userPwdRecentlyExpired["&id"].toBytes(),
+                    pwdFails["&id"].toBytes(),
+                    pwdGracesUsed["&id"].toBytes(),
+                    pwdLockout["&id"].toBytes(),
+                    pwdReset["&id"].toBytes(),
 
                     // GeneralizedTime syntaxes
-                    START_TIME_OID,
-                    EXPIRY_TIME_OID,
-                    LOCKED_TIME_OID,
-                    END_TIME_OID,
+                    pwdStartTime["&id"].toBytes(),
+                    pwdExpiryTime["&id"].toBytes(),
+                    pwdAccountLockedTime["&id"].toBytes(),
+                    pwdEndTime["&id"].toBytes(),
+
                 ],
             },
         },
         select: {
-            type: true,
-            ber: true,
+            type_oid: true,
+            tag_class: true,
+            constructed: true,
+            tag_number: true,
+            content_octets: true,
         },
     });
-    const entry_attrs = groupByOID(entry_value_rows, (r) => r.type);
-    const start_time = decodeGeneralizedTime(entry_attrs[START_TIME_OID]?.[0]?.ber);
-    const expiry_time = decodeGeneralizedTime(entry_attrs[EXPIRY_TIME_OID]?.[0]?.ber);
-    const locked_time = decodeGeneralizedTime(entry_attrs[LOCKED_TIME_OID]?.[0]?.ber);
-    const end_time = decodeGeneralizedTime(entry_attrs[END_TIME_OID]?.[0]?.ber);
+    const entry_attrs = groupByOID(entry_value_rows, (r) => ObjectIdentifier.fromBytes(r.type_oid).toString());
+    const start_time = decodeGeneralizedTime(entry_attrs[START_TIME_OID]?.[0]);
+    const expiry_time = decodeGeneralizedTime(entry_attrs[EXPIRY_TIME_OID]?.[0]);
+    const locked_time = decodeGeneralizedTime(entry_attrs[LOCKED_TIME_OID]?.[0]);
+    const end_time = decodeGeneralizedTime(entry_attrs[END_TIME_OID]?.[0]);
 
     const targetDN = getDistinguishedName(vertex);
     const admPoints = getAdministrativePoints(vertex);
@@ -353,42 +360,45 @@ async function attemptPassword (
             entry_id: {
                 in: relevantSubentries.map((s) => s.dse.id),
             },
-            type: {
+            type_oid: {
                 in: [
-                    ID_EXPIRE_WARNING,
-                    ID_GRACES,
-                    ID_LOCKOUT_DURATION,
-                    ID_MAX_FAILURES,
-                    ID_RECENTLY_EXPIRED_DURATION,
+                    pwdExpireWarning["&id"].toBytes(),
+                    id_oa_pwdGraces.toBytes(),
+                    pwdLockoutDuration["&id"].toBytes(),
+                    pwdMaxFailures["&id"].toBytes(),
+                    pwdRecentlyExpiredDuration["&id"].toBytes(),
                 ],
             },
         },
         select: {
-            type: true,
-            ber: true,
+            type_oid: true,
+            tag_class: true,
+            constructed: true,
+            tag_number: true,
+            content_octets: true,
         },
     });
 
-    const subentry_attrs = groupByOID(subentry_value_rows, (r) => r.type);
+    const subentry_attrs = groupByOID(subentry_value_rows, (r) => ObjectIdentifier.fromBytes(r.type_oid).toString());
     const warning_time: number = subentry_attrs[ID_EXPIRE_WARNING]
-        ?.map((row) => decodeInt(row.ber)).sort().pop() // Highest warning time
+        ?.map((row) => decodeInt(row)).sort().pop() // Highest warning time
         ?? 0;
     const graces = subentry_attrs[ID_GRACES]
-        ?.map((row) => decodeInt(row.ber)).sort()[0] // Lowest number of graces.
+        ?.map((row) => decodeInt(row)).sort()[0] // Lowest number of graces.
         ?? 0;
     // TODO: Cautiously check for overflow.
     const lockout_duration = subentry_attrs[ID_LOCKOUT_DURATION]
-        ?.map((row) => decodeInt(row.ber)).sort().pop() // Highest lockout duration
+        ?.map((row) => decodeInt(row)).sort().pop() // Highest lockout duration
         ?? Number.MAX_SAFE_INTEGER; // Default is infinity, but this is effectively close enough.
     const max_failures = subentry_attrs[ID_MAX_FAILURES]
-        ?.map((row) => decodeInt(row.ber)).sort()[0] // Lowest number of max failures.
+        ?.map((row) => decodeInt(row)).sort()[0] // Lowest number of max failures.
         ?? Number.MAX_SAFE_INTEGER; // Default is no maximum on failures, but this is close enough.
     const recently_expired_duration = subentry_attrs[ID_RECENTLY_EXPIRED_DURATION]
-        ?.map((row) => decodeInt(row.ber)).sort()[0] // Lowest recently expired duration.
+        ?.map((row) => decodeInt(row)).sort()[0] // Lowest recently expired duration.
         ?? 0;
 
     const now = new Date();
-    const lockedOut: boolean = (entry_attrs[pwdLockout["&id"].toString()]?.[0]?.ber[2] ?? 0) > 0;
+    const lockedOut: boolean = (entry_attrs[pwdLockout["&id"].toString()]?.[0]?.content_octets[0] ?? 0) > 0;
     if (lockedOut) {
         const lockout_end_time = locked_time && addSeconds(locked_time, lockout_duration);
         if (lockout_end_time && (now < lockout_end_time)) {
@@ -401,10 +411,10 @@ async function attemptPassword (
         ctx.db.attributeValue.deleteMany({
             where: {
                 entry_id: vertex.dse.id,
-                type: {
+                type_oid: {
                     in: [
-                        pwdLockout["&id"].toString(),
-                        pwdAccountLockedTime["&id"].toString(),
+                        pwdLockout["&id"].toBytes(),
+                        pwdAccountLockedTime["&id"].toBytes(),
                     ],
                 },
             }
@@ -412,18 +422,17 @@ async function attemptPassword (
             .then() // INTENTIONAL_NO_AWAIT
             .catch(); // If we fail, we just let it fail. // TODO: Log this.
     }
-    const passwordRecentlyExpiredValue: Buffer | undefined = entry_attrs[userPwdRecentlyExpired["&id"].toString()]?.[0].ber;
+    const passwordRecentlyExpiredValue = entry_attrs[userPwdRecentlyExpired["&id"].toString()]?.[0];
     const password2 = passwordRecentlyExpiredValue
         ? (() => {
-            const el = new BERElement();
-            el.fromBytes(passwordRecentlyExpiredValue);
+            const el = attributeValueFromDB(passwordRecentlyExpiredValue);
             return userPwdRecentlyExpired.decoderFor["&Type"]!(el);
         })()
         : undefined;
     if (!password1 && !password2) {
         return { authorized: undefined };
     }
-    const fails: number = decodeInt(entry_attrs[pwdFails["&id"].toString()]?.[0]?.ber) ?? 0;
+    const fails: number = decodeInt(entry_attrs[pwdFails["&id"].toString()]?.[0]) ?? 0;
 
     const userPwd1: UserPwd | undefined = password1
         ? {
@@ -450,7 +459,7 @@ async function attemptPassword (
         if (!valid_pwd) {
             continue;
         }
-        if (assertSimpleCreds(attemptedCreds, valid_pwd) === true) {
+        if ((await assertSimpleCreds(attemptedCreds, valid_pwd)) === true) {
             passwordIsCorrect = true;
             if (valid_pwd === userPwd2) {
                 expiredPasswordUsed = true;
@@ -460,25 +469,34 @@ async function attemptPassword (
     }
     const nowElement = _encodeGeneralizedTime(new Date(), DER);
     if (!passwordIsCorrect) {
+        const newFailsEl = _encodeInteger(fails + 1, DER);
         const new_attrs: Prisma.AttributeValueUncheckedCreateInput[] = [
             {
                 entry_id: vertex.dse.id,
-                type: pwdFails["&id"].toString(),
+                type_oid: pwdFails["&id"].toBytes(),
                 operational: true,
                 tag_class: ASN1TagClass.universal,
                 constructed: false,
                 tag_number: ASN1UniversalType.integer,
-                ber: Buffer.from(_encodeInteger(fails + 1, DER).toBytes()),
-                jer: 0,
+                content_octets: Buffer.from(
+                    newFailsEl.value.buffer,
+                    newFailsEl.value.byteOffset,
+                    newFailsEl.value.byteLength,
+                ),
+                jer: fails + 1,
             },
             {
                 entry_id: vertex.dse.id,
-                type: pwdFailureTime["&id"].toString(),
+                type_oid: pwdFailureTime["&id"].toBytes(),
                 operational: true,
                 tag_class: nowElement.tagClass,
                 constructed: false,
                 tag_number: nowElement.tagNumber,
-                ber: Buffer.from(nowElement.toBytes()),
+                content_octets: Buffer.from(
+                    nowElement.value.buffer,
+                    nowElement.value.byteOffset,
+                    nowElement.value.byteLength,
+                ),
                 jer: nowElement.toJSON() as string,
             },
         ];
@@ -486,22 +504,26 @@ async function attemptPassword (
         if (fails + 1 > max_failures) {
             new_attrs.push({
                 entry_id: vertex.dse.id,
-                type: pwdLockout["&id"].toString(),
+                type_oid: pwdLockout["&id"].toBytes(),
                 operational: false,
                 tag_class: ASN1TagClass.universal,
                 constructed: false,
                 tag_number: ASN1UniversalType.boolean,
-                ber: Buffer.from([ 0xFF ]),
+                content_octets: Buffer.from([ 0xFF ]),
                 jer: true,
             });
             new_attrs.push({
                 entry_id: vertex.dse.id,
-                type: pwdAccountLockedTime["&id"].toString(),
+                type_oid: pwdAccountLockedTime["&id"].toBytes(),
                 operational: true,
                 tag_class: nowElement.tagClass,
                 constructed: false,
                 tag_number: nowElement.tagNumber,
-                ber: Buffer.from(nowElement.toBytes().buffer),
+                content_octets: Buffer.from(
+                    nowElement.value.buffer,
+                    nowElement.value.byteOffset,
+                    nowElement.value.byteLength,
+                ),
                 jer: nowElement.toJSON() as string,
             });
         }
@@ -510,10 +532,10 @@ async function attemptPassword (
             ctx.db.attributeValue.deleteMany({
                 where: {
                     entry_id: vertex.dse.id,
-                    type: {
+                    type_oid: {
                         in: [
-                            pwdFails["&id"].toString(),
-                            pwdFailureTime["&id"].toString(),
+                            pwdFails["&id"].toBytes(),
+                            pwdFailureTime["&id"].toBytes(),
                         ],
                     },
                 },
@@ -551,7 +573,7 @@ async function attemptPassword (
     }
 
     if (expiry_time && (expiry_time <= now)) {
-        const gracesUsed: number = decodeInt(entry_attrs[pwdGracesUsed["&id"].toString()]?.[0]?.ber) ?? 0;
+        const gracesUsed: number = decodeInt(entry_attrs[pwdGracesUsed["&id"].toString()]?.[0]) ?? 0;
         const expiredPasswordExpirationTime = addSeconds(expiry_time, recently_expired_duration);
         if ((expiredPasswordExpirationTime > now) && expiredPasswordUsed) {
             return {
@@ -592,14 +614,15 @@ async function attemptPassword (
             ),
         };
     }
+    const zeroFailsEl = _encodeInteger(0, DER);
     await ctx.db.$transaction([
         ctx.db.attributeValue.deleteMany({
             where: {
                 entry_id: vertex.dse.id,
-                type: {
+                type_oid: {
                     in: [
-                        pwdFails["&id"].toString(),
-                        pwdLastSuccess["&id"].toString(),
+                        pwdFails["&id"].toBytes(),
+                        pwdLastSuccess["&id"].toBytes(),
                     ],
                 },
             },
@@ -608,22 +631,30 @@ async function attemptPassword (
             data: [
                 {
                     entry_id: vertex.dse.id,
-                    type: pwdFails["&id"].toString(),
+                    type_oid: pwdFails["&id"].toBytes(),
                     operational: true,
                     tag_class: ASN1TagClass.universal,
                     constructed: false,
                     tag_number: ASN1UniversalType.integer,
-                    ber: Buffer.from(_encodeInteger(0, DER).toBytes().buffer),
+                    content_octets: Buffer.from(
+                        zeroFailsEl.value.buffer,
+                        zeroFailsEl.value.byteOffset,
+                        zeroFailsEl.value.byteLength,
+                    ),
                     jer: 0,
                 },
                 {
                     entry_id: vertex.dse.id,
-                    type: pwdLastSuccess["&id"].toString(),
+                    type_oid: pwdLastSuccess["&id"].toBytes(),
                     operational: true,
                     tag_class: ASN1TagClass.universal,
                     constructed: false,
                     tag_number: ASN1UniversalType.generalizedTime,
-                    ber: Buffer.from(nowElement.toBytes().buffer),
+                    content_octets: Buffer.from(
+                        nowElement.value.buffer,
+                        nowElement.value.byteOffset,
+                        nowElement.value.byteLength,
+                    ),
                     jer: now.toISOString(),
                 },
             ],
@@ -634,20 +665,31 @@ async function attemptPassword (
         ? subSeconds(expiry_time, warning_time)
         : null;
 
-    const password_must_be_reset: boolean = (entry_attrs[pwdReset["&id"].toString()]?.[0]?.ber[2] ?? 0) > 0;
+    const password_must_be_reset: boolean = (entry_attrs[pwdReset["&id"].toString()]?.[0]?.content_octets[0] ?? 0) > 0;
 
+    const returnPwdResponse = (
+        (expirationWarningStart && (expirationWarningStart <= now))
+        || password_must_be_reset
+    );
     return {
         authorized: true,
-        pwdResponse: new PwdResponseValue(
-            (expirationWarningStart && (expirationWarningStart <= now))
-                ? {
-                    timeLeft: Math.abs(differenceInSeconds(now, expiry_time!)),
-                }
-                : undefined,
-            password_must_be_reset
-                ? PwdResponseValue_error_changeAfterReset
-                : undefined,
-        ),
+        /**
+         * We don't want to display this if it is empty, because WireShark does
+         * not recognize the [2] tag, so it fails to display the bind result if
+         * this is present.
+         */
+        pwdResponse: returnPwdResponse
+            ? new PwdResponseValue(
+                (expirationWarningStart && (expirationWarningStart <= now))
+                    ? {
+                        timeLeft: Math.abs(differenceInSeconds(now, expiry_time!)),
+                    }
+                    : undefined,
+                password_must_be_reset
+                    ? PwdResponseValue_error_changeAfterReset
+                    : undefined,
+            )
+            : undefined,
     };
 }
 

@@ -160,6 +160,7 @@ async function changePassword (
         );
     }
 
+    const targetDN = getDistinguishedName(target);
     const relevantSubentries: Vertex[] = (await Promise.all(
         state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
     )).flat();
@@ -215,7 +216,6 @@ async function changePassword (
             signErrors,
         );
     }
-    const targetDN = getDistinguishedName(target);
     const requestor: DistinguishedName | undefined = state.chainingArguments.originator
         ?? assn.boundNameAndUID?.dn;
     const user = requestor
@@ -232,7 +232,8 @@ async function changePassword (
         accessControlScheme
         && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
     ) {
-        const relevantACIItems = getACIItems(
+        const relevantACIItems = await getACIItems(
+            ctx,
             accessControlScheme,
             target.immediateSuperior,
             target,
@@ -394,7 +395,7 @@ async function changePassword (
                 entry_id: {
                     in: pwdAdminSubentries.map((s) => s.dse.id),
                 },
-                type: pwdChangeAllowed["&id"].toString(),
+                type_oid: pwdChangeAllowed["&id"].toBytes(),
                 operational: true,
             },
             select: {

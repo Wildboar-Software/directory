@@ -54,15 +54,15 @@ async function validateValues(
     signErrors: boolean = false,
 ): Promise<void> {
     for (const value of values) {
-        const TYPE_OID: string = value.type.toString();
-        const attrSpec = ctx.attributeTypes.get(TYPE_OID);
+        const TYPE_OID = value.type.toBytes();
+        const attrSpec = ctx.attributeTypes.get(value.type.toString());
         if (attrSpec?.validator) {
             try {
                 attrSpec.validator(value.value);
             } catch (e) {
                 throw new AttributeError(
                     ctx.i18n.t("err:invalid_attribute_syntax", {
-                        type: TYPE_OID,
+                        type: value.type.toString(),
                     }),
                     new AttributeErrorData(
                         {
@@ -98,14 +98,17 @@ async function validateValues(
                     : !!(await ctx.db.attributeValue.findFirst({
                         where: {
                             entry_id: entry.dse.id,
-                            type: TYPE_OID,
+                            type_oid: TYPE_OID,
+                        },
+                        select: {
+                            id: true,
                         },
                     }));
                 if (attributeExists) {
                     throw new AttributeError(
                         ctx.i18n.t("err:single_valued", {
                             context: "added",
-                            oid: TYPE_OID,
+                            oid: value.type.toString(),
                         }),
                         new AttributeErrorData(
                             {
@@ -145,11 +148,15 @@ async function validateValues(
                 : !!(await ctx.db.attributeValue.findFirst({
                     where: {
                         entry_id: entry.dse.id,
-                        type: TYPE_OID,
+                        type_oid: value.type.toBytes(),
                         tag_class: value.value.tagClass,
                         constructed: (value.value.construction === ASN1Construction.constructed),
                         tag_number: value.value.tagNumber,
-                        ber: Buffer.from(value.value.toBytes().buffer),
+                        content_octets: Buffer.from(
+                            value.value.value.buffer,
+                            value.value.value.byteOffset,
+                            value.value.value.byteLength,
+                        ), // Lol. Sorry.
                     },
                     select: {
                         id: true,
@@ -175,7 +182,7 @@ async function validateValues(
             if (valueExists) {
                 throw new AttributeError(
                     ctx.i18n.t("err:value_already_exists", {
-                        type: TYPE_OID,
+                        type: value.type.toString(),
                     }),
                     new AttributeErrorData(
                         {
@@ -309,17 +316,22 @@ async function addValues(
                 id: entry.dse.id,
             },
             data: pendingUpdates.entryUpdate,
+            select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
         }),
         ...pendingUpdates.otherWrites,
         ctx.db.attributeValue.createMany({
             data: unspecialValuesWithNoContexts.map((attr) => ({
                 entry_id: entry.dse.id,
-                type: attr.type.toString(),
+                type_oid: attr.type.toBytes(),
                 operational: ((ctx.attributeTypes.get(attr.type.toString())?.usage ?? userApplications) !== userApplications),
                 tag_class: attr.value.tagClass,
                 constructed: (attr.value.construction === ASN1Construction.constructed),
                 tag_number: attr.value.tagNumber,
-                ber: Buffer.from(attr.value.toBytes().buffer),
+                content_octets: Buffer.from(
+                    attr.value.value.buffer,
+                    attr.value.value.byteOffset,
+                    attr.value.value.byteLength,
+                ),
                 jer: attr.value.toJSON() as Prisma.InputJsonValue,
             })),
         }),
@@ -327,12 +339,16 @@ async function addValues(
             .map((attr) => ctx.db.attributeValue.create({
                 data: {
                     entry_id: entry.dse.id,
-                    type: attr.type.toString(),
+                    type_oid: attr.type.toBytes(),
                     operational: ((ctx.attributeTypes.get(attr.type.toString())?.usage ?? userApplications) !== userApplications),
                     tag_class: attr.value.tagClass,
                     constructed: (attr.value.construction === ASN1Construction.constructed),
                     tag_number: attr.value.tagNumber,
-                    ber: Buffer.from(attr.value.toBytes().buffer),
+                    content_octets: Buffer.from(
+                        attr.value.value.buffer,
+                        attr.value.value.byteOffset,
+                        attr.value.value.byteLength,
+                    ),
                     jer: attr.value.toJSON() as Prisma.InputJsonValue,
                     ContextValue: {
                         createMany: {
@@ -348,6 +364,7 @@ async function addValues(
                         },
                     },
                 },
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             })),
     ];
 }

@@ -38,7 +38,7 @@ import {
 import type {
     Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import { ASN1Element, BERElement, packBits, unpackBits } from "asn1-ts";
+import { ASN1Element, BERElement, FALSE, packBits, unpackBits } from "asn1-ts";
 import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
 import compareSocketToNSAP from "@wildboar/x500/src/lib/distributed/compareSocketToNSAP";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
@@ -62,7 +62,6 @@ import {
     SubordinateToSuperior,
     _decode_SubordinateToSuperior,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
-import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { DER } from "asn1-ts/dist/node/functional";
 import createSecurityParameters from "../../x500/createSecurityParameters";
@@ -91,7 +90,26 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
 import { generateSignature } from "../../pki/generateSignature";
 import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
-import { id_op_modifyOperationalBinding } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-op-modifyOperationalBinding.va";
+import {
+    id_op_modifyOperationalBinding
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-op-modifyOperationalBinding.va";
+import { rdnFromJson } from "../../x500/rdnFromJson";
+import type {
+    DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import {
+    compareDistinguishedName,
+} from "@wildboar/x500";
+import {
+    SecurityErrorData,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import {
+    SecurityProblem_insufficientAccessRights,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+import {
+    securityError,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import stringifyDN from "../../x500/stringifyDN";
 
 function getInitiator (init: Initiator): OperationalBindingInitiator {
     // NOTE: Initiator is not extensible, so this is an exhaustive list.
@@ -154,11 +172,33 @@ async function modifyOperationalBinding (
     invokeId: InvokeId,
     arg: ModifyOperationalBindingArgument,
 ): Promise<ModifyOperationalBindingResult> {
-    const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const data: ModifyOperationalBindingArgumentData = getOptionallyProtectedValue(arg);
     // DOP associations are ALWAYS authorized to receive signed responses.
     const signResult: boolean = (data.securityParameters?.target === ProtectionRequest_signed);
     const signErrors: boolean = (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed);
+    if (!assn.boundNameAndUID?.dn) {
+        throw new errors.SecurityError(
+            ctx.i18n.t("err:anon_dop"),
+            new SecurityErrorData(
+                SecurityProblem_insufficientAccessRights,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn?.boundNameAndUID?.dn,
+                    undefined,
+                    securityError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                FALSE,
+                undefined,
+            ),
+            signErrors,
+        );
+    }
+    const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     ctx.log.info(ctx.i18n.t("log:modifyOperationalBinding", {
         context: "started",
         type: data.bindingType.toString(),
@@ -266,7 +306,8 @@ async function modifyOperationalBinding (
             agreement_ber: true,
             access_point: {
                 select: {
-                    ber: true,
+                    id: true,
+                    ae_title: true,
                 },
             },
         },
@@ -275,15 +316,29 @@ async function modifyOperationalBinding (
             if (!ob.access_point) {
                 return false;
             }
-            const el = new BERElement();
-            el.fromBytes(ob.access_point.ber);
-            // This is a simpler way to get the address out of the AP type.
-            const address = el.set.find((component) => (component.tagNumber === 1));
-            if (!address) {
+            const authorized_ae_title: DistinguishedName | undefined = Array.isArray(ob.access_point.ae_title)
+                ? ob.access_point.ae_title.map((rdn: Record<string, string>) => rdnFromJson(rdn))
+                : undefined;
+            if (!authorized_ae_title) {
+                ctx.log.warn(ctx.i18n.t("log:ap_missing_ae_title", { id: ob.access_point.id }));
                 return false;
             }
-            const pa = _decode_PresentationAddress(address.inner);
-            return pa.nAddresses.some((naddr) => compareSocketToNSAP(assn.rose.socket!, naddr));
+            const modifier_is_originator: boolean = compareDistinguishedName(
+                authorized_ae_title,
+                assn.boundNameAndUID!.dn,
+                NAMING_MATCHER,
+            );
+            if (!modifier_is_originator) {
+                const logInfo = {
+                    type: data.bindingType.toString(),
+                    obid: data.bindingID?.identifier.toString(),
+                    uuid: ob.uuid,
+                    owner: stringifyDN(ctx, authorized_ae_title),
+                    impostor: stringifyDN(ctx, assn.boundNameAndUID!.dn),
+                };
+                ctx.log.warn(ctx.i18n.t("log:ob_modify_attempt_by_other_ae", logInfo), logInfo);
+            }
+            return modifier_is_originator;
         });
 
     if (!opBinding) {
@@ -407,6 +462,7 @@ async function modifyOperationalBinding (
         : undefined;
 
     const sp = data.securityParameters;
+    const access_point_id: number | undefined = createdAccessPoint ?? opBinding.access_point?.id;
     const created = await ctx.db.operationalBinding.create({
         data: {
             accepted: true,
@@ -422,11 +478,15 @@ async function modifyOperationalBinding (
             agreement_ber: data.newAgreement
                 ? Buffer.from(data.newAgreement.toBytes().buffer)
                 : opBinding.agreement_ber,
-            access_point: {
-                connect: {
-                    id: createdAccessPoint ?? opBinding.id,
-                },
-            },
+            ...(access_point_id
+                ? {
+                    access_point: {
+                        connect: {
+                            id: access_point_id,
+                        },
+                    },
+                }
+                : {}),
             initiator: data.initiator
                 ? getInitiator(data.initiator)
                 : opBinding.initiator,
@@ -532,6 +592,7 @@ async function modifyOperationalBinding (
                 new_context_prefix_rdn: rdnToJson(newAgreement.rdn),
                 immediate_superior: newAgreement.immediateSuperior.map(rdnToJson),
             },
+            select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
         });
 
         if (!data.initiator) {

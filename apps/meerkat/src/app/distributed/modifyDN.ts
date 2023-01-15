@@ -1,5 +1,5 @@
 import { Context, Vertex, Value, ClientAssociation, OperationReturn, IndexableOID } from "@wildboar/meerkat-types";
-import { OBJECT_IDENTIFIER, ObjectIdentifier, INTEGER, unpackBits } from "asn1-ts";
+import { OBJECT_IDENTIFIER, ObjectIdentifier, INTEGER, unpackBits, ASN1Construction } from "asn1-ts";
 import type { MeerkatContext } from "../ctx";
 import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
 import * as errors from "@wildboar/meerkat-types";
@@ -469,7 +469,8 @@ async function modifyDN (
     const accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
         .reverse()
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-    const relevantACIItems = getACIItems(
+    const relevantACIItems = await getACIItems(
+        ctx,
         accessControlScheme,
         target.immediateSuperior,
         target,
@@ -711,7 +712,8 @@ async function modifyDN (
             newAccessControlScheme
             && accessControlSchemesThatUseACIItems.has(newAccessControlScheme.toString())
         ) {
-            const relevantACIItems = getACIItems(
+            const relevantACIItems = await getACIItems(
+                ctx,
                 accessControlScheme,
                 superior,
                 undefined,
@@ -895,7 +897,8 @@ async function modifyDN (
             && accessControlScheme
             && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
         ) {
-            const relevantACIItemsForSuperior = getACIItems(
+            const relevantACIItemsForSuperior = await getACIItems(
+                ctx,
                 accessControlScheme,
                 superior.immediateSuperior,
                 superior,
@@ -1725,8 +1728,15 @@ async function modifyDN (
             hasValue = !!(await ctx.db.attributeValue.findFirst({
                 where: {
                     entry_id: target.dse.id,
-                    type: atav.type_.toString(),
-                    ber: Buffer.from(atav.value.toBytes().buffer),
+                    type_oid: atav.type_.toBytes(),
+                    tag_class: atav.value.tagClass,
+                    tag_number: atav.value.tagNumber,
+                    constructed: (atav.value.construction === ASN1Construction.constructed),
+                    content_octets: Buffer.from(
+                        atav.value.value.buffer,
+                        atav.value.value.byteOffset,
+                        atav.value.value.byteLength,
+                    ),
                 },
             }));
             if (!hasValue) {
@@ -1932,6 +1942,7 @@ async function modifyDN (
                         : undefined,
                     materialized_path: newMaterializedPath,
                 },
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),
             ctx.db.distinguishedValue.deleteMany({
                 where: {
@@ -1941,8 +1952,15 @@ async function modifyDN (
             ctx.db.distinguishedValue.createMany({
                 data: newRDN.map((atav, i) => ({
                     entry_id: target.dse.id,
-                    type: atav.type_.toString(),
-                    value: Buffer.from(atav.value.toBytes().buffer),
+                    type_oid: atav.type_.toBytes(),
+                    tag_class: atav.value.tagClass,
+                    constructed: (atav.value.construction === ASN1Construction.constructed),
+                    tag_number: atav.value.tagNumber,
+                    content_octets: Buffer.from(
+                        atav.value.value.buffer,
+                        atav.value.value.byteOffset,
+                        atav.value.value.byteLength,
+                    ),
                     order_index: i,
                 })),
             }),
@@ -1958,6 +1976,7 @@ async function modifyDN (
                             : target.dse.id.toString() + ".",
                     ),
                 },
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             })),
         ]);
     } catch (e) {
@@ -1966,6 +1985,22 @@ async function modifyDN (
         const dbe = await ctx.db.entry.findUnique({
             where: {
                 id: target.dse.id,
+            },
+            include: {
+                RDN: {
+                    select: {
+                        type_oid: true,
+                        tag_class: true,
+                        constructed: true,
+                        tag_number: true,
+                        content_octets: true,
+                    },
+                },
+                EntryObjectClass: {
+                    select: {
+                        object_class: true,
+                    },
+                },
             },
         });
         if (dbe) {

@@ -1,5 +1,6 @@
 import type {
     Context,
+    IndexableOID,
     Vertex,
 } from "@wildboar/meerkat-types";
 import {
@@ -17,6 +18,9 @@ import {
 import {
     id_ar_collectiveAttributeInnerArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-collectiveAttributeInnerArea.va";
+import { collectiveExclusions } from "@wildboar/x500/src/lib/collections/attributes";
+import { _decodeObjectIdentifier } from "asn1-ts/dist/node/functional";
+import { attributeValueFromDB } from "../attributeValueFromDB";
 
 const CA_SUBENTRY: string = collectiveAttributeSubentry["&id"].toString();
 const ID_CASA: string = id_ar_collectiveAttributeSpecificArea.toString();
@@ -39,12 +43,30 @@ const EXCLUDE_ALL: string = id_oa_excludeAllCollectiveAttributes.toString();
  * @function
  */
 export
-function readCollectiveAttributes (
+async function readCollectiveAttributes (
     ctx: Context,
     vertex: Vertex,
     relevantSubentries: Vertex[],
-): Attribute[] {
-    if (vertex.dse.entry?.collectiveExclusions.has(EXCLUDE_ALL)) {
+): Promise<Attribute[]> {
+    const collex: Set<IndexableOID> = new Set(
+        (await ctx.db.attributeValue.findMany({
+            where: {
+                entry_id: vertex.dse.id,
+                type_oid: collectiveExclusions["&id"].toBytes(),
+                // ber: Buffer.from([ 6, 3, 0x55, 18, 0 ]), // 2.5.18.0
+            },
+            select: {
+                tag_class: true,
+                constructed: true,
+                tag_number: true,
+                content_octets: true,
+            },
+        })).map((row) => {
+            const el = attributeValueFromDB(row);
+            return _decodeObjectIdentifier(el).toString();
+        }),
+    );
+    if (collex.has(EXCLUDE_ALL)) {
         return [];
     }
     const collectiveAttributeSubentries = relevantSubentries
@@ -83,7 +105,7 @@ function readCollectiveAttributes (
         ));
     return subentriesWithinScope
         .flatMap((subentry) => subentry.dse.subentry?.collectiveAttributes ?? [])
-        .filter((attr) => !vertex.dse.entry?.collectiveExclusions.has(attr.type_.toString()));
+        .filter((attr) => !collex.has(attr.type_.toString()));
         ;
 }
 

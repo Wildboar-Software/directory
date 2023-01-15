@@ -132,7 +132,11 @@ import {
 import {
     ipHost, ipHostNumber,
 } from "@wildboar/parity-schema/src/lib/modules/NIS/ipHost.oa";
-import { BootParameterSyntax, _encode_BootParameterSyntax } from "@wildboar/parity-schema/src/lib/modules/NIS/BootParameterSyntax.ta";
+import {
+    BootParameterSyntax,
+    _encode_BootParameterSyntax,
+} from "@wildboar/parity-schema/src/lib/modules/NIS/BootParameterSyntax.ta";
+import { Promise as bPromise } from "bluebird";
 
 const allNonSecurityContextTypes: OBJECT_IDENTIFIER[] = [
     ct.languageContext["&id"],
@@ -161,10 +165,8 @@ function securityParameters (): SecurityParameters {
     return new SecurityParameters(
         undefined,
         undefined, // DSA name
-        {
-            generalizedTime: new Date(),
-        },
-        unpackBits(randomBytes(16)),
+        undefined,
+        undefined,
         ProtectionRequest_none,
         addEntry["&operationCode"]!,
         ErrorProtectionRequest_none,
@@ -1198,6 +1200,7 @@ async function seedGB (
     }
 
     // Create random people
+    const newEntryArgs: [cn: string, arg: AddEntryArgument][] = [];
     for (let i = 0; i < 1000; i++) {
         const [ rdn, attributes, cn ] = createMockPersonAttributes();
         const dn: DistinguishedName = [
@@ -1211,8 +1214,16 @@ async function seedGB (
             rdn,
         ];
         const arg = createAddEntryArgument(dn, attributes);
-        await idempotentAddEntry(ctx, conn, `C=GB,L=London,CN=${cn}`, arg);
+        newEntryArgs.push([ cn, arg ]);
     }
+
+    await bPromise.map(
+        newEntryArgs,
+        ([cn, arg]) => idempotentAddEntry(ctx, conn, `C=GB,L=London,CN=${cn}`, arg),
+        {
+            concurrency: 10,
+        },
+    );
 }
 
 export default seedGB;
