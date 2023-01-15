@@ -2,12 +2,13 @@ name: Meerkat DSA Workflow
 
 on:
   push:
-    # tags:
-    #   - v2.*
-    #   - v1.*
+    tags:
+      - v3.*
+      - v2.*
+      - v1.*
     # Temporary, so I don't have to keep adding BS tags.
-    branches:
-      - master
+    # branches:
+    #   - master
 
 env:
   CLUSTER_NAME: production
@@ -241,6 +242,8 @@ jobs:
         working-directory: ./k8s/charts/meerkat-dsa
       - name: Download Existing Helm Chart index
         run: curl https://${{ env.STORAGE_ACCOUNT_NAME }}.blob.core.windows.net/${{ env.CHART_CONTAINER }}/index.yaml > existing-index.yaml
+        working-directory: ./k8s/charts/meerkat-dsa
+        timeout-minutes: 2
       - name: Create the Helm Index
         run: |
           helm repo index . \
