@@ -239,8 +239,13 @@ jobs:
         run: helm package .
         timeout-minutes: 2
         working-directory: ./k8s/charts/meerkat-dsa
+      - name: Download Existing Helm Chart index
+        run: curl https://${{ env.STORAGE_ACCOUNT_NAME }}.blob.core.windows.net/${{ env.CHART_CONTAINER }}/index.yaml > existing-index.yaml
       - name: Create the Helm Index
-        run: helm repo index . --url https://${{ env.STORAGE_ACCOUNT_NAME }}.blob.core.windows.net/${{ env.CHART_CONTAINER }}
+        run: |
+          helm repo index . \
+            --url https://${{ env.STORAGE_ACCOUNT_NAME }}.blob.core.windows.net/${{ env.CHART_CONTAINER }} \
+            --merge existing-index.yaml
         working-directory: ./k8s/charts/meerkat-dsa
         timeout-minutes: 2
       - name: Upload Helm Packages
