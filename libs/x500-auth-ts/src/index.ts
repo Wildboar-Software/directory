@@ -190,19 +190,6 @@ function *iterateOverSearchResults (result: SearchResult): Generator<EntryInform
     return undefined;
 }
 
-/*
-
-This implements four strategies in one:
-
-1. Authenticate directly using user's supplied username and password.
-2. Authenticate as application, and search for user with username and password.
-3. Authenticate as application, and compare password for object whose DN is derived from the username.
-
-Additional features:
-
-
-*/
-
 export type User = Record<string, unknown>;
 
 export
@@ -214,31 +201,23 @@ interface IntoUser {
  * This extends `IntoUser`, because you have to convert the entry to the user.
  */
 export
-interface PostAuthenticateReadable extends Partial<IntoUser> {
+interface PostAuthenticateReadable {
     get_read_arg?: (dn: Name) => ReadOptions;
 }
 
 export
-interface DirectSubstrategyOptions extends PostAuthenticateReadable {
+interface BindSubstrategyOptions {
     get_directory_name_from_username: (username: string) => Name | null;
 }
 
 export
-interface SearchSubstrategyOptions extends IntoUser {
-    creds_to_arg: (username: string, password: string) => SearchArgumentData;
-}
-
-export
-interface CompareSubstrategyOptions extends PostAuthenticateReadable {
+interface CompareSubstrategyOptions {
     get_compare_arg: (username: string, password: string) => [ Name, CompareOptions | null ];
 }
 
 export type X500PassportSubstrategy =
     | {
-        direct: DirectSubstrategyOptions;
-    }
-    | {
-        search: SearchSubstrategyOptions;
+        bind: BindSubstrategyOptions;
     }
     | {
         compare: CompareSubstrategyOptions;
@@ -267,7 +246,7 @@ interface RelatedInfoOptions {
 }
 
 export
-interface X500PassportStrategyOptions extends DAPOptions {
+interface X500PassportStrategyOptions extends DAPOptions, PostAuthenticateReadable, IntoUser {
     url: string | URL;
     timeout_ms?: number;
     bind_as?: () => DAPBindParameters;
@@ -363,15 +342,15 @@ function handle_non_result (
 }
 
 export
-async function direct_auth (
+async function bind_auth (
     state: AuthFunctionState,
     options: X500PassportStrategyOptions,
     username: string,
     password: string,
     done: DoneCallback,
 ): Promise<void> {
-    assert("direct" in options.substrategy);
-    const dn = options.substrategy.direct.get_directory_name_from_username(username);
+    assert("bind" in options.substrategy);
+    const dn = options.substrategy.bind.get_directory_name_from_username(username);
     if (!dn) {
         done(new Error("4fa0a1e0-2571-4a05-aae4-b24042e42ce6"));
         return;
@@ -441,70 +420,6 @@ async function direct_auth (
 }
 
 export
-async function search_auth (
-    state: AuthFunctionState,
-    options: X500PassportStrategyOptions,
-    username: string,
-    password: string,
-    done: DoneCallback,
-): Promise<void> {
-    assert("search" in options.substrategy);
-    if (!state.dap_client) {
-        state.dap_client = create_client(options);
-    }
-    assert(state.dap_client);
-    // We need to re-bind if disconnected. This might happen after a period of
-    // inactivity.
-    if (!state.dap_client.rose.is_bound) {
-        const bind_outcome = await bind(options, state.dap_client);
-        if (!("result" in bind_outcome)) {
-            done(new Error());
-            return;
-        }
-    }
-    const dap_client = state.dap_client;
-    const search_arg_data = options.substrategy.search.creds_to_arg(username, password);
-    const outcome = await dap_client.search({
-        ...search_arg_data,
-        sizeLimit: 1,
-    });
-    if (!("result" in outcome)) {
-        handle_non_result(outcome, options, username);
-        done(new Error());
-        return;
-    }
-    // TODO: Add iterateOverSearchResults() function to @wildboar/x500.
-    const result1 = iterateOverSearchResults(outcome.result.parameter).next();
-    if (!result1.value) {
-        options?.log?.({
-            level: LOG_LEVEL_WARN,
-            type: "no_results",
-            username,
-        });
-        done(new Error());
-        return;
-    }
-    const entry = result1.value;
-    assert("search" in options.substrategy);
-    const user_info = options.substrategy.search.entry_to_user(entry);
-    const user: User = { username, ...user_info };
-    if (!options.related_info) {
-        done(null, user);
-        return;
-    }
-    const related_entries_arg = options.related_info.get_related_entries(search_arg_data.baseObject);
-    const related_result = await dap_client.search(related_entries_arg);
-    if (!("result" in related_result)) {
-        handle_non_result(related_result, options, username);
-        done(new Error());
-        return;
-    }
-    const related_entries = Array.from(iterateOverSearchResults(related_result.result.parameter));
-    const final_user = options.related_info.calculate_user(user, related_entries);
-    done(null, final_user);
-}
-
-export
 async function compare_auth (
     state: AuthFunctionState,
     options: X500PassportStrategyOptions,
@@ -553,21 +468,21 @@ async function compare_auth (
         return;
     }
     if (
-        !options.substrategy.compare.get_read_arg
-        || !options.substrategy.compare.entry_to_user
+        !options.get_read_arg
+        || !options.entry_to_user
     ) {
         done(null, { username });
         return;
     }
 
-    const read_arg = options.substrategy.compare.get_read_arg(name);
+    const read_arg = options.get_read_arg(name);
     const read_outcome = await dap_client.read(read_arg);
     if (!("result" in read_outcome)) {
         done(new Error());
         return;
     }
     const read_data = getOptionallyProtectedValue(read_outcome.result.parameter);
-    const user_info = options.substrategy.compare.entry_to_user(read_data.entry);
+    const user_info = options.entry_to_user(read_data.entry);
     const user: User = { username, ...user_info };
     if (!options.related_info) {
         done(null, user);
@@ -593,12 +508,8 @@ function get_auth_function (options: X500PassportStrategyOptions): [ Promise<DAP
     return [
         bind(options),
         function (username: string, password: string, done: DoneCallback) {
-            if ("direct" in options.substrategy) {
-                direct_auth(state, options, username, password, done)
-                    .then()
-                    .catch((e) => done(e));
-            } else if ("search" in options.substrategy) {
-                search_auth(state, options, username, password, done)
+            if ("bind" in options.substrategy) {
+                bind_auth(state, options, username, password, done)
                     .then()
                     .catch((e) => done(e));
             } else if ("compare" in options.substrategy) {
