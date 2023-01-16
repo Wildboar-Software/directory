@@ -1601,6 +1601,20 @@ interface Configuration {
         rejectUnauthorizedClients: boolean;
         // This is a part of TLSSocketOptions, but not TLSOptions.
         requestOCSP: boolean;
+
+        /**
+         * A file to which the TLS (pre)-master secrets are logged to TLS
+         * traffic can be decrypted. The format of the lines in this file are
+         * documented here:
+         *
+         * https://firefox-source-docs.mozilla.org/security/nss/legacy/key_log_format/index.html
+         */
+        sslkeylog_file?: string;
+
+        /**
+         * Whether to log `SSLKEYLOGFILE` entries in the normal log at DEBUG level.
+         */
+        log_tls_secrets: boolean;
     };
 
     /**

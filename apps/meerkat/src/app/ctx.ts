@@ -757,6 +757,8 @@ const config: Configuration = {
         ocspResponseSizeLimit: process.env.MEERKAT_TLS_OCSP_RESPONSE_SIZE_LIMIT
             ? Number.parseInt(process.env.MEERKAT_TLS_OCSP_RESPONSE_SIZE_LIMIT, 10)
             : 10_000,
+        log_tls_secrets: (process.env.MEERKAT_LOG_TLS_SECRETS === "1"),
+        sslkeylog_file: process.env.MEERKAT_SSLKEYLOG_FILE,
     },
     scvp: (process.env.MEERKAT_SCVP_URL && process.env.MEERKAT_SCVP_VALIDATION_POLICY_REF_ID)
         ? {

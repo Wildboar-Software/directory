@@ -71,6 +71,7 @@ import {
     id_ac_directoryOperationalBindingManagementAC,
 } from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directoryOperationalBindingManagementAC.va";
 import { AbortReason } from "@wildboar/rose-transport";
+import { createWriteStream } from "node:fs";
 
 /**
  * @summary Check for Meerkat DSA updates
@@ -513,10 +514,22 @@ function handleIDM (
     startTimes: Map<net.Socket, Date>,
 ): (socket: net.Socket | tls.TLSSocket) => void {
     return (c: net.Socket | tls.TLSSocket): void => {
+        const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
+        if (ctx.config.tls.log_tls_secrets && (c instanceof tls.TLSSocket)) {
+            c.on("keylog", (line) => {
+                ctx.log.debug(ctx.i18n.t("log:keylog", {
+                    peer: source,
+                    key: line.toString("latin1"),
+                }));
+            });
+        }
+        if (ctx.config.tls.sslkeylog_file && (c instanceof tls.TLSSocket)) {
+            const keylogFile = createWriteStream(ctx.config.tls.sslkeylog_file, { flags: "a" });
+            c.on("keylog", (line) => keylogFile.write(line));
+        }
         c.pause();
         ctx.associations.set(c, null); // Index this socket, noting that it has no established association.
         startTimes.set(c, new Date());
-        const source: string = `${c.remoteFamily}:${c.remoteAddress}:${c.remotePort}`;
         const extraLogData = {
             remoteFamily: c.remoteFamily,
             remoteAddress: c.remoteAddress,
@@ -643,6 +656,18 @@ function handleLDAP (
     startTimes: Map<net.Socket, Date>,
 ): (socket: net.Socket | tls.TLSSocket) => void {
     return (c) => {
+        if (ctx.config.tls.log_tls_secrets && (c instanceof tls.TLSSocket)) {
+            c.on("keylog", (line) => {
+                ctx.log.debug(ctx.i18n.t("log:keylog", {
+                    peer: source,
+                    key: line.toString("latin1"),
+                }));
+            });
+        }
+        if (ctx.config.tls.sslkeylog_file && (c instanceof tls.TLSSocket)) {
+            const keylogFile = createWriteStream(ctx.config.tls.sslkeylog_file, { flags: "a" });
+            c.on("keylog", (line) => keylogFile.write(line));
+        }
         c.pause();
         ctx.associations.set(c, null);
         startTimes.set(c, new Date());
@@ -868,6 +893,18 @@ function attachUnboundEventListenersToITOTConnection (
     startTimes: Map<net.Socket, Date>,
 ): (socket: net.Socket | tls.TLSSocket) => void {
     return (c: net.Socket | tls.TLSSocket): void => {
+        if (ctx.config.tls.log_tls_secrets && (c instanceof tls.TLSSocket)) {
+            c.on("keylog", (line) => {
+                ctx.log.debug(ctx.i18n.t("log:keylog", {
+                    peer: source,
+                    key: line.toString("latin1"),
+                }));
+            });
+        }
+        if (ctx.config.tls.sslkeylog_file && (c instanceof tls.TLSSocket)) {
+            const keylogFile = createWriteStream(ctx.config.tls.sslkeylog_file, { flags: "a" });
+            c.on("keylog", (line) => keylogFile.write(line));
+        }
         c.pause();
         ctx.associations.set(c, null); // Index this socket, noting that it has no established association.
         startTimes.set(c, new Date());
