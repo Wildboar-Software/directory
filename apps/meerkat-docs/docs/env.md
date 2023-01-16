@@ -1806,6 +1806,26 @@ the equivalent of this environment variable that affects signing is:
 The filepath to the Diffie-Hellman parameters to use to enable Perfect Forward
 Secrecy (PFS).
 
+## MEERKAT_TLS_ENABLE_TRACE
+
+If set to `1`, Meerkat DSA will log trace information on inbound and outbound
+TLS packets.
+
+When enabled, TLS packet trace information is written to `stderr`. This can be
+used to debug TLS connection problems.
+
+The format of the output is identical to the output of `openssl s_client -trace`
+or `openssl s_server -trace`. While it is produced by OpenSSL's `SSL_trace()`
+function, the format is undocumented, can change without notice, and should not
+be relied on.
+
+:::note
+
+I copied the above text from the
+[NodeJS documentation](https://nodejs.org/dist/latest-v19.x/docs/api/tls.html#tlssocketenabletrace).
+
+:::
+
 ## MEERKAT_TLS_HANDSHAKE_TIMEOUT_IN_SECONDS
 
 The number of seconds before completing the handshake after which a TLS socket

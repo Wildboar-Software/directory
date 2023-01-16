@@ -153,6 +153,7 @@ log_http: false
 log_json: false
 log_level: info
 log_tailable: false
+log_tls_secrets: false
 log_zip: true
 lookup_uncert_strong_auth: false
 max_concurrent_operations_per_connection: 100
@@ -262,6 +263,7 @@ signing_remote_crl_timeout: 5
 signing_required_for_chaining: true
 signing_required_for_ob: true
 signing_tolerate_unavailable_remote_crl: true
+# sslkeylog_file: /var/log/sslkeylog
 tcp_no_delay: false
 tcp_timeout_in_seconds: 60
 tls_answer_ocsp_requests: false
@@ -271,6 +273,7 @@ tls_answer_ocsp_requests: false
 tls_client_cert_auth: false
 # tls_crl_file: use tlsCrlConfigName
 # tls_dh_param_file: use dhParamSecretName
+tls_enable_trace: false
 tls_handshake_timeout_in_seconds: 10
 # tls_key_file: use tlsSecretName
 # TODO: tls_key_passphrase: not supported by this Helm chart.

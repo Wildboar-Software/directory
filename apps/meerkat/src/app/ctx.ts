@@ -673,6 +673,7 @@ const config: Configuration = {
         bindOverrides,
     },
     tls: {
+        enableTrace: (process.env.MEERKAT_TLS_ENABLE_TRACE === "1"),
         answerOCSPRequests: (process.env.MEERKAT_TLS_ANSWER_OCSP_REQUESTS === "1"),
         rejectUnauthorizedClients: (process.env.MEERKAT_TLS_REJECT_UNAUTHORIZED_CLIENTS === "1"),
         rejectUnauthorizedServers: (process.env.MEERKAT_TLS_REJECT_UNAUTHORIZED_SERVERS !== "0"),

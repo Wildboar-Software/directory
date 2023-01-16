@@ -259,6 +259,18 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
                             rejectUnauthorized: ctx.config.tls.rejectUnauthorizedServers,
                             isServer: false,
                         });
+                        if (ctx.config.tls.log_tls_secrets) {
+                            tlsSocket.on("keylog", (line) => {
+                                ctx.log.debug(ctx.i18n.t("log:keylog", {
+                                    peer: uriString,
+                                    key: line.toString("latin1"),
+                                }));
+                            });
+                        }
+                        if (ctx.config.tls.sslkeylog_file) {
+                            const keylogFile = createWriteStream(ctx.config.tls.sslkeylog_file, { flags: "a" });
+                            tlsSocket.on("keylog", (line) => keylogFile.write(line));
+                        }
                         tlsSocket.once("secureConnect", () => {
                             if (!tlsSocket.authorized && ctx.config.tls.rejectUnauthorizedServers) {
                                 tlsSocket.destroy(); // Destroy for immediate and complete denial.
@@ -344,6 +356,18 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
                 rejectUnauthorized: ctx.config.tls.rejectUnauthorizedServers,
                 isServer: false,
             });
+            if (ctx.config.tls.log_tls_secrets) {
+                tls_socket.on("keylog", (line) => {
+                    ctx.log.debug(ctx.i18n.t("log:keylog", {
+                        peer: uriString,
+                        key: line.toString("latin1"),
+                    }));
+                });
+            }
+            if (ctx.config.tls.sslkeylog_file) {
+                const keylogFile = createWriteStream(ctx.config.tls.sslkeylog_file, { flags: "a" });
+                tls_socket.on("keylog", (line) => keylogFile.write(line));
+            }
             rose.socket = tls_socket;
         }
 
