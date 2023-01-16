@@ -23,6 +23,10 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
+            {{-if .Values.prismaDebug }}
+            - name: DEBUG
+              value: {{ .Values.prismaDebug }}
+            {{- end }}
             # NOTE: The following port configurations do not override the port
             # that the user specified. These are internal ports. The ports
             # specified in `values.yaml` control the ports on which the

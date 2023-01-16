@@ -60,6 +60,10 @@ networkPolicyEgressOverride:
 # password in it.
 databaseSecretName: meerkat-database-secret
 
+# Prisma Debugging: https://www.prisma.io/docs/concepts/components/prisma-client/debugging
+# If set, this becomes the value of the `DEBUG` environment variable.
+# prismaDebug: "prisma:client,prisma:engine"
+
 # This MUST contain the following keys:
 # - `ca.pem`: The certificate authority bundle as a concatenation of PEM-encoded X.509 certificates.
 # tlsCaConfigName: meerkat-ca-config
