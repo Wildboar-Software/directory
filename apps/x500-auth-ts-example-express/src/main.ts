@@ -43,20 +43,24 @@ import {
 import {
     commonName,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
+import {
+    telephoneNumber,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/telephoneNumber.oa";
+import {
+    postalAddress,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/postalAddress.oa";
 import { AttributeValueAssertion } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
-import { userPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
-import { EntryInformationSelection } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
 import { directoryStringToString } from "@wildboar/x500";
 import { engine } from 'express-handlebars';
 import {
     DirectoryBindArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
 import { id_ac_directoryAccessAC } from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directoryAccessAC.va";
-import {
-    userPassword,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
+import { SimpleCredentials } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
+import { TRUE_BIT } from "asn1-ts";
 
 const us_str: CountryName = "US";
+const gb_str: CountryName = "GB";
 const fl_str: UnboundedDirectoryString = {
     uTF8String: "FL",
 };
@@ -69,10 +73,22 @@ const tampa_str: UnboundedDirectoryString = {
 const westchase_str: UnboundedDirectoryString = {
     uTF8String: "Westchase",
 };
+const yn_str: UnboundedDirectoryString = {
+    uTF8String: "Yorkshire and the Humber",
+};
+const admin_str: UnboundedDirectoryString = {
+    uTF8String: "admin",
+};
 const us_rdn: RelativeDistinguishedName = [
     new AttributeTypeAndValue(
         countryName["&id"],
         countryName.encoderFor["&Type"]!(us_str, BER),
+    ),
+];
+const gb_rdn: RelativeDistinguishedName = [
+    new AttributeTypeAndValue(
+        countryName["&id"],
+        countryName.encoderFor["&Type"]!(gb_str, BER),
     ),
 ];
 const fl_rdn: RelativeDistinguishedName = [
@@ -99,15 +115,38 @@ const westchase_rdn: RelativeDistinguishedName = [
         localityName.encoderFor["&Type"]!(westchase_str, BER),
     ),
 ];
-const search_base_dn: DistinguishedName = [
+const yh_rdn: RelativeDistinguishedName = [
+    new AttributeTypeAndValue(
+        localityName["&id"],
+        localityName.encoderFor["&Type"]!(yn_str, BER),
+    ),
+];
+const admin_rdn: RelativeDistinguishedName = [
+    new AttributeTypeAndValue(
+        commonName["&id"],
+        commonName.encoderFor["&Type"]!(admin_str, BER),
+    ),
+];
+const admin_dn: DistinguishedName = [
+    admin_rdn,
+];
+const search_base_dn_us: DistinguishedName = [
     us_rdn,
     fl_rdn,
     hil_rdn,
     tampa_rdn,
     westchase_rdn,
 ];
-const search_base_name: Name = {
-    rdnSequence: search_base_dn,
+const search_base_name_us: Name = {
+    rdnSequence: search_base_dn_us,
+};
+// c=GB,l=Yorkshire and the Humber
+const search_base_dn_gb: DistinguishedName = [
+    gb_rdn,
+    yh_rdn,
+];
+const search_base_name_gb: Name = {
+    rdnSequence: search_base_dn_gb,
 };
 
 const sessions: Record<string, any> = {};
@@ -147,67 +186,92 @@ async function main () {
     const [ initial_bind, x500AuthFunction ] = get_auth_function({
         log: console.log,
         url: "idm://dsa01.root.mkdemo.wildboar.software:4632",
-        substrategy: {
-            compare: {
-                get_compare_arg: (username: string, password: string) => {
-                    const user_rdn: RelativeDistinguishedName = [
-                        new AttributeTypeAndValue(
-                            commonName["&id"],
-                            commonName.encoderFor["&Type"]!({
-                                uTF8String: username,
-                            }, BER),
-                        ),
-                    ];
-                    const userDirectoryName: Name = {
-                        rdnSequence: [
-                            ...search_base_dn,
-                            user_rdn,
-                        ],
-                    };
-                    return [
-                        userDirectoryName,
+
+        // Step 1: We bind to the directory.
+        bind_as: async () => ({
+            protocol_id: id_ac_directoryAccessAC,
+            timeout: 15000,
+            parameter: new DirectoryBindArgument(
+                {
+                    simple: new SimpleCredentials(
+                        admin_dn,
+                        undefined,
                         {
-                            object: userDirectoryName,
-                            purported: new AttributeValueAssertion(
-                                userPassword["&id"],
-                                userPassword.encoderFor["&Type"]!(Buffer.from(password, "utf-8"), BER),
-                            ),
+                            unprotected: Buffer.from("asdf", "utf-8"),
                         },
-                    ];
+                    ),
                 },
-                get_read_arg: (dn: Name) => {
-                    console.log("Compare succeeded. Reading entry.");
-                    return {
-                        object: dn,
-                        selection: new EntryInformationSelection(
-                            {
-                                select: [
-                                    uid["&id"],
-                                ],
-                            },
-                        ),
-                    };
-                },
-                entry_to_user: (entry: EntryInformation) => {
-                    const attributes = entry.information
-                        ?.flatMap((info) => "attribute" in info ? [info.attribute] : []);
-                    const uidAttr = attributes?.find((a) => a.type_.isEqualTo(uid["&id"]));
-                    const uidValue0 = uidAttr?.values[0];
-                    if (!uidValue0) {
-                        return {};
-                    }
-                    const uidValue: string = directoryStringToString(uid.decoderFor["&Type"]!(uidValue0));
-                    return {
-                        uid: uidValue,
-                    };
+                new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT ]),
+            ),
+        }),
+
+        // Step 2: We convert an asserted username to a search operation.
+        username_to_dn_or_search: async (username: string) => ({
+            baseObject: search_base_name_us,
+            subset: "level",
+            filter: {
+                item: {
+                    equality: new AttributeValueAssertion(
+                        uid["&id"],
+                        uid.encoderFor["&Type"]!({
+                            uTF8String: username,
+                        }, BER),
+                    ),
                 },
             },
-        },
-        bind_as: () => ({
-            protocol_id: id_ac_directoryAccessAC,
-            parameter: new DirectoryBindArgument(undefined, undefined),
-            timeout: 5000,
+            sizeLimit: 1,
+            copyShallDo: true,
+            dontMatchFriends: true,
+            noSubtypeMatch: true,
+            preferChaining: true,
+            requestSignedResult: true,
+            requestSignedError: true,
+            searchAliases: true,
+            searchControls: {
+                searchFamily: false,
+                searchAliases: true,
+            },
+            selection: {
+                attributes: {
+                    select: [
+                        uid["&id"],
+                        commonName["&id"],
+                        telephoneNumber["&id"],
+                        postalAddress["&id"],
+                    ],
+                },
+            },
+            subentries: false,
+            timeLimit: 15, // FIXME:
         }),
+
+        // Step 3: Use the compare operation to assert the password.
+        substrategy: { compare: {} },
+
+        // Step 4: Convert a foundentry to user information.
+        entry_to_user: async (entry: EntryInformation) => {
+            const attributes = entry.information
+                ?.flatMap((info) => "attribute" in info ? [info.attribute] : []);
+            const uidAttr = attributes?.find((a) => a.type_.isEqualTo(uid["&id"]));
+            const uidValue0 = uidAttr?.values[0];
+            if (!uidValue0) {
+                return {};
+            }
+            const phone = attributes
+                ?.find((a) => a.type_.isEqualTo(telephoneNumber["&id"]))
+                ?.values[0]?.printableString;
+            const address: string[] | undefined = attributes
+                ?.find((a) => a.type_.isEqualTo(postalAddress["&id"]))
+                ?.values[0]?.sequence.map((e) => e.utf8String);
+            const uidValue: string = directoryStringToString(uid.decoderFor["&Type"]!(uidValue0));
+            return {
+                uid: uidValue,
+                phone,
+                address,
+            };
+        },
+
+        timeout_ms: 15000,
     });
     const bind_outcome = await initial_bind;
     if (!("result" in bind_outcome)) {
@@ -228,6 +292,7 @@ async function main () {
             console.log("UID is:", req.query["uid"]);
             res.render('success', {
                 uid: req.query["uid"],
+                phone: req.query["phone"],
             });
         });
     app.get('/failure', (req, res) => {
@@ -236,7 +301,7 @@ async function main () {
     app.post("/login",
         passport.authenticate('local', { failureRedirect: '/failure' }),
         (req, res) => {
-            res.redirect(`/success?uid=${req.user?.["uid"]}`);
+            res.redirect(`/success?uid=${req.user?.["uid"]}&phone=${req.user?.["phone"]}`);
         });
 
     const port = 3001;

@@ -6,23 +6,16 @@ import {
     DAPBindParameters,
     CompareOptions,
     SearchOptions,
-    ReadOptions,
     DAPBindOutcome,
 } from "@wildboar/x500-client-ts";
 import { URL } from "node:url";
-import type {
-    SearchArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
-import type {
-    Name,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
 import {
     id_ac_directoryAccessAC,
 } from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directoryAccessAC.va";
 import {
     SimpleCredentials,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
-import { TRUE_BIT } from "asn1-ts";
+import { FALSE, TRUE, TRUE_BIT } from "asn1-ts";
 import { BER } from "asn1-ts/dist/node/functional";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import {
@@ -66,12 +59,15 @@ import {
 } from "@wildboar/rose-transport";
 import { DirectoryBindArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
 import { SearchResult } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResultData.ta";
-import type { EntryInformation } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
+import { EntryInformation } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
 import { strict as assert } from "node:assert";
 import {
     AttributeValueAssertion,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
 import { userPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
+import {
+    DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 
 // TODO: Configure positive and negative caching.
 
@@ -193,27 +189,10 @@ function *iterateOverSearchResults (result: SearchResult): Generator<EntryInform
 export type User = Record<string, unknown>;
 
 export
-interface IntoUser {
-    entry_to_user: (entry: EntryInformation) => User;
-}
-
-/**
- * This extends `IntoUser`, because you have to convert the entry to the user.
- */
-export
-interface PostAuthenticateReadable {
-    get_read_arg?: (dn: Name) => ReadOptions;
-}
+interface BindSubstrategyOptions {}
 
 export
-interface BindSubstrategyOptions {
-    get_directory_name_from_username: (username: string) => Name | null;
-}
-
-export
-interface CompareSubstrategyOptions {
-    get_compare_arg: (username: string, password: string) => [ Name, CompareOptions | null ];
-}
+interface CompareSubstrategyOptions {}
 
 export type X500PassportSubstrategy =
     | {
@@ -224,35 +203,27 @@ export type X500PassportSubstrategy =
     }
     ;
 
+// TODO: Option to fetch the pwdAttribute.
 export
-interface RelatedInfoOptions {
-
-    /* TODO:
-        Is there some way to allow this to recurse so a user could fetch
-        user -> groups -> roles on groups -> permissions on roles -> etc...?
-        Theoretically, a savvy user could just fetch and cache the roles and
-        permissions per group up front, which would be the smart thing to do
-        anyway.
-     */
-    /**
-     * This can be used for getting group memberships, roles, devices, etc.
-     */
-     get_related_entries: (dn: Name) => SearchOptions;
-
-     calculate_user: (
-         user: User,
-         other_entries: EntryInformation[],
-     ) => User;
-}
-
-export
-interface X500PassportStrategyOptions extends DAPOptions, PostAuthenticateReadable, IntoUser {
+interface X500PassportStrategyOptions extends DAPOptions {
     url: string | URL;
     timeout_ms?: number;
-    bind_as?: () => DAPBindParameters;
-    substrategy: X500PassportSubstrategy;
+    bind_as?: () => Promise<DAPBindParameters>;
     log?: (event: LogEvent) => unknown;
-    related_info?: RelatedInfoOptions;
+
+    // Step 1: Convert username to a DN, or a search that can be used to form a DN.
+    username_to_dn_or_search: (username: string) => Promise<DistinguishedName | SearchOptions>;
+
+    // Step 2: Actually use the DN to perform the password evaluation.
+    substrategy: X500PassportSubstrategy;
+
+    // Step 3: Produce initial user info.
+    // If search is used, entry will be the search result.
+    // If the DN was produced directly from the username, entry will have no attributes.
+    entry_to_user: (entry: EntryInformation) => Promise<User>;
+
+    // Step 4: Follow up to produce the final user info.
+    hydrate_user_info?: (state: AuthFunctionState, user: User) => Promise<AsyncIterableIterator<User>>;
 }
 
 export
@@ -260,7 +231,7 @@ interface AuthFunctionState {
     dap_client?: DAPClient | null | undefined;
 };
 
-export type DoneCallback = (err?: any, user?: User | null) => unknown;
+export type DoneCallback = (err?: any, user?: User | undefined | false) => unknown;
 export type AuthFunction = (username: string, password: string, done: DoneCallback) => void;
 
 export
@@ -343,22 +314,15 @@ function handle_non_result (
 
 export
 async function bind_auth (
-    state: AuthFunctionState,
     options: X500PassportStrategyOptions,
+    dn: DistinguishedName,
     username: string,
     password: string,
-    done: DoneCallback,
-): Promise<void> {
+): Promise<boolean> {
     assert("bind" in options.substrategy);
-    const dn = options.substrategy.bind.get_directory_name_from_username(username);
-    if (!dn) {
-        done(new Error("4fa0a1e0-2571-4a05-aae4-b24042e42ce6"));
-        return;
-    }
     const rose = rose_from_url(options.url);
     if (!rose) {
-        done(new Error("435ed6db-3bb8-469f-9dab-d247943030d3"));
-        return;
+        throw new Error("435ed6db-3bb8-469f-9dab-d247943030d3");
     }
     const dap = create_dap_client(rose);
     const outcome = await dap.bind({
@@ -366,7 +330,7 @@ async function bind_auth (
         parameter: {
             credentials: {
                 simple: new SimpleCredentials(
-                    dn.rdnSequence,
+                    dn,
                     undefined,
                     {
                         unprotected: Buffer.from(password),
@@ -382,51 +346,22 @@ async function bind_auth (
     });
     if (!("result" in outcome)) {
         if ("error" in outcome) {
-            done();
-            return;
+            return false;
         }
         handle_non_result(outcome, options, username);
-        done(new Error());
-        return;
+        return false;
     }
-    const user: User = { username };
-    if (!options.related_info) {
-        done(null, user);
-        return;
-    }
-    const related_entries_arg = options.related_info.get_related_entries(dn);
-    if (!state.dap_client) {
-        state.dap_client = create_client(options);
-    }
-    assert(state.dap_client);
-    // We need to re-bind if disconnected. This might happen after a period of
-    // inactivity.
-    if (!state.dap_client.rose.is_bound) {
-        const bind_outcome = await bind(options, state.dap_client);
-        if (!("result" in bind_outcome)) {
-            done(new Error());
-            return;
-        }
-    }
-    const related_result = await state.dap_client.search(related_entries_arg);
-    if (!("result" in related_result)) {
-        handle_non_result(related_result, options, username);
-        done(new Error());
-        return;
-    }
-    const related_entries = Array.from(iterateOverSearchResults(related_result.result.parameter));
-    const final_user = options.related_info.calculate_user(user, related_entries);
-    done(null, final_user);
+    return true;
 }
 
 export
 async function compare_auth (
     state: AuthFunctionState,
     options: X500PassportStrategyOptions,
+    dn: DistinguishedName,
     username: string,
     password: string,
-    done: DoneCallback,
-): Promise<void> {
+): Promise<boolean> {
     assert("compare" in options.substrategy);
     if (!state.dap_client) {
         state.dap_client = create_client(options);
@@ -437,67 +372,125 @@ async function compare_auth (
     if (!state.dap_client.rose.is_bound) {
         const bind_outcome = await bind(options, state.dap_client);
         if (!("result" in bind_outcome)) {
-            done(new Error());
-            return;
+            throw new Error("b0525d9f-cc3b-4526-9734-cab668f7551f");
         }
     }
     const dap_client = state.dap_client;
-    const [ name, calculated_compare_arg ] = options.substrategy.compare.get_compare_arg(username, password);
-    const compare_arg: CompareOptions = calculated_compare_arg ?? {
-        object: name,
+    const compare_arg: CompareOptions = {
+        object: dn,
         purported: new AttributeValueAssertion(
             userPwd["&id"],
             userPwd.encoderFor["&Type"]!({
                 clear: password,
             }, BER),
         ),
-        timeLimit: 15,
+        timeLimit: 15, // FIXME: Timeout
     };
     const outcome = await dap_client.compare(compare_arg);
     if (!("result" in outcome)) {
         handle_non_result(outcome, options, username);
-        done(new Error());
-        return;
+        return false;
     }
     const data = getOptionallyProtectedValue(outcome.result.parameter);
     if (!data.matched) {
         // WARNING: This MUST be the same behavior taken if
         // the entry does not exist, otherwise, it could
         // lead to information disclosure vulnerabilities.
-        done();
-        return;
+        return false;
     }
-    if (
-        !options.get_read_arg
-        || !options.entry_to_user
-    ) {
-        done(null, { username });
-        return;
-    }
+    return true;
+}
 
-    const read_arg = options.get_read_arg(name);
-    const read_outcome = await dap_client.read(read_arg);
-    if (!("result" in read_outcome)) {
-        done(new Error());
-        return;
+export
+async function attempt (
+    options: X500PassportStrategyOptions,
+    state: AuthFunctionState,
+    username: string,
+    password: string,
+): Promise<User | null> {
+    if (!state.dap_client) {
+        state.dap_client = create_client(options);
     }
-    const read_data = getOptionallyProtectedValue(read_outcome.result.parameter);
-    const user_info = options.entry_to_user(read_data.entry);
-    const user: User = { username, ...user_info };
-    if (!options.related_info) {
-        done(null, user);
-        return;
+    assert(state.dap_client);
+    if (!state.dap_client.rose.is_bound) {
+        const bind_outcome = await bind(options, state.dap_client);
+        if (!("result" in bind_outcome)) {
+            throw new Error("b0525d9f-cc3b-4526-9734-cab668f7551f");
+        }
     }
-    const related_entries_arg = options.related_info.get_related_entries(name);
-    const related_result = await dap_client.search(related_entries_arg);
-    if (!("result" in related_result)) {
-        handle_non_result(related_result, options, username);
-        done(new Error());
-        return;
+    const dn_or_search = await options.username_to_dn_or_search(username);
+    let entry: EntryInformation | undefined;
+    if (Array.isArray(dn_or_search)) {
+        entry = new EntryInformation(
+            {
+                rdnSequence: dn_or_search,
+            },
+            FALSE,
+            undefined,
+            undefined,
+            undefined,
+            TRUE,
+        );
+    } else {
+        const search_arg: SearchOptions = dn_or_search;
+        const search_outcome = await state.dap_client.search(search_arg);
+        if (!("result" in search_outcome)) {
+            handle_non_result(search_outcome, options, username);
+            throw new Error("472f2392-17d6-4d6e-83ce-4a156ed933fe");
+        }
+        const search_result = search_outcome.result.parameter;
+        // const search_data = getOptionallyProtectedValue(search_result);
+        const entries = Array.from(iterateOverSearchResults(search_result));
+        if (entries.length === 0) {
+            options?.log?.({
+                level: LOG_LEVEL_INFO,
+                type: "search_zero",
+                username,
+            });
+            return null;
+        }
+        if (entries.length > 1) {
+            options?.log?.({
+                level: LOG_LEVEL_WARN,
+                type: "search_multi",
+                username,
+            });
+        }
+        entry = entries[0];
     }
-    const related_entries = Array.from(iterateOverSearchResults(related_result.result.parameter));
-    const final_user = options.related_info.calculate_user(user, related_entries);
-    done(null, final_user);
+    if (!entry) {
+        options?.log?.({
+            level: LOG_LEVEL_ERROR,
+            type: "null_dn",
+            username,
+        });
+        return null;
+    }
+    let success: boolean = false;
+    if ("bind" in options.substrategy) {
+        success = await bind_auth(options, entry.name.rdnSequence, username, password);
+    } else if ("compare" in options.substrategy) {
+        success = await compare_auth(state, options, entry.name.rdnSequence, username, password);
+    } else {
+        options?.log?.({
+            level: LOG_LEVEL_ERROR,
+            type: "unrecognized_substrategy",
+            username,
+        });
+        return null;
+    }
+    if (!success) {
+        return null;
+    }
+    let user = await options.entry_to_user(entry);
+    if (!options.hydrate_user_info) {
+        return user;
+    }
+    const hydrator = await options.hydrate_user_info(state, user);
+    for await (const hydration of hydrator) {
+        user = hydration;
+    }
+    return user;
 }
 
 export
@@ -505,20 +498,15 @@ function get_auth_function (options: X500PassportStrategyOptions): [ Promise<DAP
     const state: AuthFunctionState = {
         dap_client: null,
     };
+    const auth_function = (
+        username: string,
+        password: string,
+        done: DoneCallback,
+    ) => attempt(options, state, username, password)
+        .then((result) => done(null, result ?? undefined))
+        .catch((e) => done(e));
     return [
         bind(options),
-        function (username: string, password: string, done: DoneCallback) {
-            if ("bind" in options.substrategy) {
-                bind_auth(state, options, username, password, done)
-                    .then()
-                    .catch((e) => done(e));
-            } else if ("compare" in options.substrategy) {
-                compare_auth(state, options, username, password, done)
-                    .then()
-                    .catch((e) => done(e));
-            } else {
-                done(new Error());
-            }
-        }
+        auth_function,
     ];
 }

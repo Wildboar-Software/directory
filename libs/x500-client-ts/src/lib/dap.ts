@@ -639,7 +639,9 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                 params.checkOverspecified,
                 params.relaxation,
                 params.extendedArea,
-                hs,
+                params.hierarchySelection
+                    ? hs
+                    : undefined,
                 search_opts,
                 params.joinArguments?.map((ja) => new JoinArgument(
                     ja.joinBaseObject,

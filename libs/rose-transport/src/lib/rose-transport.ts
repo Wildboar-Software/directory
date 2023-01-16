@@ -57,7 +57,7 @@ enum RejectReason {
 export
 interface Timeboxed {
     /**
-     * The time in milliseconds before
+     * The time in milliseconds before timeout.
      */
     timeout?: number;
 }

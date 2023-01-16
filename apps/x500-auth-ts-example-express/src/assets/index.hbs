@@ -11,9 +11,26 @@
     <hr />
     <div>
         <form method="post" action="/login">
-            <input id="username" name="username" type="text" />
-            <input id="password" name="password" type="text" />
-            <input type="submit" />
+            <div style="margin: 10px">
+                <label for="username">Username</label>
+                <input
+                    id="username"
+                    name="username"
+                    type="text"
+                    placeholder="jsmith"
+                    />
+            </div>
+            <div style="margin: 10px">
+                <label for="password">Password</label>
+                <input
+                    id="password"
+                    name="password"
+                    type="text"
+                    />
+            </div>
+            <div style="margin: 10px">
+                <input type="submit" />
+            </div>
         </form>
     </div>
 </body>
