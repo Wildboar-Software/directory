@@ -68,8 +68,7 @@ import { userPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.o
 import {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-
-// TODO: Configure positive and negative caching.
+import { differenceInMilliseconds } from "date-fns";
 
 const DIRECTORY_URL_SCHEMES: string[] = [
     "idm",
@@ -247,8 +246,15 @@ function create_client (options: X500PassportStrategyOptions) {
     return create_dap_client(rose);
 }
 
+// TODO: Use branded types for the timeout parameter:
+// https://dev.to/andercodes/typescript-tip-safer-functions-with-branded-types-14o4
+// Brand it "Milliseconds"
 export
-function bind (options: X500PassportStrategyOptions, dap_client?: DAPClient): Promise<DAPBindOutcome> {
+function bind (
+    options: X500PassportStrategyOptions,
+    dap_client: DAPClient | undefined,
+    timeout_ms: number,
+): Promise<DAPBindOutcome> {
     const dap = dap_client ?? create_client(options);
     const bind_arg = options.bind_as?.();
     return dap.bind({
@@ -258,6 +264,7 @@ function bind (options: X500PassportStrategyOptions, dap_client?: DAPClient): Pr
         ),
         ...bind_arg ?? {},
         protocol_id: id_ac_directoryAccessAC,
+        timeout: timeout_ms,
     });
 }
 
@@ -271,7 +278,6 @@ function handle_non_result (
         return;
     }
     else if ("error" in outcome) {
-        // TODO: Add extract problem function to @wildboar/x500.
         options?.log?.({
             level: LOG_LEVEL_WARN,
             type: "error",
@@ -318,6 +324,7 @@ async function bind_auth (
     dn: DistinguishedName,
     username: string,
     password: string,
+    timeout_ms: number,
 ): Promise<boolean> {
     assert("bind" in options.substrategy);
     const rose = rose_from_url(options.url);
@@ -343,6 +350,7 @@ async function bind_auth (
             ]),
             _unrecognizedExtensionsList: [],
         },
+        timeout: timeout_ms,
     });
     if (!("result" in outcome)) {
         if ("error" in outcome) {
@@ -361,7 +369,9 @@ async function compare_auth (
     dn: DistinguishedName,
     username: string,
     password: string,
+    timeout_ms: number,
 ): Promise<boolean> {
+    const start_time = new Date();
     assert("compare" in options.substrategy);
     if (!state.dap_client) {
         state.dap_client = create_client(options);
@@ -370,10 +380,14 @@ async function compare_auth (
     // We need to re-bind if disconnected. This might happen after a period of
     // inactivity.
     if (!state.dap_client.rose.is_bound) {
-        const bind_outcome = await bind(options, state.dap_client);
+        const bind_outcome = await bind(options, state.dap_client, timeout_ms);
         if (!("result" in bind_outcome)) {
             throw new Error("b0525d9f-cc3b-4526-9734-cab668f7551f");
         }
+    }
+    const time_elapsed = Math.abs(differenceInMilliseconds(start_time, new Date()));
+    if (time_elapsed > timeout_ms) {
+        return false;
     }
     const dap_client = state.dap_client;
     const compare_arg: CompareOptions = {
@@ -384,7 +398,7 @@ async function compare_auth (
                 clear: password,
             }, BER),
         ),
-        timeLimit: 15, // FIXME: Timeout
+        timeLimit: (timeout_ms - time_elapsed),
     };
     const outcome = await dap_client.compare(compare_arg);
     if (!("result" in outcome)) {
@@ -408,17 +422,31 @@ async function attempt (
     username: string,
     password: string,
 ): Promise<User | null> {
+    const start_time = new Date();
+    const timeout_ms: number = options.timeout_ms ?? 30_000;
     if (!state.dap_client) {
         state.dap_client = create_client(options);
     }
     assert(state.dap_client);
+    let time_elapsed = Math.abs(differenceInMilliseconds(start_time, new Date()));
+    if (time_elapsed > timeout_ms) {
+        return null;
+    }
     if (!state.dap_client.rose.is_bound) {
-        const bind_outcome = await bind(options, state.dap_client);
+        const bind_outcome = await bind(options, state.dap_client, (timeout_ms - time_elapsed));
         if (!("result" in bind_outcome)) {
             throw new Error("b0525d9f-cc3b-4526-9734-cab668f7551f");
         }
     }
+    time_elapsed = Math.abs(differenceInMilliseconds(start_time, new Date()));
+    if (time_elapsed > timeout_ms) {
+        return null;
+    }
     const dn_or_search = await options.username_to_dn_or_search(username);
+    time_elapsed = Math.abs(differenceInMilliseconds(start_time, new Date()));
+    if (time_elapsed > timeout_ms) {
+        return null;
+    }
     let entry: EntryInformation | undefined;
     if (Array.isArray(dn_or_search)) {
         entry = new EntryInformation(
@@ -433,7 +461,10 @@ async function attempt (
         );
     } else {
         const search_arg: SearchOptions = dn_or_search;
-        const search_outcome = await state.dap_client.search(search_arg);
+        const search_outcome = await state.dap_client.search({
+            ...search_arg,
+            timeLimit: search_arg.timeLimit ?? Math.floor(timeout_ms - time_elapsed),
+        });
         if (!("result" in search_outcome)) {
             handle_non_result(search_outcome, options, username);
             throw new Error("472f2392-17d6-4d6e-83ce-4a156ed933fe");
@@ -467,10 +498,27 @@ async function attempt (
         return null;
     }
     let success: boolean = false;
+    time_elapsed = Math.abs(differenceInMilliseconds(start_time, new Date()));
+    if (time_elapsed > timeout_ms) {
+        return null;
+    }
     if ("bind" in options.substrategy) {
-        success = await bind_auth(options, entry.name.rdnSequence, username, password);
+        success = await bind_auth(
+            options,
+            entry.name.rdnSequence,
+            username,
+            password,
+            (timeout_ms - time_elapsed),
+        );
     } else if ("compare" in options.substrategy) {
-        success = await compare_auth(state, options, entry.name.rdnSequence, username, password);
+        success = await compare_auth(
+            state,
+            options,
+            entry.name.rdnSequence,
+            username,
+            password,
+            (timeout_ms - time_elapsed),
+        );
     } else {
         options?.log?.({
             level: LOG_LEVEL_ERROR,
@@ -486,8 +534,16 @@ async function attempt (
     if (!options.hydrate_user_info) {
         return user;
     }
+    time_elapsed = Math.abs(differenceInMilliseconds(start_time, new Date()));
+    if (time_elapsed > timeout_ms) {
+        return null;
+    }
     const hydrator = await options.hydrate_user_info(state, user);
     for await (const hydration of hydrator) {
+        time_elapsed = Math.abs(differenceInMilliseconds(start_time, new Date()));
+        if (time_elapsed > timeout_ms) {
+            return null;
+        }
         user = hydration;
     }
     return user;
@@ -506,7 +562,7 @@ function get_auth_function (options: X500PassportStrategyOptions): [ Promise<DAP
         .then((result) => done(null, result ?? undefined))
         .catch((e) => done(e));
     return [
-        bind(options),
+        bind(options, undefined, options.timeout_ms ?? 30_000),
         auth_function,
     ];
 }
