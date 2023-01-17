@@ -5,6 +5,7 @@ import type {
     WithOutcomeStatistics,
     PagedResultsRequestState,
     IndexableOID,
+    Context,
 } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
@@ -23,7 +24,7 @@ import {
 import {
     HierarchySelections_self,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/HierarchySelections.ta";
-import { OBJECT_IDENTIFIER, TRUE_BIT, TRUE, ASN1Element, ObjectIdentifier, BOOLEAN } from "asn1-ts";
+import { OBJECT_IDENTIFIER, TRUE_BIT, TRUE, ASN1Element, ObjectIdentifier, BOOLEAN, ASN1TagClass, ASN1UniversalType } from "asn1-ts";
 import readSubordinates from "../dit/readSubordinates";
 import {
     ChainingArguments,
@@ -266,6 +267,50 @@ import type {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import { printInvokeId } from "../utils/printInvokeId";
 import { entryACI, prescriptiveACI, subentryACI } from "@wildboar/x500/src/lib/collections/attributes";
+import { AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
+import { FilterItem } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FilterItem.ta";
+import { Prisma } from "@prisma/client";
+import getAttributeParentTypes from "../x500/getAttributeParentTypes";
+import {
+    oid,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/oid.oa";
+import {
+    integer,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integer.oa";
+import {
+    boolean_,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/boolean.oa";
+// TODO: Once value normalization is implemented, these shall be incorporated
+// into `convertFilterToPrismaSelect()`.
+// import {
+//     uuid,
+// } from "@wildboar/parity-schema/src/lib/modules/UUID/uuid.oa";
+// import {
+//     bitString,
+// } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/bitString.oa";
+// import {
+//     countryString,
+// } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/countryString.oa";
+// import {
+//     octetString,
+// } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/octetString.oa";
+import {
+    objectIdentifierMatch,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/objectIdentifierMatch.oa";
+import {
+    integerMatch,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integerMatch.oa";
+import {
+    booleanMatch,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/booleanMatch.oa";
+// TODO: Once value normalization is implemented, these shall be incorporated
+// into `convertFilterToPrismaSelect()`.
+// import {
+//     bitStringMatch,
+// } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/bitStringMatch.oa";
+// import {
+//     octetStringMatch,
+// } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/octetStringMatch.oa";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 
@@ -273,6 +318,7 @@ const BYTES_IN_A_UUID: number = 16;
 const PARENT: string = id_oc_parent.toString();
 const CHILD: string = id_oc_child.toString();
 const AUTONOMOUS: string = id_ar_autonomousArea.toString();
+const FALSE_CONTENT_OCTETS: Buffer = Buffer.from([ 0x00 ]);
 
 export
 interface SearchState extends Partial<WithRequestStatistics>, Partial<WithOutcomeStatistics> {
@@ -338,250 +384,365 @@ because, in the search algorithm, when doing a subtree search, even if an entry
 does not match, its subordinates still must be searched.
 */
 
-// function canFilterAttributeValueTable (
-//     ctx: Context,
-//     types: AttributeType[],
-// ): boolean {
-//     for (const t of types) {
-//         const spec = ctx.attributeTypes.get(t.toString());
-//         if (
-//             !spec
-//             || spec.driver
-//             || spec.noUserModification
-//             || spec.collective
-//             || spec.dummy
-//             || (spec.usage !== AttributeUsage_userApplications)
-//         ) {
-//             return false;
-//         }
-//     }
-//     return true;
-// }
+function canFilterAttributeValueTable (
+    ctx: Context,
+    types: AttributeType[],
+): boolean {
+    for (const t of types) {
+        const spec = ctx.attributeTypes.get(t.toString());
+        if (
+            !spec
+            || spec.driver
+            || spec.collective
+            || spec.dummy
+        ) {
+            return false;
+        }
+    }
+    return true;
+}
 
-// function convertFilterItemToPrismaSelect (
-//     ctx: Context,
-//     filterItem: FilterItem,
-// ): Partial<Prisma.EntryWhereInput> | undefined {
-//     if ("equality" in filterItem) {
-//         const type_ = filterItem.equality.type_;
-//         if (type_.isEqualTo(objectClass["&id"])) {
-//             return {
-//                 EntryObjectClass: {
-//                     some: {
-//                         object_class: filterItem
-//                             .equality
-//                             .assertion
-//                             .objectIdentifier
-//                             .toString(),
-//                     },
-//                 },
-//             };
-//         }
-//         if (type_.isEqualTo(administrativeRole["&id"])) {
-//             return {
-//                 EntryAdministrativeRole: {
-//                     some: {
-//                         administrativeRole: filterItem
-//                             .equality
-//                             .assertion
-//                             .objectIdentifier
-//                             .toString(),
-//                     },
-//                 },
-//             };
-//         }
-//         if (type_.isEqualTo(accessControlScheme["&id"])) {
-//             return {
-//                 EntryAccessControlScheme: {
-//                     some: {
-//                         accessControlScheme: filterItem
-//                             .equality
-//                             .assertion
-//                             .objectIdentifier
-//                             .toString(),
-//                     },
-//                 },
-//             };
-//         }
-//         if (type_.isEqualTo(aliasedEntryName["&id"])) {
-//             return {
-//                 alias: true,
-//                 AliasEntry: {
-//                     some: {}, // REVIEW: I feel like this would crash. No way Prisma actually lets you do this.
-//                 },
-//             };
-//         }
-//         // if (type_.isEqualTo(hierarchyTop["&id"])) {
+function convertFilterItemToPrismaSelect (
+    ctx: Context,
+    filterItem: FilterItem,
+): Partial<Prisma.EntryWhereInput> | undefined {
+    if ("equality" in filterItem) {
+        const type_ = filterItem.equality.type_;
+        const value = filterItem.equality.assertion.value;
+        if (type_.isEqualTo(objectClass["&id"])) {
+            return {
+                EntryObjectClass: {
+                    some: {
+                        object_class: filterItem
+                            .equality
+                            .assertion
+                            .objectIdentifier
+                            .toString(),
+                    },
+                },
+            };
+        }
+        // TODO: You can pre-filter DN-typed values using the `jer` field by
+        // checking that every RDN has the correct attribute types.
+        // if (type_.isEqualTo(aliasedEntryName["&id"])) {
+        //     return {
+        //         alias: true,
+        //         AliasEntry: {
+        //             some: {}, // REVIEW: I feel like this would crash. No way Prisma actually lets you do this.
+        //         },
+        //     };
+        // }
+        const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
+        if (!canFilterAttributeValueTable(ctx, superTypes)) {
+            return undefined;
+        }
+        let ldapSyntax: OBJECT_IDENTIFIER | undefined;
+        let eqMatchingRule: OBJECT_IDENTIFIER | undefined;
+        for (const st of superTypes) {
+            const spec = ctx.attributeTypes.get(st.toString());
+            if (!spec) {
+                continue;
+            }
+            if (spec.equalityMatchingRule) {
+                eqMatchingRule = spec.equalityMatchingRule;
+            }
+            if (spec.ldapSyntax) {
+                ldapSyntax = spec.ldapSyntax;
+            }
+            if (eqMatchingRule || ldapSyntax) {
+                break;
+            }
+        }
+        switch (eqMatchingRule?.toString()) {
+            case (objectIdentifierMatch["&id"].toString()): {
+                return {
+                    AttributeValue: {
+                        some: {
+                            type_oid: {
+                                in: superTypes.map((st) => st.toBytes()),
+                            },
+                            tag_class: ASN1TagClass.universal,
+                            constructed: false,
+                            tag_number: ASN1UniversalType.objectIdentifier,
+                            content_octets: Buffer.from(value.buffer, value.byteOffset, value.byteLength),
+                        },
+                    },
+                };
+            }
+            case (integerMatch["&id"].toString()): {
+                return {
+                    AttributeValue: {
+                        some: {
+                            type_oid: {
+                                in: superTypes.map((st) => st.toBytes()),
+                            },
+                            tag_class: ASN1TagClass.universal,
+                            constructed: false,
+                            tag_number: ASN1UniversalType.integer,
+                            content_octets: Buffer.from(value.buffer, value.byteOffset, value.byteLength),
+                        },
+                    },
+                };
+            }
+            case (booleanMatch["&id"].toString()): {
+                return {
+                    AttributeValue: {
+                        some: {
+                            type_oid: {
+                                in: superTypes.map((st) => st.toBytes()),
+                            },
+                            tag_class: ASN1TagClass.universal,
+                            constructed: false,
+                            tag_number: ASN1UniversalType.boolean,
+                            content_octets: filterItem.equality.assertion.boolean
+                                ? { not: FALSE_CONTENT_OCTETS }
+                                : FALSE_CONTENT_OCTETS,
+                        },
+                    },
+                };
+            }
+        }
+        switch (ldapSyntax?.toString()) {
+            case (oid["&id"].toString()): {
+                return {
+                    AttributeValue: {
+                        some: {
+                            type_oid: {
+                                in: superTypes.map((st) => st.toBytes()),
+                            },
+                            tag_class: ASN1TagClass.universal,
+                            constructed: false,
+                            tag_number: ASN1UniversalType.objectIdentifier,
+                            content_octets: Buffer.from(value.buffer, value.byteOffset, value.byteLength),
+                        },
+                    },
+                };
+            }
+            case (integer["&id"].toString()): {
+                return {
+                    AttributeValue: {
+                        some: {
+                            type_oid: {
+                                in: superTypes.map((st) => st.toBytes()),
+                            },
+                            tag_class: ASN1TagClass.universal,
+                            constructed: false,
+                            tag_number: ASN1UniversalType.integer,
+                            content_octets: Buffer.from(value.buffer, value.byteOffset, value.byteLength),
+                        },
+                    },
+                };
+            }
+            case (boolean_["&id"].toString()): {
+                return {
+                    AttributeValue: {
+                        some: {
+                            type_oid: {
+                                in: superTypes.map((st) => st.toBytes()),
+                            },
+                            tag_class: ASN1TagClass.universal,
+                            constructed: false,
+                            tag_number: ASN1UniversalType.boolean,
+                            content_octets: filterItem.equality.assertion.boolean
+                                ? { not: FALSE_CONTENT_OCTETS }
+                                : FALSE_CONTENT_OCTETS,
+                        },
+                    },
+                };
+            }
+            // case (uuid["&id"].toString()): {
+            //     return {
+            //         AttributeValue: {
+            //             some: {
+            //                 type_oid: {
+            //                     in: superTypes.map((st) => st.toBytes()),
+            //                 },
+            //             },
+            //         },
+            //     };
+            // }
+            // case (bitString["&id"].toString()): {
+            //     return {
+            //         AttributeValue: {
+            //             some: {
+            //                 type_oid: {
+            //                     in: superTypes.map((st) => st.toBytes()),
+            //                 },
+            //             },
+            //         },
+            //     };
+            // }
+            // case (countryString["&id"].toString()): {
+            //     return {
+            //         AttributeValue: {
+            //             some: {
+            //                 type_oid: {
+            //                     in: superTypes.map((st) => st.toBytes()),
+            //                 },
+            //             },
+            //         },
+            //     };
+            // }
+            // case (octetString["&id"].toString()): {
+            //     return {
+            //         AttributeValue: {
+            //             some: {
+            //                 type_oid: {
+            //                     in: superTypes.map((st) => st.toBytes()),
+            //                 },
+            //             },
+            //         },
+            //     };
+            // }
+        }
+        return {
+            AttributeValue: {
+                some: {
+                    type_oid: {
+                        in: superTypes.map((st) => st.toBytes()),
+                    },
+                },
+            },
+        };
+    } else if ("substrings" in filterItem) {
+        const type_ = filterItem.substrings.type_;
+        const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
+        if (!canFilterAttributeValueTable(ctx, superTypes)) {
+            return undefined;
+        }
+        return {
+            AttributeValue: {
+                some: {
+                    type_oid: {
+                        in: superTypes.map((st) => st.toBytes()),
+                    },
+                },
+            },
+        };
+    } else if ("greaterOrEqual" in filterItem) {
+        const type_ = filterItem.greaterOrEqual.type_;
+        const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
+        if (!canFilterAttributeValueTable(ctx, superTypes)) {
+            return undefined;
+        }
+        return {
+            AttributeValue: {
+                some: {
+                    type_oid: {
+                        in: superTypes.map((st) => st.toBytes()),
+                    },
+                },
+            },
+        };
+    } else if ("lessOrEqual" in filterItem) {
+        const type_ = filterItem.lessOrEqual.type_;
+        const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
+        if (!canFilterAttributeValueTable(ctx, superTypes)) {
+            return undefined;
+        }
+        return {
+            AttributeValue: {
+                some: {
+                    type_oid: {
+                        in: superTypes.map((st) => st.toBytes()),
+                    },
+                },
+            },
+        };
+    } else if ("present" in filterItem) {
+        const type_ = filterItem.present;
+        const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
+        if (!canFilterAttributeValueTable(ctx, superTypes)) {
+            return undefined;
+        }
+        return {
+            AttributeValue: {
+                some: {
+                    type_oid: {
+                        in: superTypes.map((st) => st.toBytes()),
+                    },
+                },
+            },
+        };
+    } else if ("approximateMatch" in filterItem) {
+        const type_ = filterItem.approximateMatch.type_;
+        const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
+        if (!canFilterAttributeValueTable(ctx, superTypes)) {
+            return undefined;
+        }
+        return {
+            AttributeValue: {
+                some: {
+                    type_oid: {
+                        in: superTypes.map((st) => st.toBytes()),
+                    },
+                },
+            },
+        };
+    } else if ("extensibleMatch" in filterItem) {
+        const type_ = filterItem.extensibleMatch.type_;
+        if (!type_) {
+            return undefined;
+        }
+        const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
+        if (!canFilterAttributeValueTable(ctx, superTypes)) {
+            return undefined;
+        }
+        return {
+            AttributeValue: {
+                some: {
+                    type_oid: {
+                        in: superTypes.map((st) => st.toBytes()),
+                    },
+                },
+            },
+        };
+    } else if ("contextPresent" in filterItem) {
+        const type_ = filterItem.contextPresent.type_;
+        const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
+        if (!canFilterAttributeValueTable(ctx, superTypes)) {
+            return undefined;
+        }
+        return {
+            AttributeValue: {
+                some: {
+                    type_oid: {
+                        in: superTypes.map((st) => st.toBytes()),
+                    },
+                },
+            },
+        };
+    } else {
+        return undefined;
+    }
+}
 
-//         // }
-//         // if (type_.isEqualTo(hierarchyLevel["&id"])) {
-
-//         // }
-//         // if (type_.isEqualTo(hierarchyBelow["&id"])) {
-
-//         // }
-//         // if (type_.isEqualTo(hierarchyParent["&id"])) {
-
-//         // }
-//         if (type_.isEqualTo(uniqueIdentifier["&id"])) {
-//             return {
-//                 UniqueIdentifier: {
-//                     some: {}, // REVIEW: I feel like this would crash. No way Prisma actually lets you do this.
-//                 },
-//             };
-//         }
-//         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
-//         if (!canFilterAttributeValueTable(ctx, superTypes)) {
-//             return undefined;
-//         }
-//         return {
-//             AttributeValue: {
-//                 some: {
-//                     type: {
-//                         in: superTypes.map((st) => st.toString()),
-//                     },
-//                 },
-//             },
-//         };
-//     } else if ("substrings" in filterItem) {
-//         const type_ = filterItem.substrings.type_;
-//         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
-//         if (!canFilterAttributeValueTable(ctx, superTypes)) {
-//             return undefined;
-//         }
-//         return {
-//             AttributeValue: {
-//                 some: {
-//                     type: {
-//                         in: superTypes.map((st) => st.toString()),
-//                     },
-//                 },
-//             },
-//         };
-//     } else if ("greaterOrEqual" in filterItem) {
-//         const type_ = filterItem.greaterOrEqual.type_;
-//         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
-//         if (!canFilterAttributeValueTable(ctx, superTypes)) {
-//             return undefined;
-//         }
-//         return {
-//             AttributeValue: {
-//                 some: {
-//                     type: {
-//                         in: superTypes.map((st) => st.toString()),
-//                     },
-//                 },
-//             },
-//         };
-//     } else if ("lessOrEqual" in filterItem) {
-//         const type_ = filterItem.lessOrEqual.type_;
-//         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
-//         if (!canFilterAttributeValueTable(ctx, superTypes)) {
-//             return undefined;
-//         }
-//         return {
-//             AttributeValue: {
-//                 some: {
-//                     type: {
-//                         in: superTypes.map((st) => st.toString()),
-//                     },
-//                 },
-//             },
-//         };
-//     } else if ("present" in filterItem) {
-//         const type_ = filterItem.present;
-//         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
-//         if (!canFilterAttributeValueTable(ctx, superTypes)) {
-//             return undefined;
-//         }
-//         return {
-//             AttributeValue: {
-//                 some: {
-//                     type: {
-//                         in: superTypes.map((st) => st.toString()),
-//                     },
-//                 },
-//             },
-//         };
-//     } else if ("approximateMatch" in filterItem) {
-//         const type_ = filterItem.approximateMatch.type_;
-//         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
-//         if (!canFilterAttributeValueTable(ctx, superTypes)) {
-//             return undefined;
-//         }
-//         return {
-//             AttributeValue: {
-//                 some: {
-//                     type: {
-//                         in: superTypes.map((st) => st.toString()),
-//                     },
-//                 },
-//             },
-//         };
-//     } else if ("extensibleMatch" in filterItem) {
-//         const type_ = filterItem.extensibleMatch.type_;
-//         if (!type_) {
-//             return undefined;
-//         }
-//         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
-//         if (!canFilterAttributeValueTable(ctx, superTypes)) {
-//             return undefined;
-//         }
-//         return {
-//             AttributeValue: {
-//                 some: {
-//                     type: {
-//                         in: superTypes.map((st) => st.toString()),
-//                     },
-//                 },
-//             },
-//         };
-//     } else if ("contextPresent" in filterItem) {
-//         const type_ = filterItem.contextPresent.type_;
-//         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
-//         if (!canFilterAttributeValueTable(ctx, superTypes)) {
-//             return undefined;
-//         }
-//         return {
-//             AttributeValue: {
-//                 some: {
-//                     type: {
-//                         in: superTypes.map((st) => st.toString()),
-//                     },
-//                 },
-//             },
-//         };
-//     } else {
-//         return undefined;
-//     }
-// }
-
-// function convertFilterToPrismaSelect (
-//     ctx: Context,
-//     filter: Filter,
-// ): Partial<Prisma.EntryWhereInput> | undefined {
-//     if ("item" in filter) {
-//         return convertFilterItemToPrismaSelect(ctx, filter.item);
-//     } else if ("and" in filter) {
-//         return {
-//             AND: filter.and
-//                 .map((sub) => convertFilterToPrismaSelect(ctx, sub))
-//                 .filter((sub): sub is Partial<Prisma.EntryWhereInput> => !!sub),
-//         };
-//     } else if ("or" in filter) {
-//         return {
-//             OR: filter.or
-//                 .map((sub) => convertFilterToPrismaSelect(ctx, sub))
-//                 .filter((sub): sub is Partial<Prisma.EntryWhereInput> => !!sub),
-//         };
-//     } else if ("not" in filter) {
-//         return {
-//             NOT: convertFilterToPrismaSelect(ctx, filter.not),
-//         };
-//     } else {
-//         return undefined;
-//     }
-// }
+function convertFilterToPrismaSelect (
+    ctx: Context,
+    filter: Filter,
+): Partial<Prisma.EntryWhereInput> | undefined {
+    if ("item" in filter) {
+        return convertFilterItemToPrismaSelect(ctx, filter.item);
+    } else if ("and" in filter) {
+        return {
+            AND: filter.and
+                .map((sub) => convertFilterToPrismaSelect(ctx, sub))
+                .filter((sub): sub is Partial<Prisma.EntryWhereInput> => !!sub),
+        };
+    } else if ("or" in filter) {
+        return {
+            OR: filter.or
+                .map((sub) => convertFilterToPrismaSelect(ctx, sub))
+                .filter((sub): sub is Partial<Prisma.EntryWhereInput> => !!sub),
+        };
+    } else if ("not" in filter) {
+        return {
+            NOT: convertFilterToPrismaSelect(ctx, filter.not),
+        };
+    } else {
+        return undefined;
+    }
+}
 
 /**
  * @summary Get the database IDs of family members to return
@@ -2266,9 +2427,9 @@ async function search_i (
         undefined,
         cursorId,
         {
-            // ...(data.filter
-            //     ? convertFilterToPrismaSelect(ctx, data.filter)
-            //     : {}),
+            ...(data.filter
+                ? convertFilterToPrismaSelect(ctx, data.filter)
+                : {}),
             subentry: subentries,
             EntryObjectClass: (searchFamilyInEffect
                 ? {
