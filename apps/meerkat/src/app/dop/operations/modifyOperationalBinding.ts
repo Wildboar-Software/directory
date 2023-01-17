@@ -32,15 +32,11 @@ import {
     OpBindingErrorParam_problem_duplicateID,
     OpBindingErrorParam_problem_invalidNewID,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam-problem.ta";
-import {
-    _decode_PresentationAddress,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PresentationAddress.ta";
 import type {
     Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
 import { ASN1Element, BERElement, FALSE, packBits, unpackBits } from "asn1-ts";
 import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
-import compareSocketToNSAP from "@wildboar/x500/src/lib/distributed/compareSocketToNSAP";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 import {
     _encode_CertificationPath,
