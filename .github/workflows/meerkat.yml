@@ -147,6 +147,7 @@ jobs:
           - 'rose-transport'
           - 'osi-net'
           - 'ocsp-client'
+          - 'x500-client-ts'
           - 'x500-auth-ts'
     steps:
       - name: Checkout
