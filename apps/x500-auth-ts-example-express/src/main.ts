@@ -58,6 +58,7 @@ import {
 import { id_ac_directoryAccessAC } from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directoryAccessAC.va";
 import { SimpleCredentials } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
 import { TRUE_BIT } from "asn1-ts";
+import { Attribute } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Attribute.ta";
 
 const us_str: CountryName = "US";
 const gb_str: CountryName = "GB";

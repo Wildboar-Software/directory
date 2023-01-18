@@ -69,6 +69,11 @@ import {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import { differenceInMilliseconds } from "date-fns";
+import { Socket, createConnection } from "node:net";
+import { TLSSocket, connect as tlsConnect, TLSSocketOptions } from "node:tls";
+import {
+    TLSResponse_success,
+} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/TLSResponse.ta";
 
 const DIRECTORY_URL_SCHEMES: string[] = [
     "idm",
@@ -169,7 +174,7 @@ export const rejectReasonToString: Record<RejectReason, string> = {
     [RejectReason.unsupported_operation_request]: "unsupported_operation_request",
 };
 
-function *iterateOverSearchResults (result: SearchResult): Generator<EntryInformation, undefined> {
+function* iterateOverSearchResults(result: SearchResult): Generator<EntryInformation, undefined> {
     const data = getOptionallyProtectedValue(result);
     if ("searchInfo" in data) {
         for (const entry of data.searchInfo.entries) {
@@ -177,7 +182,7 @@ function *iterateOverSearchResults (result: SearchResult): Generator<EntryInform
         }
     } else if ("uncorrelatedSearchInfo" in data) {
         for (const subresult of data.uncorrelatedSearchInfo) {
-            yield *iterateOverSearchResults(subresult);
+            yield* iterateOverSearchResults(subresult);
         }
     } else {
         return undefined;
@@ -188,10 +193,10 @@ function *iterateOverSearchResults (result: SearchResult): Generator<EntryInform
 export type User = Record<string, unknown>;
 
 export
-interface BindSubstrategyOptions {}
+interface BindSubstrategyOptions { }
 
 export
-interface CompareSubstrategyOptions {}
+interface CompareSubstrategyOptions { }
 
 export type X500PassportSubstrategy =
     | {
@@ -206,6 +211,7 @@ export type X500PassportSubstrategy =
 export
 interface X500PassportStrategyOptions extends DAPOptions {
     url: string | URL;
+    tlsOptions?: TLSSocketOptions;
     timeout_ms?: number;
     bind_as?: () => Promise<DAPBindParameters>;
     log?: (event: LogEvent) => unknown;
@@ -222,7 +228,7 @@ interface X500PassportStrategyOptions extends DAPOptions {
     entry_to_user: (entry: EntryInformation) => Promise<User>;
 
     // Step 4: Follow up to produce the final user info.
-    hydrate_user_info?: (state: AuthFunctionState, user: User) => Promise<AsyncIterableIterator<User>>;
+    hydrate_user_info?: (state: AuthFunctionState, user: User) => Promise<User>;
 }
 
 export
@@ -234,8 +240,99 @@ export type DoneCallback = (err?: any, user?: User | undefined | false) => unkno
 export type AuthFunction = (username: string, password: string, done: DoneCallback) => void;
 
 export
-function create_client (options: X500PassportStrategyOptions) {
-    const rose = rose_from_url(options.url);
+async function create_client(options: X500PassportStrategyOptions) {
+    const url: URL = (options.url instanceof URL)
+        ? options.url
+        : new URL(options.url);
+    const host: string = url.hostname;
+    const port: number = url.port.length
+        ? Number.parseInt(url.port, 10)
+        : (() => {
+            throw new Error("Please specify a port number in the DSA URL.");
+        })();
+    let socket!: Socket;
+    await new Promise<void>((resolve, reject) => {
+        socket = url.protocol.slice(0, -1).toLowerCase().endsWith("s")
+            ? tlsConnect({
+                host,
+                port,
+                ...options.tlsOptions ?? {},
+                timeout: options.timeout_ms,
+            }, resolve)
+            : createConnection({
+                host,
+                port,
+                timeout: options.timeout_ms,
+            }, resolve);
+
+        socket.on("error", (e) => {
+            options?.log?.({
+                level: LOG_LEVEL_ERROR,
+                type: "socket_error",
+                message: e.message,
+            });
+            reject(e);
+        });
+
+        socket.on("timeout", () => {
+            options?.log?.({
+                level: LOG_LEVEL_ERROR,
+                type: "socket_timeout",
+                message: "Socket timed out.",
+            });
+            reject();
+        });
+
+        socket.on("lookup", (e, address, family, host) => {
+            if (e) {
+                options?.log?.({
+                    level: LOG_LEVEL_ERROR,
+                    type: "socket_lookup",
+                    message: e.message,
+                    other: {
+                        address,
+                        family,
+                        host,
+                    },
+                });
+                reject(e);
+            } else {
+                options?.log?.({
+                    level: LOG_LEVEL_DEBUG,
+                    type: "socket_lookup",
+                    other: {
+                        address,
+                        family,
+                        host,
+                    },
+                });
+            }
+        });
+
+        if (socket instanceof TLSSocket) {
+            const s = socket;
+            socket.once("secureConnect", () => {
+                if (!s.authorized && (options.tlsOptions?.rejectUnauthorized ?? true)) {
+                    socket.destroy(); // Destroy for immediate and complete denial.
+                    options?.log?.({
+                        level: LOG_LEVEL_ERROR,
+                        type: "tls_auth_fail",
+                        message: s.authorizationError.message,
+                    });
+                    reject();
+                }
+            });
+            // TODO: OCSP
+        }
+    });
+
+    const rose = rose_from_url(
+        options.url,
+        socket,
+        undefined,
+        options.tlsOptions,
+        options.timeout_ms,
+    );
     if (!rose) {
         throw new Error(
             `Invalid URL. The problem could be an unrecognized URL scheme. `
@@ -246,21 +343,39 @@ function create_client (options: X500PassportStrategyOptions) {
     return create_dap_client(rose);
 }
 
-// TODO: Use branded types for the timeout parameter:
-// https://dev.to/andercodes/typescript-tip-safer-functions-with-branded-types-14o4
-// Brand it "Milliseconds"
 export
-function bind (
+async function bind(
     options: X500PassportStrategyOptions,
     dap_client: DAPClient | undefined,
     timeout_ms: number,
 ): Promise<DAPBindOutcome> {
-    const dap = dap_client ?? create_client(options);
+    const dap = dap_client ?? await create_client(options);
     const bind_arg = options.bind_as?.();
+    if (options.tlsOptions && dap.startTLS) {
+        const tls_outcome = await dap.startTLS({
+            timeout: timeout_ms,
+        });
+        if (("not_supported_locally" in tls_outcome) || ("already_in_use" in tls_outcome)) {
+            return { other: tls_outcome };
+        }
+        if (!("response" in tls_outcome)) {
+            return tls_outcome;
+        }
+        // TLSResponse ::= ENUMERATED {
+        //     success         (0),
+        //     operationsError (1),
+        //     protocolError   (2),
+        //     unavailable     (3),
+        //     ...}
+        const tls_response = tls_outcome.response;
+        if (tls_response !== TLSResponse_success) {
+            return { other: tls_outcome };
+        }
+    }
     return dap.bind({
         parameter: new DirectoryBindArgument(
             undefined,
-            new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT ]),
+            new Uint8ClampedArray([TRUE_BIT, TRUE_BIT]),
         ),
         ...bind_arg ?? {},
         protocol_id: id_ac_directoryAccessAC,
@@ -269,7 +384,7 @@ function bind (
 }
 
 export
-function handle_non_result (
+function handle_non_result(
     outcome: OperationOutcome<any>,
     options: X500PassportStrategyOptions,
     username: string,
@@ -319,7 +434,7 @@ function handle_non_result (
 }
 
 export
-async function bind_auth (
+async function bind_auth(
     options: X500PassportStrategyOptions,
     dn: DistinguishedName,
     username: string,
@@ -363,7 +478,7 @@ async function bind_auth (
 }
 
 export
-async function compare_auth (
+async function compare_auth(
     state: AuthFunctionState,
     options: X500PassportStrategyOptions,
     dn: DistinguishedName,
@@ -373,8 +488,12 @@ async function compare_auth (
 ): Promise<boolean> {
     const start_time = new Date();
     assert("compare" in options.substrategy);
-    if (!state.dap_client) {
-        state.dap_client = create_client(options);
+    if (!state.dap_client || !state.dap_client.rose.socket?.readable) {
+        state.dap_client = await create_client(options);
+    }
+    const socket = state.dap_client.rose.socket;
+    if (!socket?.readable || !socket?.writable) {
+        state.dap_client = await create_client(options);
     }
     assert(state.dap_client);
     // We need to re-bind if disconnected. This might happen after a period of
@@ -416,7 +535,7 @@ async function compare_auth (
 }
 
 export
-async function attempt (
+async function attempt(
     options: X500PassportStrategyOptions,
     state: AuthFunctionState,
     username: string,
@@ -425,7 +544,11 @@ async function attempt (
     const start_time = new Date();
     const timeout_ms: number = options.timeout_ms ?? 30_000;
     if (!state.dap_client) {
-        state.dap_client = create_client(options);
+        state.dap_client = await create_client(options);
+    }
+    const socket = state.dap_client.rose.socket;
+    if (!socket?.readable || !socket?.writable) {
+        state.dap_client = await create_client(options);
     }
     assert(state.dap_client);
     let time_elapsed = Math.abs(differenceInMilliseconds(start_time, new Date()));
@@ -530,7 +653,7 @@ async function attempt (
     if (!success) {
         return null;
     }
-    let user = await options.entry_to_user(entry);
+    const user = await options.entry_to_user(entry);
     if (!options.hydrate_user_info) {
         return user;
     }
@@ -538,19 +661,11 @@ async function attempt (
     if (time_elapsed > timeout_ms) {
         return null;
     }
-    const hydrator = await options.hydrate_user_info(state, user);
-    for await (const hydration of hydrator) {
-        time_elapsed = Math.abs(differenceInMilliseconds(start_time, new Date()));
-        if (time_elapsed > timeout_ms) {
-            return null;
-        }
-        user = hydration;
-    }
-    return user;
+    return options.hydrate_user_info(state, user);
 }
 
 export
-function get_auth_function (options: X500PassportStrategyOptions): [ Promise<DAPBindOutcome>, AuthFunction ] {
+function get_auth_function(options: X500PassportStrategyOptions): [Promise<DAPBindOutcome>, AuthFunction] {
     const state: AuthFunctionState = {
         dap_client: null,
     };
