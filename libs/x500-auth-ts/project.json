@@ -12,7 +12,13 @@
                 "tsConfig": "libs/x500-auth-ts/tsconfig.lib.json",
                 "assets": ["libs/x500-auth-ts/*.md"],
                 "buildableProjectDepsInPackageJsonType": "dependencies"
-            }
+            },
+            "dependsOn": [
+                {
+                    "projects": "dependencies",
+                    "target": "build"
+                }
+            ]
         },
         "publish": {
             "executor": "@nrwl/workspace:run-commands",

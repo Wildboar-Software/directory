@@ -12,7 +12,13 @@
                 "main": "libs/x500-client-ts/src/index.ts",
                 "tsConfig": "libs/x500-client-ts/tsconfig.lib.json",
                 "assets": ["libs/x500-client-ts/*.md"]
-            }
+            },
+            "dependsOn": [
+                {
+                    "projects": "dependencies",
+                    "target": "build"
+                }
+            ]
         },
         "publish": {
             "executor": "nx:run-commands",
