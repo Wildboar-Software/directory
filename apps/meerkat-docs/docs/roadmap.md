@@ -4,7 +4,32 @@ We will not promise any particular schedule of delivery of features or bug fixes
 at this time. However, the very high-level roadmap for Meerkat DSA can be
 broken down to the following versions.
 
-## Version 1.4.0 - Schema Update ("Wildboar Schema")
+## Version 2.1.0 - SCR Procedure
+
+This update will introduce support for the Search Continuation Reference (SCR)
+procedure, which will allow your search requests to results spanning across
+DSAs. This update will also include some minor performance enhancements.
+
+Beyond that, a lot of work done around this time will focus on SDKs, clients,
+and other tooling.
+
+## Version 2.2.0 - Hierarchy Selection and Cross References
+
+This update will introduce support for hierarchical selections. This means
+that searches can traverse a "virtual" hierarchy that lays atop the real
+hierarchical structure of the DIT. This update will also introduce support for
+cross references, allowing DSAs to share routing information pertaining to other
+known DSAs. This will allow the entire DIT to become more discoverable and
+performant.
+
+## Version 2.3.0 - Service Administration
+
+This update will introduce support for service administrative areas. This allows
+directory administrators to limit (including rate limit) what kind of searches
+may be performed. Service administrative areas can set a "lower boundary" on
+subtree searches.
+
+## Version 2.4.0 - Schema Update ("Wildboar Schema")
 
 This update will introduce thousands of new schema objects defined by Wildboar
 Software into the default schema. This is desirable so that X.500 directories
@@ -16,31 +41,31 @@ using a `married` auxiliary object class that permits the presence of a
 administrators everywhere to define their own equivalent object classes, thereby
 duplicating work and reducing inter-domain compatibility.
 
-## Version 1.5.0 - Password Administrative Areas
+## Version 2.5.0 - Non-Specific Subordinate References (NSSRs)
 
-This update will introduce support for X.500 Password Administrative Areas. This
-is a desirable feature early on, since one of the major uses for directories is
-in storing authentication information for people in an organization.
+This update will introduce support for Non-Specific Subordinate References
+(NSSRs). These are entries whose subordinate namespace is a "free-for-all"
+among one or more participating DSAs.
 
-## Version 1.6.0 - Service Administrative Areas
+## Version 2.6.0 - Zonal Matching
 
-This update will introduce support for X.500 Service Administrative Areas.
+This update will introduce zonal matching, whereby a DSA can perform
+geographically-intelligent searches.
 
-## Version 1.7.0 - Shadowing
+## Version 2.7.0 - Shadowing
 
 This update will introduce support for the Directory Information Shadowing
-Protocol (DISP).
+Protocol (DISP). This will allow directory information to be replicated to
+other DSAs to produce read-only copies.
 
-## Version 1.8.0 and Beyond
+## Version 2.8.0 and Beyond
 
 Not much can be said about anything this far in the future. However, these
 features need to be introduced at some point:
 
-- Cross References, allowing DSAs to share knowledge about other DSAs
 - SASL Authentication, allowing alternative authentication mechanisms
 - Rule-Based Access Control, allowing an alternative access control mechanism
-- Search Continuation Procedure, allowing searches to return results from other DSAs
-- Hierarchy Selections, allowing selection of hierarchically-related entries in a search operation
+  - This might _not_ be supported, because its semantics are extremely vague.
 
 ## Integration, Scalability, and Security
 

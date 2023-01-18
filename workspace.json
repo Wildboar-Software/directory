@@ -313,6 +313,62 @@
         },
         "parity-schema": "libs/parity-schema",
         "rose-transport": "libs/rose-transport",
+        "x500-auth-ts": "libs/x500-auth-ts",
+        "x500-auth-ts-example-express": {
+            "root": "apps/x500-auth-ts-example-express",
+            "sourceRoot": "apps/x500-auth-ts-example-express/src",
+            "projectType": "application",
+            "targets": {
+                "build": {
+                    "executor": "@nrwl/node:webpack",
+                    "outputs": ["{options.outputPath}"],
+                    "options": {
+                        "outputPath": "dist/apps/x500-auth-ts-example-express",
+                        "main": "apps/x500-auth-ts-example-express/src/main.ts",
+                        "tsConfig": "apps/x500-auth-ts-example-express/tsconfig.app.json",
+                        "assets": [
+                            "apps/x500-auth-ts-example-express/src/assets"
+                        ]
+                    },
+                    "configurations": {
+                        "production": {
+                            "optimization": true,
+                            "extractLicenses": true,
+                            "inspect": false
+                        }
+                    }
+                },
+                "serve": {
+                    "executor": "@nrwl/node:node",
+                    "options": {
+                        "buildTarget": "x500-auth-ts-example-express:build"
+                    },
+                    "configurations": {
+                        "production": {
+                            "buildTarget": "x500-auth-ts-example-express:build:production"
+                        }
+                    }
+                },
+                "lint": {
+                    "executor": "@nrwl/linter:eslint",
+                    "outputs": ["{options.outputFile}"],
+                    "options": {
+                        "lintFilePatterns": [
+                            "apps/x500-auth-ts-example-express/**/*.ts"
+                        ]
+                    }
+                },
+                "test": {
+                    "executor": "@nrwl/jest:jest",
+                    "outputs": ["coverage/apps/x500-auth-ts-example-express"],
+                    "options": {
+                        "jestConfig": "apps/x500-auth-ts-example-express/jest.config.ts",
+                        "passWithNoTests": true
+                    }
+                }
+            },
+            "tags": []
+        },
         "x500-cli": {
             "$schema": "../../node_modules/nx/schemas/project-schema.json",
             "root": "apps/x500-cli",

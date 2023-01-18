@@ -647,6 +647,26 @@ just read this: https://github.com/winstonjs/winston/blob/HEAD/docs/transports.m
 
 This has no effect if the `MEERKAT_LOG_FILE` environment variable is not set.
 
+## MEERKAT_LOG_TLS_SECRETS
+
+Whether to log TLS master and pre-master secrets to the log so that TLS traffic
+can be decrypted. This is used for debugging purposes.
+
+The logging format is the same as an individual line of the
+[SSLKEYLOG format described here](https://firefox-source-docs.mozilla.org/security/nss/legacy/key_log_format/index.html).
+
+:::caution
+
+Do not enable this unless:
+
+1. You are debugging.
+2. You _need_ to debug TLS-encrypted traffic.
+3. The traffic being decrypted is not sensitive at all.
+
+For a more secure alternative, consider
+
+:::
+
 ## MEERKAT_LOG_ZIP
 
 If set to `1`, Meerkat DSA will compress non-current log files.
@@ -1661,6 +1681,24 @@ way to prevent hacking attempts via malicious DOP requests.
 If set to `1`, unavailable remote CRLs will not be treated as a failure for the
 purposes of certification path validation.
 
+## MEERKAT_SSLKEYLOG_FILE
+
+Whether to log TLS master and pre-master secrets to a file so that TLS traffic
+can be decrypted. This is used for debugging purposes.
+
+The format of the log file is the
+[SSLKEYLOG format described here](https://firefox-source-docs.mozilla.org/security/nss/legacy/key_log_format/index.html).
+
+:::caution
+
+Do not enable this unless:
+
+1. You are debugging.
+2. You _need_ to debug TLS-encrypted traffic.
+3. The traffic being decrypted is not sensitive at all.
+
+:::
+
 ## MEERKAT_TCP_NO_DELAY
 
 If set to `1`, Meerkat DSA will disable Nagle's algorithm for TCP connections.
@@ -1767,6 +1805,26 @@ the equivalent of this environment variable that affects signing is:
 
 The filepath to the Diffie-Hellman parameters to use to enable Perfect Forward
 Secrecy (PFS).
+
+## MEERKAT_TLS_ENABLE_TRACE
+
+If set to `1`, Meerkat DSA will log trace information on inbound and outbound
+TLS packets.
+
+When enabled, TLS packet trace information is written to `stderr`. This can be
+used to debug TLS connection problems.
+
+The format of the output is identical to the output of `openssl s_client -trace`
+or `openssl s_server -trace`. While it is produced by OpenSSL's `SSL_trace()`
+function, the format is undocumented, can change without notice, and should not
+be relied on.
+
+:::note
+
+I copied the above text from the
+[NodeJS documentation](https://nodejs.org/dist/latest-v19.x/docs/api/tls.html#tlssocketenabletrace).
+
+:::
 
 ## MEERKAT_TLS_HANDSHAKE_TIMEOUT_IN_SECONDS
 

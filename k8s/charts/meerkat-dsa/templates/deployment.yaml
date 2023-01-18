@@ -23,6 +23,10 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
+            {{-if .Values.prismaDebug }}
+            - name: DEBUG
+              value: {{ .Values.prismaDebug }}
+            {{- end }}
             # NOTE: The following port configurations do not override the port
             # that the user specified. These are internal ports. The ports
             # specified in `values.yaml` control the ports on which the
@@ -91,6 +95,12 @@ spec:
             - name: MEERKAT_TLS_DH_PARAM_FILE
               value: /data/dhparam/dhparam.pem
             {{- end }}
+            - name: MEERKAT_TLS_ENABLE_TRACE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: tls_enable_trace
+                  optional: true
             {{- if .Values.tlsCaConfigName }}
             - name: MEERKAT_TLS_CA_FILE
               value: /data/ca/ca.pem
@@ -373,6 +383,12 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: log_tailable
                   optional: true
+            - name: MEERKAT_LOG_TLS_SECRETS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: log_tls_secrets
+                  optional: true
             - name: MEERKAT_LOG_ZIP
               valueFrom:
                 configMapKeyRef:
@@ -624,6 +640,12 @@ spec:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: scvp_validation_policy_ref_id
+                  optional: true
+            - name: MEERKAT_SSLKEYLOG_FILE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: sslkeylog_file
                   optional: true
             - name: MEERKAT_SENTINEL_DOMAIN
               valueFrom:
