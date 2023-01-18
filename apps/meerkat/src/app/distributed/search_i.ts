@@ -2424,7 +2424,14 @@ async function search_i (
         undefined,
         cursorId,
         {
-            ...(data.filter
+            /**
+             * You can only use the pre-filtering optimization for oneLevel
+             * searches, because, if using subtree searches, you still have to
+             * recurse into the subordinates of results that don't match; that
+             * is not the case with oneLevel searches because there is no
+             * recursion.
+             */
+            ...(data.filter && (data.subset === SearchArgumentData_subset_oneLevel)
                 ? convertFilterToPrismaSelect(ctx, data.filter)
                 : {}),
             subentry: subentries,
