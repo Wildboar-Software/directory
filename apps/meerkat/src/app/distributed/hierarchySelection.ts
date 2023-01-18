@@ -1,6 +1,6 @@
 import type { Context } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
-import type { OBJECT_IDENTIFIER } from "asn1-ts";
+import { OBJECT_IDENTIFIER, TRUE_BIT } from "asn1-ts";
 import { _encodeObjectIdentifier, DER } from "asn1-ts/dist/node/functional";
 import {
     ServiceErrorData,
@@ -10,6 +10,16 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import {
     HierarchySelections,
+    HierarchySelections_all,
+    HierarchySelections_children,
+    HierarchySelections_hierarchy,
+    HierarchySelections_parent,
+    HierarchySelections_siblingChildren,
+    HierarchySelections_siblingSubtree,
+    HierarchySelections_siblings,
+    HierarchySelections_self,
+    HierarchySelections_subtree,
+    HierarchySelections_top,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/HierarchySelections.ta";
 import {
     Attribute,
@@ -45,7 +55,20 @@ function hierarchySelectionProcedure (
     hierarchySelections: HierarchySelections,
     serviceControls_serviceType?: OBJECT_IDENTIFIER,
     signErrors: boolean = false,
-): never {
+): void {
+    if (
+        (hierarchySelections[HierarchySelections_all] !== TRUE_BIT)
+        && (hierarchySelections[HierarchySelections_children] !== TRUE_BIT)
+        && (hierarchySelections[HierarchySelections_hierarchy] !== TRUE_BIT)
+        && (hierarchySelections[HierarchySelections_parent] !== TRUE_BIT)
+        && (hierarchySelections[HierarchySelections_siblingChildren] !== TRUE_BIT)
+        && (hierarchySelections[HierarchySelections_siblingSubtree] !== TRUE_BIT)
+        && (hierarchySelections[HierarchySelections_siblings] !== TRUE_BIT)
+        && (hierarchySelections[HierarchySelections_subtree] !== TRUE_BIT)
+        && (hierarchySelections[HierarchySelections_top] !== TRUE_BIT)
+    ) {
+        return;
+    }
     const notificationAttributes: Attribute[] = [
         new Attribute(
             hierarchySelectList["&id"]!,

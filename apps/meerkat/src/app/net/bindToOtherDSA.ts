@@ -48,7 +48,7 @@ import { connect as tlsConnect, TLSSocket } from "node:tls";
 import isDebugging from "is-debugging";
 import stringifyDN from "../x500/stringifyDN";
 import { DSABindResult } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindResult.ta";
-
+import { createWriteStream } from "node:fs";
 
 const DEFAULT_CONNECTION_TIMEOUT_IN_MS: number = 15 * 1000;
 
@@ -216,6 +216,18 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
                     socket.end();
                 }
             }));
+            if (ctx.config.tls.log_tls_secrets) {
+                socket.on("keylog", (line) => {
+                    ctx.log.debug(ctx.i18n.t("log:keylog", {
+                        peer: uriString,
+                        key: line.toString("latin1"),
+                    }));
+                });
+            }
+            if (ctx.config.tls.sslkeylog_file) {
+                const keylogFile = createWriteStream(ctx.config.tls.sslkeylog_file, { flags: "a" });
+                socket.on("keylog", (line) => keylogFile.write(line));
+            }
         }
 
         const rose = rose_from_presentation_address(paddr, socket, {
@@ -247,6 +259,18 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
                             rejectUnauthorized: ctx.config.tls.rejectUnauthorizedServers,
                             isServer: false,
                         });
+                        if (ctx.config.tls.log_tls_secrets) {
+                            tlsSocket.on("keylog", (line) => {
+                                ctx.log.debug(ctx.i18n.t("log:keylog", {
+                                    peer: uriString,
+                                    key: line.toString("latin1"),
+                                }));
+                            });
+                        }
+                        if (ctx.config.tls.sslkeylog_file) {
+                            const keylogFile = createWriteStream(ctx.config.tls.sslkeylog_file, { flags: "a" });
+                            tlsSocket.on("keylog", (line) => keylogFile.write(line));
+                        }
                         tlsSocket.once("secureConnect", () => {
                             if (!tlsSocket.authorized && ctx.config.tls.rejectUnauthorizedServers) {
                                 tlsSocket.destroy(); // Destroy for immediate and complete denial.
@@ -332,6 +356,18 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
                 rejectUnauthorized: ctx.config.tls.rejectUnauthorizedServers,
                 isServer: false,
             });
+            if (ctx.config.tls.log_tls_secrets) {
+                tls_socket.on("keylog", (line) => {
+                    ctx.log.debug(ctx.i18n.t("log:keylog", {
+                        peer: uriString,
+                        key: line.toString("latin1"),
+                    }));
+                });
+            }
+            if (ctx.config.tls.sslkeylog_file) {
+                const keylogFile = createWriteStream(ctx.config.tls.sslkeylog_file, { flags: "a" });
+                tls_socket.on("keylog", (line) => keylogFile.write(line));
+            }
             rose.socket = tls_socket;
         }
 

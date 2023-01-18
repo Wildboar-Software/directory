@@ -21,9 +21,6 @@ import {
     SearchArgumentData_subset_baseObject,
     SearchArgumentData_subset_oneLevel,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
-import {
-    HierarchySelections_self,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/HierarchySelections.ta";
 import { OBJECT_IDENTIFIER, TRUE_BIT, TRUE, ASN1Element, ObjectIdentifier, BOOLEAN, ASN1TagClass, ASN1UniversalType } from "asn1-ts";
 import readSubordinates from "../dit/readSubordinates";
 import {
@@ -2080,7 +2077,7 @@ async function search_i (
                 searchState.alreadyReturnedById.add(rootResult[0].dse.id);
                 searchState.paging?.[1].alreadyReturnedById.add(rootResult[0].dse.id);
             }
-            if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
+            if (data.hierarchySelections) {
                 hierarchySelectionProcedure(
                     ctx,
                     data.hierarchySelections,
@@ -2354,7 +2351,7 @@ async function search_i (
                 searchState.alreadyReturnedById.add(rootResult[0].dse.id);
                 searchState.paging?.[1].alreadyReturnedById.add(rootResult[0].dse.id);
             }
-            if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
+            if (data.hierarchySelections) {
                 hierarchySelectionProcedure(
                     ctx,
                     data.hierarchySelections,

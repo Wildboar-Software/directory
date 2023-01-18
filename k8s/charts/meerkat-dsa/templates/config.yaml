@@ -64,8 +64,9 @@ data:
   log_file: {{ .Values.log_file | quote }}
   log_file_max_size: {{ .Values.log_file_max_size | default 1000000 | quote }}
   log_file_max_files: {{ .Values.log_file_max_files | default 100 | quote }}
-  log_zip: {{ .Values.log_zip | ternary 1 0 | quote }}
   log_tailable: {{ .Values.log_tailable | ternary 1 0 | quote }}
+  log_tls_secrets: {{ .Values.log_tls_secrets | ternary 1 0 | quote }}
+  log_zip: {{ .Values.log_zip | ternary 1 0 | quote }}
   {{- end }}
   {{- if .Values.log_http }}
   log_http: {{ .Values.log_http | ternary 1 0 | quote }}
@@ -212,6 +213,9 @@ data:
   signing_required_for_chaining: {{ .Values.signing_required_for_chaining | ternary 1 0 | quote }}
   signing_required_for_ob: {{ .Values.signing_required_for_ob | ternary 1 0 | quote }}
   signing_tolerate_unavailable_remote_crl: {{ .Values.signing_tolerate_unavailable_remote_crl | ternary 1 0 | quote }}
+  {{- if .Values.sslkeylog_file }}
+  sslkeylog_file: {{ .Values.sslkeylog_file | quote }}
+  {{- end }}
   tcp_no_delay: {{ .Values.tcp_no_delay | ternary 1 0 | quote }}
   tcp_timeout_in_seconds: {{ .Values.tcp_timeout_in_seconds | default 60 | quote }}
   tls_answer_ocsp_requests: {{ .Values.tls_answer_ocsp_requests | ternary 1 0 | quote }}
@@ -223,6 +227,7 @@ data:
   tls_client_cert_auth: {{ .Values.tls_client_cert_auth | ternary 1 0 | quote }}
   # tls_crl_file: use tlsCrlConfigName
   # tls_dh_param_file: use dhParamSecretName
+  tls_enable_trace: {{ .Values.tls_enable_trace | ternary 1 0 | quote }}
   tls_handshake_timeout_in_seconds: {{ .Values.tls_handshake_timeout_in_seconds | default 10 | quote }}
   # tls_key_file: use tlsSecretName
   # tls_key_passphrase: "himom42"

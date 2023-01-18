@@ -1,17 +1,17 @@
 {
-    "name": "x500-client-ts",
     "$schema": "../../node_modules/nx/schemas/project-schema.json",
-    "sourceRoot": "libs/x500-client-ts/src",
+    "sourceRoot": "libs/x500-auth-ts/src",
     "projectType": "library",
     "targets": {
         "build": {
             "executor": "@nrwl/js:tsc",
             "outputs": ["{options.outputPath}"],
             "options": {
-                "outputPath": "dist/libs/x500-client-ts",
-                "main": "libs/x500-client-ts/src/index.ts",
-                "tsConfig": "libs/x500-client-ts/tsconfig.lib.json",
-                "assets": ["libs/x500-client-ts/*.md"]
+                "outputPath": "dist/libs/x500-auth-ts",
+                "main": "libs/x500-auth-ts/src/index.ts",
+                "tsConfig": "libs/x500-auth-ts/tsconfig.lib.json",
+                "assets": ["libs/x500-auth-ts/*.md"],
+                "buildableProjectDepsInPackageJsonType": "dependencies"
             },
             "dependsOn": [
                 {
@@ -21,9 +21,9 @@
             ]
         },
         "publish": {
-            "executor": "nx:run-commands",
+            "executor": "@nrwl/workspace:run-commands",
             "options": {
-                "command": "node tools/scripts/publish.mjs x500-client-ts {args.ver} {args.tag}"
+                "command": "node tools/scripts/publish.mjs x500-auth-ts {args.ver} {args.tag}"
             },
             "dependsOn": [
                 {
@@ -36,14 +36,14 @@
             "executor": "@nrwl/linter:eslint",
             "outputs": ["{options.outputFile}"],
             "options": {
-                "lintFilePatterns": ["libs/x500-client-ts/**/*.ts"]
+                "lintFilePatterns": ["libs/x500-auth-ts/**/*.ts"]
             }
         },
         "test": {
             "executor": "@nrwl/jest:jest",
-            "outputs": ["{workspaceRoot}/coverage/libs/x500-client-ts"],
+            "outputs": ["coverage/libs/x500-auth-ts"],
             "options": {
-                "jestConfig": "libs/x500-client-ts/jest.config.ts",
+                "jestConfig": "libs/x500-auth-ts/jest.config.ts",
                 "passWithNoTests": true
             }
         }

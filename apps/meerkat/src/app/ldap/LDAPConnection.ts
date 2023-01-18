@@ -109,6 +109,7 @@ import {
 import {
     PwdResponseValue_error_changeAfterReset,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue-error.ta";
+import { createWriteStream } from "node:fs";
 
 const UNIVERSAL_SEQUENCE_TAG: number = 0x30;
 
@@ -916,6 +917,18 @@ class LDAPAssociation extends ClientAssociation {
                             ...(this.starttlsOptions ?? {}),
                             isServer: true,
                         });
+                        if (ctx.config.tls.log_tls_secrets) {
+                            this.socket.on("keylog", (line) => {
+                                ctx.log.debug(ctx.i18n.t("log:keylog", {
+                                    peer: source,
+                                    key: line.toString("latin1"),
+                                }));
+                            });
+                        }
+                        if (ctx.config.tls.sslkeylog_file) {
+                            const keylogFile = createWriteStream(ctx.config.tls.sslkeylog_file, { flags: "a" });
+                            this.socket.on("keylog", (line) => keylogFile.write(line));
+                        }
                         ctx.log.debug(ctx.i18n.t("log:starttls_established", {
                             context: "association",
                             cid: this.id,

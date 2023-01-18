@@ -17,7 +17,7 @@ env:
 jobs:
 
   ensure_k8s_namespaces:
-    name: Create Kubernetes ${{ env.NAMESPACE }} Namespace
+    name: Create Kubernetes Namespace
     timeout-minutes: 10
     runs-on: ubuntu-latest
     environment: production
