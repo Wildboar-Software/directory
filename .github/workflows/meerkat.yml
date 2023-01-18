@@ -165,7 +165,7 @@ jobs:
         run: npx -q prisma generate --schema=apps/meerkat/src/prisma/schema.prisma
         timeout-minutes: 1
       - name: Compile ${{ matrix.library }} Library
-        run: npx nx run ${{ matrix.library }}:build --skip-nx-cache
+        run: npx nx run ${{ matrix.library }}:build --with-deps
         timeout-minutes: 5
         # We use || true here because the version numbers will usually be the
         # same between pipeline runs, so most attempted publishing will fail due
