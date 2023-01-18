@@ -10,7 +10,8 @@
                 "outputPath": "dist/libs/x500-auth-ts",
                 "main": "libs/x500-auth-ts/src/index.ts",
                 "tsConfig": "libs/x500-auth-ts/tsconfig.lib.json",
-                "assets": ["libs/x500-auth-ts/*.md"]
+                "assets": ["libs/x500-auth-ts/*.md"],
+                "buildableProjectDepsInPackageJsonType": "dependencies"
             }
         },
         "publish": {

@@ -23,7 +23,7 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-            {{-if .Values.prismaDebug }}
+            {{- if .Values.prismaDebug }}
             - name: DEBUG
               value: {{ .Values.prismaDebug }}
             {{- end }}
