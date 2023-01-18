@@ -144,10 +144,10 @@ jobs:
           - 'ldap-socket'
           - 'meerkat-types'
           - 'x500-cli-config'
-          - 'x500-auth-ts'
           - 'rose-transport'
           - 'osi-net'
           - 'ocsp-client'
+          - 'x500-auth-ts'
     steps:
       - name: Checkout
         uses: actions/checkout@v3
