@@ -1,5 +1,15 @@
 # Changelog for Meerkat DSA
 
+## Version 2.0.0
+
+- Password Administration
+- Password Assertion via the `compare` operation
+- Remote password checking via the `compare` operation during binding
+- Nearly doubled performance for most workloads
+- TLS Debugging Options
+  - The ability to log (pre-)master secrets, either to the log or to a separate file
+  - The ability to print OpenSSL trace information
+
 ## Version 1.3.0
 
 ### Changes
