@@ -2449,9 +2449,7 @@ async function search_i (
              * `EntryObjectClass` that comes earlier.
              */
             AND: (data.filter && (data.subset === SearchArgumentData_subset_oneLevel))
-                ? [
-                    convertFilterToPrismaSelect(ctx, data.filter),
-                ]
+                ? convertFilterToPrismaSelect(ctx, data.filter)
                 : undefined,
         },
     );
