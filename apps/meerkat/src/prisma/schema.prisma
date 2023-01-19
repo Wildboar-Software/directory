@@ -666,7 +666,7 @@ model EntryObjectClass {
   created_at   DateTime @default(now())
 
   @@unique([entry_id, object_class])
-  @@index([object_class])
+  @@index([object_class, entry_id])
 }
 
 model Alias {
