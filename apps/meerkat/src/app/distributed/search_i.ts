@@ -2424,16 +2424,6 @@ async function search_i (
         undefined,
         cursorId,
         {
-            /**
-             * You can only use the pre-filtering optimization for oneLevel
-             * searches, because, if using subtree searches, you still have to
-             * recurse into the subordinates of results that don't match; that
-             * is not the case with oneLevel searches because there is no
-             * recursion.
-             */
-            ...(data.filter && (data.subset === SearchArgumentData_subset_oneLevel)
-                ? convertFilterToPrismaSelect(ctx, data.filter)
-                : {}),
             subentry: subentries,
             EntryObjectClass: (searchFamilyInEffect
                 ? {
@@ -2448,6 +2438,21 @@ async function search_i (
                             object_class: CHILD,
                         },
                     }),
+            /**
+             * You can only use the pre-filtering optimization for oneLevel
+             * searches, because, if using subtree searches, you still have to
+             * recurse into the subordinates of results that don't match; that
+             * is not the case with oneLevel searches because there is no
+             * recursion.
+             *
+             * This also goes in an `AND` so that it does not overwrite the
+             * `EntryObjectClass` that comes earlier.
+             */
+            AND: (data.filter && (data.subset === SearchArgumentData_subset_oneLevel))
+                ? [
+                    convertFilterToPrismaSelect(ctx, data.filter),
+                ]
+                : undefined,
         },
     );
     let subordinatesInBatch = await getNextBatchOfSubordinates();
