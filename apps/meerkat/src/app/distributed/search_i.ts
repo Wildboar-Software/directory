@@ -300,6 +300,7 @@ import {
 import {
     booleanMatch,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/booleanMatch.oa";
+import getEqualityNormalizer from "../x500/getEqualityNormalizer";
 // TODO: Once value normalization is implemented, these shall be incorporated
 // into `convertFilterToPrismaSelect()`.
 // import {
@@ -591,6 +592,19 @@ function convertFilterItemToPrismaSelect (
             //         },
             //     };
             // }
+        }
+        const normalized_str = getEqualityNormalizer(ctx)(type_)?.(ctx, filterItem.equality.assertion);
+        if (normalized_str) {
+            return {
+                AttributeValue: {
+                    some: {
+                        type_oid: {
+                            in: superTypes.map((st) => st.toBytes()),
+                        },
+                        normalized_str,
+                    },
+                },
+            };
         }
         return {
             AttributeValue: {

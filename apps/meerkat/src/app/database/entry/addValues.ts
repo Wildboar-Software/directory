@@ -30,6 +30,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import hasValueWithoutDriver from "./hasValueWithoutDriver";
+import getEqualityNormalizer from "../../x500/getEqualityNormalizer";
 
 /**
  * @summary Validate the values to be added to the entry
@@ -293,6 +294,7 @@ async function addValues(
             signErrors,
         );
     }
+    const normalizerGetter = getEqualityNormalizer(ctx);
     const pendingUpdates: PendingUpdates = {
         entryUpdate: {
             modifyTimestamp: new Date(),
@@ -320,7 +322,7 @@ async function addValues(
         }),
         ...pendingUpdates.otherWrites,
         ctx.db.attributeValue.createMany({
-            data: unspecialValuesWithNoContexts.map((attr) => ({
+            data: unspecialValuesWithNoContexts.map((attr): Prisma.AttributeValueCreateManyInput => ({
                 entry_id: entry.dse.id,
                 type_oid: attr.type.toBytes(),
                 operational: ((ctx.attributeTypes.get(attr.type.toString())?.usage ?? userApplications) !== userApplications),
@@ -333,6 +335,7 @@ async function addValues(
                     attr.value.value.byteLength,
                 ),
                 jer: attr.value.toJSON() as Prisma.InputJsonValue,
+                normalized_str: normalizerGetter(attr.type)?.(ctx, attr.value),
             })),
         }),
         ...unspecialValuesWithContexts // The ContextValue relation is only available in .create(), not .createMany().
@@ -350,6 +353,7 @@ async function addValues(
                         attr.value.value.byteLength,
                     ),
                     jer: attr.value.toJSON() as Prisma.InputJsonValue,
+                    normalized_str: normalizerGetter(attr.type)?.(ctx, attr.value),
                     ContextValue: {
                         createMany: {
                             data: (attr.contexts ?? [])

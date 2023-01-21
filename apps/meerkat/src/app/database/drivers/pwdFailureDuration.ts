@@ -95,6 +95,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                 value.value.value.byteLength,
             ),
             jer: value.value.toJSON() as Prisma.InputJsonValue,
+            normalized_str: value.value.integer.toString(),
         },
         select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
     }));

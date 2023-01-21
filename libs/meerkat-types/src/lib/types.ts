@@ -2618,6 +2618,22 @@ export
 type SortKeyGetter = (value: ASN1Element) => SortKey;
 
 /**
+ * @summary A function that converts ASN.1 values to strings that are identical
+ *  if the values are equal according to this matching rule
+ * @description
+ * 
+ * A function that takes an ASN.1 value, and converts it to a string that
+ * has the property of being identical (including by casing and whitespace)
+ * for any two values considered equal according to this matching rule.
+ * 
+ * @param value The ASN.1 value to be converted to a normalized string
+ * @returns A string that is the exact same for any two values that match
+ *  according to this matching rule.
+ */
+export
+type ValueNormalizer = (ctx: Context, value: ASN1Element) => string | undefined;
+
+/**
  * @summary Information about a matching rule
  * @description
  *
@@ -2668,6 +2684,17 @@ extends UniquelyIdentifiedByObjectIdentifier, Partial<MultiNamed>, Partial<Descr
      * @deprecated
      */
     sortKeyGetter?: SortKeyGetter;
+
+    /**
+     * A function that takes an ASN.1 value, and converts it to a string that
+     * has the property of being identical (including by casing and whitespace)
+     * for any two values considered equal according to this matching rule.
+     * 
+     * @param value The ASN.1 value to be converted to a normalized string
+     * @returns A string that is the exact same for any two values that match
+     *  according to this matching rule.
+     */
+    normalizer?: ValueNormalizer,
 }
 
 /**

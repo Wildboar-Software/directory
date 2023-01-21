@@ -469,6 +469,7 @@ async function administerPassword (
                 tag_number: ASN1UniversalType.boolean,
                 content_octets: Buffer.from([ 0xFF ]),
                 jer: true,
+                normalized_str: "TRUE",
             },
             select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
         }),

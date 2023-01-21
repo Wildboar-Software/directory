@@ -198,12 +198,14 @@ model AttributeValue {
   tag_number     Int
   content_octets Bytes
   jer            Json?
+  normalized_str String? @db.VarChar(65500)
 
   ContextValue ContextValue[]
 
-  @@index([entry_id, type_oid(length: 32), tag_class, constructed, tag_number, content_octets(length: 64)])
+  // 128 is the old upper bound on most string types. See UpperBounds.asn1.
+  @@index([entry_id, type_oid(length: 32), tag_class, constructed, tag_number, normalized_str(length: 128)])
   @@index([entry_id, operational, type_oid(length: 32)])
-  @@index([type_oid(length: 32), tag_class, constructed, tag_number, content_octets(length: 64)])
+  @@index([type_oid(length: 32), tag_class, constructed, tag_number, normalized_str(length: 128)])
 }
 
 model ContextValue {
@@ -651,11 +653,11 @@ model DistinguishedValue {
   constructed    Boolean
   tag_number     Int
   content_octets Bytes
-  str            String?
+  normalized_str String?
   order_index    Int
 
   @@unique([entry_id, type_oid(length: 32)])
-  @@index([type_oid(length: 32), tag_class, tag_number, constructed, content_octets(length: 128)])
+  @@index([type_oid(length: 32), tag_class, tag_number, constructed, normalized_str])
 }
 
 model EntryObjectClass {

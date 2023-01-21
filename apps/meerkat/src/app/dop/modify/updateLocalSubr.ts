@@ -44,6 +44,7 @@ import {
 import { operationalBindingError } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
 import saveAccessPoint from "../../database/saveAccessPoint";
 import { ASN1Construction } from "asn1-ts";
+import getEqualityNormalizer from "../../x500/getEqualityNormalizer";
 
 /**
  * @summary Update an update to a local subr DSE given by a subordinate DSA
@@ -184,6 +185,7 @@ async function updateLocalSubr (
                         atav.value.value.byteLength,
                     ),
                     order_index: i,
+                    normalized_str: getEqualityNormalizer(ctx)?.(atav.type_)?.(ctx, atav.value),
                 })),
             }),
         ]);

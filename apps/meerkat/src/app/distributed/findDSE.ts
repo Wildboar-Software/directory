@@ -136,6 +136,11 @@ import DSPAssociation from "../dsp/DSPConnection";
 import { differenceInSeconds } from "date-fns";
 import { removeEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/removeEntry.oa";
 import { modifyDN } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
+import { rdnMatch as rdnNormalizer } from "../matching/normalizers";
+import { _encode_RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
+import { DER } from "asn1-ts/dist/node/functional";
+import { Prisma } from "@prisma/client";
+import getEqualityNormalizer from "../x500/getEqualityNormalizer";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -336,6 +341,7 @@ export
     //     serviceControlOptions?.bitString?.[ServiceControlOptions_subentries] === TRUE_BIT);
 
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
+    const NORMALIZER_GETTER = getEqualityNormalizer(ctx);
     const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
     const requestor: DistinguishedName | undefined = state.chainingArguments.originator
         ?? assn?.boundNameAndUID?.dn;
@@ -851,23 +857,10 @@ export
             }
         }
         /**
-         * What follows in this if statement is a byte-for-byte check for an
-         * entry having the exact RDN supplied by the query. This is intended to
-         * be a performance improvement by making the database do the work of
-         * finding the exact matching entry. However, a database query is not
-         * worth the overhead if there are only a few entries immediately
-         * subordinate to this entry. For this reason, this optimization is only
-         * used if the subordinates are not already loaded into memory or if
-         * there are a lot of immediate subordinates.
-         *
-         * (Empirically, it seems like this is only worth it if there are about
-         * 1000 immediate subordinates.)
-         *
-         * Also note that the short-circuit below is case-sensitive. For it to
-         * work, the queried RDN must match the present RDN byte-for-byte. This
-         * is kind of a big deal, since most attributes used for naming are
-         * case-insensitive strings. To make matters worse, they are also often
-         * `DirectoryString`, which has multiple encoding variants.
+         * What follows in this if statement is an optimization to make Find DSE
+         * run in O(1) time. If the RDN can be normalized to a string, this
+         * string is compared byte-for-byte, if not, we at least attempt to find
+         * the entry by searching byte-for-byte.
          */
         if (
             !rdnMatched
@@ -876,6 +869,17 @@ export
                 || (dse_i.subordinates.length > ctx.config.useDatabaseWhenThereAreXSubordinates)
             )
         ) {
+            let use_normalized_rdn_search: boolean = true;
+            const atav_strs: [type: OBJECT_IDENTIFIER, value: string][] = [];
+            for (const atav of needleRDN) {
+                const normalized_value: string | undefined = NORMALIZER_GETTER(atav.type_)?.(ctx, atav.value);
+                if (!normalized_value) {
+                    use_normalized_rdn_search = false;
+                    break;
+                }
+                atav_strs.push([ atav.type_, normalized_value ]);
+            }
+
             const match = await ctx.db.entry.findFirst({
                 where: {
                     AND: [
@@ -883,21 +887,30 @@ export
                             immediate_superior_id: dse_i.dse.id,
                             ...getEntryExistsFilter(),
                         },
-                        ...needleRDN.map((atav) => ({
-                            RDN: {
-                                some: {
-                                    type_oid: atav.type_.toBytes(),
-                                    tag_class: atav.value.tagClass,
-                                    constructed: (atav.value.construction === ASN1Construction.constructed),
-                                    tag_number: atav.value.tagNumber,
-                                    content_octets: Buffer.from(
-                                        atav.value.value.buffer,
-                                        atav.value.value.byteOffset,
-                                        atav.value.value.byteLength,
-                                    ),
+                        ...(use_normalized_rdn_search
+                            ? atav_strs.map(([ type_, str ]): Prisma.EntryWhereInput => ({
+                                RDN: {
+                                    some: {
+                                        type_oid: type_.toBytes(),
+                                        normalized_str: str,
+                                    },
                                 },
-                            },
-                        })),
+                            }))
+                            : needleRDN.map((atav) => ({
+                                RDN: {
+                                    some: {
+                                        type_oid: atav.type_.toBytes(),
+                                        tag_class: atav.value.tagClass,
+                                        constructed: (atav.value.construction === ASN1Construction.constructed),
+                                        tag_number: atav.value.tagNumber,
+                                        content_octets: Buffer.from(
+                                            atav.value.value.buffer,
+                                            atav.value.value.byteOffset,
+                                            atav.value.value.byteLength,
+                                        ),
+                                    },
+                                },
+                            }))),
                     ],
                 },
                 include: {
@@ -922,6 +935,7 @@ export
                     },
                 },
             });
+
             /**
              * We have to check that the number of distinguished values in the
              * entry found matches the number of RDNs we have sought, otherwise
@@ -1025,6 +1039,13 @@ export
                 rdnMatched = true;
                 dse_i = matchedVertex;
                 state.rdnsResolved++;
+            }
+            // If we used the normalized RDN search and there was no match, we
+            // can conclude that this entry does not exist. There is no point
+            // in proceeding further.
+            if (use_normalized_rdn_search && !rdnMatched) {
+                await targetNotFoundSubprocedure();
+                return;
             }
         }
         const getNextBatchOfSubordinates = async () => {

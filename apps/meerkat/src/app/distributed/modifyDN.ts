@@ -181,6 +181,8 @@ import type {
 import { printInvokeId } from "../utils/printInvokeId";
 import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
 import { getEntryExistsFilter } from "../database/entryExistsFilter";
+import { Prisma } from "@prisma/client";
+import getEqualityNormalizer from "../x500/getEqualityNormalizer";
 
 /**
  * @summary Determine whether a DSE is local to this DSA
@@ -1950,7 +1952,7 @@ async function modifyDN (
                 },
             }),
             ctx.db.distinguishedValue.createMany({
-                data: newRDN.map((atav, i) => ({
+                data: newRDN.map((atav, i): Prisma.DistinguishedValueCreateManyInput => ({
                     entry_id: target.dse.id,
                     type_oid: atav.type_.toBytes(),
                     tag_class: atav.value.tagClass,
@@ -1962,6 +1964,7 @@ async function modifyDN (
                         atav.value.value.byteLength,
                     ),
                     order_index: i,
+                    normalized_str: getEqualityNormalizer(ctx)?.(atav.type_)?.(ctx, atav.value),
                 })),
             }),
             ...materializedPathsToUpdate.map((mp) => ctx.db.entry.update({

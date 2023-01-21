@@ -3661,6 +3661,7 @@ async function modifyEntry (
                         autonomousId.value.byteLength,
                     ),
                     jer: id_ar_autonomousArea.toJSON(),
+                    normalized_str: id_ar_autonomousArea.toString(),
                 },
                 select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),

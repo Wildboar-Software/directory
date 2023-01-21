@@ -628,6 +628,7 @@ import { getRDNMatcher } from "../matching/equality/rdnMatch";
 import {
     getPolicySpecificationMatcher,
 } from "../matching/equality/policySpecificationMatch";
+import * as norms from "../matching/normalizers";
 
 const caseIgnoreSortKeyGetter: SortKeyGetter = (element: ASN1Element): SortKey | null => {
     const ds = _decode_UnboundedDirectoryString(element);
@@ -938,6 +939,42 @@ function loadMatchingRules (ctx: Context): void {
 
     ctx.orderingMatchingRules.get(x500mr.caseExactOrderingMatch["&id"]!.toString())!.sortKeyGetter = caseExactSortKeyGetter;
     ctx.orderingMatchingRules.get(x500mr.caseIgnoreOrderingMatch["&id"]!.toString())!.sortKeyGetter = caseIgnoreSortKeyGetter;
+
+    ctx.equalityMatchingRules.get(caseIgnoreMatch["&id"].toString())!.normalizer = norms.caseIgnoreMatch;
+    ctx.equalityMatchingRules.get(caseExactMatch["&id"].toString())!.normalizer = norms.caseExactMatch;
+    ctx.equalityMatchingRules.get(booleanMatch["&id"].toString())!.normalizer = norms.booleanMatch;
+    ctx.equalityMatchingRules.get(integerMatch["&id"].toString())!.normalizer = norms.integerMatch;
+    ctx.equalityMatchingRules.get(objectIdentifierMatch["&id"].toString())!.normalizer = norms.objectIdentifierMatch;
+    ctx.equalityMatchingRules.get(bitStringMatch["&id"].toString())!.normalizer = norms.bitStringMatch;
+    ctx.equalityMatchingRules.get(generalizedTimeMatch["&id"].toString())!.normalizer = norms.generalizedTimeMatch;
+    ctx.equalityMatchingRules.get(uTCTimeMatch["&id"].toString())!.normalizer = norms.utcTimeMatch;
+    ctx.equalityMatchingRules.get(octetStringMatch["&id"].toString())!.normalizer = norms.octetStringMatch;
+    ctx.equalityMatchingRules.get(numericStringMatch["&id"].toString())!.normalizer = norms.numericStringMatch;
+    ctx.equalityMatchingRules.get(telephoneNumberMatch["&id"].toString())!.normalizer = norms.telephoneNumberMatch;
+    ctx.equalityMatchingRules.get(dnsNameMatch["&id"].toString())!.normalizer = norms.dnsNameMatch;
+    ctx.equalityMatchingRules.get(intEmailMatch["&id"].toString())!.normalizer = norms.intEmailMatch;
+    ctx.equalityMatchingRules.get(jidMatch["&id"].toString())!.normalizer = norms.jidMatch;
+    ctx.equalityMatchingRules.get(directoryStringFirstComponentMatch["&id"].toString())!.normalizer = norms.directoryStringFirstComponentMatch;
+    ctx.equalityMatchingRules.get(integerFirstComponentMatch["&id"].toString())!.normalizer = norms.integerFirstComponentMatch;
+    ctx.equalityMatchingRules.get(objectIdentifierFirstComponentMatch["&id"].toString())!.normalizer = norms.objectIdentifierFirstComponentMatch;
+    ctx.equalityMatchingRules.get(caseIgnoreListMatch["&id"].toString())!.normalizer = norms.caseIgnoreListMatch;
+    ctx.equalityMatchingRules.get(caseIgnoreIA5Match["&id"].toString())!.normalizer = norms.caseIgnoreIA5Match;
+    ctx.equalityMatchingRules.get(caseExactIA5Match["&id"].toString())!.normalizer = norms.caseExactIA5Match;
+    ctx.equalityMatchingRules.get(rdnMatch["&id"].toString())!.normalizer = norms.rdnMatch;
+    ctx.equalityMatchingRules.get(distinguishedNameMatch["&id"].toString())!.normalizer = norms.distinguishedNameMatch;
+    ctx.equalityMatchingRules.get(uuidMatch["&id"].toString())!.normalizer = norms.uuidMatch;
+    ctx.equalityMatchingRules.get(dualStringMatch["&id"].toString())!.normalizer = norms.dualStringMatch;
+    ctx.equalityMatchingRules.get(accessPointMatch["&id"].toString())!.normalizer = norms.accessPointMatch;
+    ctx.equalityMatchingRules.get(masterAndShadowAccessPointsMatch["&id"].toString())!.normalizer = norms.masterAndShadowAccessPointsMatch;
+    ctx.equalityMatchingRules.get(presentationAddressMatch["&id"].toString())!.normalizer = norms.presentationAddressMatch;
+    ctx.equalityMatchingRules.get(protocolInformationMatch["&id"].toString())!.normalizer = norms.protocolInformationMatch;
+    ctx.equalityMatchingRules.get(uUIDPairMatch["&id"].toString())!.normalizer = norms.uUIDPairMatch;
+    ctx.equalityMatchingRules.get(facsimileNumberMatch["&id"].toString())!.normalizer = norms.facsimileNumberMatch;
+    ctx.equalityMatchingRules.get(signingTimeMatch["&id"].toString())!.normalizer = norms.signingTimeMatch;
+    ctx.equalityMatchingRules.get(pkcs9CaseIgnoreMatch["&id"].toString())!.normalizer = norms.pkcs9CaseIgnoreMatch;
+    ctx.equalityMatchingRules.get(algorithmIdentifierMatch["&id"].toString())!.normalizer = norms.algorithmIdentifierMatch;
+    ctx.equalityMatchingRules.get(pwdEncAlgMatch["&id"].toString())!.normalizer = norms.pwdEncAlgMatch;
+    ctx.equalityMatchingRules.get(policyMatch["&id"].toString())!.normalizer = norms.policyMatch;
 }
 
 export default loadMatchingRules;
