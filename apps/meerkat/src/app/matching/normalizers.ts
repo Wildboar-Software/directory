@@ -398,7 +398,11 @@ export const algorithmIdentifierMatch: ValueNormalizer = (
     ctx: Context,
     value: ASN1Element,
 ): string | undefined => {
-    const algid = _decode_AlgorithmIdentifier(value);
+    const algid_el = value.sequence[0];
+    if (!algid_el) {
+        return undefined;
+    }
+    const algid = _decode_AlgorithmIdentifier(algid_el);
     if (!algid.parameters) {
         return algid.algorithm.toString();
     }
@@ -411,7 +415,22 @@ export const algorithmIdentifierMatch: ValueNormalizer = (
     return `${algid.algorithm.toString()}:${param_buf.toString("base64")}`;
 };
 
-export const pwdEncAlgMatch: ValueNormalizer = algorithmIdentifierMatch;
+export const pwdEncAlgMatch: ValueNormalizer = (
+    ctx: Context,
+    value: ASN1Element,
+): string | undefined => {
+    const algid = _decode_AlgorithmIdentifier(value);
+    if (!algid.parameters) {
+        return algid.algorithm.toString();
+    }
+    const param_bytes = algid.parameters.toBytes();
+    const param_buf = Buffer.from(
+        param_bytes.buffer,
+        param_bytes.byteOffset,
+        param_bytes.byteLength,
+    );
+    return `${algid.algorithm.toString()}:${param_buf.toString("base64")}`;
+};
 
 export const policyMatch: ValueNormalizer = (
     ctx: Context,
