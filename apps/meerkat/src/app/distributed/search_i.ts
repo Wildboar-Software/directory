@@ -400,9 +400,32 @@ function canFilterAttributeValueTable (
     return true;
 }
 
+function addFriends (
+    relevantSubentries: Vertex[],
+    type_: OBJECT_IDENTIFIER,
+): AttributeType[] {
+    const ret: AttributeType[] = [];
+    const friendship = relevantSubentries
+        .filter((sub) => sub.dse.objectClass.has(id_soc_subschema.toString()) && sub.dse.subentry)
+        .sort((a, b) => {
+            const adn = getDistinguishedName(a);
+            const bdn = getDistinguishedName(b);
+            return (bdn.length - adn.length);
+        }) // Select the nearest subschema
+        [0]?.dse.subentry!.friendships?.find((fr) => fr.anchor.isEqualTo(type_) && !fr.obsolete);
+    if (friendship) {
+        for (const friend of friendship.friends) {
+            ret.push(friend);
+        }
+    }
+    return ret;
+}
+
 function convertFilterItemToPrismaSelect (
     ctx: Context,
     filterItem: FilterItem,
+    relevantSubentries: Vertex[],
+    selectFriends: boolean,
 ): Partial<Prisma.EntryWhereInput> | undefined {
     if ("equality" in filterItem) {
         const type_ = filterItem.equality.type_;
@@ -430,13 +453,17 @@ function convertFilterItemToPrismaSelect (
         //         },
         //     };
         // }
-        const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
-        if (!canFilterAttributeValueTable(ctx, superTypes)) {
+        const typeAndFriends: AttributeType[] = [ type_ ];
+        if (selectFriends) {
+            typeAndFriends.push(...addFriends(relevantSubentries, type_));
+        }
+        const selected: AttributeType[] = typeAndFriends.flatMap((s) => Array.from(getAttributeParentTypes(ctx, s)));
+        if (!canFilterAttributeValueTable(ctx, selected)) {
             return undefined;
         }
         let ldapSyntax: OBJECT_IDENTIFIER | undefined;
         let eqMatchingRule: OBJECT_IDENTIFIER | undefined;
-        for (const st of superTypes) {
+        for (const st of selected) {
             const spec = ctx.attributeTypes.get(st.toString());
             if (!spec) {
                 continue;
@@ -457,7 +484,7 @@ function convertFilterItemToPrismaSelect (
                     AttributeValue: {
                         some: {
                             type_oid: {
-                                in: superTypes.map((st) => st.toBytes()),
+                                in: selected.map((st) => st.toBytes()),
                             },
                             tag_class: ASN1TagClass.universal,
                             constructed: false,
@@ -472,7 +499,7 @@ function convertFilterItemToPrismaSelect (
                     AttributeValue: {
                         some: {
                             type_oid: {
-                                in: superTypes.map((st) => st.toBytes()),
+                                in: selected.map((st) => st.toBytes()),
                             },
                             tag_class: ASN1TagClass.universal,
                             constructed: false,
@@ -487,7 +514,7 @@ function convertFilterItemToPrismaSelect (
                     AttributeValue: {
                         some: {
                             type_oid: {
-                                in: superTypes.map((st) => st.toBytes()),
+                                in: selected.map((st) => st.toBytes()),
                             },
                             tag_class: ASN1TagClass.universal,
                             constructed: false,
@@ -506,7 +533,7 @@ function convertFilterItemToPrismaSelect (
                     AttributeValue: {
                         some: {
                             type_oid: {
-                                in: superTypes.map((st) => st.toBytes()),
+                                in: selected.map((st) => st.toBytes()),
                             },
                             tag_class: ASN1TagClass.universal,
                             constructed: false,
@@ -521,7 +548,7 @@ function convertFilterItemToPrismaSelect (
                     AttributeValue: {
                         some: {
                             type_oid: {
-                                in: superTypes.map((st) => st.toBytes()),
+                                in: selected.map((st) => st.toBytes()),
                             },
                             tag_class: ASN1TagClass.universal,
                             constructed: false,
@@ -536,7 +563,7 @@ function convertFilterItemToPrismaSelect (
                     AttributeValue: {
                         some: {
                             type_oid: {
-                                in: superTypes.map((st) => st.toBytes()),
+                                in: selected.map((st) => st.toBytes()),
                             },
                             tag_class: ASN1TagClass.universal,
                             constructed: false,
@@ -599,7 +626,7 @@ function convertFilterItemToPrismaSelect (
                 AttributeValue: {
                     some: {
                         type_oid: {
-                            in: superTypes.map((st) => st.toBytes()),
+                            in: selected.map((st) => st.toBytes()),
                         },
                         normalized_str,
                     },
@@ -610,7 +637,7 @@ function convertFilterItemToPrismaSelect (
             AttributeValue: {
                 some: {
                     type_oid: {
-                        in: superTypes.map((st) => st.toBytes()),
+                        in: selected.map((st) => st.toBytes()),
                     },
                 },
             },
@@ -731,24 +758,26 @@ function convertFilterItemToPrismaSelect (
 function convertFilterToPrismaSelect (
     ctx: Context,
     filter: Filter,
+    relevantSubentries: Vertex[],
+    selectFriends: boolean,
 ): Partial<Prisma.EntryWhereInput> | undefined {
     if ("item" in filter) {
-        return convertFilterItemToPrismaSelect(ctx, filter.item);
+        return convertFilterItemToPrismaSelect(ctx, filter.item, relevantSubentries, selectFriends);
     } else if ("and" in filter) {
         return {
             AND: filter.and
-                .map((sub) => convertFilterToPrismaSelect(ctx, sub))
+                .map((sub) => convertFilterToPrismaSelect(ctx, sub, relevantSubentries, selectFriends))
                 .filter((sub): sub is Partial<Prisma.EntryWhereInput> => !!sub),
         };
     } else if ("or" in filter) {
         return {
             OR: filter.or
-                .map((sub) => convertFilterToPrismaSelect(ctx, sub))
+                .map((sub) => convertFilterToPrismaSelect(ctx, sub, relevantSubentries, selectFriends))
                 .filter((sub): sub is Partial<Prisma.EntryWhereInput> => !!sub),
         };
     } else if ("not" in filter) {
         return {
-            NOT: convertFilterToPrismaSelect(ctx, filter.not),
+            NOT: convertFilterToPrismaSelect(ctx, filter.not, relevantSubentries, selectFriends),
         };
     } else {
         return undefined;
@@ -2463,7 +2492,7 @@ async function search_i (
              * `EntryObjectClass` that comes earlier.
              */
             AND: (data.filter && (data.subset === SearchArgumentData_subset_oneLevel))
-                ? convertFilterToPrismaSelect(ctx, data.filter)
+                ? convertFilterToPrismaSelect(ctx, data.filter, relevantSubentries, !dontSelectFriends)
                 : undefined,
         },
     );
