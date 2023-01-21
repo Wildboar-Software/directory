@@ -34,6 +34,7 @@ import {
     ID_TTL,
     ID_ACS,
 } from "../../oidstr";
+import getEqualityNormalizer from "../x500/getEqualityNormalizer";
 
 /**
  * @summary Create a DSE
@@ -105,6 +106,7 @@ async function createEntry (
         : (superior.dse.materializedPath.length
             ? `${superior.dse.materializedPath}${superior.dse.id.toString() + "."}`
             : superior.dse.id.toString() + ".");
+    const NORMALIZER_GETTER = getEqualityNormalizer(ctx);
     const createdEntry = await ctx.db.entry.create({
         data: {
             immediate_superior_id: superior.dse.id,
@@ -134,7 +136,7 @@ async function createEntry (
             governingStructureRule: entryInit.governingStructureRule,
             RDN: {
                 createMany: {
-                    data: rdn.map((atav, i) => ({
+                    data: rdn.map((atav, i): Prisma.DistinguishedValueCreateWithoutEntryInput => ({
                         type_oid: atav.type_.toBytes(),
                         tag_class: atav.value.tagClass,
                         constructed: (atav.value.construction === ASN1Construction.constructed),
@@ -144,8 +146,8 @@ async function createEntry (
                             atav.value.value.byteOffset,
                             atav.value.value.byteLength,
                         ),
-                        str: atav.value.toString(),
                         order_index: i,
+                        normalized_str: NORMALIZER_GETTER(atav.type_)?.(ctx, atav.value),
                     })),
                 },
             },
