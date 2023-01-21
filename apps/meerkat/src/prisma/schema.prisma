@@ -198,7 +198,7 @@ model AttributeValue {
   tag_number     Int
   content_octets Bytes
   jer            Json?
-  normalized_str String? @db.VarChar(65500)
+  normalized_str String? @db.VarChar(16000)
 
   ContextValue ContextValue[]
 

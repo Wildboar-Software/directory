@@ -95,9 +95,11 @@ CREATE TABLE `AttributeValue` (
     `tag_number` INTEGER NOT NULL,
     `content_octets` LONGBLOB NOT NULL,
     `jer` JSON NULL,
+    `normalized_str` VARCHAR(16000) NULL,
 
-    INDEX `AttributeValue_entry_id_type_oid_tag_class_constructed_tag_n_idx`(`entry_id`, `type_oid`(32), `tag_class`, `constructed`, `tag_number`),
+    INDEX `AttributeValue_entry_id_type_oid_tag_class_constructed_tag_n_idx`(`entry_id`, `type_oid`(32), `tag_class`, `constructed`, `tag_number`, `normalized_str`(128)),
     INDEX `AttributeValue_entry_id_operational_type_oid_idx`(`entry_id`, `operational`, `type_oid`(32)),
+    INDEX `AttributeValue_type_oid_tag_class_constructed_tag_number_nor_idx`(`type_oid`(32), `tag_class`, `constructed`, `tag_number`, `normalized_str`(128)),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -407,10 +409,10 @@ CREATE TABLE `DistinguishedValue` (
     `constructed` BOOLEAN NOT NULL,
     `tag_number` INTEGER NOT NULL,
     `content_octets` LONGBLOB NOT NULL,
-    `str` VARCHAR(191) NULL,
+    `normalized_str` VARCHAR(191) NULL,
     `order_index` INTEGER NOT NULL,
 
-    INDEX `DistinguishedValue_type_oid_tag_class_tag_number_constructed_idx`(`type_oid`(32), `tag_class`, `tag_number`, `constructed`, `content_octets`(128)),
+    INDEX `DistinguishedValue_type_oid_tag_class_tag_number_constructed_idx`(`type_oid`(32), `tag_class`, `tag_number`, `constructed`, `normalized_str`),
     UNIQUE INDEX `DistinguishedValue_entry_id_type_oid_key`(`entry_id`, `type_oid`(32)),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -422,6 +424,7 @@ CREATE TABLE `EntryObjectClass` (
     `object_class` VARCHAR(128) NOT NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
+    INDEX `EntryObjectClass_object_class_entry_id_idx`(`object_class`, `entry_id`),
     UNIQUE INDEX `EntryObjectClass_entry_id_object_class_key`(`entry_id`, `object_class`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
