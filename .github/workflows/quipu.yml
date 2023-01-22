@@ -1,8 +1,8 @@
 name: Quipu
 on:
   schedule:
-  # 17:00 UTC every day
-  - cron: "0 17 * * *"
+  # 19:00 UTC every day
+  - cron: "0 19 * * *"
 
 env:
   CLUSTER_NAME: production
@@ -12,7 +12,7 @@ env:
   STORAGE_ACCOUNT_NAME: wildboarprod
   CHART_CONTAINER: helm-charts
   CHART_REPO: wildboar
-  CHART_NAME: quipu
+  CHART_NAME: quipu-dsa
 
 jobs:
 
@@ -77,7 +77,7 @@ jobs:
         # Set log_level to "info" because logging slows down Meerkat DSA
         # considerably, even though it would be nice to have more output.
         run: |
-          helm install quipu-demo ${{ env.CHART_REPO }}/${{ env.CHART_NAME }} \
+          helm install quipu-demo ${{ env.CHART_REPO }}/${{ env.CHART_NAME }}:0.2.4 \
             -f values_override.yaml \
             --set fullnameOverride=quipu-demo \
             --set service.type=LoadBalancer \
