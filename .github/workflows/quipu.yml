@@ -100,4 +100,3 @@ jobs:
             --ttl 60 \
             --record-set-name quipu \
             --ipv4-address ${{ env.DIRECTORY_SERVICE_IP }}
-
