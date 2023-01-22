@@ -1,8 +1,8 @@
 name: Quipu
 on:
   schedule:
-  # 19:30 UTC every day
-  - cron: "30 19 * * *"
+  # 19:40 UTC every day
+  - cron: "40 19 * * *"
 
 env:
   CLUSTER_NAME: production
@@ -86,7 +86,7 @@ jobs:
         run: sleep 30
       - name: Save Directory Service IP Address
         run: |
-          echo 'DIRECTORY_SERVICE_IP=$(kubectl get svc -n ${{ env.NAMESPACE }} quipu-demo-quipu-dsa --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")' >> $GITHUB_ENV
+          echo 'DIRECTORY_SERVICE_IP=$(kubectl get svc -n ${{ env.NAMESPACE }} quipu-demo --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")' >> $GITHUB_ENV
       - name: Create DSA DNS Record
         run: |
           az network dns record-set a add-record \
