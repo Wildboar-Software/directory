@@ -117,3 +117,13 @@ These will not be formal rules, per se, but please:
 
 If these rules are abused often enough, the demo environment will be removed, so
 play nice!
+
+## Demo Integration App
+
+[The same repository](https://github.com/Wildboar-Software/directory) where
+Meerkat DSA itself is hosted also contains a
+[demo integration app](https://github.com/Wildboar-Software/directory/tree/master/apps/x500-auth-ts-example-express).
+It is just a simple ExpressJS application that uses the
+[X.500 authentication TypeScript library](https://github.com/Wildboar-Software/directory/tree/master/libs/x500-auth-ts)
+(also hosted in the same repository), which in turn, uses the
+[X.500 Client TypeScript Library](https://github.com/Wildboar-Software/directory/tree/master/libs/x500-client-ts).

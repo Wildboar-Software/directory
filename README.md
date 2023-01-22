@@ -2,13 +2,44 @@
 
 ![Are We Bun Yet?](https://github.com/Wildboar-Software/directory/actions/workflows/bun.yml/badge.svg)
 
+This repository is an [Nx](https://nx.dev) monorepo that houses several projects
+pertaining to X.500 directories. Most of these projects are written in
+[TypeScript](https://www.typescriptlang.org/), but this repo also contains some
+[Go](https://go.dev/), and will eventually contain many other languages. These
+projects are written by [Wildboar Software](https://wildboarsoftware.com/en) and
+are licensed under an MIT license unless otherwise noted.
+
+The primary project in this repository is Meerkat DSA.
+
+## Projects Within This Repo
+
+- [`apps/meerkat/create-test-dit`](https://github.com/Wildboar-Software/directory/tree/master/apps/create-test-dit): A tool for seeding the [demo environment](https://wildboar-software.github.io/directory/docs/demo) directory with fake data
+- [`apps/meerkat`](https://github.com/Wildboar-Software/directory/tree/master/apps/meerkat): The Meerkat DSA (directory server), the main project in this repo.
+- [`apps/meerkat-docs`](https://github.com/Wildboar-Software/directory/tree/master/apps/meerkat-docs): The [documentation site](https://wildboar-software.github.io/directory/) for Meerkat DSA, X.500 libraries, and X.500 clients.
+- [`apps/x500-auth-ts-example-express`](https://github.com/Wildboar-Software/directory/tree/master/apps/x500-auth-ts-example-express): An example web app demonstrating integration with an X.500 directory
+- [`apps/x500-cli`](https://github.com/Wildboar-Software/directory/tree/master/apps/x500-cli): The [X.500 command-line interface](https://wildboar-software.github.io/directory/docs/x500cli): a command-line utility for interacting with X.500 directories.
+- [`libs/idm`](https://github.com/Wildboar-Software/directory/tree/master/idm): Library for X.519 Internet Directly Mapped (IDM) Protocol
+- [`libs/ldap-socket`](https://github.com/Wildboar-Software/directory/tree/master/ldap-socket): A Lightweight Directory Access Protocol (LDAP) events socket
+- [`libs/meerkat-types`](https://github.com/Wildboar-Software/directory/tree/master/meerkat-types): A library that contains types pertaining to Meerkat DSA. This was implemented as a separate library so plugins can be developed for Meerkat DSA.
+- [`libs/ocsp-client`](https://github.com/Wildboar-Software/directory/tree/master/ocsp-client): An Online Certificate Status Protocol (OCSP) Client
+- [`libs/osi-net`](https://github.com/Wildboar-Software/directory/tree/master/osi-net): An implementation OSI Networking in TypeScript
+- [`libs/parity-schema`](https://github.com/Wildboar-Software/directory/tree/master/parity-schema): TypeScript compilation of all X.500 schema necessary to achieve functional parity with most LDAP directories and IANA-registered
+LDAP schema objects
+- [`libs/rose-transport`](https://github.com/Wildboar-Software/directory/tree/master/rose-transport): An abstraction over all possible transports for Remote Operation Service Element protocol data units.
+- [`libs/x500-auth-ts`](https://github.com/Wildboar-Software/directory/tree/master/x500-auth-ts): An X.500 authentication library specifically for integration with ExpressJS, PassportJS, and/or NestJS.
+- [`libs/x500-cli-config`](https://github.com/Wildboar-Software/directory/tree/master/x500-cli-config): Schema for the
+[X.500 client configuration file](https://wildboar-software.github.io/directory/docs/client-config)
+- [`libs/x500-client-ts`](https://github.com/Wildboar-Software/directory/tree/master/x500-client-ts): An X.500 client SDK written in TypeScript
+- [`libs/x500-functional-tests`](https://github.com/Wildboar-Software/directory/tree/master/x500-functional-tests): A suite of X.500 functional tests for X.500 directories.
+- [`libs/x500-go`](https://github.com/Wildboar-Software/directory/tree/master/x500-go): An X.500 client SDK written in the Go programming language.
+
 ## What is an X.500 Directory?
 
 An X.500 directory is a distributed, hierarchical database whose characteristics
 are defined in the International Telecommunications Union's X.500 series of
 specifications (hence the name). ITU Recommendation X.500 is the introduction
 to X.500 directory services, as well as an index to the other X.500-series
-specifications; all versions except the 2019 can be read for free
+specifications; all versions can be read for free
 [here](https://www.itu.int/rec/T-REC-X.500/en).
 
 The distributed database is called the "Directory Information Base" (DIB), and

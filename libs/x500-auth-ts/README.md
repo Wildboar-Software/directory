@@ -3,6 +3,12 @@
 - Designed to work with PassportJS.
 - Can use Bind or Compare operations to authenticate users.
 
+## Install
+
+```
+npm install @wildboar/x500-auth-ts
+```
+
 ## How it works
 
 - DN discovery:

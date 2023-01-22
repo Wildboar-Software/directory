@@ -6,7 +6,7 @@ An X.500 directory is a distributed, hierarchical database whose characteristics
 are defined in the International Telecommunications Union's X.500 series of
 specifications (hence the name). ITU Recommendation X.500 is the introduction
 to X.500 directory services, as well as an index to the other X.500-series
-specifications; all versions except the 2019 can be read for free
+specifications; all versions can be read for free
 [here](https://www.itu.int/rec/T-REC-X.500/en).
 
 The distributed database is called the "Directory Information Base" (DIB), and

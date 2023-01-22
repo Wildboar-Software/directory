@@ -7,6 +7,12 @@ Management Protocol (DOP) as well. It works over both
 Internet Directly-Mapped (IDM) and ISO Transport Over TCP (ITOT) transports, as
 defined in [ITU Recommendation X.519 (2019)](https://www.itu.int/rec/T-REC-X.519/en).
 
+## Install
+
+```
+npm install @wildboar/x500-client-ts
+```
+
 ## Documentation
 
 The JSDoc and types are the best that you'll get for now, but here is the

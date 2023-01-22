@@ -13,7 +13,3 @@ It authenticates using the Meerkat DSA
 [Demo environment](https://wildboar-software.github.io/directory/docs/demo),
 specifically performing a `oneLevel` search beneath
 `C=US,ST=FL,L=HIL,L=Tampa,L=Westchase`.
-
-Currently, logging in is pretty slow, because the directory has to search
-through several hundred entries one-by-one. In the near future, attribute values
-will be stored in a way that speeds up searches significantly.

@@ -216,6 +216,8 @@ are disabled, some schema checks are disabled, and other validation is
 disabled. This exists to speed up a bulk insertion of data when a directory is
 still being set up.
 
+In some experiments, this has made `addEntry` operations run four times faster!
+
 :::caution
 
 Enabling this _disables_ access controls. This should NOT be enabled if your
