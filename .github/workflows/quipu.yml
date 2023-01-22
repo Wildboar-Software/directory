@@ -1,8 +1,12 @@
 name: Quipu
 on:
-  schedule:
-  # 19:55 UTC every day
-  - cron: "55 19 * * *"
+  push:
+    branches:
+      - master
+# on:
+#   schedule:
+#   # 19:55 UTC every day
+#   - cron: "10 20 * * *"
 
 env:
   CLUSTER_NAME: production
@@ -13,6 +17,7 @@ env:
   CHART_CONTAINER: helm-charts
   CHART_REPO: wildboar
   CHART_NAME: quipu-dsa
+  HELM_APP_NAME: quipu
 
 jobs:
 
@@ -72,12 +77,12 @@ jobs:
       - name: Update Helm Repo Index
         run: helm repo update
       - name: Uninstall Quipu DSA via Helm
-        run: helm uninstall quipu-demo || true
+        run: helm uninstall ${{ env.HELM_APP_NAME }} -n ${{ env.NAMESPACE }} || true
       - name: Deploy Quipu DSA via Helm
         # Set log_level to "info" because logging slows down Meerkat DSA
         # considerably, even though it would be nice to have more output.
         run: |
-          helm install quipu-demo ${{ env.CHART_REPO }}/${{ env.CHART_NAME }} \
+          helm install ${{ env.HELM_APP_NAME }} ${{ env.CHART_REPO }}/${{ env.CHART_NAME }} \
             --set fullnameOverride=quipu-demo \
             --set service.type=LoadBalancer \
             --atomic \
