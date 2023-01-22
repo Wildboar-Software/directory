@@ -2,13 +2,43 @@
 
 ## Version 2.0.0
 
-- Password Administration
+### Changes
+
+- Password Administration via Password Administrative Areas
 - Password Assertion via the `compare` operation
+  - Before, asserting a password using the `compare` operation would never work,
+    because of a security feature of Meerkat DSA. User passwords were not even
+    accessible via normal means in the code of Meerkat DSA (to prevent
+    disclosing them, even if they are encrypted).
+  - Now, the `compare` operation can evaluate user passwords, and it has all of
+    the same side-effects as attempting a password during a bind operation (e.g.
+    incrementing `pwdFails` if the password is wrong).
 - Remote password checking via the `compare` operation during binding
+  - This means that, no matter what DSA you attempt to bind to, it can submit a
+    `compare` operation to the DSA that actually contains the password for a
+    given user.
+  - This is configurable via the
+    [`MEERKAT_REMOTE_PWD_TIME_LIMIT`](https://wildboar-software.github.io/directory/docs/env#meerkat_remote_pwd_time_limit)
+    environment variable. It defaults to 0, meaning that this feature is
+    disabled by default. This is for security reasons.
 - Nearly doubled performance for most workloads
 - TLS Debugging Options
-  - The ability to log (pre-)master secrets, either to the log or to a separate file
-  - The ability to print OpenSSL trace information
+  - The ability to log (pre-)master secrets, either to the log or to a separate
+    file via the [`MEERKAT_LOG_TLS_SECRETS`](https://wildboar-software.github.io/directory/docs/env#meerkat_log_tls_secrets) environment variable.
+  - The ability to print OpenSSL trace information via the
+    [`MEERKAT_SSLKEYLOG_FILE`](https://wildboar-software.github.io/directory/docs/env#meerkat_sslkeylog_file)
+    environment variable.
+
+### Upgrading to this Version
+
+The reason this version is a major version update is that I had to introduce a
+breaking change into the database schema. The schema for this version is totally
+incompatible with earlier versions. There is no way to "upgrade" to this
+version. You must completely restart.
+
+Fortunately, this update is a massive improvement and fix of many issues over
+the previous version, so it is plausible that this will mean fewer breaking
+changes going forward.
 
 ## Version 1.3.0
 
