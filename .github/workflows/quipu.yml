@@ -1,8 +1,8 @@
 name: Quipu
 on:
   schedule:
-  # 19:20 UTC every day
-  - cron: "20 19 * * *"
+  # 19:30 UTC every day
+  - cron: "30 19 * * *"
 
 env:
   CLUSTER_NAME: production
@@ -78,7 +78,6 @@ jobs:
         # considerably, even though it would be nice to have more output.
         run: |
           helm install quipu-demo ${{ env.CHART_REPO }}/${{ env.CHART_NAME }} \
-            -f values_override.yaml \
             --set fullnameOverride=quipu-demo \
             --set service.type=LoadBalancer \
             --atomic \
