@@ -4,6 +4,7 @@ import {
     Value,
     PendingUpdates,
     AttributeError,
+    AttributeTypeDatabaseDriver,
 } from "@wildboar/meerkat-types";
 import { ASN1Construction } from "asn1-ts";
 import type { PrismaPromise, Prisma } from "@prisma/client";
@@ -270,6 +271,9 @@ async function validateValues(
  * @param modifier The modifier of the entry
  * @param checkForExisting Whether to check whether the values already exist and
  *  throw an error if so
+ * @param signErrors Whether to sign errors
+ * @param otherPromises Additional promises to include in the database
+ *  transaction to update this entry.
  * @returns An array of `PrismaPromise`s that will effectively add those
  *  attributes to the entry
  *
@@ -284,6 +288,7 @@ async function addValues(
     modifier?: DistinguishedName,
     checkForExisting: boolean = true,
     signErrors: boolean = false,
+    otherPromises?: PendingUpdates,
 ): Promise<PrismaPromise<any>[]> {
     if (!ctx.config.bulkInsertMode) {
         await validateValues(
@@ -295,7 +300,7 @@ async function addValues(
         );
     }
     const normalizerGetter = getEqualityNormalizer(ctx);
-    const pendingUpdates: PendingUpdates = {
+    const pendingUpdates: PendingUpdates = otherPromises ?? {
         entryUpdate: {
             modifyTimestamp: new Date(),
             modifiersName: modifier?.map(rdnToJson),
@@ -303,10 +308,18 @@ async function addValues(
         otherWrites: [],
     };
     await Promise.all(
-        values
-            .map((attr) => ctx.attributeTypes.get(attr.type.toString())
+        otherPromises // We use this to determine if this function was called from `addAttributes`.
+            ? (values // If so, we assume the `addAttribute` driver function was called for all special attributes.
+                .map((attr): [ Value, AttributeTypeDatabaseDriver | undefined ] => [
+                    attr,
+                    ctx.attributeTypes.get(attr.type.toString())?.driver,
+                ])
+                .filter(([, driver]) => driver && !driver.addAttribute)
+                .map(([attr, driver]) => driver!.addValue(ctx, entry, attr, pendingUpdates)))
+            : (values // Otherwise, we just use the attributes `addValue` driver function.
+                .map((attr) => ctx.attributeTypes.get(attr.type.toString())
                 ?.driver
-                ?.addValue(ctx, entry, attr, pendingUpdates)),
+                ?.addValue(ctx, entry, attr, pendingUpdates))),
     );
     const unspecialValues = values
         .filter((attr) => !ctx.attributeTypes.get(attr.type.toString())?.driver);

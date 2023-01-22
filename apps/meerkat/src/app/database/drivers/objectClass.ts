@@ -10,8 +10,9 @@ import type {
     SpecialAttributeCounter,
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
+    SpecialAttributeBatchDatabaseEditor,
 } from "@wildboar/meerkat-types";
-import { ObjectIdentifier } from "asn1-ts";
+import { ObjectIdentifier, OBJECT_IDENTIFIER } from "asn1-ts";
 import { DER, _encodeObjectIdentifier } from "asn1-ts/dist/node/functional";
 import {
     objectClass,
@@ -29,6 +30,7 @@ import {
     subentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa";
 import { getEntryExistsFilter } from "../../database/entryExistsFilter";
+import { Attribute } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Attribute.ta";
 
 const PARENT: string = parent["&id"].toString();
 
@@ -95,6 +97,55 @@ const addValue: SpecialAttributeDatabaseEditor = async (
         },
         update: {},
         select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
+    }));
+};
+
+export
+const addAttribute: SpecialAttributeBatchDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    attr: Attribute,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    const oids: OBJECT_IDENTIFIER[] = [
+        ...attr.values.map((v) => v.objectIdentifier),
+        ...attr.valuesWithContext?.map((vwc) => vwc.value.objectIdentifier) ?? [],
+    ];
+    for (const oid of oids) {
+        if (oid.isEqualTo(subentry["&id"])) {
+            pendingUpdates.entryUpdate.subentry = true;
+        }
+        else if (oid.isEqualTo(alias["&id"])) {
+            pendingUpdates.entryUpdate.alias = true;
+        }
+        // If we are adding child object class, making the immediate superior of object class "parent."
+        else if (oid.isEqualTo(child["&id"]) && vertex.immediateSuperior) {
+            if (vertex.immediateSuperior.dse.root) {
+                throw new Error("aac22db0-766f-4b5b-b98c-0cccebfd04a6");
+            }
+            pendingUpdates.otherWrites.push(ctx.db.entryObjectClass.upsert({
+                where: {
+                    entry_id_object_class: {
+                        entry_id: vertex.immediateSuperior.dse.id,
+                        object_class: PARENT,
+                    },
+                },
+                create: {
+                    entry_id: vertex.immediateSuperior.dse.id,
+                    object_class: PARENT,
+                },
+                update: {},
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
+            }));
+            vertex.immediateSuperior.dse.objectClass.add(PARENT);
+            vertex.immediateSuperior.dse.familyMember = true;
+        }
+    }
+    pendingUpdates.otherWrites.push(ctx.db.entryObjectClass.createMany({
+        data: oids.map((oid) => ({
+            entry_id: vertex.dse.id,
+            object_class: oid.toString(),
+        })),
     }));
 };
 

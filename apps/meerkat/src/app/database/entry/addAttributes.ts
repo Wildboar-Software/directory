@@ -1,6 +1,8 @@
 import type {
     Context,
     Vertex,
+    AttributeTypeDatabaseDriver,
+    PendingUpdates,
 } from "@wildboar/meerkat-types";
 import type { PrismaPromise } from "@prisma/client";
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
@@ -9,6 +11,7 @@ import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
 import valuesFromAttribute from "../../x500/valuesFromAttribute";
+import rdnToJson from "../../x500/rdnToJson";
 
 /**
  * @summary Add attributes to an entry.
@@ -39,6 +42,24 @@ async function addAttributes (
     checkForExisting: boolean = true,
     signErrors: boolean = false,
 ): Promise<PrismaPromise<any>[]> {
+    const pendingUpdates: PendingUpdates = {
+        entryUpdate: {
+            modifyTimestamp: new Date(),
+            modifiersName: modifier?.map(rdnToJson),
+        },
+        otherWrites: [],
+    };
+    // All attributes that have an `addAttribute` driver function get converted
+    // to database insertion promises here, and get SKIPPED in `addValues()`.
+    await Promise.all(
+        attributes
+            .map((attr): [ Attribute, AttributeTypeDatabaseDriver | undefined ] => [
+                attr,
+                ctx.attributeTypes.get(attr.type_.toString())?.driver,
+            ])
+            .filter(([, driver]) => driver && driver.addAttribute)
+            .map(([attr, driver]) => driver!.addAttribute!(ctx, entry, attr, pendingUpdates)),
+    );
     return addValues(
         ctx,
         entry,
@@ -46,6 +67,7 @@ async function addAttributes (
         modifier,
         checkForExisting,
         signErrors,
+        pendingUpdates,
     );
 }
 

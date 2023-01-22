@@ -2621,11 +2621,11 @@ type SortKeyGetter = (value: ASN1Element) => SortKey;
  * @summary A function that converts ASN.1 values to strings that are identical
  *  if the values are equal according to this matching rule
  * @description
- * 
+ *
  * A function that takes an ASN.1 value, and converts it to a string that
  * has the property of being identical (including by casing and whitespace)
  * for any two values considered equal according to this matching rule.
- * 
+ *
  * @param value The ASN.1 value to be converted to a normalized string
  * @returns A string that is the exact same for any two values that match
  *  according to this matching rule.
@@ -2689,7 +2689,7 @@ extends UniquelyIdentifiedByObjectIdentifier, Partial<MultiNamed>, Partial<Descr
      * A function that takes an ASN.1 value, and converts it to a string that
      * has the property of being identical (including by casing and whitespace)
      * for any two values considered equal according to this matching rule.
-     * 
+     *
      * @param value The ASN.1 value to be converted to a normalized string
      * @returns A string that is the exact same for any two values that match
      *  according to this matching rule.
@@ -3240,7 +3240,7 @@ interface BindReturn {
 }
 
 /**
- * @summary A function that edits an attribute that is not handled normally
+ * @summary A function that adds an attribute value that is not handled normally
  * @description
  *
  * A function that edits an attribute that is not handled normally by the
@@ -3253,6 +3253,24 @@ type SpecialAttributeDatabaseEditor = (
     ctx: Readonly<Context>,
     entry: Vertex,
     value: Value,
+    pendingUpdates: PendingUpdates,
+) => Promise<void>;
+
+
+/**
+ * @summary A function that adds a whole attribute that is not handled normally
+ * @description
+ *
+ * A function that edits an attribute that is not handled normally by the
+ * database (such as by being stored in the `AttributeValue` table).
+ *
+ * @type
+ */
+export
+type SpecialAttributeBatchDatabaseEditor = (
+    ctx: Readonly<Context>,
+    entry: Vertex,
+    attr: Attribute,
     pendingUpdates: PendingUpdates,
 ) => Promise<void>;
 
@@ -3363,6 +3381,9 @@ interface AttributeTypeDatabaseDriver {
 
     /** Adds a single value of the specially-handled attribute type */
     readonly addValue: SpecialAttributeDatabaseEditor;
+
+    /** Adds a whole attribute of the specially-handled attribute type */
+    readonly addAttribute?: SpecialAttributeBatchDatabaseEditor;
 
     /** Removes a single value of the specially-handled attribute type */
     readonly removeValue: SpecialAttributeDatabaseEditor;
