@@ -1,8 +1,8 @@
 name: Quipu
 on:
   schedule:
-  # 19:40 UTC every day
-  - cron: "40 19 * * *"
+  # 19:55 UTC every day
+  - cron: "55 19 * * *"
 
 env:
   CLUSTER_NAME: production
