@@ -243,5 +243,8 @@
     "scr_abstained": "Search continuation not performed. PROHIBITED_BY_USER={{prohibited}}; UNAUTHORIZED={{unauthorized}}.",
     "lcr_abstained": "List continuation not performed. PROHIBITED_BY_USER={{prohibited}}; UNAUTHORIZED={{unauthorized}}.",
     "failed_to_normalize_dn": "Failed to normalize DN: {{dn}}",
-    "zero_access_points_in_cr": "Zero access points found in continuation reference for target object '{{dn}}'"
+    "zero_access_points_in_cr": "Zero access points found in continuation reference for target object '{{dn}}'",
+    "requester": "Requester for association {{aid}}, invocation {{iid}} is '{{r}}'.",
+    "requester@search_i": "Requester for association {{aid}}, Search (I) invocation {{iid}} is '{{r}}'.",
+    "requester@search_ii": "Requester for association {{aid}}, Search (II) invocation {{iid}} is '{{r}}'."
 }

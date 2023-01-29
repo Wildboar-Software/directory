@@ -1035,6 +1035,15 @@ async function search_i (
         ?? data.requestor
         ?? assn.boundNameAndUID?.dn;
 
+    if (requestor) {
+        ctx.log.debug(ctx.i18n.t("log:requester", {
+            aid: assn.id,
+            iid: printInvokeId(state.invokeId),
+            r: stringifyDN(ctx, requestor).slice(0, 256),
+            context: "search_i",
+        }));
+    }
+
     // #region Signature validation
     /**
      * Integrity of the signature SHOULD be evaluated at operation evaluation,
