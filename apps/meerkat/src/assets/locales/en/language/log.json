@@ -230,5 +230,13 @@
     "error_checking_remote_pwd": "Error checking remote password asserted by {{source}} via chained compare operation: {{e}}",
     "ob_modify_attempt_by_other_ae": "There was an attempt by {{impostor}} to modify an operational binding owned by {{owner}}: OB_TYPE={{type}} OB_ID={{obid}} UUID={{uuid}}.",
     "ap_missing_ae_title": "Access point with ID {{id}} is stored in the database with a malformed AE-title. It should be an array of JSON-encoded RDNs.",
-    "keylog": "SENSITIVE: TLS session with network peer {{peer}} has secret key: {{key}}"
+    "keylog": "SENSITIVE: TLS session with network peer {{peer}} has secret key: {{key}}",
+    "scr_attempt": "Attempting to continue search operation {{iid}} for association {{aid}} in DSA {{ae}}.",
+    "scr_null_response": "No response from remote DSA {{ae}} in chained search continuation for invocation {{iid}}.",
+    "scr_error_response": "Error from from remote DSA {{ae}} in chained search continuation for invocation {{iid}}. The error code and first few bytes of the encoded error are: {{errcode}} {{errbytes}}.",
+    "scr_undefined_result": "Undefined result in response from remote DSA {{ae}} in chained search continuation for invocation {{iid}}. This is either a bug or malicious behavior.",
+    "scr_invalid_invoke_id_response": "Invalid invokeID format in response from remote DSA {{ae}} in chained search continuation for invocation {{iid}}. This is either a bug or malicious behavior.",
+    "scr_mismatch_invoke_id": "InvokeID in response from remote DSA {{ae}} in chained search continuation for invocation {{iid}} did not match the request. This is a bug. Please report it to https://github.com/Wildboar-Software/directory/issues.",
+    "scr_missing_opcode": "Missing opCode in response from remote DSA {{ae}} in chained search continuation for invocation {{iid}}. This is either a bug or malicious behavior.",
+    "scr_mismatch_opcode": "OpCode in response from remote DSA {{ae}} in chained search continuation for invocation {{iid}} was not the opCode for search. This is either a bug or malicious behavior."
 }
