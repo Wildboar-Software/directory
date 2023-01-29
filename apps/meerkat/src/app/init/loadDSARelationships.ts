@@ -1,7 +1,11 @@
 import type { Context } from "@wildboar/meerkat-types";
 import rdnFromJson from "../x500/rdnFromJson";
 import { stringifyDN } from "../x500/stringifyDN";
-import { normalizeDN } from "../x500/normalizeDN";
+import { DER } from "asn1-ts/dist/node/functional";
+import {
+    _encode_DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers";
 
 /**
  * @summary Initialize Meerkat DSA's internal index of relationships with other DSAs
@@ -40,9 +44,9 @@ async function loadDSARelationships (ctx: Context): Promise<void> {
         }
         const aeTitleDN = ap.ae_title
             .map((rdn: Record<string, string>) => rdnFromJson(rdn));
-        const normalizedDN = normalizeDN(aeTitleDN);
-        const dnString = stringifyDN(ctx, normalizedDN);
-        ctx.otherDSAs.byStringDN.set(dnString, {
+        const normalizedDN = normalizeDN(ctx, _encode_DistinguishedName(aeTitleDN, DER))
+            ?? stringifyDN(ctx, aeTitleDN);
+        ctx.otherDSAs.byStringDN.set(normalizedDN, {
             discloseCrossReferences: ap.disclose_cross_refs,
             trustForIBRA: ap.trust_ibra,
         });
