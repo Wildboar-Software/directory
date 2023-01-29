@@ -107,7 +107,7 @@ async function scrProcedure (
                     ? Number(state.invokeId.present)
                     : 0,
             };
-            ctx.log.debug(ctx.i18n.t("log:src_attempt", logMsgInfo), logInfo);
+            ctx.log.debug(ctx.i18n.t("log:scr_attempt", logMsgInfo), logInfo);
             const req: ChainedRequest = {
                 chaining: cloneChainingArgs(state.chainingArguments, {
                     originator: requestor,
@@ -129,11 +129,11 @@ async function scrProcedure (
             };
             const response = await apinfoProcedure(ctx, api, req, assn, state, signErrors, chainingProhibited);
             if (!response) {
-                ctx.log.debug(ctx.i18n.t("log:src_null_response", logMsgInfo), logInfo);
+                ctx.log.debug(ctx.i18n.t("log:scr_null_response", logMsgInfo), logInfo);
                 continue;
             }
             if ("error" in response) {
-                ctx.log.debug(ctx.i18n.t("log:src_error_response", {
+                ctx.log.debug(ctx.i18n.t("log:scr_error_response", {
                     ...logMsgInfo,
                     errcode: response.error.code
                         ? printCode(response.error.code)
@@ -143,20 +143,20 @@ async function scrProcedure (
                 continue;
             } else if ("result" in response) {
                 if (!response.result) {
-                    ctx.log.warn(ctx.i18n.t("log:src_undefined_result", logMsgInfo), logInfo);
+                    ctx.log.warn(ctx.i18n.t("log:scr_undefined_result", logMsgInfo), logInfo);
                     continue;
                 }
                 // TODO: Shouldn't things like this be checked in apinfoProcedure?
                 if (!("present" in response.result.invoke_id)) {
-                    ctx.log.warn(ctx.i18n.t("log:src_invalid_invoke_id_response", logMsgInfo), logInfo);
+                    ctx.log.warn(ctx.i18n.t("log:scr_invalid_invoke_id_response", logMsgInfo), logInfo);
                     continue;
                 }
                 if (!response.result.code) {
-                    ctx.log.warn(ctx.i18n.t("log:src_missing_opcode", logMsgInfo), logInfo);
+                    ctx.log.warn(ctx.i18n.t("log:scr_missing_opcode", logMsgInfo), logInfo);
                     continue;
                 }
                 if (!compareCode(response.result.code, id_opcode_list)) {
-                    ctx.log.warn(ctx.i18n.t("log:src_mismatch_opcode", logMsgInfo), logInfo);
+                    ctx.log.warn(ctx.i18n.t("log:scr_mismatch_opcode", logMsgInfo), logInfo);
                     continue;
                 }
                 try {
