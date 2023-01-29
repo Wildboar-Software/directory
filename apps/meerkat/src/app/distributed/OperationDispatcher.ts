@@ -602,9 +602,10 @@ class OperationDispatcher {
             }
             const postMergeState = await resultsMergingProcedureForSearch(
                 ctx,
+                assn,
+                argument,
                 searchResponse,
-                state.NRcontinuationList,
-                state.SRcontinuationList,
+                state,
             );
             const result = await mergeSortAndPageSearch(ctx, assn, state, postMergeState, data);
             const opcr: OPCR = {
@@ -1004,9 +1005,10 @@ class OperationDispatcher {
         }
         const postMergeState = await resultsMergingProcedureForSearch(
             ctx,
+            assn,
+            argument,
             searchResponse,
-            state.NRcontinuationList,
-            state.SRcontinuationList,
+            state,
         );
         const result: SearchResult = (nameResolutionPhase === completed)
             ? { // Only Search (I) results in results merging.

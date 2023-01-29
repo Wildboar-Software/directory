@@ -4,15 +4,6 @@ We will not promise any particular schedule of delivery of features or bug fixes
 at this time. However, the very high-level roadmap for Meerkat DSA can be
 broken down to the following versions.
 
-## Version 2.1.0 - SCR Procedure
-
-This update will introduce support for the Search Continuation Reference (SCR)
-procedure, which will allow your search requests to results spanning across
-DSAs. This update will also include some minor performance enhancements.
-
-Beyond that, a lot of work done around this time will focus on SDKs, clients,
-and other tooling.
-
 ## Version 2.2.0 - Hierarchy Selection and Cross References
 
 This update will introduce support for hierarchical selections. This means

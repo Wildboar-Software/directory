@@ -1,11 +1,14 @@
-import type { Context } from "@wildboar/meerkat-types";
-import { ContinuationReference } from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
+import type { MeerkatContext } from "../ctx";
+import type { ClientAssociation } from "@wildboar/meerkat-types";
 import {
     OperationProgress_nameResolutionPhase_completed as completed,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
-import { strict as assert } from "assert";
 import scrProcedure from "./scrProcedure";
 import type { SearchState } from "./search_i";
+import {
+    SearchArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
+import { OperationDispatcherState } from "./OperationDispatcher";
 
 /**
  * @summary The Results Merging Procedure (for search), defined in ITU Recommendation X.518.
@@ -25,10 +28,11 @@ import type { SearchState } from "./search_i";
  */
 export
 async function resultsMergingProcedureForSearch (
-    ctx: Context,
+    ctx: MeerkatContext,
+    assn: ClientAssociation,
+    arg: SearchArgument,
     res: SearchState,
-    NRcontinuationList: ContinuationReference[],
-    SRcontinuationList: ContinuationReference[],
+    state: OperationDispatcherState,
 ): Promise<SearchState> {
     // const data: SearchResultData = getOptionallyProtectedValue(res);
     // We skip removing duplicates for now.
@@ -39,14 +43,20 @@ async function resultsMergingProcedureForSearch (
         for (const cr of (res.poq.unexplored ?? [])) {
             // None shall be ignored for now.
             if (cr.operationProgress.nameResolutionPhase === completed) {
-                SRcontinuationList.push(cr);
+                state.SRcontinuationList.push(cr);
             } else {
-                NRcontinuationList.push(cr);
+                state.NRcontinuationList.push(cr);
             }
         }
     }
-    if (SRcontinuationList.length) {
-        await scrProcedure(SRcontinuationList);
+    if (state.SRcontinuationList.length) {
+        await scrProcedure(
+            ctx,
+            assn,
+            arg,
+            res,
+            state,
+        );
     }
     /**
      * The text of the specification seems to imply that NRCR procedure is only

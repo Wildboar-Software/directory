@@ -1,5 +1,18 @@
 # Changelog for Meerkat DSA
 
+## Version 2.1.0
+
+- Implement the Search Continuation Reference Procedure defined in
+  [ITU Recommendation X.518 (2019)](https://www.itu.int/rec/T-REC-X.518/en),
+  Section 20.4.3.
+  - This means that, in some circumstances, instead of returning continuation
+    references to the client, Meerkat DSA will chain searches to other DSAs to
+    continue the search.
+- Improved distinguished name comparison for checking which remote DSAs are
+  trusted for Identity-Based Requester Authentication, described in
+  [ITU Recommendation X.518 (2019)](https://www.itu.int/rec/T-REC-X.519/en),
+  Section 22.1.1.
+
 ## Version 2.0.0
 
 ### Changes

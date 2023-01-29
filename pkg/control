@@ -1,5 +1,5 @@
 Package: meerkat-dsa
-Version: 2.0.0
+Version: 2.1.0
 Section: database
 Priority: optional
 Architecture: i386
