@@ -79,8 +79,6 @@ jobs:
       - name: Uninstall Quipu DSA via Helm
         run: helm uninstall ${{ env.HELM_APP_NAME }} -n ${{ env.NAMESPACE }} || true
       - name: Deploy Quipu DSA via Helm
-        # Set log_level to "info" because logging slows down Meerkat DSA
-        # considerably, even though it would be nice to have more output.
         run: |
           helm install ${{ env.HELM_APP_NAME }} ${{ env.CHART_REPO }}/${{ env.CHART_NAME }} \
             --set fullnameOverride=quipu-demo \
