@@ -488,7 +488,7 @@ async function search_ii (
             // Step #4
             const newArgument: SearchArgument = (
                 (subset === SearchArgumentData_subset_oneLevel)
-                && (target.dse.alias)
+                && (subordinate.dse.alias)
             )
                 ? {
                     unsigned: new SearchArgumentData(
