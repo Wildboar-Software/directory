@@ -38,6 +38,7 @@ import stringifyDN from "../x500/stringifyDN";
 import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers";
 import { id_opcode_search } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-search.va";
 import { _decode_SearchResult } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
+import { strict as assert } from "node:assert";
 
 /**
  * @summary Search Continuation Reference Procedure, as defined in ITU Recommendation X.518.
@@ -88,6 +89,10 @@ async function scrProcedure (
             : undefined,
     };
     if (chainingProhibited || insufficientAuthForChaining) {
+        ctx.log.debug(ctx.i18n.t("log:scr_abstained", {
+            prohibited: chainingProhibited,
+            unauthorized: insufficientAuthForChaining,
+        }), logInfo);
         return;
     }
     const signErrors: boolean = (
@@ -99,6 +104,11 @@ async function scrProcedure (
     const highPriority = (data.serviceControls?.priority === ServiceControls_priority_high);
 
     const processContinuationReference = async (cr: ContinuationReference): Promise<void> => {
+        if (cr.accessPoints.length === 0) {
+            ctx.log.warn(ctx.i18n.t("log:zero_access_points_in_cr", {
+                dn: stringifyDN(ctx, cr.targetObject.rdnSequence).slice(0, 256),
+            }), logInfo);
+        }
         for (const api of cr.accessPoints) {
             const logMsgInfo = {
                 ae: stringifyDN(ctx, api.ae_title.rdnSequence),
@@ -192,6 +202,9 @@ async function scrProcedure (
         const dn = normalizeDN(ctx, _encode_DistinguishedName(cr.targetObject.rdnSequence, DER));
         if (!dn) {
             // It's a little sloppy, but if we cannot normalize a DN, we just ignore it.
+            ctx.log.debug(ctx.i18n.t("log:failed_to_normalize_dn", {
+                dn: stringifyDN(ctx, cr.targetObject.rdnSequence).slice(0, 256),
+            }), logInfo);
             continue;
         }
         const crs = continuationReferencesByTargetObject.get(dn);
@@ -201,6 +214,8 @@ async function scrProcedure (
             continuationReferencesByTargetObject.set(dn, [ cr ]);
         }
     }
+
+    assert(continuationReferencesByTargetObject.size > 0);
 
     for (const crlist of continuationReferencesByTargetObject.values()) {
         if (

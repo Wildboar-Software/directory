@@ -50,6 +50,11 @@ async function resultsMergingProcedureForSearch (
         }
     }
     if (state.SRcontinuationList.length) {
+        // Deviation: this is not specified, but I think we need to do it.
+        if (res.poq?.unexplored) {
+            // We will re-introduce CRs as we fail to access the
+            res.poq.unexplored.length = 0;
+        }
         await scrProcedure(
             ctx,
             assn,

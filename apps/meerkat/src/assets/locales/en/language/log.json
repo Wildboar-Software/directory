@@ -238,5 +238,9 @@
     "scr_invalid_invoke_id_response": "Invalid invokeID format in response from remote DSA {{ae}} in chained search continuation for invocation {{iid}}. This is either a bug or malicious behavior.",
     "scr_mismatch_invoke_id": "InvokeID in response from remote DSA {{ae}} in chained search continuation for invocation {{iid}} did not match the request. This is a bug. Please report it to https://github.com/Wildboar-Software/directory/issues.",
     "scr_missing_opcode": "Missing opCode in response from remote DSA {{ae}} in chained search continuation for invocation {{iid}}. This is either a bug or malicious behavior.",
-    "scr_mismatch_opcode": "OpCode in response from remote DSA {{ae}} in chained search continuation for invocation {{iid}} was not the opCode for search. This is either a bug or malicious behavior."
+    "scr_mismatch_opcode": "OpCode in response from remote DSA {{ae}} in chained search continuation for invocation {{iid}} was not the opCode for search. This is either a bug or malicious behavior.",
+    "scr_abstained": "Search continuation not performed. PROHIBITED_BY_USER={{prohibited}}; UNAUTHORIZED={{unauthorized}}.",
+    "lcr_abstained": "List continuation not performed. PROHIBITED_BY_USER={{prohibited}}; UNAUTHORIZED={{unauthorized}}.",
+    "failed_to_normalize_dn": "Failed to normalize DN: {{dn}}",
+    "zero_access_points_in_cr": "Zero access points found in continuation reference for target object '{{dn}}'"
 }

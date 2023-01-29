@@ -93,6 +93,10 @@ async function lcrProcedure (
             : undefined,
     };
     if (chainingProhibited || insufficientAuthForChaining) {
+        ctx.log.debug(ctx.i18n.t("log:lcr_abstained", {
+            prohibited: chainingProhibited,
+            unauthorized: insufficientAuthForChaining,
+        }));
         return;
     }
     const signErrors: boolean = (
@@ -133,6 +137,11 @@ async function lcrProcedure (
                 );
             }
         };
+        if (cr.accessPoints.length === 0) {
+            ctx.log.warn(ctx.i18n.t("log:zero_access_points_in_cr", {
+                dn: stringifyDN(ctx, cr.targetObject.rdnSequence).slice(0, 256),
+            }), logInfo);
+        }
         for (const api of cr.accessPoints) {
             const logMsgInfo = {
                 ae: stringifyDN(ctx, api.ae_title.rdnSequence),
