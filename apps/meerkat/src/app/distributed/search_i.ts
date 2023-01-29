@@ -1515,6 +1515,11 @@ async function search_i (
                 }
             }
         } else if (!authorizedToSearch) {
+            // TODO: This will probably have to be removed, since it is too chatty.
+            ctx.log.debug(ctx.i18n.t("log:not_authz_search", {
+                aid: assn.id,
+                dn: stringifyDN(ctx, targetDN).slice(0, 256),
+            }));
             return;
         }
     }
