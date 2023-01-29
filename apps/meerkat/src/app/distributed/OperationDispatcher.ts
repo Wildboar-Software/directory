@@ -687,9 +687,9 @@ class OperationDispatcher {
         assert(req.argument);
         const reqData = getOptionallyProtectedValue(preparedRequest);
         const nrp = reqData.chainedArgument.operationProgress?.nameResolutionPhase;
-        if (nrp !== OperationProgress_nameResolutionPhase_completed) {
+        if ((assn instanceof DSPAssociation) && (nrp !== OperationProgress_nameResolutionPhase_completed)) {
             ctx.log.debug(ctx.i18n.t("log:resolving_name", {
-                op: printCode(req.opCode),
+                opid: reqData.chainedArgument.operationIdentifier ?? "ABSENT",
                 dn: stringifyDN(ctx, reqData.chainedArgument.targetObject ?? []).slice(0, 256),
             }));
         }

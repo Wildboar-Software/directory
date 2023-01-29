@@ -485,12 +485,12 @@ async function search_ii (
             if (!suitable) {
                 continue;
             }
+            // Step #4
             const newArgument: SearchArgument = (
-                (subset !== SearchArgumentData_subset_oneLevel)
+                (subset === SearchArgumentData_subset_oneLevel)
                 && (target.dse.alias)
             )
-                ? argument
-                : {
+                ? {
                     unsigned: new SearchArgumentData(
                         data.baseObject,
                         data.subset,
@@ -521,7 +521,8 @@ async function search_ii (
                         data.operationContexts,
                         data.familyGrouping,
                     ),
-                };
+                }
+                : argument;
             searchState.depth++;
             await search_i(
                 ctx,
