@@ -77,7 +77,7 @@ import search_ii from "./search_ii";
 import resultsMergingProcedureForList from "./resultsMergingProcedureForList";
 import resultsMergingProcedureForSearch from "./resultsMergingProcedureForSearch";
 import {
-    OperationProgress_nameResolutionPhase_completed as completed,
+    OperationProgress_nameResolutionPhase_completed as completed, OperationProgress_nameResolutionPhase_completed,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
 import { DER } from "asn1-ts/dist/node/functional";
 import type { SearchState } from "./search_i";
@@ -123,6 +123,8 @@ import { addSeconds } from "date-fns";
 import { randomInt } from "crypto";
 import { CommonArguments } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArguments.ta";
 import LDAPAssociation from "../ldap/LDAPConnection";
+import printCode from "../utils/printCode";
+import stringifyDN from "../x500/stringifyDN";
 
 function getPathFromVersion (vertex: Vertex): Vertex[] {
     const ret: Vertex[] = [];
@@ -684,6 +686,13 @@ class OperationDispatcher {
         assert(req.opCode);
         assert(req.argument);
         const reqData = getOptionallyProtectedValue(preparedRequest);
+        const nrp = reqData.chainedArgument.operationProgress?.nameResolutionPhase;
+        if (nrp !== OperationProgress_nameResolutionPhase_completed) {
+            ctx.log.debug(ctx.i18n.t("log:resolving_name", {
+                op: printCode(req.opCode),
+                dn: stringifyDN(ctx, reqData.chainedArgument.targetObject ?? []).slice(0, 256),
+            }));
+        }
         if (compareCode(req.opCode, abandon["&operationCode"]!)) {
             const result = await doAbandon(ctx, assn, reqData);
             const opcr: OPCR = {

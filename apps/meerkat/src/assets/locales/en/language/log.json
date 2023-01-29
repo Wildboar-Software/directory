@@ -56,7 +56,8 @@
     "admin_role_not_present_first_level_dse": "The administrativeRole attribute was not present in an added first-level DSE. Meerkat DSA automatically added this, making this new entry an autonomous administrative point (AAP).",
     "duplicate_name": "Duplicate name '{{name}}'. The object represented by this OID will still be usable, but not its name when using LDAP.",
     "checking_if_name_taken_in_nssr": "Checking if name is taken in NSSR via DSP operation {{opid}}.",
-    "continuing_name_resolution": "Continuing name resolution via DSP operation {{opid}}.",
+    "continuing_name_resolution": "Continuing name resolution via DSP operation {{opid}} for DN: '{{dn}}'",
+    "resolving_name": "Resolving name '{{dn}}' for DSP operation {{opid}}.",
     "received_chained_operation": "Received chained operation with identifier {{opid}} from association {{cid}}.",
     "not_authz_to_add_top_level@hint": "To be able to add an entry to the top level in Meerkat DSA, the environment variable MEERKAT_OPEN_TOP_LEVEL must be set to '1', or there must be entries in this DSA with passwords, or you must be authenticated non-anonymously as an entry that has the boolean may_add_top_level_dse set. The first entry created in this DSA with a password will have this flag set automatically. This was the DN: {{dn}}",
     "operation_progress_not_understood": "OperationProgress value {{value}} not understood from association {{cid}}.",
@@ -242,5 +243,5 @@
     "scr_abstained": "Search continuation not performed. PROHIBITED_BY_USER={{prohibited}}; UNAUTHORIZED={{unauthorized}}.",
     "lcr_abstained": "List continuation not performed. PROHIBITED_BY_USER={{prohibited}}; UNAUTHORIZED={{unauthorized}}.",
     "failed_to_normalize_dn": "Failed to normalize DN: {{dn}}",
-    "zero_access_points_in_cr": "Zero access points found in continuation reference for target object '{{dn}}'"
+    "zero_access_points_in_cr": "Zero access points found in continuation reference for target object '{{dn}}'",
 }

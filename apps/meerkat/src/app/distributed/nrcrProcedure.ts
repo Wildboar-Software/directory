@@ -60,6 +60,7 @@ import {
 import { printInvokeId } from "../utils/printInvokeId";
 import { compareAuthenticationLevel } from "@wildboar/x500";
 import { OperationOutcome, ErrorParameters } from "@wildboar/rose-transport";
+import stringifyDN from "../x500/stringifyDN";
 
 // TODO: Really, this should have the same return type as the OperationDispatcher.
 // This also returns a value, but also mutates the OD state, which is sketchy.
@@ -121,6 +122,7 @@ async function nrcrProcedure (
             );
         }
     };
+    // TODO: Can you assert that every CR has OP not set to completed?
     assert(state.chainingArguments.operationProgress?.nameResolutionPhase !== OperationProgress_nameResolutionPhase_completed);
     assert(state.NRcontinuationList.length); // This procedure should not be called if there are no refs.
     /**
@@ -203,6 +205,10 @@ async function nrcrProcedure (
         }
         assert(cref.accessPoints[0]);
         checkTimeLimit();
+        ctx.log.debug(ctx.i18n.t("log:continuing_name_resolution", {
+            opid: req.chaining.operationIdentifier ?? "ABSENT",
+            dn: stringifyDN(ctx, cref.targetObject.rdnSequence),
+        }));
         const isNSSR = (cref.referenceType === ReferenceType_nonSpecificSubordinate);
         if (!isNSSR) {
             const outcome = await apinfoProcedure(

@@ -147,14 +147,6 @@ async function relatedEntryProcedure (
         checkTimeLimit();
         const jarg = data.joinArguments[i];
         const operationIdentifier: INTEGER = randomInt(2147483648);
-        // ctx.log.debug(ctx.i18n.t("log:continuing_name_resolution", {
-        //     opid: operationIdentifier,
-        // }), {
-        //     remoteFamily: assn.socket.remoteFamily,
-        //     remoteAddress: assn.socket.remoteAddress,
-        //     remotePort: assn.socket.remotePort,
-        //     association_id: assn.id,
-        // });
         const newChaining = new ChainingArguments(
             requestor,
             undefined,
