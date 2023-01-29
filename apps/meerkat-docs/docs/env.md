@@ -908,7 +908,7 @@ strongly recommended that you do not enable this option.
 
 If set to `1`, Meerkat DSA shall accept ALL requested operational bindings.
 
-:::caution
+:::danger
 
 Your DSA is **INSECURE** if this is enabled. It means that your DSA will
 automatically agree to:
@@ -2078,6 +2078,28 @@ such that the file looks like this when opened in a text editor:
 ```
 
 This file is NOT used for verifying TLS peers.
+
+## MEERKAT_TRUST_FOR_IBRA
+
+If set to `*`, all remote DSAs will be trusted for Identity-Based Requester
+Authentication (IBRA), as described in
+[ITU Recommendation X.518 (2019)](https://www.itu.int/rec/T-REC-X.518/en),
+Section 22.1.1. If set to `SUPR`, all remote DSAs that have a superior
+hierarchical binding outstanding with the local DSA will be automatically
+trusted for IBRA; this will have no effect on new operational bindings
+until the DSA is restarted.
+
+Otherwise, remote DSAs will only be trusted for IBRA if explicitly checked in
+the [web admin console](./webadmin.md) when their proposed operational bindings
+are manually accepted.
+
+:::danger
+
+Do NOT enable this setting for any production workloads. If enabled, users can
+entirely bypass access controls by issuing DSP requests claiming to be a trusted
+DSA and claim to be relaying a request for any user.
+
+:::
 
 ## MEERKAT_USE_DATABASE_WHEN_THERE_ARE_X_SUBORDINATES
 

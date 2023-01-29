@@ -6,6 +6,67 @@ import {
     _encode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers";
+import { Prisma, OperationalBindingInitiator } from "@prisma/client";
+import {
+    id_op_binding_hierarchical,
+} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
+import {
+    id_op_binding_non_specific_hierarchical,
+} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
+
+const HOB: string = id_op_binding_hierarchical.toString();
+const NHOB: string = id_op_binding_non_specific_hierarchical.toString();
+
+function getWhere (): Prisma.OperationalBindingWhereInput {
+    const now = new Date();
+    // This where clause was pretty much ripped from `getRelevantOperationalBindings()`.
+    return {
+        /**
+         * This is a hack for getting the latest version: we are selecting
+         * operational bindings that have no next version.
+         */
+        next_version: {
+            none: {},
+        },
+        binding_type: {
+            in: [
+                HOB,
+                NHOB,
+            ],
+        },
+        accepted: true,
+        terminated_time: null,
+        validity_start: {
+            lte: now,
+        },
+        AND: [
+            {
+                OR: [
+                    { // Remote DSA initiated role A (meaning remote DSA is superior.)
+                        initiator: OperationalBindingInitiator.ROLE_A,
+                        outbound: true,
+                    },
+                    { // Local DSA initiated role B (meaning remote DSA is superior again.)
+                        initiator: OperationalBindingInitiator.ROLE_B,
+                        outbound: false,
+                    },
+                ],
+            },
+            {
+                OR: [
+                    {
+                        validity_end: null,
+                    },
+                    {
+                        validity_end: {
+                            gte: now,
+                        },
+                    },
+                ],
+            },
+        ],
+    };
+}
 
 /**
  * @summary Initialize Meerkat DSA's internal index of relationships with other DSAs
@@ -36,6 +97,11 @@ async function loadDSARelationships (ctx: Context): Promise<void> {
             ae_title: true,
             trust_ibra: true,
             disclose_cross_refs: true,
+            operational_bindings: (ctx.config.authn.automaticallyTrustForIBRA === "SUPR")
+                ? {
+                    where: getWhere(),
+                }
+                : undefined,
         },
     });
     for (const ap of aps) {
@@ -48,7 +114,9 @@ async function loadDSARelationships (ctx: Context): Promise<void> {
             ?? stringifyDN(ctx, aeTitleDN);
         ctx.otherDSAs.byStringDN.set(normalizedDN, {
             discloseCrossReferences: ap.disclose_cross_refs,
-            trustForIBRA: ap.trust_ibra,
+            trustForIBRA: (ctx.config.authn.automaticallyTrustForIBRA === "SUPR")
+                ? (ap.operational_bindings.length > 1)
+                : ap.trust_ibra,
         });
     }
 }

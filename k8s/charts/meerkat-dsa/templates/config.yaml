@@ -255,6 +255,9 @@ data:
   transcode_distinguished_values_to_der: {{ .Values.transcode_distinguished_values_to_der | ternary 1 0 | quote }}
   transcode_values_to_der: {{ .Values.transcode_values_to_der | ternary 1 0 | quote }}
   # trust_anchors_file: use signingTrustAnchorListConfigName
+  {{- if .Values.trust_for_ibra }}
+  trust_for_ibra: {{ .Values.trust_for_ibra | quote }}
+  {{- end }}
   use_database_when_there_are_x_subordinates: {{ .Values.use_database_when_there_are_x_subordinates | default "1000" | quote }}
   {{- if .Values.vendor_name }}
   vendor_name: {{ .Values.vendor_name | quote }}

@@ -1427,6 +1427,17 @@ interface AuthenticationConfiguration extends PrivilegeManagementInfrastructureC
      */
     remotePaswordCompareTimeLimit: number;
 
+    /**
+     * If set to `*`, all remote DSAs will be trusted for Identity-Based
+     * Requester Authentication (IBRA), as described in
+     * [ITU Recommendation X.518 (2019)](https://www.itu.int/rec/T-REC-X.518/en),
+     * Section 22.1.1. If set to `SUPR`, all remote DSAs that have a superior
+     * hierarchical binding outstanding with the local DSA will be automatically
+     * trusted for IBRA; this will have no effect on new operational bindings
+     * until the DSA is restarted.
+     */
+    automaticallyTrustForIBRA?: string;
+
 }
 
 /**

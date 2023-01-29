@@ -751,6 +751,14 @@ spec:
             - name: MEERKAT_TRUST_ANCHORS_FILE
               value: "/data/pki/signing/tal/tal.cmsc"
             {{- end }}
+            {{- if .Values.trust_for_ibra }}
+            - name: MEERKAT_TRUST_FOR_IBRA
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: trust_for_ibra
+                  optional: true
+            {{- end }}
             {{- if .Values.signingCrlConfigName }}
             - name: MEERKAT_SIGNING_CRL_FILE
               value: "/data/pki/signing/crl/crl.pem"

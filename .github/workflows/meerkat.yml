@@ -814,6 +814,7 @@ jobs:
             --set remote_pwd_time_limit=15 \
             --set scr_parallelism=2 \
             --set lcr_parallelism=2 \
+            --set trust_for_ibra='*' \
             --atomic \
             --namespace=${{ env.NAMESPACE }}
       - name: Wait 30 Seconds for Public IP to be Allocated

@@ -558,6 +558,7 @@ const config: Configuration = {
         remotePaswordCompareTimeLimit: process.env.MEERKAT_REMOTE_PWD_TIME_LIMIT
             ? Number.parseInt(process.env.MEERKAT_REMOTE_PWD_TIME_LIMIT, 10)
             : 0, // 0 disables this procedure.
+        automaticallyTrustForIBRA: process.env.MEERKAT_TRUST_FOR_IBRA?.toUpperCase(),
     },
     log: {
         boundDN: (process.env.MEERKAT_LOG_BOUND_DN === "1"),
