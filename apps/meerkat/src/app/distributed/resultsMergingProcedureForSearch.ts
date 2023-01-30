@@ -9,6 +9,8 @@ import {
     SearchArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
 import { OperationDispatcherState } from "./OperationDispatcher";
+import printInvokeId from "../utils/printInvokeId";
+import printCode from "../utils/printCode";
 
 /**
  * @summary The Results Merging Procedure (for search), defined in ITU Recommendation X.518.
@@ -18,9 +20,6 @@ import { OperationDispatcherState } from "./OperationDispatcher";
  * defined in ITU Recommendation X.518 (2016), Section 21.
  *
  * @param ctx The context object
- * @param res The search operation state
- * @param NRcontinuationList The list of name resolution continuation references
- * @param SRcontinuationList The list of subrequest continuation references
  * @returns An updated search operation state
  *
  * @function
@@ -34,10 +33,27 @@ async function resultsMergingProcedureForSearch (
     res: SearchState,
     state: OperationDispatcherState,
 ): Promise<SearchState> {
+    const logInfo = {
+        remoteFamily: assn.socket.remoteFamily,
+        remoteAddress: assn.socket.remoteAddress,
+        remotePort: assn.socket.remotePort,
+        association_id: assn.id,
+        invokeId: ("present" in state.invokeId) ? Number(state.invokeId.present) : undefined,
+        opCode: printCode(state.operationCode),
+        operationIdentifier: state.chainingArguments.operationIdentifier
+            ? Number(state.chainingArguments.operationIdentifier)
+            : undefined,
+    };
     // const data: SearchResultData = getOptionallyProtectedValue(res);
     // We skip removing duplicates for now.
     if (res.poq) {
         if (res.poq.limitProblem !== undefined) {
+            ctx.log.debug(ctx.i18n.t("log:search_complete", {
+                aid: assn.id,
+                iid: printInvokeId(state.invokeId),
+                limit: res.poq.limitProblem.toString(),
+                context: "limit",
+            }), logInfo);
             return res;
         }
         for (const cr of (res.poq.unexplored ?? [])) {
@@ -62,6 +78,11 @@ async function resultsMergingProcedureForSearch (
             res,
             state,
         );
+    } else {
+        ctx.log.debug(ctx.i18n.t("log:search_complete", {
+            aid: assn.id,
+            iid: printInvokeId(state.invokeId),
+        }), logInfo);
     }
     /**
      * The text of the specification seems to imply that NRCR procedure is only

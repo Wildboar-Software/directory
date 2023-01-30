@@ -8,7 +8,6 @@ import { SearchState } from "./search_i";
 import { OperationDispatcherState } from "./OperationDispatcher";
 import { TRUE_BIT } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
-import { chainedList } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedList.oa";
 import {
     ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
     ServiceControlOptions_manageDSAIT as manageDSAITBit,
@@ -18,7 +17,6 @@ import { apinfoProcedure } from "./apinfoProcedure";
 import {
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
-import { id_opcode_list } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-list.va";
 import { OperationProgress } from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress.ta";
 import {
     DistinguishedName,
@@ -39,6 +37,7 @@ import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers";
 import { id_opcode_search } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-search.va";
 import { _decode_SearchResult } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
 import { strict as assert } from "node:assert";
+import { chainedSearch } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedSearch.oa";
 
 /**
  * @summary Search Continuation Reference Procedure, as defined in ITU Recommendation X.518.
@@ -47,7 +46,11 @@ import { strict as assert } from "node:assert";
  * The Search Continuation Reference Procedure, as defined in ITU Recommendation
  * X.518 (2016), Section 20.4.3.
  *
- * @param SRcontinuationList The subrequest continuation list
+ * @param ctx The context object
+ * @param assn The client association
+ * @param arg The search argument
+ * @param listState The search operation state
+ * @param state The operation dispatcher state
  *
  * @function
  * @async
@@ -165,17 +168,17 @@ async function scrProcedure (
                     ctx.log.warn(ctx.i18n.t("log:scr_missing_opcode", logMsgInfo), logInfo);
                     continue;
                 }
-                if (!compareCode(response.result.code, id_opcode_list)) {
+                if (!compareCode(response.result.code, id_opcode_search)) {
                     ctx.log.warn(ctx.i18n.t("log:scr_mismatch_opcode", logMsgInfo), logInfo);
                     continue;
                 }
                 try {
                     // NOTE: You do not need to check signatures. That was
                     // already handled by apInfoProcedure().
-                    const chainedResult = chainedList.decoderFor["&ResultType"]!(response.result.parameter);
+                    const chainedResult = chainedSearch.decoderFor["&ResultType"]!(response.result.parameter);
                     const chainedResultData = getOptionallyProtectedValue(chainedResult);
                     const searchResult = _decode_SearchResult(chainedResultData.result);
-                    // Whether signed or not, we still just add the list result.
+                    // Whether signed or not, we still just add the search result.
                     // This preserves the performer.
                     searchState.resultSets.push(searchResult);
                 } catch (e) {

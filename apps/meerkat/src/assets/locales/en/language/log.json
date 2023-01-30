@@ -247,5 +247,7 @@
     "requester": "Requester for association {{aid}}, invocation {{iid}} is '{{r}}'.",
     "requester@search_i": "Requester for association {{aid}}, Search (I) invocation {{iid}} is '{{r}}'.",
     "requester@search_ii": "Requester for association {{aid}}, Search (II) invocation {{iid}} is '{{r}}'.",
-    "not_authz_search": "Association {{aid}} is not allowed to discover DSE {{dn}}."
+    "not_authz_search": "Association {{aid}} is not allowed to discover DSE {{dn}}.",
+    "search_complete": "Search complete for invocation {{iid}} by association {{aid}}.",
+    "search_complete@limit": "Search limit reached for invocation {{iid}} by association {{aid}}: {{limit}}"
 }
