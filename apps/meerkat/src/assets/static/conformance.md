@@ -1,7 +1,7 @@
 # Conformance
 
-In the statements below, the term "Meerkat DSA" refers to version 2.0.0 of
-Meerkat DSA, hence these statements are only claimed for version 2.0.0 of
+In the statements below, the term "Meerkat DSA" refers to version 2.1.0 of
+Meerkat DSA, hence these statements are only claimed for version 2.1.0 of
 Meerkat DSA.
 
 ## X.519 Conformance Statement
@@ -157,7 +157,7 @@ Recommendation X.511 (2016), Section 7.3.1.
 | Search Distinguished Name Attributes               | 31         | Yes        |
 | Friend Attributes                                  | 32         | Yes        |
 | Abandon of Paged Results                           | 33         | Yes        |
-| Paged Results on the DSP                           | 34         | No         |
+| Paged Results on the DSP                           | 34         | Yes        |
 | Entry Modification `replaceValues`                 | 35         | Yes        |
 
 #### J. Collective Attributes Support

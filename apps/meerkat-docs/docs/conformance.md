@@ -157,7 +157,7 @@ Recommendation X.511 (2016), Section 7.3.1.
 | Search Distinguished Name Attributes               | 31         | Yes        |
 | Friend Attributes                                  | 32         | Yes        |
 | Abandon of Paged Results                           | 33         | Yes        |
-| Paged Results on the DSP                           | 34         | No         |
+| Paged Results on the DSP                           | 34         | Yes        |
 | Entry Modification `replaceValues`                 | 35         | Yes        |
 
 #### J. Collective Attributes Support
