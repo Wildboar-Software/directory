@@ -6,7 +6,7 @@ import {
 import { SearchArgument, _encode_SearchArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
 import { SearchState } from "./search_i";
 import { OperationDispatcherState } from "./OperationDispatcher";
-import { TRUE_BIT } from "asn1-ts";
+import { TRUE, TRUE_BIT } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
     ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
@@ -135,6 +135,7 @@ async function scrProcedure (
                         api.ae_title.rdnSequence,
                         id_opcode_search,
                     ),
+                    dspPaging: TRUE,
                 }),
                 invokeId: state.invokeId,
                 opCode: id_opcode_search,

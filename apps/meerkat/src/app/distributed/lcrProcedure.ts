@@ -1,6 +1,6 @@
 import type { MeerkatContext } from "../ctx";
 import type { ClientAssociation } from "@wildboar/meerkat-types";
-import { TRUE_BIT } from "asn1-ts";
+import { TRUE, TRUE_BIT } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
     ListArgument,
@@ -165,6 +165,7 @@ async function lcrProcedure (
                         api.ae_title.rdnSequence,
                         id_opcode_list,
                     ),
+                    dspPaging: TRUE,
                 }),
                 invokeId: state.invokeId,
                 opCode: id_opcode_list,
