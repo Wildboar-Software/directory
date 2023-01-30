@@ -180,14 +180,28 @@ function mergeResultSet (
         )
             ? mergePOQ(acc.partialOutcomeQualifier, data.searchInfo.partialOutcomeQualifier)
             : (acc.partialOutcomeQualifier ?? data.searchInfo.partialOutcomeQualifier);
-        if (acc.altMatching) {
-            acc.altMatching = TRUE;
+        acc.altMatching ||= data.searchInfo.altMatching;
+        acc.aliasDereferenced ||= data.searchInfo.aliasDereferenced;
+        if (!acc.notification) {
+            acc.notification = [];
         }
+        acc.notification.push(...data.searchInfo.notification ?? []);
     } else if ("uncorrelatedSearchInfo" in data) {
         data.uncorrelatedSearchInfo
             .forEach((usi) => mergeResultSet(acc, usi));
     }
     return acc;
+}
+
+function flattenResultSet (resultSet: SearchResult): SearchResultData_searchInfo[] {
+    const data = getOptionallyProtectedValue(resultSet);
+    if ("searchInfo" in data) {
+        return [ data.searchInfo ];
+    } else if ("uncorrelatedSearchInfo" in data) {
+        return data.uncorrelatedSearchInfo.flatMap(flattenResultSet);
+    } else {
+        return [];
+    }
 }
 
 const A_COMES_FIRST: number = -1;
@@ -429,7 +443,7 @@ async function mergeSortAndPageSearch(
             resultStats,
             poqStats,
         };
-    }
+    } // End of no paging
     assert(searchState.paging);
     const entryCount: boolean = (searchArgument.searchControlOptions?.[entryCountBit] === TRUE_BIT);
     const prr = searchState.paging[1].request;
@@ -464,8 +478,8 @@ async function mergeSortAndPageSearch(
             ? Number(searchArgument.pagedResults.newRequest.pageNumber ?? 0)
             : 0;
         pageNumberSkips = Math.max(0, pageNumber * Number(searchArgument.pagedResults.newRequest.pageSize));
-        mergedResult = searchState.resultSets.reduce(mergeResultSet, mergedResult);
-        if (prr.sortKeys?.length) { // TODO: Try to multi-thread this, if possible.
+        const unmerged: boolean = (searchArgument.pagedResults.newRequest.unmerged === TRUE);
+        if (unmerged && prr.sortKeys?.length) { // Unmerged is to be ignored if there are no sort keys specified.
             mergedResult.entries.sort((a, b) => compareEntries(
                 ctx,
                 a,
@@ -474,7 +488,40 @@ async function mergeSortAndPageSearch(
                 prr.reverse,
                 (assn instanceof LDAPAssociation),
             ));
+            const infos = searchState.resultSets.flatMap(flattenResultSet);
+            for (const info of infos) {
+                const entries = [ ...info.entries ];
+                entries.sort((a, b) => compareEntries(
+                    ctx,
+                    a,
+                    b,
+                    prr.sortKeys!,
+                    prr.reverse,
+                    (assn instanceof LDAPAssociation),
+                ));
+                mergedResult.entries.push(...entries);
+                mergedResult.altMatching ||= info.altMatching;
+                mergedResult.aliasDereferenced ||= info.aliasDereferenced;
+                if (!mergedResult.notification) {
+                    mergedResult.notification = [];
+                }
+                mergedResult.notification.push(...info.notification ?? []);
+            }
+        } else {
+            mergedResult = searchState.resultSets.reduce(mergeResultSet, mergedResult);
+            // TODO: If paging.unmerged, sort unsigned sets individually.
+            if (prr.sortKeys?.length) { // TODO: Try to multi-thread this, if possible.
+                mergedResult.entries.sort((a, b) => compareEntries(
+                    ctx,
+                    a,
+                    b,
+                    prr.sortKeys!,
+                    prr.reverse,
+                    (assn instanceof LDAPAssociation),
+                ));
+            }
         }
+
         const nonSkippedResults = mergedResult.entries.slice(pageNumberSkips);
         await ctx.db.enqueuedSearchResult.createMany({
             data: nonSkippedResults.map((entry, i) => ({

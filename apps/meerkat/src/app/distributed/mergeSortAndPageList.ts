@@ -10,6 +10,7 @@ import {
     ASN1TagClass,
     encodeUnsignedBigEndianInteger,
     unpackBits,
+    TRUE,
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -170,11 +171,27 @@ function mergeResultSet (
         )
             ? mergePOQ(acc.partialOutcomeQualifier, data.listInfo.partialOutcomeQualifier)
             : (acc.partialOutcomeQualifier ?? data.listInfo.partialOutcomeQualifier);
+        acc.aliasDereferenced ||= data.listInfo.aliasDereferenced;
+        if (!acc.notification) {
+            acc.notification = [];
+        }
+        acc.notification.push(...data.listInfo.notification ?? []);
     } else if ("uncorrelatedListInfo" in data) {
         data.uncorrelatedListInfo
             .forEach((usi) => mergeResultSet(acc, usi));
     }
     return acc;
+}
+
+function flattenResultSet (resultSet: ListResult): ListResultData_listInfo[] {
+    const data = getOptionallyProtectedValue(resultSet);
+    if ("listInfo" in data) {
+        return [ data.listInfo ];
+    } else if ("uncorrelatedListInfo" in data) {
+        return data.uncorrelatedListInfo.flatMap(flattenResultSet);
+    } else {
+        return [];
+    }
 }
 
 const A_COMES_FIRST: number = -1;
@@ -387,12 +404,8 @@ async function mergeSortAndPageList(
             resultStats,
             poqStats,
         };
-    }
-    assert(paging);
-    // Otherwise, assume every result from here on came from within this DSA.
-    // Therefore, signatures may be stripped. All result sets may be joined.
-    // Then you can sort, store, and paginate.
-
+    } // End of no paging.
+    assert(paging); // When paging is used, you can sort, store, and paginate.
     const prr = paging.request;
     const localListInfo = new ListResultData_listInfo(
         {
@@ -425,8 +438,8 @@ async function mergeSortAndPageList(
             ? Number(listArgument.pagedResults.newRequest.pageNumber ?? 0)
             : 0;
         pageNumberSkips = Math.max(0, pageNumber * Number(listArgument.pagedResults.newRequest.pageSize));
-        mergedResult = listState.resultSets.reduce(mergeResultSet, mergedResult);
-        if (prr.sortKeys?.length) { // TODO: Try to multi-thread this, if possible.
+        const unmerged: boolean = (listArgument.pagedResults.newRequest.unmerged === TRUE);
+        if (unmerged && prr.sortKeys?.length) { // Unmerged is to be ignored if there are no sort keys specified.
             mergedResult.subordinates.sort((a, b) => compareSubordinates(
                 ctx,
                 a,
@@ -434,6 +447,34 @@ async function mergeSortAndPageList(
                 prr.sortKeys!,
                 prr.reverse,
             ));
+            const infos = listState.resultSets.flatMap(flattenResultSet);
+            for (const info of infos) {
+                const subordinates = [ ...info.subordinates ];
+                subordinates.sort((a, b) => compareSubordinates(
+                    ctx,
+                    a,
+                    b,
+                    prr.sortKeys!,
+                    prr.reverse,
+                ));
+                mergedResult.subordinates.push(...subordinates);
+                mergedResult.aliasDereferenced ||= info.aliasDereferenced;
+                if (!mergedResult.notification) {
+                    mergedResult.notification = [];
+                }
+                mergedResult.notification.push(...info.notification ?? []);
+            }
+        } else {
+            mergedResult = listState.resultSets.reduce(mergeResultSet, mergedResult);
+            if (prr.sortKeys?.length) { // TODO: Try to multi-thread this, if possible.
+                mergedResult.subordinates.sort((a, b) => compareSubordinates(
+                    ctx,
+                    a,
+                    b,
+                    prr.sortKeys!,
+                    prr.reverse,
+                ));
+            }
         }
         const nonSkippedResults = mergedResult.subordinates.slice(pageNumberSkips);
         await ctx.db.enqueuedListResult.createMany({
