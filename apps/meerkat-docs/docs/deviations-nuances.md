@@ -39,7 +39,6 @@ noted below are nuances in Meerkat DSA:
   `ldapAssertionSyntax` property of matching rules.
 - Because LDAP schema values are converted to the equivalent X.500 types,
   extensions (fields starting with "X-") will be ignored and not preserved.
-- The `unmerged` parameter of paged results requests will be ignored for now.
 - ITU Recommendation X.511, Section 7.5.f is not clear in what it means by
   "behaves as though normal entries do not exist." The parent of a subentry is
   necessarily a normal entry. Does this mean that a subtree search can only
@@ -210,6 +209,16 @@ noted below are nuances in Meerkat DSA:
     locked account until they receive a `blockedCredentials` error instead of
     `invalidCredentials`, which will reveal that they guessed the password that
     was in place prior to the block.
+- Duplicates are only removed from search or list results in these
+  circumstances:
+  - When a local operation yields local results that are duplicates, and
+  - When paginated search results are requested and the `unmerged` option is
+    left unused or explicitly set to `FALSE`.
+    - This might not be a deviation at all, because the procedures for
+      deduplicating entries are vague enough to lack details for handling the
+      presence of multiple possibly-signed result sets. It is worth knowing,
+      though: if you have a strong need for absolutely no duplicate entries in
+      results, simply request pagination, even if you only read the first page.
 
 ## The "Never Contributing" Bug
 

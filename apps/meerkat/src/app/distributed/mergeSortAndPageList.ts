@@ -3,6 +3,7 @@ import type {
     ClientAssociation,
     ListResultStatistics,
     PartialOutcomeQualifierStatistics,
+    IndexableDN,
 } from "@wildboar/meerkat-types";
 import {
     ASN1Element,
@@ -40,6 +41,7 @@ import {
 import type { ListState } from "./list_i";
 import {
     ListResultData_listInfo_subordinates_Item as ListItem,
+    ListResultData_listInfo_subordinates_Item,
     _encode_ListResultData_listInfo_subordinates_Item,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData-listInfo-subordinates-Item.ta";
 import {
@@ -66,6 +68,8 @@ import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
 import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics";
+import { stringifyDN } from "../x500/stringifyDN";
+import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers";
 
 export
 interface MergeListResultsReturn {
@@ -262,6 +266,35 @@ function compareSubordinates (
     }
     assert(bValue);
     return B_COMES_FIRST * (reverse ? -1 : 1);
+}
+
+
+function chooseSubordinate (
+    a: ListResultData_listInfo_subordinates_Item,
+    b: ListResultData_listInfo_subordinates_Item,
+): ListResultData_listInfo_subordinates_Item {
+    if ((a.fromEntry ?? TRUE) && !(b.fromEntry ?? TRUE)) {
+        return a;
+    }
+    if ((b.fromEntry ?? TRUE) && !(a.fromEntry ?? TRUE)) {
+        return b;
+    }
+    return a;
+}
+
+function dedupeSubordinates (ctx: Context, subs: ListResultData_listInfo_subordinates_Item[]): ListResultData_listInfo_subordinates_Item[] {
+    const map: Map<IndexableDN, ListResultData_listInfo_subordinates_Item> = new Map();
+    for (const sub of subs) {
+        const dn = normalizeDN(ctx, _encode_DistinguishedName([sub.rdn], DER))
+            ?? stringifyDN(ctx, [sub.rdn]);
+        const incumbent = map.get(dn);
+        if (incumbent) {
+            map.set(dn, chooseSubordinate(incumbent, sub));
+        } else {
+            map.set(dn, sub);
+        }
+    }
+    return Array.from(map.values());
 }
 
 /**
@@ -466,6 +499,7 @@ async function mergeSortAndPageList(
             }
         } else {
             mergedResult = listState.resultSets.reduce(mergeResultSet, mergedResult);
+            mergedResult.subordinates = dedupeSubordinates(ctx, mergedResult.subordinates);
             if (prr.sortKeys?.length) { // TODO: Try to multi-thread this, if possible.
                 mergedResult.subordinates.sort((a, b) => compareSubordinates(
                     ctx,

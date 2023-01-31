@@ -3,6 +3,7 @@ import type {
     ClientAssociation,
     SearchResultStatistics,
     PartialOutcomeQualifierStatistics,
+    IndexableDN,
 } from "@wildboar/meerkat-types";
 import { LDAPAssociation } from "../ldap/LDAPConnection";
 import {
@@ -76,6 +77,8 @@ import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
 import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics";
+import { stringifyDN } from "../x500/stringifyDN";
+import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers";
 
 export
 interface MergeSearchResultsReturn {
@@ -294,6 +297,37 @@ function compareEntries (
     return B_COMES_FIRST * ((reverse && isLDAP) ? -1 : 1);
 }
 
+function chooseEntry (a: EntryInformation, b: EntryInformation): EntryInformation {
+    if ((a.fromEntry ?? TRUE) && !(b.fromEntry ?? TRUE)) {
+        return a;
+    }
+    if ((b.fromEntry ?? TRUE) && !(a.fromEntry ?? TRUE)) {
+        return b;
+    }
+    if (a.information?.length && !(b.information?.length)) {
+        return a;
+    }
+    if (b.information?.length && !(a.information?.length)) {
+        return b;
+    }
+    return ((a.information?.length ?? 0) > (b.information?.length ?? 0)) ? a : b;
+}
+
+function dedupeEntries (ctx: Context, entries: EntryInformation[]): EntryInformation[] {
+    const map: Map<IndexableDN, EntryInformation> = new Map();
+    for (const entry of entries) {
+        const dn = normalizeDN(ctx, _encode_DistinguishedName(entry.name.rdnSequence, DER))
+            ?? stringifyDN(ctx, entry.name.rdnSequence);
+        const incumbent = map.get(dn);
+        if (incumbent) {
+            map.set(dn, chooseEntry(incumbent, entry));
+        } else {
+            map.set(dn, entry);
+        }
+    }
+    return Array.from(map.values());
+}
+
 /**
  * @summary A procedure that merges, sorts, and pages search results.
  * @description
@@ -509,7 +543,7 @@ async function mergeSortAndPageSearch(
             }
         } else {
             mergedResult = searchState.resultSets.reduce(mergeResultSet, mergedResult);
-            // TODO: If paging.unmerged, sort unsigned sets individually.
+            mergedResult.entries = dedupeEntries(ctx, mergedResult.entries);
             if (prr.sortKeys?.length) { // TODO: Try to multi-thread this, if possible.
                 mergedResult.entries.sort((a, b) => compareEntries(
                     ctx,
