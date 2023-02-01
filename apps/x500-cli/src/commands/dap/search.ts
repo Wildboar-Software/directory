@@ -47,7 +47,7 @@ import {
     PagedResultsRequest,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest.ta";
 import {
-    PagedResultsRequest_newRequest,
+    PagedResultsRequest_newRequest, SortKey,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
 import * as hs from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/HierarchySelections.ta";
 import {
@@ -149,9 +149,17 @@ async function search_new (
         ? {
             newRequest: new PagedResultsRequest_newRequest(
                 argv.pageSize,
-                argv.sortKey
-                    ? argv.sortKey.map(ObjectIdentifier.fromString)
-                    : undefined,
+                argv.sortKey?.map((sk: string) => {
+                    const [ attrType, matchingRule ] = sk.split(":");
+                    const spec = ctx.attributes.get(attrType.toLowerCase());
+                    // TODO: Support the matching rule name.
+                    return new SortKey(
+                        spec?.id ?? ObjectIdentifier.fromString(attrType),
+                        matchingRule
+                            ? ObjectIdentifier.fromString(matchingRule)
+                            : undefined,
+                    );
+                }),
                 argv.reverse,
                 argv.unmerged,
                 argv.pageNumber,
