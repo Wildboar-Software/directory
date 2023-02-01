@@ -7,17 +7,18 @@ import printValue from "./Value";
 import stringifyDN from "../utils/stringifyDN";
 import printAttributeValue from "./AttributeValue";
 import chalk from "chalk";
+import { EOL } from "node:os";
 
 const colorize: (str: string) => string = process.env.NO_COLOR
     ? (str: string): string => str
-    : chalk.cyanBright;
+    : (str: string) => chalk.bold(chalk.underline(str));
 
 export
 function printEntryInformation (
     ctx: Context,
     entry: EntryInformation,
-): void {
-    console.log(colorize(`>>> Entry: ${stringifyDN(ctx, entry.name.rdnSequence)}`));
+): string {
+    let ret: string = colorize(`----- ${stringifyDN(ctx, entry.name.rdnSequence)} -----`) + EOL;
     const unusualThings: string[] = [];
     if (entry.fromEntry === FALSE) {
         unusualThings.push("fromEntry: FALSE");
@@ -32,45 +33,46 @@ function printEntryInformation (
         unusualThings.push("derivedEntry: TRUE");
     }
     if (unusualThings.length) {
-        console.log("-----");
-        unusualThings.forEach((thing) => console.log(thing));
-        console.log("-----");
+        ret += ("-----" + EOL);
+        ret += unusualThings.join(EOL);
+        ret += ("-----");
     }
+    // TODO: Use for loop instead.
     entry.information?.forEach((info) => {
         if ("attribute" in info) {
             const TYPE_OID: string = info.attribute.type_.toString();
             const spec = ctx.attributes.get(TYPE_OID);
             if (spec?.name) {
-                console.log(`${spec.name} (${TYPE_OID})`);
+                ret += (`${spec.name} (${TYPE_OID})` + EOL);
             } else {
-                console.log(TYPE_OID);
+                ret += TYPE_OID + EOL;
             }
             info.attribute.values
-                .forEach((v) => console.log("\t" + printAttributeValue(ctx, v, spec)));
+                .forEach((v) => ret += ("\t" + printAttributeValue(ctx, v, spec) + EOL));
             info.attribute.valuesWithContext?.forEach((vwc) => {
-                console.log("\t" + vwc.value.toString());
+                ret += ("\t" + vwc.value.toString() + EOL);
                 vwc.contextList
                     .forEach((c) => {
                         const CONTEXT_TYPE_OID: string = c.contextType.toString();
                         const cspec = ctx.contextTypes.get(CONTEXT_TYPE_OID);
                         if (cspec?.name) {
-                            console.log(`\t\t${cspec.name} (${CONTEXT_TYPE_OID})` + (c.fallback ? " FALLBACK" : ""));
+                            ret += (`\t\t${cspec.name} (${CONTEXT_TYPE_OID})` + (c.fallback ? " FALLBACK" : "") + EOL);
                         } else {
-                            console.log("\t\t" + CONTEXT_TYPE_OID + (c.fallback ? " FALLBACK" : ""));
+                            ret += ("\t\t" + CONTEXT_TYPE_OID + (c.fallback ? " FALLBACK" : "") + EOL);
                         }
                         c.contextValues
                             .forEach((cv) => {
                                 if (cspec?.valuePrinter) {
                                     const printed = cspec.valuePrinter(ctx, cv);
                                     if (printed) {
-                                        console.log("\t\t\t" + printed);
+                                        ret += ("\t\t\t" + printed + EOL);
                                         return;
                                     } else {
-                                        console.log("\t\t\t" + printValue(cv));
+                                        ret += ("\t\t\t" + printValue(cv) + EOL);
                                         return;
                                     }
                                 } else {
-                                    console.log("\t\t\t" + printValue(cv));
+                                    ret += ("\t\t\t" + printValue(cv) + EOL);
                                     return;
                                 }
                             });
@@ -80,12 +82,13 @@ function printEntryInformation (
             const TYPE_OID: string = info.attributeType.toString();
             const spec = ctx.attributes.get(TYPE_OID);
             if (spec?.name) {
-                console.log(`${spec.name} (${TYPE_OID})`);
+                ret += (`${spec.name} (${TYPE_OID})${EOL}`);
             } else {
-                console.log(TYPE_OID);
+                ret += (TYPE_OID + EOL);
             }
         }
     });
+    return ret;
 }
 
 export default printEntryInformation;

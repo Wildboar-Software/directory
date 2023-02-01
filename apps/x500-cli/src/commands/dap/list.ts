@@ -45,6 +45,7 @@ import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
 import {
+    ErrorProtectionRequest_signed,
     SecurityParameters,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
 import {
@@ -93,7 +94,7 @@ function printContinuationReference (ctx: Context, cr: ContinuationReference): v
         for (const naddr of ap.address.nAddresses) {
             console.info(`URL: ${naddrToURI(naddr)}`);
         }
-    } 
+    }
 }
 
 function printPOQ (ctx: Context, poq: PartialOutcomeQualifier): void {
@@ -190,7 +191,13 @@ async function do_list (
             undefined,
             undefined,
             undefined,
-            ProtectionRequest_signed,
+            argv.pageSize
+                ? undefined
+                : ProtectionRequest_signed,
+            undefined,
+            argv.pageSize
+                ? undefined
+                : ErrorProtectionRequest_signed,
         ), // TODO: Options
         undefined,
     );

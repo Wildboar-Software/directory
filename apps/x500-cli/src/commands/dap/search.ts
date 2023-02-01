@@ -24,10 +24,8 @@ import {
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import destringifyDN from "../../utils/destringifyDN";
 import printError from "../../printers/Error_";
-import printEntryInformation from "../../printers/EntryInformation";
 import {
     EntryInformationSelection,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
@@ -76,16 +74,18 @@ import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
 import {
+    ErrorProtectionRequest_signed,
     SecurityParameters,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
+import { print as printSearchResult } from "../../printers/SearchResult";
 
 function subsetFromString (str: string): SearchArgumentData_subset {
     const str_ = str.toLowerCase();
     if (str_.indexOf("base") > -1) {
         return SearchArgumentData_subset_baseObject;
-    } else if (str_.indexOf("one") > -1) {
+    } else if ((str_.indexOf("one") > -1) || (str_.indexOf("level") > -1)) {
         return SearchArgumentData_subset_oneLevel;
-    } else if (str_.indexOf("tree") > -1) {
+    } else if ((str_.indexOf("tree") > -1) || (str_.indexOf("sub") > -1)) {
         return SearchArgumentData_subset_wholeSubtree;
     } else {
         return SearchArgumentData_subset_baseObject; // Default to the least expensive query.
@@ -125,7 +125,6 @@ async function search_new (
     conn: Connection,
     argv: any,
 ): Promise<void> {
-    const bindDN = destringifyDN(ctx, argv.bindDN ?? "");
     const objectName: DistinguishedName = destringifyDN(ctx, argv.object);
     const eis = new EntryInformationSelection(
             argv.userAttribute
@@ -305,9 +304,13 @@ async function search_new (
             undefined,
             undefined,
             undefined,
-            ProtectionRequest_signed,
+            argv.pageSize
+                ? undefined
+                : ProtectionRequest_signed,
             undefined,
-            undefined,
+            argv.pageSize
+                ? undefined
+                : ErrorProtectionRequest_signed,
             undefined,
         ), // FIXME: security parameters
         undefined,
@@ -339,21 +342,24 @@ async function search_new (
         return;
     }
     const result: SearchResult = _decode_SearchResult(outcome.result);
-    const resData = getOptionallyProtectedValue(result);
-    if ("signed" in result) {
-        ctx.log.info("This response was signed.");
-    }
-    if ("searchInfo" in resData) {
-        resData.searchInfo.entries.forEach((e) => {
-            printEntryInformation(ctx, e);
-            console.log();
-        });
-        ctx.log.info("End of search.");
-    } else if ("uncorrelatedSearchInfo" in resData) {
-        ctx.log.warn("Uncorrelated info."); // FIXME:
-    } else {
-        ctx.log.warn("Unrecognized result set format.");
-    }
+    console.log(printSearchResult(ctx, result));
+    // const resData = getOptionallyProtectedValue(result);
+    // if ("signed" in result) {
+    //     ctx.log.info("This response was signed.");
+    // }
+    // if ("searchInfo" in resData) {
+    //     resData.searchInfo.entries.forEach((e) => {
+    //         console.log(printEntryInformation(ctx, e) + EOL);
+    //     });
+    //     ctx.log.info("End of search.");
+    // } else if ("uncorrelatedSearchInfo" in resData) {
+    //     ctx.log.warn("Uncorrelated info.");
+    //     for (const entry of iterateOverSearchResults(result)) {
+    //         console.log(printEntryInformation(ctx, entry) + EOL);
+    //     }
+    // } else {
+    //     ctx.log.warn("Unrecognized result set format.");
+    // }
 }
 
 export default search_new;

@@ -16,9 +16,9 @@ function create (ctx: Context): CommandModule {
                 })
                 .positional("subset", {
                     type: "string",
-                    describe: "The subset of the search: base, one, or sub",
+                    describe: "The subset of the search: baseObject, oneLevel, or subtree",
                     // These enum values come from LDAP URLs.
-                    choices: [ "base", "one", "sub" ],
+                    choices: [ "base", "one", "sub", "level", "tree" ],
                 })
                 .option("dontSearchAliases", {
                     type: "boolean",

@@ -33,6 +33,7 @@ import {
 import {
     SecurityParameters,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
+import { EOL } from "node:os";
 
 export
 async function do_read (
@@ -95,7 +96,7 @@ async function do_read (
     if (resData.performer) {
         console.log("Operation performed by: " + stringifyDN(ctx, resData.performer));
     }
-    printEntryInformation(ctx, resData.entry);
+    console.log(printEntryInformation(ctx, resData.entry) + EOL);
     if (resData.modifyRights) {
         console.log("----- Modify Rights -----");
         resData.modifyRights.forEach((mr) => {
