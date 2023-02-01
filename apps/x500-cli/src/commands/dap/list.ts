@@ -21,9 +21,7 @@ import type {
 import {
     ServiceControls,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import destringifyDN from "../../utils/destringifyDN";
-import stringifyDN from "../../utils/stringifyDN";
 import printError from "../../printers/Error_";
 import {
     PagedResultsRequest,
@@ -48,19 +46,7 @@ import {
     ErrorProtectionRequest_signed,
     SecurityParameters,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
-import {
-    LimitProblem,
-    LimitProblem_administrativeLimitExceeded,
-    LimitProblem_sizeLimitExceeded,
-    LimitProblem_timeLimitExceeded,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
-import type {
-    PartialOutcomeQualifier,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
-import type {
-    ContinuationReference,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
-import naddrToURI from "@wildboar/x500/src/lib/distributed/naddrToURI";
+import { print as printListResult } from "../../printers/ListResult";
 
 function priorityFromString (str: string): ServiceControls["priority"] {
     switch (str.trim().toLowerCase()) {
@@ -76,43 +62,6 @@ function scopeOfReferralFromString (str: string): ServiceControls["scopeOfReferr
         case ("dmd"): return ServiceControls_scopeOfReferral_dmd;
         case ("country"): return ServiceControls_scopeOfReferral_country;
         default: return undefined;
-    }
-}
-
-function limitProblemToString (lp: LimitProblem): string {
-    return {
-        [Number(LimitProblem_administrativeLimitExceeded)]: "Administrative Limit Exceeded",
-        [Number(LimitProblem_sizeLimitExceeded)]: "Size Limit Exceeded",
-        [Number(LimitProblem_timeLimitExceeded)]: "Time Limit Exceeded",
-    }[Number(lp)] ?? "Unknown";
-}
-
-function printContinuationReference (ctx: Context, cr: ContinuationReference): void {
-    console.info("Continuation Reference:");
-    for (const ap of cr.accessPoints) {
-        console.info(`Access Point AE-Title: ${stringifyDN(ctx, ap.ae_title.rdnSequence)}`);
-        for (const naddr of ap.address.nAddresses) {
-            console.info(`URL: ${naddrToURI(naddr)}`);
-        }
-    }
-}
-
-function printPOQ (ctx: Context, poq: PartialOutcomeQualifier): void {
-    ctx.log.info("This result set was incomplete.");
-    if (poq.limitProblem !== undefined) {
-        ctx.log.info(`The limiting problem encountered was: ${limitProblemToString(poq.limitProblem)}`);
-    }
-    if (poq.entryCount !== undefined) {
-        if ("exact" in poq.entryCount) {
-            ctx.log.info(`The exact number of entries in the total result set is ${poq.entryCount.exact}`);
-        } else if ("lowEstimate" in poq.entryCount) {
-            ctx.log.info(`The low estimate of the number of entries in the total result set is ${poq.entryCount.lowEstimate}`);
-        } else if ("bestEstimate" in poq.entryCount) {
-            ctx.log.info(`The best estimate of the number of entries in the total result set is ${poq.entryCount.bestEstimate}`);
-        }
-    }
-    for (const unx of poq.unexplored ?? []) {
-        printContinuationReference(ctx, unx);
     }
 }
 
@@ -217,37 +166,7 @@ async function do_list (
         return;
     }
     const result: ListResult = _decode_ListResult(outcome.result);
-    const resData = getOptionallyProtectedValue(result);
-    if ("signed" in result) {
-        ctx.log.info("This response was signed.");
-    }
-    if ("listInfo" in resData) {
-        resData.listInfo.subordinates
-            .map((sub) => stringifyDN(ctx, [ sub.rdn ]))
-            .forEach((str, i) => console.log(`#${(i + 1).toString().padStart(4, "0")}: ${str}`));
-        if (resData.listInfo.partialOutcomeQualifier) {
-            const poq = resData.listInfo.partialOutcomeQualifier;
-            printPOQ(ctx, poq);
-        }
-        ctx.log.info("End of list.");
-    } else if ("uncorrelatedListInfo" in resData) {
-        for (const uli of resData.uncorrelatedListInfo) {
-            const data = getOptionallyProtectedValue(uli);
-            if ("listInfo" in data) {
-                data.listInfo.subordinates
-                .map((sub) => stringifyDN(ctx, [ sub.rdn ]))
-                .forEach((str, i) => console.log(`#${(i + 1).toString().padStart(4, "0")}: ${str}`));
-            if (data.listInfo.partialOutcomeQualifier) {
-                const poq = data.listInfo.partialOutcomeQualifier;
-                printPOQ(ctx, poq);
-            }
-            } else {
-                ctx.log.warn("Uncorrelated info."); // FIXME:
-            }
-        }
-    } else {
-        ctx.log.warn("Unrecognized result set format.");
-    }
+    console.log(printListResult(ctx, result));
 }
 
 export default do_list;
