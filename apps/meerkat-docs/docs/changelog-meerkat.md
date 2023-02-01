@@ -12,6 +12,8 @@
   trusted for Identity-Based Requester Authentication, described in
   [ITU Recommendation X.518 (2019)](https://www.itu.int/rec/T-REC-X.519/en),
   Section 22.1.1.
+- Properly support the `unmerged` option in paginated `list` and `search`
+  operations.
 
 ## Version 2.0.0
 
