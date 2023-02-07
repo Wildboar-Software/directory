@@ -439,6 +439,21 @@ interface HierarchyInfo {
      */
     parent?: DistinguishedName;
 
+    /**
+     * Materialized path period-delimited database IDs, ending with a period.
+     */
+    path?: string;
+
+    /**
+     * The database ID of the hierarchical parent.
+     */
+    parent_id?: number;
+
+    /**
+     * The database ID of the hierarchical top.
+     */
+    top_id?: number;
+
 }
 
 /**

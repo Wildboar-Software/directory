@@ -452,6 +452,9 @@ async function dseFromDatabaseEntry (
             top: Array.isArray(dbe.hierarchyTopDN)
                 ? dbe.hierarchyTopDN.map(rdnFromJson)
                 : undefined,
+            path: dbe.hierarchyPath,
+            parent_id: dbe.hierarchyParent_id ?? undefined,
+            top_id: dbe.hierarchyTop_id ?? undefined,
         };
     }
 

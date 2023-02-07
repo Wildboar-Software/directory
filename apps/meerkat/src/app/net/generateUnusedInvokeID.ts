@@ -1,7 +1,12 @@
 import type { Context } from "@wildboar/meerkat-types";
 import * as crypto from "crypto";
 
-const MAX_INVOKE_ID: number = 2147483647;
+/**
+ * The invoke ID is capped at 1 billion so that the first digit can be
+ * distributed among 1-9 instead of 1-2, while still being nearly as collision
+ * resistant as a maximum signed 32-bit integer.
+ */
+const MAX_INVOKE_ID: number = 1_000_000_000;
 
 /**
  * @summary Produce an unused InvokeId
