@@ -59,6 +59,12 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
 import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
 import { addSeconds } from "date-fns";
+import {
+    PartialOutcomeQualifier,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PartialOutcomeQualifier.ta";
+import {
+    LimitProblem_timeLimitExceeded,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
 
 function atavFromDB (atav: DistinguishedValue): AttributeTypeAndValue {
     const type_el = new BERElement();
@@ -99,10 +105,14 @@ async function id_to_dn (
             select: {
                 immediate_superior_id: true,
                 RDN: true,
+
             },
         });
         if (!entry) {
             return null;
+        }
+        if (!entry.immediate_superior_id) {
+            return dn.reverse();
         }
         const rdn = entry.RDN.map(atavFromDB);
         dn.push(rdn);
@@ -131,7 +141,7 @@ async function hierarchySelectionProcedure (
     ctx: MeerkatContext,
     assn: ClientAssociation,
     selfVertex: Vertex,
-    selfEntryInfo: EntryInformation,
+    selfEntryInfos: [id: number, info: EntryInformation][],
     searchArgument: SearchArgumentData,
     searchState: SearchState,
     hierarchySelections: HierarchySelections,
@@ -153,7 +163,7 @@ async function hierarchySelectionProcedure (
     const top: boolean = !all && !hierarchy && (hierarchySelections[HierarchySelections_top] === TRUE_BIT);
 
     const hinfo = selfVertex.dse.hierarchy;
-    const search_targets: DistinguishedName[] = [];
+    const search_targets: [number, DistinguishedName][] = [];
     const rdnsById: Map<number, [number | null, RelativeDistinguishedName]> = new Map();
 
     // Per the spec, Set is guaraneteed to be iterable in insertion order.
@@ -174,15 +184,14 @@ async function hierarchySelectionProcedure (
                 RDN: true,
             },
         });
-        // TODO: In each such loop, check that the entry wasn't already added to the result set.
         for (const sub of subordinates) {
             ids_to_resolve.add(sub.id);
             const rdn = sub.RDN.map(atavFromDB);
             rdnsById.set(sub.id, [sub.immediate_superior_id, rdn]);
         }
     }
-    if (top && hinfo.top) {
-        search_targets.push(hinfo.top);
+    if (top && hinfo.top && (hinfo.top_id !== undefined)) {
+        search_targets.push([hinfo.top_id, hinfo.top]);
     }
     if (hierarchy && selfVertex.dse.hierarchy.path) {
         selfVertex.dse.hierarchy.path
@@ -191,11 +200,19 @@ async function hierarchySelectionProcedure (
             .map((str) => Number.parseInt(str, 10))
             .forEach((id) => ids_to_resolve.add(id));
     }
-    if (parent && hinfo.parent) {
-        search_targets.push(hinfo.parent)
+    if (parent && hinfo.parent && (hinfo.parent_id !== undefined)) {
+        search_targets.push([hinfo.parent_id, hinfo.parent])
     }
-    if (self) {
-        searchState.results.push(selfEntryInfo);
+    if (self && !searchState.alreadyReturnedById.has(selfVertex.dse.id)) {
+        for (const [id, info] of selfEntryInfos) {
+            if (
+                searchState.alreadyReturnedById.has(id)
+                || searchState.paging?.[1].alreadyReturnedById.has(id)
+            ) {
+                continue;
+            }
+            searchState.results.push(info);
+        }
     }
     if (subtree && selfVertex.dse.hierarchy.path) {
         const subordinates = await ctx.db.entry.findMany({
@@ -233,11 +250,14 @@ async function hierarchySelectionProcedure (
             rdnsById.set(sub.id, [sub.immediate_superior_id, rdn]);
         }
     }
-    if (siblings && selfVertex.dse.hierarchy.path) {
+    if (siblings && selfVertex.dse.hierarchy.parent_id) {
         const subordinates = await ctx.db.entry.findMany({
             where: {
-                hierarchyParent_id: selfVertex.dse.id,
+                hierarchyParent_id: selfVertex.dse.hierarchy.parent_id,
                 hierarchyLevel: level,
+                id: {
+                    not: selfVertex.dse.id,
+                },
             },
             select: {
                 id: true,
@@ -257,7 +277,7 @@ async function hierarchySelectionProcedure (
             where: {
                 hierarchyTop_id: selfVertex.dse.hierarchy.top_id,
                 hierarchyLevel: {
-                    gte: level,
+                    gt: level, // Not a mistake: siblingSubtree is not supposed to include the siblings themselves.
                 },
             },
             select: {
@@ -295,9 +315,15 @@ async function hierarchySelectionProcedure (
     }
 
     for (const id of ids_to_resolve.values()) {
+        if (
+            searchState.alreadyReturnedById.has(id)
+            || searchState.paging?.[1].alreadyReturnedById.has(id)
+        ) {
+            continue;
+        }
         const dn = await id_to_dn(ctx, id, rdnsById);
         if (dn) {
-            search_targets.push(dn);
+            search_targets.push([id, dn]);
         }
     }
 
@@ -337,7 +363,15 @@ async function hierarchySelectionProcedure (
     service_co[ServiceControlOptions_noSubtypeSelection] = searchArgument.serviceControls?.options?.[ServiceControlOptions_noSubtypeSelection] ?? FALSE_BIT;
     service_co[ServiceControlOptions_countFamily] = searchArgument.serviceControls?.options?.[ServiceControlOptions_countFamily] ?? FALSE_BIT;
     service_co[ServiceControlOptions_dontSelectFriends] = searchArgument.serviceControls?.options?.[ServiceControlOptions_dontSelectFriends] ?? FALSE_BIT;
-    for (const dn of search_targets) {
+    for (const [ id, dn ] of search_targets) {
+        if (deadline && (new Date()) > deadline) {
+            if (!searchState.poq) {
+                searchState.poq = new PartialOutcomeQualifier(
+                    LimitProblem_timeLimitExceeded,
+                );
+            }
+            return;
+        }
         const search_arg: SearchArgument = {
             unsigned: new SearchArgumentData(
                 {
@@ -447,6 +481,8 @@ async function hierarchySelectionProcedure (
             } else {
                 searchState.resultSets.push(response.result);
             }
+            searchState.alreadyReturnedById.add(id);
+            searchState.paging?.[1].alreadyReturnedById.add(id);
         } else {
             continue;
         }

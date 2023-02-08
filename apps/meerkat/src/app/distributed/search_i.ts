@@ -1515,11 +1515,6 @@ async function search_i (
                 }
             }
         } else if (!authorizedToSearch) {
-            // TODO: This will probably have to be removed, since it is too chatty.
-            ctx.log.debug(ctx.i18n.t("log:not_authz_search", {
-                aid: assn.id,
-                dn: stringifyDN(ctx, targetDN).slice(0, 256),
-            }));
             return;
         }
     }
@@ -2089,27 +2084,46 @@ async function search_i (
                 undefined,
             );
             if (separateFamilyMembers) {
-                const separateResults = Array.from(resultsById.values())
-                    .filter(([ vertex ]) => !searchState.alreadyReturnedById.has(vertex.dse.id))
-                    .map(([ vertex, incompleteEntry, info, discloseIncompleteness ]) => new EntryInformation(
-                        {
-                            rdnSequence: getDistinguishedName(vertex),
-                        },
-                        !vertex.dse.shadow,
-                        attributeSizeLimit
-                            ? info.filter(filterEntryInfoItemBySize)
-                            : info,
-                        discloseIncompleteness
-                            ? incompleteEntry
-                            : false,
-                        (state.partialName && (searchState.depth === 0)),
-                        undefined,
-                    ));
-                for (const id of resultsById.keys()) {
-                    searchState.alreadyReturnedById.add(id);
-                    searchState.paging?.[1].alreadyReturnedById.add(id);
+                const separateResults: [ id: number, info: EntryInformation ][] = Array.from(resultsById.values())
+                    .filter(([ vertex ]) => (
+                        !searchState.alreadyReturnedById.has(vertex.dse.id)
+                        && !searchState.paging?.[1].alreadyReturnedById.has(vertex.dse.id)
+                    ))
+                    .map(([ vertex, incompleteEntry, info, discloseIncompleteness ]): [ id: number, info: EntryInformation ] => [
+                        vertex.dse.id,
+                        new EntryInformation(
+                            {
+                                rdnSequence: getDistinguishedName(vertex),
+                            },
+                            !vertex.dse.shadow,
+                            attributeSizeLimit
+                                ? info.filter(filterEntryInfoItemBySize)
+                                : info,
+                            discloseIncompleteness
+                                ? incompleteEntry
+                                : false,
+                            (state.partialName && (searchState.depth === 0)),
+                            undefined,
+                        ),
+                    ]);
+                if (data.hierarchySelections) {
+                    await hierarchySelectionProcedure(
+                        ctx,
+                        assn,
+                        target,
+                        separateResults,
+                        data,
+                        searchState,
+                        data.hierarchySelections,
+                        timeLimitEndTime,
+                    );
+                } else {
+                    for (const [id] of separateResults) {
+                        searchState.alreadyReturnedById.add(id);
+                        searchState.paging?.[1].alreadyReturnedById.add(id);
+                    }
+                    searchState.results.push(...separateResults.map(s => s[1]));
                 }
-                searchState.results.push(...separateResults);
             } else {
                 if ((resultsById.size > 1) && !(assn instanceof LDAPAssociation)) { // If there actually are children.
                     const familyEntries: FamilyEntries[] = convertSubtreeToFamilyInformation(
@@ -2125,27 +2139,27 @@ async function search_i (
                         attribute: familyInfoAttr,
                     });
                 }
-                if (
-                    !searchState.alreadyReturnedById.has(rootResult[0].dse.id)
-                    && !searchState.paging?.[1].alreadyReturnedById.has(rootResult[0].dse.id)
-                ) {
-                    searchState.results.push(rootEntryInfo);
+                if (data.hierarchySelections) {
+                    await hierarchySelectionProcedure(
+                        ctx,
+                        assn,
+                        target,
+                        [[rootResult[0].dse.id, rootEntryInfo]],
+                        data,
+                        searchState,
+                        data.hierarchySelections,
+                        timeLimitEndTime,
+                    );
+                } else {
+                    if (
+                        !searchState.alreadyReturnedById.has(rootResult[0].dse.id)
+                        && !searchState.paging?.[1].alreadyReturnedById.has(rootResult[0].dse.id)
+                    ) {
+                        searchState.results.push(rootEntryInfo);
+                    }
+                    searchState.alreadyReturnedById.add(rootResult[0].dse.id);
+                    searchState.paging?.[1].alreadyReturnedById.add(rootResult[0].dse.id);
                 }
-                searchState.alreadyReturnedById.add(rootResult[0].dse.id);
-                searchState.paging?.[1].alreadyReturnedById.add(rootResult[0].dse.id);
-            }
-
-            if (data.hierarchySelections) {
-                await hierarchySelectionProcedure(
-                    ctx,
-                    assn,
-                    target,
-                    rootEntryInfo,
-                    data,
-                    searchState,
-                    data.hierarchySelections,
-                    timeLimitEndTime,
-                );
             }
         }
         return;
@@ -2368,27 +2382,46 @@ async function search_i (
                 undefined,
             );
             if (separateFamilyMembers) {
-                const separateResults = Array.from(resultsById.values())
-                    .filter(([ vertex ]) => !searchState.alreadyReturnedById.has(vertex.dse.id))
-                    .map(([ vertex, incompleteEntry, info, discloseIncompleteness ]) => new EntryInformation(
-                        {
-                            rdnSequence: getDistinguishedName(vertex),
-                        },
-                        !vertex.dse.shadow,
-                        attributeSizeLimit
-                            ? info.filter(filterEntryInfoItemBySize)
-                            : info,
-                        discloseIncompleteness
-                            ? incompleteEntry
-                            : false,
-                        (state.partialName && (searchState.depth === 0)),
-                        undefined,
-                    ));
-                for (const id of resultsById.keys()) {
-                    searchState.alreadyReturnedById.add(id);
-                    searchState.paging?.[1].alreadyReturnedById.add(id);
+                const separateResults: [ id: number, info: EntryInformation ][] = Array.from(resultsById.values())
+                    .filter(([ vertex ]) => (
+                        !searchState.alreadyReturnedById.has(vertex.dse.id)
+                        && !searchState.paging?.[1].alreadyReturnedById.has(vertex.dse.id)
+                    ))
+                    .map(([ vertex, incompleteEntry, info, discloseIncompleteness ]): [ id: number, info: EntryInformation ] => [
+                        vertex.dse.id,
+                        new EntryInformation(
+                            {
+                                rdnSequence: getDistinguishedName(vertex),
+                            },
+                            !vertex.dse.shadow,
+                            attributeSizeLimit
+                                ? info.filter(filterEntryInfoItemBySize)
+                                : info,
+                            discloseIncompleteness
+                                ? incompleteEntry
+                                : false,
+                            (state.partialName && (searchState.depth === 0)),
+                            undefined,
+                        ),
+                    ]);
+                if (data.hierarchySelections) {
+                    await hierarchySelectionProcedure(
+                        ctx,
+                        assn,
+                        target,
+                        separateResults,
+                        data,
+                        searchState,
+                        data.hierarchySelections,
+                        timeLimitEndTime,
+                    );
+                } else {
+                    for (const [id] of separateResults) {
+                        searchState.alreadyReturnedById.add(id);
+                        searchState.paging?.[1].alreadyReturnedById.add(id);
+                    }
+                    searchState.results.push(...separateResults.map(s => s[1]));
                 }
-                searchState.results.push(...separateResults);
             } else {
                 if ((resultsById.size > 1) && !(assn instanceof LDAPAssociation)) { // If there actually are children.
                     const familyEntries: FamilyEntries[] = convertSubtreeToFamilyInformation(
@@ -2404,26 +2437,27 @@ async function search_i (
                         attribute: familyInfoAttr,
                     });
                 }
-                if (
-                    !searchState.alreadyReturnedById.has(rootResult[0].dse.id)
-                    && !searchState.paging?.[1].alreadyReturnedById.has(rootResult[0].dse.id)
-                ) {
-                    searchState.results.push(rootEntryInfo);
+                if (data.hierarchySelections) {
+                    await hierarchySelectionProcedure(
+                        ctx,
+                        assn,
+                        target,
+                        [[rootResult[0].dse.id, rootEntryInfo]],
+                        data,
+                        searchState,
+                        data.hierarchySelections,
+                        timeLimitEndTime,
+                    );
+                } else {
+                    if (
+                        !searchState.alreadyReturnedById.has(rootResult[0].dse.id)
+                        && !searchState.paging?.[1].alreadyReturnedById.has(rootResult[0].dse.id)
+                    ) {
+                        searchState.results.push(rootEntryInfo);
+                    }
+                    searchState.alreadyReturnedById.add(rootResult[0].dse.id);
+                    searchState.paging?.[1].alreadyReturnedById.add(rootResult[0].dse.id);
                 }
-                searchState.alreadyReturnedById.add(rootResult[0].dse.id);
-                searchState.paging?.[1].alreadyReturnedById.add(rootResult[0].dse.id);
-            }
-            if (data.hierarchySelections) {
-                await hierarchySelectionProcedure(
-                    ctx,
-                    assn,
-                    target,
-                    rootEntryInfo,
-                    data,
-                    searchState,
-                    data.hierarchySelections,
-                    timeLimitEndTime,
-                );
             }
         }
     }

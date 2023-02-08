@@ -440,7 +440,7 @@ async function dseFromDatabaseEntry (
         ret.entry = {};
     }
 
-    if (typeof dbe.hierarchyPath === "string" && Array.isArray(dbe.hierarchyTopDN)) {
+    if (typeof dbe.hierarchyPath === "string" && Array.isArray(dbe.hierarchyTopDN) && dbe.hierarchyTop_id) {
         ret.hierarchy = {
             level: dbe.hierarchyLevel ?? 0,
             parent: Array.isArray(dbe.hierarchyParentDN)
@@ -449,7 +449,7 @@ async function dseFromDatabaseEntry (
             top: dbe.hierarchyTopDN.map(rdnFromJson),
             path: dbe.hierarchyPath,
             parent_id: dbe.hierarchyParent_id ?? undefined,
-            top_id: dbe.hierarchyTop_id ?? undefined,
+            top_id: dbe.hierarchyTop_id,
         };
     }
 

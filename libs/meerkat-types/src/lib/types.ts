@@ -452,7 +452,7 @@ interface HierarchyInfo {
     /**
      * The database ID of the hierarchical top.
      */
-    top_id?: number;
+    top_id: number;
 
 }
 
