@@ -17,7 +17,6 @@ import rdnToJson from "../../x500/rdnToJson";
 import {
     hierarchyParent,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyParent.oa";
-import getDistinguishedName from "../../x500/getDistinguishedName";
 import { Prisma } from "@prisma/client";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
@@ -25,7 +24,7 @@ import getRDNFromEntryId from "../getRDNFromEntryId";
 import sleep from "../../utils/sleep";
 import { randomInt } from "crypto";
 import {
-    UpdateErrorData,
+    UpdateErrorData, _encode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
 import {
     UpdateProblem_hierarchyRuleViolation,
@@ -34,8 +33,9 @@ import {
 import {
     id_oc_child,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
-import rdnFromJson from "../../x500/rdnFromJson";
 import dnToVertex from "../../dit/dnToVertex";
+import { stringifyDN } from "../../x500/stringifyDN";
+import { distinguishedNameMatch as normalizeDN } from "../../matching/normalizers";
 
 const CHILD: string = id_oc_child.toString();
 
@@ -113,55 +113,88 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             ),
         );
     }
+
     if (!parent.dse.hierarchy) {
         parent.dse.hierarchy = {
             level: 0,
+            top_id: parent.dse.id,
+            path: `${parent.dse.id}.`,
+            top: dn,
         };
     }
-    const top = parent.dse.hierarchy?.top
-        ? parent.dse.hierarchy.top
-        : getDistinguishedName(parent);
+    const top = parent.dse.hierarchy.top;
     if (!vertex.dse.hierarchy) {
         vertex.dse.hierarchy = {
             top,
+            top_id: parent.dse.hierarchy.top_id,
             parent: dn,
+            parent_id: parent.dse.id,
             level: (parent.dse.hierarchy.level + 1),
+            path: parent.dse.hierarchy.path + `${vertex.dse.id}.`,
         };
     }
-    const parentRow = await ctx.db.entry.findUnique({
-        where: {
-            id: parent.dse.id,
-        },
-        select: {
-            hierarchyPath: true,
-            hierarchyParentDN: true,
-        },
-    });
-    pendingUpdates.entryUpdate.hierarchyParentDN = dn.map(rdnToJson);
-    pendingUpdates.entryUpdate.hierarchyTopDN = top.map(rdnToJson);
-    pendingUpdates.entryUpdate.hierarchyPath = ((parentRow?.hierarchyPath ?? "") + parent.dse.id.toString() + ".");
+
+    const top_dn_str: string = normalizeDN(ctx, _encode_DistinguishedName(parent.dse.hierarchy.top, DER))
+        ?? stringifyDN(ctx, parent.dse.hierarchy.top);
+    const parent_parent_dn_str: string | undefined = parent.dse.hierarchy.parent
+        ? normalizeDN(ctx, _encode_DistinguishedName(parent.dse.hierarchy.parent, DER))
+            ?? stringifyDN(ctx, parent.dse.hierarchy.parent)
+        : undefined;
+    const parent_dn_str: string = normalizeDN(ctx, _encode_DistinguishedName(dn, DER))
+        ?? stringifyDN(ctx, parent.dse.hierarchy.top);
+
     pendingUpdates.otherWrites.push(ctx.db.entry.update({
         where: {
             id: parent.dse.id,
         },
         data: {
-            hierarchyPath: parentRow?.hierarchyPath ?? "",
-            hierarchyTopDN: top.map(rdnToJson),
+            hierarchyPath: parent.dse.hierarchy.path,
+            hierarchyTopDN: parent.dse.hierarchy.top.map(rdnToJson),
+            hierarchyLevel: parent.dse.hierarchy.level,
+            hierarchyParent_id: parent.dse.hierarchy.parent_id,
+            hierarchyTop_id: parent.dse.hierarchy.top_id,
+            hierarchyParentDN: parent.dse.hierarchy.parent?.map(rdnToJson),
+            hierarchyParentStr: parent_parent_dn_str,
+            hierarchyTopStr: top_dn_str,
         },
         select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
     }));
-    parent.dse.hierarchy = {
-        top,
-        level: parent.dse.hierarchy.level ?? 0,
-        parent: Array.isArray(parentRow?.hierarchyParentDN)
-            ? parentRow!.hierarchyParentDN.map(rdnFromJson)
-            : undefined,
-    };
+    pendingUpdates.entryUpdate.hierarchyPath = vertex.dse.hierarchy.path;
+    pendingUpdates.entryUpdate.hierarchyTopDN = vertex.dse.hierarchy.top.map(rdnToJson);
+    pendingUpdates.entryUpdate.hierarchyLevel = vertex.dse.hierarchy.level;
     pendingUpdates.entryUpdate.hierarchyParent = {
         connect: {
-            id: parent.dse.id,
+            id: vertex.dse.hierarchy.parent_id,
         },
     };
+    pendingUpdates.entryUpdate.hierarchyTop = {
+        connect: {
+            id: vertex.dse.hierarchy.top_id,
+        },
+    };
+    pendingUpdates.entryUpdate.hierarchyParentDN = vertex.dse.hierarchy.parent?.map(rdnToJson);
+    pendingUpdates.entryUpdate.hierarchyParentStr = parent_dn_str;
+    pendingUpdates.entryUpdate.hierarchyTopStr = top_dn_str;
+
+    /**
+     * If the `hierarchyParent` refers to an in-memory cached DSE for the
+     * association that is adding this attribute, it will get added in the
+     * database, but the in-memory cache will not be updated.
+     *
+     * This loop will iterate through the in-memory superiors of `vertex` and
+     * update their hierarchy information, which will fix this problem if the
+     * vertex is cached for the entry that is adding this attribute. In all
+     * other cases, it is assumed that this transient inconsistency is
+     * acceptable.
+     */
+    let v = vertex;
+    while (v.immediateSuperior) {
+        v = v.immediateSuperior;
+        if (v.dse.id === parent.dse.id) {
+            v.dse.hierarchy = parent.dse.hierarchy;
+            break;
+        }
+    }
 };
 
 export

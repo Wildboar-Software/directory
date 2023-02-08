@@ -424,7 +424,7 @@ interface HierarchyInfo {
      * The distinguished name of the top entry in the hierarchical group. This
      * should not be present in the hierarchical top.
      */
-    top?: DistinguishedName;
+    top: DistinguishedName;
 
     /**
      * The level of this entry within the hierarchical group. This starts off at

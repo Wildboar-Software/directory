@@ -88,6 +88,7 @@ async function id_to_dn (
         if (cached) {
             const [ superior_id, rdn ] = cached;
             dn.push(rdn);
+            assert(current_id !== superior_id);
             current_id = superior_id;
             continue;
         }
@@ -106,6 +107,7 @@ async function id_to_dn (
         const rdn = entry.RDN.map(atavFromDB);
         dn.push(rdn);
         rdnsById.set(current_id, [entry.immediate_superior_id, rdn])
+        assert(current_id !== entry.immediate_superior_id);
         current_id = entry.immediate_superior_id;
     }
     return dn.reverse();
@@ -135,7 +137,10 @@ async function hierarchySelectionProcedure (
     hierarchySelections: HierarchySelections,
     deadline: Date | undefined,
 ): Promise<void> {
-    assert(selfVertex.dse.hierarchy);
+    // TODO: This used to be an assert(). If it failed, NodeJS would hang indefinitely. Investigate.
+    if (!selfVertex.dse.hierarchy) {
+        return;
+    }
     const self: boolean = (hierarchySelections[HierarchySelections_self] === TRUE_BIT);
     const all: boolean = (hierarchySelections[HierarchySelections_all] === TRUE_BIT);
     const hierarchy: boolean = !all && (hierarchySelections[HierarchySelections_hierarchy] === TRUE_BIT);

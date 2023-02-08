@@ -123,7 +123,6 @@ import { addSeconds } from "date-fns";
 import { randomInt } from "crypto";
 import { CommonArguments } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArguments.ta";
 import LDAPAssociation from "../ldap/LDAPConnection";
-import printCode from "../utils/printCode";
 import stringifyDN from "../x500/stringifyDN";
 
 function getPathFromVersion (vertex: Vertex): Vertex[] {
