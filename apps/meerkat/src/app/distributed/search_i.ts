@@ -2067,22 +2067,6 @@ async function search_i (
                     ];
                 }
             } // End of matchedValuesOnly handling.
-            const rootResult = resultsById.get(familySubsetToReturn.dse.id)!;
-            assert(rootResult[0].dse.id === target.dse.id);
-            const rootEntryInfo = new EntryInformation(
-                {
-                    rdnSequence: getDistinguishedName(rootResult[0]),
-                },
-                !rootResult[0].dse.shadow,
-                attributeSizeLimit
-                    ? rootResult[2].filter(filterEntryInfoItemBySize)
-                    : rootResult[2],
-                rootResult[3] // discloseOnError?
-                    ? rootResult[1] // -> tell them the truth
-                    : false, // -> say the entry is complete even when it is not
-                (state.partialName && (searchState.depth === 0)),
-                undefined,
-            );
             if (separateFamilyMembers) {
                 const separateResults: [ id: number, info: EntryInformation ][] = Array.from(resultsById.values())
                     .filter(([ vertex ]) => (
@@ -2106,7 +2090,8 @@ async function search_i (
                             undefined,
                         ),
                     ]);
-                if (data.hierarchySelections) {
+                const ancestorEntryIncluded = separateResults.some((sr) => (sr[0] === target.dse.id));
+                if (data.hierarchySelections && ancestorEntryIncluded && target.dse.hierarchy) {
                     await hierarchySelectionProcedure(
                         ctx,
                         assn,
@@ -2125,6 +2110,22 @@ async function search_i (
                     searchState.results.push(...separateResults.map(s => s[1]));
                 }
             } else {
+                const rootResult = resultsById.get(familySubsetToReturn.dse.id)!;
+                const rootResultIsAncestor: boolean = (rootResult[0].dse.id === target.dse.id);
+                const rootEntryInfo = new EntryInformation(
+                    {
+                        rdnSequence: getDistinguishedName(rootResult[0]),
+                    },
+                    !rootResult[0].dse.shadow,
+                    attributeSizeLimit
+                        ? rootResult[2].filter(filterEntryInfoItemBySize)
+                        : rootResult[2],
+                    rootResult[3] // discloseOnError?
+                        ? rootResult[1] // -> tell them the truth
+                        : false, // -> say the entry is complete even when it is not
+                    (state.partialName && (searchState.depth === 0)),
+                    undefined,
+                );
                 if ((resultsById.size > 1) && !(assn instanceof LDAPAssociation)) { // If there actually are children.
                     const familyEntries: FamilyEntries[] = convertSubtreeToFamilyInformation(
                         familySubsetToReturn,
@@ -2139,7 +2140,19 @@ async function search_i (
                         attribute: familyInfoAttr,
                     });
                 }
-                if (data.hierarchySelections) {
+                /**
+                 * If the ancestor is not selected, we do not perform hierarchy
+                 * selections, since child entries are not permitted to be a
+                 * part of a hierarchical group. ITU Recommendation X.511
+                 * (2019), Section 7.13 states this another way:
+                 *
+                 * > If the ancestor of the compound entry is marked as
+                 * > participating (and possibly also as contributing), all
+                 * > referenced entries of the hierarchical group that are not
+                 * > compound entries shall be selected, otherwise they shall be
+                 * > excluded.
+                 */
+                if (data.hierarchySelections && rootResultIsAncestor && target.dse.hierarchy) {
                     await hierarchySelectionProcedure(
                         ctx,
                         assn,
@@ -2365,22 +2378,6 @@ async function search_i (
                     ];
                 }
             } // End of matchedValuesOnly handling.
-            const rootResult = resultsById.get(familySubsetToReturn.dse.id)!;
-            assert(rootResult[0].dse.id === target.dse.id);
-            const rootEntryInfo = new EntryInformation(
-                {
-                    rdnSequence: getDistinguishedName(rootResult[0]),
-                },
-                !rootResult[0].dse.shadow,
-                attributeSizeLimit
-                    ? rootResult[2].filter(filterEntryInfoItemBySize)
-                    : rootResult[2],
-                rootResult[3] // discloseOnError?
-                    ? rootResult[1] // -> tell them the truth
-                    : false, // -> say the entry is complete even when it is not
-                (state.partialName && (searchState.depth === 0)),
-                undefined,
-            );
             if (separateFamilyMembers) {
                 const separateResults: [ id: number, info: EntryInformation ][] = Array.from(resultsById.values())
                     .filter(([ vertex ]) => (
@@ -2404,7 +2401,8 @@ async function search_i (
                             undefined,
                         ),
                     ]);
-                if (data.hierarchySelections) {
+                const ancestorEntryIncluded = separateResults.some((sr) => (sr[0] === target.dse.id));
+                if (data.hierarchySelections && ancestorEntryIncluded && target.dse.hierarchy) {
                     await hierarchySelectionProcedure(
                         ctx,
                         assn,
@@ -2423,6 +2421,22 @@ async function search_i (
                     searchState.results.push(...separateResults.map(s => s[1]));
                 }
             } else {
+                const rootResult = resultsById.get(familySubsetToReturn.dse.id)!;
+                const rootResultIsAncestor: boolean = (rootResult[0].dse.id === target.dse.id);
+                const rootEntryInfo = new EntryInformation(
+                    {
+                        rdnSequence: getDistinguishedName(rootResult[0]),
+                    },
+                    !rootResult[0].dse.shadow,
+                    attributeSizeLimit
+                        ? rootResult[2].filter(filterEntryInfoItemBySize)
+                        : rootResult[2],
+                    rootResult[3] // discloseOnError?
+                        ? rootResult[1] // -> tell them the truth
+                        : false, // -> say the entry is complete even when it is not
+                    (state.partialName && (searchState.depth === 0)),
+                    undefined,
+                );
                 if ((resultsById.size > 1) && !(assn instanceof LDAPAssociation)) { // If there actually are children.
                     const familyEntries: FamilyEntries[] = convertSubtreeToFamilyInformation(
                         familySubsetToReturn,
@@ -2437,7 +2451,19 @@ async function search_i (
                         attribute: familyInfoAttr,
                     });
                 }
-                if (data.hierarchySelections) {
+                /**
+                 * If the ancestor is not selected, we do not perform hierarchy
+                 * selections, since child entries are not permitted to be a
+                 * part of a hierarchical group. ITU Recommendation X.511
+                 * (2019), Section 7.13 states this another way:
+                 *
+                 * > If the ancestor of the compound entry is marked as
+                 * > participating (and possibly also as contributing), all
+                 * > referenced entries of the hierarchical group that are not
+                 * > compound entries shall be selected, otherwise they shall be
+                 * > excluded.
+                 */
+                if (data.hierarchySelections && rootResultIsAncestor && target.dse.hierarchy) {
                     await hierarchySelectionProcedure(
                         ctx,
                         assn,

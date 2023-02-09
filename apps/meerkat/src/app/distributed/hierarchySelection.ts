@@ -90,6 +90,7 @@ async function id_to_dn (
     let current_id: number | null = id;
     const dn: DistinguishedName = [];
     while (current_id) {
+        console.log(current_id);
         const cached = rdnsById.get(current_id);
         if (cached) {
             const [ superior_id, rdn ] = cached;
@@ -123,6 +124,23 @@ async function id_to_dn (
     return dn.reverse();
 }
 
+/* TODO: ITU Recommendation X.511 (2019), Section 7.13 states that:
+
+If a referenced entry is a compound entry, the marking of its
+members shall be done as follows. Each member of the referenced compound entry
+that have the same local member name as a member of the matched compound entry
+is marked the same way. All other members of the referenced
+compound entry are left unmarked.
+
+I think this will require:
+
+- Querying the entire compound entry in hierarchical subsearches.
+- Passing in a Set<IndexableDN> and filtering out the family members whose DN
+  is NOT in that set.
+
+I don't know how this would relate to separateFamilyMembers.
+
+*/
 /**
  * @summary The Hierarchy Selection Procedure as defined in ITU Recommendation X.518.
  * @description
