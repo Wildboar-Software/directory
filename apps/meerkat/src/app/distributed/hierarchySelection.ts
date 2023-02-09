@@ -65,6 +65,10 @@ import {
 import {
     LimitProblem_timeLimitExceeded,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/LimitProblem.ta";
+import { id_ar_serviceSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-serviceSpecificArea.va";
+import { id_ar_autonomousArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
+import getDistinguishedName from "../x500/getDistinguishedName";
+import isPrefix from "../x500/isPrefix";
 
 function atavFromDB (atav: DistinguishedValue): AttributeTypeAndValue {
     const type_el = new BERElement();
@@ -122,6 +126,27 @@ async function id_to_dn (
         current_id = entry.immediate_superior_id;
     }
     return dn.reverse();
+}
+
+const ID_AR_SVC: string = id_ar_serviceSpecificArea.toString();
+const ID_AR_AUTONOMOUS: string = id_ar_autonomousArea.toString();
+
+function getServiceAdminPrefix (target: Vertex): DistinguishedName | undefined {
+    let i = 0;
+    let curr: Vertex | undefined = target;
+    while (curr && i < 100_000) {
+        i++;
+        if (
+            curr.dse.admPoint
+            && (
+                curr.dse.admPoint.administrativeRole.has(ID_AR_SVC)
+                || curr.dse.admPoint.administrativeRole.has(ID_AR_AUTONOMOUS)
+            )
+        ) {
+            return getDistinguishedName(curr);
+        }
+        curr = curr.immediateSuperior;
+    }
 }
 
 /* TODO: ITU Recommendation X.511 (2019), Section 7.13 states that:
@@ -345,6 +370,8 @@ async function hierarchySelectionProcedure (
         }
     }
 
+    const serviceAdminPrefix: DistinguishedName | undefined = getServiceAdminPrefix(selfVertex);
+
     const requestor: DistinguishedName | undefined = searchArgument
         .securityParameters
         ?.certification_path
@@ -389,6 +416,19 @@ async function hierarchySelectionProcedure (
                 );
             }
             return;
+        }
+        /**
+         * Hierarchical groups are required by the X.500 specifications to be
+         * within a single service administrative area, or within no service
+         * administrative area at all. There is currently no efficient way to
+         * check this with certainty in Meerkat DSA, but we can check that the
+         * distinguished name is prefixed by the distinguished name of the
+         * applicable service admin area, if one is defined. This will not tell
+         * us if the hierarchical sub-search crosses the lower bound of the
+         * service admin area.
+         */
+        if (serviceAdminPrefix && !isPrefix(ctx, serviceAdminPrefix, dn)) {
+            continue;
         }
         const search_arg: SearchArgument = {
             unsigned: new SearchArgumentData(
