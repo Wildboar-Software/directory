@@ -626,6 +626,13 @@ async function hierarchySelectionProcedure (
                 : dn;
             const namingMatcher = getNamingMatcherGetter(ctx);
             for (const result of results) {
+                /**
+                 * [ITU Recommendation X.511 (2019)](https://www.itu.int/rec/T-REC-X.511/en),
+                 * Section 7.13 details the procedures for hierarchically-related
+                 * entries that are compound entries. Basically, the DSA should
+                 * return all family members having the same local names as
+                 * family members returned from the `self` entry.
+                 */
                 if (separateFamilyMembers) {
                     // Always include the ancestor
                     if (compareDistinguishedName(ancestorDN, result.name.rdnSequence, namingMatcher)) {
