@@ -1,5 +1,18 @@
 # Changelog for Meerkat DSA
 
+## Version 2.2.0
+
+### Changes
+
+- Support all hierarchy selections in the `search` operation.
+- Use the `extendedFilter` component of `search` operation arguments.
+
+### Upgrading to this version
+
+- If you previously set any hierarchical group-related attributes on any
+  entries, hierarchical selections might not work as expected. You can fix this
+  by removing the attributes and re-adding them.
+
 ## Version 2.1.0
 
 - Implement the Search Continuation Reference Procedure defined in

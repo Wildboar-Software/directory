@@ -219,6 +219,14 @@ noted below are nuances in Meerkat DSA:
       presence of multiple possibly-signed result sets. It is worth knowing,
       though: if you have a strong need for absolutely no duplicate entries in
       results, simply request pagination, even if you only read the first page.
+- [ITU Recommendation X.501 (2019)](https://www.itu.int/rec/T-REC-X.501/en),
+  Section 10.3 outlines very specific ordering in which entries included as a
+  result of hierarchical selection are to be returned in search results, but
+  Meerkat DSA does not strictly obey this, solely because an implementation that
+  did strictly obey this would be complicated, and for the small benefit of
+  correct ordering. Instead, Meerkat DSA performs the hierarchy selection
+  sub-searches in such an order that the returned entries are innately _likely_
+  to appear in approximately the proper ordering.
 
 ## The "Never Contributing" Bug
 
