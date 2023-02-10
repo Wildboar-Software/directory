@@ -1,12 +1,11 @@
 import type { Connection, Context } from "./types";
 import {
     FALSE_BIT,
-    unpackBits,
     OBJECT_IDENTIFIER,
     ObjectIdentifier,
     TRUE_BIT,
 } from "asn1-ts";
-import { randomBytes, randomInt } from "crypto";
+import { randomInt } from "crypto";
 import {
     addEntry,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
@@ -17,7 +16,7 @@ import {
     AddEntryArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta";
 import {
-    DistinguishedName,
+    DistinguishedName, _encode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import {
     Attribute,
@@ -252,6 +251,67 @@ const baseObject: DistinguishedName = [
         ),
     ],
 ];
+
+function cn_rdn (cn: string): RelativeDistinguishedName {
+    return [
+        new AttributeTypeAndValue(
+            selat.commonName["&id"]!,
+            _encodeUTF8String(cn, DER),
+        ),
+    ];
+}
+
+function get_child_device (parent: DistinguishedName, name: string): AddEntryArgument {
+    return createAddEntryArgument([
+        ...parent,
+        [
+            new AttributeTypeAndValue(
+                selat.commonName["&id"]!,
+                _encodeUTF8String(name, DER),
+            ),
+        ],
+    ], [
+        new Attribute(
+            selat.objectClass["&id"],
+            [
+                _encodeObjectIdentifier(seloc.device["&id"]!, DER),
+                _encodeObjectIdentifier(seloc.child["&id"]!, DER),
+            ],
+            undefined,
+        ),
+        new Attribute(
+            selat.commonName["&id"]!,
+            [_encodeUTF8String(name, DER)],
+            undefined,
+        ),
+    ]);
+}
+
+function get_child_ap (parent: DistinguishedName, name: string): AddEntryArgument {
+    return createAddEntryArgument([
+        ...parent,
+        [
+            new AttributeTypeAndValue(
+                selat.commonName["&id"]!,
+                _encodeUTF8String(name, DER),
+            ),
+        ],
+    ], [
+        new Attribute(
+            selat.objectClass["&id"],
+            [
+                _encodeObjectIdentifier(seloc.applicationProcess["&id"]!, DER),
+                _encodeObjectIdentifier(seloc.child["&id"]!, DER),
+            ],
+            undefined,
+        ),
+        new Attribute(
+            selat.commonName["&id"]!,
+            [_encodeUTF8String(name, DER)],
+            undefined,
+        ),
+    ]);
+}
 
 export
 async function seedUS (
@@ -900,6 +960,263 @@ async function seedUS (
         ));
         const arg = createAddEntryArgument(dn, attributes);
         await idempotentAddEntry(ctx, conn, "C=US,ST=FL,L=HIL,L=Tampa,O=Wildboar Software,CN=CRL Dist Point #001", arg);
+    }
+
+    const gov_rdn: RelativeDistinguishedName = [
+        new AttributeTypeAndValue(
+            selat.organizationName["&id"]!,
+            _encodeUTF8String("Government", DER),
+        ),
+    ];
+    {
+        const name: string = "Government";
+        const rdn: RelativeDistinguishedName = gov_rdn;
+        const dn: DistinguishedName = [
+            ...baseObject,
+            rdn,
+        ];
+        const attributes: Attribute[] = [
+            new Attribute(
+                selat.objectClass["&id"],
+                [_encodeObjectIdentifier(seloc.organization["&id"], DER)],
+            ),
+            new Attribute(
+                selat.organizationName["&id"],
+                [_encodeUTF8String(name, DER)],
+            ),
+        ];
+        const arg = createAddEntryArgument(dn, attributes);
+        await idempotentAddEntry(ctx, conn, "C=US,O=Government", arg);
+    }
+    const dod_rdn: RelativeDistinguishedName = [
+        new AttributeTypeAndValue(
+            selat.organizationalUnitName["&id"]!,
+            _encodeUTF8String("Dept. of Defense", DER),
+        ),
+    ];
+
+    const jb_dn: DistinguishedName = [ ...baseObject, gov_rdn, cn_rdn("Joseph R. Biden") ];
+    const kh_dn: DistinguishedName = [ ...baseObject, gov_rdn, cn_rdn("Kamala Harris") ];
+    const government_persons: [ string, string, DistinguishedName? ][] = [
+        [ "Joseph R. Biden", "Biden", undefined ],
+        [ "Kamala Harris", "Harris", jb_dn ],
+        [ "Patty Murray", "Murray", kh_dn ],
+    ];
+    for (const gov_person of government_persons) {
+        const name: string = gov_person[0];
+        const rdn: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                selat.commonName["&id"]!,
+                _encodeUTF8String(name, DER),
+            ),
+        ];
+        const dn: DistinguishedName = [
+            ...baseObject,
+            rdn,
+        ];
+        const attributes: Attribute[] = [
+            new Attribute(
+                selat.objectClass["&id"],
+                [_encodeObjectIdentifier(seloc.person["&id"], DER)],
+            ),
+            new Attribute(
+                selat.commonName["&id"],
+                [_encodeUTF8String(name, DER)],
+            ),
+            new Attribute(
+                selat.surname["&id"],
+                [_encodeUTF8String(gov_person[1], DER)],
+            ),
+        ];
+        if (gov_person[2]) {
+            attributes.push(new Attribute(
+                selat.hierarchyParent["&id"],
+                [_encode_DistinguishedName(gov_person[2], DER)],
+            ));
+        }
+        const arg = createAddEntryArgument(dn, attributes);
+        await idempotentAddEntry(ctx, conn, `C=US,O=Government,CN=${gov_person[0]}`, arg);
+    }
+
+    const depts: [string, string][] = [
+        [ "State",	"Antony Blinken" ],
+        [ "Treasury",	"Janet Yellen" ],
+        [ "Defense",	"Lloyd Austin" ],
+        [ "Justice",	"Merrick Garland" ],
+        [ "Interior",	"Deb Haaland" ],
+        [ "Agriculture",	"Tom Vilsack" ],
+        [ "Commerce",	"Gina Raimondo" ],
+        [ "Labor",	"Marty Walsh" ],
+        [ "Health and Human Services",	"Xavier Becerra" ],
+        [ "Housing and Urban Development",	"Marcia Fudge" ],
+        [ "Transportation",	"Pete Buttigieg" ],
+        [ "Energy",	"Jennifer Granholm" ],
+        [ "Education",	"Miguel Cardona" ],
+        [ "Veterans Affairs",	"Denis McDonough" ],
+        [ "Homeland Security",	"Alejandro Mayorkas" ],
+    ];
+    for (const dept of depts) {
+        const dept_name: string = `Dept. of ${dept[0]}`;
+        const dept_rdn: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                selat.organizationalUnitName["&id"]!,
+                _encodeUTF8String(dept_name, DER),
+            ),
+        ];
+        {
+            const dn: DistinguishedName = [
+                ...baseObject,
+                gov_rdn,
+                dept_rdn,
+            ];
+            const attributes: Attribute[] = [
+                new Attribute(
+                    selat.objectClass["&id"],
+                    [_encodeObjectIdentifier(seloc.organizationalUnit["&id"], DER)],
+                ),
+                new Attribute(
+                    selat.organizationalUnitName["&id"],
+                    [_encodeUTF8String(dept_name, DER)],
+                ),
+            ];
+            const arg = createAddEntryArgument(dn, attributes);
+            await idempotentAddEntry(ctx, conn, `C=US,O=Government,OU=${dept_name}`, arg);
+        }
+        {
+            const secretary_name = dept[1];
+            const secretary_surname = secretary_name.split(" ").pop()!;
+            const secretary_rdn: RelativeDistinguishedName = [
+                new AttributeTypeAndValue(
+                    selat.commonName["&id"]!,
+                    _encodeUTF8String(secretary_name, DER),
+                ),
+            ];
+            const dn: DistinguishedName = [
+                ...baseObject,
+                gov_rdn,
+                dept_rdn,
+                secretary_rdn,
+            ];
+            const attributes: Attribute[] = [
+                new Attribute(
+                    selat.objectClass["&id"],
+                    [_encodeObjectIdentifier(seloc.person["&id"], DER)],
+                ),
+                new Attribute(
+                    selat.commonName["&id"],
+                    [_encodeUTF8String(secretary_name, DER)],
+                ),
+                new Attribute(
+                    selat.surname["&id"],
+                    [_encodeUTF8String(secretary_surname, DER)],
+                ),
+                new Attribute(
+                    selat.hierarchyParent["&id"],
+                    [_encode_DistinguishedName([ ...baseObject, gov_rdn, cn_rdn("Patty Murray") ], DER)],
+                ),
+            ];
+            const arg = createAddEntryArgument(dn, attributes);
+            await idempotentAddEntry(ctx, conn, `C=US,O=Government,OU=${dept_name},CN=${secretary_name}`, arg);
+        }
+    }
+
+    const dod_persons: [ string, string, DistinguishedName ][] = [
+        [ "Kathleen Hicks", "Hicks", [ ...baseObject, gov_rdn, dod_rdn, cn_rdn("Lloyd Austin") ] ],
+        [ "Avril Haines", "Haines", [ ...baseObject, gov_rdn, dod_rdn, cn_rdn("Kathleen Hicks") ] ],
+        [ "Mark Milley", "Milley", [ ...baseObject, gov_rdn, dod_rdn, cn_rdn("Kathleen Hicks") ] ],
+        [ "Christopher Grady", "Grady", [ ...baseObject, gov_rdn, dod_rdn, cn_rdn("Mark Milley") ] ],
+    ];
+    for (const dod_person of dod_persons) {
+        const name = dod_person[0];
+        const surname = dod_person[1];
+        const rdn: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                selat.commonName["&id"]!,
+                _encodeUTF8String(name, DER),
+            ),
+        ];
+        const dn: DistinguishedName = [
+            ...baseObject,
+            gov_rdn,
+            dod_rdn,
+            rdn,
+        ];
+        const attributes: Attribute[] = [
+            new Attribute(
+                selat.objectClass["&id"],
+                [_encodeObjectIdentifier(seloc.person["&id"], DER)],
+            ),
+            new Attribute(
+                selat.commonName["&id"],
+                [_encodeUTF8String(name, DER)],
+            ),
+            new Attribute(
+                selat.surname["&id"],
+                [_encodeUTF8String(surname, DER)],
+            ),
+            new Attribute(
+                selat.hierarchyParent["&id"],
+                [_encode_DistinguishedName(dod_person[2], DER)],
+            ),
+        ];
+        const arg = createAddEntryArgument(dn, attributes);
+        await idempotentAddEntry(ctx, conn, `C=US,O=Government,OU=Dept. of Defense,CN=${name}`, arg);
+    }
+
+    const joe_biden_devices: string[] = [
+        "iPhone 1",
+        "Android 1",
+        "Windows Phone",
+        "Gaming Desktop",
+        "Tamagotchi",
+    ];
+    const joe_gaming_processes: string[] = [
+        "Antivirus",
+        "Discord",
+    ];
+    for (const dev of joe_biden_devices) {
+        await idempotentAddEntry(
+            ctx,
+            conn,
+            `C=US,O=Government,CN=Joseph R. Biden,CN=${dev}`,
+            get_child_device(jb_dn, dev),
+        );
+    }
+    for (const proc of joe_gaming_processes) {
+        const dev_dn: DistinguishedName = [ ...jb_dn, cn_rdn("Gaming Desktop") ];
+        await idempotentAddEntry(
+            ctx,
+            conn,
+            `C=US,O=Government,CN=Joseph R. Biden,CN=Gaming Desktop,CN=${proc}`,
+            get_child_ap(dev_dn, proc),
+        );
+    }
+
+    const kamala_harris_devices: string[] = [
+        "Gaming Desktop",
+        "Even Bigger Gaming Desktop",
+        "Oculus Rift",
+        "Tamagotchi",
+    ];
+    const kamala_gaming_processes: string[] = [
+        "Discord",
+    ];
+    for (const dev of kamala_harris_devices) {
+        await idempotentAddEntry(
+            ctx,
+            conn,
+            `C=US,O=Government,CN=Kamala Harris,CN=${dev}`,
+            get_child_device(kh_dn, dev),
+        );
+    }
+    for (const proc of kamala_gaming_processes) {
+        const dev_dn: DistinguishedName = [ ...kh_dn, cn_rdn("Gaming Desktop") ];
+        await idempotentAddEntry(
+            ctx,
+            conn,
+            `C=US,O=Government,CN=Kamala Harris,CN=Gaming Desktop,CN=${proc}`,
+            get_child_ap(dev_dn, proc),
+        );
     }
 }
 

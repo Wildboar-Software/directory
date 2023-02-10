@@ -67,6 +67,12 @@ passwords and a multitude of auxiliary object classes.
 `C=GB,CN=Prince Harry` is a compound entry.
 
 `C=RU,dmdName=Sputnik DMD` contains a handful of entries of object class `dSA`.
+Each of these has attribute values that have contexts.
+
+`C=US,O=Government` has a hierarchical group that does not correspond to the DIT
+structure exactly, and `C=US,O=Government,CN=Joseph R. Biden` and
+`C=US,O=Government,CN=Kamala Harris` are both compound entries, allowing you to
+test the intersection of compound entries and hierarchical groups.
 
 ## Quipu DSA
 
