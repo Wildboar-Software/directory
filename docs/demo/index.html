@@ -11,7 +11,7 @@
 <link rel="icon" href="/directory/img/boar-head-rune-circle.svg">
 <link rel="manifest" href="/directory/manifest.json">
 <meta name="theme-color" content="rgb(37, 194, 160)"><link rel="stylesheet" href="/directory/assets/css/styles.98760b4a.css">
-<link rel="preload" href="/directory/assets/js/runtime~main.1e905147.js" as="script">
+<link rel="preload" href="/directory/assets/js/runtime~main.bc83ee8c.js" as="script">
 <link rel="preload" href="/directory/assets/js/main.d0e84626.js" as="script">
 </head>
 <body class="navigation-with-keyboard">
@@ -34,7 +34,11 @@ one or more <code>organizationalRole</code> entries and one or more <code>cRLDis
 entries. <code>C=US,ST=FL,L=HIL,L=Tampa,O=Wildboar Software,CN=Code Peasants</code> is an
 <code>organizationalRole</code> that contains multiple members from
 <code>C=US,ST=FL,L=HIL,L=Tampa,L=Westchase</code>.</p><p>The <code>L=Westchase</code> contains an assortment of people entries, some of which have
-passwords and a multitude of auxiliary object classes.</p><p><code>C=GB,CN=Prince Harry</code> is a compound entry.</p><p><code>C=RU,dmdName=Sputnik DMD</code> contains a handful of entries of object class <code>dSA</code>.</p><h2 class="anchor anchorWithStickyNavbar_LWe7" id="quipu-dsa">Quipu DSA<a class="hash-link" href="#quipu-dsa" title="Direct link to heading">​</a></h2><p>Quipu DSA, the X.500 directory in the
+passwords and a multitude of auxiliary object classes.</p><p><code>C=GB,CN=Prince Harry</code> is a compound entry.</p><p><code>C=RU,dmdName=Sputnik DMD</code> contains a handful of entries of object class <code>dSA</code>.
+Each of these has attribute values that have contexts.</p><p><code>C=US,O=Government</code> has a hierarchical group that does not correspond to the DIT
+structure exactly, and <code>C=US,O=Government,CN=Joseph R. Biden</code> and
+<code>C=US,O=Government,CN=Kamala Harris</code> are both compound entries, allowing you to
+test the intersection of compound entries and hierarchical groups.</p><h2 class="anchor anchorWithStickyNavbar_LWe7" id="quipu-dsa">Quipu DSA<a class="hash-link" href="#quipu-dsa" title="Direct link to heading">​</a></h2><p>Quipu DSA, the X.500 directory in the
 <a href="https://en.wikipedia.org/wiki/ISO_Development_Environment" target="_blank" rel="noopener noreferrer">ISO Development Environment</a>,
 is now a part of the demo environment. It is accessible at:</p><p><code>itot://quipu.mkdemo.wildboar.software:17003</code></p><p>As the URL implies, it is only accessible via ISO Transport Over TCP (ITOT).
 Note that Quipu is a version 1 DSA, so it will not support many features, such
@@ -61,7 +65,7 @@ It is just a simple ExpressJS application that uses the
 <a href="https://github.com/Wildboar-Software/directory/tree/master/libs/x500-auth-ts" target="_blank" rel="noopener noreferrer">X.500 authentication TypeScript library</a>
 (also hosted in the same repository), which in turn, uses the
 <a href="https://github.com/Wildboar-Software/directory/tree/master/libs/x500-client-ts" target="_blank" rel="noopener noreferrer">X.500 Client TypeScript Library</a>.</p></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="theme-doc-footer-edit-meta-row row"><div class="col"><a href="https://github.com/Wildboar-Software/directory/edit/main/website/docs/demo.md" target="_blank" rel="noreferrer noopener" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_Z9Sw" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_vwxv"></div></div></footer></article><nav class="pagination-nav docusaurus-mt-lg" aria-label="Docs pages navigation"></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#credentials" class="table-of-contents__link toc-highlight">Credentials</a></li><li><a href="#demo-dit-overview" class="table-of-contents__link toc-highlight">Demo DIT Overview</a></li><li><a href="#quipu-dsa" class="table-of-contents__link toc-highlight">Quipu DSA</a></li><li><a href="#permissions" class="table-of-contents__link toc-highlight">Permissions</a></li><li><a href="#hacking-challenge" class="table-of-contents__link toc-highlight">Hacking Challenge</a></li><li><a href="#demo-integration-app" class="table-of-contents__link toc-highlight">Demo Integration App</a></li></ul></div></div></div></div></main></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2022 Wildboar Software. Built with Docusaurus.</div></div></div></footer></div>
-<script src="/directory/assets/js/runtime~main.1e905147.js"></script>
+<script src="/directory/assets/js/runtime~main.bc83ee8c.js"></script>
 <script src="/directory/assets/js/main.d0e84626.js"></script>
 </body>
 </html>
