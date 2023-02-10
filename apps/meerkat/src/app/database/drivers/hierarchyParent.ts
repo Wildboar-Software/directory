@@ -36,8 +36,34 @@ import {
 import dnToVertex from "../../dit/dnToVertex";
 import { stringifyDN } from "../../x500/stringifyDN";
 import { distinguishedNameMatch as normalizeDN } from "../../matching/normalizers";
+import {
+    id_ar_serviceSpecificArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-serviceSpecificArea.va";
+import {
+    id_ar_autonomousArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
 
 const CHILD: string = id_oc_child.toString();
+const ID_AR_SVC: string = id_ar_serviceSpecificArea.toString();
+const ID_AR_AUTONOMOUS: string = id_ar_autonomousArea.toString();
+
+function getServiceAdminPrefix (target: Vertex): Vertex | undefined {
+    let i = 0;
+    let curr: Vertex | undefined = target;
+    while (curr && i < 100_000) {
+        i++;
+        if (
+            curr.dse.admPoint
+            && (
+                curr.dse.admPoint.administrativeRole.has(ID_AR_SVC)
+                || curr.dse.admPoint.administrativeRole.has(ID_AR_AUTONOMOUS)
+            )
+        ) {
+            return curr;
+        }
+        curr = curr.immediateSuperior;
+    }
+}
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -100,6 +126,32 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             ctx.i18n.t("err:parent_not_ancestor"),
             new UpdateErrorData(
                 UpdateProblem_parentNotAncestor,
+                [
+                    {
+                        attributeType: hierarchyParent["&id"],
+                    },
+                ],
+                [],
+                undefined,
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                undefined,
+                undefined,
+            ),
+        );
+    }
+    const childsSAA = getServiceAdminPrefix(vertex);
+    const parentsSAA = getServiceAdminPrefix(parent);
+    if (
+        (!!childsSAA !== !!parentsSAA) // parent XOR child is in a service administrative area...
+        || ( // ...or both are, but not the same service administrative areas...
+            (childsSAA && parentsSAA)
+            && (childsSAA.dse.id !== parentsSAA.dse.id)
+        )
+    ) { // Throw an error, because this is not permitted by ITU Rec. X.501 (2019), Section 10.2.
+        throw new UpdateError(
+            ctx.i18n.t("err:hierarchy_spans_service_admin_areas"),
+            new UpdateErrorData(
+                UpdateProblem_hierarchyRuleViolation,
                 [
                     {
                         attributeType: hierarchyParent["&id"],
