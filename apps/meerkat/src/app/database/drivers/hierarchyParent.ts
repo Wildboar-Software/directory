@@ -109,6 +109,24 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             signErrors,
         );
     }
+    if (!parent.dse.entry) {
+        throw new UpdateError(
+            ctx.i18n.t("err:parent_not_entry"),
+            new UpdateErrorData(
+                UpdateProblem_parentNotAncestor,
+                [
+                    {
+                        attributeType: hierarchyParent["&id"],
+                    },
+                ],
+                [],
+                undefined,
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                undefined,
+                undefined,
+            ),
+        );
+    }
     if (parent.dse.objectClass.has(CHILD)) {
         throw new UpdateError(
             ctx.i18n.t("err:parent_not_ancestor"),
