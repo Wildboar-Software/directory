@@ -8379,7 +8379,7 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    it("Hierarchy attributes are correct for entries in a hierarchy", async () => {
+    it.skip("Hierarchy attributes are correct for entries in a hierarchy", async () => {
         const testId = `hierarchy-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId);

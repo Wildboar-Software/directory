@@ -440,21 +440,18 @@ async function dseFromDatabaseEntry (
         ret.entry = {};
     }
 
-    if (typeof dbe.hierarchyPath === "string") {
+    if (typeof dbe.hierarchyPath === "string" && Array.isArray(dbe.hierarchyTopDN) && dbe.hierarchyTop_id) {
         ret.hierarchy = {
-            // Subtract two from the following, because:
-            // -1 for there being a trailing period (necessary).
-            // -1 for hierarchyLevel being zero-indexed.
-            level: dbe.hierarchyPath?.split(".").slice(0, -1).length ?? 0,
+            level: dbe.hierarchyLevel ?? 0,
             parent: Array.isArray(dbe.hierarchyParentDN)
                 ? dbe.hierarchyParentDN.map(rdnFromJson)
                 : undefined,
-            top: Array.isArray(dbe.hierarchyTopDN)
-                ? dbe.hierarchyTopDN.map(rdnFromJson)
-                : undefined,
+            top: dbe.hierarchyTopDN.map(rdnFromJson),
+            path: dbe.hierarchyPath,
+            parent_id: dbe.hierarchyParent_id ?? undefined,
+            top_id: dbe.hierarchyTop_id,
         };
     }
-
 
     if (dbe.admPoint) {
         const administrativeRoles = await ctx.db.attributeValue.findMany({

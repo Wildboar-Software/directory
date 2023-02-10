@@ -120,6 +120,7 @@
     "not_allowed_on_rdn": "Modification would affect the RDN.",
     "no_such_hierarchy_parent": "No such hierarchy parent.",
     "parent_not_ancestor": "Hierarchy parent was not the ancestor of the compound entry of which it is a part.",
+    "parent_not_entry": "Hierarchy parent was not an entry-type DSE.",
     "unsupported_auth_method": "Unsupported authentication method.",
     "alias_problem": "Alias did not point to an existing entry.",
     "no_such_attribute_or_value": "The entry did not possess the selected values.",
@@ -206,5 +207,6 @@
     "pwd_end": "Your password expired beyond the point after which you cannot reset it yourself. You will need administrator intervention.",
     "compare_pwd_compound_entry": "You cannot compare passwords for a whole compound entry. The familyGrouping option must be set to entryOnly when using compare to assert passwords.",
     "unrecognized_user_pwd_alt": "Unrecognized UserPwd alternative. Password cannot be set.",
-    "anon_dop": "DOP operations cannot be performed anonymously."
+    "anon_dop": "DOP operations cannot be performed anonymously.",
+    "hierarchy_spans_service_admin_areas": "Cannot add the hierarchyParent attribute, because it would cause this hierarchical group to span multiple service administrative areas."
 }

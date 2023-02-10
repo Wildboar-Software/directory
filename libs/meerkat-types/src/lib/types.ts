@@ -424,7 +424,7 @@ interface HierarchyInfo {
      * The distinguished name of the top entry in the hierarchical group. This
      * should not be present in the hierarchical top.
      */
-    top?: DistinguishedName;
+    top: DistinguishedName;
 
     /**
      * The level of this entry within the hierarchical group. This starts off at
@@ -438,6 +438,21 @@ interface HierarchyInfo {
      * entry.
      */
     parent?: DistinguishedName;
+
+    /**
+     * Materialized path period-delimited database IDs, ending with a period.
+     */
+    path?: string;
+
+    /**
+     * The database ID of the hierarchical parent.
+     */
+    parent_id?: number;
+
+    /**
+     * The database ID of the hierarchical top.
+     */
+    top_id: number;
 
 }
 

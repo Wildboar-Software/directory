@@ -17,15 +17,11 @@ import rdnToJson from "../../x500/rdnToJson";
 import {
     hierarchyParent,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyParent.oa";
-import getDistinguishedName from "../../x500/getDistinguishedName";
 import { Prisma } from "@prisma/client";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
-import getRDNFromEntryId from "../getRDNFromEntryId";
-import sleep from "../../utils/sleep";
-import { randomInt } from "crypto";
 import {
-    UpdateErrorData,
+    UpdateErrorData, _encode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
 import {
     UpdateProblem_hierarchyRuleViolation,
@@ -34,10 +30,37 @@ import {
 import {
     id_oc_child,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
-import rdnFromJson from "../../x500/rdnFromJson";
 import dnToVertex from "../../dit/dnToVertex";
+import { stringifyDN } from "../../x500/stringifyDN";
+import { distinguishedNameMatch as normalizeDN } from "../../matching/normalizers";
+import {
+    id_ar_serviceSpecificArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-serviceSpecificArea.va";
+import {
+    id_ar_autonomousArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
 
 const CHILD: string = id_oc_child.toString();
+const ID_AR_SVC: string = id_ar_serviceSpecificArea.toString();
+const ID_AR_AUTONOMOUS: string = id_ar_autonomousArea.toString();
+
+function getServiceAdminPrefix (target: Vertex): Vertex | undefined {
+    let i = 0;
+    let curr: Vertex | undefined = target;
+    while (curr && i < 100_000) {
+        i++;
+        if (
+            curr.dse.admPoint
+            && (
+                curr.dse.admPoint.administrativeRole.has(ID_AR_SVC)
+                || curr.dse.admPoint.administrativeRole.has(ID_AR_AUTONOMOUS)
+            )
+        ) {
+            return curr;
+        }
+        curr = curr.immediateSuperior;
+    }
+}
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -62,16 +85,6 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    /**
-     * Since there is no access control evaluation here (pertaining to the
-     * users' permission to know about the hierarchical parent), we randomize
-     * the response time slightly to stifle timing attacks. Despite throwing a
-     * non-descript error, the timing could be used by a nefarious user to
-     * enumerate entries in the database.
-     */
-    if (!ctx.config.bulkInsertMode) {
-        await sleep(randomInt(1000));
-    }
     const dn = hierarchyParent.decoderFor["&Type"]!(value.value);
     const parent = await dnToVertex(ctx, ctx.dit.root, dn);
     const signErrors: boolean = false;
@@ -95,6 +108,24 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             signErrors,
         );
     }
+    if (!parent.dse.entry) {
+        throw new UpdateError(
+            ctx.i18n.t("err:parent_not_entry"),
+            new UpdateErrorData(
+                UpdateProblem_parentNotAncestor,
+                [
+                    {
+                        attributeType: hierarchyParent["&id"],
+                    },
+                ],
+                [],
+                undefined,
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                undefined,
+                undefined,
+            ),
+        );
+    }
     if (parent.dse.objectClass.has(CHILD)) {
         throw new UpdateError(
             ctx.i18n.t("err:parent_not_ancestor"),
@@ -113,55 +144,114 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             ),
         );
     }
+    const childsSAA = getServiceAdminPrefix(vertex);
+    const parentsSAA = getServiceAdminPrefix(parent);
+    if (
+        (!!childsSAA !== !!parentsSAA) // parent XOR child is in a service administrative area...
+        || ( // ...or both are, but not the same service administrative areas...
+            (childsSAA && parentsSAA)
+            && (childsSAA.dse.id !== parentsSAA.dse.id)
+        )
+    ) { // Throw an error, because this is not permitted by ITU Rec. X.501 (2019), Section 10.2.
+        throw new UpdateError(
+            ctx.i18n.t("err:hierarchy_spans_service_admin_areas"),
+            new UpdateErrorData(
+                UpdateProblem_hierarchyRuleViolation,
+                [
+                    {
+                        attributeType: hierarchyParent["&id"],
+                    },
+                ],
+                [],
+                undefined,
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                undefined,
+                undefined,
+            ),
+        );
+    }
+
     if (!parent.dse.hierarchy) {
         parent.dse.hierarchy = {
             level: 0,
+            top_id: parent.dse.id,
+            path: `${parent.dse.id}.`,
+            top: dn,
         };
     }
-    const top = parent.dse.hierarchy?.top
-        ? parent.dse.hierarchy.top
-        : getDistinguishedName(parent);
+    const top = parent.dse.hierarchy.top;
     if (!vertex.dse.hierarchy) {
         vertex.dse.hierarchy = {
             top,
+            top_id: parent.dse.hierarchy.top_id,
             parent: dn,
+            parent_id: parent.dse.id,
             level: (parent.dse.hierarchy.level + 1),
+            path: parent.dse.hierarchy.path + `${vertex.dse.id}.`,
         };
     }
-    const parentRow = await ctx.db.entry.findUnique({
-        where: {
-            id: parent.dse.id,
-        },
-        select: {
-            hierarchyPath: true,
-            hierarchyParentDN: true,
-        },
-    });
-    pendingUpdates.entryUpdate.hierarchyParentDN = dn.map(rdnToJson);
-    pendingUpdates.entryUpdate.hierarchyTopDN = top.map(rdnToJson);
-    pendingUpdates.entryUpdate.hierarchyPath = ((parentRow?.hierarchyPath ?? "") + parent.dse.id.toString() + ".");
+
+    const top_dn_str: string = normalizeDN(ctx, _encode_DistinguishedName(parent.dse.hierarchy.top, DER))
+        ?? stringifyDN(ctx, parent.dse.hierarchy.top);
+    const parent_parent_dn_str: string | undefined = parent.dse.hierarchy.parent
+        ? normalizeDN(ctx, _encode_DistinguishedName(parent.dse.hierarchy.parent, DER))
+            ?? stringifyDN(ctx, parent.dse.hierarchy.parent)
+        : undefined;
+    const parent_dn_str: string = normalizeDN(ctx, _encode_DistinguishedName(dn, DER))
+        ?? stringifyDN(ctx, parent.dse.hierarchy.top);
+
     pendingUpdates.otherWrites.push(ctx.db.entry.update({
         where: {
             id: parent.dse.id,
         },
         data: {
-            hierarchyPath: parentRow?.hierarchyPath ?? "",
-            hierarchyTopDN: top.map(rdnToJson),
+            hierarchyPath: parent.dse.hierarchy.path,
+            hierarchyTopDN: parent.dse.hierarchy.top.map(rdnToJson),
+            hierarchyLevel: parent.dse.hierarchy.level,
+            hierarchyParent_id: parent.dse.hierarchy.parent_id,
+            hierarchyTop_id: parent.dse.hierarchy.top_id,
+            hierarchyParentDN: parent.dse.hierarchy.parent?.map(rdnToJson),
+            hierarchyParentStr: parent_parent_dn_str,
+            hierarchyTopStr: top_dn_str,
         },
         select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
     }));
-    parent.dse.hierarchy = {
-        top,
-        level: parent.dse.hierarchy.level ?? 0,
-        parent: Array.isArray(parentRow?.hierarchyParentDN)
-            ? parentRow!.hierarchyParentDN.map(rdnFromJson)
-            : undefined,
-    };
+    pendingUpdates.entryUpdate.hierarchyPath = vertex.dse.hierarchy.path;
+    pendingUpdates.entryUpdate.hierarchyTopDN = vertex.dse.hierarchy.top.map(rdnToJson);
+    pendingUpdates.entryUpdate.hierarchyLevel = vertex.dse.hierarchy.level;
     pendingUpdates.entryUpdate.hierarchyParent = {
         connect: {
-            id: parent.dse.id,
+            id: vertex.dse.hierarchy.parent_id,
         },
     };
+    pendingUpdates.entryUpdate.hierarchyTop = {
+        connect: {
+            id: vertex.dse.hierarchy.top_id,
+        },
+    };
+    pendingUpdates.entryUpdate.hierarchyParentDN = vertex.dse.hierarchy.parent?.map(rdnToJson);
+    pendingUpdates.entryUpdate.hierarchyParentStr = parent_dn_str;
+    pendingUpdates.entryUpdate.hierarchyTopStr = top_dn_str;
+
+    /**
+     * If the `hierarchyParent` refers to an in-memory cached DSE for the
+     * association that is adding this attribute, it will get added in the
+     * database, but the in-memory cache will not be updated.
+     *
+     * This loop will iterate through the in-memory superiors of `vertex` and
+     * update their hierarchy information, which will fix this problem if the
+     * vertex is cached for the entry that is adding this attribute. In all
+     * other cases, it is assumed that this transient inconsistency is
+     * acceptable.
+     */
+    let v = vertex;
+    while (v.immediateSuperior) {
+        v = v.immediateSuperior;
+        if (v.dse.id === parent.dse.id) {
+            v.dse.hierarchy = parent.dse.hierarchy;
+            break;
+        }
+    }
 };
 
 export
@@ -222,6 +312,8 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
         },
     });
     for (const child of children) {
+        // normalizeDN(ctx, _encode_DistinguishedName(parent.dse.hierarchy.top, DER))
+        //     ?? stringifyDN(ctx, parent.dse.hierarchy.top);
         // Update the immediate children materialized paths.
         pendingUpdates.otherWrites.push(ctx.db.entry.updateMany({
             where: {
@@ -232,64 +324,46 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
                 hierarchyParentDN: Prisma.DbNull,
                 hierarchyParent_id: null,
                 hierarchyPath: child.id.toString() + ".",
+                hierarchyLevel: 0,
+                hierarchyParentStr: null,
+                hierarchyTop_id: child.id,
+                hierarchyTopStr: null, // Not filling this in, because it is not necessary.
             },
         }));
-        const childRDN = await getRDNFromEntryId(ctx, child.id);
         // Find the children of the children.
-        const descendants = await ctx.db.entry.findMany({
-            where: {
-                hierarchyPath: {
-                    startsWith: `${child.hierarchyPath}.`,
-                },
-            },
-            select: {
-                id: true,
-                hierarchyPath: true,
-            },
-        });
-        // REVIEW: Should this be done outside of the transaction, just so
-        // we don't hit some limit on the number of changes in a transaction?
-        // Update their materialized paths.
-        pendingUpdates.otherWrites.push(
-            ...descendants.map((descendant) => ctx.db.entry.updateMany({
+        if (child.hierarchyPath) {
+            const descendants = await ctx.db.entry.findMany({
                 where: {
-                    id: descendant.id,
+                    hierarchyPath: {
+                        startsWith: child.hierarchyPath,
+                    },
                 },
-                data: {
-                    hierarchyTopDN: [ rdnToJson(childRDN) ],
-                    hierarchyPath: descendant.hierarchyPath
-                        ?.replace(child.hierarchyPath!, `${child.id}.`),
+                select: {
+                    id: true,
+                    hierarchyPath: true,
+                    hierarchyLevel: true,
                 },
-            })),
-        );
+            });
+            // REVIEW: Should this be done outside of the transaction, just so
+            // we don't hit some limit on the number of changes in a transaction?
+            // Update their materialized paths.
+            pendingUpdates.otherWrites.push(
+                ...descendants.map((descendant) => ctx.db.entry.updateMany({
+                    where: {
+                        id: descendant.id,
+                    },
+                    data: {
+                        hierarchyPath: descendant.hierarchyPath
+                            ?.replace(child.hierarchyPath!, `${child.id}.`),
+                        hierarchyLevel: (descendant.hierarchyLevel ?? 0) + 1,
+                        hierarchyTop_id: child.id,
+                        hierarchyTopDN: Prisma.DbNull,
+                        hierarchyTopStr: null,
+                    },
+                })),
+            );
+        }
     }
-    // Actually, below is not in the database: it is calculated on the fly, so
-    // there is no need to update the database as below.
-    // const vertexRow = await ctx.db.entry.findUnique({
-    //     where: {
-    //         id: vertex.dse.id,
-    //     },
-    //     select: {
-    //         hierarchyParent_id: true,
-    //     },
-    // });
-    // if (vertexRow?.hierarchyParent_id) {
-    //     const siblingsCount: number = (await ctx.db.entry.count({
-    //         where: {
-    //             hierarchyParent_id: vertexRow.hierarchyParent_id,
-    //         },
-    //     })) - 1; // -1 to not count the target entry itself.
-    //     if (siblingsCount === 0) {
-    //         await ctx.db.entry.update({
-    //             where: {
-    //                 id: vertexRow.hierarchyParent_id,
-    //             },
-    //             data: {
-    //                 hier
-    //             },
-    //         });
-    //     }
-    // } // The "else" case should never happen.
 };
 
 export

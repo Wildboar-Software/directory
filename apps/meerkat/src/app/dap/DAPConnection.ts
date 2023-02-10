@@ -62,7 +62,7 @@ import { ASN1Element, FALSE } from "asn1-ts";
 import {
     _decode_DirectoryBindArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
-import { strict as assert } from "assert";
+import { AssertionError, strict as assert } from "assert";
 import { flatten } from "flat";
 import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
 import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics";
@@ -530,6 +530,8 @@ async function handleRequestAndErrors (
             assn.rose.write_abort(AbortReason.invalid_protocol);
         } else if (e instanceof errors.ReasonNotSpecifiedError) {
             assn.rose.write_abort(AbortReason.reason_not_specified);
+        } else if (e instanceof AssertionError) {
+            throw e;
         } else {
             assn.rose.write_abort(AbortReason.reason_not_specified);
         }

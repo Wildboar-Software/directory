@@ -136,11 +136,10 @@ import DSPAssociation from "../dsp/DSPConnection";
 import { differenceInSeconds } from "date-fns";
 import { removeEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/removeEntry.oa";
 import { modifyDN } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
-import { rdnMatch as rdnNormalizer } from "../matching/normalizers";
-import { _encode_RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
-import { DER } from "asn1-ts/dist/node/functional";
 import { Prisma } from "@prisma/client";
 import getEqualityNormalizer from "../x500/getEqualityNormalizer";
+import { isModificationOperation } from "@wildboar/x500";
+import { EXT_BIT_USE_ALIAS_ON_UPDATE } from "@wildboar/x500/src/lib/dap/extensions";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -1538,7 +1537,8 @@ export
                 );
             }
             state.aliasesEncounteredById.add(dse_i.dse.id);
-            if (dontDereferenceAliases) {
+            const useAliasOnUpdate = (common?.criticalExtensions?.[EXT_BIT_USE_ALIAS_ON_UPDATE - 1] === TRUE_BIT);
+            if (dontDereferenceAliases || (isModificationOperation(state.operationCode) && !useAliasOnUpdate)) {
                 if (i === m) {
                     await targetFoundSubprocedure();
                     return;
@@ -1641,6 +1641,7 @@ export
                     haystackVertex,
                     newN,
                     newState,
+                    common,
                 );
                 if (!newState.entrySuitable) {
                     throw new errors.NameError(

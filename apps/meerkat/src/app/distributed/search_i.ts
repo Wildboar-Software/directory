@@ -1515,11 +1515,6 @@ async function search_i (
                 }
             }
         } else if (!authorizedToSearch) {
-            // TODO: This will probably have to be removed, since it is too chatty.
-            ctx.log.debug(ctx.i18n.t("log:not_authz_search", {
-                aid: assn.id,
-                dn: stringifyDN(ctx, targetDN).slice(0, 256),
-            }));
             return;
         }
     }
@@ -1533,7 +1528,7 @@ async function search_i (
     const filter: Filter = (matchOnResidualName && state.partialName)
         ? {
             and: [
-                (data.filter ?? SearchArgumentData._default_value_for_filter),
+                (data.extendedFilter ?? data.filter ?? SearchArgumentData._default_value_for_filter),
                 ...data.baseObject.rdnSequence
                     .slice(targetDN.length)
                     .flatMap((unmatchedRDN: RDN): Filter[] => unmatchedRDN
@@ -1548,7 +1543,7 @@ async function search_i (
                         }))),
             ],
         }
-        : (data.filter ?? SearchArgumentData._default_value_for_filter);
+        : (data.extendedFilter ?? data.filter ?? SearchArgumentData._default_value_for_filter);
     const serviceControlOptions = data.serviceControls?.options;
     // Service controls
     const noSubtypeMatch: boolean = (
@@ -2073,29 +2068,65 @@ async function search_i (
                 }
             } // End of matchedValuesOnly handling.
             if (separateFamilyMembers) {
-                const separateResults = Array.from(resultsById.values())
-                    .filter(([ vertex ]) => !searchState.alreadyReturnedById.has(vertex.dse.id))
-                    .map(([ vertex, incompleteEntry, info, discloseIncompleteness ]) => new EntryInformation(
-                        {
-                            rdnSequence: getDistinguishedName(vertex),
-                        },
-                        !vertex.dse.shadow,
-                        attributeSizeLimit
-                            ? info.filter(filterEntryInfoItemBySize)
-                            : info,
-                        discloseIncompleteness
-                            ? incompleteEntry
-                            : false,
-                        (state.partialName && (searchState.depth === 0)),
-                        undefined,
-                    ));
-                for (const id of resultsById.keys()) {
-                    searchState.alreadyReturnedById.add(id);
-                    searchState.paging?.[1].alreadyReturnedById.add(id);
+                const separateResults: [ id: number, info: EntryInformation ][] = Array.from(resultsById.values())
+                    .filter(([ vertex ]) => (
+                        !searchState.alreadyReturnedById.has(vertex.dse.id)
+                        && !searchState.paging?.[1].alreadyReturnedById.has(vertex.dse.id)
+                    ))
+                    .map(([ vertex, incompleteEntry, info, discloseIncompleteness ]): [ id: number, info: EntryInformation ] => [
+                        vertex.dse.id,
+                        new EntryInformation(
+                            {
+                                rdnSequence: getDistinguishedName(vertex),
+                            },
+                            !vertex.dse.shadow,
+                            attributeSizeLimit
+                                ? info.filter(filterEntryInfoItemBySize)
+                                : info,
+                            discloseIncompleteness
+                                ? incompleteEntry
+                                : false,
+                            (state.partialName && (searchState.depth === 0)),
+                            undefined,
+                        ),
+                    ]);
+                const ancestorEntryIncluded = separateResults.some((sr) => (sr[0] === target.dse.id));
+                if (data.hierarchySelections && ancestorEntryIncluded && target.dse.hierarchy) {
+                    await hierarchySelectionProcedure(
+                        ctx,
+                        assn,
+                        target,
+                        separateResults,
+                        data,
+                        searchState,
+                        data.hierarchySelections,
+                        timeLimitEndTime,
+                        separateFamilyMembers,
+                    );
+                } else {
+                    for (const [id] of separateResults) {
+                        searchState.alreadyReturnedById.add(id);
+                        searchState.paging?.[1].alreadyReturnedById.add(id);
+                    }
+                    searchState.results.push(...separateResults.map(s => s[1]));
                 }
-                searchState.results.push(...separateResults);
             } else {
                 const rootResult = resultsById.get(familySubsetToReturn.dse.id)!;
+                const rootResultIsAncestor: boolean = (rootResult[0].dse.id === target.dse.id);
+                const rootEntryInfo = new EntryInformation(
+                    {
+                        rdnSequence: getDistinguishedName(rootResult[0]),
+                    },
+                    !rootResult[0].dse.shadow,
+                    attributeSizeLimit
+                        ? rootResult[2].filter(filterEntryInfoItemBySize)
+                        : rootResult[2],
+                    rootResult[3] // discloseOnError?
+                        ? rootResult[1] // -> tell them the truth
+                        : false, // -> say the entry is complete even when it is not
+                    (state.partialName && (searchState.depth === 0)),
+                    undefined,
+                );
                 if ((resultsById.size > 1) && !(assn instanceof LDAPAssociation)) { // If there actually are children.
                     const familyEntries: FamilyEntries[] = convertSubtreeToFamilyInformation(
                         familySubsetToReturn,
@@ -2110,37 +2141,40 @@ async function search_i (
                         attribute: familyInfoAttr,
                     });
                 }
-                if (
-                    !searchState.alreadyReturnedById.has(rootResult[0].dse.id)
-                    && !searchState.paging?.[1].alreadyReturnedById.has(rootResult[0].dse.id)
-                ) {
-                    searchState.results.push(
-                        new EntryInformation(
-                            {
-                                rdnSequence: getDistinguishedName(rootResult[0]),
-                            },
-                            !rootResult[0].dse.shadow,
-                            attributeSizeLimit
-                                ? rootResult[2].filter(filterEntryInfoItemBySize)
-                                : rootResult[2],
-                            rootResult[3] // discloseOnError?
-                                ? rootResult[1] // -> tell them the truth
-                                : false, // -> say the entry is complete even when it is not
-                            (state.partialName && (searchState.depth === 0)),
-                            undefined,
-                        ),
+                /**
+                 * If the ancestor is not selected, we do not perform hierarchy
+                 * selections, since child entries are not permitted to be a
+                 * part of a hierarchical group. ITU Recommendation X.511
+                 * (2019), Section 7.13 states this another way:
+                 *
+                 * > If the ancestor of the compound entry is marked as
+                 * > participating (and possibly also as contributing), all
+                 * > referenced entries of the hierarchical group that are not
+                 * > compound entries shall be selected, otherwise they shall be
+                 * > excluded.
+                 */
+                if (data.hierarchySelections && rootResultIsAncestor && target.dse.hierarchy) {
+                    await hierarchySelectionProcedure(
+                        ctx,
+                        assn,
+                        target,
+                        [[rootResult[0].dse.id, rootEntryInfo]],
+                        data,
+                        searchState,
+                        data.hierarchySelections,
+                        timeLimitEndTime,
+                        separateFamilyMembers,
                     );
+                } else {
+                    if (
+                        !searchState.alreadyReturnedById.has(rootResult[0].dse.id)
+                        && !searchState.paging?.[1].alreadyReturnedById.has(rootResult[0].dse.id)
+                    ) {
+                        searchState.results.push(rootEntryInfo);
+                    }
+                    searchState.alreadyReturnedById.add(rootResult[0].dse.id);
+                    searchState.paging?.[1].alreadyReturnedById.add(rootResult[0].dse.id);
                 }
-                searchState.alreadyReturnedById.add(rootResult[0].dse.id);
-                searchState.paging?.[1].alreadyReturnedById.add(rootResult[0].dse.id);
-            }
-            if (data.hierarchySelections) {
-                hierarchySelectionProcedure(
-                    ctx,
-                    data.hierarchySelections,
-                    data.serviceControls?.serviceType,
-                    signErrors,
-                );
             }
         }
         return;
@@ -2347,29 +2381,65 @@ async function search_i (
                 }
             } // End of matchedValuesOnly handling.
             if (separateFamilyMembers) {
-                const separateResults = Array.from(resultsById.values())
-                    .filter(([ vertex ]) => !searchState.alreadyReturnedById.has(vertex.dse.id))
-                    .map(([ vertex, incompleteEntry, info, discloseIncompleteness ]) => new EntryInformation(
-                        {
-                            rdnSequence: getDistinguishedName(vertex),
-                        },
-                        !vertex.dse.shadow,
-                        attributeSizeLimit
-                            ? info.filter(filterEntryInfoItemBySize)
-                            : info,
-                        discloseIncompleteness
-                            ? incompleteEntry
-                            : false,
-                        (state.partialName && (searchState.depth === 0)),
-                        undefined,
-                    ));
-                for (const id of resultsById.keys()) {
-                    searchState.alreadyReturnedById.add(id);
-                    searchState.paging?.[1].alreadyReturnedById.add(id);
+                const separateResults: [ id: number, info: EntryInformation ][] = Array.from(resultsById.values())
+                    .filter(([ vertex ]) => (
+                        !searchState.alreadyReturnedById.has(vertex.dse.id)
+                        && !searchState.paging?.[1].alreadyReturnedById.has(vertex.dse.id)
+                    ))
+                    .map(([ vertex, incompleteEntry, info, discloseIncompleteness ]): [ id: number, info: EntryInformation ] => [
+                        vertex.dse.id,
+                        new EntryInformation(
+                            {
+                                rdnSequence: getDistinguishedName(vertex),
+                            },
+                            !vertex.dse.shadow,
+                            attributeSizeLimit
+                                ? info.filter(filterEntryInfoItemBySize)
+                                : info,
+                            discloseIncompleteness
+                                ? incompleteEntry
+                                : false,
+                            (state.partialName && (searchState.depth === 0)),
+                            undefined,
+                        ),
+                    ]);
+                const ancestorEntryIncluded = separateResults.some((sr) => (sr[0] === target.dse.id));
+                if (data.hierarchySelections && ancestorEntryIncluded && target.dse.hierarchy) {
+                    await hierarchySelectionProcedure(
+                        ctx,
+                        assn,
+                        target,
+                        separateResults,
+                        data,
+                        searchState,
+                        data.hierarchySelections,
+                        timeLimitEndTime,
+                        separateFamilyMembers,
+                    );
+                } else {
+                    for (const [id] of separateResults) {
+                        searchState.alreadyReturnedById.add(id);
+                        searchState.paging?.[1].alreadyReturnedById.add(id);
+                    }
+                    searchState.results.push(...separateResults.map(s => s[1]));
                 }
-                searchState.results.push(...separateResults);
             } else {
                 const rootResult = resultsById.get(familySubsetToReturn.dse.id)!;
+                const rootResultIsAncestor: boolean = (rootResult[0].dse.id === target.dse.id);
+                const rootEntryInfo = new EntryInformation(
+                    {
+                        rdnSequence: getDistinguishedName(rootResult[0]),
+                    },
+                    !rootResult[0].dse.shadow,
+                    attributeSizeLimit
+                        ? rootResult[2].filter(filterEntryInfoItemBySize)
+                        : rootResult[2],
+                    rootResult[3] // discloseOnError?
+                        ? rootResult[1] // -> tell them the truth
+                        : false, // -> say the entry is complete even when it is not
+                    (state.partialName && (searchState.depth === 0)),
+                    undefined,
+                );
                 if ((resultsById.size > 1) && !(assn instanceof LDAPAssociation)) { // If there actually are children.
                     const familyEntries: FamilyEntries[] = convertSubtreeToFamilyInformation(
                         familySubsetToReturn,
@@ -2384,37 +2454,40 @@ async function search_i (
                         attribute: familyInfoAttr,
                     });
                 }
-                if (
-                    !searchState.alreadyReturnedById.has(rootResult[0].dse.id)
-                    && !searchState.paging?.[1].alreadyReturnedById.has(rootResult[0].dse.id)
-                ) {
-                    searchState.results.push(
-                        new EntryInformation(
-                            {
-                                rdnSequence: getDistinguishedName(rootResult[0]),
-                            },
-                            !rootResult[0].dse.shadow,
-                            attributeSizeLimit
-                                ? rootResult[2].filter(filterEntryInfoItemBySize)
-                                : rootResult[2],
-                            rootResult[3] // discloseOnError?
-                                ? rootResult[1] // -> tell them the truth
-                                : false, // -> say the entry is complete even when it is not
-                            (state.partialName && (searchState.depth === 0)),
-                            undefined,
-                        ),
+                /**
+                 * If the ancestor is not selected, we do not perform hierarchy
+                 * selections, since child entries are not permitted to be a
+                 * part of a hierarchical group. ITU Recommendation X.511
+                 * (2019), Section 7.13 states this another way:
+                 *
+                 * > If the ancestor of the compound entry is marked as
+                 * > participating (and possibly also as contributing), all
+                 * > referenced entries of the hierarchical group that are not
+                 * > compound entries shall be selected, otherwise they shall be
+                 * > excluded.
+                 */
+                if (data.hierarchySelections && rootResultIsAncestor && target.dse.hierarchy) {
+                    await hierarchySelectionProcedure(
+                        ctx,
+                        assn,
+                        target,
+                        [[rootResult[0].dse.id, rootEntryInfo]],
+                        data,
+                        searchState,
+                        data.hierarchySelections,
+                        timeLimitEndTime,
+                        separateFamilyMembers,
                     );
+                } else {
+                    if (
+                        !searchState.alreadyReturnedById.has(rootResult[0].dse.id)
+                        && !searchState.paging?.[1].alreadyReturnedById.has(rootResult[0].dse.id)
+                    ) {
+                        searchState.results.push(rootEntryInfo);
+                    }
+                    searchState.alreadyReturnedById.add(rootResult[0].dse.id);
+                    searchState.paging?.[1].alreadyReturnedById.add(rootResult[0].dse.id);
                 }
-                searchState.alreadyReturnedById.add(rootResult[0].dse.id);
-                searchState.paging?.[1].alreadyReturnedById.add(rootResult[0].dse.id);
-            }
-            if (data.hierarchySelections) {
-                hierarchySelectionProcedure(
-                    ctx,
-                    data.hierarchySelections,
-                    data.serviceControls?.serviceType,
-                    signErrors,
-                );
             }
         }
     }
@@ -2456,10 +2529,11 @@ async function search_i (
         state.SRcontinuationList.push(cr);
     }
 
+    const effective_filter = data.extendedFilter ?? data.filter;
     const entriesPerSubordinatesPage: number = (
         !entryOnly
         && (data.subset === SearchArgumentData_subset_oneLevel)
-        && isMatchAllFilter(data.filter)
+        && isMatchAllFilter(effective_filter)
     )
         ? Math.min(sizeLimit, ctx.config.entriesPerSubordinatesPage * 10)
         : ctx.config.entriesPerSubordinatesPage;
@@ -2505,8 +2579,8 @@ async function search_i (
              * This also goes in an `AND` so that it does not overwrite the
              * `EntryObjectClass` that comes earlier.
              */
-            AND: (data.filter && (data.subset === SearchArgumentData_subset_oneLevel))
-                ? convertFilterToPrismaSelect(ctx, data.filter, relevantSubentries, !dontSelectFriends)
+            AND: (effective_filter && (data.subset === SearchArgumentData_subset_oneLevel))
+                ? convertFilterToPrismaSelect(ctx, effective_filter, relevantSubentries, !dontSelectFriends)
                 : undefined,
         },
     );

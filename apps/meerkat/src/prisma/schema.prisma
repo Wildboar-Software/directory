@@ -104,10 +104,13 @@ model Entry {
   hierarchyParent_id Int?
   hierarchyParent    Entry?  @relation(name: "parent", fields: [hierarchyParent_id], references: [id])
   hierarchyParentDN  Json?
+  hierarchyParentStr String? @db.VarChar(2048)
   hierarchyTop_id    Int?
   hierarchyTop       Entry?  @relation(name: "top", fields: [hierarchyTop_id], references: [id])
   hierarchyTopDN     Json?
+  hierarchyTopStr    String? @db.VarChar(2048)
   hierarchyPath      String? // Period-delimited database IDs
+  hierarchyLevel     Int?
 
   // For storing other arbitrary data in the entry.
   otherData Json?
