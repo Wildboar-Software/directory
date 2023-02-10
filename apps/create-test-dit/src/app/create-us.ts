@@ -1012,6 +1012,7 @@ async function seedUS (
         ];
         const dn: DistinguishedName = [
             ...baseObject,
+            gov_rdn,
             rdn,
         ];
         const attributes: Attribute[] = [
