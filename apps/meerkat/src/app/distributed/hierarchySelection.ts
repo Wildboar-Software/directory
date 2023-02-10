@@ -1,7 +1,8 @@
-import type { Vertex, ClientAssociation, Context } from "@wildboar/meerkat-types";
+import type { Vertex, ClientAssociation, Context, IndexableDN } from "@wildboar/meerkat-types";
 import { OperationDispatcher } from "./OperationDispatcher";
 import { ASN1Construction, BERElement, FALSE, FALSE_BIT, TRUE, TRUE_BIT } from "asn1-ts";
 import {
+    Attribute,
     SecurityParameters,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import {
@@ -27,7 +28,7 @@ import {
     ChainingArguments, OperationProgress,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingArguments.ta";
 import {
-    DistinguishedName,
+    DistinguishedName, _encode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import { SearchArgumentData_subset_baseObject } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
 import { SearchState } from "./search_i";
@@ -69,6 +70,60 @@ import { id_ar_serviceSpecificArea } from "@wildboar/x500/src/lib/modules/Inform
 import { id_ar_autonomousArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import isPrefix from "../x500/isPrefix";
+import {
+    EntryInformationSelection,
+    FamilyReturn,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
+import {
+    FamilyReturn_memberSelect_compoundEntry,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn-memberSelect.ta";
+import { stringifyDN } from "../x500/stringifyDN";
+import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers";
+import { DER } from "asn1-ts/dist/node/functional";
+import { family_information } from "@wildboar/x500/src/lib/collections/attributes";
+import { FamilyEntries, FamilyEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyEntry.ta";
+import iterateOverSearchResults from "../x500/iterateOverSearchResults";
+import { compareDistinguishedName, getOptionallyProtectedValue } from "@wildboar/x500";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+
+export
+function getNamesFromFamilyEntry (fe: FamilyEntry, base_dn: DistinguishedName): DistinguishedName[] {
+    const root: DistinguishedName = [ ...base_dn, fe.rdn ];
+    return [
+        root,
+        ...fe.family_info
+            ?.flatMap((f) => f
+                .familyEntries.flatMap((f2) => getNamesFromFamilyEntry(f2, root))) ?? [],
+    ];
+}
+
+export
+function filterFamilyEntries (
+    ctx: Context,
+    fe: FamilyEntries,
+    base_dn: DistinguishedName,
+    permitted: Set<IndexableDN>,
+): FamilyEntries {
+    const entries: FamilyEntry[] = [];
+    for (const f of fe.familyEntries) {
+        const dn: DistinguishedName = [ ...base_dn, f.rdn ];
+        const dn_str = normalizeDN(ctx, _encode_DistinguishedName(dn, DER)) ?? stringifyDN(ctx, dn);
+        if (permitted.has(dn_str)) {
+            const new_f = new FamilyEntry(
+                f.rdn,
+                f.information,
+                f.family_info
+                    ?.map((fi) => filterFamilyEntries(ctx, fi, dn, permitted))
+                    .filter((fi) => fi.familyEntries.length),
+            );
+            entries.push(new_f);
+        }
+    }
+    return new FamilyEntries(
+        fe.family_class,
+        entries,
+    );
+}
 
 function atavFromDB (atav: DistinguishedValue): AttributeTypeAndValue {
     const type_el = new BERElement();
@@ -149,33 +204,12 @@ function getServiceAdminPrefix (target: Vertex): DistinguishedName | undefined {
     }
 }
 
-/* TODO: ITU Recommendation X.511 (2019), Section 7.13 states that:
-
-If a referenced entry is a compound entry, the marking of its
-members shall be done as follows. Each member of the referenced compound entry
-that have the same local member name as a member of the matched compound entry
-is marked the same way. All other members of the referenced
-compound entry are left unmarked.
-
-I think this will require:
-
-- Querying the entire compound entry in hierarchical subsearches.
-- Passing in a Set<IndexableDN> and filtering out the family members whose DN
-  is NOT in that set.
-
-I don't know how this would relate to separateFamilyMembers.
-
-*/
 /**
  * @summary The Hierarchy Selection Procedure as defined in ITU Recommendation X.518.
  * @description
  *
  * The Hierarchy Selection Procedure (I) as defined in ITU Recommendation X.518
  * (2016), Section 19.3.2.2.10.
- *
- * @param ctx The context object
- * @param hierarchySelections The hierarchy selections
- * @param serviceControls_serviceType The service type
  *
  * @function
  */
@@ -189,6 +223,7 @@ async function hierarchySelectionProcedure (
     searchState: SearchState,
     hierarchySelections: HierarchySelections,
     deadline: Date | undefined,
+    separateFamilyMembers: boolean,
 ): Promise<void> {
     // TODO: This used to be an assert(). If it failed, NodeJS would hang indefinitely. Investigate.
     if (!selfVertex.dse.hierarchy) {
@@ -371,6 +406,33 @@ async function hierarchySelectionProcedure (
     }
 
     const serviceAdminPrefix: DistinguishedName | undefined = getServiceAdminPrefix(selfVertex);
+    const ancestorDN: DistinguishedName = getDistinguishedName(selfVertex);
+    const selectedChildEntries: Set<IndexableDN> = new Set();
+    if (separateFamilyMembers) {
+        for (const [, entry] of selfEntryInfos) {
+            // Remove the ancestor prefix.
+            const childDN = entry.name.rdnSequence.slice(ancestorDN.length);
+            const dn_str = normalizeDN(ctx, _encode_DistinguishedName(childDN, DER)) ?? stringifyDN(ctx, childDN);
+            selectedChildEntries.add(dn_str);
+        }
+    } else {
+        const entry = selfEntryInfos[0][1];
+        const family_info_info = entry.information
+            ?.find((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(family_information["&id"]));
+        if (family_info_info) {
+            assert("attribute" in family_info_info);
+            const family_info_attr = family_info_info.attribute;
+            const memberDNs: DistinguishedName[] = family_info_attr.values
+                .map((v) => family_information.decoderFor["&Type"]!(v))
+                .flatMap((f1) => f1.familyEntries.flatMap((f) => getNamesFromFamilyEntry(f, entry.name.rdnSequence)));
+            for (const memberDN of memberDNs) {
+                // Remove the ancestor prefix.
+                const childDN = memberDN.slice(ancestorDN.length);
+                const dn_str = normalizeDN(ctx, _encode_DistinguishedName(childDN, DER)) ?? stringifyDN(ctx, childDN);
+                selectedChildEntries.add(dn_str);
+            }
+        }
+    }
 
     const requestor: DistinguishedName | undefined = searchArgument
         .securityParameters
@@ -394,8 +456,6 @@ async function hierarchySelectionProcedure (
         searchArgument.matchedValuesOnly
         || (searchArgument.searchControlOptions?.[SearchControlOptions_matchedValuesOnly] === TRUE_BIT)
     );
-    const separateFamilyMembers: boolean = (
-        searchArgument.searchControlOptions?.[SearchControlOptions_separateFamilyMembers] === TRUE_BIT);
     search_co[SearchControlOptions_searchAliases] = searchAliases ? TRUE_BIT : FALSE_BIT;
     search_co[SearchControlOptions_matchedValuesOnly] = matchedValuesOnly ? TRUE_BIT : FALSE_BIT;
     search_co[SearchControlOptions_separateFamilyMembers] = separateFamilyMembers ? TRUE_BIT : FALSE_BIT;
@@ -438,7 +498,33 @@ async function hierarchySelectionProcedure (
                 SearchArgumentData_subset_baseObject,
                 undefined, // I believe the hierarchically-selected entries are not filtered.
                 searchAliases,
-                searchArgument.selection,
+                /**
+                 * We select the whole compound entry, because, in hierarchy
+                 * selections, if the hierarchically-non-self entry is a
+                 * compound entry, the child entries are selected based on the
+                 * names of the child entries that were selected in the self
+                 * entry. See ITU Recommendation X.511 (2019), Section 7.13:
+                 *
+                 * ITU Recommendation X.511 (2019), Section 7.13 states that:
+                 *
+                 * > If a referenced entry is a compound entry, the marking of
+                 * > its members shall be done as follows. Each member of the
+                 * > referenced compound entry that have the same local member
+                 * > name as a member of the matched compound entry
+                 * > is marked the same way. All other members of the referenced
+                 * > compound entry are left unmarked.
+                 */
+                new EntryInformationSelection(
+                    searchArgument.selection?.attributes,
+                    searchArgument.selection?.infoTypes,
+                    searchArgument.selection?.extraAttributes,
+                    searchArgument.selection?.contextSelection,
+                    searchArgument.selection?.returnContexts,
+                    new FamilyReturn(
+                        FamilyReturn_memberSelect_compoundEntry,
+                        undefined,
+                    ),
+                ),
                 undefined, // No paged results
                 matchedValuesOnly,
                 undefined, // No extended filter
@@ -533,11 +619,66 @@ async function hierarchySelectionProcedure (
             ),
         );
         if ("result" in response && response.result) {
-            if (("unsigned" in response.result) && ("searchInfo" in response.result.unsigned)) {
-                // This implementation does not actually check for duplicates.
-                searchState.results.push(...response.result.unsigned.searchInfo.entries);
-            } else {
-                searchState.resultSets.push(response.result);
+            const results = Array.from(iterateOverSearchResults(response.result));
+            const data = getOptionallyProtectedValue(response.result);
+            const baseDN = ("searchInfo" in data)
+                ? (data.searchInfo.name?.rdnSequence ?? dn)
+                : dn;
+            const namingMatcher = getNamingMatcherGetter(ctx);
+            for (const result of results) {
+                if (separateFamilyMembers) {
+                    // Always include the ancestor
+                    if (compareDistinguishedName(ancestorDN, result.name.rdnSequence, namingMatcher)) {
+                        searchState.results.push(result);
+                    }
+                    // Remove the ancestor prefix.
+                    const childDN = result.name.rdnSequence.slice(ancestorDN.length);
+                    const dn_str = normalizeDN(ctx, _encode_DistinguishedName(childDN, DER))
+                        ?? stringifyDN(ctx, childDN);
+                    if (selectedChildEntries.has(dn_str)) {
+                        searchState.results.push(result);
+                    }
+                } else if (results[0]?.information && (results.length === 1)) {
+                    const entry = results[0];
+                    const family_info_info = entry.information
+                        ?.find((info) => (
+                            ("attribute" in info)
+                            && info.attribute.type_.isEqualTo(family_information["&id"])
+                        ));
+                    if (family_info_info) {
+                        assert("attribute" in family_info_info);
+                        const family_info_attr = family_info_info.attribute;
+                        const new_attr = new Attribute(
+                            family_information["&id"],
+                            family_info_attr.values
+                                .map((v) => family_information.decoderFor["&Type"]!(v))
+                                .map((f1) => filterFamilyEntries(ctx, f1, baseDN, selectedChildEntries))
+                                .filter((f) => f.familyEntries.length)
+                                .map((f) => family_information.encoderFor["&Type"]!(f, DER)),
+                            undefined,
+                        );
+                        const new_info = (entry.information ?? [])
+                            .filter((info) => (
+                                !("attribute" in info)
+                                || info.attribute.type_.isEqualTo(family_information["&id"])
+                            ));
+                        new_info.push({
+                            attribute: new_attr,
+                        });
+                        const new_entry = new EntryInformation(
+                            entry.name,
+                            entry.fromEntry,
+                            new_info,
+                            entry.incompleteEntry,
+                            entry.partialName,
+                            entry.derivedEntry,
+                        );
+                        searchState.results.push(new_entry);
+                    } else {
+                        // If no family-information, just return the result.
+                        searchState.results.push(result);
+                    }
+                } // Otherwise, we don't know what to do!
             }
             searchState.alreadyReturnedById.add(id);
             searchState.paging?.[1].alreadyReturnedById.add(id);

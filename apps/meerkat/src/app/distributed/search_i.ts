@@ -2101,6 +2101,7 @@ async function search_i (
                         searchState,
                         data.hierarchySelections,
                         timeLimitEndTime,
+                        separateFamilyMembers,
                     );
                 } else {
                     for (const [id] of separateResults) {
@@ -2162,6 +2163,7 @@ async function search_i (
                         searchState,
                         data.hierarchySelections,
                         timeLimitEndTime,
+                        separateFamilyMembers,
                     );
                 } else {
                     if (
@@ -2412,6 +2414,7 @@ async function search_i (
                         searchState,
                         data.hierarchySelections,
                         timeLimitEndTime,
+                        separateFamilyMembers,
                     );
                 } else {
                     for (const [id] of separateResults) {
@@ -2473,6 +2476,7 @@ async function search_i (
                         searchState,
                         data.hierarchySelections,
                         timeLimitEndTime,
+                        separateFamilyMembers,
                     );
                 } else {
                     if (
