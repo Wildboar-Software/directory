@@ -21,8 +21,6 @@ import { Prisma } from "@prisma/client";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import getRDNFromEntryId from "../getRDNFromEntryId";
-import sleep from "../../utils/sleep";
-import { randomInt } from "crypto";
 import {
     UpdateErrorData, _encode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
@@ -88,16 +86,6 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     value: Value,
     pendingUpdates: PendingUpdates,
 ): Promise<void> => {
-    /**
-     * Since there is no access control evaluation here (pertaining to the
-     * users' permission to know about the hierarchical parent), we randomize
-     * the response time slightly to stifle timing attacks. Despite throwing a
-     * non-descript error, the timing could be used by a nefarious user to
-     * enumerate entries in the database.
-     */
-    if (!ctx.config.bulkInsertMode) {
-        await sleep(randomInt(1000));
-    }
     const dn = hierarchyParent.decoderFor["&Type"]!(value.value);
     const parent = await dnToVertex(ctx, ctx.dit.root, dn);
     const signErrors: boolean = false;
