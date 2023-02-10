@@ -868,7 +868,7 @@ function prismaOCK2OCK (ock: PrismaObjectClassKind): ObjectClassKind {
  * @async
  */
 export
-async function loadObjectClasses (ctx: Context, use_db: boolean = true): Promise<void> {
+async function loadObjectClasses (ctx: Context): Promise<void> {
     const objectClassInfoObjects = {
         ...x500oc,
         "mhs-distribution-list": mhs_distribution_list,
