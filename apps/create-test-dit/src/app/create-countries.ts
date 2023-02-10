@@ -511,7 +511,7 @@ function addSubschemaSubentryArgument (
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     6,
                     nf.deviceNameForm["&id"],
-                    [1, 2, 3, 4, 5, 8, 11],
+                    [1, 2, 3, 4, 5, 8, 11, 12, 13, 14, 15, 16, 17],
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     7,
