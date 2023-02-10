@@ -138,7 +138,7 @@ Recommendation X.511 (2019), Section 7.3.1.
 | Matched Values Only                                | 7          | Yes        |
 | Extended Filter                                    | 8          | Yes        |
 | Target System                                      | 9          | Yes        |
-| Use Alias On Update                                | 10         | No         |
+| Use Alias On Update                                | 10         | Yes        |
 | New Superior                                       | 11         | Yes        |
 | Manage DSAIT                                       | 12         | Yes        |
 | Use of Contexts                                    | 13         | Yes        |

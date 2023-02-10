@@ -20,7 +20,6 @@ import {
 import { Prisma } from "@prisma/client";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
-import getRDNFromEntryId from "../getRDNFromEntryId";
 import {
     UpdateErrorData, _encode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
@@ -313,6 +312,8 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
         },
     });
     for (const child of children) {
+        // normalizeDN(ctx, _encode_DistinguishedName(parent.dse.hierarchy.top, DER))
+        //     ?? stringifyDN(ctx, parent.dse.hierarchy.top);
         // Update the immediate children materialized paths.
         pendingUpdates.otherWrites.push(ctx.db.entry.updateMany({
             where: {
@@ -323,64 +324,46 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
                 hierarchyParentDN: Prisma.DbNull,
                 hierarchyParent_id: null,
                 hierarchyPath: child.id.toString() + ".",
+                hierarchyLevel: 0,
+                hierarchyParentStr: null,
+                hierarchyTop_id: child.id,
+                hierarchyTopStr: null, // Not filling this in, because it is not necessary.
             },
         }));
-        const childRDN = await getRDNFromEntryId(ctx, child.id);
         // Find the children of the children.
-        const descendants = await ctx.db.entry.findMany({
-            where: {
-                hierarchyPath: {
-                    startsWith: `${child.hierarchyPath}.`,
-                },
-            },
-            select: {
-                id: true,
-                hierarchyPath: true,
-            },
-        });
-        // REVIEW: Should this be done outside of the transaction, just so
-        // we don't hit some limit on the number of changes in a transaction?
-        // Update their materialized paths.
-        pendingUpdates.otherWrites.push(
-            ...descendants.map((descendant) => ctx.db.entry.updateMany({
+        if (child.hierarchyPath) {
+            const descendants = await ctx.db.entry.findMany({
                 where: {
-                    id: descendant.id,
+                    hierarchyPath: {
+                        startsWith: child.hierarchyPath,
+                    },
                 },
-                data: {
-                    hierarchyTopDN: [ rdnToJson(childRDN) ],
-                    hierarchyPath: descendant.hierarchyPath
-                        ?.replace(child.hierarchyPath!, `${child.id}.`),
+                select: {
+                    id: true,
+                    hierarchyPath: true,
+                    hierarchyLevel: true,
                 },
-            })),
-        );
+            });
+            // REVIEW: Should this be done outside of the transaction, just so
+            // we don't hit some limit on the number of changes in a transaction?
+            // Update their materialized paths.
+            pendingUpdates.otherWrites.push(
+                ...descendants.map((descendant) => ctx.db.entry.updateMany({
+                    where: {
+                        id: descendant.id,
+                    },
+                    data: {
+                        hierarchyPath: descendant.hierarchyPath
+                            ?.replace(child.hierarchyPath!, `${child.id}.`),
+                        hierarchyLevel: (descendant.hierarchyLevel ?? 0) + 1,
+                        hierarchyTop_id: child.id,
+                        hierarchyTopDN: Prisma.DbNull,
+                        hierarchyTopStr: null,
+                    },
+                })),
+            );
+        }
     }
-    // Actually, below is not in the database: it is calculated on the fly, so
-    // there is no need to update the database as below.
-    // const vertexRow = await ctx.db.entry.findUnique({
-    //     where: {
-    //         id: vertex.dse.id,
-    //     },
-    //     select: {
-    //         hierarchyParent_id: true,
-    //     },
-    // });
-    // if (vertexRow?.hierarchyParent_id) {
-    //     const siblingsCount: number = (await ctx.db.entry.count({
-    //         where: {
-    //             hierarchyParent_id: vertexRow.hierarchyParent_id,
-    //         },
-    //     })) - 1; // -1 to not count the target entry itself.
-    //     if (siblingsCount === 0) {
-    //         await ctx.db.entry.update({
-    //             where: {
-    //                 id: vertexRow.hierarchyParent_id,
-    //             },
-    //             data: {
-    //                 hier
-    //             },
-    //         });
-    //     }
-    // } // The "else" case should never happen.
 };
 
 export

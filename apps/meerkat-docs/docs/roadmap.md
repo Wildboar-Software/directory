@@ -4,23 +4,30 @@ We will not promise any particular schedule of delivery of features or bug fixes
 at this time. However, the very high-level roadmap for Meerkat DSA can be
 broken down to the following versions.
 
-## Version 2.2.0 - Hierarchy Selection and Cross References
+## Version 2.3.0 - Relaxation
 
-This update will introduce support for hierarchical selections. This means
-that searches can traverse a "virtual" hierarchy that lays atop the real
-hierarchical structure of the DIT. This update will also introduce support for
-cross references, allowing DSAs to share routing information pertaining to other
-known DSAs. This will allow the entire DIT to become more discoverable and
-performant.
+This update will allow Meerkat DSA to internally modify the filter used in
+search operations (if requested by the user, or configured via service
+administration) to return more entries if the search is producing too few
+results and/or return fewer entries if the search is producing too many results.
 
-## Version 2.3.0 - Service Administration
+Support for the `overspecifiedFilter` control may be added to this version as
+well.
+
+## Version 2.4.0 - Cross References
+
+This update will introduce support for cross references, allowing DSAs to share
+routing information pertaining to other known DSAs. This will allow the entire
+DIT to become more discoverable and performant.
+
+## Version 2.5.0 - Service Administration
 
 This update will introduce support for service administrative areas. This allows
 directory administrators to limit (including rate limit) what kind of searches
 may be performed. Service administrative areas can set a "lower boundary" on
 subtree searches.
 
-## Version 2.4.0 - Schema Update ("Wildboar Schema")
+## Version 2.6.0 - Schema Update ("Wildboar Schema")
 
 This update will introduce thousands of new schema objects defined by Wildboar
 Software into the default schema. This is desirable so that X.500 directories
@@ -32,24 +39,24 @@ using a `married` auxiliary object class that permits the presence of a
 administrators everywhere to define their own equivalent object classes, thereby
 duplicating work and reducing inter-domain compatibility.
 
-## Version 2.5.0 - Non-Specific Subordinate References (NSSRs)
+## Version 2.7.0 - Non-Specific Subordinate References (NSSRs)
 
 This update will introduce support for Non-Specific Subordinate References
 (NSSRs). These are entries whose subordinate namespace is a "free-for-all"
 among one or more participating DSAs.
 
-## Version 2.6.0 - Zonal Matching
+## Version 2.8.0 - Zonal Matching
 
 This update will introduce zonal matching, whereby a DSA can perform
 geographically-intelligent searches.
 
-## Version 2.7.0 - Shadowing
+## Version 2.9.0 - Shadowing
 
 This update will introduce support for the Directory Information Shadowing
 Protocol (DISP). This will allow directory information to be replicated to
 other DSAs to produce read-only copies.
 
-## Version 2.8.0 and Beyond
+## Version 2.10.0 and Beyond
 
 Not much can be said about anything this far in the future. However, these
 features need to be introduced at some point:
