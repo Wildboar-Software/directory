@@ -1,14 +1,14 @@
 # Conformance
 
-In the statements below, the term "Meerkat DSA" refers to version 2.1.0 of
-Meerkat DSA, hence these statements are only claimed for version 2.1.0 of
+In the statements below, the term "Meerkat DSA" refers to version 2.2.0 of
+Meerkat DSA, hence these statements are only claimed for version 2.2.0 of
 Meerkat DSA.
 
 ## X.519 Conformance Statement
 
 The following conformance statement is intended to conform to the conformance
 statement requirements specified in International Telecommunications Union
-Recommendation X.519 (2016), Section 13.
+Recommendation X.519 (2019), Section 13.
 
 ### Section 13.2.1 Conformance
 
@@ -125,7 +125,7 @@ be supported.
 #### I. Extensions Supported
 
 These extensions are defined in International Telecommunications Union's
-Recommendation X.511 (2016), Section 7.3.1.
+Recommendation X.511 (2019), Section 7.3.1.
 
 | Extension                                          | Identifier | Supported? |
 |----------------------------------------------------|------------|------------|
@@ -136,7 +136,7 @@ Recommendation X.511 (2016), Section 7.3.1.
 | Modify Rights Request                              | 5          | Yes        |
 | Paged Results Request                              | 6          | Yes        |
 | Matched Values Only                                | 7          | Yes        |
-| Extended Filter                                    | 8          | No         |
+| Extended Filter                                    | 8          | Yes        |
 | Target System                                      | 9          | Yes        |
 | Use Alias On Update                                | 10         | No         |
 | New Superior                                       | 11         | Yes        |
@@ -150,7 +150,7 @@ Recommendation X.511 (2016), Section 7.3.1.
 | Security Parameters - Error Protection             | 20         | Yes        |
 | Service Administration                             | 25         | No         |
 | Entry Count                                        | 26         | Yes        |
-| Hierarchy Selections                               | 27         | No         |
+| Hierarchy Selections                               | 27         | Yes        |
 | Relaxation                                         | 28         | No         |
 | Family Grouping                                    | 29         | Yes        |
 | Family Return                                      | 30         | Yes        |
@@ -166,20 +166,17 @@ Collective Attributes are completely supported by Meerkat DSA.
 
 #### K. Hierarchical Attributes Support
 
-Hierarchy selections are not supported by Meerkat DSA. The related hierarchy
-attributes _are_ supported by Meerkat DSA, but they are not used by any
-functionality.
+All hierarchy selections are fully supported by Meerkat DSA.
 
 #### L. Operational Attribute Types Support
 
 All operational attribute types defined in the International Telecommunications
-Union's Recommendation X.501 are supported by Meerkat DSA. However, the
-hierarchy attributes do not provide any functionality.
+Union's Recommendation X.501 are supported by Meerkat DSA.
 
 #### M. Alias Dereferencing Support
 
 Meerkat DSA fully supports alias dereferencing as described in the
-International Telecommunication Union's Recommendation X.511 (2016), Section
+International Telecommunication Union's Recommendation X.511 (2019), Section
 7.7.1.
 
 #### N. Entry Incompleteness Indication
@@ -194,18 +191,18 @@ Meerkat DSA supports adding auxiliary object classes.
 #### P. Basic Access Control
 
 Meerkat DSA supports the Basic Access Control defined in
-International Telecommunication Union's Recommendation X.501 (2016).
+International Telecommunication Union's Recommendation X.501 (2019).
 
 #### Q. Simplified Access Control
 
 Meerkat DSA supports the Simplified Access Control defined in
-International Telecommunication Union's Recommendation X.501 (2016).
+International Telecommunication Union's Recommendation X.501 (2019).
 
 #### R. Subschema Administration
 
 Meerkat DSA supports subschema administration, and validates entries and their
 names and locations against subschema, if present, as defined in
-International Telecommunication Union's Recommendation X.501 (2016).
+International Telecommunication Union's Recommendation X.501 (2019).
 
 #### S. Name Forms
 
@@ -233,7 +230,7 @@ supported.
 #### V. Context Support
 
 Meerkat DSA fully supports the use of contexts as defined in the
-International Telecommunication Union's Recommendation X.501 (2016).
+International Telecommunication Union's Recommendation X.501 (2019).
 
 #### W. DSA Information Tree Management
 
