@@ -327,6 +327,12 @@ interface SearchState extends Partial<WithRequestStatistics>, Partial<WithOutcom
     depth: number;
     paging?: [ queryReference: string, pagingState: PagedResultsRequestState ];
     familyOnly?: boolean;
+
+    /**
+     * Entries that are excluded from being returned because they were either
+     * added to the result set already or they were de-selected via exclusive
+     * relaxation (See ITU Rec. X.501 (2019), Section 13.6.2).
+     */
     excludedById: Set<number>;
 }
 
