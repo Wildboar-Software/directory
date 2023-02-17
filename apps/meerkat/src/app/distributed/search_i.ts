@@ -327,7 +327,7 @@ interface SearchState extends Partial<WithRequestStatistics>, Partial<WithOutcom
     depth: number;
     paging?: [ queryReference: string, pagingState: PagedResultsRequestState ];
     familyOnly?: boolean;
-    alreadyReturnedById: Set<number>;
+    excludedById: Set<number>;
 }
 
 /**
@@ -2070,7 +2070,7 @@ async function search_i (
             if (separateFamilyMembers) {
                 const separateResults: [ id: number, info: EntryInformation ][] = Array.from(resultsById.values())
                     .filter(([ vertex ]) => (
-                        !searchState.alreadyReturnedById.has(vertex.dse.id)
+                        !searchState.excludedById.has(vertex.dse.id)
                         && !searchState.paging?.[1].alreadyReturnedById.has(vertex.dse.id)
                     ))
                     .map(([ vertex, incompleteEntry, info, discloseIncompleteness ]): [ id: number, info: EntryInformation ] => [
@@ -2105,7 +2105,7 @@ async function search_i (
                     );
                 } else {
                     for (const [id] of separateResults) {
-                        searchState.alreadyReturnedById.add(id);
+                        searchState.excludedById.add(id);
                         searchState.paging?.[1].alreadyReturnedById.add(id);
                     }
                     searchState.results.push(...separateResults.map(s => s[1]));
@@ -2167,12 +2167,12 @@ async function search_i (
                     );
                 } else {
                     if (
-                        !searchState.alreadyReturnedById.has(rootResult[0].dse.id)
+                        !searchState.excludedById.has(rootResult[0].dse.id)
                         && !searchState.paging?.[1].alreadyReturnedById.has(rootResult[0].dse.id)
                     ) {
                         searchState.results.push(rootEntryInfo);
                     }
-                    searchState.alreadyReturnedById.add(rootResult[0].dse.id);
+                    searchState.excludedById.add(rootResult[0].dse.id);
                     searchState.paging?.[1].alreadyReturnedById.add(rootResult[0].dse.id);
                 }
             }
@@ -2383,7 +2383,7 @@ async function search_i (
             if (separateFamilyMembers) {
                 const separateResults: [ id: number, info: EntryInformation ][] = Array.from(resultsById.values())
                     .filter(([ vertex ]) => (
-                        !searchState.alreadyReturnedById.has(vertex.dse.id)
+                        !searchState.excludedById.has(vertex.dse.id)
                         && !searchState.paging?.[1].alreadyReturnedById.has(vertex.dse.id)
                     ))
                     .map(([ vertex, incompleteEntry, info, discloseIncompleteness ]): [ id: number, info: EntryInformation ] => [
@@ -2418,7 +2418,7 @@ async function search_i (
                     );
                 } else {
                     for (const [id] of separateResults) {
-                        searchState.alreadyReturnedById.add(id);
+                        searchState.excludedById.add(id);
                         searchState.paging?.[1].alreadyReturnedById.add(id);
                     }
                     searchState.results.push(...separateResults.map(s => s[1]));
@@ -2480,12 +2480,12 @@ async function search_i (
                     );
                 } else {
                     if (
-                        !searchState.alreadyReturnedById.has(rootResult[0].dse.id)
+                        !searchState.excludedById.has(rootResult[0].dse.id)
                         && !searchState.paging?.[1].alreadyReturnedById.has(rootResult[0].dse.id)
                     ) {
                         searchState.results.push(rootEntryInfo);
                     }
-                    searchState.alreadyReturnedById.add(rootResult[0].dse.id);
+                    searchState.excludedById.add(rootResult[0].dse.id);
                     searchState.paging?.[1].alreadyReturnedById.add(rootResult[0].dse.id);
                 }
             }

@@ -550,7 +550,7 @@ class OperationDispatcher {
                 resultSets: [],
                 chaining: chainingResults,
                 depth: 0,
-                alreadyReturnedById: new Set(),
+                excludedById: new Set(),
             };
             await relatedEntryProcedure(
                 ctx,
@@ -992,7 +992,7 @@ class OperationDispatcher {
             resultSets: [],
             chaining: state.chainingResults,
             depth: 0,
-            alreadyReturnedById: new Set(),
+            excludedById: new Set(),
         };
         await relatedEntryProcedure(
             ctx,
