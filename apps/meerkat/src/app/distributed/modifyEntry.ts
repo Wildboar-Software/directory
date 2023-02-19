@@ -5,7 +5,6 @@ import {
     Value,
     ClientAssociation,
     OperationReturn,
-    PendingUpdates,
 } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";

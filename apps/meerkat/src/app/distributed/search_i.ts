@@ -269,6 +269,9 @@ import { FilterItem } from "@wildboar/x500/src/lib/modules/DirectoryAbstractServ
 import { Prisma } from "@prisma/client";
 import getAttributeParentTypes from "../x500/getAttributeParentTypes";
 import {
+    MRMapping,
+} from "@wildboar/x500/src/lib/modules/ServiceAdministration/MRMapping.ta";
+import {
     oid,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/oid.oa";
 import {
@@ -301,6 +304,8 @@ import {
     booleanMatch,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/booleanMatch.oa";
 import getEqualityNormalizer from "../x500/getEqualityNormalizer";
+import { id_mr_nullMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-mr-nullMatch.va";
+import { groupByOID } from "@wildboar/x500";
 // TODO: Once value normalization is implemented, these shall be incorporated
 // into `convertFilterToPrismaSelect()`.
 // import {
@@ -334,6 +339,18 @@ interface SearchState extends Partial<WithRequestStatistics>, Partial<WithOutcom
      * relaxation (See ITU Rec. X.501 (2019), Section 13.6.2).
      */
     excludedById: Set<number>;
+
+    /**
+     * Regardless of the search argument, the currently effective filter, after
+     * considering relaxation or tightening.
+     */
+    effectiveFilter?: Filter;
+
+    /**
+     * This is a mapping of both attribute type OIDs to the OID of the
+     * currently-applicable matching rule that supplants the default.
+     */
+    matching_rule_substitutions: Map<IndexableOID, OBJECT_IDENTIFIER>;
 }
 
 /**
@@ -999,6 +1016,107 @@ function isMatchAllFilter (filter?: Filter): boolean {
     }
 }
 
+const get_emr_info = function (ctx: Context, attributeType: IndexableOID): OBJECT_IDENTIFIER | undefined {
+    const spec = ctx.attributeTypes.get(attributeType);
+    if (!spec) {
+        return undefined;
+    }
+    if (!spec.equalityMatchingRule) {
+        if (spec.parent) {
+            return get_emr_info(ctx, spec.parent.toString());
+        } else {
+            return undefined;
+        }
+    }
+    return ctx.equalityMatchingRules.get(spec.equalityMatchingRule.toString())?.id;
+};
+
+const get_omr_info = function (ctx: Context, attributeType: IndexableOID): OBJECT_IDENTIFIER | undefined {
+    const spec = ctx.attributeTypes.get(attributeType);
+    if (!spec) {
+        return undefined;
+    }
+    if (!spec.orderingMatchingRule) {
+        if (spec.parent) {
+            return get_omr_info(ctx, spec.parent.toString());
+        } else {
+            return undefined;
+        }
+    }
+    return ctx.orderingMatchingRules.get(spec.orderingMatchingRule.toString())?.id;
+};
+
+const get_smr_info = function (ctx: Context, attributeType: IndexableOID): OBJECT_IDENTIFIER | undefined {
+    const spec = ctx.attributeTypes.get(attributeType);
+    if (!spec) {
+        return undefined;
+    }
+    if (!spec.substringsMatchingRule) {
+        if (spec.parent) {
+            return get_smr_info(ctx, spec.parent.toString());
+        } else {
+            return undefined;
+        }
+    }
+    return ctx.substringsMatchingRules.get(spec.substringsMatchingRule.toString())?.id;
+};
+
+async function apply_relaxation (
+    ctx: Context,
+    searchState: SearchState,
+    target_object: DistinguishedName,
+    mrm: MRMapping,
+): Promise<void> {
+    if (!searchState.effectiveFilter) {
+        // If there is no filter, there is no relaxation or tightening to do.
+        return;
+    }
+    const subs_cache = searchState.matching_rule_substitutions;
+    const substitutions = mrm.substitution ?? [];
+    const attrs = groupByOID(substitutions, (s) => s.attribute);
+    for (const [attr, subs] of Object.entries(attrs)) { // Each iteration of this loop is a different attribute type.
+        let mr_oid = get_emr_info(ctx, attr) ?? get_omr_info(ctx, attr) ?? get_smr_info(ctx, attr);
+        if (!mr_oid) {
+            // If there is no matching rule defined for this attribute type, just ignore it.
+            continue;
+        }
+        /**
+         * We have to track whether a substitution within this level matched
+         * the old matching rule specifically. If it did not, but a "wildcard"
+         * substitution was present (no `oldMatchingRule`), we apply that
+         * wildcard substitution instead.
+         */
+        let old_mr_specifically_matched: boolean = false;
+        /**
+         * For the above reason, we merely record the wildcard matching rule
+         * for later use.
+         */
+        let wildcard_new_mr: OBJECT_IDENTIFIER | undefined;
+        for (const sub of subs) { // Each iteration of this loop is a single matching rule substitution.
+            if (!sub.oldMatchingRule) {
+                // If no `oldMatchingRule`, this is a "wildcard" substitution.
+                // We merely record the wildcard substitution for later, in case
+                // a more specific substitution does not override the existing
+                // matching rule specifically.
+                wildcard_new_mr = sub.newMatchingRule ?? id_mr_nullMatch;
+                break;
+            }
+            if (sub.oldMatchingRule.isEqualTo(mr_oid)) {
+                mr_oid = sub.newMatchingRule ?? id_mr_nullMatch;
+                old_mr_specifically_matched = true;
+            }
+        }
+        /* If no substitution for this attribute type at this level explicitly
+        overrides the existing matching rule specifically, using the
+        `oldMatchingRule` component, we can use the "wildcard" substitution, if
+        it was present in this level. */
+        if (!old_mr_specifically_matched && wildcard_new_mr) {
+            mr_oid = wildcard_new_mr;
+        }
+        subs_cache.set(attr, mr_oid);
+    }
+}
+
 /**
  * @summary The Search (I) Procedure, as specified in ITU Recommendation X.518.
  * @description
@@ -1017,7 +1135,81 @@ function isMatchAllFilter (filter?: Filter): boolean {
  * @async
  */
 export
-async function search_i (
+async function search_i(
+    ctx: MeerkatContext,
+    assn: ClientAssociation,
+    state: OperationDispatcherState,
+    argument: SearchArgument,
+    searchState: SearchState,
+): Promise<void> {
+    const data = getOptionallyProtectedValue(argument);
+    const rp = data.relaxation;
+    const target = state.chainingArguments.targetObject ?? data.baseObject.rdnSequence;
+    await search_i_ex(
+        ctx,
+        assn,
+        state,
+        argument,
+        searchState,
+    );
+    // const base_result = searchState;
+    let results_count = getCurrentNumberOfResults(searchState);
+    let needs_relaxation: boolean = !!(rp && (results_count < (rp.minimum ?? 1)));
+    const needs_tightening: boolean = !!(rp?.maximum && (results_count > rp.maximum));
+    if (needs_relaxation && needs_tightening) {
+        // TODO: Log and/or throw an error. This means that maximum < minimum.
+        // return base_result;
+        return;
+    }
+    if (needs_relaxation || needs_tightening) {
+        // TODO: Apply the base relaxation.
+        // NOTE: X.511 states that the base relaxation is applied by the search
+        // rule validation, but it is not clear as to whether this even does
+        // anything outside of a SAA.
+    }
+    if (needs_relaxation && rp?.relaxations?.length) {
+        // let relaxed_result = base_result;
+        for (const relaxation of rp.relaxations) {
+            await apply_relaxation(ctx, searchState, target, relaxation);
+            // Reset some aspects of the search state, while leaving others.
+            searchState.results.length = 0;
+            searchState.resultSets.length = 0;
+            searchState.depth = 0;
+            searchState.poq = undefined;
+            searchState.paging = undefined;
+            await search_i_ex(
+                ctx,
+                assn,
+                state, // This does not really need to be updated. It is hardly touched anywhere.
+                argument,
+                {
+                    ...searchState,
+                    results: [],
+                    resultSets: [],
+                    depth: 0,
+                },
+            );
+            results_count = getCurrentNumberOfResults(searchState);
+            needs_relaxation = !!(rp && (results_count < (rp.minimum ?? 1)));
+            if (!needs_relaxation) {
+                // If we have already returned a satisfactory number of results, return.
+                return;
+            }
+        }
+        // If we have exhausted all relaxations, return whatever we have.
+        return;
+    }
+    else if (needs_tightening && rp?.tightenings?.length) {
+        for (const tightening of rp.tightenings) {
+            // TODO: Apply tightening to search and restart.
+        }
+    }
+    return;
+}
+
+
+export
+async function search_i_ex (
     ctx: MeerkatContext,
     assn: ClientAssociation,
     state: OperationDispatcherState,
@@ -1640,9 +1832,9 @@ async function search_i (
             return (bdn.length - adn.length);
         })[0]; // Select the nearest subschema
     const filterOptions: EvaluateFilterSettings = {
-        getEqualityMatcher: getEqualityMatcherGetter(ctx),
-        getOrderingMatcher: getOrderingMatcherGetter(ctx),
-        getSubstringsMatcher: getSubstringsMatcherGetter(ctx),
+        getEqualityMatcher: getEqualityMatcherGetter(ctx, searchState.matching_rule_substitutions),
+        getOrderingMatcher: getOrderingMatcherGetter(ctx, searchState.matching_rule_substitutions),
+        getSubstringsMatcher: getSubstringsMatcherGetter(ctx, searchState.matching_rule_substitutions),
         getApproximateMatcher: getApproxMatcherGetter(ctx),
         getContextMatcher: (contextType: OBJECT_IDENTIFIER): ContextMatcher | undefined => {
             return ctx.contextTypes.get(contextType.toString())?.matcher;
@@ -2777,7 +2969,7 @@ async function search_i (
                 : state.chainingArguments;
             searchState.depth++;
             searchState.familyOnly = searchFamilyInEffect;
-            await search_i(
+            await search_i_ex(
                 ctx,
                 assn,
                 {

@@ -551,6 +551,7 @@ class OperationDispatcher {
                 chaining: chainingResults,
                 depth: 0,
                 excludedById: new Set(),
+                matching_rule_substitutions: new Map(),
             };
             await relatedEntryProcedure(
                 ctx,
@@ -993,6 +994,7 @@ class OperationDispatcher {
             chaining: state.chainingResults,
             depth: 0,
             excludedById: new Set(),
+            matching_rule_substitutions: new Map(),
         };
         await relatedEntryProcedure(
             ctx,

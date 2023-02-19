@@ -35,7 +35,7 @@ import {
 import {
     search,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
-import search_i, { SearchState } from "./search_i";
+import search_i_ex, { SearchState } from "./search_i";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import {
     ServiceErrorData,
@@ -533,7 +533,7 @@ async function search_ii (
                 }
                 : argument;
             searchState.depth++;
-            await search_i(
+            await search_i_ex(
                 ctx,
                 assn,
                 {
