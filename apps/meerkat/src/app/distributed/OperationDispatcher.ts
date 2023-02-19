@@ -671,10 +671,10 @@ class OperationDispatcher {
                 matching_rule_substitutions: new Map(),
             };
             if (state.chainingArguments.chainedRelaxation) {
-                await apply_mr_mapping(ctx, initialSearchState, target, state.chainingArguments.chainedRelaxation);
+                await apply_mr_mapping(ctx, initialSearchState, target, state.chainingArguments.chainedRelaxation, true);
             }
             else if (rp?.basic) {
-                await apply_mr_mapping(ctx, initialSearchState, target, rp.basic);
+                await apply_mr_mapping(ctx, initialSearchState, target, rp.basic, true);
             }
             let searchState = await search_procedures(
                 ctx,
@@ -718,7 +718,7 @@ class OperationDispatcher {
             }
             if (provide_relaxation_or_tightening && needs_relaxation && rp?.relaxations?.length) {
                 for (const relaxation of rp.relaxations) {
-                    await apply_mr_mapping(ctx, searchState, target, relaxation);
+                    await apply_mr_mapping(ctx, searchState, target, relaxation, true);
                     // Reset some aspects of the search state, while leaving others.
                     searchState.results.length = 0;
                     searchState.resultSets.length = 0;
@@ -766,7 +766,7 @@ class OperationDispatcher {
             }
             else if (provide_relaxation_or_tightening && needs_tightening && rp?.tightenings?.length) {
                 for (const tightening of rp.tightenings) {
-                    await apply_mr_mapping(ctx, searchState, target, tightening);
+                    await apply_mr_mapping(ctx, searchState, target, tightening, false);
                     // Reset some aspects of the search state, while leaving others.
                     searchState.results.length = 0;
                     searchState.resultSets.length = 0;

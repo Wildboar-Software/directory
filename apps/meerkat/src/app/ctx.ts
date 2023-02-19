@@ -1105,6 +1105,8 @@ const ctx: MeerkatContext = {
     duplicatedLDAPNames: new Set(),
     // doneModifyingOperationalBinding: new EventEmitter(),
     jobQueue: [],
+    systemProposedRelaxations: new Map(),
+    systemProposedTightenings: new Map(),
 };
 
 export default ctx;

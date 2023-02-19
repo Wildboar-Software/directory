@@ -306,6 +306,7 @@ import {
 import getEqualityNormalizer from "../x500/getEqualityNormalizer";
 import { id_mr_nullMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-mr-nullMatch.va";
 import { groupByOID } from "@wildboar/x500";
+import { systemProposedMatch } from "@wildboar/x500/src/lib/collections/matchingRules";
 // TODO: Once value normalization is implemented, these shall be incorporated
 // into `convertFilterToPrismaSelect()`.
 // import {
@@ -1067,6 +1068,7 @@ async function apply_mr_mapping (
     searchState: SearchState,
     target_object: DistinguishedName,
     mrm: MRMapping,
+    relaxing: boolean,
 ): Promise<void> {
     if (!searchState.effectiveFilter) {
         // If there is no filter, there is no relaxation or tightening to do.
@@ -1100,10 +1102,24 @@ async function apply_mr_mapping (
                 // a more specific substitution does not override the existing
                 // matching rule specifically.
                 wildcard_new_mr = sub.newMatchingRule ?? id_mr_nullMatch;
-                break;
+                if (wildcard_new_mr.isEqualTo(systemProposedMatch["&id"])) {
+                    wildcard_new_mr = (relaxing
+                        ? ctx.systemProposedRelaxations.get(mr_oid.toString())
+                        : ctx.systemProposedTightenings.get(mr_oid.toString()))
+                        ?? id_mr_nullMatch;
+                }
+                continue;
             }
             if (sub.oldMatchingRule.isEqualTo(mr_oid)) {
-                mr_oid = sub.newMatchingRule ?? id_mr_nullMatch;
+                if (sub.newMatchingRule?.isEqualTo(systemProposedMatch["&id"])) {
+                    mr_oid = (relaxing
+                        ? ctx.systemProposedRelaxations.get(mr_oid.toString())
+                        : ctx.systemProposedTightenings.get(mr_oid.toString()))
+                        ?? sub.oldMatchingRule
+                        ?? id_mr_nullMatch;
+                } else {
+                    mr_oid = sub.newMatchingRule ?? id_mr_nullMatch;
+                }
                 old_mr_specifically_matched = true;
             }
         }

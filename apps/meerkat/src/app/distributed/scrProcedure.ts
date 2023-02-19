@@ -70,6 +70,14 @@ async function scrProcedure (
         (data.serviceControls?.options?.[chainingProhibitedBit] === TRUE_BIT)
         || (data.serviceControls?.options?.[manageDSAITBit] === TRUE_BIT)
     );
+    // const results_count = getCurrentNumberOfResults(searchState);
+    // If we already have more results than the user wants, there is no point in chaining.
+    /**
+     * If we already have more results than the user wants, there is no point in
+     * chaining. This is not required by the specification, but it seems like a
+     * no-brainer, since
+     */
+    // const tightening_max_exceeded: boolean = results_count >= (data.relaxation?.maximum ?? Infinity);
     const insufficientAuthForChaining = assn && (
         (
             ("basicLevels" in assn.authLevel)

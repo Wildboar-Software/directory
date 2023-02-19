@@ -276,7 +276,7 @@ import approx_uriMatch from "../matching/approx/uriMatch";
 import approx_uTCTimeMatch from "../matching/approx/uTCTimeMatch";
 import { uuidMatch as uuidMatcher } from "../matching/equality/uuidMatch";
 import { uuidOrderingMatch as uuidOrderingMatcher } from "../matching/ordering/uuidOrderingMatch";
-import type { ASN1Element } from "asn1-ts";
+import type { ASN1Element, OBJECT_IDENTIFIER } from "asn1-ts";
 import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
 import {
     _decode_UnboundedDirectoryString,
@@ -662,6 +662,13 @@ function toInfo <Matcher> (
     };
 }
 
+const relaxations: [ OBJECT_IDENTIFIER, OBJECT_IDENTIFIER ][] = [
+    [ x500mr.caseExactMatch["&id"], x500mr.caseIgnoreMatch["&id"] ],
+    [ x500mr.caseExactOrderingMatch["&id"], x500mr.caseIgnoreOrderingMatch["&id"] ],
+    [ x500mr.caseExactSubstringsMatch["&id"], x500mr.caseIgnoreSubstringsMatch["&id"] ],
+    [ x500mr.caseExactIA5Match["&id"], x500mr.caseIgnoreIA5Match["&id"] ],
+];
+
 /**
  * @summary Initialize Meerkat DSA's internal index of known matching rules.
  * @description
@@ -975,6 +982,12 @@ function loadMatchingRules (ctx: Context): void {
     ctx.equalityMatchingRules.get(x500mr.algorithmIdentifierMatch["&id"].toString())!.normalizer = norms.algorithmIdentifierMatch;
     ctx.equalityMatchingRules.get(x500mr.pwdEncAlgMatch["&id"].toString())!.normalizer = norms.pwdEncAlgMatch;
     ctx.equalityMatchingRules.get(x500mr.policyMatch["&id"].toString())!.normalizer = norms.policyMatch;
+
+    for (const [ strict_mr, relaxed_mr ] of relaxations) {
+        ctx.systemProposedRelaxations.set(strict_mr.toString(), relaxed_mr);
+        ctx.systemProposedTightenings.set(relaxed_mr.toString(), strict_mr);
+    }
+
 }
 
 export default loadMatchingRules;
