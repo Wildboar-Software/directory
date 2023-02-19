@@ -737,7 +737,6 @@ function loadMatchingRules (ctx: Context): void {
         [ x500mr.sOAIdentifierMatch, sOAIdentifierMatch ],
         [ x500mr.supplierAndConsumersMatch, supplierAndConsumersMatch ],
         [ x500mr.supplierOrConsumerInformationMatch, supplierOrConsumerInformationMatch ],
-        // TODO: [ x500mr.systemProposedMatch, systemProposedMatch ],
         [ x500mr.telephoneNumberMatch, telephoneNumberMatch ],
         [ x500mr.timeSpecificationMatch, timeSpecificationMatch ],
         [ x500mr.uTCTimeMatch, uTCTimeMatch ],
