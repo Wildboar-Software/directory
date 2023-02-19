@@ -40,7 +40,7 @@ import {
     TraceItem,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/TraceItem.ta";
 import nrcrProcedure from "./nrcrProcedure";
-import { TRUE_BIT, ASN1Element } from "asn1-ts";
+import { TRUE_BIT, ASN1Element, ObjectIdentifier } from "asn1-ts";
 import {
     ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
     ServiceControlOptions_partialNameResolution as partialNameResolutionBit,
@@ -125,6 +125,9 @@ import { randomInt } from "crypto";
 import { CommonArguments } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArguments.ta";
 import LDAPAssociation from "../ldap/LDAPConnection";
 import stringifyDN from "../x500/stringifyDN";
+import { MRMapping, RelaxationPolicy } from "@wildboar/x500/src/lib/modules/ServiceAdministration/RelaxationPolicy.ta";
+import cloneChainingArgs from "../x500/cloneChainingArguments";
+import { MRSubstitution } from "@wildboar/x500/src/lib/modules/ServiceAdministration/MRSubstitution.ta";
 
 function getPathFromVersion (vertex: Vertex): Vertex[] {
     const ret: Vertex[] = [];
@@ -667,7 +670,10 @@ class OperationDispatcher {
                 excludedById: new Set(),
                 matching_rule_substitutions: new Map(),
             };
-            if (rp?.basic) {
+            if (state.chainingArguments.chainedRelaxation) {
+                await apply_mr_mapping(ctx, initialSearchState, target, state.chainingArguments.chainedRelaxation);
+            }
+            else if (rp?.basic) {
                 await apply_mr_mapping(ctx, initialSearchState, target, rp.basic);
             }
             let searchState = await search_procedures(
@@ -682,6 +688,23 @@ class OperationDispatcher {
                 initialSearchState,
             );
 
+            /**
+             * We only provide relaxation or tightening if this DSA is the
+             * performing DSA for the base object of the search request, which
+             * means that the `nameResolutionPhase` will not be `completed`.
+             * (It gets set only prior to chaining or if manageDSAIT is set.)
+             *
+             * I don't think the specifications mention it, but Meerkat DSA does
+             * this because each DSA servicing part of a search request may
+             * themselves generate multiple subrequests as a result of
+             * relaxation, which could balloon into a nearly infinite number of
+             * subrequests as each participating DSA individually attempts to
+             * fulfill the relaxation policy's `minimum`.
+             *
+             * As such, we determine if this search operation is for the base
+             * object or not based on the `nameResolutionPhase`.
+             */
+            const provide_relaxation_or_tightening: boolean = (nameResolutionPhase !== completed);
             let results_count = getCurrentNumberOfResults(searchState);
             let needs_relaxation: boolean = !!(rp && (results_count < (rp.minimum ?? 1)));
             let needs_tightening: boolean = !!(rp?.maximum && (results_count > rp.maximum));
@@ -693,7 +716,7 @@ class OperationDispatcher {
                     }),
                 );
             }
-            if (needs_relaxation && rp?.relaxations?.length) {
+            if (provide_relaxation_or_tightening && needs_relaxation && rp?.relaxations?.length) {
                 for (const relaxation of rp.relaxations) {
                     await apply_mr_mapping(ctx, searchState, target, relaxation);
                     // Reset some aspects of the search state, while leaving others.
@@ -703,6 +726,25 @@ class OperationDispatcher {
                     searchState.poq = undefined;
                     searchState.paging = undefined;
                     state.SRcontinuationList.length = 0; // The only aspect of ODS that gets modified by search.
+
+                    // In this block, we update the chaining args so subrequests relax correctly.
+                    { // We do not have to do this for tightening, since the solution is to just not chain at all.
+                        const mr_substitutions: MRSubstitution[] = [];
+                        for (const [attr_oid, mr_oid] of searchState.matching_rule_substitutions.entries()) {
+                            mr_substitutions.push(new MRSubstitution(
+                                ObjectIdentifier.fromString(attr_oid),
+                                undefined,
+                                mr_oid,
+                            ));
+                        }
+                        state.chainingArguments = cloneChainingArgs(state.chainingArguments, {
+                            chainedRelaxation: new MRMapping(
+                                undefined,
+                                mr_substitutions,
+                            ),
+                        });
+                    }
+
                     searchState = await search_procedures(
                         ctx,
                         assn,
@@ -722,7 +764,7 @@ class OperationDispatcher {
                     }
                 }
             }
-            else if (needs_tightening && rp?.tightenings?.length) {
+            else if (provide_relaxation_or_tightening && needs_tightening && rp?.tightenings?.length) {
                 for (const tightening of rp.tightenings) {
                     await apply_mr_mapping(ctx, searchState, target, tightening);
                     // Reset some aspects of the search state, while leaving others.
