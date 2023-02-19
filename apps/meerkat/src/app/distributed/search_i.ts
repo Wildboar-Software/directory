@@ -390,7 +390,7 @@ function getNumberOfResultsInSearch (result: SearchResult): number {
  *
  * @function
  */
-function getCurrentNumberOfResults (state: SearchState): number {
+export function getCurrentNumberOfResults (state: SearchState): number {
     return (
         state.results.length
         + state.resultSets
@@ -1061,7 +1061,8 @@ const get_smr_info = function (ctx: Context, attributeType: IndexableOID): OBJEC
     return ctx.substringsMatchingRules.get(spec.substringsMatchingRule.toString())?.id;
 };
 
-async function apply_relaxation (
+export
+async function apply_mr_mapping (
     ctx: Context,
     searchState: SearchState,
     target_object: DistinguishedName,
@@ -1142,69 +1143,14 @@ async function search_i(
     argument: SearchArgument,
     searchState: SearchState,
 ): Promise<void> {
-    const data = getOptionallyProtectedValue(argument);
-    const rp = data.relaxation;
-    const target = state.chainingArguments.targetObject ?? data.baseObject.rdnSequence;
-    await search_i_ex(
+    // TODO: Put all depth == 0 code here.
+    return search_i_ex(
         ctx,
         assn,
         state,
         argument,
         searchState,
     );
-    // const base_result = searchState;
-    let results_count = getCurrentNumberOfResults(searchState);
-    let needs_relaxation: boolean = !!(rp && (results_count < (rp.minimum ?? 1)));
-    const needs_tightening: boolean = !!(rp?.maximum && (results_count > rp.maximum));
-    if (needs_relaxation && needs_tightening) {
-        // TODO: Log and/or throw an error. This means that maximum < minimum.
-        // return base_result;
-        return;
-    }
-    if (needs_relaxation || needs_tightening) {
-        // TODO: Apply the base relaxation.
-        // NOTE: X.511 states that the base relaxation is applied by the search
-        // rule validation, but it is not clear as to whether this even does
-        // anything outside of a SAA.
-    }
-    if (needs_relaxation && rp?.relaxations?.length) {
-        // let relaxed_result = base_result;
-        for (const relaxation of rp.relaxations) {
-            await apply_relaxation(ctx, searchState, target, relaxation);
-            // Reset some aspects of the search state, while leaving others.
-            searchState.results.length = 0;
-            searchState.resultSets.length = 0;
-            searchState.depth = 0;
-            searchState.poq = undefined;
-            searchState.paging = undefined;
-            await search_i_ex(
-                ctx,
-                assn,
-                state, // This does not really need to be updated. It is hardly touched anywhere.
-                argument,
-                {
-                    ...searchState,
-                    results: [],
-                    resultSets: [],
-                    depth: 0,
-                },
-            );
-            results_count = getCurrentNumberOfResults(searchState);
-            needs_relaxation = !!(rp && (results_count < (rp.minimum ?? 1)));
-            if (!needs_relaxation) {
-                // If we have already returned a satisfactory number of results, return.
-                return;
-            }
-        }
-        // If we have exhausted all relaxations, return whatever we have.
-        return;
-    }
-    else if (needs_tightening && rp?.tightenings?.length) {
-        for (const tightening of rp.tightenings) {
-            // TODO: Apply tightening to search and restart.
-        }
-    }
-    return;
 }
 
 
