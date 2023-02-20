@@ -767,7 +767,7 @@ model PostalCodesGazetteEntry {
   postal_code              String
   PostalCodeBoundaryPoints PostalCodeBoundaryPoints[]
 
-  @@unique([c2c, st, locality])
+  @@unique([c2c, st, locality, postal_code])
 }
 
 model PostalCodeBoundaryPoints {
