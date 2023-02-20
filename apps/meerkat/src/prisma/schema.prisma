@@ -756,3 +756,26 @@ model AccessPointCredentials {
 
   @@unique([uuid])
 }
+
+// Zonal Matching Tables
+
+model PostalCodesGazetteEntry {
+  id                       Int                        @id @default(autoincrement())
+  c2c                      String                     @db.Char(2)
+  st                       String
+  locality                 String
+  postal_code              String
+  PostalCodeBoundaryPoints PostalCodeBoundaryPoints[]
+
+  @@unique([c2c, st, locality])
+}
+
+model PostalCodeBoundaryPoints {
+  id             Int                     @id @default(autoincrement())
+  postal_code_id Int
+  postal_code    PostalCodesGazetteEntry @relation(fields: [postal_code_id], references: [id])
+  northing       Int // in meters
+  easting        Int // in meters
+
+  @@index([postal_code_id])
+}

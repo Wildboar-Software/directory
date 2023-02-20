@@ -307,6 +307,8 @@ import getEqualityNormalizer from "../x500/getEqualityNormalizer";
 import { id_mr_nullMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-mr-nullMatch.va";
 import { groupByOID } from "@wildboar/x500";
 import { systemProposedMatch } from "@wildboar/x500/src/lib/collections/matchingRules";
+import { id_mr_zonalMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-mr-zonalMatch.va";
+import { mapFilterForPostalZonalMatch } from "../matching/zonal";
 // TODO: Once value normalization is implemented, these shall be incorporated
 // into `convertFilterToPrismaSelect()`.
 // import {
@@ -1132,6 +1134,21 @@ async function apply_mr_mapping (
         }
         subs_cache.set(attr, mr_oid);
     }
+
+    for (const mapping of mrm.mapping ?? []) {
+        if (!searchState.effectiveFilter) {
+            continue;
+        }
+        if (mapping.mappingFunction.isEqualTo(id_mr_zonalMatch)) {
+            searchState.effectiveFilter = await mapFilterForPostalZonalMatch(
+                ctx,
+                target_object,
+                searchState.effectiveFilter,
+                Number(mapping.level ?? 0),
+            );
+        }
+    }
+
 }
 
 /**
