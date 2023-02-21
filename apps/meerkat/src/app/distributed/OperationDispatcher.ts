@@ -128,6 +128,9 @@ import stringifyDN from "../x500/stringifyDN";
 import { MRMapping, RelaxationPolicy } from "@wildboar/x500/src/lib/modules/ServiceAdministration/RelaxationPolicy.ta";
 import cloneChainingArgs from "../x500/cloneChainingArguments";
 import { MRSubstitution } from "@wildboar/x500/src/lib/modules/ServiceAdministration/MRSubstitution.ta";
+import {
+    SearchControlOptions_includeAllAreas,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
 
 function getPathFromVersion (vertex: Vertex): Vertex[] {
     const ret: Vertex[] = [];
@@ -718,15 +721,18 @@ class OperationDispatcher {
                 );
             }
             if (provide_relaxation_or_tightening && needs_relaxation && rp?.relaxations?.length) {
+                const includeAllAreas: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_includeAllAreas]);
                 for (const relaxation of rp.relaxations) {
                     await apply_mr_mapping(ctx, searchState, target, relaxation, true);
                     // Reset some aspects of the search state, while leaving others.
-                    searchState.results.length = 0;
-                    searchState.resultSets.length = 0;
                     searchState.depth = 0;
                     searchState.poq = undefined;
                     searchState.paging = undefined;
                     state.SRcontinuationList.length = 0; // The only aspect of ODS that gets modified by search.
+                    if (!includeAllAreas) {
+                        searchState.results.length = 0;
+                        searchState.resultSets.length = 0;
+                    }
 
                     // In this block, we update the chaining args so subrequests relax correctly.
                     { // We do not have to do this for tightening, since the solution is to just not chain at all.
@@ -775,6 +781,7 @@ class OperationDispatcher {
                     searchState.poq = undefined;
                     searchState.paging = undefined;
                     state.SRcontinuationList.length = 0; // The only aspect of ODS that gets modified by search.
+                    searchState.excludedById.clear(); // Only for tightening do you clear this.
                     searchState = await search_procedures(
                         ctx,
                         assn,
