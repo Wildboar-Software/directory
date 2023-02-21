@@ -189,6 +189,8 @@ import {
 import {
     DITContextUseInformation,
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseInformation.ta";
+import { country, countryName } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/country.oa";
+import { residentialPerson } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/residentialPerson.oa";
 
 export
 const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(Array(9).fill(FALSE_BIT));
@@ -389,15 +391,17 @@ async function createEntry(
 }
 
 // NOTE: These are made up OIDs.
-export const personNameForm1ID  = new ObjectIdentifier([ 2, 5, 100, 1 ]);
-export const personNameForm2ID  = new ObjectIdentifier([ 2, 5, 100, 2 ]);
-export const processNameFormID  = new ObjectIdentifier([ 2, 5, 100, 3 ]);
-export const deviceNameFormID   = new ObjectIdentifier([ 2, 5, 100, 4 ]);
-export const orgNameFormID      = new ObjectIdentifier([ 2, 5, 100, 5 ]);
-export const orgUnitNameFormID  = new ObjectIdentifier([ 2, 5, 100, 6 ]);
-export const aliasNameFormID    = new ObjectIdentifier([ 2, 5, 100, 7 ]);
-export const oidNameFormID      = new ObjectIdentifier([ 2, 5, 100, 8 ]);
-export const aliasNameForm2ID   = new ObjectIdentifier([ 2, 5, 100, 9 ]);
+export const personNameForm1ID      = new ObjectIdentifier([ 2, 5, 100, 1 ]);
+export const personNameForm2ID      = new ObjectIdentifier([ 2, 5, 100, 2 ]);
+export const processNameFormID      = new ObjectIdentifier([ 2, 5, 100, 3 ]);
+export const deviceNameFormID       = new ObjectIdentifier([ 2, 5, 100, 4 ]);
+export const orgNameFormID          = new ObjectIdentifier([ 2, 5, 100, 5 ]);
+export const orgUnitNameFormID      = new ObjectIdentifier([ 2, 5, 100, 6 ]);
+export const aliasNameFormID        = new ObjectIdentifier([ 2, 5, 100, 7 ]);
+export const oidNameFormID          = new ObjectIdentifier([ 2, 5, 100, 8 ]);
+export const aliasNameForm2ID       = new ObjectIdentifier([ 2, 5, 100, 9 ]);
+export const countryNameFormId      = new ObjectIdentifier([ 2, 5, 100, 10 ]);
+export const resPersonNameFormId    = new ObjectIdentifier([ 2, 5, 100, 11 ]);
 
 export
 async function createTestRootNode(
@@ -482,6 +486,28 @@ async function createTestRootNode(
                             applicationProcess["&id"],
                             [commonName["&id"]],
                             [description["&id"]],
+                        ),
+                    ), DER),
+                    _encode_NameFormDescription(new NameFormDescription(
+                        countryNameFormId,
+                        undefined,
+                        undefined,
+                        undefined,
+                        new NameFormInformation(
+                            country["&id"],
+                            [countryName["&id"]],
+                            undefined,
+                        ),
+                    ), DER),
+                    _encode_NameFormDescription(new NameFormDescription(
+                        resPersonNameFormId,
+                        undefined,
+                        undefined,
+                        undefined,
+                        new NameFormInformation(
+                            residentialPerson["&id"],
+                            [commonName["&id"]],
+                            undefined,
                         ),
                     ), DER),
                     _encode_NameFormDescription(new NameFormDescription(
@@ -637,6 +663,16 @@ async function createTestRootNode(
                         10,
                         aliasNameForm2ID,
                         [ 1, 2, 3, 4, 5, 6, 7 ], // Everything may appear under everything else.
+                    ), DER),
+                    _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
+                        11,
+                        countryNameFormId,
+                        [ 1, 2, 3, 4, 5, 6, 7 ], // Everything may appear under everything else.
+                    ), DER),
+                    _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
+                        12,
+                        resPersonNameFormId,
+                        [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ], // Everything may appear under everything else.
                     ), DER),
                 ],
                 undefined,

@@ -669,6 +669,7 @@ class OperationDispatcher {
                 depth: 0,
                 excludedById: new Set(),
                 matching_rule_substitutions: new Map(),
+                effectiveFilter: data.extendedFilter ?? data.filter,
             };
             if (state.chainingArguments.chainedRelaxation) {
                 await apply_mr_mapping(ctx, initialSearchState, target, state.chainingArguments.chainedRelaxation, true);

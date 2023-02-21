@@ -1176,6 +1176,8 @@ async function search_i(
     argument: SearchArgument,
     searchState: SearchState,
 ): Promise<void> {
+    const data = getOptionallyProtectedValue(argument);
+    searchState.effectiveFilter = searchState.effectiveFilter ?? data.extendedFilter ?? data.filter;
     // TODO: Put all depth == 0 code here.
     return search_i_ex(
         ctx,
@@ -1705,7 +1707,7 @@ async function search_i_ex (
     const filter: Filter = (matchOnResidualName && state.partialName)
         ? {
             and: [
-                (data.extendedFilter ?? data.filter ?? SearchArgumentData._default_value_for_filter),
+                (searchState.effectiveFilter ?? SearchArgumentData._default_value_for_filter),
                 ...data.baseObject.rdnSequence
                     .slice(targetDN.length)
                     .flatMap((unmatchedRDN: RDN): Filter[] => unmatchedRDN
@@ -1720,7 +1722,7 @@ async function search_i_ex (
                         }))),
             ],
         }
-        : (data.extendedFilter ?? data.filter ?? SearchArgumentData._default_value_for_filter);
+        : (searchState.effectiveFilter ?? SearchArgumentData._default_value_for_filter);
     const serviceControlOptions = data.serviceControls?.options;
     // Service controls
     const noSubtypeMatch: boolean = (
@@ -2706,11 +2708,10 @@ async function search_i_ex (
         state.SRcontinuationList.push(cr);
     }
 
-    const effective_filter = data.extendedFilter ?? data.filter;
     const entriesPerSubordinatesPage: number = (
         !entryOnly
         && (data.subset === SearchArgumentData_subset_oneLevel)
-        && isMatchAllFilter(effective_filter)
+        && isMatchAllFilter(searchState.effectiveFilter)
     )
         ? Math.min(sizeLimit, ctx.config.entriesPerSubordinatesPage * 10)
         : ctx.config.entriesPerSubordinatesPage;
@@ -2756,8 +2757,8 @@ async function search_i_ex (
              * This also goes in an `AND` so that it does not overwrite the
              * `EntryObjectClass` that comes earlier.
              */
-            AND: (effective_filter && (data.subset === SearchArgumentData_subset_oneLevel))
-                ? convertFilterToPrismaSelect(ctx, effective_filter, relevantSubentries, !dontSelectFriends)
+            AND: (searchState.effectiveFilter && (data.subset === SearchArgumentData_subset_oneLevel))
+                ? convertFilterToPrismaSelect(ctx, searchState.effectiveFilter, relevantSubentries, !dontSelectFriends)
                 : undefined,
         },
     );

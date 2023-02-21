@@ -141,7 +141,7 @@ async function extract_zone_info (
                 const southest = bp_rows[0];
                 const northest = bp_rows[bp_rows.length - 1];
                 const eastest = sorted_by_easting_asc[0];
-                const westest = sorted_by_easting_asc[sorted_by_easting_asc.length];
+                const westest = sorted_by_easting_asc[sorted_by_easting_asc.length - 1];
                 const diag_len = Math.sqrt(
                     Math.pow((northest.northing - southest.northing), 2)
                     + Math.pow((eastest.easting - westest.easting), 2)
@@ -150,7 +150,7 @@ async function extract_zone_info (
                 let radius = radius0;
 
                 for (let i = 1; i <= level; i++) {
-                    radius += (radius0 / i);
+                    radius += Math.round(radius0 / i);
                 }
 
                 const northern_bound = northest.northing + radius;
@@ -208,14 +208,13 @@ function replace_with_postal_codes (
     }
     if ("item" in filter) {
         if ("equality" in filter.item) {
-            const type_ = filter.item.equality.type_;
             for (const supertype of getAttributeParentTypes(ctx, filter.item.equality.type_)) {
                 if (supertype.isEqualTo(localityName["&id"])) {
                     return {
                         or: postal_codes.map((pc): Filter => ({
                             item: {
                                 equality: new AttributeValueAssertion(
-                                    type_,
+                                    postalCode["&id"],
                                     postalCode.encoderFor["&Type"]!({ uTF8String: pc }, DER),
                                 ),
                             },
@@ -224,6 +223,11 @@ function replace_with_postal_codes (
                 }
             }
         }
+    }
+    else if ("and" in filter) {
+        return {
+            and: filter.and.map((sub) => replace_with_postal_codes(ctx, sub, postal_codes)),
+        };
     }
     return filter;
 }
@@ -245,13 +249,16 @@ async function zonal_map_filter (
         await extract_zone_info(ctx, info_from_target_dn, filter.item, postal, level);
         return filter;
     } else if (!negated && "and" in filter) {
+        const new_subfilters: Filter[] = [];
         for (const sub of filter.and) {
-            await zonal_map_filter(ctx, info_from_target_dn, sub, postal, negated, level);
+            new_subfilters.push(await zonal_map_filter(ctx, info_from_target_dn, sub, postal, negated, level));
         }
         if (!postal.unmappable && postal.postal_codes?.length) {
             return replace_with_postal_codes(ctx, filter, postal.postal_codes);
         }
-        return filter;
+        return {
+            and: new_subfilters,
+        };
     } else if (!negated && "or" in filter) {
         return {
             or: await Promise.all(

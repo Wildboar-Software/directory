@@ -110,9 +110,6 @@ import {
 import {
     holderIssuerMatch,
 } from "@wildboar/x500/src/lib/matching/equality/holderIssuerMatch";
-// import {
-//     ignoreIfAbsentMatch,
-// } from "@wildboar/x500/src/lib/matching/equality/ignoreIfAbsentMatch";
 import {
     intEmailMatch,
 } from "@wildboar/x500/src/lib/matching/equality/intEmailMatch";
@@ -126,14 +123,8 @@ import {
     jidMatch,
 } from "@wildboar/x500/src/lib/matching/equality/jidMatch";
 import {
-    keywordMatch,
-} from "@wildboar/x500/src/lib/matching/equality/keywordMatch";
-import {
     masterAndShadowAccessPointsMatch,
 } from "@wildboar/x500/src/lib/matching/equality/masterAndShadowAccessPointsMatch";
-// import {
-//     nullMatch,
-// } from "@wildboar/x500/src/lib/matching/equality/nullMatch";
 import {
     numericStringMatch,
 } from "@wildboar/x500/src/lib/matching/equality/numericStringMatch";
@@ -176,9 +167,6 @@ import {
 import {
     supplierOrConsumerInformationMatch,
 } from "@wildboar/x500/src/lib/matching/equality/supplierOrConsumerInformationMatch";
-// import {
-//     systemProposedMatch,
-// } from "@wildboar/x500/src/lib/matching/equality/systemProposedMatch";
 import {
     telephoneNumberMatch,
 } from "@wildboar/x500/src/lib/matching/equality/telephoneNumberMatch";
@@ -205,10 +193,7 @@ import {
 // } from "@wildboar/x500/src/lib/matching/equality/userPwdMatch";
 import {
     wordMatch,
-} from "@wildboar/x500/src/lib/matching/equality/wordMatch";
-// import {
-//     zonalMatch,
-// } from "@wildboar/x500/src/lib/matching/equality/zonalMatch";
+} from "../matching/equality/wordMatch";
 import {
     caseExactOrderingMatch,
 } from "@wildboar/x500/src/lib/matching/ordering/caseExactOrderingMatch";
@@ -236,9 +221,6 @@ import {
 import {
     caseIgnoreIA5SubstringsMatch,
 } from "@wildboar/x500/src/lib/matching/substring/caseIgnoreIA5SubstringsMatch";
-// import {
-//     caseIgnoreListSubstringsMatch,
-// } from "@wildboar/x500/src/lib/matching/substring/caseIgnoreListSubstringsMatch";
 import {
     caseIgnoreSubstringsMatch,
 } from "@wildboar/x500/src/lib/matching/substring/caseIgnoreSubstringsMatch";
@@ -667,6 +649,7 @@ const relaxations: [ OBJECT_IDENTIFIER, OBJECT_IDENTIFIER ][] = [
     [ x500mr.caseExactOrderingMatch["&id"], x500mr.caseIgnoreOrderingMatch["&id"] ],
     [ x500mr.caseExactSubstringsMatch["&id"], x500mr.caseIgnoreSubstringsMatch["&id"] ],
     [ x500mr.caseExactIA5Match["&id"], x500mr.caseIgnoreIA5Match["&id"] ],
+    [ x500mr.caseIgnoreMatch["&id"], x500mr.wordMatch["&id"] ],
 ];
 
 /**
@@ -721,7 +704,7 @@ function loadMatchingRules (ctx: Context): void {
         [ x500mr.integerFirstComponentMatch, integerFirstComponentMatch ],
         [ x500mr.integerMatch, integerMatch ],
         [ x500mr.jidMatch, jidMatch ],
-        [ x500mr.keywordMatch, keywordMatch ],
+        [ x500mr.keywordMatch, wordMatch ],
         [ x500mr.masterAndShadowAccessPointsMatch, masterAndShadowAccessPointsMatch ],
         // [ x500mr.nullMatch, nullMatch ], // Supported by @wildboar/x500#evaluateFilter().
         [ x500mr.numericStringMatch, numericStringMatch ],
