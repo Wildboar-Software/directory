@@ -26,7 +26,7 @@ Meerkat DSA had to define its own zonal matching. Below is its ASN.1
 specification, followed by an explanation of how it works.
 
 ```asn1
-id-zmr-postalZonalMatch OBJECT IDENTIFIER ::= { /* TODO */ }
+id-zmr-postalZonalMatch OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 56490 58 1 }
 postalZonalMatch ZONAL-MATCHING ::= {
     SELECT BY           {
         id-at-countryName
