@@ -103,8 +103,6 @@ function writeOperation(
     });
 }
 
-
-
 describe("Meerkat DSA", () => {
 
     let connection: IDMConnection | undefined;
@@ -803,6 +801,4 @@ describe("Meerkat DSA", () => {
 
     test.todo("multiple tightenings");
     test.todo("multiple relaxations");
-    test.todo("notification attributes, per ZonalResult");
-
 });

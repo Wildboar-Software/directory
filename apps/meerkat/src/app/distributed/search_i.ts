@@ -136,6 +136,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import {
     ServiceProblem_invalidQueryReference,
+    ServiceProblem_requestedServiceNotAvailable,
     ServiceProblem_unsupportedMatchingUse,
     ServiceProblem_unwillingToPerform,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
@@ -309,6 +310,17 @@ import { groupByOID } from "@wildboar/x500";
 import { systemProposedMatch } from "@wildboar/x500/src/lib/collections/matchingRules";
 import { id_mr_zonalMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-mr-zonalMatch.va";
 import { mapFilterForPostalZonalMatch } from "../matching/zonal";
+import {
+    ZonalResult_multiple_mappings,
+    ZonalResult_zero_mappings,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/ZonalResult.ta";
+import { searchServiceProblem } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/searchServiceProblem.oa";
+import {
+    id_pr_ambiguousKeyAttributes,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-ambiguousKeyAttributes.va";
+import {
+    id_pr_unmatchedKeyAttributes,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-unmatchedKeyAttributes.va";
 // TODO: Once value normalization is implemented, these shall be incorporated
 // into `convertFilterToPrismaSelect()`.
 // import {
@@ -1067,10 +1079,13 @@ const get_smr_info = function (ctx: Context, attributeType: IndexableOID): OBJEC
 export
 async function apply_mr_mapping (
     ctx: Context,
+    assn: ClientAssociation,
     searchState: SearchState,
     target_object: DistinguishedName,
     mrm: MRMapping,
     relaxing: boolean,
+    signErrors: boolean,
+    aliasDereferenced: boolean,
 ): Promise<void> {
     if (!searchState.effectiveFilter) {
         // If there is no filter, there is no relaxation or tightening to do.
@@ -1140,12 +1155,70 @@ async function apply_mr_mapping (
             continue;
         }
         if (mapping.mappingFunction.isEqualTo(id_mr_zonalMatch)) {
-            searchState.effectiveFilter = await mapFilterForPostalZonalMatch(
+            const [ zr, new_filter ] = await mapFilterForPostalZonalMatch(
                 ctx,
                 target_object,
                 searchState.effectiveFilter,
                 Number(mapping.level ?? 0),
             );
+            // In the Meerkat DSA implementation of this zonal match, these outcomes
+            // are basically impossible, so this could should never be reached.
+            // It is here for thoroughness.
+            if (zr === ZonalResult_zero_mappings) {
+                throw new errors.ServiceError(
+                    ctx.i18n.t("err:zonal_zero_mappings"),
+                    new ServiceErrorData(
+                        ServiceProblem_requestedServiceNotAvailable,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            id_errcode_serviceError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        aliasDereferenced,
+                        [
+                            new Attribute(
+                                searchServiceProblem["&id"],
+                                [
+                                    searchServiceProblem.encoderFor["&Type"]!(id_pr_unmatchedKeyAttributes, DER),
+                                ],
+                            ),
+                        ],
+                    ),
+                    signErrors,
+                );
+            }
+            if (zr === ZonalResult_multiple_mappings) {
+                throw new errors.ServiceError(
+                    ctx.i18n.t("err:zonal_multiple_mappings"),
+                    new ServiceErrorData(
+                        ServiceProblem_requestedServiceNotAvailable,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            id_errcode_serviceError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        aliasDereferenced,
+                        [
+                            new Attribute(
+                                searchServiceProblem["&id"],
+                                [
+                                    searchServiceProblem.encoderFor["&Type"]!(id_pr_ambiguousKeyAttributes, DER),
+                                ],
+                            ),
+                        ],
+                    ),
+                    signErrors,
+                );
+            }
+            searchState.effectiveFilter = new_filter;
         }
     }
 

@@ -125,12 +125,13 @@ import { randomInt } from "crypto";
 import { CommonArguments } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArguments.ta";
 import LDAPAssociation from "../ldap/LDAPConnection";
 import stringifyDN from "../x500/stringifyDN";
-import { MRMapping, RelaxationPolicy } from "@wildboar/x500/src/lib/modules/ServiceAdministration/RelaxationPolicy.ta";
+import { MRMapping } from "@wildboar/x500/src/lib/modules/ServiceAdministration/MRMapping.ta";
 import cloneChainingArgs from "../x500/cloneChainingArguments";
 import { MRSubstitution } from "@wildboar/x500/src/lib/modules/ServiceAdministration/MRSubstitution.ta";
 import {
     SearchControlOptions_includeAllAreas,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
+import normalizeFilter from "../x500/normalizeFilter";
 
 function getPathFromVersion (vertex: Vertex): Vertex[] {
     const ret: Vertex[] = [];
@@ -674,11 +675,32 @@ class OperationDispatcher {
                 matching_rule_substitutions: new Map(),
                 effectiveFilter: data.extendedFilter ?? data.filter,
             };
+            if (rp && initialSearchState.effectiveFilter) {
+                initialSearchState.effectiveFilter = normalizeFilter(initialSearchState.effectiveFilter);
+            }
             if (state.chainingArguments.chainedRelaxation) {
-                await apply_mr_mapping(ctx, initialSearchState, target, state.chainingArguments.chainedRelaxation, true);
+                await apply_mr_mapping(
+                    ctx,
+                    assn,
+                    initialSearchState,
+                    target,
+                    state.chainingArguments.chainedRelaxation,
+                    true,
+                    signErrors,
+                    state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
+                );
             }
             else if (rp?.basic) {
-                await apply_mr_mapping(ctx, initialSearchState, target, rp.basic, true);
+                await apply_mr_mapping(
+                    ctx,
+                    assn,
+                    initialSearchState,
+                    target,
+                    rp.basic,
+                    true,
+                    signErrors,
+                    state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
+                );
             }
             let searchState = await search_procedures(
                 ctx,
@@ -723,7 +745,16 @@ class OperationDispatcher {
             if (provide_relaxation_or_tightening && needs_relaxation && rp?.relaxations?.length) {
                 const includeAllAreas: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_includeAllAreas]);
                 for (const relaxation of rp.relaxations) {
-                    await apply_mr_mapping(ctx, searchState, target, relaxation, true);
+                    await apply_mr_mapping(
+                        ctx,
+                        assn,
+                        searchState,
+                        target,
+                        relaxation,
+                        true,
+                        signErrors,
+                        state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
+                    );
                     // Reset some aspects of the search state, while leaving others.
                     searchState.depth = 0;
                     searchState.poq = undefined;
@@ -773,7 +804,16 @@ class OperationDispatcher {
             }
             else if (provide_relaxation_or_tightening && needs_tightening && rp?.tightenings?.length) {
                 for (const tightening of rp.tightenings) {
-                    await apply_mr_mapping(ctx, searchState, target, tightening, false);
+                    await apply_mr_mapping(
+                        ctx,
+                        assn,
+                        searchState,
+                        target,
+                        tightening,
+                        false,
+                        signErrors,
+                        state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
+                    );
                     // Reset some aspects of the search state, while leaving others.
                     searchState.results.length = 0;
                     searchState.resultSets.length = 0;

@@ -209,5 +209,7 @@
     "unrecognized_user_pwd_alt": "Unrecognized UserPwd alternative. Password cannot be set.",
     "anon_dop": "DOP operations cannot be performed anonymously.",
     "hierarchy_spans_service_admin_areas": "Cannot add the hierarchyParent attribute, because it would cause this hierarchical group to span multiple service administrative areas.",
-    "relaxation_max_lt_min": "Relaxation maximum was less than the minimum. The search request cannot be satisfied. Max={{max}}. Min={{min}}."
+    "relaxation_max_lt_min": "Relaxation maximum was less than the minimum. The search request cannot be satisfied. Max={{max}}. Min={{min}}.",
+    "zonal_zero_mappings": "Key attributes for zonal match could not be mapped to a zone.",
+    "zonal_multiple_mappings": "Key attributes for zonal match mapped to multiple zones."
 }

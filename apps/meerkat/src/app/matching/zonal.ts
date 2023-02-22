@@ -20,6 +20,9 @@ import {
     stateOrProvinceName,
 } from "@wildboar/x500/src/lib/collections/attributes";
 import getAttributeParentTypes from "../x500/getAttributeParentTypes";
+import {
+    ZonalResult, ZonalResult_cannot_select_mapping,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/ZonalResult.ta";
 
 interface PostalZoneMatchProperties {
     c2c: string;
@@ -47,19 +50,19 @@ async function extract_zone_info (
     item: FilterItem,
     postal: Partial<PostalZoneMatchProperties> = {},
     level: number,
-): Promise<void> {
+): Promise<ZonalResult | null> {
     if ("equality" in item) {
         if (item.equality.type_.isEqualTo(countryName["&id"])) {
             if (postal.c2c) {
                 postal.unmappable = true;
-                return;
+                return ZonalResult_cannot_select_mapping;
             }
             postal.c2c = item.equality.assertion.printableString;
         }
         else if (item.equality.type_.isEqualTo(countryCode3c["&id"])) {
             if (postal.c3c) {
                 postal.unmappable = true;
-                return;
+                return ZonalResult_cannot_select_mapping;
             }
             postal.c3c = item.equality.assertion.printableString;
             // TODO: Use this to lookup the correct 2-character code
@@ -67,7 +70,7 @@ async function extract_zone_info (
         else if (item.equality.type_.isEqualTo(countryCode3n["&id"])) {
             if (postal.c3n) {
                 postal.unmappable = true;
-                return;
+                return ZonalResult_cannot_select_mapping;
             }
             postal.c3n = Number.parseInt(item.equality.assertion.numericString, 10);
             // TODO: Use this to lookup the correct 2-character code
@@ -75,14 +78,14 @@ async function extract_zone_info (
         else if (item.equality.type_.isEqualTo(stateOrProvinceName["&id"])) {
             if (postal.st) {
                 postal.unmappable = true;
-                return;
+                return ZonalResult_cannot_select_mapping;
             }
             postal.st = directoryStringToString(item.equality.assertion);
         }
         else if (item.equality.type_.isEqualTo(localityName["&id"])) {
             if (postal.locality) {
                 postal.unmappable = true;
-                return;
+                return ZonalResult_cannot_select_mapping;
             }
             postal.locality = directoryStringToString(item.equality.assertion);
         }
@@ -96,7 +99,7 @@ async function extract_zone_info (
             && (info_from_target_dn.st || postal.st)
             && postal.locality
         );
-        if (!postal.postal_codes && enough_information) {
+        if (!postal.postal_codes && enough_information && !postal.unmappable) {
             const pc_rows = await ctx.db.postalCodesGazetteEntry.findMany({
                 where: {
                     c2c: info_from_target_dn.c2c || postal.c2c,
@@ -135,7 +138,7 @@ async function extract_zone_info (
                 });
                 if (bp_rows.length <= 2) {
                     postal.postal_codes = postal_codes;
-                    return;
+                    return null;
                 }
                 const sorted_by_easting_asc = [ ...bp_rows ].sort((a, b) => a.easting - b.easting);
                 const southest = bp_rows[0];
@@ -196,6 +199,7 @@ async function extract_zone_info (
             }
         }
     }
+    return null;
 }
 
 function replace_with_postal_codes (
@@ -222,6 +226,11 @@ function replace_with_postal_codes (
                     };
                 }
             }
+            if (filter.item.equality.type_.isEqualTo(localityName["&id"])) {
+                return {
+                    and: [], // This will always match.
+                };
+            }
         }
     }
     else if ("and" in filter) {
@@ -239,37 +248,46 @@ async function zonal_map_filter (
     postal: Partial<PostalZoneMatchProperties>,
     negated: boolean,
     level: number,
-): Promise<Filter> {
-    // If item, check if postal code has been determined and if item type is localityName. If so, replace.
-    // If and, iterate over each, populating postal properties. If, at the end, postal properties is completed, recurse and replace.
-    // If or, treat each subfilter like a brand new filter.
-    // If not, recurse, but invert the relaxation / tightening.
-
+): Promise<[ZonalResult | null, Filter]> {
     if (!negated && "item" in filter) {
-        await extract_zone_info(ctx, info_from_target_dn, filter.item, postal, level);
-        return filter;
+        const result = await extract_zone_info(ctx, info_from_target_dn, filter.item, postal, level);
+        return [result, filter];
     } else if (!negated && "and" in filter) {
         const new_subfilters: Filter[] = [];
         for (const sub of filter.and) {
-            new_subfilters.push(await zonal_map_filter(ctx, info_from_target_dn, sub, postal, negated, level));
+            const [ zr, new_sub ] = await zonal_map_filter(ctx, info_from_target_dn, sub, postal, negated, level);
+            if (zr !== null) {
+                return [zr, filter];
+            }
+            new_subfilters.push(new_sub);
         }
         if (!postal.unmappable && postal.postal_codes?.length) {
-            return replace_with_postal_codes(ctx, filter, postal.postal_codes);
+            const replaced_filter = replace_with_postal_codes(ctx, filter, postal.postal_codes);
+            return [null, replaced_filter];
         }
-        return {
-            and: new_subfilters,
-        };
+        return [null, { and: new_subfilters }];
     } else if (!negated && "or" in filter) {
-        return {
-            or: await Promise.all(
-                filter.or.map((f) => zonal_map_filter(ctx, info_from_target_dn, f, {}, negated, level))),
-        };
+        const new_subfilters: Filter[] = [];
+        for (const sub of filter.or) {
+            const [ zr, new_sub ] = await zonal_map_filter(ctx, info_from_target_dn, sub, postal, negated, level);
+            if (zr !== null) {
+                if (zr === ZonalResult_cannot_select_mapping) {
+                    // DEVIATION: This is supposed to result in an UNDEFINED
+                    // result for the subfilter, but instead, we just return the
+                    // original filter. We do not exit with an error, so the
+                    // other subfilters at least have a chance to match.
+                    return [null, filter];
+                }
+                return [zr, filter];
+            }
+            new_subfilters.push(new_sub);
+        }
+        return [null, { or: new_subfilters }];
     } else if ("not" in filter) {
-        return {
-            not: await zonal_map_filter(ctx, info_from_target_dn, filter.not, {}, !negated, level),
-        };
+        const [zr, new_sub] = await zonal_map_filter(ctx, info_from_target_dn, filter.not, {}, !negated, level);
+        return [zr, { not: new_sub }];
     } else {
-        return filter;
+        return [null, filter];
     }
 }
 
@@ -292,12 +310,14 @@ function getPostalPropertiesFromDN (dn: DistinguishedName): Partial<PostalZoneMa
     };
 }
 
+// NOTE: This implementation cannot return `multiple-mappings`, so there is no
+// need to handle `multipleMatchingLocalities`.
 export async function mapFilterForPostalZonalMatch (
     ctx: Context,
     target_object: DistinguishedName,
     filter: Filter,
     level: number,
-): Promise<Filter> {
+): Promise<[ZonalResult | null, Filter]> {
     return zonal_map_filter(
         ctx,
         getPostalPropertiesFromDN(target_object),
