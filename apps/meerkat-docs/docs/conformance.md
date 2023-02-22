@@ -151,7 +151,7 @@ Recommendation X.511 (2019), Section 7.3.1.
 | Service Administration                             | 25         | No         |
 | Entry Count                                        | 26         | Yes        |
 | Hierarchy Selections                               | 27         | Yes        |
-| Relaxation                                         | 28         | No         |
+| Relaxation                                         | 28         | Yes        |
 | Family Grouping                                    | 29         | Yes        |
 | Family Return                                      | 30         | Yes        |
 | Search Distinguished Name Attributes               | 31         | Yes        |

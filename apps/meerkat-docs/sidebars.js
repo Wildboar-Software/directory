@@ -37,6 +37,7 @@ const sidebars = {
                 'troubleshooting',
                 'advice',
                 'usage',
+                'zonal',
                 'telemetry',
                 'conformance',
                 'deviations-nuances',
