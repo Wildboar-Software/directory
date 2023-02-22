@@ -329,6 +329,6 @@ export async function mapFilterForPostalZonalMatch (
         filter,
         {},
         false,
-        level,
+        Math.max(Math.min(level, 0), 10), // Negative not supported.
     );
 }
