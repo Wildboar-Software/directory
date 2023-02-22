@@ -226,7 +226,12 @@ function replace_with_postal_codes (
                     };
                 }
             }
-            if (filter.item.equality.type_.isEqualTo(localityName["&id"])) {
+            if (filter.item.equality.type_.isEqualTo(stateOrProvinceName["&id"])) {
+                return {
+                    and: [], // This will always match.
+                };
+            }
+            if (filter.item.equality.type_.isEqualTo(countryName["&id"])) {
                 return {
                     and: [], // This will always match.
                 };
