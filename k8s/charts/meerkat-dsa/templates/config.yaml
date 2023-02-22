@@ -80,6 +80,7 @@ data:
   max_idm_pdu_size: {{ .Values.max_idm_pdu_size | default "1000000" | quote }}
   max_idm_segments: {{ .Values.max_idm_segments | default 10 | quote }}
   max_pre_bind_requests: {{ .Values.max_pre_bind_requests | default 2 | quote }}
+  max_relaxations: {{ .Values.max_relaxations | default 3 | quote }}
   min_auth_level_for_chaining: {{ .Values.min_auth_level_for_chaining | default 1 | quote }}
   min_auth_level_for_ob: {{ .Values.min_auth_level_for_ob | default 1 | quote }}
   min_auth_local_qualifier_for_chaining: {{ .Values.min_auth_local_qualifier_for_chaining | default 0 | quote }}

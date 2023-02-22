@@ -750,7 +750,7 @@ class OperationDispatcher {
             }
             if (provide_relaxation_or_tightening && needs_relaxation && rp?.relaxations?.length) {
                 const includeAllAreas: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_includeAllAreas]);
-                for (const relaxation of rp.relaxations) {
+                for (const relaxation of rp.relaxations.slice(0, ctx.config.maxRelaxationsOrTightenings)) {
                     await apply_mr_mapping(
                         ctx,
                         assn,
@@ -810,7 +810,7 @@ class OperationDispatcher {
                 }
             }
             else if (provide_relaxation_or_tightening && needs_tightening && rp?.tightenings?.length) {
-                for (const tightening of rp.tightenings) {
+                for (const tightening of rp.tightenings.slice(0, ctx.config.maxRelaxationsOrTightenings)) {
                     await apply_mr_mapping(
                         ctx,
                         assn,

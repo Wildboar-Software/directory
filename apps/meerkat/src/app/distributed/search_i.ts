@@ -1167,11 +1167,16 @@ async function apply_mr_mapping (
         subs_cache.set(attr, mr_oid);
     }
 
-    for (const mapping of mrm.mapping ?? []) {
+    const alreadyPerformedMBM: Set<IndexableOID> = new Set();
+    for (const mapping of (mrm.mapping ?? [])) {
         if (!searchState.effectiveFilter) {
             continue;
         }
+        if (alreadyPerformedMBM.has(mapping.mappingFunction.toString())) {
+            continue;
+        }
         if (mapping.mappingFunction.isEqualTo(id_mr_zonalMatch)) {
+            alreadyPerformedMBM.add(id_mr_zonalMatch.toString());
             const [ zr, new_filter ] = await mapFilterForPostalZonalMatch(
                 ctx,
                 target_object,

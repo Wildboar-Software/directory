@@ -552,6 +552,9 @@ const config: Configuration = {
         ? process.env.MEERKAT_VENDOR_VERSION
         : undefined,
     revealUserPwdEncryptedValues: (process.env.MEERKAT_REVEAL_USER_PWD === "1"),
+    maxRelaxationsOrTightenings: process.env.MEERKAT_MAX_RELAXATIONS
+        ? Number.parseInt(process.env.MEERKAT_MAX_RELAXATIONS, 10)
+        : 3,
     authn: {
         lookupPkiPathForUncertifiedStrongAuth: (process.env.MEERKAT_LOOKUP_UNCERT_STRONG_AUTH === "1"),
         attributeCertificationPath,

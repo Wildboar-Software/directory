@@ -2048,6 +2048,12 @@ interface Configuration {
      */
     defaultEntryTTL: number;
 
+    /**
+     * The maximum number of times that a search will be evaluated again with
+     * different matching to produce a desired number of results.
+     */
+    maxRelaxationsOrTightenings: number;
+
     /** Directory Access Protocol (DAP) options. */
     dap: {
 
