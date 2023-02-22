@@ -111,7 +111,7 @@ import { BER } from "asn1-ts/dist/node/functional";
 import failover from "../utils/failover";
 import mergeSortAndPageSearch from "./mergeSortAndPageSearch";
 import mergeSortAndPageList from "./mergeSortAndPageList";
-import { SearchResultData_searchInfo } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResultData-searchInfo.ta";
+import { Attribute, SearchResultData_searchInfo } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResultData-searchInfo.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import {
     ProtectionRequest_signed,
@@ -132,6 +132,9 @@ import {
     SearchControlOptions_includeAllAreas,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
 import normalizeFilter from "../x500/normalizeFilter";
+import {
+    appliedRelaxation,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/appliedRelaxation.oa";
 
 function getPathFromVersion (vertex: Vertex): Vertex[] {
     const ret: Vertex[] = [];
@@ -674,6 +677,7 @@ class OperationDispatcher {
                 excludedById: new Set(),
                 matching_rule_substitutions: new Map(),
                 effectiveFilter: data.extendedFilter ?? data.filter,
+                notification: [],
             };
             if (rp && initialSearchState.effectiveFilter) {
                 initialSearchState.effectiveFilter = normalizeFilter(initialSearchState.effectiveFilter);
@@ -840,6 +844,14 @@ class OperationDispatcher {
                         break;
                     }
                 }
+            }
+
+            if (searchState.matching_rule_substitutions.size > 0) {
+                searchState.notification.push(new Attribute(
+                    appliedRelaxation["&id"],
+                    Array.from(searchState.matching_rule_substitutions.keys())
+                        .map((oid) => appliedRelaxation.encoderFor["&Type"]!(ObjectIdentifier.fromString(oid), DER)),
+                ));
             }
 
             const result = await mergeSortAndPageSearch(ctx, assn, state, searchState, data);
@@ -1228,6 +1240,7 @@ class OperationDispatcher {
             depth: 0,
             excludedById: new Set(),
             matching_rule_substitutions: new Map(),
+            notification: [],
         };
         await relatedEntryProcedure(
             ctx,

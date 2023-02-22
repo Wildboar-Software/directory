@@ -366,6 +366,11 @@ interface SearchState extends Partial<WithRequestStatistics>, Partial<WithOutcom
      * currently-applicable matching rule that supplants the default.
      */
     matching_rule_substitutions: Map<IndexableOID, OBJECT_IDENTIFIER>;
+
+    /**
+     * Notification attributes.
+     */
+    notification: Attribute[];
 }
 
 /**
