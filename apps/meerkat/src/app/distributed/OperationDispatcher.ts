@@ -692,6 +692,7 @@ class OperationDispatcher {
                     true,
                     signErrors,
                     state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
+                    data.extendedArea,
                 );
             }
             else if (rp?.basic) {
@@ -704,6 +705,7 @@ class OperationDispatcher {
                     true,
                     signErrors,
                     state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
+                    data.extendedArea,
                 );
             }
             let searchState = await search_procedures(
@@ -758,6 +760,7 @@ class OperationDispatcher {
                         true,
                         signErrors,
                         state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
+                        data.extendedArea,
                     );
                     // Reset some aspects of the search state, while leaving others.
                     searchState.depth = 0;
@@ -817,6 +820,7 @@ class OperationDispatcher {
                         false,
                         signErrors,
                         state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
+                        data.extendedArea,
                     );
                     // Reset some aspects of the search state, while leaving others.
                     searchState.results.length = 0;

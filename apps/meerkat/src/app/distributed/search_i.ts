@@ -21,7 +21,18 @@ import {
     SearchArgumentData_subset_baseObject,
     SearchArgumentData_subset_oneLevel,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
-import { OBJECT_IDENTIFIER, TRUE_BIT, TRUE, ASN1Element, ObjectIdentifier, BOOLEAN, ASN1TagClass, ASN1UniversalType } from "asn1-ts";
+import {
+    OBJECT_IDENTIFIER,
+    TRUE_BIT,
+    TRUE,
+    ASN1Element,
+    ObjectIdentifier,
+    BOOLEAN,
+    ASN1TagClass,
+    ASN1UniversalType,
+    INTEGER,
+    OPTIONAL,
+} from "asn1-ts";
 import readSubordinates from "../dit/readSubordinates";
 import {
     ChainingArguments,
@@ -1091,6 +1102,7 @@ async function apply_mr_mapping (
     relaxing: boolean,
     signErrors: boolean,
     aliasDereferenced: boolean,
+    extendedArea: OPTIONAL<INTEGER>,
 ): Promise<void> {
     if (!searchState.effectiveFilter) {
         // If there is no filter, there is no relaxation or tightening to do.
@@ -1164,7 +1176,11 @@ async function apply_mr_mapping (
                 ctx,
                 target_object,
                 searchState.effectiveFilter,
-                Number(mapping.level ?? 0),
+                /**
+                 * Note that extendedArea is _only_ used here because &userControl
+                 * is TRUE for this MBM.
+                 */
+                Number(extendedArea ?? mapping.level ?? 0),
             );
             // In the Meerkat DSA implementation of this zonal match, these outcomes
             // are basically impossible, so this could should never be reached.
