@@ -15,6 +15,8 @@ import {
     TRUE_BIT,
     encodeUnsignedBigEndianInteger,
     unpackBits,
+    BERElement,
+    ASN1Construction,
 } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import * as $ from "asn1-ts/dist/node/functional";
@@ -79,6 +81,7 @@ import {
 import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics";
 import { stringifyDN } from "../x500/stringifyDN";
 import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers";
+import { _encode_Attribute } from "@wildboar/pkcs/src/lib/modules/PKCS-10/Attribute.ta";
 
 export
 interface MergeSearchResultsReturn {
@@ -409,7 +412,9 @@ async function mergeSortAndPageSearch(
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
                     state.chainingArguments.aliasDereferenced,
-                    undefined,
+                    searchState.notification.length > 0
+                        ? searchState.notification
+                        : undefined,
                 ),
             },
         };
@@ -499,7 +504,9 @@ async function mergeSortAndPageSearch(
         ),
         ctx.dsa.accessPoint.ae_title.rdnSequence,
         state.chainingArguments.aliasDereferenced,
-        undefined,
+        searchState.notification.length > 0
+            ? searchState.notification
+            : undefined,
     );
     let mergedResult: ISearchInfo = { ...localSearchInfo };
     let pageNumberSkips: number = 0;
@@ -687,6 +694,17 @@ async function mergeSortAndPageSearch(
     const adBuffer = state.chainingArguments.aliasDereferenced
         ? Buffer.from([ 0xBD, 0x03, 0x01, 0x01, 0xFF ]) // [29] TRUE
         : Buffer.allocUnsafe(0);
+    const notificationBuffer = (searchState.notification.length > 0)
+        ? (() => {
+            const seq = BERElement.fromSequence(searchState.notification.map((n) => _encode_Attribute(n, DER)));
+            const outer = new BERElement();
+            outer.tagClass = ASN1TagClass.context;
+            outer.construction = ASN1Construction.constructed;
+            outer.tagNumber = 27;
+            outer.value = seq.toBytes();
+            return outer.toBytes();
+        })()
+        : Buffer.allocUnsafe(0);
     let searchInfoLength: number = (
         nameBuffer.length
         + poqBuffer.length
@@ -694,6 +712,7 @@ async function mergeSortAndPageSearch(
         + spBuffer.length
         + performerBuffer.length
         + adBuffer.length
+        + notificationBuffer.length
     );
     let resultsByteLength = 0;
     for (const r of results) {
@@ -726,8 +745,6 @@ async function mergeSortAndPageSearch(
     searchInfoLength += resultsInnerTagAndLengthBytes.length;
     searchInfoLength += resultsOuterTagAndLengthBytes.length;
 
-    // This is a SET type, so the components MUST be re-ordered for DER-encoding.
-
     const searchInfoTLBytes = (searchInfoLength >= 128)
         ? (() => {
             const lengthBytes = encodeUnsignedBigEndianInteger(searchInfoLength);
@@ -739,6 +756,8 @@ async function mergeSortAndPageSearch(
         })()
         : Buffer.from([ 0x31, searchInfoLength ]); // SET + Length
 
+    // This is a SET type, so the components MUST be re-ordered for DER-encoding.
+
     const searchInfoBuffer = Buffer.concat([
         searchInfoTLBytes,
         nameBuffer,
@@ -747,6 +766,7 @@ async function mergeSortAndPageSearch(
         ...results.map((r) => r.entry_info),
         poqBuffer,
         altMatchingBuffer,
+        notificationBuffer,
         adBuffer,
         performerBuffer,
         spBuffer,

@@ -21,7 +21,18 @@ import {
     SearchArgumentData_subset_baseObject,
     SearchArgumentData_subset_oneLevel,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
-import { OBJECT_IDENTIFIER, TRUE_BIT, TRUE, ASN1Element, ObjectIdentifier, BOOLEAN, ASN1TagClass, ASN1UniversalType } from "asn1-ts";
+import {
+    OBJECT_IDENTIFIER,
+    TRUE_BIT,
+    TRUE,
+    ASN1Element,
+    ObjectIdentifier,
+    BOOLEAN,
+    ASN1TagClass,
+    ASN1UniversalType,
+    INTEGER,
+    OPTIONAL,
+} from "asn1-ts";
 import readSubordinates from "../dit/readSubordinates";
 import {
     ChainingArguments,
@@ -136,6 +147,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import {
     ServiceProblem_invalidQueryReference,
+    ServiceProblem_requestedServiceNotAvailable,
     ServiceProblem_unsupportedMatchingUse,
     ServiceProblem_unwillingToPerform,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
@@ -269,6 +281,9 @@ import { FilterItem } from "@wildboar/x500/src/lib/modules/DirectoryAbstractServ
 import { Prisma } from "@prisma/client";
 import getAttributeParentTypes from "../x500/getAttributeParentTypes";
 import {
+    MRMapping,
+} from "@wildboar/x500/src/lib/modules/ServiceAdministration/MRMapping.ta";
+import {
     oid,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/oid.oa";
 import {
@@ -301,6 +316,22 @@ import {
     booleanMatch,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/booleanMatch.oa";
 import getEqualityNormalizer from "../x500/getEqualityNormalizer";
+import { id_mr_nullMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-mr-nullMatch.va";
+import { groupByOID } from "@wildboar/x500";
+import { systemProposedMatch } from "@wildboar/x500/src/lib/collections/matchingRules";
+import { id_mr_zonalMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-mr-zonalMatch.va";
+import { mapFilterForPostalZonalMatch } from "../matching/zonal";
+import {
+    ZonalResult_multiple_mappings,
+    ZonalResult_zero_mappings,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/ZonalResult.ta";
+import { searchServiceProblem } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/searchServiceProblem.oa";
+import {
+    id_pr_ambiguousKeyAttributes,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-ambiguousKeyAttributes.va";
+import {
+    id_pr_unmatchedKeyAttributes,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-unmatchedKeyAttributes.va";
 // TODO: Once value normalization is implemented, these shall be incorporated
 // into `convertFilterToPrismaSelect()`.
 // import {
@@ -327,7 +358,30 @@ interface SearchState extends Partial<WithRequestStatistics>, Partial<WithOutcom
     depth: number;
     paging?: [ queryReference: string, pagingState: PagedResultsRequestState ];
     familyOnly?: boolean;
-    alreadyReturnedById: Set<number>;
+
+    /**
+     * Entries that are excluded from being returned because they were either
+     * added to the result set already or they were de-selected via exclusive
+     * relaxation (See ITU Rec. X.501 (2019), Section 13.6.2).
+     */
+    excludedById: Set<number>;
+
+    /**
+     * Regardless of the search argument, the currently effective filter, after
+     * considering relaxation or tightening.
+     */
+    effectiveFilter?: Filter;
+
+    /**
+     * This is a mapping of both attribute type OIDs to the OID of the
+     * currently-applicable matching rule that supplants the default.
+     */
+    matching_rule_substitutions: Map<IndexableOID, OBJECT_IDENTIFIER>;
+
+    /**
+     * Notification attributes.
+     */
+    notification: Attribute[];
 }
 
 /**
@@ -367,7 +421,7 @@ function getNumberOfResultsInSearch (result: SearchResult): number {
  *
  * @function
  */
-function getCurrentNumberOfResults (state: SearchState): number {
+export function getCurrentNumberOfResults (state: SearchState): number {
     return (
         state.results.length
         + state.resultSets
@@ -993,6 +1047,211 @@ function isMatchAllFilter (filter?: Filter): boolean {
     }
 }
 
+const get_emr_info = function (ctx: Context, attributeType: IndexableOID): OBJECT_IDENTIFIER | undefined {
+    const spec = ctx.attributeTypes.get(attributeType);
+    if (!spec) {
+        return undefined;
+    }
+    if (!spec.equalityMatchingRule) {
+        if (spec.parent) {
+            return get_emr_info(ctx, spec.parent.toString());
+        } else {
+            return undefined;
+        }
+    }
+    return ctx.equalityMatchingRules.get(spec.equalityMatchingRule.toString())?.id;
+};
+
+const get_omr_info = function (ctx: Context, attributeType: IndexableOID): OBJECT_IDENTIFIER | undefined {
+    const spec = ctx.attributeTypes.get(attributeType);
+    if (!spec) {
+        return undefined;
+    }
+    if (!spec.orderingMatchingRule) {
+        if (spec.parent) {
+            return get_omr_info(ctx, spec.parent.toString());
+        } else {
+            return undefined;
+        }
+    }
+    return ctx.orderingMatchingRules.get(spec.orderingMatchingRule.toString())?.id;
+};
+
+const get_smr_info = function (ctx: Context, attributeType: IndexableOID): OBJECT_IDENTIFIER | undefined {
+    const spec = ctx.attributeTypes.get(attributeType);
+    if (!spec) {
+        return undefined;
+    }
+    if (!spec.substringsMatchingRule) {
+        if (spec.parent) {
+            return get_smr_info(ctx, spec.parent.toString());
+        } else {
+            return undefined;
+        }
+    }
+    return ctx.substringsMatchingRules.get(spec.substringsMatchingRule.toString())?.id;
+};
+
+export
+async function apply_mr_mapping (
+    ctx: Context,
+    assn: ClientAssociation,
+    searchState: SearchState,
+    target_object: DistinguishedName,
+    mrm: MRMapping,
+    relaxing: boolean,
+    signErrors: boolean,
+    aliasDereferenced: boolean,
+    extendedArea: OPTIONAL<INTEGER>,
+    includeAllAreas: boolean,
+): Promise<void> {
+    if (!searchState.effectiveFilter) {
+        // If there is no filter, there is no relaxation or tightening to do.
+        return;
+    }
+    const subs_cache = searchState.matching_rule_substitutions;
+    const substitutions = mrm.substitution ?? [];
+    const attrs = groupByOID(substitutions, (s) => s.attribute);
+    for (const [attr, subs] of Object.entries(attrs)) { // Each iteration of this loop is a different attribute type.
+        let mr_oid = get_emr_info(ctx, attr) ?? get_omr_info(ctx, attr) ?? get_smr_info(ctx, attr);
+        if (!mr_oid) {
+            // If there is no matching rule defined for this attribute type, just ignore it.
+            continue;
+        }
+        /**
+         * We have to track whether a substitution within this level matched
+         * the old matching rule specifically. If it did not, but a "wildcard"
+         * substitution was present (no `oldMatchingRule`), we apply that
+         * wildcard substitution instead.
+         */
+        let old_mr_specifically_matched: boolean = false;
+        /**
+         * For the above reason, we merely record the wildcard matching rule
+         * for later use.
+         */
+        let wildcard_new_mr: OBJECT_IDENTIFIER | undefined;
+        for (const sub of subs) { // Each iteration of this loop is a single matching rule substitution.
+            if (!sub.oldMatchingRule) {
+                // If no `oldMatchingRule`, this is a "wildcard" substitution.
+                // We merely record the wildcard substitution for later, in case
+                // a more specific substitution does not override the existing
+                // matching rule specifically.
+                wildcard_new_mr = sub.newMatchingRule ?? id_mr_nullMatch;
+                if (wildcard_new_mr.isEqualTo(systemProposedMatch["&id"])) {
+                    wildcard_new_mr = (relaxing
+                        ? ctx.systemProposedRelaxations.get(mr_oid.toString())
+                        : ctx.systemProposedTightenings.get(mr_oid.toString()))
+                        ?? id_mr_nullMatch;
+                }
+                continue;
+            }
+            if (sub.oldMatchingRule.isEqualTo(mr_oid)) {
+                if (sub.newMatchingRule?.isEqualTo(systemProposedMatch["&id"])) {
+                    mr_oid = (relaxing
+                        ? ctx.systemProposedRelaxations.get(mr_oid.toString())
+                        : ctx.systemProposedTightenings.get(mr_oid.toString()))
+                        ?? sub.oldMatchingRule
+                        ?? id_mr_nullMatch;
+                } else {
+                    mr_oid = sub.newMatchingRule ?? id_mr_nullMatch;
+                }
+                old_mr_specifically_matched = true;
+            }
+        }
+        /* If no substitution for this attribute type at this level explicitly
+        overrides the existing matching rule specifically, using the
+        `oldMatchingRule` component, we can use the "wildcard" substitution, if
+        it was present in this level. */
+        if (!old_mr_specifically_matched && wildcard_new_mr) {
+            mr_oid = wildcard_new_mr;
+        }
+        subs_cache.set(attr, mr_oid);
+    }
+
+    const alreadyPerformedMBM: Set<IndexableOID> = new Set();
+    for (const mapping of (mrm.mapping ?? [])) {
+        if (!searchState.effectiveFilter) {
+            continue;
+        }
+        if (alreadyPerformedMBM.has(mapping.mappingFunction.toString())) {
+            continue;
+        }
+        if (mapping.mappingFunction.isEqualTo(id_mr_zonalMatch)) {
+            alreadyPerformedMBM.add(id_mr_zonalMatch.toString());
+            const [ zr, new_filter ] = await mapFilterForPostalZonalMatch(
+                ctx,
+                target_object,
+                searchState.effectiveFilter,
+                /**
+                 * Note that extendedArea is _only_ used here because &userControl
+                 * is TRUE for this MBM.
+                 */
+                Number(extendedArea ?? mapping.level ?? 0),
+                !includeAllAreas,
+            );
+            // In the Meerkat DSA implementation of this zonal match, these outcomes
+            // are basically impossible, so this could should never be reached.
+            // It is here for thoroughness.
+            if (zr === ZonalResult_zero_mappings) {
+                throw new errors.ServiceError(
+                    ctx.i18n.t("err:zonal_zero_mappings"),
+                    new ServiceErrorData(
+                        ServiceProblem_requestedServiceNotAvailable,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            id_errcode_serviceError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        aliasDereferenced,
+                        [
+                            new Attribute(
+                                searchServiceProblem["&id"],
+                                [
+                                    searchServiceProblem.encoderFor["&Type"]!(id_pr_unmatchedKeyAttributes, DER),
+                                ],
+                            ),
+                        ],
+                    ),
+                    signErrors,
+                );
+            }
+            if (zr === ZonalResult_multiple_mappings) {
+                throw new errors.ServiceError(
+                    ctx.i18n.t("err:zonal_multiple_mappings"),
+                    new ServiceErrorData(
+                        ServiceProblem_requestedServiceNotAvailable,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            id_errcode_serviceError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        aliasDereferenced,
+                        [
+                            new Attribute(
+                                searchServiceProblem["&id"],
+                                [
+                                    searchServiceProblem.encoderFor["&Type"]!(id_pr_ambiguousKeyAttributes, DER),
+                                ],
+                            ),
+                        ],
+                    ),
+                    signErrors,
+                );
+            }
+            searchState.effectiveFilter = new_filter;
+        }
+    }
+
+}
+
 /**
  * @summary The Search (I) Procedure, as specified in ITU Recommendation X.518.
  * @description
@@ -1011,7 +1270,28 @@ function isMatchAllFilter (filter?: Filter): boolean {
  * @async
  */
 export
-async function search_i (
+async function search_i(
+    ctx: MeerkatContext,
+    assn: ClientAssociation,
+    state: OperationDispatcherState,
+    argument: SearchArgument,
+    searchState: SearchState,
+): Promise<void> {
+    const data = getOptionallyProtectedValue(argument);
+    searchState.effectiveFilter = searchState.effectiveFilter ?? data.extendedFilter ?? data.filter;
+    // TODO: Put all depth == 0 code here.
+    return search_i_ex(
+        ctx,
+        assn,
+        state,
+        argument,
+        searchState,
+    );
+}
+
+
+export
+async function search_i_ex (
     ctx: MeerkatContext,
     assn: ClientAssociation,
     state: OperationDispatcherState,
@@ -1528,7 +1808,7 @@ async function search_i (
     const filter: Filter = (matchOnResidualName && state.partialName)
         ? {
             and: [
-                (data.extendedFilter ?? data.filter ?? SearchArgumentData._default_value_for_filter),
+                (searchState.effectiveFilter ?? SearchArgumentData._default_value_for_filter),
                 ...data.baseObject.rdnSequence
                     .slice(targetDN.length)
                     .flatMap((unmatchedRDN: RDN): Filter[] => unmatchedRDN
@@ -1543,7 +1823,7 @@ async function search_i (
                         }))),
             ],
         }
-        : (data.extendedFilter ?? data.filter ?? SearchArgumentData._default_value_for_filter);
+        : (searchState.effectiveFilter ?? SearchArgumentData._default_value_for_filter);
     const serviceControlOptions = data.serviceControls?.options;
     // Service controls
     const noSubtypeMatch: boolean = (
@@ -1634,9 +1914,9 @@ async function search_i (
             return (bdn.length - adn.length);
         })[0]; // Select the nearest subschema
     const filterOptions: EvaluateFilterSettings = {
-        getEqualityMatcher: getEqualityMatcherGetter(ctx),
-        getOrderingMatcher: getOrderingMatcherGetter(ctx),
-        getSubstringsMatcher: getSubstringsMatcherGetter(ctx),
+        getEqualityMatcher: getEqualityMatcherGetter(ctx, searchState.matching_rule_substitutions),
+        getOrderingMatcher: getOrderingMatcherGetter(ctx, searchState.matching_rule_substitutions),
+        getSubstringsMatcher: getSubstringsMatcherGetter(ctx, searchState.matching_rule_substitutions),
         getApproximateMatcher: getApproxMatcherGetter(ctx),
         getContextMatcher: (contextType: OBJECT_IDENTIFIER): ContextMatcher | undefined => {
             return ctx.contextTypes.get(contextType.toString())?.matcher;
@@ -2070,7 +2350,7 @@ async function search_i (
             if (separateFamilyMembers) {
                 const separateResults: [ id: number, info: EntryInformation ][] = Array.from(resultsById.values())
                     .filter(([ vertex ]) => (
-                        !searchState.alreadyReturnedById.has(vertex.dse.id)
+                        !searchState.excludedById.has(vertex.dse.id)
                         && !searchState.paging?.[1].alreadyReturnedById.has(vertex.dse.id)
                     ))
                     .map(([ vertex, incompleteEntry, info, discloseIncompleteness ]): [ id: number, info: EntryInformation ] => [
@@ -2105,7 +2385,7 @@ async function search_i (
                     );
                 } else {
                     for (const [id] of separateResults) {
-                        searchState.alreadyReturnedById.add(id);
+                        searchState.excludedById.add(id);
                         searchState.paging?.[1].alreadyReturnedById.add(id);
                     }
                     searchState.results.push(...separateResults.map(s => s[1]));
@@ -2167,12 +2447,12 @@ async function search_i (
                     );
                 } else {
                     if (
-                        !searchState.alreadyReturnedById.has(rootResult[0].dse.id)
+                        !searchState.excludedById.has(rootResult[0].dse.id)
                         && !searchState.paging?.[1].alreadyReturnedById.has(rootResult[0].dse.id)
                     ) {
                         searchState.results.push(rootEntryInfo);
                     }
-                    searchState.alreadyReturnedById.add(rootResult[0].dse.id);
+                    searchState.excludedById.add(rootResult[0].dse.id);
                     searchState.paging?.[1].alreadyReturnedById.add(rootResult[0].dse.id);
                 }
             }
@@ -2383,7 +2663,7 @@ async function search_i (
             if (separateFamilyMembers) {
                 const separateResults: [ id: number, info: EntryInformation ][] = Array.from(resultsById.values())
                     .filter(([ vertex ]) => (
-                        !searchState.alreadyReturnedById.has(vertex.dse.id)
+                        !searchState.excludedById.has(vertex.dse.id)
                         && !searchState.paging?.[1].alreadyReturnedById.has(vertex.dse.id)
                     ))
                     .map(([ vertex, incompleteEntry, info, discloseIncompleteness ]): [ id: number, info: EntryInformation ] => [
@@ -2418,7 +2698,7 @@ async function search_i (
                     );
                 } else {
                     for (const [id] of separateResults) {
-                        searchState.alreadyReturnedById.add(id);
+                        searchState.excludedById.add(id);
                         searchState.paging?.[1].alreadyReturnedById.add(id);
                     }
                     searchState.results.push(...separateResults.map(s => s[1]));
@@ -2480,12 +2760,12 @@ async function search_i (
                     );
                 } else {
                     if (
-                        !searchState.alreadyReturnedById.has(rootResult[0].dse.id)
+                        !searchState.excludedById.has(rootResult[0].dse.id)
                         && !searchState.paging?.[1].alreadyReturnedById.has(rootResult[0].dse.id)
                     ) {
                         searchState.results.push(rootEntryInfo);
                     }
-                    searchState.alreadyReturnedById.add(rootResult[0].dse.id);
+                    searchState.excludedById.add(rootResult[0].dse.id);
                     searchState.paging?.[1].alreadyReturnedById.add(rootResult[0].dse.id);
                 }
             }
@@ -2529,11 +2809,10 @@ async function search_i (
         state.SRcontinuationList.push(cr);
     }
 
-    const effective_filter = data.extendedFilter ?? data.filter;
     const entriesPerSubordinatesPage: number = (
         !entryOnly
         && (data.subset === SearchArgumentData_subset_oneLevel)
-        && isMatchAllFilter(effective_filter)
+        && isMatchAllFilter(searchState.effectiveFilter)
     )
         ? Math.min(sizeLimit, ctx.config.entriesPerSubordinatesPage * 10)
         : ctx.config.entriesPerSubordinatesPage;
@@ -2579,8 +2858,8 @@ async function search_i (
              * This also goes in an `AND` so that it does not overwrite the
              * `EntryObjectClass` that comes earlier.
              */
-            AND: (effective_filter && (data.subset === SearchArgumentData_subset_oneLevel))
-                ? convertFilterToPrismaSelect(ctx, effective_filter, relevantSubentries, !dontSelectFriends)
+            AND: (searchState.effectiveFilter && (data.subset === SearchArgumentData_subset_oneLevel))
+                ? convertFilterToPrismaSelect(ctx, searchState.effectiveFilter, relevantSubentries, !dontSelectFriends)
                 : undefined,
         },
     );
@@ -2771,7 +3050,7 @@ async function search_i (
                 : state.chainingArguments;
             searchState.depth++;
             searchState.familyOnly = searchFamilyInEffect;
-            await search_i(
+            await search_i_ex(
                 ctx,
                 assn,
                 {

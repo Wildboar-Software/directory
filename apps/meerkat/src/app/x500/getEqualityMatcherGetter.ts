@@ -1,8 +1,9 @@
-import type { Context } from "@wildboar/meerkat-types";
+import type { Context, IndexableOID } from "@wildboar/meerkat-types";
 import type EqualityMatcher from "@wildboar/x500/src/lib/types/EqualityMatcher";
 import type {
     AttributeType,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
+import { OBJECT_IDENTIFIER } from "asn1-ts";
 
 /**
  * @summary Higher-order function that returns an equality matcher function if it can be determined
@@ -24,20 +25,24 @@ import type {
 export
 function getEqualityMatcherGetter (
     ctx: Context,
+    substitutions?: Map<IndexableOID, OBJECT_IDENTIFIER>,
 ): (attributeType: AttributeType) => EqualityMatcher | undefined {
     const ret = function (attributeType: AttributeType): EqualityMatcher | undefined {
-        const spec = ctx.attributeTypes.get(attributeType.toString());
+        const attr_oid = attributeType.toString();
+        const spec = ctx.attributeTypes.get(attr_oid);
         if (!spec) {
             return undefined;
         }
-        if (!spec.equalityMatchingRule) {
+        const mr_oid = substitutions?.get(attr_oid) ?? spec.equalityMatchingRule;
+        if (!mr_oid) {
             if (spec.parent) { // Recurse into parent, searching for a potential equality matcher.
                 return ret(spec.parent);
             } else {
                 return undefined;
             }
         }
-        const info = ctx.equalityMatchingRules.get(spec.equalityMatchingRule.toString());
+
+        const info = ctx.equalityMatchingRules.get(mr_oid.toString());
         if (!info?.matcher) {
             return undefined;
         }

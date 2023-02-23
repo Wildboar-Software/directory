@@ -40,7 +40,7 @@ import {
     TraceItem,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/TraceItem.ta";
 import nrcrProcedure from "./nrcrProcedure";
-import { TRUE_BIT, ASN1Element } from "asn1-ts";
+import { TRUE_BIT, ASN1Element, ObjectIdentifier } from "asn1-ts";
 import {
     ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
     ServiceControlOptions_partialNameResolution as partialNameResolutionBit,
@@ -72,11 +72,12 @@ import { read as doRead } from "./read";
 import { removeEntry as doRemoveEntry } from "./removeEntry";
 import list_i from "./list_i";
 import list_ii from "./list_ii";
-import search_i from "./search_i";
+import search_i, { apply_mr_mapping, getCurrentNumberOfResults } from "./search_i";
 import search_ii from "./search_ii";
 import resultsMergingProcedureForList from "./resultsMergingProcedureForList";
 import resultsMergingProcedureForSearch from "./resultsMergingProcedureForSearch";
 import {
+    OperationProgress_nameResolutionPhase,
     OperationProgress_nameResolutionPhase_completed as completed, OperationProgress_nameResolutionPhase_completed,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -110,7 +111,7 @@ import { BER } from "asn1-ts/dist/node/functional";
 import failover from "../utils/failover";
 import mergeSortAndPageSearch from "./mergeSortAndPageSearch";
 import mergeSortAndPageList from "./mergeSortAndPageList";
-import { SearchResultData_searchInfo } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResultData-searchInfo.ta";
+import { Attribute, SearchResultData_searchInfo } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResultData-searchInfo.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import {
     ProtectionRequest_signed,
@@ -124,6 +125,16 @@ import { randomInt } from "crypto";
 import { CommonArguments } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArguments.ta";
 import LDAPAssociation from "../ldap/LDAPConnection";
 import stringifyDN from "../x500/stringifyDN";
+import { MRMapping } from "@wildboar/x500/src/lib/modules/ServiceAdministration/MRMapping.ta";
+import cloneChainingArgs from "../x500/cloneChainingArguments";
+import { MRSubstitution } from "@wildboar/x500/src/lib/modules/ServiceAdministration/MRSubstitution.ta";
+import {
+    SearchControlOptions_includeAllAreas,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
+import normalizeFilter from "../x500/normalizeFilter";
+import {
+    appliedRelaxation,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/appliedRelaxation.oa";
 
 function getPathFromVersion (vertex: Vertex): Vertex[] {
     const ret: Vertex[] = [];
@@ -181,6 +192,114 @@ extends
     opCode: Code;
     foundDSE?: Vertex;
     result: OPCR;
+}
+
+/**
+ * @summary All X.518 search procedures, callable as a unit
+ * @description
+ *
+ * This function combines all of the X.518 search procedures purely for
+ * refactoring / code cleanliness purposes. This is used in relaxation or
+ * tightening, where, if a search produces an undesirable number of results,
+ * the search can be restarted with different matching rules. Each restart of
+ * the search must call _all_ of these procedures, hence this function.
+ *
+ * @param ctx
+ * @param assn
+ * @param state
+ * @param argument
+ * @param reqData
+ * @param signErrors
+ * @param signDSPResult
+ * @param nameResolutionPhase
+ * @param searchState
+ * @returns
+ */
+async function search_procedures (
+    ctx: MeerkatContext,
+    assn: ClientAssociation,
+    state: OperationDispatcherState,
+    argument: SearchArgument,
+    reqData: Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
+    signErrors: boolean,
+    signDSPResult: boolean,
+    nameResolutionPhase: OperationProgress_nameResolutionPhase,
+    searchState: SearchState,
+): Promise<SearchState> {
+    const chainingResults = new ChainingResults(
+        undefined,
+        undefined,
+        createSecurityParameters(
+            ctx,
+            signDSPResult,
+            assn.boundNameAndUID?.dn,
+            search["&operationCode"],
+        ),
+        undefined,
+    );
+    const searchResponse: SearchState = searchState ?? {
+        results: [],
+        resultSets: [],
+        chaining: chainingResults,
+        depth: 0,
+        excludedById: new Set(),
+        matching_rule_substitutions: new Map(),
+    };
+    await relatedEntryProcedure(
+        ctx,
+        assn,
+        state,
+        searchResponse,
+        argument,
+        reqData.chainedArgument,
+        signErrors,
+    );
+
+    if (
+        (nameResolutionPhase === completed)
+        /**
+         * The Java Naming and Directory Interface (JNDI) library
+         * automatically inserts the `ManageDSAIT` control into search
+         * requests in most cases. In LDAP, it is expected that the use
+         * of this control causes searches to return entries as usual,
+         * but in X.500 directories, the use of this control causes the
+         * Search (II) procedure to be used, which only delves into
+         * context prefixes. I think this (meaning that the
+         * `ManageDSAIT` control causing the Search (II) and List (II)
+         * procedures to be used) is actually a mistake on the
+         * part of the X.500 directory specifications, but it might not
+         * be, so I will not deviate from the specified behavior here,
+         * except for LDAP requests only.
+         *
+         * With this line added, LDAP requests will always use
+         * Search (I), even if the `ManageDSAIT` control is used.
+         */
+        && !(assn instanceof LDAPAssociation)
+    ) { // Search (II)
+        await search_ii(
+            ctx,
+            assn,
+            state,
+            argument,
+            searchResponse,
+        );
+    } else { // Search (I)
+        // Only Search (I) results in results merging.
+        await search_i(
+            ctx,
+            assn,
+            state,
+            argument,
+            searchResponse,
+        );
+    }
+    return resultsMergingProcedureForSearch(
+        ctx,
+        assn,
+        argument,
+        searchResponse,
+        state,
+    );
 }
 
 /**
@@ -497,6 +616,10 @@ class OperationDispatcher {
                 (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
                 && (assn.authorizedForSignedErrors)
             );
+            const target = state.chainingArguments.targetObject ?? data.baseObject.rdnSequence;
+            const nameResolutionPhase = reqData.chainedArgument.operationProgress?.nameResolutionPhase
+                ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
+            const rp = data.relaxation;
             const requestStats: RequestStatistics | undefined = failover(() => ({
                 operationCode: codeToString(req.opCode!),
                 ...getStatisticsFromCommonArguments(data),
@@ -534,6 +657,7 @@ class OperationDispatcher {
                     : undefined,
                 joinType: data.joinType,
             }), undefined);
+
             const chainingResults = new ChainingResults(
                 undefined,
                 undefined,
@@ -545,70 +669,199 @@ class OperationDispatcher {
                 ),
                 undefined,
             );
-            const searchResponse: SearchState = {
+            const initialSearchState: SearchState = {
                 results: [],
                 resultSets: [],
                 chaining: chainingResults,
                 depth: 0,
-                alreadyReturnedById: new Set(),
+                excludedById: new Set(),
+                matching_rule_substitutions: new Map(),
+                effectiveFilter: data.extendedFilter ?? data.filter,
+                notification: [],
             };
-            await relatedEntryProcedure(
-                ctx,
-                assn,
-                state,
-                searchResponse,
-                argument,
-                reqData.chainedArgument,
-                signErrors,
-            );
-            const nameResolutionPhase = reqData.chainedArgument.operationProgress?.nameResolutionPhase
-                ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
-            if (
-                (nameResolutionPhase === completed)
-                /**
-                 * The Java Naming and Directory Interface (JNDI) library
-                 * automatically inserts the `ManageDSAIT` control into search
-                 * requests in most cases. In LDAP, it is expected that the use
-                 * of this control causes searches to return entries as usual,
-                 * but in X.500 directories, the use of this control causes the
-                 * Search (II) procedure to be used, which only delves into
-                 * context prefixes. I think this (meaning that the
-                 * `ManageDSAIT` control causing the Search (II) and List (II)
-                 * procedures to be used) is actually a mistake on the
-                 * part of the X.500 directory specifications, but it might not
-                 * be, so I will not deviate from the specified behavior here,
-                 * except for LDAP requests only.
-                 *
-                 * With this line added, LDAP requests will always use
-                 * Search (I), even if the `ManageDSAIT` control is used.
-                 */
-                && !(assn instanceof LDAPAssociation)
-            ) { // Search (II)
-                await search_ii(
+            if (rp && initialSearchState.effectiveFilter) {
+                initialSearchState.effectiveFilter = normalizeFilter(initialSearchState.effectiveFilter);
+            }
+            const includeAllAreas: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_includeAllAreas]);
+            if (state.chainingArguments.chainedRelaxation) {
+                await apply_mr_mapping(
                     ctx,
                     assn,
-                    state,
-                    argument,
-                    searchResponse,
-                );
-            } else { // Search (I)
-                // Only Search (I) results in results merging.
-                await search_i(
-                    ctx,
-                    assn,
-                    state,
-                    argument,
-                    searchResponse,
+                    initialSearchState,
+                    target,
+                    state.chainingArguments.chainedRelaxation,
+                    true,
+                    signErrors,
+                    state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
+                    data.extendedArea,
+                    includeAllAreas,
                 );
             }
-            const postMergeState = await resultsMergingProcedureForSearch(
+            else if (rp?.basic) {
+                await apply_mr_mapping(
+                    ctx,
+                    assn,
+                    initialSearchState,
+                    target,
+                    rp.basic,
+                    true,
+                    signErrors,
+                    state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
+                    data.extendedArea,
+                    includeAllAreas,
+                );
+            }
+            let searchState = await search_procedures(
                 ctx,
                 assn,
-                argument,
-                searchResponse,
                 state,
+                argument,
+                reqData,
+                signErrors,
+                signDSPResult,
+                nameResolutionPhase,
+                initialSearchState,
             );
-            const result = await mergeSortAndPageSearch(ctx, assn, state, postMergeState, data);
+
+            /**
+             * We only provide relaxation or tightening if this DSA is the
+             * performing DSA for the base object of the search request, which
+             * means that the `nameResolutionPhase` will not be `completed`.
+             * (It gets set only prior to chaining or if manageDSAIT is set.)
+             *
+             * I don't think the specifications mention it, but Meerkat DSA does
+             * this because each DSA servicing part of a search request may
+             * themselves generate multiple subrequests as a result of
+             * relaxation, which could balloon into a nearly infinite number of
+             * subrequests as each participating DSA individually attempts to
+             * fulfill the relaxation policy's `minimum`.
+             *
+             * As such, we determine if this search operation is for the base
+             * object or not based on the `nameResolutionPhase`.
+             */
+            const provide_relaxation_or_tightening: boolean = (nameResolutionPhase !== completed);
+            let results_count = getCurrentNumberOfResults(searchState);
+            let needs_relaxation: boolean = !!(rp && (results_count < (rp.minimum ?? 1)));
+            let needs_tightening: boolean = !!(rp?.maximum && (results_count > rp.maximum));
+            if (needs_relaxation && needs_tightening) {
+                throw new errors.MistypedArgumentError(
+                    ctx.i18n.t("err:relaxation_max_lt_min", {
+                        min: rp?.minimum ?? 1,
+                        max: rp?.maximum ?? Infinity,
+                    }),
+                );
+            }
+            if (provide_relaxation_or_tightening && needs_relaxation && rp?.relaxations?.length) {
+                for (const relaxation of rp.relaxations.slice(0, ctx.config.maxRelaxationsOrTightenings)) {
+                    await apply_mr_mapping(
+                        ctx,
+                        assn,
+                        searchState,
+                        target,
+                        relaxation,
+                        true,
+                        signErrors,
+                        state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
+                        data.extendedArea,
+                        includeAllAreas,
+                    );
+                    // Reset some aspects of the search state, while leaving others.
+                    searchState.depth = 0;
+                    searchState.poq = undefined;
+                    searchState.paging = undefined;
+                    state.SRcontinuationList.length = 0; // The only aspect of ODS that gets modified by search.
+                    searchState.results.length = 0;
+                    searchState.resultSets.length = 0;
+                    searchState.excludedById.clear();
+
+                    // In this block, we update the chaining args so subrequests relax correctly.
+                    { // We do not have to do this for tightening, since the solution is to just not chain at all.
+                        const mr_substitutions: MRSubstitution[] = [];
+                        for (const [attr_oid, mr_oid] of searchState.matching_rule_substitutions.entries()) {
+                            mr_substitutions.push(new MRSubstitution(
+                                ObjectIdentifier.fromString(attr_oid),
+                                undefined,
+                                mr_oid,
+                            ));
+                        }
+                        state.chainingArguments = cloneChainingArgs(state.chainingArguments, {
+                            chainedRelaxation: new MRMapping(
+                                undefined,
+                                mr_substitutions,
+                            ),
+                        });
+                    }
+
+                    searchState = await search_procedures(
+                        ctx,
+                        assn,
+                        state,
+                        argument,
+                        reqData,
+                        signErrors,
+                        signDSPResult,
+                        nameResolutionPhase,
+                        searchState,
+                    );
+                    results_count = getCurrentNumberOfResults(searchState);
+                    needs_relaxation = !!(rp && (results_count < (rp.minimum ?? 1)));
+                    if (!needs_relaxation) {
+                        // If we have already returned a satisfactory number of results, return.
+                        break;
+                    }
+                }
+            }
+            else if (provide_relaxation_or_tightening && needs_tightening && rp?.tightenings?.length) {
+                for (const tightening of rp.tightenings.slice(0, ctx.config.maxRelaxationsOrTightenings)) {
+                    await apply_mr_mapping(
+                        ctx,
+                        assn,
+                        searchState,
+                        target,
+                        tightening,
+                        false,
+                        signErrors,
+                        state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
+                        data.extendedArea,
+                        includeAllAreas,
+                    );
+                    // Reset some aspects of the search state, while leaving others.
+                    searchState.results.length = 0;
+                    searchState.resultSets.length = 0;
+                    searchState.depth = 0;
+                    searchState.poq = undefined;
+                    searchState.paging = undefined;
+                    state.SRcontinuationList.length = 0; // The only aspect of ODS that gets modified by search.
+                    searchState.excludedById.clear(); // Only for tightening do you clear this.
+                    searchState = await search_procedures(
+                        ctx,
+                        assn,
+                        state,
+                        argument,
+                        reqData,
+                        signErrors,
+                        signDSPResult,
+                        nameResolutionPhase,
+                        searchState,
+                    );
+                    results_count = getCurrentNumberOfResults(searchState);
+                    needs_tightening = !!(rp?.maximum && (results_count > rp.maximum));
+                    if (!needs_tightening) {
+                        // If we have already returned a satisfactory number of results, return.
+                        break;
+                    }
+                }
+            }
+
+            if (searchState.matching_rule_substitutions.size > 0) {
+                searchState.notification.push(new Attribute(
+                    appliedRelaxation["&id"],
+                    Array.from(searchState.matching_rule_substitutions.keys())
+                        .map((oid) => appliedRelaxation.encoderFor["&Type"]!(ObjectIdentifier.fromString(oid), DER)),
+                ));
+            }
+
+            const result = await mergeSortAndPageSearch(ctx, assn, state, searchState, data);
             const opcr: OPCR = {
                 unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
                     new ChainingResults(
@@ -992,7 +1245,9 @@ class OperationDispatcher {
             resultSets: [],
             chaining: state.chainingResults,
             depth: 0,
-            alreadyReturnedById: new Set(),
+            excludedById: new Set(),
+            matching_rule_substitutions: new Map(),
+            notification: [],
         };
         await relatedEntryProcedure(
             ctx,

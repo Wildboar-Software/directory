@@ -281,10 +281,10 @@ async function hierarchySelectionProcedure (
     if (parent && hinfo.parent && (hinfo.parent_id !== undefined)) {
         search_targets.push([hinfo.parent_id, hinfo.parent])
     }
-    if (self && !searchState.alreadyReturnedById.has(selfVertex.dse.id)) {
+    if (self && !searchState.excludedById.has(selfVertex.dse.id)) {
         for (const [id, info] of selfEntryInfos) {
             if (
-                searchState.alreadyReturnedById.has(id)
+                searchState.excludedById.has(id)
                 || searchState.paging?.[1].alreadyReturnedById.has(id)
             ) {
                 continue;
@@ -394,7 +394,7 @@ async function hierarchySelectionProcedure (
 
     for (const id of ids_to_resolve.values()) {
         if (
-            searchState.alreadyReturnedById.has(id)
+            searchState.excludedById.has(id)
             || searchState.paging?.[1].alreadyReturnedById.has(id)
         ) {
             continue;
@@ -687,7 +687,7 @@ async function hierarchySelectionProcedure (
                     }
                 } // Otherwise, we don't know what to do!
             }
-            searchState.alreadyReturnedById.add(id);
+            searchState.excludedById.add(id);
             searchState.paging?.[1].alreadyReturnedById.add(id);
         } else {
             continue;

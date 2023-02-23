@@ -1,7 +1,7 @@
 # Conformance
 
-In the statements below, the term "Meerkat DSA" refers to version 2.2.0 of
-Meerkat DSA, hence these statements are only claimed for version 2.2.0 of
+In the statements below, the term "Meerkat DSA" refers to version 2.3.0 of
+Meerkat DSA, hence these statements are only claimed for version 2.3.0 of
 Meerkat DSA.
 
 ## X.519 Conformance Statement
@@ -151,7 +151,7 @@ Recommendation X.511 (2019), Section 7.3.1.
 | Service Administration                             | 25         | No         |
 | Entry Count                                        | 26         | Yes        |
 | Hierarchy Selections                               | 27         | Yes        |
-| Relaxation                                         | 28         | No         |
+| Relaxation                                         | 28         | Yes        |
 | Family Grouping                                    | 29         | Yes        |
 | Family Return                                      | 30         | Yes        |
 | Search Distinguished Name Attributes               | 31         | Yes        |

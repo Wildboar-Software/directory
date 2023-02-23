@@ -1,5 +1,23 @@
 # Changelog for Meerkat DSA
 
+## Version 2.3.0
+
+- Relaxations and Tightenings
+  - This means that users can specify a desired minimum and maximum number of
+    entries to be returned from the search, and, if the first pass of the search
+    does not return a number of results within this range, a new pass of the
+    search will proceed, but using a user-specified replacement of the otherwise
+    applicable matching rules that makes the search filter stricter or more
+    relaxed.
+- Zonal matching
+  - This is a type of relaxation that replaces locale-related attributes in the
+    search filter with their equivalent "zone identifiers," such as postal
+    codes, and can intelligently expand the scope of the search by including
+    neighboring zones.
+  - See [the documentation on zonal matching](https://wildboar-software.github.io/directory/docs/usage).
+
+You do not need to do anything for this to work other than apply migrations.
+
 ## Version 2.2.0
 
 ### Changes

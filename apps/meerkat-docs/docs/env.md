@@ -747,6 +747,15 @@ queue with an unlimited number of pending requests and exhaust memory.
 It is not a security vulnerability for this to be a number greater than zero,
 but it should be a low number. It should probably not be higher than 10.
 
+## MEERKAT_MAX_RELAXATIONS
+
+The maximum number of times that a search will be evaluated again with
+different matching to produce a desired number of results. This applies to both
+relaxations and tightenings. This defaults to 3, if unset. You generally do not
+want to make this much larger than three, otherwise nefarious users could use
+malicious search requests with a huge number of relaxations or tightenings to
+overwhelm your DSA with bogus search re-evaluations.
+
 ## MEERKAT_MIN_AUTH_LEVEL_FOR_CHAINING
 
 The integer representation of the minimum authentication level required for

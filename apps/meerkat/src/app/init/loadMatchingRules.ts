@@ -110,9 +110,6 @@ import {
 import {
     holderIssuerMatch,
 } from "@wildboar/x500/src/lib/matching/equality/holderIssuerMatch";
-// import {
-//     ignoreIfAbsentMatch,
-// } from "@wildboar/x500/src/lib/matching/equality/ignoreIfAbsentMatch";
 import {
     intEmailMatch,
 } from "@wildboar/x500/src/lib/matching/equality/intEmailMatch";
@@ -126,14 +123,8 @@ import {
     jidMatch,
 } from "@wildboar/x500/src/lib/matching/equality/jidMatch";
 import {
-    keywordMatch,
-} from "@wildboar/x500/src/lib/matching/equality/keywordMatch";
-import {
     masterAndShadowAccessPointsMatch,
 } from "@wildboar/x500/src/lib/matching/equality/masterAndShadowAccessPointsMatch";
-// import {
-//     nullMatch,
-// } from "@wildboar/x500/src/lib/matching/equality/nullMatch";
 import {
     numericStringMatch,
 } from "@wildboar/x500/src/lib/matching/equality/numericStringMatch";
@@ -176,9 +167,6 @@ import {
 import {
     supplierOrConsumerInformationMatch,
 } from "@wildboar/x500/src/lib/matching/equality/supplierOrConsumerInformationMatch";
-// import {
-//     systemProposedMatch,
-// } from "@wildboar/x500/src/lib/matching/equality/systemProposedMatch";
 import {
     telephoneNumberMatch,
 } from "@wildboar/x500/src/lib/matching/equality/telephoneNumberMatch";
@@ -205,10 +193,7 @@ import {
 // } from "@wildboar/x500/src/lib/matching/equality/userPwdMatch";
 import {
     wordMatch,
-} from "@wildboar/x500/src/lib/matching/equality/wordMatch";
-// import {
-//     zonalMatch,
-// } from "@wildboar/x500/src/lib/matching/equality/zonalMatch";
+} from "../matching/equality/wordMatch";
 import {
     caseExactOrderingMatch,
 } from "@wildboar/x500/src/lib/matching/ordering/caseExactOrderingMatch";
@@ -236,9 +221,6 @@ import {
 import {
     caseIgnoreIA5SubstringsMatch,
 } from "@wildboar/x500/src/lib/matching/substring/caseIgnoreIA5SubstringsMatch";
-// import {
-//     caseIgnoreListSubstringsMatch,
-// } from "@wildboar/x500/src/lib/matching/substring/caseIgnoreListSubstringsMatch";
 import {
     caseIgnoreSubstringsMatch,
 } from "@wildboar/x500/src/lib/matching/substring/caseIgnoreSubstringsMatch";
@@ -276,7 +258,7 @@ import approx_uriMatch from "../matching/approx/uriMatch";
 import approx_uTCTimeMatch from "../matching/approx/uTCTimeMatch";
 import { uuidMatch as uuidMatcher } from "../matching/equality/uuidMatch";
 import { uuidOrderingMatch as uuidOrderingMatcher } from "../matching/ordering/uuidOrderingMatch";
-import type { ASN1Element } from "asn1-ts";
+import type { ASN1Element, OBJECT_IDENTIFIER } from "asn1-ts";
 import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
 import {
     _decode_UnboundedDirectoryString,
@@ -662,6 +644,14 @@ function toInfo <Matcher> (
     };
 }
 
+const relaxations: [ OBJECT_IDENTIFIER, OBJECT_IDENTIFIER ][] = [
+    [ x500mr.caseExactMatch["&id"], x500mr.caseIgnoreMatch["&id"] ],
+    [ x500mr.caseExactOrderingMatch["&id"], x500mr.caseIgnoreOrderingMatch["&id"] ],
+    [ x500mr.caseExactSubstringsMatch["&id"], x500mr.caseIgnoreSubstringsMatch["&id"] ],
+    [ x500mr.caseExactIA5Match["&id"], x500mr.caseIgnoreIA5Match["&id"] ],
+    [ x500mr.caseIgnoreMatch["&id"], x500mr.wordMatch["&id"] ],
+];
+
 /**
  * @summary Initialize Meerkat DSA's internal index of known matching rules.
  * @description
@@ -714,7 +704,7 @@ function loadMatchingRules (ctx: Context): void {
         [ x500mr.integerFirstComponentMatch, integerFirstComponentMatch ],
         [ x500mr.integerMatch, integerMatch ],
         [ x500mr.jidMatch, jidMatch ],
-        [ x500mr.keywordMatch, keywordMatch ],
+        [ x500mr.keywordMatch, wordMatch ],
         [ x500mr.masterAndShadowAccessPointsMatch, masterAndShadowAccessPointsMatch ],
         // [ x500mr.nullMatch, nullMatch ], // Supported by @wildboar/x500#evaluateFilter().
         [ x500mr.numericStringMatch, numericStringMatch ],
@@ -730,7 +720,6 @@ function loadMatchingRules (ctx: Context): void {
         [ x500mr.sOAIdentifierMatch, sOAIdentifierMatch ],
         [ x500mr.supplierAndConsumersMatch, supplierAndConsumersMatch ],
         [ x500mr.supplierOrConsumerInformationMatch, supplierOrConsumerInformationMatch ],
-        // TODO: [ x500mr.systemProposedMatch, systemProposedMatch ],
         [ x500mr.telephoneNumberMatch, telephoneNumberMatch ],
         [ x500mr.timeSpecificationMatch, timeSpecificationMatch ],
         [ x500mr.uTCTimeMatch, uTCTimeMatch ],
@@ -975,6 +964,12 @@ function loadMatchingRules (ctx: Context): void {
     ctx.equalityMatchingRules.get(x500mr.algorithmIdentifierMatch["&id"].toString())!.normalizer = norms.algorithmIdentifierMatch;
     ctx.equalityMatchingRules.get(x500mr.pwdEncAlgMatch["&id"].toString())!.normalizer = norms.pwdEncAlgMatch;
     ctx.equalityMatchingRules.get(x500mr.policyMatch["&id"].toString())!.normalizer = norms.policyMatch;
+
+    for (const [ strict_mr, relaxed_mr ] of relaxations) {
+        ctx.systemProposedRelaxations.set(strict_mr.toString(), relaxed_mr);
+        ctx.systemProposedTightenings.set(relaxed_mr.toString(), strict_mr);
+    }
+
 }
 
 export default loadMatchingRules;

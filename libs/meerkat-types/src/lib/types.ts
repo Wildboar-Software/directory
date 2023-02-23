@@ -2048,6 +2048,12 @@ interface Configuration {
      */
     defaultEntryTTL: number;
 
+    /**
+     * The maximum number of times that a search will be evaluated again with
+     * different matching to produce a desired number of results.
+     */
+    maxRelaxationsOrTightenings: number;
+
     /** Directory Access Protocol (DAP) options. */
     dap: {
 
@@ -2975,6 +2981,22 @@ interface Context {
     // doneModifyingOperationalBinding: Map<UUID, null | ((lastVersion: number) => Promise<any>)>;
 
     jobQueue: ((...args: any[]) => Promise<any>)[];
+
+    /**
+     * This is an index of matching rule substitutions, where the key is the
+     * OID string of the old matching rule and the value is the object
+     * identifier for the matching rule that is to replace it to provide
+     * relaxation (a larger result set as a result of a less strict filter).
+     */
+    systemProposedRelaxations: Map<IndexableOID, OBJECT_IDENTIFIER>;
+
+    /**
+     * This is an index of matching rule substitutions, where the key is the
+     * OID string of the old matching rule and the value is the object
+     * identifier for the matching rule that is to replace it to provide
+     * tightening (a smaller result set as a result of a more strict filter).
+     */
+    systemProposedTightenings: Map<IndexableOID, OBJECT_IDENTIFIER>;
 }
 
 /**
