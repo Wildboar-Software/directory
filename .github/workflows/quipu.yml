@@ -1,8 +1,12 @@
 name: Quipu
 on:
   push:
-    branches:
-      - master
+    tags:
+      - v3.*
+      - v2.*
+  # push:
+  #   branches:
+  #     - master
 # on:
 #   schedule:
 #   # 19:55 UTC every day
