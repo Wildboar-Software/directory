@@ -16,7 +16,7 @@
     neighboring zones.
   - See [the documentation on zonal matching](https://wildboar-software.github.io/directory/docs/usage).
 
-You do not need to do anything for this to work other than apply migrations.
+ You do not need to do anything for this to work other than apply migrations.
 
 ## Version 2.2.0
 

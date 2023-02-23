@@ -4,7 +4,7 @@ import type {
     AttributeTypeDatabaseDriver,
     PendingUpdates,
 } from "@wildboar/meerkat-types";
-import type { PrismaPromise } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import addValues from "./addValues";
 import {
@@ -41,7 +41,7 @@ async function addAttributes (
     modifier?: DistinguishedName,
     checkForExisting: boolean = true,
     signErrors: boolean = false,
-): Promise<PrismaPromise<any>[]> {
+): Promise<Prisma.PrismaPromise<any>[]> {
     const pendingUpdates: PendingUpdates = {
         entryUpdate: {
             modifyTimestamp: new Date(),

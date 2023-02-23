@@ -6,7 +6,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
 import encryptPassword from "../x500/encryptPassword";
 import getScryptAlgorithmIdentifier from "../x500/getScryptAlgorithmIdentifier";
-import { PrismaPromise } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import anyPasswordsExist from "../authz/anyPasswordsExist";
 import { DER, _encodeGeneralizedTime } from "asn1-ts/dist/node/functional";
 import {
@@ -65,7 +65,7 @@ async function setEntryPassword (
     assn: ClientAssociation | undefined,
     vertex: Vertex,
     pwd: UserPwd,
-): Promise<PrismaPromise<any>[]> {
+): Promise<Prisma.PrismaPromise<any>[]> {
     const entriesWithPasswordsExist: boolean = await anyPasswordsExist(ctx);
     // Notice that we do not await this promise here, so it does not execute.
     // (`PrismaPromise`s only run the callback when awaited.)
@@ -174,7 +174,7 @@ async function setEntryPassword (
     // in two queries: delete attributes and create attributes.
     // This will obviously have to change if drivers are implemented for any of
     // the below pwd* attribute types.
-    const otherUpdates: PrismaPromise<any>[] = [
+    const otherUpdates: Prisma.PrismaPromise<any>[] = [
         ctx.db.attributeValue.deleteMany({
             where: {
                 type_oid: {

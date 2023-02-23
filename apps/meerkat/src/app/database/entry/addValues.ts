@@ -7,7 +7,7 @@ import {
     AttributeTypeDatabaseDriver,
 } from "@wildboar/meerkat-types";
 import { ASN1Construction } from "asn1-ts";
-import type { PrismaPromise, Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import rdnToJson from "../../x500/rdnToJson";
 import {
@@ -289,7 +289,7 @@ async function addValues(
     checkForExisting: boolean = true,
     signErrors: boolean = false,
     otherPromises?: PendingUpdates,
-): Promise<PrismaPromise<any>[]> {
+): Promise<Prisma.PrismaPromise<any>[]> {
     if (!ctx.config.bulkInsertMode) {
         await validateValues(
             ctx,

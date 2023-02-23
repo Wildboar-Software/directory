@@ -54,7 +54,7 @@ import { userPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.o
 import { userPassword } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
 import { id_oa_pwdGraces } from "@wildboar/x500/src/lib/modules/PasswordPolicy/id-oa-pwdGraces.va";
 import { pwdExpireWarning } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdExpireWarning.oa";
-import { PrismaPromise, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { pwdLockout } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLockout.oa";
 import { pwdAccountLockedTime } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdAccountLockedTime.oa";
 import { pwdReset } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdReset.oa";
@@ -528,7 +528,7 @@ async function attemptPassword (
             });
         }
 
-        const dbPromises: PrismaPromise<any>[] = [
+        const dbPromises: Prisma.PrismaPromise<any>[] = [
             ctx.db.attributeValue.deleteMany({
                 where: {
                     entry_id: vertex.dse.id,

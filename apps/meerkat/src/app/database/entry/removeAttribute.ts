@@ -3,7 +3,7 @@ import type {
     Vertex,
     PendingUpdates,
 } from "@wildboar/meerkat-types";
-import type { PrismaPromise } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import type { AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
 import rdnToJson from "../../x500/rdnToJson";
@@ -34,7 +34,7 @@ async function removeAttribute (
     entry: Vertex,
     type_: AttributeType,
     modifier?: DistinguishedName,
-): Promise<PrismaPromise<any>[]> {
+): Promise<Prisma.PrismaPromise<any>[]> {
     const pendingUpdates: PendingUpdates = {
         entryUpdate: {
             modifyTimestamp: new Date(),

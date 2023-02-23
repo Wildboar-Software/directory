@@ -41,7 +41,7 @@ import type {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
 import type LDAPSyntaxDecoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxDecoder";
 import type LDAPSyntaxEncoder from "@wildboar/ldap/src/lib/types/LDAPSyntaxEncoder";
-import type { PrismaClient, PrismaPromise, Prisma, Entry } from "@prisma/client";
+import type { PrismaClient, Prisma, Entry } from "@prisma/client";
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import type { SupplierInformation } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/SupplierInformation.ta";
 import type { ConsumerInformation } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/ConsumerInformation.ta";
@@ -3017,7 +3017,7 @@ interface PendingUpdates {
     readonly entryUpdate: Prisma.EntryUpdateInput,
 
     /** Database updates to anything else */
-    readonly otherWrites: PrismaPromise<any>[],
+    readonly otherWrites: Prisma.PrismaPromise<any>[],
 
 }
 

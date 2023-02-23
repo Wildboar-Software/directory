@@ -89,7 +89,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import getDistinguishedName from "../x500/getDistinguishedName";
-import type { PrismaPromise, Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import addValues from "../database/entry/addValues";
 import removeValues from "../database/entry/removeValues";
 import removeAttribute from "../database/entry/removeAttribute";
@@ -980,7 +980,7 @@ async function executeAddAttribute (
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
     signErrors: boolean = false,
-): Promise<PrismaPromise<any>[]> {
+): Promise<Prisma.PrismaPromise<any>[]> {
     checkAttributeArity(ctx, assn, entry, mod, aliasDereferenced, signErrors);
     /**
      * This is done before checking if the attribute is already present to avoid
@@ -1078,7 +1078,7 @@ async function executeRemoveAttribute (
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
     signErrors: boolean = false,
-): Promise<PrismaPromise<any>[]> {
+): Promise<Prisma.PrismaPromise<any>[]> {
     if (entry.dse.rdn.some((atav) => atav.type_.isEqualTo(mod))) {
         throw new errors.UpdateError(
             ctx.i18n.t("err:not_allowed_on_rdn"),
@@ -1216,7 +1216,7 @@ async function executeAddValues (
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
     signErrors: boolean = false,
-): Promise<PrismaPromise<any>[]> {
+): Promise<Prisma.PrismaPromise<any>[]> {
     const equalityMatcher: boolean = !!bacSettings.getEqualityMatcher(mod.type_);
     if (!equalityMatcher) {
         throw new errors.AttributeError(
@@ -1309,7 +1309,7 @@ async function executeRemoveValues (
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
     signErrors: boolean = false,
-): Promise<PrismaPromise<any>[]> {
+): Promise<Prisma.PrismaPromise<any>[]> {
     const equalityMatcher: boolean = !!bacSettings.getEqualityMatcher(mod.type_);
     if (!equalityMatcher) {
         throw new errors.AttributeError(
@@ -1484,7 +1484,7 @@ async function executeAlterValues (
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
     signErrors: boolean = false,
-): Promise<PrismaPromise<any>[]> {
+): Promise<Prisma.PrismaPromise<any>[]> {
     if (!isAcceptableTypeForAlterValues(mod.value)) {
         throw new errors.AttributeError(
             ctx.i18n.t("err:invalid_type_for_alter_values"),
@@ -1683,7 +1683,7 @@ async function executeResetValue (
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
     signErrors: boolean = false,
-): Promise<PrismaPromise<any>[]> {
+): Promise<Prisma.PrismaPromise<any>[]> {
     const where: Prisma.AttributeValueWhereInput = {
         entry_id: entry.dse.id,
         type_oid: mod.toBytes(),
@@ -1805,7 +1805,7 @@ async function executeReplaceValues (
     relevantACDFTuples: ACDFTupleExtended[],
     aliasDereferenced?: boolean,
     signErrors: boolean = false,
-): Promise<PrismaPromise<any>[]> {
+): Promise<Prisma.PrismaPromise<any>[]> {
     checkAttributeArity(ctx, assn, entry, mod, aliasDereferenced, signErrors);
     const TYPE_OID: string = mod.type_.toString();
     const values = valuesFromAttribute(mod);
@@ -2202,7 +2202,7 @@ async function executeEntryModification (
     manageDSAIT: boolean,
     aliasDereferenced?: boolean,
     signErrors: boolean = false,
-): Promise<PrismaPromise<any>[]> {
+): Promise<Prisma.PrismaPromise<any>[]> {
 
     const commonArguments = [
         ctx,
@@ -2710,7 +2710,7 @@ async function modifyEntry (
         contextUseRules.forEach((rule) => contextRulesIndex.set(rule.identifier.toString(), rule));
     }
 
-    const pendingUpdates: PrismaPromise<any>[] = [];
+    const pendingUpdates: Prisma.PrismaPromise<any>[] = [];
     const patch: Patch = {
         addedValues: new Map(),
         removedValues: new Map(),

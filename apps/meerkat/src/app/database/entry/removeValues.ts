@@ -5,7 +5,7 @@ import type {
     PendingUpdates,
 } from "@wildboar/meerkat-types";
 import { ASN1Construction } from "asn1-ts";
-import type { PrismaPromise } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import rdnToJson from "../../x500/rdnToJson";
 
@@ -35,7 +35,7 @@ async function removeValues (
     entry: Vertex,
     values: Value[],
     modifier?: DistinguishedName,
-): Promise<PrismaPromise<any>[]> {
+): Promise<Prisma.PrismaPromise<any>[]> {
     const pendingUpdates: PendingUpdates = {
         entryUpdate: {
             modifyTimestamp: new Date(),
