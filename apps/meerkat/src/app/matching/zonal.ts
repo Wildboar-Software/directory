@@ -50,6 +50,7 @@ async function extract_zone_info (
     item: FilterItem,
     postal: Partial<PostalZoneMatchProperties> = {},
     level: number,
+    exclusive: boolean,
 ): Promise<ZonalResult | null> {
     if ("equality" in item) {
         if (item.equality.type_.isEqualTo(countryName["&id"])) {
@@ -150,9 +151,11 @@ async function extract_zone_info (
                     + Math.pow((eastest.easting - westest.easting), 2)
                 );
                 const radius0 = Math.floor(diag_len / 2);
-                let radius = radius0;
+                let radius: number = radius0;
+                let prev_radius: number = radius0;
 
                 for (let i = 1; i <= level; i++) {
+                    prev_radius = radius;
                     radius += Math.round(radius0 / i);
                 }
 
@@ -194,8 +197,53 @@ async function extract_zone_info (
                         postal_code: true,
                     },
                 });
-                const selections = selection_rows.map((r) => r.postal_code);
-                postal.postal_codes = selections;
+                if (!exclusive) {
+                    postal.postal_codes = selection_rows.map((r) => r.postal_code);
+                    return null;
+                }
+                const selections: Set<string> = new Set(selection_rows.map((r) => r.postal_code));
+                const inner_northern_bound = northest.northing + prev_radius;
+                const inner_southern_bound = southest.northing - prev_radius;
+                const inner_eastern_bound = eastest.easting + prev_radius;
+                const inner_western_bound = westest.easting - prev_radius;
+                const exclusion_rows = await ctx.db.postalCodesGazetteEntry.findMany({
+                    where: {
+                        c2c: postal.c2c,
+                        PostalCodeBoundaryPoints: {
+                            some: {
+                                AND: [
+                                    {
+                                        northing: {
+                                            gte: inner_southern_bound,
+                                        },
+                                    },
+                                    {
+                                        northing: {
+                                            lte: inner_northern_bound,
+                                        },
+                                    },
+                                    {
+                                        easting: {
+                                            gte: inner_western_bound,
+                                        },
+                                    },
+                                    {
+                                        easting: {
+                                            lte: inner_eastern_bound,
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                    select: {
+                        postal_code: true,
+                    },
+                });
+                for (const ex of exclusion_rows) {
+                    selections.delete(ex.postal_code);
+                }
+                postal.postal_codes = Array.from(selections.values());
             }
         }
     }
@@ -253,14 +301,15 @@ async function zonal_map_filter (
     postal: Partial<PostalZoneMatchProperties>,
     negated: boolean,
     level: number,
+    exclusive: boolean,
 ): Promise<[ZonalResult | null, Filter]> {
     if (!negated && "item" in filter) {
-        const result = await extract_zone_info(ctx, info_from_target_dn, filter.item, postal, level);
+        const result = await extract_zone_info(ctx, info_from_target_dn, filter.item, postal, level, exclusive);
         return [result, filter];
     } else if (!negated && "and" in filter) {
         const new_subfilters: Filter[] = [];
         for (const sub of filter.and) {
-            const [ zr, new_sub ] = await zonal_map_filter(ctx, info_from_target_dn, sub, postal, negated, level);
+            const [ zr, new_sub ] = await zonal_map_filter(ctx, info_from_target_dn, sub, postal, negated, level, exclusive);
             if (zr !== null) {
                 return [zr, filter];
             }
@@ -274,7 +323,7 @@ async function zonal_map_filter (
     } else if (!negated && "or" in filter) {
         const new_subfilters: Filter[] = [];
         for (const sub of filter.or) {
-            const [ zr, new_sub ] = await zonal_map_filter(ctx, info_from_target_dn, sub, postal, negated, level);
+            const [ zr, new_sub ] = await zonal_map_filter(ctx, info_from_target_dn, sub, postal, negated, level, exclusive);
             if (zr !== null) {
                 if (zr === ZonalResult_cannot_select_mapping) {
                     // DEVIATION: This is supposed to result in an UNDEFINED
@@ -289,7 +338,7 @@ async function zonal_map_filter (
         }
         return [null, { or: new_subfilters }];
     } else if ("not" in filter) {
-        const [zr, new_sub] = await zonal_map_filter(ctx, info_from_target_dn, filter.not, {}, !negated, level);
+        const [zr, new_sub] = await zonal_map_filter(ctx, info_from_target_dn, filter.not, {}, !negated, level, exclusive);
         return [zr, { not: new_sub }];
     } else {
         return [null, filter];
@@ -322,6 +371,7 @@ export async function mapFilterForPostalZonalMatch (
     target_object: DistinguishedName,
     filter: Filter,
     level: number,
+    exclusive: boolean,
 ): Promise<[ZonalResult | null, Filter]> {
     return zonal_map_filter(
         ctx,
@@ -330,5 +380,6 @@ export async function mapFilterForPostalZonalMatch (
         {},
         false,
         Math.max(Math.min(level, 0), 10), // Negative not supported.
+        exclusive,
     );
 }

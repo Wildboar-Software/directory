@@ -682,6 +682,7 @@ class OperationDispatcher {
             if (rp && initialSearchState.effectiveFilter) {
                 initialSearchState.effectiveFilter = normalizeFilter(initialSearchState.effectiveFilter);
             }
+            const includeAllAreas: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_includeAllAreas]);
             if (state.chainingArguments.chainedRelaxation) {
                 await apply_mr_mapping(
                     ctx,
@@ -693,6 +694,7 @@ class OperationDispatcher {
                     signErrors,
                     state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
                     data.extendedArea,
+                    includeAllAreas,
                 );
             }
             else if (rp?.basic) {
@@ -706,6 +708,7 @@ class OperationDispatcher {
                     signErrors,
                     state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
                     data.extendedArea,
+                    includeAllAreas,
                 );
             }
             let searchState = await search_procedures(
@@ -749,7 +752,6 @@ class OperationDispatcher {
                 );
             }
             if (provide_relaxation_or_tightening && needs_relaxation && rp?.relaxations?.length) {
-                const includeAllAreas: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_includeAllAreas]);
                 for (const relaxation of rp.relaxations.slice(0, ctx.config.maxRelaxationsOrTightenings)) {
                     await apply_mr_mapping(
                         ctx,
@@ -761,16 +763,16 @@ class OperationDispatcher {
                         signErrors,
                         state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
                         data.extendedArea,
+                        includeAllAreas,
                     );
                     // Reset some aspects of the search state, while leaving others.
                     searchState.depth = 0;
                     searchState.poq = undefined;
                     searchState.paging = undefined;
                     state.SRcontinuationList.length = 0; // The only aspect of ODS that gets modified by search.
-                    if (!includeAllAreas) {
-                        searchState.results.length = 0;
-                        searchState.resultSets.length = 0;
-                    }
+                    searchState.results.length = 0;
+                    searchState.resultSets.length = 0;
+                    searchState.excludedById.clear();
 
                     // In this block, we update the chaining args so subrequests relax correctly.
                     { // We do not have to do this for tightening, since the solution is to just not chain at all.
@@ -821,6 +823,7 @@ class OperationDispatcher {
                         signErrors,
                         state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
                         data.extendedArea,
+                        includeAllAreas,
                     );
                     // Reset some aspects of the search state, while leaving others.
                     searchState.results.length = 0;

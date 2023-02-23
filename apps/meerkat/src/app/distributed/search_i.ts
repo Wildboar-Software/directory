@@ -1103,6 +1103,7 @@ async function apply_mr_mapping (
     signErrors: boolean,
     aliasDereferenced: boolean,
     extendedArea: OPTIONAL<INTEGER>,
+    includeAllAreas: boolean,
 ): Promise<void> {
     if (!searchState.effectiveFilter) {
         // If there is no filter, there is no relaxation or tightening to do.
@@ -1186,6 +1187,7 @@ async function apply_mr_mapping (
                  * is TRUE for this MBM.
                  */
                 Number(extendedArea ?? mapping.level ?? 0),
+                !includeAllAreas,
             );
             // In the Meerkat DSA implementation of this zonal match, these outcomes
             // are basically impossible, so this could should never be reached.
