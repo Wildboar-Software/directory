@@ -2,14 +2,11 @@
 CREATE TABLE `PostalCodesGazetteEntry` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `c2c` CHAR(2) NOT NULL,
-    `c3c` CHAR(3) NOT NULL,
-    `c3n` INTEGER NOT NULL,
     `st` VARCHAR(191) NOT NULL,
-    `locality_1` VARCHAR(191) NOT NULL,
-    `locality_2` VARCHAR(191) NULL,
-    `locality_3` VARCHAR(191) NULL,
+    `locality` VARCHAR(191) NOT NULL,
     `postal_code` VARCHAR(191) NOT NULL,
 
+    UNIQUE INDEX `PostalCodesGazetteEntry_c2c_st_locality_postal_code_key`(`c2c`, `st`, `locality`, `postal_code`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -20,6 +17,7 @@ CREATE TABLE `PostalCodeBoundaryPoints` (
     `northing` INTEGER NOT NULL,
     `easting` INTEGER NOT NULL,
 
+    INDEX `PostalCodeBoundaryPoints_postal_code_id_idx`(`postal_code_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
