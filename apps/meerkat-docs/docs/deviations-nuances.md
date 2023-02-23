@@ -227,6 +227,10 @@ noted below are nuances in Meerkat DSA:
   correct ordering. Instead, Meerkat DSA performs the hierarchy selection
   sub-searches in such an order that the returned entries are innately _likely_
   to appear in approximately the proper ordering.
+- Relaxations and Tightenings do not apply to `extensibleMatch`. This was partly
+  due to difficulty in implementing this, but also because it seems like
+  unintuitive behavior to replace matching rules that a user specifically
+  requested.
 
 ## The "Never Contributing" Bug
 

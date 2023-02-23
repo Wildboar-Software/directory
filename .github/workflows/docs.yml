@@ -1,6 +1,10 @@
 name: Docs Workflow
 
 on:
+  # push:
+  #   tags:
+  #     - v3.*
+  #     - v2.*
   push:
     branches:
       - main

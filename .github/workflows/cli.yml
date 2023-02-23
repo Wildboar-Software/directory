@@ -2,9 +2,13 @@ name: CLI Workflow
 
 on:
   push:
-    branches:
-      - main
-      - master
+    tags:
+      - v3.*
+      - v2.*
+  # push:
+  #   branches:
+  #     - main
+  #     - master
 
 jobs:
 
