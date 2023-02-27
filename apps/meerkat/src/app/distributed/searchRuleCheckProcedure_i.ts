@@ -7,21 +7,25 @@ import {
 import {
     serviceAdminSubentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/serviceAdminSubentry.oa";
-import readSubordinates from "../dit/readSubordinates";
 import {
-    OperationProgress, OperationProgress_nameResolutionPhase_completed,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress.ta";
-import {
-    TraceItem,
-} from "@wildboar/x500/src/lib/modules/DistributedOperations/TraceItem.ta";
+    OperationProgress_nameResolutionPhase_completed,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
 import {
     AttributeCombination,
     RequestAttribute,
     SearchRule,
 } from "@wildboar/x500/src/lib/modules/ServiceAdministration/SearchRule.ta";
-import { SearchArgument, SearchArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
-import { compareElements, getOptionallyProtectedValue } from "@wildboar/x500";
-import { ASN1Element, BERElement, BIT_STRING, FALSE_BIT, INTEGER, ObjectIdentifier, OBJECT_IDENTIFIER, TRUE, TRUE_BIT } from "asn1-ts";
+import { SearchArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
+import { compareElements } from "@wildboar/x500";
+import {
+    ASN1Element,
+    BERElement,
+    BIT_STRING,
+    FALSE_BIT,
+    ObjectIdentifier,
+    OBJECT_IDENTIFIER,
+    TRUE_BIT,
+} from "asn1-ts";
 import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
@@ -29,7 +33,6 @@ import {
     ServiceErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import {
-    ServiceProblem,
     ServiceProblem_requestedServiceNotAvailable,
     ServiceProblem_unwillingToPerform,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
@@ -65,18 +68,18 @@ import {
 import {
     id_pr_invalidServiceControlOptions,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-invalidServiceControlOptions.va";
-import {
-    id_pr_attributeMatchingViolation,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-attributeMatchingViolation.va";
-import {
-    id_pr_invalidContextSearchValue,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-invalidContextSearchValue.va";
-import {
-    id_pr_matchingUseViolation,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-matchingUseViolation.va";
-import {
-    id_pr_relaxationNotSupported,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-relaxationNotSupported.va";
+// import {
+//     id_pr_attributeMatchingViolation,
+// } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-attributeMatchingViolation.va";
+// import {
+//     id_pr_invalidContextSearchValue,
+// } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-invalidContextSearchValue.va";
+// import {
+//     id_pr_matchingUseViolation,
+// } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-matchingUseViolation.va";
+// import {
+//     id_pr_relaxationNotSupported,
+// } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-relaxationNotSupported.va";
 import {
     id_pr_searchValueRequired,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-searchValueRequired.va";
@@ -115,7 +118,6 @@ import {
     AttributeErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
 import {
-    AttributeProblem,
     AttributeProblem_inappropriateMatching,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
 import {
@@ -211,18 +213,13 @@ import type {
 import {
     NameAndOptionalUID,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
-import { entryACI, searchRules, subentryACI } from "@wildboar/x500/src/lib/collections/attributes";
-import { attributeFromDatabaseAttribute } from "../database/attributeFromDatabaseAttribute";
-import { ACIItem, _decode_ACIItem } from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
-import readValues from "../database/entry/readValues";
-import { EntryInformationSelection } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
+import { searchRules } from "@wildboar/x500/src/lib/collections/attributes";
 import { attributeValueFromDB } from "../database/attributeValueFromDB";
 import { _decode_SearchRuleDescription } from "@wildboar/x500/src/lib/modules/InformationFramework/SearchRuleDescription.ta";
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import getAdministrativePoints from "../dit/getAdministrativePoints";
 import { ID_AC_SPECIFIC, ID_AUTONOMOUS } from "../../oidstr";
 import getACIItems from "../authz/getACIItems";
-import { subordinate } from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
 import getIsGroupMember from "../authz/getIsGroupMember";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import preprocessTuples from "../authz/preprocessTuples";
@@ -231,7 +228,6 @@ import { PERMISSION_CATEGORY_INVOKE } from "@wildboar/x500/src/lib/bac/bacACDF";
 import { bacSettings } from "../authz/bacSettings";
 import { AttributeTypeAndValue } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttributeTypeAndValue.ta";
 
-const ENTRY_ACI_BYTES: Buffer = entryACI["&id"].toBytes();
 const SEARCH_RULE_BYTES: Buffer = searchRules["&id"].toBytes();
 
 function bit_diff (a: BIT_STRING, b: BIT_STRING): BIT_STRING {
@@ -626,7 +622,6 @@ function check_for_disallowed_contexts (
 
 
 const ID_SSA: string = id_ar_serviceSpecificArea.toString();
-const SERVICE_ADMIN_SUB_OC: string = serviceAdminSubentry["&id"].toString();
 
 function get_service_admin_point (target: Vertex): Vertex | undefined {
     let current: Vertex | undefined = target;
@@ -671,7 +666,7 @@ function general_check_of_search_filter (
         return [0, state];
     }
     const filter = search.extendedFilter ?? search.filter;
-    // TODO: You might have to normalized the filter.
+    // TODO: You might have to normalize the filter.
 
     // This behavior is specified in X.501, Section 16.10.2.
     if (
@@ -1003,6 +998,7 @@ function check_of_request_attribute_profile_in_filter (
                     state.searchContextViolationsAttr = [ type_oid ];
                     state.searchContextViolations.push(asserted_context.contextType); // TODO: Change to a set.
                 } else if (profile.contextValue) {
+                    // Step 6
                     const matcher = ctx.contextTypes.get(key)?.matcher ?? compareElements;
                     const non_matching_assertions: ASN1Element[] = [];
                     for (const context_value of asserted_context.contextValues) {
@@ -1414,7 +1410,7 @@ function check_search_rule (
         if (request_attrs_state.searchContextValueViolations.length > 0) {
             state.notification.push(new Attribute(
                 searchServiceProblem["&id"],
-                [searchServiceProblem.encoderFor["&Type"]!(id_pr_searchContextViolation, DER)],
+                [searchServiceProblem.encoderFor["&Type"]!(id_pr_searchContextValueViolation, DER)],
             ));
             state.notification.push(new Attribute(
                 attributeTypeList["&id"],
@@ -1534,8 +1530,8 @@ async function searchRuleCheckProcedure_i (
 ): Promise<SearchRule | undefined> {
     const searchRuleId = state.chainingArguments.searchRuleId;
     const service_admin_point = get_service_admin_point(target);
-    if (searchRuleId) {
-        if (!service_admin_point) {
+    if (!service_admin_point) {
+        if (searchRuleId) {
             throw new ServiceError(
                 ctx.i18n.t("err:search_escaped_svc_admin_area", { iid: printInvokeId(state.invokeId) }),
                 new ServiceErrorData(
@@ -1552,27 +1548,9 @@ async function searchRuleCheckProcedure_i (
                     state.chainingArguments.aliasDereferenced,
                 ),
             );
+        } else {
+            return;
         }
-        // service_admin_point
-        // TODO: You can do this without converting to vertexes.
-        // const results = await readSubordinates(ctx, service_admin_point, undefined, undefined, undefined, {
-        //     subentry: true,
-        //     EntryObjectClass: {
-        //         some: {
-        //             object_class: SERVICE_ADMIN_SUB_OC,
-        //         },
-        //     },
-        // });
-        // If no search rule dmdId matches, throw unwillingToPerform.
-        // I think you have to use find() because it sounds like you need the search rule
-    } else {
-        // if target DSE is outside a service-specific administrative area; return
-        // if it is within such an area, but no subentries are associated with that area, return.
-    }
-
-    // TODO: Review if this is actually appropriate.
-    if (!service_admin_point) {
-        return;
     }
 
     // If the target DSE is within a service-specific administrative area and the
@@ -1600,7 +1578,7 @@ async function searchRuleCheckProcedure_i (
     }
 
     const data = searchArg;
-    let candidate_search_rules: SearchRule[] = []; // TODO: Query these. Yes subtree spec matters.
+    let candidate_search_rules: SearchRule[] = [];
 
     const targetDN = getDistinguishedName(target);
     const target_subentries: Vertex[] = await getRelevantSubentries(ctx, target, targetDN, service_admin_point);
@@ -1670,6 +1648,7 @@ async function searchRuleCheckProcedure_i (
         },
     });
 
+    let chainedSearchRule: SearchRule | undefined;
     const search_rules_by_subentry_id: Map<Vertex["dse"]["id"], [BERElement, SearchRule][]> = new Map();
     for (const db_sub of db_subentries) {
         const search_rules: [BERElement, SearchRule][] = [];
@@ -1677,8 +1656,43 @@ async function searchRuleCheckProcedure_i (
             const value = attributeValueFromDB(attr);
             const search_rule = _decode_SearchRuleDescription(value);
             search_rules.push([value, search_rule]);
+            if (
+                !chainedSearchRule
+                && searchRuleId
+                && search_rule.id === searchRuleId.id
+                && search_rule.dmdId.isEqualTo(searchRuleId.dmdId)
+            ) {
+                chainedSearchRule = search_rule;
+            }
         }
         search_rules_by_subentry_id.set(db_sub.id, search_rules);
+    }
+
+    if (searchRuleId) {
+        if (chainedSearchRule) {
+            return chainedSearchRule;
+        } else {
+            throw new ServiceError(
+                ctx.i18n.t("err:unrecognized_search_rule", {
+                    uuid: target.dse.uuid,
+                    dmd_id: searchRuleId.dmdId.toString(),
+                    id: searchRuleId.id.toString(),
+                }),
+                new ServiceErrorData(
+                    ServiceProblem_unwillingToPerform,
+                    undefined,
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        serviceError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                ),
+            );
+        }
     }
 
     const DeniedSR: SearchRule[] = [];
@@ -1821,7 +1835,7 @@ async function searchRuleCheckProcedure_i (
 
     let GoodPermittedSR: SearchRule[] = [];
     const MatchProblemSR: SearchRule[] = [];
-    const BadPermittedSR: SearchRule[] = [];
+    let BadPermittedSR: SearchRule[] = [];
     // NOTE: DeniedSR is populated earlier.
 
     const search_rule_evals: Map<SearchRule, SearchRuleCheckResult> = new Map();
@@ -1973,9 +1987,202 @@ async function searchRuleCheckProcedure_i (
     // }
 
     // Step 10
-    // Whether the search rule complies is already checked. I think this means
-    // that you'll want the search rule checking function to return WHY rule
-    // failed.
-    // TODO: I think the rest of this function is pretty much blocked on the actual rule checking function.
+    for (const asserted_step of [ 1, 2, 3, 4, 5, 6 ]) {
+        BadPermittedSR = BadPermittedSR
+            .filter((sr) => {
+                const result = search_rule_evals.get(sr);
+                if (!result?.clause_and_step_failed) {
+                    return false; // This should never happen.
+                }
+                const [ clause, step ] = result.clause_and_step_failed;
+                if (clause > 1) { // If it failed on a later clause...
+                    return true; // The rule survives.
+                }
+                if (step > asserted_step) { // Or it failed on a later step...
+                    return true; // The rule survives.
+                }
+                return false; // Otherwise, the rule is dropped.
+            });
+        if (BadPermittedSR.length === 1) {
+            const result = search_rule_evals.get(BadPermittedSR[0]);
+            // NOTE: The spec is somewhat vague as to what is supposed to happen here.
+            if (result) {
+                throw new ServiceError(
+                    ctx.i18n.t("err:requestedServiceNotAvailable", { iid: printInvokeId(state.invokeId) }),
+                    new ServiceErrorData(
+                        ServiceProblem_requestedServiceNotAvailable,
+                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            serviceError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        result.notification,
+                    ),
+                );
+            }
+        }
+    }
+
+    // Step 11
+    const all_non_compliant_so_far: boolean = BadPermittedSR
+        .every((sr) => {
+            const result = search_rule_evals.get(sr);
+            if (!result?.clause_and_step_failed) {
+                return true;
+            }
+            const [ clause ] = result.clause_and_step_failed;
+            return (clause === 1);
+        });
+    if (all_non_compliant_so_far) {
+        const notification: Attribute[] = [
+            new Attribute(
+                searchServiceProblem["&id"],
+                [searchServiceProblem.encoderFor["&Type"]!(id_pr_unidentifiedOperation, DER)],
+            ),
+        ];
+        if (data.serviceControls?.serviceType) {
+            notification.push(new Attribute(
+                serviceType["&id"],
+                [serviceType.encoderFor["&Type"]!(data.serviceControls.serviceType, DER)],
+            ));
+        }
+        throw new ServiceError(
+            ctx.i18n.t("err:requestedServiceNotAvailable", { iid: printInvokeId(state.invokeId) }),
+            new ServiceErrorData(
+                ServiceProblem_requestedServiceNotAvailable,
+                undefined,
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    serviceError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                notification,
+            ),
+        );
+    }
+
+    // Step 12
+    for (const asserted_step of [ 1, 2, 3, 4, 5, 6 ]) {
+        BadPermittedSR = BadPermittedSR
+            .filter((sr) => {
+                const result = search_rule_evals.get(sr);
+                if (!result?.clause_and_step_failed) {
+                    return false; // This should never happen.
+                }
+                const [ clause, step ] = result.clause_and_step_failed;
+                if (clause > 2) { // If it failed on a later clause...
+                    return true; // The rule survives.
+                }
+                if (step > asserted_step) { // Or it failed on a later step...
+                    return true; // The rule survives.
+                }
+                return false; // Otherwise, the rule is dropped.
+            });
+        if (BadPermittedSR.length === 1) {
+            const result = search_rule_evals.get(BadPermittedSR[0]);
+            // NOTE: The spec is somewhat vague as to what is supposed to happen here.
+            if (result) {
+                throw new ServiceError(
+                    ctx.i18n.t("err:requestedServiceNotAvailable", { iid: printInvokeId(state.invokeId) }),
+                    new ServiceErrorData(
+                        ServiceProblem_requestedServiceNotAvailable,
+                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            serviceError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        result.notification,
+                    ),
+                );
+            }
+        }
+    }
+
+    // Step 13
+    for (const asserted_step of [ 1, 2, 3, 4, 5 ]) {
+        BadPermittedSR = BadPermittedSR
+            .filter((sr) => {
+                const result = search_rule_evals.get(sr);
+                if (!result?.clause_and_step_failed) {
+                    return false; // This should never happen.
+                }
+                const [ clause, step ] = result.clause_and_step_failed;
+                if (clause > 3) { // If it failed on a later clause...
+                    return true; // The rule survives.
+                }
+                if (step > asserted_step) { // Or it failed on a later step...
+                    return true; // The rule survives.
+                }
+                return false; // Otherwise, the rule is dropped.
+            });
+        if (BadPermittedSR.length === 1) {
+            const result = search_rule_evals.get(BadPermittedSR[0]);
+            // NOTE: The spec is somewhat vague as to what is supposed to happen here.
+            if (result) {
+                throw new ServiceError(
+                    ctx.i18n.t("err:requestedServiceNotAvailable", { iid: printInvokeId(state.invokeId) }),
+                    new ServiceErrorData(
+                        ServiceProblem_requestedServiceNotAvailable,
+                        undefined,
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            serviceError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        result.notification,
+                    ),
+                );
+            }
+        }
+    }
+
+    // Step 14
+    const notification: Attribute[] = [
+        new Attribute(
+            searchServiceProblem["&id"],
+            [searchServiceProblem.encoderFor["&Type"]!(id_pr_unidentifiedOperation, DER)],
+        ),
+    ];
+    if (data.serviceControls?.serviceType) {
+        notification.push(new Attribute(
+            serviceType["&id"],
+            [serviceType.encoderFor["&Type"]!(data.serviceControls.serviceType, DER)],
+        ));
+    }
+    throw new ServiceError(
+        ctx.i18n.t("err:requestedServiceNotAvailable", { iid: printInvokeId(state.invokeId) }),
+        new ServiceErrorData(
+            ServiceProblem_requestedServiceNotAvailable,
+            undefined,
+            createSecurityParameters(
+                ctx,
+                signErrors,
+                assn.boundNameAndUID?.dn,
+                undefined,
+                serviceError["&errorCode"],
+            ),
+            ctx.dsa.accessPoint.ae_title.rdnSequence,
+            state.chainingArguments.aliasDereferenced,
+            notification,
+        ),
+    );
 
 }
