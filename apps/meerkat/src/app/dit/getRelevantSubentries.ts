@@ -8,6 +8,7 @@ import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import { subtreeSpecification } from "@wildboar/x500/src/lib/collections/attributes";
 import { _decode_SubtreeSpecification } from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
 import { attributeValueFromDB } from "../database/attributeValueFromDB";
+import type { Prisma } from "@prisma/client";
 
 /**
  * @summary Get the subentries whose subtree specification select for an entry
@@ -22,6 +23,7 @@ import { attributeValueFromDB } from "../database/attributeValueFromDB";
  *  array of object identifiers of the object classes the entry has.
  * @param entryDN The distinguished name of the DSE given by the `entry` parameter
  * @param admPoint The autonomous administrative point
+ * @param where Additional Prisma selection of subentries.
  * @returns An array of vertices, which are the subentries whose subtree
  *  specification selected for the specified entry
  *
@@ -34,10 +36,11 @@ async function getRelevantSubentries (
     entry: Vertex | OBJECT_IDENTIFIER[],
     entryDN: DistinguishedName,
     admPoint: Vertex,
-    // TODO: Add parameter to only select subentries having a specific object class.
+    where?: Prisma.EntryWhereInput,
 ): Promise<Vertex[]> {
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const subentries = await readSubordinates(ctx, admPoint, undefined, undefined, undefined, {
+        ...where,
         subentry: true,
     });
     const objectClasses = Array.isArray(entry)

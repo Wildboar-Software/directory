@@ -245,6 +245,9 @@ async function search_procedures (
         excludedById: new Set(),
         matching_rule_substitutions: new Map(),
     };
+
+    // TODO: Search Rule Check (I) Procedure
+
     await relatedEntryProcedure(
         ctx,
         assn,
@@ -284,6 +287,7 @@ async function search_procedures (
             searchResponse,
         );
     } else { // Search (I)
+        // searchRuleCheckProcedure_i
         // Only Search (I) results in results merging.
         await search_i(
             ctx,

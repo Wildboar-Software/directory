@@ -248,5 +248,6 @@
     "requester@search_i": "Requester for association {{aid}}, Search (I) invocation {{iid}} is '{{r}}'.",
     "requester@search_ii": "Requester for association {{aid}}, Search (II) invocation {{iid}} is '{{r}}'.",
     "search_complete": "Search complete for invocation {{iid}} by association {{aid}}.",
-    "search_complete@limit": "Search limit reached for invocation {{iid}} by association {{aid}}: {{limit}}"
+    "search_complete@limit": "Search limit reached for invocation {{iid}} by association {{aid}}: {{limit}}",
+    "multiple_search_rules_of_same_user_class": "Detected multiple permitted and applicable search rules having user class {{user_class}}. It may be desirable to re-work the search rule definitions."
 }
