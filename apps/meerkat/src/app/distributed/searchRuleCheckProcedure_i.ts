@@ -949,8 +949,8 @@ function check_of_request_attribute_profile_in_filter (
         if (profile.contexts) {
             // This is specified in 16.10.2.
             if ((profile.contexts.length === 0) && asserted_contexts && (asserted_contexts.length > 0)) {
-                // TODO: state.serviceProblem =
-                state.searchContextViolationsAttr = [ type_oid ];
+                state.serviceProblem = id_pr_searchContextViolation;
+                state.searchContextViolationsAttr = type_oid;
                 state.searchContextViolations.push(...asserted_contexts.map((ac) => ac.contextType));
                 return;
             }
@@ -971,7 +971,7 @@ function check_of_request_attribute_profile_in_filter (
                 for (const mc of required_contexts.values()) {
                     if (!asserted_context_set.has(mc)) {
                         state.serviceProblem = id_pr_missingSearchContext;
-                        state.searchContextViolationsAttr = [ type_oid ];
+                        state.searchContextViolationsAttr = type_oid;
                         state.searchContextViolations.push(ObjectIdentifier.fromString(mc));
                     }
                 }
@@ -982,6 +982,7 @@ function check_of_request_attribute_profile_in_filter (
                 // Check context combinations
                 checkContextCombination(asserted_context_set, profile.contextCombination, state.contextComboViolations);
                 if (state.contextComboViolations.length > 0) {
+                    state.contextComboViolationAttr = type_oid;
                     state.serviceProblem = id_pr_searchContextCombinationViolation;
                     return;
                 }
@@ -995,7 +996,7 @@ function check_of_request_attribute_profile_in_filter (
                 const key = asserted_context.contextType.toString();
                 const profile = context_map.get(key);
                 if (!profile) {
-                    state.searchContextViolationsAttr = [ type_oid ];
+                    state.searchContextViolationsAttr = type_oid;
                     state.searchContextViolations.push(asserted_context.contextType); // TODO: Change to a set.
                 } else if (profile.contextValue) {
                     // Step 6
@@ -1011,7 +1012,7 @@ function check_of_request_attribute_profile_in_filter (
                         }
                         if (!matched) {
                             non_matching_assertions.push(context_value);
-                            state.searchContextValueViolationAttr = [ type_oid ];
+                            state.searchContextValueViolationAttr = type_oid;
                             state.searchContextValueViolations.push(new ContextAssertion(
                                 asserted_context.contextType,
                                 non_matching_assertions,
@@ -1038,12 +1039,13 @@ interface CheckRequestAttributeState {
     serviceProblem?: OBJECT_IDENTIFIER,
     searchValuesRequired: AttributeType[], // FIXME: Change to a set
     invalidSearchValues: FilterItem[],
-    missingSearchContextAttr: AttributeType[], // FIXME: Set to a single OID.
+    missingSearchContextAttr?: AttributeType,
     missingSearchContexts: OBJECT_IDENTIFIER[], // FIXME: Change to a set
+    contextComboViolationAttr?: AttributeType;
     contextComboViolations: ContextCombination[],
-    searchContextViolationsAttr: AttributeType[], // FIXME: Set to a single OID.
+    searchContextViolationsAttr?: AttributeType,
     searchContextViolations: OBJECT_IDENTIFIER[],
-    searchContextValueViolationAttr: AttributeType[], // FIXME: Set to a single OID.
+    searchContextValueViolationAttr?: AttributeType,
     searchContextValueViolations: ContextAssertion[],
 }
 
@@ -1056,12 +1058,9 @@ function check_of_request_attribute_profiles (
     const state: CheckRequestAttributeState = {
         searchValuesRequired: [],
         invalidSearchValues: [],
-        missingSearchContextAttr: [],
         missingSearchContexts: [],
         contextComboViolations: [],
-        searchContextViolationsAttr: [],
         searchContextViolations: [],
-        searchContextValueViolationAttr: [],
         searchContextValueViolations: [],
     };
     const filter = search.extendedFilter ?? search.filter;
@@ -1363,11 +1362,12 @@ function check_search_rule (
                 searchServiceProblem["&id"],
                 [searchServiceProblem.encoderFor["&Type"]!(id_pr_missingSearchContext, DER)],
             ));
-            state.notification.push(new Attribute(
-                attributeTypeList["&id"],
-                request_attrs_state.missingSearchContextAttr
-                    .map((oid) => attributeTypeList.encoderFor["&Type"]!(oid, DER)),
-            ));
+            if (request_attrs_state.missingSearchContextAttr) {
+                state.notification.push(new Attribute(
+                    attributeTypeList["&id"],
+                    [attributeTypeList.encoderFor["&Type"]!(request_attrs_state.missingSearchContextAttr, DER)],
+                ));
+            }
             state.notification.push(new Attribute(
                 contextTypeList["&id"],
                 request_attrs_state.missingSearchContexts
@@ -1379,12 +1379,12 @@ function check_search_rule (
                 searchServiceProblem["&id"],
                 [searchServiceProblem.encoderFor["&Type"]!(id_pr_searchContextCombinationViolation, DER)],
             ));
-            // FIXME:
-            // state.notification.push(new Attribute(
-            //     attributeTypeList["&id"],
-            //     request_attrs_state.missingSearchContextAttr
-            //         .map((oid) => attributeTypeList.encoderFor["&Type"]!(oid, DER)),
-            // ));
+            if (request_attrs_state.contextComboViolationAttr) {
+                state.notification.push(new Attribute(
+                    attributeTypeList["&id"],
+                    [attributeTypeList.encoderFor["&Type"]!(request_attrs_state.contextComboViolationAttr, DER)],
+                ));
+            }
             state.notification.push(new Attribute(
                 contextCombinations["&id"],
                 request_attrs_state.contextComboViolations
@@ -1396,11 +1396,12 @@ function check_search_rule (
                 searchServiceProblem["&id"],
                 [searchServiceProblem.encoderFor["&Type"]!(id_pr_searchContextViolation, DER)],
             ));
-            state.notification.push(new Attribute(
-                attributeTypeList["&id"],
-                request_attrs_state.searchContextViolationsAttr
-                    .map((oid) => attributeTypeList.encoderFor["&Type"]!(oid, DER)),
-            ));
+            if (request_attrs_state.searchContextViolationsAttr) {
+                state.notification.push(new Attribute(
+                    attributeTypeList["&id"],
+                    [attributeTypeList.encoderFor["&Type"]!(request_attrs_state.searchContextViolationsAttr, DER)],
+                ));
+            }
             state.notification.push(new Attribute(
                 contextTypeList["&id"],
                 request_attrs_state.searchContextViolations
@@ -1412,11 +1413,12 @@ function check_search_rule (
                 searchServiceProblem["&id"],
                 [searchServiceProblem.encoderFor["&Type"]!(id_pr_searchContextValueViolation, DER)],
             ));
-            state.notification.push(new Attribute(
-                attributeTypeList["&id"],
-                request_attrs_state.searchContextViolationsAttr
-                    .map((oid) => attributeTypeList.encoderFor["&Type"]!(oid, DER)),
-            ));
+            if (request_attrs_state.searchContextValueViolationAttr) {
+                state.notification.push(new Attribute(
+                    attributeTypeList["&id"],
+                    [attributeTypeList.encoderFor["&Type"]!(request_attrs_state.searchContextValueViolationAttr, DER)],
+                ));
+            }
             state.notification.push(new Attribute(
                 contextList["&id"],
                 request_attrs_state.searchContextValueViolations
@@ -1830,8 +1832,6 @@ async function searchRuleCheckProcedure_i (
             ),
         );
     }
-
-
 
     let GoodPermittedSR: SearchRule[] = [];
     const MatchProblemSR: SearchRule[] = [];
