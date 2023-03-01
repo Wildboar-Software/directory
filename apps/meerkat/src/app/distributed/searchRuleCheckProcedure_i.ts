@@ -1494,6 +1494,7 @@ function check_search_rule (
         state.clause_and_step_failed = [3, controls_result.step_failed];
         return state;
     }
+    // TODO: Set effective controls.
     const matching_result = check_of_matching_use();
     if (matching_result.problem) {
         state.notification.push(new Attribute(
