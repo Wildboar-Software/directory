@@ -5,7 +5,7 @@ import type {
     Value,
     SpecialAttributeDatabaseReader,
 } from "@wildboar/meerkat-types";
-import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
+import { OBJECT_IDENTIFIER, ObjectIdentifier, ASN1Element } from "asn1-ts";
 import type {
     EntryInformationSelection,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
@@ -28,7 +28,7 @@ import groupByOID from "../../utils/groupByOID";
 import {
     TypeAndContextAssertion,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
-import type {
+import {
     ContextAssertion,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ContextAssertion.ta";
 import {
@@ -41,6 +41,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
 import getAttributeSubtypes from "../../x500/getAttributeSubtypes";
 import getContextAssertionDefaults from "../../dit/getContextAssertionDefaults";
+import { ResultAttribute } from "@wildboar/x500/src/lib/modules/ServiceAdministration/ResultAttribute.ta";
 
 // TODO: Explore making this a temporalContext
 const DEFAULT_CAD: ContextSelection = {
@@ -54,6 +55,12 @@ interface ReadValuesOptions {
     readonly operationContexts?: ContextSelection;
     readonly noSubtypeSelection?: boolean;
     readonly dontSelectFriends?: boolean;
+
+    /**
+     * This is used by service administrative areas to further constrain the
+     * returned attribute types.
+     */
+    readonly outputAttributeTypes?: Map<IndexableOID, ResultAttribute>;
 }
 
 export
@@ -290,7 +297,7 @@ async function readValues (
     entry: Vertex,
     options?: ReadValuesOptions,
 ): Promise<ReadValuesReturn> {
-    const cads: TypeAndContextAssertion[] = options?.relevantSubentries
+    const outputTypes = options?.outputAttributeTypes;
         ? await getContextAssertionDefaults(ctx, entry, options.relevantSubentries)
         : [];
     /**
@@ -305,22 +312,48 @@ async function readValues (
             }
             : undefined)
         ?? DEFAULT_CAD;
-    const selectedUserAttributes: Set<IndexableOID> | null = (
+    let selectedUserAttributes: Set<IndexableOID> | null = (
         options?.selection?.attributes
         && ("select" in options.selection.attributes)
     )
         ? new Set(options?.selection.attributes.select.map((oid) => oid.toString()))
         : null;
+
+    if (outputTypes) {
+        if (selectedUserAttributes) {
+            for (const attr of selectedUserAttributes.values()) {
+                if (!outputTypes.has(attr)) {
+                    selectedUserAttributes.delete(attr);
+                }
+            }
+        } else {
+            selectedUserAttributes = new Set(outputTypes.keys());
+        }
+    }
+
     if (selectedUserAttributes && options?.relevantSubentries && !options?.dontSelectFriends) {
         for (const attr of Array.from(selectedUserAttributes.values() ?? [])) {
             addFriends(options.relevantSubentries, selectedUserAttributes, ObjectIdentifier.fromString(attr));
         }
     }
-    const selectedOperationalAttributes: Set<IndexableOID> | null | undefined = options?.selection?.extraAttributes
+    let selectedOperationalAttributes: Set<IndexableOID> | null | undefined = options?.selection?.extraAttributes
         ? (("select" in options.selection.extraAttributes)
             ? new Set(options.selection.extraAttributes.select.map((oid) => oid.toString()))
             : null)
         : undefined;
+
+    if (outputTypes) {
+        if (selectedOperationalAttributes) {
+            for (const attr of selectedOperationalAttributes.values()) {
+                if (!outputTypes.has(attr)) {
+                    selectedOperationalAttributes.delete(attr);
+                }
+            }
+        } else if (selectedOperationalAttributes === null) {
+            selectedOperationalAttributes = new Set(outputTypes.keys());
+        }
+    }
+
     if (selectedOperationalAttributes && options?.relevantSubentries && !options?.dontSelectFriends) {
         for (const attr of Array.from(selectedOperationalAttributes.values() ?? [])) {
             addFriends(options.relevantSubentries, selectedOperationalAttributes, ObjectIdentifier.fromString(attr));
@@ -477,6 +510,10 @@ async function readValues (
                 return selectedUserAttributes.has(attr.type.toString());
             });
 
+    if (outputTypes) {
+        collectiveValues = collectiveValues.filter((v) => outputTypes.has(v.type.toString()));
+    }
+
     const newAssertions: TypeAndContextAssertion[] = [];
     if ("selectedContexts" in contextSelection) {
         const valuesByType: Record<IndexableOID, Value[]> = groupByOID([
@@ -517,6 +554,7 @@ async function readValues (
         ], (c) => c.type_)
         : null;
 
+    // TODO: Filter out non-permitted contexts
     userAttributes = Array.from(filterByTypeAndContextAssertion(ctx, userAttributes, selectedContexts));
     operationalAttributes = Array.from(filterByTypeAndContextAssertion(ctx, operationalAttributes, selectedContexts));
     collectiveValues = Array.from(filterByTypeAndContextAssertion(ctx, collectiveValues, selectedContexts));
