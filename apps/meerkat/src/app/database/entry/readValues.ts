@@ -254,6 +254,9 @@ function *filterByTypeAndContextAssertion (
     }
 }
 
+let cachedUserAttributeDrivers: SpecialAttributeDatabaseReader[] | undefined;
+let cachedOperationalAttributeDrivers: SpecialAttributeDatabaseReader[] | undefined;
+
 /**
  * @summary Read the values of an entry
  * @description
@@ -324,23 +327,28 @@ async function readValues (
         }
     }
 
+    // We cache these so we do not have to recompute this every time an entry is read.
+    if (!cachedUserAttributeDrivers || !cachedOperationalAttributeDrivers) {
     const uniqueAttributeTypes = Array.from(new Set(ctx.attributeTypes.values()));
+        cachedUserAttributeDrivers = uniqueAttributeTypes
+            .filter((spec) => (!spec.usage || (spec.usage === AttributeUsage_userApplications)) && spec.driver)
+            .map((spec) => spec.driver!.readValues);
+        cachedOperationalAttributeDrivers = uniqueAttributeTypes
+            .filter((spec) => (spec.usage && (spec.usage !== AttributeUsage_userApplications)) && spec.driver)
+            .map((spec) => spec.driver!.readValues)
+    }
 
     const userAttributeReaderToExecute: SpecialAttributeDatabaseReader[] = selectedUserAttributes
         ? Array.from(selectedUserAttributes)
             .map((oid) => ctx.attributeTypes.get(oid)?.driver?.readValues)
             .filter((handler): handler is SpecialAttributeDatabaseReader => !!handler)
-        : uniqueAttributeTypes
-            .filter((spec) => (!spec.usage || (spec.usage === AttributeUsage_userApplications)) && spec.driver)
-            .map((spec) => spec.driver!.readValues);
+        : cachedUserAttributeDrivers;
 
     const operationalAttributeReadersToExecute: SpecialAttributeDatabaseReader[] = (
         selectedOperationalAttributes !== undefined
     )
         ? ((selectedOperationalAttributes === null)
-            ? uniqueAttributeTypes
-                .filter((spec) => (spec.usage && (spec.usage !== AttributeUsage_userApplications)) && spec.driver)
-                .map((spec) => spec.driver!.readValues)
+            ? cachedOperationalAttributeDrivers
             : Array.from(selectedOperationalAttributes)
                 .map((oid) => ctx.attributeTypes.get(oid)?.driver?.readValues)
                 .filter((handler): handler is SpecialAttributeDatabaseReader => !!handler))
@@ -514,18 +522,15 @@ async function readValues (
     collectiveValues = Array.from(filterByTypeAndContextAssertion(ctx, collectiveValues, selectedContexts));
 
     if (!options?.selection?.returnContexts) {
-        userAttributes = userAttributes.map((value) => ({
-            ...value,
-            contexts: undefined,
-        }));
-        operationalAttributes = operationalAttributes.map((value) => ({
-            ...value,
-            contexts: undefined,
-        }));
-        collectiveValues = collectiveValues.map((value) => ({
-            ...value,
-            contexts: undefined,
-        }));
+        for (const attr of userAttributes) {
+            delete attr.contexts;
+        }
+        for (const attr of operationalAttributes) {
+            delete attr.contexts;
+        }
+        for (const attr of collectiveValues) {
+            delete attr.contexts;
+        }
     }
 
     return {
