@@ -5,7 +5,7 @@ import type {
     Value,
     SpecialAttributeDatabaseReader,
 } from "@wildboar/meerkat-types";
-import { OBJECT_IDENTIFIER, ObjectIdentifier, ASN1Element } from "asn1-ts";
+import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import type {
     EntryInformationSelection,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
@@ -197,8 +197,7 @@ function determinePreference (
  *
  * @param ctx The context object
  * @param values The values to be filtered
- * @param selectedContexts An index of `TypeAndContextAssertion` by attribute
- *  type, or `null` if there are no selected contexts
+ * @param selectedContexts Index of `TypeAndContextAssertion` by attribute OIDs
  * @yields Values that survived the context assertions, if any.
  *
  * @generator
@@ -207,12 +206,8 @@ function determinePreference (
 function *filterByTypeAndContextAssertion (
     ctx: Context,
     values: Value[],
-    selectedContexts: Record<IndexableOID, TypeAndContextAssertion[]> | null,
+    selectedContexts: Record<IndexableOID, TypeAndContextAssertion[]>,
 ): IterableIterator<Value> {
-    if (!selectedContexts) {
-        yield *values;
-        return;
-    }
     for (const value of values) {
         // A ContextAssertion is true for a particular attribute value if:
         // ...the attribute value contains no contexts of the asserted contextType
@@ -424,7 +419,7 @@ async function readValues (
      * This variable exists to avoid an unnecessary database query.
      */
     const allUserAttributesUseDrivers = (selectedUserAttributes?.size === userAttributeReaderToExecute.length);
-    let userAttributes: Value[] = allUserAttributesUseDrivers
+    let userValues: Value[] = allUserAttributesUseDrivers
         ? []
         : (await ctx.db.attributeValue.findMany({
             where: {
@@ -475,7 +470,7 @@ async function readValues (
      */
     const allOperationalAttributesUseDrivers = (
         selectedOperationalAttributes?.size === operationalAttributeReadersToExecute.length);
-    let operationalAttributes: Value[] = (
+    let operationalValues: Value[] = (
         (selectedOperationalAttributes === undefined)
         || allOperationalAttributesUseDrivers
     )
@@ -514,14 +509,14 @@ async function readValues (
 
     for (const reader of userAttributeReaderToExecute) {
         try {
-            userAttributes.push(...await reader(ctx, entry, options?.relevantSubentries));
+            userValues.push(...await reader(ctx, entry, options?.relevantSubentries));
         } catch (e) {
             continue;
         }
     }
     for (const reader of operationalAttributeReadersToExecute) {
         try {
-            operationalAttributes.push(...await reader(ctx, entry, options?.relevantSubentries));
+            operationalValues.push(...await reader(ctx, entry, options?.relevantSubentries));
         } catch (e) {
             continue;
         }
@@ -550,8 +545,8 @@ async function readValues (
     const newAssertions: TypeAndContextAssertion[] = [];
     if ("selectedContexts" in contextSelection) {
         const valuesByType: Record<IndexableOID, Value[]> = groupByOID([
-            ...userAttributes,
-            ...operationalAttributes,
+            ...userValues,
+            ...operationalValues,
             ...collectiveValues,
         ], (value) => value.type);
         // This loop is just to handle TypeAndContextAssertion.[#].preference.
@@ -588,15 +583,17 @@ async function readValues (
         : null;
 
     // TODO: Filter out non-permitted contexts
-    userAttributes = Array.from(filterByTypeAndContextAssertion(ctx, userAttributes, selectedContexts));
-    operationalAttributes = Array.from(filterByTypeAndContextAssertion(ctx, operationalAttributes, selectedContexts));
-    collectiveValues = Array.from(filterByTypeAndContextAssertion(ctx, collectiveValues, selectedContexts));
+    if (selectedContexts) {
+        userValues = Array.from(filterByTypeAndContextAssertion(ctx, userValues, selectedContexts));
+        operationalValues = Array.from(filterByTypeAndContextAssertion(ctx, operationalValues, selectedContexts));
+        collectiveValues = Array.from(filterByTypeAndContextAssertion(ctx, collectiveValues, selectedContexts));
+    }
 
     if (!options?.selection?.returnContexts) {
-        for (const attr of userAttributes) {
+        for (const attr of userValues) {
             delete attr.contexts;
         }
-        for (const attr of operationalAttributes) {
+        for (const attr of operationalValues) {
             delete attr.contexts;
         }
         for (const attr of collectiveValues) {
@@ -605,8 +602,8 @@ async function readValues (
     }
 
     return {
-        userValues: userAttributes,
-        operationalValues: operationalAttributes,
+        userValues,
+        operationalValues,
         collectiveValues,
     };
 }
