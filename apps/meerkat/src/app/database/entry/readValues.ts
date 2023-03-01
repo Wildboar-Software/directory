@@ -41,7 +41,9 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
 import getAttributeSubtypes from "../../x500/getAttributeSubtypes";
 import getContextAssertionDefaults from "../../dit/getContextAssertionDefaults";
-import { ResultAttribute } from "@wildboar/x500/src/lib/modules/ServiceAdministration/ResultAttribute.ta";
+import { ContextProfile, ResultAttribute } from "@wildboar/x500/src/lib/modules/ServiceAdministration/ResultAttribute.ta";
+import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 
 // TODO: Explore making this a temporalContext
 const DEFAULT_CAD: ContextSelection = {
@@ -256,6 +258,54 @@ function *filterByTypeAndContextAssertion (
     }
 }
 
+// This modifies values by reference!
+function getValueFilter (
+    ctx: Context,
+    outputTypes: Map<IndexableOID, ResultAttribute>,
+): (value: Value) => boolean {
+    return function (value: Value): boolean {
+        const key = value.type.toString();
+        const profile = outputTypes.get(key);
+        if (!profile) {
+            return false; // This shouldn't happen, because it should have never been read from the DB.
+        }
+        if (profile.outputValues) {
+            const matcher = getEqualityMatcherGetter(ctx)(value.type);
+            if (!matcher) {
+                return false; // No EMR defined for this type.
+            }
+            if ("selectedValues" in profile.outputValues) {
+                const namingMatcher = getNamingMatcherGetter(ctx);
+                const selected = profile
+                    .outputValues
+                    .selectedValues
+                    .some((v) => matcher(v, value.value, namingMatcher))
+                    ;
+                if (!selected) {
+                    return false;
+                }
+            }
+        }
+        if (profile.contexts && value.contexts?.length) {
+            const contextProfilesByOID: Map<IndexableOID, ContextProfile> = new Map();
+            for (const context of profile.contexts) {
+                contextProfilesByOID.set(context.contextType.toString(), context);
+            }
+            /* Context profiles with contextValue are handled before this
+            function is called, by creating TypeAndContextAssertion values and
+            checking those assertions along with the user-supplied TACAs. This
+            function just needs to filter out context types that are not
+            permitted in the output. */
+            value.contexts = value.contexts
+                .filter((c) => contextProfilesByOID.has(c.contextType.toString()));
+            if (value.contexts.length === 0) {
+                delete value.contexts;
+            }
+        }
+        return true;
+    };
+}
+
 let cachedUserAttributeDrivers: SpecialAttributeDatabaseReader[] | undefined;
 let cachedOperationalAttributeDrivers: SpecialAttributeDatabaseReader[] | undefined;
 
@@ -282,6 +332,8 @@ let cachedOperationalAttributeDrivers: SpecialAttributeDatabaseReader[] | undefi
  * @param ctx The context object
  * @param entry The DSE whose attributes are to be read
  * @param options Options
+ * @param reading_attributes Whether this function was called from
+ *  `readAttributes()`
  * @returns The values, grouped into user, operational, and collective values
  *
  * @function
@@ -292,6 +344,7 @@ async function readValues (
     ctx: Context,
     entry: Vertex,
     options?: ReadValuesOptions,
+    reading_attributes: boolean = false,
 ): Promise<ReadValuesReturn> {
     const outputTypes = options?.outputAttributeTypes;
     const cads: TypeAndContextAssertion[] = options?.relevantSubentries
@@ -582,11 +635,21 @@ async function readValues (
         ], (c) => c.type_)
         : null;
 
-    // TODO: Filter out non-permitted contexts
     if (selectedContexts) {
         userValues = Array.from(filterByTypeAndContextAssertion(ctx, userValues, selectedContexts));
         operationalValues = Array.from(filterByTypeAndContextAssertion(ctx, operationalValues, selectedContexts));
         collectiveValues = Array.from(filterByTypeAndContextAssertion(ctx, collectiveValues, selectedContexts));
+    }
+
+    /* Using `reading_attributes` is a performance hack. Since these functions
+    will have to index into a Map by an attribute object identifier, it will be
+    slightly more efficient to do this when all values are already grouped by
+    their attribute types. */
+    if (outputTypes && !reading_attributes) {
+        const valueFilter = getValueFilter(ctx, outputTypes);
+        userValues = userValues.filter(valueFilter);
+        operationalValues = operationalValues.filter(valueFilter);
+        collectiveValues = collectiveValues.filter(valueFilter);
     }
 
     if (!options?.selection?.returnContexts) {
