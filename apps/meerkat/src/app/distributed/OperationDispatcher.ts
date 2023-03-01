@@ -72,7 +72,7 @@ import { read as doRead } from "./read";
 import { removeEntry as doRemoveEntry } from "./removeEntry";
 import list_i from "./list_i";
 import list_ii from "./list_ii";
-import search_i, { apply_mr_mapping, getCurrentNumberOfResults } from "./search_i";
+import search_i, { apply_mr_mapping, getCurrentNumberOfResults, update_search_state_with_search_rule } from "./search_i";
 import search_ii from "./search_ii";
 import resultsMergingProcedureForList from "./resultsMergingProcedureForList";
 import resultsMergingProcedureForSearch from "./resultsMergingProcedureForSearch";
@@ -135,6 +135,9 @@ import normalizeFilter from "../x500/normalizeFilter";
 import {
     appliedRelaxation,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/appliedRelaxation.oa";
+import { MAX_RESULTS } from "../constants";
+import { searchRuleCheckProcedure_i } from "./searchRuleCheckProcedure_i";
+import searchRuleCheckProcedure_ii from "./searchRuleCheckProcedure_ii";
 
 function getPathFromVersion (vertex: Vertex): Vertex[] {
     const ret: Vertex[] = [];
@@ -246,19 +249,8 @@ async function search_procedures (
         matching_rule_substitutions: new Map(),
     };
 
-    // TODO: Search Rule Check (I) Procedure
-
-    await relatedEntryProcedure(
-        ctx,
-        assn,
-        state,
-        searchResponse,
-        argument,
-        reqData.chainedArgument,
-        signErrors,
-    );
-
-    if (
+    const use_search_rule_check_ii: boolean = (nameResolutionPhase === completed);
+    const use_search_ii: boolean = (
         (nameResolutionPhase === completed)
         /**
          * The Java Naming and Directory Interface (JNDI) library
@@ -278,7 +270,36 @@ async function search_procedures (
          * Search (I), even if the `ManageDSAIT` control is used.
          */
         && !(assn instanceof LDAPAssociation)
-    ) { // Search (II)
+    );
+
+    const data = getOptionallyProtectedValue(argument);
+    if (use_search_rule_check_ii) {
+        await searchRuleCheckProcedure_ii(ctx, assn, state, state.foundDSE, data, signErrors);
+    } else {
+        const search_rule = await searchRuleCheckProcedure_i(
+            ctx,
+            assn,
+            state,
+            state.foundDSE,
+            data,
+            signErrors,
+        );
+        if (search_rule) {
+            update_search_state_with_search_rule(data, searchState, search_rule);
+        }
+    }
+
+    await relatedEntryProcedure(
+        ctx,
+        assn,
+        state,
+        searchResponse,
+        argument,
+        reqData.chainedArgument,
+        signErrors,
+    );
+
+    if (use_search_ii) {
         await search_ii(
             ctx,
             assn,
@@ -286,8 +307,7 @@ async function search_procedures (
             argument,
             searchResponse,
         );
-    } else { // Search (I)
-        // searchRuleCheckProcedure_i
+    } else {
         // Only Search (I) results in results merging.
         await search_i(
             ctx,
@@ -682,6 +702,7 @@ class OperationDispatcher {
                 matching_rule_substitutions: new Map(),
                 effectiveFilter: data.extendedFilter ?? data.filter,
                 notification: [],
+                effectiveEntryLimit: MAX_RESULTS,
             };
             if (rp && initialSearchState.effectiveFilter) {
                 initialSearchState.effectiveFilter = normalizeFilter(initialSearchState.effectiveFilter);
@@ -1252,6 +1273,7 @@ class OperationDispatcher {
             excludedById: new Set(),
             matching_rule_substitutions: new Map(),
             notification: [],
+            effectiveEntryLimit: MAX_RESULTS,
         };
         await relatedEntryProcedure(
             ctx,

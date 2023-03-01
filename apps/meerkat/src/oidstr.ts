@@ -36,6 +36,9 @@ import {
 import {
     id_ar_subschemaAdminSpecificArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-subschemaAdminSpecificArea.va";
+import {
+    id_ar_serviceSpecificArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-serviceSpecificArea.va";
 
 // These exist to save on the computing expense of recalculating their string
 // values every time they are used.
@@ -61,3 +64,4 @@ export const ID_AC_SPECIFIC: string = id_ar_accessControlSpecificArea.toString()
 export const ID_AC_INNER: string = id_ar_accessControlInnerArea.toString();
 export const ID_AR_SUBSCHEMA: string = id_ar_subschemaAdminSpecificArea.toString();
 export const ID_AR_PWD_ADMIN: string = id_ar_pwdAdminSpecificArea.toString();
+export const ID_AR_SERVICE: string = id_ar_serviceSpecificArea.toString();

@@ -2,9 +2,6 @@ import { Context, Vertex, ServiceError, ClientAssociation, AttributeError, Index
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import { ACDFTupleExtended, ACDFTuple, getACDFTuplesFromACIItem, bacACDF } from "@wildboar/x500";
 import {
-    id_ar_serviceSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-serviceSpecificArea.va";
-import {
     serviceAdminSubentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/serviceAdminSubentry.oa";
 import {
@@ -227,6 +224,7 @@ import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
 import { PERMISSION_CATEGORY_INVOKE } from "@wildboar/x500/src/lib/bac/bacACDF";
 import { bacSettings } from "../authz/bacSettings";
 import { AttributeTypeAndValue } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttributeTypeAndValue.ta";
+import { getServiceAdminPoint } from "../dit/getServiceAdminPoint";
 
 const SEARCH_RULE_BYTES: Buffer = searchRules["&id"].toBytes();
 
@@ -617,19 +615,6 @@ function check_for_disallowed_contexts (
     }
     else if ("not" in filter) {
         check_for_disallowed_contexts(ctx, filter.not, profiles, violating_context_types);
-    }
-}
-
-
-const ID_SSA: string = id_ar_serviceSpecificArea.toString();
-
-function get_service_admin_point (target: Vertex): Vertex | undefined {
-    let current: Vertex | undefined = target;
-    while (current) {
-        if (current.dse.admPoint?.administrativeRole.has(ID_SSA)) {
-            return current;
-        }
-        current = current.immediateSuperior;
     }
 }
 
@@ -1532,7 +1517,7 @@ async function searchRuleCheckProcedure_i (
     signErrors: boolean,
 ): Promise<SearchRule | undefined> {
     const searchRuleId = state.chainingArguments.searchRuleId;
-    const service_admin_point = get_service_admin_point(target);
+    const service_admin_point = getServiceAdminPoint(target);
     if (!service_admin_point) {
         if (searchRuleId) {
             throw new ServiceError(
