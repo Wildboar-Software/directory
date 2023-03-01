@@ -18,6 +18,7 @@ import {
     SearchArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
 import {
+    SearchArgumentData_subset,
     SearchArgumentData_subset_baseObject,
     SearchArgumentData_subset_oneLevel,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
@@ -46,6 +47,7 @@ import {
     ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
     ServiceControlOptions_manageDSAIT as manageDSAITBit,
     ServiceControlOptions_preferChaining as preferChainingBit,
+    ServiceControlOptions,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import {
     _encode_DistinguishedName,
@@ -200,6 +202,7 @@ import {
     // SearchControlOptions_useSubset,
     SearchControlOptions_separateFamilyMembers,
     SearchControlOptions_searchFamily,
+    SearchControlOptions,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
 import {
     EntryInformationSelection_infoTypes_attributeTypesOnly as typesOnly,
@@ -340,6 +343,11 @@ import {
 // import {
 //     octetStringMatch,
 // } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/octetStringMatch.oa";
+import {
+    ResultAttribute,
+    SearchRule,
+} from "@wildboar/x500/src/lib/modules/ServiceAdministration/SearchRule.ta";
+import { HierarchySelections } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/HierarchySelections.ta";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 
@@ -382,6 +390,14 @@ interface SearchState extends Partial<WithRequestStatistics>, Partial<WithOutcom
      * Notification attributes.
      */
     notification: Attribute[];
+
+    // These are set by service administration.
+    governingSearchRule?: SearchRule;
+    outputAttributeTypes?: Map<IndexableOID, ResultAttribute>;
+    effectiveServiceControls?: ServiceControlOptions;
+    effectiveSearchControls?: SearchControlOptions;
+    effectiveHierarchySelections?: HierarchySelections;
+    effectiveSubset?: SearchArgumentData_subset;
 }
 
 /**
@@ -2269,7 +2285,7 @@ async function search_i_ex (
             const resultsById: Map<number, [ Vertex, BOOLEAN, EntryInformation_information_Item[], boolean ]> = new Map(
                 await Promise.all(
                     verticesToReturn
-                        .map(async (member) => {
+                        .map(async (member): Promise<[ number, [ Vertex, BOOLEAN, EntryInformation_information_Item[], boolean ] ]> => {
                             const permittedEntryReturn = await readPermittedEntryInformation(
                                 ctx,
                                 member,
@@ -2283,6 +2299,7 @@ async function search_i_ex (
                                     attributeSizeLimit,
                                     noSubtypeSelection,
                                     dontSelectFriends,
+                                    outputAttributeTypes: searchState.outputAttributeTypes,
                                 },
                             );
                             return [
@@ -2292,8 +2309,8 @@ async function search_i_ex (
                                     permittedEntryReturn.incompleteEntry,
                                     permittedEntryReturn.information,
                                     permittedEntryReturn.discloseIncompleteEntry,
-                                ] as [ Vertex, BOOLEAN, EntryInformation_information_Item[], boolean ]
-                            ] as const;
+                                ],
+                            ];
                         }),
                 ),
             );
