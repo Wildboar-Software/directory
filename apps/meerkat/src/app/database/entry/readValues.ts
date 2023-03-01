@@ -298,8 +298,86 @@ async function readValues (
     options?: ReadValuesOptions,
 ): Promise<ReadValuesReturn> {
     const outputTypes = options?.outputAttributeTypes;
+    let cads: TypeAndContextAssertion[] = options?.relevantSubentries
         ? await getContextAssertionDefaults(ctx, entry, options.relevantSubentries)
         : [];
+
+    // Convert context values in search rule result attributes into context assertions.
+    if (outputTypes) {
+        // Pre-index all of the user-supplied context assertions.
+        const contextualTypes: Map<IndexableOID, TypeAndContextAssertion> = new Map();
+        for (const cad of cads) {
+            contextualTypes.set(cad.type_.toString(), cad);
+        }
+        let contexts_overwritten: boolean = false;
+        // For every output type...
+        for (const [key, resultAttr] of outputTypes.entries()) {
+            if (!resultAttr.contexts?.length) {
+                continue; // If there are no contexts, move on.
+            }
+            const contexts = resultAttr.contexts;
+            const cad = contextualTypes.get(key);
+            if (cad) { // If the user supplied a context assertion for this type...
+                // Overwrite it.
+                const contextsWithValues = contexts
+                    .filter((c) => c.contextValue?.length);
+                const valuesByContextType: Map<IndexableOID, ASN1Element[]> = new Map();
+                if ("all" in cad.contextAssertions) {
+                    for (const ca of cad.contextAssertions.all) {
+                        const ckey = ca.contextType.toString();
+                        const existing = valuesByContextType.get(ckey);
+                        if (existing) {
+                            existing.push(...ca.contextValues);
+                        } else {
+                            valuesByContextType.set(ckey, ca.contextValues);
+                        }
+                    }
+                } // the "preference" alternative is just overwritten entirely.
+                for (const context of contexts) {
+                    if (!context.contextValue) {
+                        continue;
+                    }
+                    const ckey = context.contextType.toString();
+                    const existing = valuesByContextType.get(ckey);
+                    if (existing) {
+                        existing.push(...context.contextValue);
+                    } else {
+                        valuesByContextType.set(ckey, context.contextValue);
+                    }
+                }
+                if (contextsWithValues.length > 0) {
+                    contexts_overwritten = true;
+                    // FIXME: This needs to be merged with the outstanding context assertions...
+                    contextualTypes.set(key, new TypeAndContextAssertion(
+                        resultAttr.attributeType,
+                        {
+                            all: contextsWithValues
+                                .filter((c) => c.contextValue?.length)
+                                .map((c) => new ContextAssertion(
+                                    c.contextType,
+                                    c.contextValue ?? [],
+                                )),
+                        },
+                    ));
+                }
+            } else { // ...otherwise, create a new TACA.
+                cads.push(new TypeAndContextAssertion(
+                    resultAttr.attributeType,
+                    {
+                        all: contexts
+                            .filter((c) => c.contextValue?.length)
+                            .map((c) => new ContextAssertion(
+                                c.contextType,
+                                c.contextValue ?? [],
+                            )),
+                    },
+                ));
+            }
+        }
+        if (contexts_overwritten) {
+            cads = Array.from(contextualTypes.values());
+        }
+    }
     /**
      * EIS contexts > operationContexts > CAD subentries > locally-defined default > no context assertion.
      * Per ITU X.501 (2016), Section 8.9.2.2.
@@ -362,7 +440,7 @@ async function readValues (
 
     // We cache these so we do not have to recompute this every time an entry is read.
     if (!cachedUserAttributeDrivers || !cachedOperationalAttributeDrivers) {
-    const uniqueAttributeTypes = Array.from(new Set(ctx.attributeTypes.values()));
+        const uniqueAttributeTypes = Array.from(new Set(ctx.attributeTypes.values()));
         cachedUserAttributeDrivers = uniqueAttributeTypes
             .filter((spec) => (!spec.usage || (spec.usage === AttributeUsage_userApplications)) && spec.driver)
             .map((spec) => spec.driver!.readValues);
