@@ -959,6 +959,49 @@ const get_smr_info = function (ctx: Context, attributeType: IndexableOID): OBJEC
     return ctx.substringsMatchingRules.get(spec.substringsMatchingRule.toString())?.id;
 };
 
+/**
+ * @summary Apply an MRMapping to a search filter.
+ * @description
+ *
+ * Updates the search state to use non-default matching rules per the procedures
+ * defined in ITU Recommendation X.501 (2019), Section 16.10.7, and expounded
+ * upon in ITU Recommendation X.511 (2019), Section 11.2.2. This means that it
+ * applies both matching rule substitution and mapping-based matching.
+ *
+ * This implementation is designed to support service administration as
+ * described in the second section mentioned above. It does so by taking the
+ * `dontMapAttributes` and `pretendMatchingRuleMapping` arguments. The former
+ * allows relaxations already applied to an attribute type by the search request
+ * to be passed over by those imposed by the search rule. The latter allows
+ * current matching rule substitutions to be "reverted" so that the `basic`
+ * substitution supplied in the search request can replace the `oldMatchingRule`
+ * according to what its value was before the search rule's `basic`
+ * substitution.
+ *
+ * The two above arguments come from the outputs of a previous iteration of this
+ * function. The tuple returned contains a set of attributes to _not_ map and
+ * a mapping of the new matching rule OID to its prior value.
+ *
+ * @param ctx The context object
+ * @param assn The association
+ * @param searchState The search state
+ * @param target_object The target DSE's distinguished name
+ * @param mrm `MRMapping`
+ * @param relaxing Whether this invocation is a relaxation rather than a tightening
+ * @param signErrors Whether to sign errors
+ * @param aliasDereferenced Whether an alias was dereferenced in finding the target DSE
+ * @param extendedArea A user-supplied extended area to use in mapping-based-matching
+ * @param includeAllAreas Whether to perform inclusive mapping-based mapping.
+ * @param dontMapAttributes A set of attributes to not map.
+ * @param pretendMatchingRuleMapping A mapping of new matching rule OIDs to the
+ *  OIDs of the matching rules they replaced
+ * @returns A tuple, where the first element is a set of all mapped attributes,
+ *  and the second is a mapping of new matching rule OID strings to the OIDs of
+ *  the matching rules they replaced.
+ *
+ * @async
+ * @function
+ */
 export
 async function apply_mr_mapping (
     ctx: Context,
@@ -971,20 +1014,35 @@ async function apply_mr_mapping (
     aliasDereferenced: boolean,
     extendedArea: OPTIONAL<INTEGER>,
     includeAllAreas: boolean,
-): Promise<void> {
+    dontMapAttributes: Set<IndexableOID>,
+    pretendMatchingRuleMapping?: Map<IndexableOID, OBJECT_IDENTIFIER>,
+): Promise<[Set<IndexableOID>, Map<IndexableOID, OBJECT_IDENTIFIER>]> {
+    const mapped_attributes: Set<IndexableOID> = new Set();
+    const new_mr_to_old: Map<IndexableOID, OBJECT_IDENTIFIER> = new Map();
     if (!searchState.effectiveFilter) {
         // If there is no filter, there is no relaxation or tightening to do.
-        return;
+        return [mapped_attributes, new_mr_to_old];
     }
     const subs_cache = searchState.matching_rule_substitutions;
     const substitutions = mrm.substitution ?? [];
     const attrs = groupByOID(substitutions, (s) => s.attribute);
     for (const [attr, subs] of Object.entries(attrs)) { // Each iteration of this loop is a different attribute type.
-        let mr_oid = get_emr_info(ctx, attr) ?? get_omr_info(ctx, attr) ?? get_smr_info(ctx, attr);
+        if (dontMapAttributes.has(attr)) {
+            continue;
+        }
+        let mr_oid = subs_cache.get(attr)
+            ?? get_emr_info(ctx, attr)
+            ?? get_omr_info(ctx, attr)
+            ?? get_smr_info(ctx, attr)
+            ;
+
         if (!mr_oid) {
             // If there is no matching rule defined for this attribute type, just ignore it.
             continue;
         }
+        const old_mr_oid = mr_oid;
+        mr_oid = pretendMatchingRuleMapping?.get(mr_oid?.toString()) ?? mr_oid;
+
         /**
          * We have to track whether a substitution within this level matched
          * the old matching rule specifically. If it did not, but a "wildcard"
@@ -1022,6 +1080,7 @@ async function apply_mr_mapping (
                 } else {
                     mr_oid = sub.newMatchingRule ?? id_mr_nullMatch;
                 }
+                new_mr_to_old.set(mr_oid.toString(), old_mr_oid);
                 old_mr_specifically_matched = true;
             }
         }
@@ -1031,7 +1090,9 @@ async function apply_mr_mapping (
         it was present in this level. */
         if (!old_mr_specifically_matched && wildcard_new_mr) {
             mr_oid = wildcard_new_mr;
+            new_mr_to_old.set(mr_oid.toString(), old_mr_oid);
         }
+        mapped_attributes.add(attr);
         subs_cache.set(attr, mr_oid);
     }
 
@@ -1116,7 +1177,7 @@ async function apply_mr_mapping (
             searchState.effectiveFilter = new_filter;
         }
     }
-
+    return [mapped_attributes, new_mr_to_old];
 }
 
 export

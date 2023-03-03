@@ -6,6 +6,7 @@ import {
     RequestStatistics,
     OPCR,
     UnknownOperationError,
+    IndexableOID,
 } from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
 import DSPAssociation from "../dsp/DSPConnection";
@@ -40,7 +41,7 @@ import {
     TraceItem,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/TraceItem.ta";
 import nrcrProcedure from "./nrcrProcedure";
-import { TRUE_BIT, ASN1Element, ObjectIdentifier } from "asn1-ts";
+import { TRUE_BIT, ASN1Element, ObjectIdentifier, OBJECT_IDENTIFIER } from "asn1-ts";
 import {
     ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
     ServiceControlOptions_partialNameResolution as partialNameResolutionBit,
@@ -249,7 +250,6 @@ async function search_procedures (
         matching_rule_substitutions: new Map(),
     };
 
-    const use_search_rule_check_ii: boolean = (nameResolutionPhase === completed);
     const use_search_ii: boolean = (
         (nameResolutionPhase === completed)
         /**
@@ -271,23 +271,6 @@ async function search_procedures (
          */
         && !(assn instanceof LDAPAssociation)
     );
-
-    const data = getOptionallyProtectedValue(argument);
-    if (use_search_rule_check_ii) {
-        await searchRuleCheckProcedure_ii(ctx, assn, state, state.foundDSE, data, signErrors);
-    } else {
-        const search_rule = await searchRuleCheckProcedure_i(
-            ctx,
-            assn,
-            state,
-            state.foundDSE,
-            data,
-            signErrors,
-        );
-        if (search_rule) {
-            update_search_state_with_search_rule(data, searchState, search_rule);
-        }
-    }
 
     await relatedEntryProcedure(
         ctx,
@@ -643,7 +626,6 @@ class OperationDispatcher {
             const target = state.chainingArguments.targetObject ?? data.baseObject.rdnSequence;
             const nameResolutionPhase = reqData.chainedArgument.operationProgress?.nameResolutionPhase
                 ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
-            const rp = data.relaxation;
             const requestStats: RequestStatistics | undefined = failover(() => ({
                 operationCode: codeToString(req.opCode!),
                 ...getStatisticsFromCommonArguments(data),
@@ -704,9 +686,29 @@ class OperationDispatcher {
                 notification: [],
                 effectiveEntryLimit: MAX_RESULTS,
             };
+
+            const use_search_rule_check_ii: boolean = (nameResolutionPhase === completed);
+            if (use_search_rule_check_ii) {
+                await searchRuleCheckProcedure_ii(ctx, assn, state, state.foundDSE, data, signErrors);
+            } else {
+                const search_rule = await searchRuleCheckProcedure_i(
+                    ctx,
+                    assn,
+                    state,
+                    state.foundDSE,
+                    data,
+                    signErrors,
+                );
+                if (search_rule) {
+                    update_search_state_with_search_rule(data, initialSearchState, search_rule);
+                }
+            }
+
+            const rp = data.relaxation ?? initialSearchState.governingSearchRule?.relaxation;
             if (rp && initialSearchState.effectiveFilter) {
                 initialSearchState.effectiveFilter = normalizeFilter(initialSearchState.effectiveFilter);
             }
+
             const includeAllAreas: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_includeAllAreas]);
             if (state.chainingArguments.chainedRelaxation) {
                 await apply_mr_mapping(
@@ -720,9 +722,29 @@ class OperationDispatcher {
                     state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
                     data.extendedArea,
                     includeAllAreas,
+                    new Set(),
                 );
             }
             else if (rp?.basic) {
+                const relaxation = initialSearchState.governingSearchRule?.relaxation?.basic;
+                let pretendMatchingRuleMapping: Map<IndexableOID, OBJECT_IDENTIFIER> = new Map();
+                if (relaxation && data.relaxation) {
+                    const [, new_mr_to_old] = await apply_mr_mapping(
+                        ctx,
+                        assn,
+                        initialSearchState,
+                        target,
+                        relaxation,
+                        true,
+                        signErrors,
+                        state.chainingArguments.aliasDereferenced
+                            ?? ChainingArguments._default_value_for_aliasDereferenced,
+                        data.extendedArea,
+                        includeAllAreas,
+                        new Set(),
+                    );
+                    pretendMatchingRuleMapping = new_mr_to_old;
+                }
                 await apply_mr_mapping(
                     ctx,
                     assn,
@@ -731,9 +753,27 @@ class OperationDispatcher {
                     rp.basic,
                     true,
                     signErrors,
+                    state.chainingArguments.aliasDereferenced
+                        ?? ChainingArguments._default_value_for_aliasDereferenced,
+                    data.extendedArea,
+                    includeAllAreas,
+                    new Set(),
+                    pretendMatchingRuleMapping,
+                );
+            } else if (initialSearchState.governingSearchRule?.relaxation?.basic) {
+                const relaxation = initialSearchState.governingSearchRule.relaxation.basic;
+                await apply_mr_mapping(
+                    ctx,
+                    assn,
+                    initialSearchState,
+                    target,
+                    relaxation,
+                    true,
+                    signErrors,
                     state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
                     data.extendedArea,
                     includeAllAreas,
+                    new Set(),
                 );
             }
             let searchState = await search_procedures(
@@ -777,8 +817,8 @@ class OperationDispatcher {
                 );
             }
             if (provide_relaxation_or_tightening && needs_relaxation && rp?.relaxations?.length) {
-                for (const relaxation of rp.relaxations.slice(0, ctx.config.maxRelaxationsOrTightenings)) {
-                    await apply_mr_mapping(
+                for (const [i, relaxation] of rp.relaxations.slice(0, ctx.config.maxRelaxationsOrTightenings).entries()) {
+                    const [mapped_attrs] = await apply_mr_mapping(
                         ctx,
                         assn,
                         searchState,
@@ -789,7 +829,24 @@ class OperationDispatcher {
                         state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
                         data.extendedArea,
                         includeAllAreas,
+                        new Set(),
                     );
+                    const search_rule_relaxation = searchState.governingSearchRule?.relaxation?.relaxations?.[i];
+                    if (search_rule_relaxation && data.relaxation) { // If !data.relaxation, the relaxation was already applied.
+                        await apply_mr_mapping(
+                            ctx,
+                            assn,
+                            searchState,
+                            target,
+                            search_rule_relaxation,
+                            true,
+                            signErrors,
+                            state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
+                            data.extendedArea,
+                            includeAllAreas,
+                            mapped_attrs,
+                        );
+                    }
                     // Reset some aspects of the search state, while leaving others.
                     searchState.depth = 0;
                     searchState.poq = undefined;
@@ -837,8 +894,8 @@ class OperationDispatcher {
                 }
             }
             else if (provide_relaxation_or_tightening && needs_tightening && rp?.tightenings?.length) {
-                for (const tightening of rp.tightenings.slice(0, ctx.config.maxRelaxationsOrTightenings)) {
-                    await apply_mr_mapping(
+                for (const [i, tightening] of rp.tightenings.slice(0, ctx.config.maxRelaxationsOrTightenings).entries()) {
+                    const [mapped_attrs] = await apply_mr_mapping(
                         ctx,
                         assn,
                         searchState,
@@ -849,7 +906,24 @@ class OperationDispatcher {
                         state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
                         data.extendedArea,
                         includeAllAreas,
+                        new Set(),
                     );
+                    const search_rule_relaxation = searchState.governingSearchRule?.relaxation?.tightenings?.[i];
+                    if (search_rule_relaxation && data.relaxation) {  // If !data.relaxation, the relaxation was already applied.
+                        await apply_mr_mapping(
+                            ctx,
+                            assn,
+                            searchState,
+                            target,
+                            search_rule_relaxation,
+                            true,
+                            signErrors,
+                            state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
+                            data.extendedArea,
+                            includeAllAreas,
+                            mapped_attrs,
+                        );
+                    }
                     // Reset some aspects of the search state, while leaving others.
                     searchState.results.length = 0;
                     searchState.resultSets.length = 0;
