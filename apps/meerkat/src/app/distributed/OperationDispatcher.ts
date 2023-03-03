@@ -806,6 +806,12 @@ class OperationDispatcher {
                 effectiveFilter: data.extendedFilter ?? data.filter,
                 notification: [],
                 effectiveEntryLimit: MAX_RESULTS,
+                effectiveSubset: data.subset,
+                effectiveFamilyGrouping: data.familyGrouping,
+                effectiveFamilyReturn: data.selection?.familyReturn,
+                effectiveHierarchySelections: data.hierarchySelections,
+                effectiveSearchControls: data.searchControlOptions,
+                effectiveServiceControls: data.serviceControls?.options,
             };
 
             const use_search_rule_check_ii: boolean = (nameResolutionPhase === completed);
