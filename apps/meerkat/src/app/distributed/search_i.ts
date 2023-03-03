@@ -1181,10 +1181,48 @@ async function apply_mr_mapping (
 }
 
 export
+function update_operation_dispatcher_state_with_search_rule (
+    data: SearchArgumentData,
+    state: OperationDispatcherState,
+    governing_search_rule: SearchRule,
+): void {
+    state.governingSearchRule = governing_search_rule;
+    if (governing_search_rule.outputAttributeTypes) {
+        const outputAttributeTypes: Map<IndexableOID, ResultAttribute> = new Map();
+        for (const out_attr of governing_search_rule.outputAttributeTypes ?? []) {
+            outputAttributeTypes.set(out_attr.attributeType.toString(), out_attr);
+        }
+        state.outputAttributeTypes = outputAttributeTypes;
+    }
+    const { service: effective_service_opts } = getEffectiveControlsFromSearchRule(
+        governing_search_rule,
+        data.hierarchySelections,
+        data.searchControlOptions,
+        data.serviceControls?.options,
+        false,
+    );
+    state.effectiveServiceControls = effective_service_opts;
+    if (governing_search_rule.familyReturn !== undefined) {
+        // ITU X.501 (2019), Section 16.10.6 states that the search
+        // rule shall have precedence when setting memberSelect, but
+        // not familySelect.
+        const familySelect = data.selection?.familyReturn?.familySelect
+            ?? governing_search_rule.familyReturn.familySelect;
+        const memberSelect = governing_search_rule.familyReturn.memberSelect
+            ?? data.selection?.familyReturn?.memberSelect;
+        state.effectiveFamilyReturn = new FamilyReturn(
+            memberSelect,
+            familySelect,
+        );
+    }
+}
+
+export
 function update_search_state_with_search_rule (
     data: SearchArgumentData,
     searchState: SearchState,
     governing_search_rule: SearchRule,
+    is_search: boolean = true,
 ): void {
     searchState.governingSearchRule = governing_search_rule;
     if (governing_search_rule.outputAttributeTypes) {
@@ -1203,6 +1241,7 @@ function update_search_state_with_search_rule (
         data.hierarchySelections,
         data.searchControlOptions,
         data.serviceControls?.options,
+        is_search,
     );
     searchState.effectiveHierarchySelections = effective_hs;
     searchState.effectiveSearchControls = effective_search_opts;

@@ -19,11 +19,12 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgument.ta";
 import {
     SearchArgument,
+    SearchArgumentData,
     _decode_SearchArgument,
     _encode_SearchArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
 import {
-    ReadArgument, _encode_ReadArgument,
+    ReadArgument, _decode_ReadArgument, _encode_ReadArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta";
 import {
     SearchResult,
@@ -46,6 +47,7 @@ import {
     ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
     ServiceControlOptions_partialNameResolution as partialNameResolutionBit,
     ServiceControlOptions_manageDSAIT as manageDSAITBit,
+    ServiceControlOptions,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import { compareCode } from "@wildboar/x500/src/lib/utils/compareCode";
 import { abandon } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandon.oa";
@@ -54,7 +56,7 @@ import { addEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractServic
 import { changePassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
 import { compare, CompareArgument, _encode_CompareArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa";
 import { modifyDN } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
-import { modifyEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
+import { modifyEntry, _decode_ModifyEntryArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
 import { ldapTransport } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ldapTransport.oa";
 import { linkedLDAP } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/linkedLDAP.oa";
 import { list } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
@@ -73,7 +75,12 @@ import { read as doRead } from "./read";
 import { removeEntry as doRemoveEntry } from "./removeEntry";
 import list_i from "./list_i";
 import list_ii from "./list_ii";
-import search_i, { apply_mr_mapping, getCurrentNumberOfResults, update_search_state_with_search_rule } from "./search_i";
+import search_i, {
+    apply_mr_mapping,
+    getCurrentNumberOfResults,
+    update_search_state_with_search_rule,
+    update_operation_dispatcher_state_with_search_rule,
+} from "./search_i";
 import search_ii from "./search_ii";
 import resultsMergingProcedureForList from "./resultsMergingProcedureForList";
 import resultsMergingProcedureForSearch from "./resultsMergingProcedureForSearch";
@@ -139,6 +146,8 @@ import {
 import { MAX_RESULTS } from "../constants";
 import { searchRuleCheckProcedure_i } from "./searchRuleCheckProcedure_i";
 import searchRuleCheckProcedure_ii from "./searchRuleCheckProcedure_ii";
+import { SearchArgumentData_subset_baseObject } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
+import { FamilyReturn, ResultAttribute, SearchRule } from "@wildboar/x500/src/lib/modules/ServiceAdministration/SearchRule.ta";
 
 function getPathFromVersion (vertex: Vertex): Vertex[] {
     const ret: Vertex[] = [];
@@ -184,6 +193,12 @@ interface OperationDispatcherState {
     // Not explicitly defined in the spec, but needed for preventing alias
     // loops.
     aliasesEncounteredById: Set<number>;
+
+    // These are set by service administration for non-search operations.
+    governingSearchRule?: SearchRule;
+    outputAttributeTypes?: Map<IndexableOID, ResultAttribute>;
+    effectiveServiceControls?: ServiceControlOptions;
+    effectiveFamilyReturn?: FamilyReturn;
 }
 
 export
@@ -451,6 +466,59 @@ class OperationDispatcher {
             };
         }
         else if (compareCode(req.opCode, modifyEntry["&operationCode"]!)) {
+            // #region service-admin
+            {
+                const argument = _decode_ModifyEntryArgument(reqData.argument);
+                const data = getOptionallyProtectedValue(argument);
+                state.effectiveFamilyReturn = data.selection?.familyReturn;
+                state.effectiveServiceControls = data.serviceControls?.options;
+                const equivalent_search_data = new SearchArgumentData(
+                    data.object,
+                    SearchArgumentData_subset_baseObject,
+                    undefined,
+                    undefined,
+                    data.selection,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    data.serviceControls,
+                    data.securityParameters, // NOTE: This will have the wrong opcode...
+                    data.requestor,
+                    data.operationProgress,
+                    data.aliasedRDNs,
+                    data.criticalExtensions,
+                    data.referenceType,
+                    data.entryOnly,
+                    data.exclusions,
+                    data.nameResolveOnMaster,
+                    data.operationContexts,
+                    data.familyGrouping,
+                );
+                const signErrors: boolean = (
+                    (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+                    && (assn.authorizedForSignedErrors)
+                );
+                const search_rule = await searchRuleCheckProcedure_i(
+                    ctx,
+                    assn,
+                    state,
+                    state.foundDSE,
+                    equivalent_search_data,
+                    signErrors,
+                );
+                if (search_rule) {
+                    update_operation_dispatcher_state_with_search_rule(equivalent_search_data, state, search_rule);
+                }
+            }
+            // #endregion service-admin
             const outcome = await doModifyEntry(ctx, assn, state);
             return {
                 invokeId: req.invokeId,
@@ -581,6 +649,59 @@ class OperationDispatcher {
             }
         }
         else if (compareCode(req.opCode, read["&operationCode"]!)) {
+            // #region service-admin
+            {
+                const argument = _decode_ReadArgument(reqData.argument);
+                const data = getOptionallyProtectedValue(argument);
+                state.effectiveFamilyReturn = data.selection?.familyReturn;
+                state.effectiveServiceControls = data.serviceControls?.options;
+                const equivalent_search_data = new SearchArgumentData(
+                    data.object,
+                    SearchArgumentData_subset_baseObject,
+                    undefined,
+                    undefined,
+                    data.selection,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    data.serviceControls,
+                    data.securityParameters, // NOTE: This will have the wrong opcode...
+                    data.requestor,
+                    data.operationProgress,
+                    data.aliasedRDNs,
+                    data.criticalExtensions,
+                    data.referenceType,
+                    data.entryOnly,
+                    data.exclusions,
+                    data.nameResolveOnMaster,
+                    data.operationContexts,
+                    data.familyGrouping,
+                );
+                const signErrors: boolean = (
+                    (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+                    && (assn.authorizedForSignedErrors)
+                );
+                const search_rule = await searchRuleCheckProcedure_i(
+                    ctx,
+                    assn,
+                    state,
+                    state.foundDSE,
+                    equivalent_search_data,
+                    signErrors,
+                );
+                if (search_rule) {
+                    update_operation_dispatcher_state_with_search_rule(equivalent_search_data, state, search_rule);
+                }
+            }
+            // #endregion service-admin
             const outcome = await doRead(ctx, assn, state);
             return {
                 invokeId: req.invokeId,
