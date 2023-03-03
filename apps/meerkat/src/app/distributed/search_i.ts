@@ -279,7 +279,7 @@ import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import { printInvokeId } from "../utils/printInvokeId";
-import { entryACI, prescriptiveACI, searchRules, subentryACI } from "@wildboar/x500/src/lib/collections/attributes";
+import { administrativeRole, entryACI, prescriptiveACI, searchRules, subentryACI } from "@wildboar/x500/src/lib/collections/attributes";
 import { AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
 import { FilterItem } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FilterItem.ta";
 import { Prisma } from "@prisma/client";
@@ -353,6 +353,7 @@ import { getServiceAdminPoint } from "../dit/getServiceAdminPoint";
 import getEntryExistsFilter from "../database/entryExistsFilter";
 import { attributeValueFromDB } from "../database/attributeValueFromDB";
 import { getEffectiveControlsFromSearchRule } from "../service/getEffectiveControlsFromSearchRule";
+import { id_ar_serviceSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-serviceSpecificArea.va";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 
@@ -2918,6 +2919,20 @@ async function search_i_ex (
                             object_class: CHILD,
                         },
                     }),
+            // This stops recursion into different service administrative areas.
+            AttributeValue: {
+                none: {
+                    type_oid: administrativeRole["&id"].toBytes(),
+                    content_octets: searchState.governingSearchRule
+                        ? {
+                            in: [
+                                id_ar_autonomousArea.toBytes(),
+                                id_ar_serviceSpecificArea.toBytes(),
+                            ],
+                        }
+                        : id_ar_serviceSpecificArea.toBytes(),
+                },
+            },
             /**
              * You can only use the pre-filtering optimization for oneLevel
              * searches, because, if using subtree searches, you still have to
@@ -2931,6 +2946,7 @@ async function search_i_ex (
             AND: (searchState.effectiveFilter && (data.subset === SearchArgumentData_subset_oneLevel))
                 ? convertFilterToPrismaSelect(ctx, searchState.effectiveFilter, relevantSubentries, !dontSelectFriends)
                 : undefined,
+
         },
     );
     let subordinatesInBatch = await getNextBatchOfSubordinates();
