@@ -130,7 +130,7 @@ import { MRMapping } from "@wildboar/x500/src/lib/modules/ServiceAdministration/
 import cloneChainingArgs from "../x500/cloneChainingArguments";
 import { MRSubstitution } from "@wildboar/x500/src/lib/modules/ServiceAdministration/MRSubstitution.ta";
 import {
-    SearchControlOptions_includeAllAreas,
+    SearchControlOptions_includeAllAreas, SearchControlOptions_noSystemRelaxation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
 import normalizeFilter from "../x500/normalizeFilter";
 import {
@@ -703,8 +703,12 @@ class OperationDispatcher {
                     update_search_state_with_search_rule(data, initialSearchState, search_rule);
                 }
             }
-
-            const rp = data.relaxation ?? initialSearchState.governingSearchRule?.relaxation;
+            const noSystemRelaxation: boolean = (data.searchControlOptions?.[SearchControlOptions_noSystemRelaxation] === TRUE_BIT);
+            const user_rp = data.relaxation;
+            const dsa_rp = initialSearchState.governingSearchRule?.relaxation;
+            const rp = noSystemRelaxation
+                ? user_rp
+                : (user_rp ?? dsa_rp);
             if (rp && initialSearchState.effectiveFilter) {
                 initialSearchState.effectiveFilter = normalizeFilter(initialSearchState.effectiveFilter);
             }
@@ -725,16 +729,15 @@ class OperationDispatcher {
                     new Set(),
                 );
             }
-            else if (rp?.basic) {
-                const relaxation = initialSearchState.governingSearchRule?.relaxation?.basic;
+            else if (user_rp?.basic) {
                 let pretendMatchingRuleMapping: Map<IndexableOID, OBJECT_IDENTIFIER> = new Map();
-                if (relaxation && data.relaxation) {
+                if (dsa_rp?.basic && !noSystemRelaxation) {
                     const [, new_mr_to_old] = await apply_mr_mapping(
                         ctx,
                         assn,
                         initialSearchState,
                         target,
-                        relaxation,
+                        dsa_rp.basic,
                         true,
                         signErrors,
                         state.chainingArguments.aliasDereferenced
@@ -750,7 +753,7 @@ class OperationDispatcher {
                     assn,
                     initialSearchState,
                     target,
-                    rp.basic,
+                    user_rp.basic,
                     true,
                     signErrors,
                     state.chainingArguments.aliasDereferenced
@@ -760,14 +763,13 @@ class OperationDispatcher {
                     new Set(),
                     pretendMatchingRuleMapping,
                 );
-            } else if (initialSearchState.governingSearchRule?.relaxation?.basic) {
-                const relaxation = initialSearchState.governingSearchRule.relaxation.basic;
+            } else if (dsa_rp?.basic) {
                 await apply_mr_mapping(
                     ctx,
                     assn,
                     initialSearchState,
                     target,
-                    relaxation,
+                    dsa_rp.basic,
                     true,
                     signErrors,
                     state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
