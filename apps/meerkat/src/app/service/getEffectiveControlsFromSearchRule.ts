@@ -1,4 +1,4 @@
-import { FALSE_BIT, TRUE_BIT } from "asn1-ts";
+import { FALSE_BIT, TRUE, TRUE_BIT } from "asn1-ts";
 import type {
     SearchRule,
 } from "@wildboar/x500/src/lib/modules/ServiceAdministration/SearchRule.ta";
@@ -87,7 +87,7 @@ function getEffectiveControlsFromSearchRule (
     effective_search_opts[SearchControlOptions_matchedValuesOnly] = user_search_opts?.[SearchControlOptions_matchedValuesOnly] ?? default_search_opts?.[SearchControlOptions_matchedValuesOnly] ?? FALSE_BIT;
     effective_search_opts[SearchControlOptions_noSystemRelaxation] = user_search_opts?.[SearchControlOptions_noSystemRelaxation] ?? default_search_opts?.[SearchControlOptions_noSystemRelaxation] ?? FALSE_BIT;
     effective_search_opts[SearchControlOptions_performExactly] = user_search_opts?.[SearchControlOptions_performExactly] ?? default_search_opts?.[SearchControlOptions_performExactly] ?? FALSE_BIT;
-    effective_search_opts[SearchControlOptions_searchAliases] = user_search_opts?.[SearchControlOptions_searchAliases] ?? default_search_opts?.[SearchControlOptions_searchAliases] ?? FALSE_BIT;
+    effective_search_opts[SearchControlOptions_searchAliases] = user_search_opts?.[SearchControlOptions_searchAliases] ?? default_search_opts?.[SearchControlOptions_searchAliases] ?? TRUE_BIT;
     effective_search_opts[SearchControlOptions_searchFamily] = user_search_opts?.[SearchControlOptions_searchFamily] ?? default_search_opts?.[SearchControlOptions_searchFamily] ?? FALSE_BIT;
     effective_search_opts[SearchControlOptions_separateFamilyMembers] = user_search_opts?.[SearchControlOptions_separateFamilyMembers] ?? default_search_opts?.[SearchControlOptions_separateFamilyMembers] ?? FALSE_BIT;
     effective_search_opts[SearchControlOptions_useSubset] = user_search_opts?.[SearchControlOptions_useSubset] ?? default_search_opts?.[SearchControlOptions_useSubset] ?? FALSE_BIT;
@@ -116,7 +116,7 @@ function getEffectiveControlsFromSearchRule (
         effective_hs[HierarchySelections_children] = (sr_hs?.[HierarchySelections_children] === TRUE_BIT) ? (default_hs?.[HierarchySelections_children] ?? FALSE_BIT) : effective_hs[HierarchySelections_children];
         effective_hs[HierarchySelections_hierarchy] = (sr_hs?.[HierarchySelections_hierarchy] === TRUE_BIT) ? (default_hs?.[HierarchySelections_hierarchy] ?? FALSE_BIT) : effective_hs[HierarchySelections_hierarchy];
         effective_hs[HierarchySelections_parent] = (sr_hs?.[HierarchySelections_parent] === TRUE_BIT) ? (default_hs?.[HierarchySelections_parent] ?? FALSE_BIT) : effective_hs[HierarchySelections_parent];
-        effective_hs[HierarchySelections_self] = (sr_hs?.[HierarchySelections_self] === TRUE_BIT) ? (default_hs?.[HierarchySelections_self] ?? FALSE_BIT) : effective_hs[HierarchySelections_self];
+        effective_hs[HierarchySelections_self] = (sr_hs?.[HierarchySelections_self] === TRUE_BIT) ? (default_hs?.[HierarchySelections_self] ?? TRUE_BIT) : effective_hs[HierarchySelections_self];
         effective_hs[HierarchySelections_siblingChildren] = (sr_hs?.[HierarchySelections_siblingChildren] === TRUE_BIT) ? (default_hs?.[HierarchySelections_siblingChildren] ?? FALSE_BIT) : effective_hs[HierarchySelections_siblingChildren];
         effective_hs[HierarchySelections_siblingSubtree] = (sr_hs?.[HierarchySelections_siblingSubtree] === TRUE_BIT) ? (default_hs?.[HierarchySelections_siblingSubtree] ?? FALSE_BIT) : effective_hs[HierarchySelections_siblingSubtree];
         effective_hs[HierarchySelections_siblings] = (sr_hs?.[HierarchySelections_siblings] === TRUE_BIT) ? (default_hs?.[HierarchySelections_siblings] ?? FALSE_BIT) : effective_hs[HierarchySelections_siblings];
@@ -132,7 +132,7 @@ function getEffectiveControlsFromSearchRule (
         effective_search_opts[SearchControlOptions_matchedValuesOnly] = (sr_src?.[SearchControlOptions_matchedValuesOnly] === TRUE_BIT) ? (default_search_opts?.[SearchControlOptions_matchedValuesOnly] ?? FALSE_BIT) : effective_search_opts[SearchControlOptions_matchedValuesOnly];
         effective_search_opts[SearchControlOptions_noSystemRelaxation] = (sr_src?.[SearchControlOptions_noSystemRelaxation] === TRUE_BIT) ? (default_search_opts?.[SearchControlOptions_noSystemRelaxation] ?? FALSE_BIT) : effective_search_opts[SearchControlOptions_noSystemRelaxation];
         effective_search_opts[SearchControlOptions_performExactly] = (sr_src?.[SearchControlOptions_performExactly] === TRUE_BIT) ? (default_search_opts?.[SearchControlOptions_performExactly] ?? FALSE_BIT) : effective_search_opts[SearchControlOptions_performExactly];
-        effective_search_opts[SearchControlOptions_searchAliases] = (sr_src?.[SearchControlOptions_searchAliases] === TRUE_BIT) ? (default_search_opts?.[SearchControlOptions_searchAliases] ?? FALSE_BIT) : effective_search_opts[SearchControlOptions_searchAliases];
+        effective_search_opts[SearchControlOptions_searchAliases] = (sr_src?.[SearchControlOptions_searchAliases] === TRUE_BIT) ? (default_search_opts?.[SearchControlOptions_searchAliases] ?? TRUE_BIT) : effective_search_opts[SearchControlOptions_searchAliases];
         effective_search_opts[SearchControlOptions_searchFamily] = (sr_src?.[SearchControlOptions_searchFamily] === TRUE_BIT) ? (default_search_opts?.[SearchControlOptions_searchFamily] ?? FALSE_BIT) : effective_search_opts[SearchControlOptions_searchFamily];
         effective_search_opts[SearchControlOptions_separateFamilyMembers] = (sr_src?.[SearchControlOptions_separateFamilyMembers] === TRUE_BIT) ? (default_search_opts?.[SearchControlOptions_separateFamilyMembers] ?? FALSE_BIT) : effective_search_opts[SearchControlOptions_separateFamilyMembers];
         effective_search_opts[SearchControlOptions_useSubset] = (sr_src?.[SearchControlOptions_useSubset] === TRUE_BIT) ? (default_search_opts?.[SearchControlOptions_useSubset] ?? FALSE_BIT) : effective_search_opts[SearchControlOptions_useSubset];

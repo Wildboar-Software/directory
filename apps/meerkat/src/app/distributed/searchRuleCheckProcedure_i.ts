@@ -1115,7 +1115,7 @@ function check_of_controls_and_hierarchy_selections (search: SearchArgumentData,
     effective_hs[HierarchySelections_children] = user_hs?.[HierarchySelections_children] ?? default_hs?.[HierarchySelections_children] ?? FALSE_BIT;
     effective_hs[HierarchySelections_hierarchy] = user_hs?.[HierarchySelections_hierarchy] ?? default_hs?.[HierarchySelections_hierarchy] ?? FALSE_BIT;
     effective_hs[HierarchySelections_parent] = user_hs?.[HierarchySelections_parent] ?? default_hs?.[HierarchySelections_parent] ?? FALSE_BIT;
-    effective_hs[HierarchySelections_self] = user_hs?.[HierarchySelections_self] ?? default_hs?.[HierarchySelections_self] ?? FALSE_BIT;
+    effective_hs[HierarchySelections_self] = user_hs?.[HierarchySelections_self] ?? default_hs?.[HierarchySelections_self] ?? TRUE_BIT;
     effective_hs[HierarchySelections_siblingChildren] = user_hs?.[HierarchySelections_siblingChildren] ?? default_hs?.[HierarchySelections_siblingChildren] ?? FALSE_BIT;
     effective_hs[HierarchySelections_siblingSubtree] = user_hs?.[HierarchySelections_siblingSubtree] ?? default_hs?.[HierarchySelections_siblingSubtree] ?? FALSE_BIT;
     effective_hs[HierarchySelections_siblings] = user_hs?.[HierarchySelections_siblings] ?? default_hs?.[HierarchySelections_siblings] ?? FALSE_BIT;
