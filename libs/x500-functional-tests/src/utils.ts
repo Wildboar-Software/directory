@@ -191,6 +191,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseInformation.ta";
 import { country, countryName } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/country.oa";
 import { residentialPerson } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/residentialPerson.oa";
+import { id_ar_serviceSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-serviceSpecificArea.va";
 
 export
 const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(Array(9).fill(FALSE_BIT));
@@ -409,7 +410,15 @@ async function createTestRootNode(
     testId: string,
     extraAttributes: Attribute[] = [],
     extraAttributesForSubschema: Attribute[] = [],
+    serviceAdmin: boolean = false,
 ): Promise<void> {
+    const adminRoles = [
+        oid(id_ar_autonomousArea),
+        oid(id_ar_subschemaAdminSpecificArea),
+    ];
+    if (serviceAdmin) {
+        adminRoles.push(oid(id_ar_serviceSpecificArea));
+    }
     await createEntry(
         connection,
         [],
@@ -417,10 +426,7 @@ async function createTestRootNode(
         [
             new Attribute(
                 administrativeRole["&id"],
-                [
-                    oid(id_ar_autonomousArea),
-                    oid(id_ar_subschemaAdminSpecificArea),
-                ],
+                adminRoles,
                 undefined,
             ),
             new Attribute(

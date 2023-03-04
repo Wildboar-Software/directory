@@ -199,6 +199,7 @@ import { getServiceAdminPoint } from "../dit/getServiceAdminPoint";
 import {
     ControlOptions,
 } from "@wildboar/x500/src/lib/modules/ServiceAdministration/ControlOptions.ta";
+import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 
 const SEARCH_RULE_BYTES: Buffer = searchRules["&id"].toBytes();
 
@@ -1629,71 +1630,84 @@ async function searchRuleCheckProcedure_i (
     }
 
     const DeniedSR: SearchRule[] = [];
-    for (const subentry of target_subentries) {
-        const subentryDN = getDistinguishedName(subentry);
-        const relevantSubentries: Vertex[] = (await Promise.all(
-            adm_points.map((ap) => getRelevantSubentries(ctx, subentry, subentryDN, ap)),
-        )).flat();
-        const relevantACIItems = await getACIItems(
-            ctx,
-            accessControlScheme,
-            subentry.immediateSuperior,
-            subentry,
-            relevantSubentries,
-            Boolean(target.dse.subentry),
-        );
-        const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
-            .flatMap((aci) => getACDFTuplesFromACIItem(aci));
-        const relevantTuples: ACDFTupleExtended[] = await preprocessTuples(
-            accessControlScheme,
-            acdfTuples,
-            user,
-            state.chainingArguments.authenticationLevel
-                ?? assn?.authLevel
-                ?? UNTRUSTED_REQ_AUTH_LEVEL,
-            subentryDN,
-            isMemberOfGroup,
-            namingMatcher,
-        );
-        const search_rules = search_rules_by_subentry_id.get(subentry.dse.id);
-        if (!search_rules?.length) {
-            continue;
-        }
-        const { authorized: authorizedToInvokeSearchRules } = bacACDF(
-            relevantTuples,
-            user,
-            {
-                attributeType: searchRules["&id"],
-            },
-            [PERMISSION_CATEGORY_INVOKE],
-            bacSettings,
-            true,
-        );
-        if (!authorizedToInvokeSearchRules) {
-            continue;
-        }
-        for (const [ undecoded, sr ] of search_rules) {
-            const { authorized: authorizedToInvokeThisSearchRule } = bacACDF(
+    if (accessControlScheme && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())) {
+        for (const subentry of target_subentries) {
+            const subentryDN = getDistinguishedName(subentry);
+            const relevantSubentries: Vertex[] = (await Promise.all(
+                adm_points.map((ap) => getRelevantSubentries(ctx, subentry, subentryDN, ap)),
+            )).flat();
+            const relevantACIItems = await getACIItems(
+                ctx,
+                accessControlScheme,
+                subentry.immediateSuperior,
+                subentry,
+                relevantSubentries,
+                Boolean(target.dse.subentry),
+            );
+            const acdfTuples: ACDFTuple[] = (relevantACIItems ?? [])
+                .flatMap((aci) => getACDFTuplesFromACIItem(aci));
+            const relevantTuples: ACDFTupleExtended[] = await preprocessTuples(
+                accessControlScheme,
+                acdfTuples,
+                user,
+                state.chainingArguments.authenticationLevel
+                    ?? assn?.authLevel
+                    ?? UNTRUSTED_REQ_AUTH_LEVEL,
+                subentryDN,
+                isMemberOfGroup,
+                namingMatcher,
+            );
+            const search_rules = search_rules_by_subentry_id.get(subentry.dse.id);
+            if (!search_rules?.length) {
+                continue;
+            }
+            const { authorized: authorizedToInvokeSearchRules } = bacACDF(
                 relevantTuples,
                 user,
                 {
-                    value: new AttributeTypeAndValue(
-                        searchRules["&id"],
-                        undecoded,
-                    ),
-                    operational: true,
+                    attributeType: searchRules["&id"],
                 },
                 [PERMISSION_CATEGORY_INVOKE],
                 bacSettings,
                 true,
             );
-            if (authorizedToInvokeThisSearchRule) {
+            if (!authorizedToInvokeSearchRules) {
+                continue;
+            }
+            for (const [ undecoded, sr ] of search_rules) {
+                const { authorized: authorizedToInvokeThisSearchRule } = bacACDF(
+                    relevantTuples,
+                    user,
+                    {
+                        value: new AttributeTypeAndValue(
+                            searchRules["&id"],
+                            undecoded,
+                        ),
+                        operational: true,
+                    },
+                    [PERMISSION_CATEGORY_INVOKE],
+                    bacSettings,
+                    true,
+                );
+                if (authorizedToInvokeThisSearchRule) {
+                    candidate_search_rules.push(sr);
+                } else {
+                    DeniedSR.push(sr);
+                }
+            }
+        }
+    } else {
+        for (const subentry of target_subentries) {
+            const search_rules = search_rules_by_subentry_id.get(subentry.dse.id);
+            if (!search_rules?.length) {
+                continue;
+            }
+            for (const [ , sr ] of search_rules) {
                 candidate_search_rules.push(sr);
-            } else {
-                DeniedSR.push(sr);
             }
         }
     }
+
 
     // #endregion Access Control
 

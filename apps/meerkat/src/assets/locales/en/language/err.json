@@ -213,7 +213,7 @@
     "zonal_zero_mappings": "Key attributes for zonal match could not be mapped to a zone.",
     "zonal_multiple_mappings": "Key attributes for zonal match mapped to multiple zones.",
     "search_escaped_svc_admin_area": "Distributed search operation with invoke id {{iid}} attempted (maybe by accident) to escape a service administrative area.",
-    "requestedServiceNotAvailable": "There is no search rules defined for the base object requested by invocation {{iid}}.",
+    "requestedServiceNotAvailable": "There are no search rules defined for the base object requested by invocation {{iid}}.",
     "invalid_matching_use": "Invalid matching use for attribute types: {{attrs}}",
     "unrecognized_search_rule": "This DSA does not have a search rule that applies to the DSE with ID {{uuid}} that has a DMD ID of {{dmd_id}} and an ID of {{id}}."
 }
