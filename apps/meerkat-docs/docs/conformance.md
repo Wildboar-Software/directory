@@ -148,7 +148,7 @@ Recommendation X.511 (2019), Section 7.3.1.
 | Security Parameters - Operation Code               | 18         | Yes        |
 | Security Parameters - Attribute Certification Path | 19         | Yes        |
 | Security Parameters - Error Protection             | 20         | Yes        |
-| Service Administration                             | 25         | No         |
+| Service Administration                             | 25         | Yes        |
 | Entry Count                                        | 26         | Yes        |
 | Hierarchy Selections                               | 27         | Yes        |
 | Relaxation                                         | 28         | Yes        |
