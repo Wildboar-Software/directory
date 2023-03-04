@@ -18,7 +18,6 @@ import {
     ASN1Element,
     BERElement,
     BIT_STRING,
-    FALSE_BIT,
     ObjectIdentifier,
     OBJECT_IDENTIFIER,
     TRUE_BIT,
@@ -137,7 +136,6 @@ import {
     HierarchySelections_children,
     HierarchySelections_hierarchy,
     HierarchySelections_parent,
-    HierarchySelections_self,
     HierarchySelections_siblingChildren,
     HierarchySelections_siblingSubtree,
     HierarchySelections_siblings,
@@ -146,36 +144,9 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/HierarchySelections.ta";
 import {
     SearchControlOptions,
-    SearchControlOptions_checkOverspecified,
-    SearchControlOptions_dnAttribute,
-    SearchControlOptions_entryCount,
-    SearchControlOptions_includeAllAreas,
-    SearchControlOptions_matchOnResidualName,
-    SearchControlOptions_matchedValuesOnly,
-    SearchControlOptions_noSystemRelaxation,
-    SearchControlOptions_performExactly,
-    SearchControlOptions_searchAliases,
-    SearchControlOptions_searchFamily,
-    SearchControlOptions_separateFamilyMembers,
-    SearchControlOptions_useSubset,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
 import {
     ServiceControlOptions,
-    ServiceControlOptions_allowWriteableCopy,
-    ServiceControlOptions_chainingProhibited,
-    ServiceControlOptions_copyShallDo,
-    ServiceControlOptions_countFamily,
-    ServiceControlOptions_dontDereferenceAliases,
-    ServiceControlOptions_dontMatchFriends,
-    ServiceControlOptions_dontSelectFriends,
-    ServiceControlOptions_dontUseCopy,
-    ServiceControlOptions_localScope,
-    ServiceControlOptions_manageDSAIT,
-    ServiceControlOptions_noSubtypeMatch,
-    ServiceControlOptions_noSubtypeSelection,
-    ServiceControlOptions_partialNameResolution,
-    ServiceControlOptions_preferChaining,
-    ServiceControlOptions_subentries,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import {
     attributeTypeList,
@@ -225,19 +196,11 @@ import { PERMISSION_CATEGORY_INVOKE } from "@wildboar/x500/src/lib/bac/bacACDF";
 import { bacSettings } from "../authz/bacSettings";
 import { AttributeTypeAndValue } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttributeTypeAndValue.ta";
 import { getServiceAdminPoint } from "../dit/getServiceAdminPoint";
+import {
+    ControlOptions,
+} from "@wildboar/x500/src/lib/modules/ServiceAdministration/ControlOptions.ta";
 
 const SEARCH_RULE_BYTES: Buffer = searchRules["&id"].toBytes();
-
-function bit_diff (a: BIT_STRING, b: BIT_STRING): BIT_STRING {
-    const len: number = Math.min(a.length, b.length);
-    const ret: BIT_STRING = new Uint8ClampedArray(len);
-    for (let i = 0; i < len; i++) {
-        if (a[i] !== b[i]) {
-            ret[i] = TRUE_BIT;
-        }
-    }
-    return ret;
-}
 
 export
 function getAttributeTypeNegationFromFilterItem (
@@ -1085,23 +1048,52 @@ interface CheckControlsAndHSReturn {
     serviceControlOptionsList?: ServiceControlOptions;
 }
 
+function get_int32_from_bit_string (bs?: BIT_STRING): number {
+    if (!bs) {
+        return 0;
+    }
+    let ret: number = 0;
+    const len: number = Math.min(bs.length, 32);
+    for (let i = 0; i < len; i++) {
+        if (bs[i] === TRUE_BIT) {
+            ret |= (1 << (31 - i));
+        }
+    }
+    return ret;
+}
+
+function get_bit_string_from_int32 (int: number): BIT_STRING {
+    let last_set: number = -1;
+    const ret: BIT_STRING = new Uint8ClampedArray(32);
+    for (let i = 0; i < 32; i++) {
+        if (int & (1 << (31 - i))) {
+            ret[i] = TRUE_BIT;
+            last_set = i;
+        }
+    }
+    return ret.subarray(0, last_set + 1);
+}
+
+// NOTE: This is NOT a deviation from the spec.
+const DEFAULT_HS: BIT_STRING = new Uint8ClampedArray([ TRUE_BIT ]); // Just self
+
 // Described in X.511, Section 15.3
-function check_of_controls_and_hierarchy_selections (search: SearchArgumentData, rule: SearchRule): CheckControlsAndHSReturn {
-    const user_hs = search.hierarchySelections;
-    const default_hs = rule.defaultControls?.hierarchyOptions;
-    const mandatory_hs = rule.mandatoryControls?.hierarchyOptions;
+function check_of_controls_and_hierarchy_selections (
+    search: SearchArgumentData,
+    rule: SearchRule,
+): CheckControlsAndHSReturn {
     if (!rule.defaultControls || !rule.defaultControls.hierarchyOptions) {
-        const hs_other_than_self: boolean = !!user_hs && (
-            (user_hs[HierarchySelections_all] === TRUE_BIT)
-            || (user_hs[HierarchySelections_children] === TRUE_BIT)
-            || (user_hs[HierarchySelections_hierarchy] === TRUE_BIT)
-            || (user_hs[HierarchySelections_parent] === TRUE_BIT)
-            // || (user_hs[HierarchySelections_self] === TRUE_BIT)
-            || (user_hs[HierarchySelections_siblingChildren] === TRUE_BIT)
-            || (user_hs[HierarchySelections_siblingSubtree] === TRUE_BIT)
-            || (user_hs[HierarchySelections_siblings] === TRUE_BIT)
-            || (user_hs[HierarchySelections_subtree] === TRUE_BIT)
-            || (user_hs[HierarchySelections_top] === TRUE_BIT)
+        const hs_other_than_self: boolean = !!search.hierarchySelections && (
+            (search.hierarchySelections[HierarchySelections_all] === TRUE_BIT)
+            || (search.hierarchySelections[HierarchySelections_children] === TRUE_BIT)
+            || (search.hierarchySelections[HierarchySelections_hierarchy] === TRUE_BIT)
+            || (search.hierarchySelections[HierarchySelections_parent] === TRUE_BIT)
+            // || (search.hierarchySelections[HierarchySelections_self] === TRUE_BIT)
+            || (search.hierarchySelections[HierarchySelections_siblingChildren] === TRUE_BIT)
+            || (search.hierarchySelections[HierarchySelections_siblingSubtree] === TRUE_BIT)
+            || (search.hierarchySelections[HierarchySelections_siblings] === TRUE_BIT)
+            || (search.hierarchySelections[HierarchySelections_subtree] === TRUE_BIT)
+            || (search.hierarchySelections[HierarchySelections_top] === TRUE_BIT)
         );
         if (hs_other_than_self) {
             return {
@@ -1110,28 +1102,17 @@ function check_of_controls_and_hierarchy_selections (search: SearchArgumentData,
         }
     }
 
-    const effective_hs: HierarchySelections = new Uint8ClampedArray(10);
-    effective_hs[HierarchySelections_all] = user_hs?.[HierarchySelections_all] ?? default_hs?.[HierarchySelections_all] ?? FALSE_BIT;
-    effective_hs[HierarchySelections_children] = user_hs?.[HierarchySelections_children] ?? default_hs?.[HierarchySelections_children] ?? FALSE_BIT;
-    effective_hs[HierarchySelections_hierarchy] = user_hs?.[HierarchySelections_hierarchy] ?? default_hs?.[HierarchySelections_hierarchy] ?? FALSE_BIT;
-    effective_hs[HierarchySelections_parent] = user_hs?.[HierarchySelections_parent] ?? default_hs?.[HierarchySelections_parent] ?? FALSE_BIT;
-    effective_hs[HierarchySelections_self] = user_hs?.[HierarchySelections_self] ?? default_hs?.[HierarchySelections_self] ?? TRUE_BIT;
-    effective_hs[HierarchySelections_siblingChildren] = user_hs?.[HierarchySelections_siblingChildren] ?? default_hs?.[HierarchySelections_siblingChildren] ?? FALSE_BIT;
-    effective_hs[HierarchySelections_siblingSubtree] = user_hs?.[HierarchySelections_siblingSubtree] ?? default_hs?.[HierarchySelections_siblingSubtree] ?? FALSE_BIT;
-    effective_hs[HierarchySelections_siblings] = user_hs?.[HierarchySelections_siblings] ?? default_hs?.[HierarchySelections_siblings] ?? FALSE_BIT;
-    effective_hs[HierarchySelections_subtree] = user_hs?.[HierarchySelections_subtree] ?? default_hs?.[HierarchySelections_subtree] ?? FALSE_BIT;
-    effective_hs[HierarchySelections_top] = user_hs?.[HierarchySelections_top] ?? default_hs?.[HierarchySelections_top] ?? FALSE_BIT;
-
     // Step 2
-    if (mandatory_hs) {
-        const mandatory_bits = new Uint8ClampedArray(10);
-        mandatory_bits.set(mandatory_hs.slice(0, 10));
-        const effective_bits = effective_hs;
-        // assert same length
-        if (mandatory_bits.toString() !== effective_bits.toString()) {
+    if (rule.mandatoryControls?.hierarchyOptions) {
+        const user_hs = get_int32_from_bit_string(search.hierarchySelections ?? rule.defaultControls?.hierarchyOptions ?? DEFAULT_HS);
+        const mandatory_hs = get_int32_from_bit_string(rule.mandatoryControls.hierarchyOptions);
+        const default_hs = get_int32_from_bit_string(rule.defaultControls?.hierarchyOptions ?? DEFAULT_HS);
+        const non_default_bits = user_hs ^ default_hs;
+        const non_compliant_bits = non_default_bits ^ mandatory_hs;
+        if (non_compliant_bits !== 0) {
             return {
                 step_failed: 2,
-                hierarchySelectList: bit_diff(mandatory_hs, effective_hs),
+                hierarchySelectList: get_bit_string_from_int32(non_compliant_bits),
             };
         }
     }
@@ -1139,67 +1120,31 @@ function check_of_controls_and_hierarchy_selections (search: SearchArgumentData,
     // Step 3 does not apply, because Meerkat DSA supports all hierarchy selections.
 
     // Step 4
-    const user_search_opts = search.searchControlOptions;
-    const default_search_opts = rule.defaultControls?.searchOptions;
-    const mandatory_search_opts = rule.mandatoryControls?.searchOptions;
-
-    const effective_search_opts: SearchControlOptions = new Uint8ClampedArray(12);
-    effective_search_opts[SearchControlOptions_checkOverspecified] = user_search_opts?.[SearchControlOptions_checkOverspecified] ?? default_search_opts?.[SearchControlOptions_checkOverspecified] ?? FALSE_BIT;
-    effective_search_opts[SearchControlOptions_dnAttribute] = user_search_opts?.[SearchControlOptions_dnAttribute] ?? default_search_opts?.[SearchControlOptions_dnAttribute] ?? FALSE_BIT;
-    effective_search_opts[SearchControlOptions_entryCount] = user_search_opts?.[SearchControlOptions_entryCount] ?? default_search_opts?.[SearchControlOptions_entryCount] ?? FALSE_BIT;
-    effective_search_opts[SearchControlOptions_includeAllAreas] = user_search_opts?.[SearchControlOptions_includeAllAreas] ?? default_search_opts?.[SearchControlOptions_includeAllAreas] ?? FALSE_BIT;
-    effective_search_opts[SearchControlOptions_matchOnResidualName] = user_search_opts?.[SearchControlOptions_matchOnResidualName] ?? default_search_opts?.[SearchControlOptions_matchOnResidualName] ?? FALSE_BIT;
-    effective_search_opts[SearchControlOptions_matchedValuesOnly] = user_search_opts?.[SearchControlOptions_matchedValuesOnly] ?? default_search_opts?.[SearchControlOptions_matchedValuesOnly] ?? FALSE_BIT;
-    effective_search_opts[SearchControlOptions_noSystemRelaxation] = user_search_opts?.[SearchControlOptions_noSystemRelaxation] ?? default_search_opts?.[SearchControlOptions_noSystemRelaxation] ?? FALSE_BIT;
-    effective_search_opts[SearchControlOptions_performExactly] = user_search_opts?.[SearchControlOptions_performExactly] ?? default_search_opts?.[SearchControlOptions_performExactly] ?? FALSE_BIT;
-    effective_search_opts[SearchControlOptions_searchAliases] = user_search_opts?.[SearchControlOptions_searchAliases] ?? default_search_opts?.[SearchControlOptions_searchAliases] ?? FALSE_BIT;
-    effective_search_opts[SearchControlOptions_searchFamily] = user_search_opts?.[SearchControlOptions_searchFamily] ?? default_search_opts?.[SearchControlOptions_searchFamily] ?? FALSE_BIT;
-    effective_search_opts[SearchControlOptions_separateFamilyMembers] = user_search_opts?.[SearchControlOptions_separateFamilyMembers] ?? default_search_opts?.[SearchControlOptions_separateFamilyMembers] ?? FALSE_BIT;
-    effective_search_opts[SearchControlOptions_useSubset] = user_search_opts?.[SearchControlOptions_useSubset] ?? default_search_opts?.[SearchControlOptions_useSubset] ?? FALSE_BIT;
-
-    if (mandatory_search_opts) {
-        const mandatory_bits = new Uint8ClampedArray(12);
-        mandatory_bits.set(mandatory_search_opts.slice(0, 12));
-        const effective_bits = effective_search_opts;
-        // assert same length
-        if (mandatory_bits.toString() !== effective_bits.toString()) {
+    if (rule.mandatoryControls?.searchOptions) {
+        const user_sco = get_int32_from_bit_string(search.searchControlOptions ?? rule.defaultControls?.searchOptions ?? ControlOptions._default_value_for_searchOptions);
+        const mandatory_sco = get_int32_from_bit_string(rule.mandatoryControls.searchOptions);
+        const default_sco = get_int32_from_bit_string(rule.defaultControls?.searchOptions ?? ControlOptions._default_value_for_searchOptions);
+        const non_default_bits = user_sco ^ default_sco;
+        const non_compliant_bits = non_default_bits ^ mandatory_sco;
+        if (non_compliant_bits !== 0) {
             return {
                 step_failed: 4,
-                searchControlOptionsList: bit_diff(mandatory_search_opts, effective_search_opts),
+                searchControlOptionsList: get_bit_string_from_int32(non_compliant_bits),
             };
         }
     }
 
     // Step 5
-    const user_service_opts = search.serviceControls;
-    const default_service_opts = rule.defaultControls?.serviceControls;
-    const mandatory_service_opts = rule.mandatoryControls?.serviceControls;
-    const effective_service_opts: ServiceControlOptions = new Uint8ClampedArray(15);
-    effective_service_opts[ServiceControlOptions_allowWriteableCopy] = user_service_opts?.[ServiceControlOptions_allowWriteableCopy] ?? default_service_opts?.[ServiceControlOptions_allowWriteableCopy] ?? FALSE_BIT;
-    effective_service_opts[ServiceControlOptions_chainingProhibited] = user_service_opts?.[ServiceControlOptions_chainingProhibited] ?? default_service_opts?.[ServiceControlOptions_chainingProhibited] ?? FALSE_BIT;
-    effective_service_opts[ServiceControlOptions_copyShallDo] = user_service_opts?.[ServiceControlOptions_copyShallDo] ?? default_service_opts?.[ServiceControlOptions_copyShallDo] ?? FALSE_BIT;
-    effective_service_opts[ServiceControlOptions_countFamily] = user_service_opts?.[ServiceControlOptions_countFamily] ?? default_service_opts?.[ServiceControlOptions_countFamily] ?? FALSE_BIT;
-    effective_service_opts[ServiceControlOptions_dontDereferenceAliases] = user_service_opts?.[ServiceControlOptions_dontDereferenceAliases] ?? default_service_opts?.[ServiceControlOptions_dontDereferenceAliases] ?? FALSE_BIT;
-    effective_service_opts[ServiceControlOptions_dontMatchFriends] = user_service_opts?.[ServiceControlOptions_dontMatchFriends] ?? default_service_opts?.[ServiceControlOptions_dontMatchFriends] ?? FALSE_BIT;
-    effective_service_opts[ServiceControlOptions_dontSelectFriends] = user_service_opts?.[ServiceControlOptions_dontSelectFriends] ?? default_service_opts?.[ServiceControlOptions_dontSelectFriends] ?? FALSE_BIT;
-    effective_service_opts[ServiceControlOptions_dontUseCopy] = user_service_opts?.[ServiceControlOptions_dontUseCopy] ?? default_service_opts?.[ServiceControlOptions_dontUseCopy] ?? FALSE_BIT;
-    effective_service_opts[ServiceControlOptions_localScope] = user_service_opts?.[ServiceControlOptions_localScope] ?? default_service_opts?.[ServiceControlOptions_localScope] ?? FALSE_BIT;
-    effective_service_opts[ServiceControlOptions_manageDSAIT] = user_service_opts?.[ServiceControlOptions_manageDSAIT] ?? default_service_opts?.[ServiceControlOptions_manageDSAIT] ?? FALSE_BIT;
-    effective_service_opts[ServiceControlOptions_noSubtypeMatch] = user_service_opts?.[ServiceControlOptions_noSubtypeMatch] ?? default_service_opts?.[ServiceControlOptions_noSubtypeMatch] ?? FALSE_BIT;
-    effective_service_opts[ServiceControlOptions_noSubtypeSelection] = user_service_opts?.[ServiceControlOptions_noSubtypeSelection] ?? default_service_opts?.[ServiceControlOptions_noSubtypeSelection] ?? FALSE_BIT;
-    effective_service_opts[ServiceControlOptions_partialNameResolution] = user_service_opts?.[ServiceControlOptions_partialNameResolution] ?? default_service_opts?.[ServiceControlOptions_partialNameResolution] ?? FALSE_BIT;
-    effective_service_opts[ServiceControlOptions_preferChaining] = user_service_opts?.[ServiceControlOptions_preferChaining] ?? default_service_opts?.[ServiceControlOptions_preferChaining] ?? FALSE_BIT;
-    effective_service_opts[ServiceControlOptions_subentries] = user_service_opts?.[ServiceControlOptions_subentries] ?? default_service_opts?.[ServiceControlOptions_subentries] ?? FALSE_BIT;
-
-    if (mandatory_service_opts) {
-        const mandatory_bits = new Uint8ClampedArray(15);
-        mandatory_bits.set(mandatory_service_opts.slice(0, 15));
-        const effective_bits = effective_service_opts;
-        // assert same length
-        if (mandatory_bits.toString() !== effective_bits.toString()) {
+    if (rule.mandatoryControls?.serviceControls) {
+        const user_sco = get_int32_from_bit_string(search.serviceControls?.options ?? rule.defaultControls?.serviceControls ?? ControlOptions._default_value_for_serviceControls);
+        const mandatory_sco = get_int32_from_bit_string(rule.mandatoryControls.serviceControls);
+        const default_sco = get_int32_from_bit_string(rule.defaultControls?.serviceControls ?? ControlOptions._default_value_for_serviceControls);
+        const non_default_bits = user_sco ^ default_sco;
+        const non_compliant_bits = non_default_bits ^ mandatory_sco;
+        if (non_compliant_bits !== 0) {
             return {
                 step_failed: 5,
-                serviceControlOptionsList: bit_diff(mandatory_service_opts, effective_service_opts),
+                serviceControlOptionsList: get_bit_string_from_int32(non_compliant_bits),
             };
         }
     }
