@@ -1519,6 +1519,8 @@ async function search_i_ex (
         ?? SearchArgumentData._default_value_for_searchAliases;
     const matchedValuesOnly: boolean = data.matchedValuesOnly
         || Boolean(searchState.effectiveSearchControls?.[SearchControlOptions_matchedValuesOnly]);
+    const searchRuleReturnsMatchedValuesOnly: boolean = state.governingSearchRule?.outputAttributeTypes
+        ?.some((oat) => oat.outputValues && ("matchedValuesOnly" in oat.outputValues)) ?? false;
     // const checkOverspecified: boolean = Boolean(searchState.effectiveSearchControls?.[SearchControlOptions_checkOverspecified]);
     const performExactly: boolean = Boolean(searchState.effectiveSearchControls?.[SearchControlOptions_performExactly]);
     // const includeAllAreas: boolean = Boolean(searchState.effectiveSearchControls?.[SearchControlOptions_includeAllAreas]);
@@ -2045,7 +2047,7 @@ async function search_i_ex (
             return authorizedToMatch;
         },
         performExactly,
-        matchedValuesOnly,
+        matchedValuesOnly: matchedValuesOnly || searchRuleReturnsMatchedValuesOnly,
         dnAttribute,
     };
 
@@ -2369,7 +2371,7 @@ async function search_i_ex (
                 ),
             );
             if (
-                matchedValuesOnly
+                (matchedValuesOnly || searchRuleReturnsMatchedValuesOnly)
                 && filterResult.matchedValues?.length
                 && !typesOnly // This option would make no sense with matchedValuesOnly.
             ) {
@@ -2387,6 +2389,17 @@ async function search_i_ex (
                     const matchedValuesTypes: Set<IndexableOID> = new Set(
                         matchedValuesAttributes.map((mva) => mva.type_.toString()),
                     );
+                    // If !matchedValuesOnly because matchedValuesOnly acts on all attribute types.
+                    if (searchRuleReturnsMatchedValuesOnly && !matchedValuesOnly) { // Therefore...
+                        // If the condition above is true, only some attributes
+                        // will be filtered for matched values.
+                        const oats = searchState.governingSearchRule?.outputAttributeTypes ?? [];
+                        for (const oat of oats) {
+                            if (!oat.outputValues || !("matchedValuesOnly" in oat.outputValues)) {
+                                matchedValuesTypes.delete(oat.attributeType.toString());
+                            }
+                        }
+                    }
                     /**
                      * Remember: matchedValuesOnly only filters the
                      * values of attributes that contributed to the
@@ -2682,7 +2695,7 @@ async function search_i_ex (
                 ),
             );
             if (
-                matchedValuesOnly
+                (matchedValuesOnly || searchRuleReturnsMatchedValuesOnly)
                 && filterResult.matchedValues?.length
                 && !typesOnly // This option would make no sense with matchedValuesOnly.
             ) {
@@ -2700,6 +2713,17 @@ async function search_i_ex (
                     const matchedValuesTypes: Set<IndexableOID> = new Set(
                         matchedValuesAttributes.map((mva) => mva.type_.toString()),
                     );
+                    // If !matchedValuesOnly because matchedValuesOnly acts on all attribute types.
+                    if (searchRuleReturnsMatchedValuesOnly && !matchedValuesOnly) { // Therefore...
+                        // If the condition above is true, only some attributes
+                        // will be filtered for matched values.
+                        const oats = searchState.governingSearchRule?.outputAttributeTypes ?? [];
+                        for (const oat of oats) {
+                            if (!oat.outputValues || !("matchedValuesOnly" in oat.outputValues)) {
+                                matchedValuesTypes.delete(oat.attributeType.toString());
+                            }
+                        }
+                    }
                     /**
                      * Remember: matchedValuesOnly only filters the
                      * values of attributes that contributed to the
