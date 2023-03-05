@@ -1309,9 +1309,10 @@ async function search_i(
 ): Promise<void> {
     const data = getOptionallyProtectedValue(argument);
     searchState.effectiveFilter = searchState.effectiveFilter ?? data.extendedFilter ?? data.filter;
-    searchState.effectiveEntryLimit = Number(data.serviceControls?.sizeLimit ?? MAX_RESULTS);
-    searchState.effectiveFamilyGrouping = data.familyGrouping;
-    searchState.effectiveFamilyReturn = data.selection?.familyReturn;
+    searchState.effectiveEntryLimit = searchState.effectiveEntryLimit
+        ?? Number(data.serviceControls?.sizeLimit ?? MAX_RESULTS);
+    searchState.effectiveFamilyGrouping = searchState.effectiveFamilyGrouping ?? data.familyGrouping;
+    searchState.effectiveFamilyReturn = searchState.effectiveFamilyReturn ?? data.selection?.familyReturn;
 
     // NOTE: This was copied to Search (II)
     if (state.chainingArguments.searchRuleId && !searchState.governingSearchRule) {
