@@ -655,7 +655,12 @@ function general_check_of_search_filter (
         required_attrs.delete(attr);
     }
 
-    if (rule.attributeCombination) {
+    // If attribute combo is defined AND it is not the default value.
+    if (rule.attributeCombination && !(
+        ("and" in rule.attributeCombination)
+        && (rule.attributeCombination.and.length === 0)
+    )) {
+        console.log(rule.attributeCombination);
         state.missingSearchAttributes.push(...Array
             .from(required_attrs.values())
             .map((s) => ObjectIdentifier.fromString(s)));

@@ -35,14 +35,16 @@ function getAttributeMap (
              // This shouldn't happen, because it should have never been read from the DB.
             return new Attribute(attr.type_, []);
         }
-        let values: ASN1Element[] = [];
-        let valuesWithContext: Attribute_valuesWithContext_Item[] | undefined = [];
+        let values: ASN1Element[] = attr.values;
+        let valuesWithContext: Attribute_valuesWithContext_Item[] | undefined = attr.valuesWithContext;
         if (profile.outputValues) {
             const matcher = getEqualityMatcherGetter(ctx)(attr.type_);
             if (!matcher) {
                 return new Attribute(attr.type_, []); // No EMR defined for this type.
             }
             if ("selectedValues" in profile.outputValues) {
+                values = [];
+                valuesWithContext = [];
                 const namingMatcher = getNamingMatcherGetter(ctx);
                 const selectedValues = profile.outputValues.selectedValues;
                 for (const value of attr.values) {
@@ -61,9 +63,6 @@ function getAttributeMap (
                         }
                     }
                 }
-            } else {
-                values = attr.values;
-                valuesWithContext = attr.valuesWithContext;
             }
         }
         if (profile.contexts) {
