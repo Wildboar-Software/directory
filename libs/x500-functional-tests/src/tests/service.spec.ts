@@ -29,7 +29,7 @@ import {
     SearchArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
 import {
-    SearchArgumentData_subset_oneLevel,
+    SearchArgumentData_subset_oneLevel, SearchArgumentData_subset_wholeSubtree,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
 import {
     _decode_SearchResult,
@@ -160,38 +160,55 @@ describe("Meerkat DSA", () => {
             ],
         );
 
-        const subordinates = [
-            "E338ECE9-0100-4499-BEEE-2F3F766B669C",
-            "837DF269-2A2A-47E6-BA19-3FC65D5D3FA7",
-            "6AF6F47F-8432-4CBE-9F2F-7C8C56D4F70A",
-        ];
+        const subordinates = [ "A", "B", "C" ];
         for (const subordinate_id of subordinates) {
             await createTestNode(connection!, dn, subordinate_id);
         }
-        const reqData: SearchArgumentData = new SearchArgumentData(
-            {
-                rdnSequence: dn,
-            },
-            SearchArgumentData_subset_oneLevel,
-        );
-        const arg: SearchArgument = {
-            unsigned: reqData,
-        };
-        const result = await writeOperation(
-            connection!,
-            search["&operationCode"]!,
-            _encode_SearchArgument(arg, DER),
-        );
-        if ("result" in result && result.result) {
-            const decoded = _decode_SearchResult(result.result);
-            const resData = getOptionallyProtectedValue(decoded);
-            if ("searchInfo" in resData) {
-                expect(resData.searchInfo.entries.length).toBe(3);
+
+        { // Try request that should be prohibited
+            const reqData: SearchArgumentData = new SearchArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                SearchArgumentData_subset_wholeSubtree,
+            );
+            const arg: SearchArgument = {
+                unsigned: reqData,
+            };
+            const result = await writeOperation(
+                connection!,
+                search["&operationCode"]!,
+                _encode_SearchArgument(arg, DER),
+            );
+            expect("error" in result);
+        }
+
+        { // Try a request that should be allowed
+            const reqData: SearchArgumentData = new SearchArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                SearchArgumentData_subset_oneLevel,
+            );
+            const arg: SearchArgument = {
+                unsigned: reqData,
+            };
+            const result = await writeOperation(
+                connection!,
+                search["&operationCode"]!,
+                _encode_SearchArgument(arg, DER),
+            );
+            if ("result" in result && result.result) {
+                const decoded = _decode_SearchResult(result.result);
+                const resData = getOptionallyProtectedValue(decoded);
+                if ("searchInfo" in resData) {
+                    expect(resData.searchInfo.entries.length).toBe(3);
+                } else {
+                    expect(false).toBeFalsy();
+                }
             } else {
-                expect(false).toBeFalsy();
+                expect(false).toBeTruthy();
             }
-        } else {
-            expect(false).toBeTruthy();
         }
     });
 
