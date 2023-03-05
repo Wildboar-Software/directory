@@ -874,11 +874,19 @@ export
 async function createCompoundEntry(
     connection: IDMConnection,
     superiorDN: DistinguishedName,
+    id?: string
 ): Promise<void> {
     await createEntry(
         connection,
         superiorDN,
-        parentRDN,
+        id
+            ? [
+                new AttributeTypeAndValue(
+                    organizationName["&id"],
+                    utf8(id),
+                ),
+            ]
+            : parentRDN,
         [
             new Attribute(
                 objectClass["&id"],
@@ -887,7 +895,7 @@ async function createCompoundEntry(
             ),
             new Attribute(
                 organizationName["&id"],
-                [utf8("Wildboar Software")],
+                [utf8(id ?? "Wildboar Software")],
                 undefined,
             ),
         ],
