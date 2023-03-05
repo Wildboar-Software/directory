@@ -1819,7 +1819,7 @@ async function searchRuleCheckProcedure_i (
             .filter((sr) => (sr.userClass ?? 0) === highest_user_class);
 
         // Step 6.
-        if (GoodPermittedSR.length > 0) {
+        if (GoodPermittedSR.length > 1) {
             /* "If in the list above there are several search-rules to select
             from, the implementation should log the incident for administrative
             attention, as the search-rule definitions probably need re-working."
