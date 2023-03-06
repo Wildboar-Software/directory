@@ -200,6 +200,7 @@ import {
     ControlOptions,
 } from "@wildboar/x500/src/lib/modules/ServiceAdministration/ControlOptions.ta";
 import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
+import getAttributeParentTypes from "../x500/getAttributeParentTypes";
 
 const SEARCH_RULE_BYTES: Buffer = searchRules["&id"].toBytes();
 
@@ -643,14 +644,31 @@ function general_check_of_search_filter (
     }
 
     for (const [attr, is_non_neg] of non_negated.entries()) {
-        const is_permitted = permitted_attrs.get(attr);
-        if (!is_permitted) {
-            state.searchAttributeViolations.push(ObjectIdentifier.fromString(attr));
+        const oid = ObjectIdentifier.fromString(attr);
+        let is_permitted: boolean = false;
+        for (const attr_type of getAttributeParentTypes(ctx, oid)) {
+            const key = attr_type.toString();
+            const profile = permitted_attrs.get(attr_type.toString());
+            if (profile) {
+                const is_subtype: boolean = (key !== attr);
+                if (!is_subtype || profile.includeSubtypes) {
+                    is_permitted = true;
+                } else {
+                    break;
+                }
+            } else {
+                continue;
+            }
+            /* WARNING: The specification is not clear as to whether this is true
+            for all attributes at all, or just those present in the input attrs. */
+            if (!is_non_neg) {
+                state.attributeNegationViolations.push(oid);
+                break;
+            }
         }
-        /* WARNING: The specification is not clear as to whether this is true
-        for all attributes at all, or just those present in the input attrs. */
-        if (!is_non_neg) {
-            state.attributeNegationViolations.push(ObjectIdentifier.fromString(attr));
+        if (!is_permitted) {
+            state.searchAttributeViolations.push(oid);
+            continue;
         }
         required_attrs.delete(attr);
     }
