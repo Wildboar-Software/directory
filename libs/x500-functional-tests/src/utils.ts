@@ -164,14 +164,8 @@ import {
     uiiInUrn,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uiiInUrn.oa";
 import {
-    contentUrl,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/contentUrl.oa";
-import {
     alias,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/alias.oa";
-import {
-    aliasedEntryName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/aliasedEntryName.oa";
 import {
     oidC,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/oidC.oa";
@@ -191,7 +185,10 @@ import {
 } from "@wildboar/x500/src/lib/modules/SchemaAdministration/DITContextUseInformation.ta";
 import { country, countryName } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/country.oa";
 import { residentialPerson } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/residentialPerson.oa";
-import { id_ar_serviceSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-serviceSpecificArea.va";
+import {
+    id_ar_serviceSpecificArea
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-serviceSpecificArea.va";
+import { languageContext } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/languageContext.oa";
 
 export
 const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(Array(9).fill(FALSE_BIT));
@@ -734,6 +731,19 @@ async function createTestRootNode(
                         new DITContextUseInformation(
                             undefined,
                             [localeContext["&id"]],
+                        ),
+                    ), DER),
+                    _encode_DITContextUseDescription(new DITContextUseDescription(
+                        organizationalUnitName["&id"],
+                        undefined,
+                        undefined,
+                        undefined,
+                        new DITContextUseInformation(
+                            undefined,
+                            [
+                                localeContext["&id"],
+                                languageContext["&id"],
+                            ],
                         ),
                     ), DER),
                 ],

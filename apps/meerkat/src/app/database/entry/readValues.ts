@@ -210,6 +210,10 @@ function *filterByTypeAndContextAssertion (
     values: Value[],
     selectedContexts: Record<IndexableOID, TypeAndContextAssertion[]>,
 ): IterableIterator<Value> {
+    if (!selectedContexts) {
+        yield *values;
+        return;
+    }
     for (const value of values) {
         // A ContextAssertion is true for a particular attribute value if:
         // ...the attribute value contains no contexts of the asserted contextType
@@ -351,41 +355,11 @@ async function readValues (
         ? await getContextAssertionDefaults(ctx, entry, options.relevantSubentries)
         : [];
 
-    // Convert context values in search rule result attributes into context assertions.
-    if (outputTypes) {
-        for (const resultAttr of outputTypes.values()) {
-            if (!resultAttr.contexts?.length) {
-                continue; // If there are no contexts, move on.
-            }
-            const contexts = resultAttr.contexts;
-            const contextsWithValues = contexts.filter((c) => c.contextValue?.length);
-            if (contextsWithValues.length === 0) {
-                continue;
-            }
-            /**
-             * Note that we do not have to merge these contexts with the user
-             * supplied contexts. This implementation can handle multiple
-             * TACAs of the same attribute type, so we just add more TACAs.
-             */
-            cads.push(new TypeAndContextAssertion(
-                resultAttr.attributeType,
-                {
-                    all: contexts
-                        .filter((c) => c.contextValue?.length)
-                        .map((c) => new ContextAssertion(
-                            c.contextType,
-                            c.contextValue ?? [],
-                        )),
-                },
-            ));
-        }
-    }
-
     /**
      * EIS contexts > operationContexts > CAD subentries > locally-defined default > no context assertion.
      * Per ITU X.501 (2016), Section 8.9.2.2.
      */
-    const contextSelection: ContextSelection = options?.selection?.contextSelection
+    let contextSelection: ContextSelection = options?.selection?.contextSelection
         ?? options?.operationContexts
         ?? (cads.length
             ? {
@@ -623,6 +597,41 @@ async function readValues (
                 taca.type_,
                 {
                     all: [ ca ],
+                },
+            ));
+        }
+    }
+
+    // Convert context values in search rule result attributes into context assertions.
+    if (outputTypes) {
+        for (const resultAttr of outputTypes.values()) {
+            if (!resultAttr.contexts?.length) {
+                continue; // If there are no contexts, move on.
+            }
+            const contexts = resultAttr.contexts;
+            const contextsWithValues = contexts.filter((c) => c.contextValue?.length);
+            if (contextsWithValues.length === 0) {
+                continue;
+            }
+            if (!("selectedContexts" in contextSelection)) {
+                contextSelection = {
+                    selectedContexts: [],
+                };
+            }
+            /**
+             * Note that we do not have to merge these contexts with the user
+             * supplied contexts. This implementation can handle multiple
+             * TACAs of the same attribute type, so we just add more TACAs.
+             */
+            newAssertions.push(new TypeAndContextAssertion(
+                resultAttr.attributeType,
+                {
+                    all: contexts
+                        .filter((c) => c.contextValue?.length)
+                        .map((c) => new ContextAssertion(
+                            c.contextType,
+                            c.contextValue ?? [],
+                        )),
                 },
             ));
         }

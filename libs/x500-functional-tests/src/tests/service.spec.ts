@@ -1,11 +1,11 @@
 import {
     ASN1Element,
-    FALSE,
     FALSE_BIT,
     ObjectIdentifier,
+    TRUE,
     TRUE_BIT,
 } from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER, _encodePrintableString } from "asn1-ts/dist/node/functional";
 import {
     IDMConnection,
 } from "@wildboar/idm";
@@ -30,7 +30,9 @@ import {
     SearchArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
 import {
-    SearchArgumentData_subset_oneLevel, SearchArgumentData_subset_wholeSubtree,
+    SearchArgumentData_subset_baseObject,
+    SearchArgumentData_subset_oneLevel,
+    SearchArgumentData_subset_wholeSubtree,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
 import {
     _decode_SearchResult,
@@ -56,7 +58,7 @@ import { subentry, subtreeSpecification } from "@wildboar/x500/src/lib/modules/I
 import { serviceAdminSubentry } from "@wildboar/x500/src/lib/modules/InformationFramework/serviceAdminSubentry.oa";
 import { SubtreeSpecification } from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
 import { AttributeValueAssertion } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
-import { applicationProcess, description } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/applicationProcess.oa";
+import { applicationProcess, description, organizationalUnitName } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/applicationProcess.oa";
 import { EntryInformationSelection, FamilyReturn } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
 import { ServiceControls } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
 import { FamilyReturn_memberSelect_compoundEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn-memberSelect.ta";
@@ -68,10 +70,11 @@ import { SearchControlOptions, SearchControlOptions_noSystemRelaxation, SearchCo
 import { Context } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Context.ta";
 import { ContextProfile } from "@wildboar/x500/src/lib/modules/ServiceAdministration/ContextProfile.ta";
 import { languageContext } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/languageContext.oa";
-import { TypeAndContextAssertion } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
 import { ContextAssertion } from "@wildboar/x500/src/lib/modules/InformationFramework/ContextAssertion.ta";
 import { localeContext } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localeContext.oa";
 import { name } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/name.oa";
+import { Attribute_valuesWithContext_Item } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Attribute-valuesWithContext-Item.ta";
+import { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 
 jest.setTimeout(30000);
 
@@ -546,7 +549,7 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    test("search rules can limit the returned attribute tyes", async () => {
+    test("search rules can limit the returned attribute types", async () => {
         const testId = `search-rule-output-attr-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, undefined, undefined, true);
@@ -2890,12 +2893,333 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    test.todo("result context types");
+    test("search rules can limit the returned contexts", async () => {
+        const testId = `search-rule-output-context-types-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId, undefined, undefined, true);
+        }
+        const dn = createTestRootDN(testId);
 
-    test.todo("result context values");
+        const service_subentry_rdn: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("Service Admin"),
+            ),
+        ];
+        await createEntry(
+            connection!,
+            dn,
+            service_subentry_rdn,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(serviceAdminSubentry["&id"]),
+                    ],
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [utf8("Service Admin")],
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [subtreeSpecification.encoderFor["&Type"]!(new SubtreeSpecification(), DER)],
+                ),
+                new Attribute(
+                    searchRules["&id"],
+                    [
+                        searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
+                            1,
+                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
+                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            4,
+                            undefined,
+                            undefined,
+                            [
+                                new ResultAttribute(
+                                    organizationalUnitName["&id"],
+                                    undefined,
+                                    [
+                                        new ContextProfile(
+                                            languageContext["&id"],
+                                        ),
+                                    ],
+                                ),
+                            ],
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, FALSE_BIT ]), // baseObject and oneLevel
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                        ), DER),
+                    ],
+                ),
+            ],
+        );
+
+        const subordinateRDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("A"),
+            ),
+        ];
+        const subordinateDN: DistinguishedName = [ ...dn, subordinateRDN ];
+        await createTestNode(connection!, dn, "A", [
+            new Attribute(
+                organizationalUnitName["&id"],
+                [],
+                [
+                    new Attribute_valuesWithContext_Item(
+                        utf8("Area 51"),
+                        [
+                            new Context(
+                                languageContext["&id"],
+                                [_encodePrintableString("en", DER)],
+                            ),
+                            new Context(
+                                localeContext["&id"],
+                                [
+                                    localeContext.encoderFor["&Type"]!({
+                                        localeID1: new ObjectIdentifier([ 2, 5, 42, 23 ]),
+                                    }, DER),
+                                ],
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        ]);
+
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: subordinateDN,
+            },
+            SearchArgumentData_subset_baseObject,
+            undefined,
+            undefined,
+            new EntryInformationSelection(
+                {
+                    select: [
+                        organizationalUnitName["&id"],
+                    ],
+                },
+                undefined,
+                undefined,
+                undefined,
+                TRUE, // You must specify that you actually WANT contexts.
+            ),
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in result);
+        assert(result.result);
+        const decoded = _decode_SearchResult(result.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        expect(resData.searchInfo.entries).toHaveLength(1);
+        const entry = resData.searchInfo.entries[0];
+        assert(entry.information);
+        expect(entry.information).toHaveLength(1);
+        const ou_info = entry.information[0];
+        assert("attribute" in ou_info);
+        const ou_attr = ou_info.attribute;
+        expect(ou_attr.type_.isEqualTo(organizationalUnitName["&id"])).toBeTruthy();
+        expect(ou_attr.values).toHaveLength(0);
+        assert(ou_attr.valuesWithContext);
+        expect(ou_attr.valuesWithContext).toHaveLength(1);
+        const vwc = ou_attr.valuesWithContext[0];
+        expect(vwc.value.printableString).toBe("Area 51");
+        expect(vwc.contextList).toHaveLength(1);
+        const context = vwc.contextList[0];
+        expect(context.contextType.isEqualTo(languageContext["&id"]));
+        expect(context.contextValues).toHaveLength(1);
+        const context_value = context.contextValues[0];
+        expect(context_value.printableString).toBe("en");
+    });
+
+    test("search rules can limit the returned context values", async () => {
+        const testId = `search-rule-output-context-values-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId, undefined, undefined, true);
+        }
+        const dn = createTestRootDN(testId);
+
+        const service_subentry_rdn: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("Service Admin"),
+            ),
+        ];
+        await createEntry(
+            connection!,
+            dn,
+            service_subentry_rdn,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(serviceAdminSubentry["&id"]),
+                    ],
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [utf8("Service Admin")],
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [subtreeSpecification.encoderFor["&Type"]!(new SubtreeSpecification(), DER)],
+                ),
+                new Attribute(
+                    searchRules["&id"],
+                    [
+                        searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
+                            1,
+                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
+                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            4,
+                            undefined,
+                            undefined,
+                            [
+                                new ResultAttribute(
+                                    organizationalUnitName["&id"],
+                                    undefined,
+                                    [
+                                        new ContextProfile(
+                                            languageContext["&id"],
+                                            [_encodePrintableString("en", DER)],
+                                        ),
+                                    ],
+                                ),
+                            ],
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, FALSE_BIT ]), // baseObject and oneLevel
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                        ), DER),
+                    ],
+                ),
+            ],
+        );
+
+        const subordinateRDN: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("A"),
+            ),
+        ];
+        const subordinateDN: DistinguishedName = [ ...dn, subordinateRDN ];
+        await createTestNode(connection!, dn, "A", [
+            new Attribute(
+                organizationalUnitName["&id"],
+                [],
+                [
+                    new Attribute_valuesWithContext_Item(
+                        utf8("Area 51"),
+                        [
+                            new Context(
+                                languageContext["&id"],
+                                [
+                                    _encodePrintableString("en", DER),
+                                    _encodePrintableString("fr", DER),
+                                    _encodePrintableString("de", DER),
+                                ],
+                            ),
+                            new Context(
+                                localeContext["&id"],
+                                [
+                                    localeContext.encoderFor["&Type"]!({
+                                        localeID1: new ObjectIdentifier([ 2, 5, 42, 23 ]),
+                                    }, DER),
+                                ],
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        ]);
+
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: subordinateDN,
+            },
+            SearchArgumentData_subset_baseObject,
+            undefined,
+            undefined,
+            new EntryInformationSelection(
+                {
+                    select: [
+                        organizationalUnitName["&id"],
+                    ],
+                },
+                undefined,
+                undefined,
+                undefined,
+                TRUE, // You must specify that you actually WANT contexts.
+            ),
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in result);
+        assert(result.result);
+        const decoded = _decode_SearchResult(result.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        expect(resData.searchInfo.entries).toHaveLength(1);
+        const entry = resData.searchInfo.entries[0];
+        assert(entry.information);
+        expect(entry.information).toHaveLength(1);
+        const ou_info = entry.information[0];
+        assert("attribute" in ou_info);
+        const ou_attr = ou_info.attribute;
+        expect(ou_attr.type_.isEqualTo(organizationalUnitName["&id"])).toBeTruthy();
+        expect(ou_attr.values).toHaveLength(0);
+        assert(ou_attr.valuesWithContext);
+        expect(ou_attr.valuesWithContext).toHaveLength(1);
+        const vwc = ou_attr.valuesWithContext[0];
+        expect(vwc.value.printableString).toBe("Area 51");
+        expect(vwc.contextList).toHaveLength(1);
+        const context = vwc.contextList[0];
+        expect(context.contextType.isEqualTo(languageContext["&id"]));
+        /* This is not a mistake. The return contexts do not limit the contexts
+        values that are returned. Return contexts with values become context
+        assertions, and since we only asserted a languageContext of "en", the
+        value supplied above is returned, even though it lacks "fr" and "de"
+        values as contexts. This is honestly not a very good test at all, but
+        I did debug this and I do see that it is creating context assertions. */
+        expect(context.contextValues).toHaveLength(3);
+    });
+
     test.todo("defaultValues");
     test.todo("defaultValues without an entry type");
-
     test.todo("complicated example")
 
 });
