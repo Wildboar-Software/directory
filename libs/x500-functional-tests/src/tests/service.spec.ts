@@ -65,6 +65,13 @@ import { strict as assert } from "node:assert";
 import { MRMapping, MRSubstitution } from "@wildboar/x500/src/lib/modules/ServiceAdministration/MRMapping.ta";
 import { id_mr_systemProposedMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-mr-systemProposedMatch.va";
 import { SearchControlOptions, SearchControlOptions_noSystemRelaxation, SearchControlOptions_useSubset } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
+import { Context } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Context.ta";
+import { ContextProfile } from "@wildboar/x500/src/lib/modules/ServiceAdministration/ContextProfile.ta";
+import { languageContext } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/languageContext.oa";
+import { TypeAndContextAssertion } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
+import { ContextAssertion } from "@wildboar/x500/src/lib/modules/InformationFramework/ContextAssertion.ta";
+import { localeContext } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localeContext.oa";
+import { name } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/name.oa";
 
 jest.setTimeout(30000);
 
@@ -2221,11 +2228,674 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    test.todo("contextCombination");
-    test.todo("includeSubtypes");
-    test.todo("request contexts");
-    test.todo("result contexts");
+    test("search rules can allow certain searches based on filter item context types", async () => {
+        const testId = `search-rule-request-contexts-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId, undefined, undefined, true);
+        }
+        const dn = createTestRootDN(testId);
+
+        const service_subentry_rdn: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("Service Admin"),
+            ),
+        ];
+        await createEntry(
+            connection!,
+            dn,
+            service_subentry_rdn,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(serviceAdminSubentry["&id"]),
+                    ],
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [utf8("Service Admin")],
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [subtreeSpecification.encoderFor["&Type"]!(new SubtreeSpecification(), DER)],
+                ),
+                new Attribute(
+                    searchRules["&id"],
+                    [
+                        searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
+                            1,
+                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
+                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            4,
+                            [
+                                new RequestAttribute(
+                                    commonName["&id"],
+                                    undefined,
+                                    undefined,
+                                    undefined,
+                                    [
+                                        new ContextProfile(
+                                            languageContext["&id"],
+                                        ),
+                                    ],
+                                    undefined,
+                                    undefined,
+                                ),
+                            ],
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, FALSE_BIT ]), // baseObject and oneLevel
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                        ), DER),
+                    ],
+                ),
+            ],
+        );
+
+        const subordinates = [ "A", "B", "C" ];
+        for (const subordinate_id of subordinates) {
+            await createTestNode(connection!, dn, subordinate_id);
+        }
+
+        { // Try request that should be prohibited
+            const reqData: SearchArgumentData = new SearchArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                SearchArgumentData_subset_oneLevel,
+                {
+                    item: {
+                        equality: new AttributeValueAssertion(
+                            objectClass["&id"],
+                            oid(applicationProcess["&id"]),
+                            {
+                                selectedContexts: [
+                                    new ContextAssertion(
+                                        localeContext["&id"],
+                                        [
+                                            localeContext.encoderFor["&Type"]!({
+                                                localeID1: new ObjectIdentifier([ 2, 5, 234, 20 ]),
+                                            }, DER),
+                                        ],
+                                    ),
+                                ],
+                            },
+                        ),
+                    },
+                },
+            );
+            const arg: SearchArgument = {
+                unsigned: reqData,
+            };
+            const result = await writeOperation(
+                connection!,
+                search["&operationCode"]!,
+                _encode_SearchArgument(arg, DER),
+            );
+            expect("error" in result);
+        }
+
+        { // Try a request that should be allowed
+            const reqData: SearchArgumentData = new SearchArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                SearchArgumentData_subset_oneLevel,
+                {
+                    item: {
+                        equality: new AttributeValueAssertion(
+                            commonName["&id"],
+                            utf8("B"),
+                            {
+                                selectedContexts: [
+                                    new ContextAssertion(
+                                        languageContext["&id"],
+                                        [
+                                            languageContext.encoderFor["&Type"]!("en", DER),
+                                        ],
+                                    ),
+                                ],
+                            },
+                        ),
+                    },
+                },
+            );
+            const arg: SearchArgument = {
+                unsigned: reqData,
+            };
+            const result = await writeOperation(
+                connection!,
+                search["&operationCode"]!,
+                _encode_SearchArgument(arg, DER),
+            );
+            if ("result" in result && result.result) {
+                const decoded = _decode_SearchResult(result.result);
+                const resData = getOptionallyProtectedValue(decoded);
+                if ("searchInfo" in resData) {
+                    expect(resData.searchInfo.entries.length).toBe(1);
+                } else {
+                    expect(false).toBeFalsy();
+                }
+            } else {
+                expect(false).toBeTruthy();
+            }
+        }
+    });
+
+    test("search rules can allow certain searches based on filter item context values", async () => {
+        const testId = `search-rule-request-context-values-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId, undefined, undefined, true);
+        }
+        const dn = createTestRootDN(testId);
+
+        const service_subentry_rdn: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("Service Admin"),
+            ),
+        ];
+        await createEntry(
+            connection!,
+            dn,
+            service_subentry_rdn,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(serviceAdminSubentry["&id"]),
+                    ],
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [utf8("Service Admin")],
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [subtreeSpecification.encoderFor["&Type"]!(new SubtreeSpecification(), DER)],
+                ),
+                new Attribute(
+                    searchRules["&id"],
+                    [
+                        searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
+                            1,
+                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
+                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            4,
+                            [
+                                new RequestAttribute(
+                                    commonName["&id"],
+                                    undefined,
+                                    undefined,
+                                    undefined,
+                                    [
+                                        new ContextProfile(
+                                            languageContext["&id"],
+                                            [
+                                                languageContext.encoderFor["&Type"]!("en", DER),
+                                            ],
+                                        ),
+                                    ],
+                                    undefined,
+                                    undefined,
+                                ),
+                            ],
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, FALSE_BIT ]), // baseObject and oneLevel
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                        ), DER),
+                    ],
+                ),
+            ],
+        );
+
+        const subordinates = [ "A", "B", "C" ];
+        for (const subordinate_id of subordinates) {
+            await createTestNode(connection!, dn, subordinate_id);
+        }
+
+        { // Try request that should be prohibited
+            const reqData: SearchArgumentData = new SearchArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                SearchArgumentData_subset_oneLevel,
+                {
+                    item: {
+                        equality: new AttributeValueAssertion(
+                            objectClass["&id"],
+                            oid(applicationProcess["&id"]),
+                            {
+                                selectedContexts: [
+                                    new ContextAssertion(
+                                        languageContext["&id"],
+                                        [
+                                            languageContext.encoderFor["&Type"]!("fr", DER),
+                                        ],
+                                    ),
+                                ],
+                            },
+                        ),
+                    },
+                },
+            );
+            const arg: SearchArgument = {
+                unsigned: reqData,
+            };
+            const result = await writeOperation(
+                connection!,
+                search["&operationCode"]!,
+                _encode_SearchArgument(arg, DER),
+            );
+            expect("error" in result);
+        }
+
+        { // Try a request that should be allowed
+            const reqData: SearchArgumentData = new SearchArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                SearchArgumentData_subset_oneLevel,
+                {
+                    item: {
+                        equality: new AttributeValueAssertion(
+                            commonName["&id"],
+                            utf8("B"),
+                            {
+                                selectedContexts: [
+                                    new ContextAssertion(
+                                        languageContext["&id"],
+                                        [
+                                            languageContext.encoderFor["&Type"]!("en", DER),
+                                        ],
+                                    ),
+                                ],
+                            },
+                        ),
+                    },
+                },
+            );
+            const arg: SearchArgument = {
+                unsigned: reqData,
+            };
+            const result = await writeOperation(
+                connection!,
+                search["&operationCode"]!,
+                _encode_SearchArgument(arg, DER),
+            );
+            if ("result" in result && result.result) {
+                const decoded = _decode_SearchResult(result.result);
+                const resData = getOptionallyProtectedValue(decoded);
+                if ("searchInfo" in resData) {
+                    expect(resData.searchInfo.entries.length).toBe(1);
+                } else {
+                    expect(false).toBeFalsy();
+                }
+            } else {
+                expect(false).toBeTruthy();
+            }
+        }
+    });
+
+    test("search rules can allow certain searches based on filter item context combinations", async () => {
+        const testId = `search-rule-request-context-combo-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId, undefined, undefined, true);
+        }
+        const dn = createTestRootDN(testId);
+
+        const service_subentry_rdn: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("Service Admin"),
+            ),
+        ];
+        await createEntry(
+            connection!,
+            dn,
+            service_subentry_rdn,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(serviceAdminSubentry["&id"]),
+                    ],
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [utf8("Service Admin")],
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [subtreeSpecification.encoderFor["&Type"]!(new SubtreeSpecification(), DER)],
+                ),
+                new Attribute(
+                    searchRules["&id"],
+                    [
+                        searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
+                            1,
+                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
+                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            4,
+                            [
+                                new RequestAttribute(
+                                    commonName["&id"],
+                                    undefined,
+                                    undefined,
+                                    undefined,
+                                    [
+                                        new ContextProfile(
+                                            languageContext["&id"],
+                                            [
+                                                languageContext.encoderFor["&Type"]!("en", DER),
+                                            ],
+                                        ),
+                                        new ContextProfile(
+                                            localeContext["&id"],
+                                        ),
+                                    ],
+                                    {
+                                        and: [
+                                            {
+                                                context: languageContext["&id"],
+                                            },
+                                            {
+                                                context: localeContext["&id"],
+                                            },
+                                        ],
+                                    },
+                                    undefined,
+                                ),
+                            ],
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, FALSE_BIT ]), // baseObject and oneLevel
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                        ), DER),
+                    ],
+                ),
+            ],
+        );
+
+        const subordinates = [ "A", "B", "C" ];
+        for (const subordinate_id of subordinates) {
+            await createTestNode(connection!, dn, subordinate_id);
+        }
+
+        { // Try request that should be prohibited
+            const reqData: SearchArgumentData = new SearchArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                SearchArgumentData_subset_oneLevel,
+                {
+                    item: {
+                        equality: new AttributeValueAssertion(
+                            objectClass["&id"],
+                            oid(applicationProcess["&id"]),
+                            {
+                                selectedContexts: [
+                                    new ContextAssertion(
+                                        languageContext["&id"],
+                                        [
+                                            languageContext.encoderFor["&Type"]!("fr", DER),
+                                        ],
+                                    ),
+                                ],
+                            },
+                        ),
+                    },
+                },
+            );
+            const arg: SearchArgument = {
+                unsigned: reqData,
+            };
+            const result = await writeOperation(
+                connection!,
+                search["&operationCode"]!,
+                _encode_SearchArgument(arg, DER),
+            );
+            expect("error" in result);
+        }
+
+        { // Try a request that should be allowed
+            const reqData: SearchArgumentData = new SearchArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                SearchArgumentData_subset_oneLevel,
+                {
+                    item: {
+                        equality: new AttributeValueAssertion(
+                            commonName["&id"],
+                            utf8("B"),
+                            {
+                                selectedContexts: [
+                                    new ContextAssertion(
+                                        languageContext["&id"],
+                                        [
+                                            languageContext.encoderFor["&Type"]!("en", DER),
+                                        ],
+                                    ),
+                                    new ContextAssertion(
+                                        localeContext["&id"],
+                                        [
+                                            localeContext.encoderFor["&Type"]!({
+                                                localeID1: new ObjectIdentifier([ 2, 5, 423, 30 ]),
+                                            }, DER),
+                                        ],
+                                    ),
+                                ],
+                            },
+                        ),
+                    },
+                },
+            );
+            const arg: SearchArgument = {
+                unsigned: reqData,
+            };
+            const result = await writeOperation(
+                connection!,
+                search["&operationCode"]!,
+                _encode_SearchArgument(arg, DER),
+            );
+            if ("result" in result && result.result) {
+                const decoded = _decode_SearchResult(result.result);
+                const resData = getOptionallyProtectedValue(decoded);
+                if ("searchInfo" in resData) {
+                    expect(resData.searchInfo.entries.length).toBe(1);
+                } else {
+                    expect(false).toBeFalsy();
+                }
+            } else {
+                expect(false).toBeTruthy();
+            }
+        }
+    });
+
+    test("search rules can allow certain searches based on filter attribute subtypes", async () => {
+        const testId = `search-rule-filter-subtypes-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId, undefined, undefined, true);
+        }
+        const dn = createTestRootDN(testId);
+
+        const service_subentry_rdn: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("Service Admin"),
+            ),
+        ];
+        await createEntry(
+            connection!,
+            dn,
+            service_subentry_rdn,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(serviceAdminSubentry["&id"]),
+                    ],
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [utf8("Service Admin")],
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [subtreeSpecification.encoderFor["&Type"]!(new SubtreeSpecification(), DER)],
+                ),
+                new Attribute(
+                    searchRules["&id"],
+                    [
+                        searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
+                            1,
+                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
+                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            4,
+                            [
+                                new RequestAttribute(
+                                    name["&id"],
+                                    true,
+                                    undefined,
+                                    undefined,
+                                    undefined,
+                                    undefined,
+                                    undefined,
+                                ),
+                            ],
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, FALSE_BIT ]), // baseObject and oneLevel
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                        ), DER),
+                    ],
+                ),
+            ],
+        );
+
+        const subordinates = [ "A", "B", "C" ];
+        for (const subordinate_id of subordinates) {
+            await createTestNode(connection!, dn, subordinate_id);
+        }
+
+        { // Try request that should be prohibited
+            const reqData: SearchArgumentData = new SearchArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                SearchArgumentData_subset_oneLevel,
+                {
+                    item: {
+                        equality: new AttributeValueAssertion(
+                            objectClass["&id"],
+                            oid(applicationProcess["&id"]),
+                            undefined,
+                        ),
+                    },
+                },
+            );
+            const arg: SearchArgument = {
+                unsigned: reqData,
+            };
+            const result = await writeOperation(
+                connection!,
+                search["&operationCode"]!,
+                _encode_SearchArgument(arg, DER),
+            );
+            expect("error" in result);
+        }
+
+        { // Try a request that should be allowed
+            const reqData: SearchArgumentData = new SearchArgumentData(
+                {
+                    rdnSequence: dn,
+                },
+                SearchArgumentData_subset_oneLevel,
+                {
+                    item: {
+                        equality: new AttributeValueAssertion(
+                            commonName["&id"],
+                            utf8("B"),
+                            undefined,
+                        ),
+                    },
+                },
+            );
+            const arg: SearchArgument = {
+                unsigned: reqData,
+            };
+            const result = await writeOperation(
+                connection!,
+                search["&operationCode"]!,
+                _encode_SearchArgument(arg, DER),
+            );
+            if ("result" in result && result.result) {
+                const decoded = _decode_SearchResult(result.result);
+                const resData = getOptionallyProtectedValue(decoded);
+                if ("searchInfo" in resData) {
+                    expect(resData.searchInfo.entries.length).toBe(1);
+                } else {
+                    expect(false).toBeFalsy();
+                }
+            } else {
+                expect(false).toBeTruthy();
+            }
+        }
+    });
+
+    test.todo("result context types");
+
+    test.todo("result context values");
     test.todo("defaultValues");
     test.todo("defaultValues without an entry type");
+
+    test.todo("complicated example")
 
 });
