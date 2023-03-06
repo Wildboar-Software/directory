@@ -505,9 +505,14 @@ function convertFilterItemToPrismaSelect (
     filterItem: FilterItem,
     relevantSubentries: Vertex[],
     selectFriends: boolean,
+    mr_subs: SearchState["matching_rule_substitutions"],
 ): Partial<Prisma.EntryWhereInput> | undefined {
     if ("equality" in filterItem) {
         const type_ = filterItem.equality.type_;
+        // For now, if the matching rules for this type are overwritten, just return.
+        if (mr_subs.has(type_.toString())) {
+            return undefined;
+        }
         const value = filterItem.equality.assertion.value;
         if (type_.isEqualTo(objectClass["&id"])) {
             return {
@@ -723,6 +728,10 @@ function convertFilterItemToPrismaSelect (
         };
     } else if ("substrings" in filterItem) {
         const type_ = filterItem.substrings.type_;
+        // For now, if the matching rules for this type are overwritten, just return.
+        if (mr_subs.has(type_.toString())) {
+            return undefined;
+        }
         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
         if (!canFilterAttributeValueTable(ctx, superTypes)) {
             return undefined;
@@ -738,6 +747,10 @@ function convertFilterItemToPrismaSelect (
         };
     } else if ("greaterOrEqual" in filterItem) {
         const type_ = filterItem.greaterOrEqual.type_;
+        // For now, if the matching rules for this type are overwritten, just return.
+        if (mr_subs.has(type_.toString())) {
+            return undefined;
+        }
         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
         if (!canFilterAttributeValueTable(ctx, superTypes)) {
             return undefined;
@@ -753,6 +766,10 @@ function convertFilterItemToPrismaSelect (
         };
     } else if ("lessOrEqual" in filterItem) {
         const type_ = filterItem.lessOrEqual.type_;
+        // For now, if the matching rules for this type are overwritten, just return.
+        if (mr_subs.has(type_.toString())) {
+            return undefined;
+        }
         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
         if (!canFilterAttributeValueTable(ctx, superTypes)) {
             return undefined;
@@ -783,6 +800,10 @@ function convertFilterItemToPrismaSelect (
         };
     } else if ("approximateMatch" in filterItem) {
         const type_ = filterItem.approximateMatch.type_;
+        // For now, if the matching rules for this type are overwritten, just return.
+        if (mr_subs.has(type_.toString())) {
+            return undefined;
+        }
         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
         if (!canFilterAttributeValueTable(ctx, superTypes)) {
             return undefined;
@@ -839,24 +860,25 @@ function convertFilterToPrismaSelect (
     filter: Filter,
     relevantSubentries: Vertex[],
     selectFriends: boolean,
+    mr_subs: SearchState["matching_rule_substitutions"],
 ): Partial<Prisma.EntryWhereInput> | undefined {
     if ("item" in filter) {
-        return convertFilterItemToPrismaSelect(ctx, filter.item, relevantSubentries, selectFriends);
+        return convertFilterItemToPrismaSelect(ctx, filter.item, relevantSubentries, selectFriends, mr_subs);
     } else if ("and" in filter) {
         return {
             AND: filter.and
-                .map((sub) => convertFilterToPrismaSelect(ctx, sub, relevantSubentries, selectFriends))
+                .map((sub) => convertFilterToPrismaSelect(ctx, sub, relevantSubentries, selectFriends, mr_subs))
                 .filter((sub): sub is Partial<Prisma.EntryWhereInput> => !!sub),
         };
     } else if ("or" in filter) {
         return {
             OR: filter.or
-                .map((sub) => convertFilterToPrismaSelect(ctx, sub, relevantSubentries, selectFriends))
+                .map((sub) => convertFilterToPrismaSelect(ctx, sub, relevantSubentries, selectFriends, mr_subs))
                 .filter((sub): sub is Partial<Prisma.EntryWhereInput> => !!sub),
         };
     } else if ("not" in filter) {
         return {
-            NOT: convertFilterToPrismaSelect(ctx, filter.not, relevantSubentries, selectFriends),
+            NOT: convertFilterToPrismaSelect(ctx, filter.not, relevantSubentries, selectFriends, mr_subs),
         };
     } else {
         return undefined;
@@ -1520,7 +1542,7 @@ async function search_i_ex (
         ?? SearchArgumentData._default_value_for_searchAliases;
     const matchedValuesOnly: boolean = data.matchedValuesOnly
         || Boolean(searchState.effectiveSearchControls?.[SearchControlOptions_matchedValuesOnly]);
-    const searchRuleReturnsMatchedValuesOnly: boolean = state.governingSearchRule?.outputAttributeTypes
+    const searchRuleReturnsMatchedValuesOnly: boolean = searchState.governingSearchRule?.outputAttributeTypes
         ?.some((oat) => oat.outputValues && ("matchedValuesOnly" in oat.outputValues)) ?? false;
     // const checkOverspecified: boolean = Boolean(searchState.effectiveSearchControls?.[SearchControlOptions_checkOverspecified]);
     const performExactly: boolean = Boolean(searchState.effectiveSearchControls?.[SearchControlOptions_performExactly]);
@@ -2259,6 +2281,7 @@ async function search_i_ex (
                 });
                 continue; // This should never happen, but just handling it in case it does.
             }
+            // TODO: Cache attributes from previous reads.
             const familyInfos = await Promise.all(
                 familySubset.map((member) => readFamilyMemberInfo(member)),
             );
@@ -2967,9 +2990,23 @@ async function search_i_ex (
              *
              * This also goes in an `AND` so that it does not overwrite the
              * `EntryObjectClass` that comes earlier.
+             *
+             * For this to work, familyGrouping must also be entryOnly (the
+             * default), because this will not recurse into the child entries to
+             * check for matching values.
              */
-            AND: (searchState.effectiveFilter && (data.subset === SearchArgumentData_subset_oneLevel))
-                ? convertFilterToPrismaSelect(ctx, searchState.effectiveFilter, relevantSubentries, !dontSelectFriends)
+            AND: (
+                searchState.effectiveFilter
+                && (data.subset === SearchArgumentData_subset_oneLevel)
+                && (familyGrouping === FamilyGrouping_entryOnly)
+            )
+                ? convertFilterToPrismaSelect(
+                    ctx,
+                    searchState.effectiveFilter,
+                    relevantSubentries,
+                    !dontSelectFriends,
+                    searchState.matching_rule_substitutions
+                )
                 : undefined,
 
         },
