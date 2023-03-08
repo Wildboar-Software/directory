@@ -345,6 +345,7 @@ import {
 //     octetStringMatch,
 // } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/octetStringMatch.oa";
 import {
+    RequestAttribute,
     ResultAttribute,
     SearchRule,
 } from "@wildboar/x500/src/lib/modules/ServiceAdministration/SearchRule.ta";
@@ -506,11 +507,18 @@ function convertFilterItemToPrismaSelect (
     relevantSubentries: Vertex[],
     selectFriends: boolean,
     mr_subs: SearchState["matching_rule_substitutions"],
+    request_attributes?: EvaluateFilterSettings["requestAttributes"],
 ): Partial<Prisma.EntryWhereInput> | undefined {
     if ("equality" in filterItem) {
         const type_ = filterItem.equality.type_;
+        const type_str = type_.toString();
         // For now, if the matching rules for this type are overwritten, just return.
-        if (mr_subs.has(type_.toString())) {
+        if (mr_subs.has(type_str)) {
+            return undefined;
+        }
+        const profile = request_attributes?.get(type_str);
+        if (profile?.defaultValues) {
+            // If there are default values defined, there is no need to pre-filter entries.
             return undefined;
         }
         const value = filterItem.equality.assertion.value;
@@ -861,24 +869,25 @@ function convertFilterToPrismaSelect (
     relevantSubentries: Vertex[],
     selectFriends: boolean,
     mr_subs: SearchState["matching_rule_substitutions"],
+    request_attributes?: EvaluateFilterSettings["requestAttributes"],
 ): Partial<Prisma.EntryWhereInput> | undefined {
     if ("item" in filter) {
-        return convertFilterItemToPrismaSelect(ctx, filter.item, relevantSubentries, selectFriends, mr_subs);
+        return convertFilterItemToPrismaSelect(ctx, filter.item, relevantSubentries, selectFriends, mr_subs, request_attributes);
     } else if ("and" in filter) {
         return {
             AND: filter.and
-                .map((sub) => convertFilterToPrismaSelect(ctx, sub, relevantSubentries, selectFriends, mr_subs))
+                .map((sub) => convertFilterToPrismaSelect(ctx, sub, relevantSubentries, selectFriends, mr_subs, request_attributes))
                 .filter((sub): sub is Partial<Prisma.EntryWhereInput> => !!sub),
         };
     } else if ("or" in filter) {
         return {
             OR: filter.or
-                .map((sub) => convertFilterToPrismaSelect(ctx, sub, relevantSubentries, selectFriends, mr_subs))
+                .map((sub) => convertFilterToPrismaSelect(ctx, sub, relevantSubentries, selectFriends, mr_subs, request_attributes))
                 .filter((sub): sub is Partial<Prisma.EntryWhereInput> => !!sub),
         };
     } else if ("not" in filter) {
         return {
-            NOT: convertFilterToPrismaSelect(ctx, filter.not, relevantSubentries, selectFriends, mr_subs),
+            NOT: convertFilterToPrismaSelect(ctx, filter.not, relevantSubentries, selectFriends, mr_subs, request_attributes),
         };
     } else {
         return undefined;
@@ -2072,6 +2081,16 @@ async function search_i_ex (
         performExactly,
         matchedValuesOnly: matchedValuesOnly || searchRuleReturnsMatchedValuesOnly,
         dnAttribute,
+        requestAttributes: searchState.governingSearchRule?.inputAttributeTypes?.length
+            ? (() => {
+                const ret: Map<string, RequestAttribute> =
+                new Map();
+                for (const iat of searchState.governingSearchRule.inputAttributeTypes) {
+                    ret.set(iat.attributeType.toString(), iat);
+                }
+                return ret;
+            })()
+            : undefined,
     };
 
     if (target.dse.cp) {
@@ -2997,7 +3016,7 @@ async function search_i_ex (
              */
             AND: (
                 searchState.effectiveFilter
-                && (data.subset === SearchArgumentData_subset_oneLevel)
+                && (searchState.effectiveSubset === SearchArgumentData_subset_oneLevel)
                 && (familyGrouping === FamilyGrouping_entryOnly)
             )
                 ? convertFilterToPrismaSelect(
@@ -3005,7 +3024,8 @@ async function search_i_ex (
                     searchState.effectiveFilter,
                     relevantSubentries,
                     !dontSelectFriends,
-                    searchState.matching_rule_substitutions
+                    searchState.matching_rule_substitutions,
+                    filterOptions["requestAttributes"],
                 )
                 : undefined,
 

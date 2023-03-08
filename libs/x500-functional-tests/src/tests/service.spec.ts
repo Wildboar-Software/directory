@@ -75,6 +75,7 @@ import { localeContext } from "@wildboar/x500/src/lib/modules/SelectedAttributeT
 import { name } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/name.oa";
 import { Attribute_valuesWithContext_Item } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Attribute-valuesWithContext-Item.ta";
 import { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import { RequestAttribute_defaultValues_Item } from "@wildboar/x500/src/lib/modules/ServiceAdministration/RequestAttribute-defaultValues-Item.ta";
 
 jest.setTimeout(30000);
 
@@ -3218,8 +3219,124 @@ describe("Meerkat DSA", () => {
         expect(context.contextValues).toHaveLength(3);
     });
 
-    test.todo("defaultValues");
-    test.todo("defaultValues without an entry type");
+    /**
+     * This remains undone because the specifications say nothing about how to
+     * use the entryType field.
+     */
+    test.todo("defaultValues with an entry type");
+    test("search rules can use default values for input attribute types without an entry type", async () => {
+        const testId = `search-rule-defaultValues-no-entry-type-${(new Date()).toISOString()}`;
+        { // Setup
+            await createTestRootNode(connection!, testId, undefined, undefined, true);
+        }
+        const dn = createTestRootDN(testId);
+
+        const service_subentry_rdn: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                commonName["&id"],
+                utf8("Service Admin"),
+            ),
+        ];
+        await createEntry(
+            connection!,
+            dn,
+            service_subentry_rdn,
+            [
+                new Attribute(
+                    objectClass["&id"],
+                    [
+                        oid(subentry["&id"]),
+                        oid(serviceAdminSubentry["&id"]),
+                    ],
+                ),
+                new Attribute(
+                    commonName["&id"],
+                    [utf8("Service Admin")],
+                ),
+                new Attribute(
+                    subtreeSpecification["&id"],
+                    [subtreeSpecification.encoderFor["&Type"]!(new SubtreeSpecification(), DER)],
+                ),
+                new Attribute(
+                    searchRules["&id"],
+                    [
+                        searchRules.encoderFor["&Type"]!(new SearchRuleDescription(
+                            1,
+                            new ObjectIdentifier([ 1, 3, 4, 6, 1 ]),
+                            new ObjectIdentifier([ 1, 3, 4, 6, 1, 4, 555 ]),
+                            4,
+                            [
+                                new RequestAttribute(
+                                    organizationalUnitName["&id"],
+                                    undefined,
+                                    undefined,
+                                    [
+                                        new RequestAttribute_defaultValues_Item(
+                                            undefined,
+                                            [utf8("enron")],
+                                        ),
+                                    ],
+                                    undefined,
+                                    undefined,
+                                    undefined,
+                                ),
+                            ],
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                            new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT, FALSE_BIT ]), // baseObject and oneLevel
+                            undefined,
+                            undefined,
+                            undefined,
+                            undefined,
+                        ), DER),
+                    ],
+                ),
+            ],
+        );
+
+        const subordinates = [ "A", "B", "C" ];
+        for (const subordinate_id of subordinates) {
+            await createTestNode(connection!, dn, subordinate_id);
+        }
+
+        const reqData: SearchArgumentData = new SearchArgumentData(
+            {
+                rdnSequence: dn,
+            },
+            SearchArgumentData_subset_oneLevel,
+            {
+                item: {
+                    equality: new AttributeValueAssertion(
+                        organizationalUnitName["&id"],
+                        utf8("enron"),
+                        undefined,
+                    ),
+                },
+            },
+        );
+        const arg: SearchArgument = {
+            unsigned: reqData,
+        };
+        const result = await writeOperation(
+            connection!,
+            search["&operationCode"]!,
+            _encode_SearchArgument(arg, DER),
+        );
+        assert("result" in result);
+        assert(result.result);
+        const decoded = _decode_SearchResult(result.result);
+        const resData = getOptionallyProtectedValue(decoded);
+        assert("searchInfo" in resData);
+        expect(resData.searchInfo.entries.length).toBe(3);
+    });
+
     test.todo("complicated example")
 
 });

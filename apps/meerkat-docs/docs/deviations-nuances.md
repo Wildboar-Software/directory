@@ -231,6 +231,9 @@ noted below are nuances in Meerkat DSA:
   due to difficulty in implementing this, but also because it seems like
   unintuitive behavior to replace matching rules that a user specifically
   requested.
+- Where a search rule is used to provide default values in a request attribute
+  profile, filter evaluation does not check if the supertypes of that the
+  asserted attribute type have request attribute profiles with default values.
 
 ## The "Never Contributing" Bug
 
