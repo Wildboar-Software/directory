@@ -234,10 +234,19 @@ noted below are nuances in Meerkat DSA:
 - Where a search rule is used to provide default values in a request attribute
   profile, filter evaluation does not check if the supertypes of that the
   asserted attribute type have request attribute profiles with default values.
+- The `additionalControl` component in a search rule has no effect, because
+  Meerkat DSA does not recognize any service control attributes.
+- The `matchingUse` component in a search rule's `inputAttributeTypes` has no
+  effect because there are no matching restrictions defined anywhere and Meerkat
+  DSA does not support any.
+- The `entryType` component of a search rule's input attribute type's
+  `defaultValues` field is unused, because the specification does not define how
+  it is to be used. As such, Meerkat DSA simply joins all default values defined
+  in each item in this set as though there were no `entryType` field at all.
 
 ## The "Never Contributing" Bug
 
-X.511 (2016), Section 7.13 states that:
+ITU Recommendation X.511 (2016), Section 7.13 states that:
 
 > If the filter used is the default filter (and : { }), then all members of a
 > family grouping shall be marked as participating members, but not as
