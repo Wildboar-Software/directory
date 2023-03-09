@@ -3338,5 +3338,7 @@ describe("Meerkat DSA", () => {
     });
 
     test.todo("complicated example");
+    test.todo("search rules can regulate a read operation");
+    test.todo("search rules can regulate a modifyEntry operation");
 
 });
