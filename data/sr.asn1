@@ -1,0 +1,148 @@
+id-svc-whitePages   OBJECT IDENTIFIER ::= {  } -- Name to telephone
+id-svc-yellowPages  OBJECT IDENTIFIER ::= {  } -- Businesses by category
+id-svc-greyPages    OBJECT IDENTIFIER ::= {  } -- Telephone to name
+id-svc-bluePages    OBJECT IDENTIFIER ::= {  } -- Government agencies
+
+simpleSearchBy{ATTRIBUTE:attr} REQUEST-ATTRIBUTE ::= {
+    ATTRIBUTE TYPE      attr.&id
+}
+
+simpleSearchFor{ATTRIBUTE:attr} RESULT-ATTRIBUTE ::= {
+    ATTRIBUTE TYPE      attr.&id,
+}
+
+searchBySurname                 REQUEST-ATTRIBUTE ::= simpleSearchBy{surname}
+searchByGivenName               REQUEST-ATTRIBUTE ::= simpleSearchBy{givenName}
+searchByCommonName              REQUEST-ATTRIBUTE ::= simpleSearchBy{commonName}
+searchByInitials                REQUEST-ATTRIBUTE ::= simpleSearchBy{initials}
+searchByGenerationQualifier     REQUEST-ATTRIBUTE ::= simpleSearchBy{generationQualifier}
+searchByLocalityName            REQUEST-ATTRIBUTE ::= simpleSearchBy{localityName}
+searchByStateOrProvinceName     REQUEST-ATTRIBUTE ::= simpleSearchBy{stateOrProvinceName}
+searchByBusinessCategory        REQUEST-ATTRIBUTE ::= simpleSearchBy{businessCategory}
+searchByTelephoneNumber         REQUEST-ATTRIBUTE ::= simpleSearchBy{telephoneNumber}
+
+searchForTelephoneNumber                RESULT-ATTRIBUTE ::= simpleSearchFor{telephoneNumber}
+searchForPostalAddress                  RESULT-ATTRIBUTE ::= simpleSearchFor{postalAddress}
+searchForPhysicalDeliveryOfficeName     RESULT-ATTRIBUTE ::= simpleSearchFor{physicalDeliveryOfficeName}
+searchForPostalCode                     RESULT-ATTRIBUTE ::= simpleSearchFor{postalCode}
+searchForPostOfficeBox                  RESULT-ATTRIBUTE ::= simpleSearchFor{postOfficeBox}
+searchForStreetAddress                  RESULT-ATTRIBUTE ::= simpleSearchFor{streetAddress}
+searchForStateOrProvinceName            RESULT-ATTRIBUTE ::= simpleSearchFor{stateOrProvinceName}
+searchForSurname                        RESULT-ATTRIBUTE ::= simpleSearchFor{surname}
+searchForGivenName                      RESULT-ATTRIBUTE ::= simpleSearchFor{givenName}
+searchForCommonName                     RESULT-ATTRIBUTE ::= simpleSearchFor{commonName}
+searchForInitials                       RESULT-ATTRIBUTE ::= simpleSearchFor{initials}
+searchForGenerationQualifier            RESULT-ATTRIBUTE ::= simpleSearchFor{generationQualifier}
+searchForLocalityName                   RESULT-ATTRIBUTE ::= simpleSearchFor{localityName}
+searchForBusinessCategory               RESULT-ATTRIBUTE ::= simpleSearchFor{businessCategory}
+searchForOrganizationName               RESULT-ATTRIBUTE ::= simpleSearchFor{organizationName}
+searchForDescription                    RESULT-ATTRIBUTE ::= simpleSearchFor{description}
+
+PersonNameRequestAttributes RESULT-ATTRIBUTE ::= {
+    searchByCommonName
+    | searchBySurname
+    | searchByGivenName
+    | searchByInitials
+    | searchByGenerationQualifier
+}
+
+PersonNameResultAttributes RESULT-ATTRIBUTE ::= {
+    searchForCommonName
+    | searchForSurname
+    | searchForGivenName
+    | searchForInitials
+    | searchForGenerationQualifier
+}
+
+AddressResultAttributes RESULT-ATTRIBUTE ::= {
+    searchForPostalAddress
+    | searchForPhysicalDeliveryOfficeName
+    | searchForPostalCode
+    | searchForPostOfficeBox
+    | searchForStreetAddress
+    | searchForLocalityName
+    | searchForStateOrProvinceName
+}
+
+whitePages {
+    OBJECT IDENTIFIER:dmdId,
+    INTEGER:id,
+    AllowedSubset:subsets,
+    INTEGER:defaultEntryLimit,
+    INTEGER:maxEntryLimit
+} SEARCH-RULE ::= {
+    DMD ID                  dmdId
+    SERVICE-TYPE            id-svc-whitePages
+    INPUT ATTRIBUTES        {
+        PersonNameRequestAttributes
+        | searchByLocalityName
+        | searchByStateOrProvinceName
+    }
+    OUTPUT ATTRIBUTES       {
+        PersonNameResultAttributes
+        | AddressResultAttributes
+        | searchForTelephoneNumber
+    }
+    ALLOWED SUBSET          subsets
+    IMPOSED SUBSET          oneLevel
+    ENTRY LIMIT             {
+        default             defaultEntryLimit,
+        max                 maxEntryLimit
+    }
+}
+
+yellowPages {
+    OBJECT IDENTIFIER:dmdId,
+    INTEGER:id,
+    AllowedSubset:subsets,
+    INTEGER:defaultEntryLimit,
+    INTEGER:maxEntryLimit
+} SEARCH-RULE ::= {
+    DMD ID                  dmdId
+    SERVICE-TYPE            id-svc-yellowPages
+    INPUT ATTRIBUTES        {
+        searchByLocalityName
+        | searchByStateOrProvinceName
+        | searchByBusinessCategory
+    }
+    OUTPUT ATTRIBUTES       {
+        searchForOrganizationName
+        | searchForCommonName
+        | searchForDescription
+        | searchForBusinessCategory
+        AddressResultAttributes
+    }
+    ALLOWED SUBSET          subsets
+    IMPOSED SUBSET          oneLevel
+    ENTRY LIMIT             {
+        default             defaultEntryLimit,
+        max                 maxEntryLimit
+    }
+}
+
+greyPages {
+    OBJECT IDENTIFIER:dmdId,
+    INTEGER:id,
+    AllowedSubset:subsets,
+    INTEGER:defaultEntryLimit,
+    INTEGER:maxEntryLimit
+} SEARCH-RULE ::= {
+    DMD ID                  dmdId
+    SERVICE-TYPE            id-svc-greyPages
+    INPUT ATTRIBUTES        {searchByTelephoneNumber}
+    COMBINATION             attribute:telephoneNumber.&id
+    OUTPUT ATTRIBUTES       {
+        PersonNameResultAttributes
+        | AddressResultAttributes
+        | searchForTelephoneNumber
+    }
+    ALLOWED SUBSET          subsets
+    ENTRY LIMIT             {
+        default             defaultEntryLimit,
+        max                 maxEntryLimit
+    }
+}
+
+-- Grey pages, sometimes called a "reverse telephone directory"
+-- Information on government agencies is often printed on blue pages or green pages.
+-- Blue pages are not really implementable with the X.500 schema.

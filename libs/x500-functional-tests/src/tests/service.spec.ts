@@ -3337,6 +3337,6 @@ describe("Meerkat DSA", () => {
         expect(resData.searchInfo.entries.length).toBe(3);
     });
 
-    test.todo("complicated example")
+    test.todo("complicated example");
 
 });

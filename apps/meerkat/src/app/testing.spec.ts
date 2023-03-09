@@ -547,6 +547,7 @@ const bindOverrides: SigningInfo["bindOverrides"] = {
 };
 
 const config: Configuration = {
+    maxRelaxationsOrTightenings: 3,
     vendorName: process.env.MEERKAT_VENDOR_NAME?.length
         ? process.env.MEERKAT_VENDOR_NAME
         : undefined,
@@ -991,6 +992,8 @@ const config: Configuration = {
 };
 
 const ctx: MeerkatContext = {
+    systemProposedRelaxations: new Map(),
+    systemProposedTightenings: new Map(),
     i18n,
     config,
     dsa: {
@@ -1138,3 +1141,10 @@ export function getMockCtx (): Context {
     cached_ctx = ctx;
     return cached_ctx;
 }
+
+// This is just put here to prevent `Your test suite must contain at least one test.`
+describe.skip("1 + 1", () => {
+    it("equals 2", () => {
+        expect(true).toBeTruthy();
+    });
+});
