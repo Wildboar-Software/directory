@@ -688,7 +688,7 @@ async function seedUS (
         const subentry_rdn: RelativeDistinguishedName = [
             new AttributeTypeAndValue(
                 selat.commonName["&id"]!,
-                _encodeUTF8String("Ocala", DER),
+                _encodeUTF8String(name, DER),
             ),
         ];
         const dn: DistinguishedName = [
