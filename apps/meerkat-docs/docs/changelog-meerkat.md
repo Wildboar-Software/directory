@@ -1,5 +1,12 @@
 # Changelog for Meerkat DSA
 
+## Version 2.4.1
+
+- Fix Denial-of-Service caused by failing assertion
+
+You do not have to do anything for this upgrade to work. Just update the
+version of Meerkat DSA you're using.
+
 ## Version 2.4.0
 
 - Service Administration

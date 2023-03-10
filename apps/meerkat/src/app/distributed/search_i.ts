@@ -1551,7 +1551,7 @@ async function search_i_ex (
         ?? data.requestor
         ?? assn.boundNameAndUID?.dn;
 
-    if (requestor) {
+    if (requestor && (searchState.depth === 0)) {
         ctx.log.debug(ctx.i18n.t("log:requester", {
             aid: assn.id,
             iid: printInvokeId(state.invokeId),
