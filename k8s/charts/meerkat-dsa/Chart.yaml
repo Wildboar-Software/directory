@@ -2,8 +2,8 @@ apiVersion: v2
 name: meerkat-dsa
 description: X.500 Directory Server (DSA) and LDAP Server by Wildboar Software.
 type: application
-version: 2.9.0
-appVersion: 2.3.0
+version: 2.9.1
+appVersion: 2.4.0
 home: https://wildboarsoftware.com
 keywords:
   - directory

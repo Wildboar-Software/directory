@@ -1,5 +1,16 @@
 # Changelog for Meerkat DSA
 
+## Version 2.4.0
+
+- Service Administration
+  - This means that directory administrators can define search rules that
+    constrain the types of searches users can perform
+
+You do not have to do anything for this upgrade to work. Just update the
+version of Meerkat DSA you're using. The Demo DIT has a
+[service administrative area](./demo.md#demo-dit-overview) in
+`C=US,ST=FL,L=MAR,L=Ocala` that you can experiment with.
+
 ## Version 2.3.0
 
 - Relaxations and Tightenings
