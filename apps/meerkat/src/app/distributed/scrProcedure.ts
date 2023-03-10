@@ -36,7 +36,6 @@ import stringifyDN from "../x500/stringifyDN";
 import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers";
 import { id_opcode_search } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-search.va";
 import { _decode_SearchResult } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
-import { strict as assert } from "node:assert";
 import { chainedSearch } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedSearch.oa";
 
 /**
@@ -212,7 +211,16 @@ async function scrProcedure (
             continue;
         }
         const dn = normalizeDN(ctx, _encode_DistinguishedName(cr.targetObject.rdnSequence, DER));
-        if (!dn) {
+        /**
+         * We have to explicitly check for `undefined`, because "" is a falsy
+         * value which will be produced from the normalization of the root DN.
+         *
+         * On that note, it is perfectly valid for the target object of a
+         * continuation reference to be the root DSE, because the first-level
+         * DSEs may be subordinate references, and continuation references,
+         * in some circumstances, target the entry above the subordinate ref.
+         */
+        if (dn === undefined) {
             // It's a little sloppy, but if we cannot normalize a DN, we just ignore it.
             ctx.log.debug(ctx.i18n.t("log:failed_to_normalize_dn", {
                 dn: stringifyDN(ctx, cr.targetObject.rdnSequence).slice(0, 256),
@@ -227,7 +235,15 @@ async function scrProcedure (
         }
     }
 
-    assert(continuationReferencesByTargetObject.size > 0);
+    /**
+     * This assertion caused Meerkat DSA to crash in the past. When the Root
+     * DN is normalized, you get "", which evaluates to falsy in the loop
+     * above, resulting in the map being empty. This issue has been fixed.
+     *
+     * Also, since assertion failures seem to make Meerkat DSA max out the CPU
+     * and hang indefinitely, I have simply removed this.
+     */
+    // assert(continuationReferencesByTargetObject.size > 0);
 
     for (const crlist of continuationReferencesByTargetObject.values()) {
         if (
