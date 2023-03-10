@@ -103,7 +103,7 @@ import {
     numSubordinates,
 } from "@wildboar/parity-schema/src/lib/modules/DS389CoreSchema/numSubordinates.oa";
 import { countryName, localityName, searchRules, stateOrProvinceName } from "@wildboar/x500/src/lib/collections/attributes";
-import { country, organization, person, residentialPerson } from "@wildboar/x500/src/lib/collections/objectClasses";
+import { organization, person, residentialPerson } from "@wildboar/x500/src/lib/collections/objectClasses";
 
 const DENY_ALL_BITS: number[] = [
     GrantsAndDenials_denyAdd,
