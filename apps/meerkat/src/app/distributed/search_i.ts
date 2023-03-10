@@ -18,6 +18,7 @@ import {
     SearchArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
 import {
+    SearchArgumentData_subset,
     SearchArgumentData_subset_baseObject,
     SearchArgumentData_subset_oneLevel,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
@@ -46,6 +47,7 @@ import {
     ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
     ServiceControlOptions_manageDSAIT as manageDSAITBit,
     ServiceControlOptions_preferChaining as preferChainingBit,
+    ServiceControlOptions,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import {
     _encode_DistinguishedName,
@@ -185,6 +187,7 @@ import {
     FamilyGrouping_entryOnly,
     FamilyGrouping_compoundEntry,
     FamilyGrouping_strands,
+    FamilyGrouping,
     // FamilyGrouping_multiStrand,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
 import {
@@ -197,9 +200,10 @@ import {
     SearchControlOptions_dnAttribute,
     SearchControlOptions_matchOnResidualName,
     // SearchControlOptions_entryCount,
-    // SearchControlOptions_useSubset,
+    SearchControlOptions_useSubset,
     SearchControlOptions_separateFamilyMembers,
     SearchControlOptions_searchFamily,
+    SearchControlOptions,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
 import {
     EntryInformationSelection_infoTypes_attributeTypesOnly as typesOnly,
@@ -275,7 +279,7 @@ import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import { printInvokeId } from "../utils/printInvokeId";
-import { entryACI, prescriptiveACI, subentryACI } from "@wildboar/x500/src/lib/collections/attributes";
+import { administrativeRole, entryACI, prescriptiveACI, searchRules, subentryACI } from "@wildboar/x500/src/lib/collections/attributes";
 import { AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
 import { FilterItem } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FilterItem.ta";
 import { Prisma } from "@prisma/client";
@@ -340,6 +344,17 @@ import {
 // import {
 //     octetStringMatch,
 // } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/octetStringMatch.oa";
+import {
+    RequestAttribute,
+    ResultAttribute,
+    SearchRule,
+} from "@wildboar/x500/src/lib/modules/ServiceAdministration/SearchRule.ta";
+import { HierarchySelections } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/HierarchySelections.ta";
+import { getServiceAdminPoint } from "../dit/getServiceAdminPoint";
+import getEntryExistsFilter from "../database/entryExistsFilter";
+import { attributeValueFromDB } from "../database/attributeValueFromDB";
+import { getEffectiveControlsFromSearchRule } from "../service/getEffectiveControlsFromSearchRule";
+import { id_ar_serviceSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-serviceSpecificArea.va";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 
@@ -382,6 +397,17 @@ interface SearchState extends Partial<WithRequestStatistics>, Partial<WithOutcom
      * Notification attributes.
      */
     notification: Attribute[];
+
+    // These are set by service administration.
+    governingSearchRule?: SearchRule;
+    outputAttributeTypes?: Map<IndexableOID, ResultAttribute>;
+    effectiveServiceControls?: ServiceControlOptions;
+    effectiveSearchControls?: SearchControlOptions;
+    effectiveHierarchySelections?: HierarchySelections;
+    effectiveSubset?: SearchArgumentData_subset;
+    effectiveEntryLimit: number;
+    effectiveFamilyGrouping?: FamilyGrouping;
+    effectiveFamilyReturn?: FamilyReturn;
 }
 
 /**
@@ -436,6 +462,22 @@ because, in the search algorithm, when doing a subtree search, even if an entry
 does not match, its subordinates still must be searched.
 */
 
+/**
+ * @summary Determine whether attributes can be queried from the `AttributeValue` table.
+ * @description
+ *
+ * This function determines if all attribute types specified in `types` can be
+ * queried via the `AttributeValue` table. This is the case if there is no
+ * driver defined for that attribute type, and the attribute type is neither a
+ * dummy or collective attribute type.
+ *
+ * @param ctx The context object
+ * @param types The attribute types to check
+ * @returns Whether the `AttributeValue` table can be filtered to select for
+ *  values of the specified types.
+ *
+ * @function
+ */
 function canFilterAttributeValueTable (
     ctx: Context,
     types: AttributeType[],
@@ -454,6 +496,20 @@ function canFilterAttributeValueTable (
     return true;
 }
 
+/**
+ * @summary Determine friend attribute types
+ * @description
+ *
+ * This function gets the friend attribute types of a given attribute type based
+ * on the target DSE.
+ *
+ * @param relevantSubentries Subentries whose subtree selected the target DSE
+ * @param type_ The anchor attribute type
+ * @returns An array of friend attribute types, not including the type specified
+ *  by `type_`.
+ *
+ * @function
+ */
 function addFriends (
     relevantSubentries: Vertex[],
     type_: OBJECT_IDENTIFIER,
@@ -475,14 +531,54 @@ function addFriends (
     return ret;
 }
 
+/**
+ * @summary Convert an X.500 filter item into a Prisma filter on the Entry table
+ * @description
+ *
+ * When using a search operation to filter entries, it may be possible to
+ * "pre-filter" said entries within the DBMS (MySQL, Postgres, etc.) before
+ * performing the more expensive work of loading those entries and evaluating
+ * the filter against them in memory. For instance, if the user is filtering for
+ * a `surname` of `Wilbur`, we can pre-filter entries that have an
+ * `AttributeValue` whose `normalized_str` is `WILBUR`, thereby greatly
+ * narrowing the number of entries Meerkat DSA has to actually load into memory
+ * and evaluate.
+ *
+ * This function implements such an optimization by converting the search filter
+ * item into a Prisma (that's the ORM used by Meerkat DSA) filter.
+ *
+ * @param ctx The context object
+ * @param filterItem The filter item to be converted
+ * @param relevantSubentries The subentries whose subtrees select for the target DSE.
+ * @param selectFriends Whether to select friend attribute types as well
+ * @param mr_subs Active matching rule substitutions (as imposed by relaxation or tightening)
+ * @param request_attributes Request attribute types (as imposed by search rules)
+ * @returns A Prisma filter for the `Entry` table, or `undefined` if this cannot
+ *  be produced
+ *
+ * @function
+ * @see {@link convertFilterToPrismaSelect}
+ */
 function convertFilterItemToPrismaSelect (
     ctx: Context,
     filterItem: FilterItem,
     relevantSubentries: Vertex[],
     selectFriends: boolean,
+    mr_subs: SearchState["matching_rule_substitutions"],
+    request_attributes?: EvaluateFilterSettings["requestAttributes"],
 ): Partial<Prisma.EntryWhereInput> | undefined {
     if ("equality" in filterItem) {
         const type_ = filterItem.equality.type_;
+        const type_str = type_.toString();
+        // For now, if the matching rules for this type are overwritten, just return.
+        if (mr_subs.has(type_str)) {
+            return undefined;
+        }
+        const profile = request_attributes?.get(type_str);
+        if (profile?.defaultValues) {
+            // If there are default values defined, there is no need to pre-filter entries.
+            return undefined;
+        }
         const value = filterItem.equality.assertion.value;
         if (type_.isEqualTo(objectClass["&id"])) {
             return {
@@ -698,6 +794,10 @@ function convertFilterItemToPrismaSelect (
         };
     } else if ("substrings" in filterItem) {
         const type_ = filterItem.substrings.type_;
+        // For now, if the matching rules for this type are overwritten, just return.
+        if (mr_subs.has(type_.toString())) {
+            return undefined;
+        }
         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
         if (!canFilterAttributeValueTable(ctx, superTypes)) {
             return undefined;
@@ -713,6 +813,10 @@ function convertFilterItemToPrismaSelect (
         };
     } else if ("greaterOrEqual" in filterItem) {
         const type_ = filterItem.greaterOrEqual.type_;
+        // For now, if the matching rules for this type are overwritten, just return.
+        if (mr_subs.has(type_.toString())) {
+            return undefined;
+        }
         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
         if (!canFilterAttributeValueTable(ctx, superTypes)) {
             return undefined;
@@ -728,6 +832,10 @@ function convertFilterItemToPrismaSelect (
         };
     } else if ("lessOrEqual" in filterItem) {
         const type_ = filterItem.lessOrEqual.type_;
+        // For now, if the matching rules for this type are overwritten, just return.
+        if (mr_subs.has(type_.toString())) {
+            return undefined;
+        }
         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
         if (!canFilterAttributeValueTable(ctx, superTypes)) {
             return undefined;
@@ -758,6 +866,10 @@ function convertFilterItemToPrismaSelect (
         };
     } else if ("approximateMatch" in filterItem) {
         const type_ = filterItem.approximateMatch.type_;
+        // For now, if the matching rules for this type are overwritten, just return.
+        if (mr_subs.has(type_.toString())) {
+            return undefined;
+        }
         const superTypes: AttributeType[] = Array.from(getAttributeParentTypes(ctx, type_));
         if (!canFilterAttributeValueTable(ctx, superTypes)) {
             return undefined;
@@ -809,29 +921,64 @@ function convertFilterItemToPrismaSelect (
     }
 }
 
+/**
+ * @summary Convert an X.500 filter into a Prisma filter on the Entry table
+ * @description
+ *
+ * When using a search operation to filter entries, it may be possible to
+ * "pre-filter" said entries within the DBMS (MySQL, Postgres, etc.) before
+ * performing the more expensive work of loading those entries and evaluating
+ * the filter against them in memory. For instance, if the user is filtering for
+ * a `surname` of `Wilbur`, we can pre-filter entries that have an
+ * `AttributeValue` whose `normalized_str` is `WILBUR`, thereby greatly
+ * narrowing the number of entries Meerkat DSA has to actually load into memory
+ * and evaluate.
+ *
+ * This function implements such an optimization by converting the search filter
+ * into a Prisma (that's the ORM used by Meerkat DSA) filter.
+ *
+ * It is important that this is only used to filter entries when `baseObject`
+ * and `oneLevel` searches are used; if it is used to pre-filter in a `subtree`
+ * search, the search will fail to recurse into entries that themselves have
+ * subordinates that might match!
+ *
+ * @param ctx The context object
+ * @param filter The filter to be converted
+ * @param relevantSubentries The subentries whose subtrees select for the target DSE.
+ * @param selectFriends Whether to select friend attribute types as well
+ * @param mr_subs Active matching rule substitutions (as imposed by relaxation or tightening)
+ * @param request_attributes Request attribute types (as imposed by search rules)
+ * @returns A Prisma filter for the `Entry` table, or `undefined` if this cannot
+ *  be produced
+ *
+ * @function
+ * @see {@link convertFilterItemToPrismaSelect}
+ */
 function convertFilterToPrismaSelect (
     ctx: Context,
     filter: Filter,
     relevantSubentries: Vertex[],
     selectFriends: boolean,
+    mr_subs: SearchState["matching_rule_substitutions"],
+    request_attributes?: EvaluateFilterSettings["requestAttributes"],
 ): Partial<Prisma.EntryWhereInput> | undefined {
     if ("item" in filter) {
-        return convertFilterItemToPrismaSelect(ctx, filter.item, relevantSubentries, selectFriends);
+        return convertFilterItemToPrismaSelect(ctx, filter.item, relevantSubentries, selectFriends, mr_subs, request_attributes);
     } else if ("and" in filter) {
         return {
             AND: filter.and
-                .map((sub) => convertFilterToPrismaSelect(ctx, sub, relevantSubentries, selectFriends))
+                .map((sub) => convertFilterToPrismaSelect(ctx, sub, relevantSubentries, selectFriends, mr_subs, request_attributes))
                 .filter((sub): sub is Partial<Prisma.EntryWhereInput> => !!sub),
         };
     } else if ("or" in filter) {
         return {
             OR: filter.or
-                .map((sub) => convertFilterToPrismaSelect(ctx, sub, relevantSubentries, selectFriends))
+                .map((sub) => convertFilterToPrismaSelect(ctx, sub, relevantSubentries, selectFriends, mr_subs, request_attributes))
                 .filter((sub): sub is Partial<Prisma.EntryWhereInput> => !!sub),
         };
     } else if ("not" in filter) {
         return {
-            NOT: convertFilterToPrismaSelect(ctx, filter.not, relevantSubentries, selectFriends),
+            NOT: convertFilterToPrismaSelect(ctx, filter.not, relevantSubentries, selectFriends, mr_subs, request_attributes),
         };
     } else {
         return undefined;
@@ -874,163 +1021,18 @@ function getFamilyMembersToReturnById (
     }
 }
 
-// async function emitResultsFromMatchedFamilySubset (
-//     ctx: Context,
-//     data: SearchArgumentData,
-//     searchState: SearchState,
-//     matchedFamilySubset: Vertex[],
-//     matchedValues: ReturnType<typeof evaluateFilter>,
-//     relevantSubentries: Vertex[],
-//     filterUnauthorizedEntryInformation: (einfo: EntryInformation_information_Item[]) => [ boolean, EntryInformation_information_Item[] ],
-//     attributeSizeLimit?: number,
-//     noSubtypeSelection?: boolean,
-//     dontSelectFriends?: boolean,
-//     separateFamilyMembers?: boolean,
-//     matchedValuesOnly?: boolean,
-// ): Promise<void> {
-//     const einfos = await Promise.all(
-//         matchedFamilySubset.map((member) => readEntryInformation(
-//             ctx,
-//             member,
-//             {
-//                 selection: data.selection,
-//                 relevantSubentries,
-//                 operationContexts: data.operationContexts,
-//                 attributeSizeLimit,
-//                 noSubtypeSelection,
-//                 dontSelectFriends,
-//             },
-//         )),
-//     );
-//     if (
-//         matchedValuesOnly
-//         && (Array.isArray(matchedValues) && matchedValues.length)
-//         && !typesOnly // This option would make no sense with matchedValuesOnly.
-//     ) {
-//         for (let i = 0; i < einfos.length; i++) {
-//             const matchedValuesAttributes = attributesFromValues(
-//                 matchedValues.filter((mv) => (mv.entryIndex === i)),
-//             );
-//             const matchedValuesTypes: Set<IndexableOID> = new Set(
-//                 matchedValuesAttributes.map((mva) => mva.type_.toString()),
-//             );
-//             const einfo = einfos[i];
-//             /**
-//              * Remember: matchedValuesOnly only filters the
-//              * values of attributes that contributed to the
-//              * match. All other information is returned
-//              * unchanged. This was actually a point of
-//              * confusion to the IETF LDAP working group, which
-//              * is why LDAP's matchedValues extension does not
-//              * align with DAP's matchedValuesOnly boolean.
-//              *
-//              * See: https://www.rfc-editor.org/rfc/rfc3876.html#section-3
-//              *
-//              * This was later clarified in the X.500 standards.
-//              * There is a notable increase in detail in X.511's
-//              * description of matchedValuesOnly in the 2001
-//              * version of the specification.
-//              */
-//             einfos[i] = [
-//                 ...einfo
-//                     .filter((e) => {
-//                         if ("attribute" in e) {
-//                             return !matchedValuesTypes.has(e.attribute.type_.toString());
-//                         } else if ("attributeType" in e) {
-//                             return !matchedValuesTypes.has(e.attributeType.toString());
-//                         } else {
-//                             return false;
-//                         }
-//                     }),
-//                 ...matchedValuesAttributes.map((attribute) => ({ attribute })),
-//             ];
-//         }
-//     } // End of matchedValuesOnly handling.
-//     const familyMembersToBeReturned = familyMembersToReturnById(familyReturn, matchedFamilySubset, matchedValues);
-//     const filteredEinfos = einfos.map(filterUnauthorizedEntryInformation);
-//     if (separateFamilyMembers) {
-//         const familyMemberResults = filteredEinfos
-//             .map((einfo, i) => [ einfo, matchedFamilySubset![i], i ] as const)
-//             .filter(([ , vertex ]) => (
-//                 (!familySelect || familySelect.has(vertex.dse.structuralObjectClass?.toString() ?? ""))
-//                 && !((): boolean => {
-//                     const had: boolean = searchState.paging?.[1].alreadyReturnedById.has(vertex.dse.id) ?? false;
-//                     searchState.paging?.[1].alreadyReturnedById.add(vertex.dse.id);
-//                     return had;
-//                 })()
-//                 && ( // Is this part of the familyReturn member selection?
-//                     !familyMembersToBeReturned
-//                     || familyMembersToBeReturned.has(vertex.dse.id)
-//                 )
-//             ))
-//             .map(([ [ incompleteEntry, permittedEinfo ], vertex, index ]) => new EntryInformation(
-//                 {
-//                     rdnSequence: getDistinguishedName(vertex),
-//                 },
-//                 !vertex.dse.shadow,
-//                 attributeSizeLimit
-//                     ? permittedEinfo.filter(filterEntryInfoItemBySize)
-//                     : permittedEinfo,
-//                 incompleteEntry, // Technically, you need DiscloseOnError permission to see this, but this is fine.
-//                 // Only the ancestor can have partialName.
-//                 ((index === 0) && state.partialName && (searchState.depth === 0)),
-//                 undefined,
-//             ));
-//         searchState.results.push(...familyMemberResults);
-//         return;
-//     } else {
-//         if (matchedFamilySubset.length > 1) { // If there actually are children.
-//             const subset = keepSubsetOfDITById(
-//                 family,
-//                 new Set(matchedFamilySubset
-//                     .filter((vertex) => ( // Is this part of the familyReturn member selection?
-//                         !familyMembersToBeReturned
-//                         || familyMembersToBeReturned.has(vertex.dse.id)
-//                     ))
-//                     .map((member) => member.dse.id)),
-//             );
-//             const familyEntries: FamilyEntries[] = convertSubtreeToFamilyInformation(
-//                 subset,
-//                 (vertex: Vertex) => filteredEinfos[
-//                     matchedFamilySubset!.findIndex((member) => (member.dse.id === vertex.dse.id))]?.[1] ?? [],
-//             )
-//                 .filter((fe) => (!familySelect || familySelect.has(fe.family_class.toString())));
-//             const familyInfoAttr: Attribute = new Attribute(
-//                 family_information["&id"],
-//                 familyEntries.map((fe) => family_information.encoderFor["&Type"]!(fe, DER)),
-//                 undefined,
-//             );
-//             filteredEinfos[0][1].push({
-//                 attribute: familyInfoAttr,
-//             });
-//         }
-//         if (!searchState.paging?.[1].alreadyReturnedById.has(matchedFamilySubset[0].dse.id)) {
-//             searchState.paging?.[1].alreadyReturnedById.add(matchedFamilySubset[0].dse.id);
-//             searchState.results.push(
-//                 new EntryInformation(
-//                     {
-//                         rdnSequence: getDistinguishedName(matchedFamilySubset[0]),
-//                     },
-//                     !matchedFamilySubset[0].dse.shadow,
-//                     attributeSizeLimit
-//                         ? filteredEinfos[0][1].filter(filterEntryInfoItemBySize)
-//                         : filteredEinfos[0][1],
-//                     filteredEinfos[0][0], // Technically, you need DiscloseOnError permission to see this, but this is fine.
-//                     (state.partialName && (searchState.depth === 0)),
-//                     undefined,
-//                 ),
-//             );
-//         }
-//     }
-//     if (data.hierarchySelections && !data.hierarchySelections[HierarchySelections_self]) {
-//         hierarchySelectionProcedure(
-//             ctx,
-//             data.hierarchySelections,
-//             data.serviceControls?.serviceType,
-//         );
-//     }
-// }
-
+/**
+ * @summary Determine whether a filter is a "match-all" filter
+ * @description
+ *
+ * This function returns a boolean indicating whether a filter will match all
+ * entries. Examples of such filters include `and:{}`.
+ *
+ * @param filter The filter to be evaluated
+ * @returns A boolean indicating whether the filter will match all entries
+ *
+ * @function
+ */
 function isMatchAllFilter (filter?: Filter): boolean {
     if (!filter) {
         return true;
@@ -1092,6 +1094,49 @@ const get_smr_info = function (ctx: Context, attributeType: IndexableOID): OBJEC
     return ctx.substringsMatchingRules.get(spec.substringsMatchingRule.toString())?.id;
 };
 
+/**
+ * @summary Apply an MRMapping to a search filter.
+ * @description
+ *
+ * Updates the search state to use non-default matching rules per the procedures
+ * defined in ITU Recommendation X.501 (2019), Section 16.10.7, and expounded
+ * upon in ITU Recommendation X.511 (2019), Section 11.2.2. This means that it
+ * applies both matching rule substitution and mapping-based matching.
+ *
+ * This implementation is designed to support service administration as
+ * described in the second section mentioned above. It does so by taking the
+ * `dontMapAttributes` and `pretendMatchingRuleMapping` arguments. The former
+ * allows relaxations already applied to an attribute type by the search request
+ * to be passed over by those imposed by the search rule. The latter allows
+ * current matching rule substitutions to be "reverted" so that the `basic`
+ * substitution supplied in the search request can replace the `oldMatchingRule`
+ * according to what its value was before the search rule's `basic`
+ * substitution.
+ *
+ * The two above arguments come from the outputs of a previous iteration of this
+ * function. The tuple returned contains a set of attributes to _not_ map and
+ * a mapping of the new matching rule OID to its prior value.
+ *
+ * @param ctx The context object
+ * @param assn The association
+ * @param searchState The search state
+ * @param target_object The target DSE's distinguished name
+ * @param mrm `MRMapping`
+ * @param relaxing Whether this invocation is a relaxation rather than a tightening
+ * @param signErrors Whether to sign errors
+ * @param aliasDereferenced Whether an alias was dereferenced in finding the target DSE
+ * @param extendedArea A user-supplied extended area to use in mapping-based-matching
+ * @param includeAllAreas Whether to perform inclusive mapping-based mapping.
+ * @param dontMapAttributes A set of attributes to not map.
+ * @param pretendMatchingRuleMapping A mapping of new matching rule OIDs to the
+ *  OIDs of the matching rules they replaced
+ * @returns A tuple, where the first element is a set of all mapped attributes,
+ *  and the second is a mapping of new matching rule OID strings to the OIDs of
+ *  the matching rules they replaced.
+ *
+ * @async
+ * @function
+ */
 export
 async function apply_mr_mapping (
     ctx: Context,
@@ -1104,20 +1149,35 @@ async function apply_mr_mapping (
     aliasDereferenced: boolean,
     extendedArea: OPTIONAL<INTEGER>,
     includeAllAreas: boolean,
-): Promise<void> {
+    dontMapAttributes: Set<IndexableOID>,
+    pretendMatchingRuleMapping?: Map<IndexableOID, OBJECT_IDENTIFIER>,
+): Promise<[Set<IndexableOID>, Map<IndexableOID, OBJECT_IDENTIFIER>]> {
+    const mapped_attributes: Set<IndexableOID> = new Set();
+    const new_mr_to_old: Map<IndexableOID, OBJECT_IDENTIFIER> = new Map();
     if (!searchState.effectiveFilter) {
         // If there is no filter, there is no relaxation or tightening to do.
-        return;
+        return [mapped_attributes, new_mr_to_old];
     }
     const subs_cache = searchState.matching_rule_substitutions;
     const substitutions = mrm.substitution ?? [];
     const attrs = groupByOID(substitutions, (s) => s.attribute);
     for (const [attr, subs] of Object.entries(attrs)) { // Each iteration of this loop is a different attribute type.
-        let mr_oid = get_emr_info(ctx, attr) ?? get_omr_info(ctx, attr) ?? get_smr_info(ctx, attr);
+        if (dontMapAttributes.has(attr)) {
+            continue;
+        }
+        let mr_oid = subs_cache.get(attr)
+            ?? get_emr_info(ctx, attr)
+            ?? get_omr_info(ctx, attr)
+            ?? get_smr_info(ctx, attr)
+            ;
+
         if (!mr_oid) {
             // If there is no matching rule defined for this attribute type, just ignore it.
             continue;
         }
+        const old_mr_oid = mr_oid;
+        mr_oid = pretendMatchingRuleMapping?.get(mr_oid?.toString()) ?? mr_oid;
+
         /**
          * We have to track whether a substitution within this level matched
          * the old matching rule specifically. If it did not, but a "wildcard"
@@ -1155,6 +1215,7 @@ async function apply_mr_mapping (
                 } else {
                     mr_oid = sub.newMatchingRule ?? id_mr_nullMatch;
                 }
+                new_mr_to_old.set(mr_oid.toString(), old_mr_oid);
                 old_mr_specifically_matched = true;
             }
         }
@@ -1164,7 +1225,9 @@ async function apply_mr_mapping (
         it was present in this level. */
         if (!old_mr_specifically_matched && wildcard_new_mr) {
             mr_oid = wildcard_new_mr;
+            new_mr_to_old.set(mr_oid.toString(), old_mr_oid);
         }
+        mapped_attributes.add(attr);
         subs_cache.set(attr, mr_oid);
     }
 
@@ -1249,7 +1312,136 @@ async function apply_mr_mapping (
             searchState.effectiveFilter = new_filter;
         }
     }
+    return [mapped_attributes, new_mr_to_old];
+}
 
+/**
+ * @summary Update the operation dispatcher state with a search rule
+ * @description
+ *
+ * This function updates the operation dispatcher state with the restrictions
+ * imposed by a governing search rule so that these may be used in operation
+ * evaluation.
+ *
+ * @param data The unsigned search argument data
+ * @param state The operation dispatcher state
+ * @param governing_search_rule The governing search rule
+ *
+ * @function
+ * @see {@link update_search_state_with_search_rule}
+ */
+export
+function update_operation_dispatcher_state_with_search_rule (
+    data: SearchArgumentData,
+    state: OperationDispatcherState,
+    governing_search_rule: SearchRule,
+): void {
+    state.governingSearchRule = governing_search_rule;
+    if (governing_search_rule.outputAttributeTypes) {
+        const outputAttributeTypes: Map<IndexableOID, ResultAttribute> = new Map();
+        for (const out_attr of governing_search_rule.outputAttributeTypes ?? []) {
+            outputAttributeTypes.set(out_attr.attributeType.toString(), out_attr);
+        }
+        state.outputAttributeTypes = outputAttributeTypes;
+    }
+    const { service: effective_service_opts } = getEffectiveControlsFromSearchRule(
+        governing_search_rule,
+        data.hierarchySelections,
+        data.searchControlOptions,
+        data.serviceControls?.options,
+        false,
+    );
+    state.effectiveServiceControls = effective_service_opts;
+    if (governing_search_rule.familyReturn !== undefined) {
+        // ITU X.501 (2019), Section 16.10.6 states that the search
+        // rule shall have precedence when setting memberSelect, but
+        // not familySelect.
+        const familySelect = data.selection?.familyReturn?.familySelect
+            ?? governing_search_rule.familyReturn.familySelect;
+        const memberSelect = governing_search_rule.familyReturn.memberSelect
+            ?? data.selection?.familyReturn?.memberSelect;
+        state.effectiveFamilyReturn = new FamilyReturn(
+            memberSelect,
+            familySelect,
+        );
+    }
+}
+
+/**
+ * @summary Update search operation state with a search rule
+ * @description
+ *
+ * This function updates the search operation state with the restrictions
+ * imposed by a governing search rule.
+ *
+ * @param data The unsigned search argument data
+ * @param searchState The search state to be updated
+ * @param governing_search_rule The governing search rule
+ *
+ * @function
+ * @see {@link update_operation_dispatcher_state_with_search_rule}
+ */
+export
+function update_search_state_with_search_rule (
+    data: SearchArgumentData,
+    searchState: SearchState,
+    governing_search_rule: SearchRule,
+): void {
+    searchState.governingSearchRule = governing_search_rule;
+    if (governing_search_rule.outputAttributeTypes) {
+        const outputAttributeTypes: Map<IndexableOID, ResultAttribute> = new Map();
+        for (const out_attr of governing_search_rule.outputAttributeTypes ?? []) {
+            outputAttributeTypes.set(out_attr.attributeType.toString(), out_attr);
+        }
+        searchState.outputAttributeTypes = outputAttributeTypes;
+    }
+    const {
+        hs: effective_hs,
+        search: effective_search_opts,
+        service: effective_service_opts,
+    } = getEffectiveControlsFromSearchRule(
+        governing_search_rule,
+        data.hierarchySelections,
+        data.searchControlOptions,
+        data.serviceControls?.options,
+        true,
+    );
+    searchState.effectiveHierarchySelections = effective_hs;
+    searchState.effectiveSearchControls = effective_search_opts;
+    searchState.effectiveServiceControls = effective_service_opts;
+
+    const useSubset: boolean = (effective_search_opts[SearchControlOptions_useSubset] === TRUE_BIT);
+    searchState.effectiveSubset = (useSubset
+        ? data.subset
+        : (governing_search_rule.imposedSubset ?? data.subset))
+        ?? SearchArgumentData._default_value_for_subset;
+
+    if (governing_search_rule.entryLimit) {
+        if (data.serviceControls?.sizeLimit) {
+            searchState.effectiveEntryLimit = Math.min(
+                Number(data.serviceControls.sizeLimit),
+                Number(governing_search_rule.entryLimit.max),
+            );
+        } else {
+            searchState.effectiveEntryLimit = Number(governing_search_rule.entryLimit.default_);
+        }
+    }
+    if (governing_search_rule.familyGrouping !== undefined) {
+        searchState.effectiveFamilyGrouping = governing_search_rule.familyGrouping;
+    }
+    if (governing_search_rule.familyReturn !== undefined) {
+        // ITU X.501 (2019), Section 16.10.6 states that the search
+        // rule shall have precedence when setting memberSelect, but
+        // not familySelect.
+        const familySelect = data.selection?.familyReturn?.familySelect
+            ?? governing_search_rule.familyReturn.familySelect;
+        const memberSelect = governing_search_rule.familyReturn.memberSelect
+            ?? data.selection?.familyReturn?.memberSelect;
+        searchState.effectiveFamilyReturn = new FamilyReturn(
+            memberSelect,
+            familySelect,
+        );
+    }
 }
 
 /**
@@ -1279,6 +1471,50 @@ async function search_i(
 ): Promise<void> {
     const data = getOptionallyProtectedValue(argument);
     searchState.effectiveFilter = searchState.effectiveFilter ?? data.extendedFilter ?? data.filter;
+    searchState.effectiveEntryLimit = searchState.effectiveEntryLimit
+        ?? Number(data.serviceControls?.sizeLimit ?? MAX_RESULTS);
+    searchState.effectiveFamilyGrouping = searchState.effectiveFamilyGrouping ?? data.familyGrouping;
+    searchState.effectiveFamilyReturn = searchState.effectiveFamilyReturn ?? data.selection?.familyReturn;
+
+    // NOTE: This was copied to Search (II)
+    if (state.chainingArguments.searchRuleId && !searchState.governingSearchRule) {
+        const searchRuleId = state.chainingArguments.searchRuleId;
+        const sap = getServiceAdminPoint(state.foundDSE);
+        if (sap) {
+            const governing_search_rule = (await ctx.db.attributeValue.findMany({
+                where: {
+                    entry: {
+                        ...getEntryExistsFilter(),
+                        immediate_superior_id: sap.dse.id,
+                        subentry: true,
+                    },
+                    type_oid: searchRules["&id"].toBytes(),
+                },
+                select: {
+                    tag_class: true,
+                    constructed: true,
+                    tag_number: true,
+                    content_octets: true,
+                },
+            }))
+                .map(attributeValueFromDB)
+                .map(searchRules.decoderFor["&Type"]!)
+                .find((sr) => (
+                    (sr.id === searchRuleId.id)
+                    && sr.dmdId.isEqualTo(searchRuleId.dmdId)
+                ));
+                ;
+            if (governing_search_rule) {
+                update_search_state_with_search_rule(data, searchState, governing_search_rule);
+            } else {
+                ctx.log.warn(ctx.i18n.t("log:unable_to_find_search_rule", {
+                    dmd_id: searchRuleId.dmdId.toString(),
+                    id: searchRuleId.id.toString(),
+                }));
+            }
+        }
+    }
+
     // TODO: Put all depth == 0 code here.
     return search_i_ex(
         ctx,
@@ -1442,20 +1678,22 @@ async function search_i_ex (
     };
 
     const searchAliases: boolean = data.searchAliases
-        ?? Boolean(data.searchControlOptions?.[SearchControlOptions_searchAliases])
+        ?? Boolean(searchState.effectiveSearchControls?.[SearchControlOptions_searchAliases])
         ?? SearchArgumentData._default_value_for_searchAliases;
     const matchedValuesOnly: boolean = data.matchedValuesOnly
-        || Boolean(data.searchControlOptions?.[SearchControlOptions_matchedValuesOnly]);
-    // const checkOverspecified: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_checkOverspecified]);
-    const performExactly: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_performExactly]);
-    // const includeAllAreas: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_includeAllAreas]);
-    // const noSystemRelaxation: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_noSystemRelaxation]);
-    const dnAttribute: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_dnAttribute]);
-    const matchOnResidualName: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_matchOnResidualName]);
-    // const entryCount: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_entryCount]);
-    // const useSubset: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_useSubset]);
-    const separateFamilyMembers: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_separateFamilyMembers]);
-    const searchFamily: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_searchFamily]);
+        || Boolean(searchState.effectiveSearchControls?.[SearchControlOptions_matchedValuesOnly]);
+    const searchRuleReturnsMatchedValuesOnly: boolean = searchState.governingSearchRule?.outputAttributeTypes
+        ?.some((oat) => oat.outputValues && ("matchedValuesOnly" in oat.outputValues)) ?? false;
+    // const checkOverspecified: boolean = Boolean(searchState.effectiveSearchControls?.[SearchControlOptions_checkOverspecified]);
+    const performExactly: boolean = Boolean(searchState.effectiveSearchControls?.[SearchControlOptions_performExactly]);
+    // const includeAllAreas: boolean = Boolean(searchState.effectiveSearchControls?.[SearchControlOptions_includeAllAreas]);
+    // const noSystemRelaxation: boolean = Boolean(searchState.effectiveSearchControls?.[SearchControlOptions_noSystemRelaxation]);
+    const dnAttribute: boolean = Boolean(searchState.effectiveSearchControls?.[SearchControlOptions_dnAttribute]);
+    const matchOnResidualName: boolean = Boolean(searchState.effectiveSearchControls?.[SearchControlOptions_matchOnResidualName]);
+    // const entryCount: boolean = Boolean(searchState.effectiveSearchControls?.[SearchControlOptions_entryCount]);
+    // const useSubset: boolean = Boolean(searchState.effectiveSearchControls?.[SearchControlOptions_useSubset]);
+    const separateFamilyMembers: boolean = Boolean(searchState.effectiveSearchControls?.[SearchControlOptions_separateFamilyMembers]);
+    const searchFamily: boolean = Boolean(searchState.effectiveSearchControls?.[SearchControlOptions_searchFamily]);
 
     const timeLimitEndTime: Date | undefined = state.chainingArguments.timeLimit
         ? getDateFromTime(state.chainingArguments.timeLimit)
@@ -1495,13 +1733,13 @@ async function search_i_ex (
         NAMING_MATCHER,
     );
     let cursorId: number | undefined = searchState.paging?.[1].cursorIds[searchState.depth];
-    const manageDSAIT: boolean = (data.serviceControls?.options?.[manageDSAITBit] === TRUE_BIT);
+    const manageDSAIT: boolean = (searchState.effectiveServiceControls?.[manageDSAITBit] === TRUE_BIT);
     if (!searchState.depth && data.pagedResults) { // This should only be done for the first recursion.
         const chainingProhibited = (
-            (data.serviceControls?.options?.[chainingProhibitedBit] === TRUE_BIT)
+            (searchState.effectiveServiceControls?.[chainingProhibitedBit] === TRUE_BIT)
             || manageDSAIT
         );
-        const preferChaining: boolean = (data.serviceControls?.options?.[preferChainingBit] === TRUE_BIT);
+        const preferChaining: boolean = (searchState.effectiveServiceControls?.[preferChainingBit] === TRUE_BIT);
         if (
             data.pagedResults
             && (data.securityParameters?.target === ProtectionRequest_signed)
@@ -1691,9 +1929,6 @@ async function search_i_ex (
             );
         }
     }
-    const sizeLimit: number = searchState.paging?.[1]
-        ? MAX_RESULTS
-        : Number(data.serviceControls?.sizeLimit ?? MAX_RESULTS);
     if (timeLimitEndTime && (new Date() > timeLimitEndTime)) {
         searchState.poq = new PartialOutcomeQualifier(
             LimitProblem_timeLimitExceeded,
@@ -1707,7 +1942,7 @@ async function search_i_ex (
         return;
     }
     const currentNumberOfResults: number = getCurrentNumberOfResults(searchState);
-    if (currentNumberOfResults >= sizeLimit) {
+    if (currentNumberOfResults >= searchState.effectiveEntryLimit) {
         searchState.poq = new PartialOutcomeQualifier(
             (currentNumberOfResults >= MAX_RESULTS)
                 ? LimitProblem_administrativeLimitExceeded
@@ -1798,13 +2033,13 @@ async function search_i_ex (
             return;
         }
     }
-    const subset = data.subset ?? SearchArgumentData._default_value_for_subset;
+    const subset = Number(searchState.effectiveSubset ?? SearchArgumentData._default_value_for_subset);
     /**
      * NOTE: It is critical that entryOnly comes from ChainingArguments. The
      * default values are the OPPOSITE between ChainingArguments and CommonArguments.
      */
     const entryOnly = state.chainingArguments.entryOnly ?? ChainingArguments._default_value_for_entryOnly;
-    const subentries: boolean = (data.serviceControls?.options?.[subentriesBit] === TRUE_BIT);
+    const subentries: boolean = (searchState.effectiveServiceControls?.[subentriesBit] === TRUE_BIT);
     const filter: Filter = (matchOnResidualName && state.partialName)
         ? {
             and: [
@@ -1824,16 +2059,16 @@ async function search_i_ex (
             ],
         }
         : (searchState.effectiveFilter ?? SearchArgumentData._default_value_for_filter);
-    const serviceControlOptions = data.serviceControls?.options;
+    const serviceControlOptions = searchState.effectiveServiceControls;
     // Service controls
     const noSubtypeMatch: boolean = (
-        data.serviceControls?.options?.[ServiceControlOptions_noSubtypeMatch] === TRUE_BIT);
+        searchState.effectiveServiceControls?.[ServiceControlOptions_noSubtypeMatch] === TRUE_BIT);
     const noSubtypeSelection: boolean = (
-        data.serviceControls?.options?.[ServiceControlOptions_noSubtypeSelection] === TRUE_BIT);
+        searchState.effectiveServiceControls?.[ServiceControlOptions_noSubtypeSelection] === TRUE_BIT);
     const dontSelectFriends: boolean = (
-        data.serviceControls?.options?.[ServiceControlOptions_dontSelectFriends] === TRUE_BIT);
+        searchState.effectiveServiceControls?.[ServiceControlOptions_dontSelectFriends] === TRUE_BIT);
     const dontMatchFriends: boolean = (
-        data.serviceControls?.options?.[ServiceControlOptions_dontMatchFriends] === TRUE_BIT);
+        searchState.effectiveServiceControls?.[ServiceControlOptions_dontMatchFriends] === TRUE_BIT);
     const dontUseCopy: boolean = (
         serviceControlOptions?.[ServiceControlOptions_dontUseCopy] === TRUE_BIT);
     const copyShallDo: boolean = (
@@ -1975,8 +2210,18 @@ async function search_i_ex (
             return authorizedToMatch;
         },
         performExactly,
-        matchedValuesOnly,
+        matchedValuesOnly: matchedValuesOnly || searchRuleReturnsMatchedValuesOnly,
         dnAttribute,
+        requestAttributes: searchState.governingSearchRule?.inputAttributeTypes?.length
+            ? (() => {
+                const ret: Map<string, RequestAttribute> =
+                new Map();
+                for (const iat of searchState.governingSearchRule.inputAttributeTypes) {
+                    ret.set(iat.attributeType.toString(), iat);
+                }
+                return ret;
+            })()
+            : undefined,
     };
 
     if (target.dse.cp) {
@@ -2098,7 +2343,7 @@ async function search_i_ex (
         (searchFamily && !entryOnly && isAncestor && (searchState.depth === 0))
         || Boolean(searchState.familyOnly)
     );
-    const familyGrouping = data.familyGrouping ?? SearchArgumentData._default_value_for_familyGrouping;
+    const familyGrouping = searchState.effectiveFamilyGrouping ?? SearchArgumentData._default_value_for_familyGrouping;
     const familySubsetGetter: (vertex: Vertex) => IterableIterator<Vertex[]> = (() => {
         switch (familyGrouping) {
         case (FamilyGrouping_entryOnly): return readEntryOnly;
@@ -2126,7 +2371,7 @@ async function search_i_ex (
         }
         }
     })();
-    const familyReturn: FamilyReturn = data.selection?.familyReturn
+    const familyReturn: FamilyReturn = searchState.effectiveFamilyReturn
         ?? EntryInformationSelection._default_value_for_familyReturn;
     if ((subset === SearchArgumentData_subset_oneLevel) && !entryOnly) { // Step 3
         // Nothing needs to be done here. Proceed to step 6.
@@ -2186,6 +2431,7 @@ async function search_i_ex (
                 });
                 continue; // This should never happen, but just handling it in case it does.
             }
+            // TODO: Cache attributes from previous reads.
             const familyInfos = await Promise.all(
                 familySubset.map((member) => readFamilyMemberInfo(member)),
             );
@@ -2221,8 +2467,8 @@ async function search_i_ex (
             }
         }
         if (matchedFamilySubset) {
-            const familySelect: Set<IndexableOID> | null = data.selection?.familyReturn?.familySelect?.length
-                ? new Set(data.selection.familyReturn.familySelect.map((oid) => oid.toString()))
+            const familySelect: Set<IndexableOID> | null = searchState.effectiveFamilyReturn?.familySelect?.length
+                ? new Set(searchState.effectiveFamilyReturn.familySelect.map((oid) => oid.toString()))
                 : null;
             const contributingEntriesByIndex: Set<number> = filterResult.contributingEntries;
             /** DEVIATION:
@@ -2269,7 +2515,7 @@ async function search_i_ex (
             const resultsById: Map<number, [ Vertex, BOOLEAN, EntryInformation_information_Item[], boolean ]> = new Map(
                 await Promise.all(
                     verticesToReturn
-                        .map(async (member) => {
+                        .map(async (member): Promise<[ number, [ Vertex, BOOLEAN, EntryInformation_information_Item[], boolean ] ]> => {
                             const permittedEntryReturn = await readPermittedEntryInformation(
                                 ctx,
                                 member,
@@ -2283,6 +2529,7 @@ async function search_i_ex (
                                     attributeSizeLimit,
                                     noSubtypeSelection,
                                     dontSelectFriends,
+                                    outputAttributeTypes: searchState.outputAttributeTypes,
                                 },
                             );
                             return [
@@ -2292,13 +2539,13 @@ async function search_i_ex (
                                     permittedEntryReturn.incompleteEntry,
                                     permittedEntryReturn.information,
                                     permittedEntryReturn.discloseIncompleteEntry,
-                                ] as [ Vertex, BOOLEAN, EntryInformation_information_Item[], boolean ]
-                            ] as const;
+                                ],
+                            ];
                         }),
                 ),
             );
             if (
-                matchedValuesOnly
+                (matchedValuesOnly || searchRuleReturnsMatchedValuesOnly)
                 && filterResult.matchedValues?.length
                 && !typesOnly // This option would make no sense with matchedValuesOnly.
             ) {
@@ -2316,6 +2563,17 @@ async function search_i_ex (
                     const matchedValuesTypes: Set<IndexableOID> = new Set(
                         matchedValuesAttributes.map((mva) => mva.type_.toString()),
                     );
+                    // If !matchedValuesOnly because matchedValuesOnly acts on all attribute types.
+                    if (searchRuleReturnsMatchedValuesOnly && !matchedValuesOnly) { // Therefore...
+                        // If the condition above is true, only some attributes
+                        // will be filtered for matched values.
+                        const oats = searchState.governingSearchRule?.outputAttributeTypes ?? [];
+                        for (const oat of oats) {
+                            if (!oat.outputValues || !("matchedValuesOnly" in oat.outputValues)) {
+                                matchedValuesTypes.delete(oat.attributeType.toString());
+                            }
+                        }
+                    }
                     /**
                      * Remember: matchedValuesOnly only filters the
                      * values of attributes that contributed to the
@@ -2371,7 +2629,7 @@ async function search_i_ex (
                         ),
                     ]);
                 const ancestorEntryIncluded = separateResults.some((sr) => (sr[0] === target.dse.id));
-                if (data.hierarchySelections && ancestorEntryIncluded && target.dse.hierarchy) {
+                if (searchState.effectiveHierarchySelections && ancestorEntryIncluded && target.dse.hierarchy) {
                     await hierarchySelectionProcedure(
                         ctx,
                         assn,
@@ -2379,7 +2637,7 @@ async function search_i_ex (
                         separateResults,
                         data,
                         searchState,
-                        data.hierarchySelections,
+                        searchState.effectiveHierarchySelections,
                         timeLimitEndTime,
                         separateFamilyMembers,
                     );
@@ -2433,7 +2691,7 @@ async function search_i_ex (
                  * > compound entries shall be selected, otherwise they shall be
                  * > excluded.
                  */
-                if (data.hierarchySelections && rootResultIsAncestor && target.dse.hierarchy) {
+                if (searchState.effectiveHierarchySelections && rootResultIsAncestor && target.dse.hierarchy) {
                     await hierarchySelectionProcedure(
                         ctx,
                         assn,
@@ -2441,7 +2699,7 @@ async function search_i_ex (
                         [[rootResult[0].dse.id, rootEntryInfo]],
                         data,
                         searchState,
-                        data.hierarchySelections,
+                        searchState.effectiveHierarchySelections,
                         timeLimitEndTime,
                         separateFamilyMembers,
                     );
@@ -2534,8 +2792,8 @@ async function search_i_ex (
             }
         }
         if (matchedFamilySubset) {
-            const familySelect: Set<IndexableOID> | null = data.selection?.familyReturn?.familySelect?.length
-                ? new Set(data.selection.familyReturn.familySelect.map((oid) => oid.toString()))
+            const familySelect: Set<IndexableOID> | null = searchState.effectiveFamilyReturn?.familySelect?.length
+                ? new Set(searchState.effectiveFamilyReturn.familySelect.map((oid) => oid.toString()))
                 : null;
             const contributingEntriesByIndex: Set<number> = filterResult.contributingEntries;
             /** DEVIATION:
@@ -2611,7 +2869,7 @@ async function search_i_ex (
                 ),
             );
             if (
-                matchedValuesOnly
+                (matchedValuesOnly || searchRuleReturnsMatchedValuesOnly)
                 && filterResult.matchedValues?.length
                 && !typesOnly // This option would make no sense with matchedValuesOnly.
             ) {
@@ -2629,6 +2887,17 @@ async function search_i_ex (
                     const matchedValuesTypes: Set<IndexableOID> = new Set(
                         matchedValuesAttributes.map((mva) => mva.type_.toString()),
                     );
+                    // If !matchedValuesOnly because matchedValuesOnly acts on all attribute types.
+                    if (searchRuleReturnsMatchedValuesOnly && !matchedValuesOnly) { // Therefore...
+                        // If the condition above is true, only some attributes
+                        // will be filtered for matched values.
+                        const oats = searchState.governingSearchRule?.outputAttributeTypes ?? [];
+                        for (const oat of oats) {
+                            if (!oat.outputValues || !("matchedValuesOnly" in oat.outputValues)) {
+                                matchedValuesTypes.delete(oat.attributeType.toString());
+                            }
+                        }
+                    }
                     /**
                      * Remember: matchedValuesOnly only filters the
                      * values of attributes that contributed to the
@@ -2684,7 +2953,7 @@ async function search_i_ex (
                         ),
                     ]);
                 const ancestorEntryIncluded = separateResults.some((sr) => (sr[0] === target.dse.id));
-                if (data.hierarchySelections && ancestorEntryIncluded && target.dse.hierarchy) {
+                if (searchState.effectiveHierarchySelections && ancestorEntryIncluded && target.dse.hierarchy) {
                     await hierarchySelectionProcedure(
                         ctx,
                         assn,
@@ -2692,7 +2961,7 @@ async function search_i_ex (
                         separateResults,
                         data,
                         searchState,
-                        data.hierarchySelections,
+                        searchState.effectiveHierarchySelections,
                         timeLimitEndTime,
                         separateFamilyMembers,
                     );
@@ -2746,7 +3015,7 @@ async function search_i_ex (
                  * > compound entries shall be selected, otherwise they shall be
                  * > excluded.
                  */
-                if (data.hierarchySelections && rootResultIsAncestor && target.dse.hierarchy) {
+                if (searchState.effectiveHierarchySelections && rootResultIsAncestor && target.dse.hierarchy) {
                     await hierarchySelectionProcedure(
                         ctx,
                         assn,
@@ -2754,7 +3023,7 @@ async function search_i_ex (
                         [[rootResult[0].dse.id, rootEntryInfo]],
                         data,
                         searchState,
-                        data.hierarchySelections,
+                        searchState.effectiveHierarchySelections,
                         timeLimitEndTime,
                         separateFamilyMembers,
                     );
@@ -2814,7 +3083,7 @@ async function search_i_ex (
         && (data.subset === SearchArgumentData_subset_oneLevel)
         && isMatchAllFilter(searchState.effectiveFilter)
     )
-        ? Math.min(sizeLimit, ctx.config.entriesPerSubordinatesPage * 10)
+        ? Math.min(searchState.effectiveEntryLimit, ctx.config.entriesPerSubordinatesPage * 10)
         : ctx.config.entriesPerSubordinatesPage;
 
     const getNextBatchOfSubordinates = async (): Promise<Vertex[]> => readSubordinates(
@@ -2848,6 +3117,20 @@ async function search_i_ex (
                             object_class: CHILD,
                         },
                     }),
+            // This stops recursion into different service administrative areas.
+            AttributeValue: {
+                none: {
+                    type_oid: administrativeRole["&id"].toBytes(),
+                    content_octets: searchState.governingSearchRule
+                        ? {
+                            in: [
+                                id_ar_autonomousArea.toBytes(),
+                                id_ar_serviceSpecificArea.toBytes(),
+                            ],
+                        }
+                        : id_ar_serviceSpecificArea.toBytes(),
+                },
+            },
             /**
              * You can only use the pre-filtering optimization for oneLevel
              * searches, because, if using subtree searches, you still have to
@@ -2857,10 +3140,26 @@ async function search_i_ex (
              *
              * This also goes in an `AND` so that it does not overwrite the
              * `EntryObjectClass` that comes earlier.
+             *
+             * For this to work, familyGrouping must also be entryOnly (the
+             * default), because this will not recurse into the child entries to
+             * check for matching values.
              */
-            AND: (searchState.effectiveFilter && (data.subset === SearchArgumentData_subset_oneLevel))
-                ? convertFilterToPrismaSelect(ctx, searchState.effectiveFilter, relevantSubentries, !dontSelectFriends)
+            AND: (
+                searchState.effectiveFilter
+                && (searchState.effectiveSubset === SearchArgumentData_subset_oneLevel)
+                && (familyGrouping === FamilyGrouping_entryOnly)
+            )
+                ? convertFilterToPrismaSelect(
+                    ctx,
+                    searchState.effectiveFilter,
+                    relevantSubentries,
+                    !dontSelectFriends,
+                    searchState.matching_rule_substitutions,
+                    filterOptions["requestAttributes"],
+                )
                 : undefined,
+
         },
     );
     let subordinatesInBatch = await getNextBatchOfSubordinates();

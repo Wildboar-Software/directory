@@ -6,6 +6,7 @@ import {
     RequestStatistics,
     OPCR,
     UnknownOperationError,
+    IndexableOID,
 } from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
 import DSPAssociation from "../dsp/DSPConnection";
@@ -18,11 +19,12 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgument.ta";
 import {
     SearchArgument,
+    SearchArgumentData,
     _decode_SearchArgument,
     _encode_SearchArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
 import {
-    ReadArgument, _encode_ReadArgument,
+    ReadArgument, _decode_ReadArgument, _encode_ReadArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta";
 import {
     SearchResult,
@@ -40,11 +42,12 @@ import {
     TraceItem,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/TraceItem.ta";
 import nrcrProcedure from "./nrcrProcedure";
-import { TRUE_BIT, ASN1Element, ObjectIdentifier } from "asn1-ts";
+import { TRUE_BIT, ASN1Element, ObjectIdentifier, OBJECT_IDENTIFIER } from "asn1-ts";
 import {
     ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
     ServiceControlOptions_partialNameResolution as partialNameResolutionBit,
     ServiceControlOptions_manageDSAIT as manageDSAITBit,
+    ServiceControlOptions,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import { compareCode } from "@wildboar/x500/src/lib/utils/compareCode";
 import { abandon } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandon.oa";
@@ -53,7 +56,7 @@ import { addEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractServic
 import { changePassword } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
 import { compare, CompareArgument, _encode_CompareArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa";
 import { modifyDN } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
-import { modifyEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
+import { modifyEntry, _decode_ModifyEntryArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
 import { ldapTransport } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ldapTransport.oa";
 import { linkedLDAP } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/linkedLDAP.oa";
 import { list } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
@@ -72,7 +75,12 @@ import { read as doRead } from "./read";
 import { removeEntry as doRemoveEntry } from "./removeEntry";
 import list_i from "./list_i";
 import list_ii from "./list_ii";
-import search_i, { apply_mr_mapping, getCurrentNumberOfResults } from "./search_i";
+import search_i, {
+    apply_mr_mapping,
+    getCurrentNumberOfResults,
+    update_search_state_with_search_rule,
+    update_operation_dispatcher_state_with_search_rule,
+} from "./search_i";
 import search_ii from "./search_ii";
 import resultsMergingProcedureForList from "./resultsMergingProcedureForList";
 import resultsMergingProcedureForSearch from "./resultsMergingProcedureForSearch";
@@ -129,12 +137,17 @@ import { MRMapping } from "@wildboar/x500/src/lib/modules/ServiceAdministration/
 import cloneChainingArgs from "../x500/cloneChainingArguments";
 import { MRSubstitution } from "@wildboar/x500/src/lib/modules/ServiceAdministration/MRSubstitution.ta";
 import {
-    SearchControlOptions_includeAllAreas,
+    SearchControlOptions_includeAllAreas, SearchControlOptions_noSystemRelaxation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
 import normalizeFilter from "../x500/normalizeFilter";
 import {
     appliedRelaxation,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/appliedRelaxation.oa";
+import { MAX_RESULTS } from "../constants";
+import { searchRuleCheckProcedure_i } from "./searchRuleCheckProcedure_i";
+import searchRuleCheckProcedure_ii from "./searchRuleCheckProcedure_ii";
+import { SearchArgumentData_subset_baseObject } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
+import { FamilyReturn, ResultAttribute, SearchRule } from "@wildboar/x500/src/lib/modules/ServiceAdministration/SearchRule.ta";
 
 function getPathFromVersion (vertex: Vertex): Vertex[] {
     const ret: Vertex[] = [];
@@ -180,6 +193,12 @@ interface OperationDispatcherState {
     // Not explicitly defined in the spec, but needed for preventing alias
     // loops.
     aliasesEncounteredById: Set<number>;
+
+    // These are set by service administration for non-search operations.
+    governingSearchRule?: SearchRule;
+    outputAttributeTypes?: Map<IndexableOID, ResultAttribute>;
+    effectiveServiceControls?: ServiceControlOptions;
+    effectiveFamilyReturn?: FamilyReturn;
 }
 
 export
@@ -245,17 +264,8 @@ async function search_procedures (
         excludedById: new Set(),
         matching_rule_substitutions: new Map(),
     };
-    await relatedEntryProcedure(
-        ctx,
-        assn,
-        state,
-        searchResponse,
-        argument,
-        reqData.chainedArgument,
-        signErrors,
-    );
 
-    if (
+    const use_search_ii: boolean = (
         (nameResolutionPhase === completed)
         /**
          * The Java Naming and Directory Interface (JNDI) library
@@ -275,7 +285,19 @@ async function search_procedures (
          * Search (I), even if the `ManageDSAIT` control is used.
          */
         && !(assn instanceof LDAPAssociation)
-    ) { // Search (II)
+    );
+
+    await relatedEntryProcedure(
+        ctx,
+        assn,
+        state,
+        searchResponse,
+        argument,
+        reqData.chainedArgument,
+        signErrors,
+    );
+
+    if (use_search_ii) {
         await search_ii(
             ctx,
             assn,
@@ -283,7 +305,7 @@ async function search_procedures (
             argument,
             searchResponse,
         );
-    } else { // Search (I)
+    } else {
         // Only Search (I) results in results merging.
         await search_i(
             ctx,
@@ -444,6 +466,59 @@ class OperationDispatcher {
             };
         }
         else if (compareCode(req.opCode, modifyEntry["&operationCode"]!)) {
+            // #region service-admin
+            {
+                const argument = _decode_ModifyEntryArgument(reqData.argument);
+                const data = getOptionallyProtectedValue(argument);
+                state.effectiveFamilyReturn = data.selection?.familyReturn;
+                state.effectiveServiceControls = data.serviceControls?.options;
+                const equivalent_search_data = new SearchArgumentData(
+                    data.object,
+                    SearchArgumentData_subset_baseObject,
+                    undefined,
+                    undefined,
+                    data.selection,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    data.serviceControls,
+                    data.securityParameters, // NOTE: This will have the wrong opcode...
+                    data.requestor,
+                    data.operationProgress,
+                    data.aliasedRDNs,
+                    data.criticalExtensions,
+                    data.referenceType,
+                    data.entryOnly,
+                    data.exclusions,
+                    data.nameResolveOnMaster,
+                    data.operationContexts,
+                    data.familyGrouping,
+                );
+                const signErrors: boolean = (
+                    (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+                    && (assn.authorizedForSignedErrors)
+                );
+                const search_rule = await searchRuleCheckProcedure_i(
+                    ctx,
+                    assn,
+                    state,
+                    state.foundDSE,
+                    equivalent_search_data,
+                    signErrors,
+                );
+                if (search_rule) {
+                    update_operation_dispatcher_state_with_search_rule(equivalent_search_data, state, search_rule);
+                }
+            }
+            // #endregion service-admin
             const outcome = await doModifyEntry(ctx, assn, state);
             return {
                 invokeId: req.invokeId,
@@ -574,6 +649,59 @@ class OperationDispatcher {
             }
         }
         else if (compareCode(req.opCode, read["&operationCode"]!)) {
+            // #region service-admin
+            {
+                const argument = _decode_ReadArgument(reqData.argument);
+                const data = getOptionallyProtectedValue(argument);
+                state.effectiveFamilyReturn = data.selection?.familyReturn;
+                state.effectiveServiceControls = data.serviceControls?.options;
+                const equivalent_search_data = new SearchArgumentData(
+                    data.object,
+                    SearchArgumentData_subset_baseObject,
+                    undefined,
+                    undefined,
+                    data.selection,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    data.serviceControls,
+                    data.securityParameters, // NOTE: This will have the wrong opcode...
+                    data.requestor,
+                    data.operationProgress,
+                    data.aliasedRDNs,
+                    data.criticalExtensions,
+                    data.referenceType,
+                    data.entryOnly,
+                    data.exclusions,
+                    data.nameResolveOnMaster,
+                    data.operationContexts,
+                    data.familyGrouping,
+                );
+                const signErrors: boolean = (
+                    (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
+                    && (assn.authorizedForSignedErrors)
+                );
+                const search_rule = await searchRuleCheckProcedure_i(
+                    ctx,
+                    assn,
+                    state,
+                    state.foundDSE,
+                    equivalent_search_data,
+                    signErrors,
+                );
+                if (search_rule) {
+                    update_operation_dispatcher_state_with_search_rule(equivalent_search_data, state, search_rule);
+                }
+            }
+            // #endregion service-admin
             const outcome = await doRead(ctx, assn, state);
             return {
                 invokeId: req.invokeId,
@@ -619,7 +747,6 @@ class OperationDispatcher {
             const target = state.chainingArguments.targetObject ?? data.baseObject.rdnSequence;
             const nameResolutionPhase = reqData.chainedArgument.operationProgress?.nameResolutionPhase
                 ?? ChainingArguments._default_value_for_operationProgress.nameResolutionPhase;
-            const rp = data.relaxation;
             const requestStats: RequestStatistics | undefined = failover(() => ({
                 operationCode: codeToString(req.opCode!),
                 ...getStatisticsFromCommonArguments(data),
@@ -678,10 +805,41 @@ class OperationDispatcher {
                 matching_rule_substitutions: new Map(),
                 effectiveFilter: data.extendedFilter ?? data.filter,
                 notification: [],
+                effectiveEntryLimit: MAX_RESULTS,
+                effectiveSubset: data.subset,
+                effectiveFamilyGrouping: data.familyGrouping,
+                effectiveFamilyReturn: data.selection?.familyReturn,
+                effectiveHierarchySelections: data.hierarchySelections,
+                effectiveSearchControls: data.searchControlOptions,
+                effectiveServiceControls: data.serviceControls?.options,
             };
+
+            const use_search_rule_check_ii: boolean = (nameResolutionPhase === completed);
+            if (use_search_rule_check_ii) {
+                await searchRuleCheckProcedure_ii(ctx, assn, state, state.foundDSE, data, signErrors);
+            } else {
+                const search_rule = await searchRuleCheckProcedure_i(
+                    ctx,
+                    assn,
+                    state,
+                    state.foundDSE,
+                    data,
+                    signErrors,
+                );
+                if (search_rule) {
+                    update_search_state_with_search_rule(data, initialSearchState, search_rule);
+                }
+            }
+            const noSystemRelaxation: boolean = (data.searchControlOptions?.[SearchControlOptions_noSystemRelaxation] === TRUE_BIT);
+            const user_rp = data.relaxation;
+            const dsa_rp = initialSearchState.governingSearchRule?.relaxation;
+            const rp = noSystemRelaxation
+                ? user_rp
+                : (user_rp ?? dsa_rp);
             if (rp && initialSearchState.effectiveFilter) {
                 initialSearchState.effectiveFilter = normalizeFilter(initialSearchState.effectiveFilter);
             }
+
             const includeAllAreas: boolean = Boolean(data.searchControlOptions?.[SearchControlOptions_includeAllAreas]);
             if (state.chainingArguments.chainedRelaxation) {
                 await apply_mr_mapping(
@@ -695,20 +853,56 @@ class OperationDispatcher {
                     state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
                     data.extendedArea,
                     includeAllAreas,
+                    new Set(),
                 );
             }
-            else if (rp?.basic) {
+            else if (user_rp?.basic) {
+                let pretendMatchingRuleMapping: Map<IndexableOID, OBJECT_IDENTIFIER> = new Map();
+                if (dsa_rp?.basic && !noSystemRelaxation) {
+                    const [, new_mr_to_old] = await apply_mr_mapping(
+                        ctx,
+                        assn,
+                        initialSearchState,
+                        target,
+                        dsa_rp.basic,
+                        true,
+                        signErrors,
+                        state.chainingArguments.aliasDereferenced
+                            ?? ChainingArguments._default_value_for_aliasDereferenced,
+                        data.extendedArea,
+                        includeAllAreas,
+                        new Set(),
+                    );
+                    pretendMatchingRuleMapping = new_mr_to_old;
+                }
                 await apply_mr_mapping(
                     ctx,
                     assn,
                     initialSearchState,
                     target,
-                    rp.basic,
+                    user_rp.basic,
+                    true,
+                    signErrors,
+                    state.chainingArguments.aliasDereferenced
+                        ?? ChainingArguments._default_value_for_aliasDereferenced,
+                    data.extendedArea,
+                    includeAllAreas,
+                    new Set(),
+                    pretendMatchingRuleMapping,
+                );
+            } else if (dsa_rp?.basic) {
+                await apply_mr_mapping(
+                    ctx,
+                    assn,
+                    initialSearchState,
+                    target,
+                    dsa_rp.basic,
                     true,
                     signErrors,
                     state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
                     data.extendedArea,
                     includeAllAreas,
+                    new Set(),
                 );
             }
             let searchState = await search_procedures(
@@ -752,8 +946,8 @@ class OperationDispatcher {
                 );
             }
             if (provide_relaxation_or_tightening && needs_relaxation && rp?.relaxations?.length) {
-                for (const relaxation of rp.relaxations.slice(0, ctx.config.maxRelaxationsOrTightenings)) {
-                    await apply_mr_mapping(
+                for (const [i, relaxation] of rp.relaxations.slice(0, ctx.config.maxRelaxationsOrTightenings).entries()) {
+                    const [mapped_attrs] = await apply_mr_mapping(
                         ctx,
                         assn,
                         searchState,
@@ -764,7 +958,24 @@ class OperationDispatcher {
                         state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
                         data.extendedArea,
                         includeAllAreas,
+                        new Set(),
                     );
+                    const search_rule_relaxation = searchState.governingSearchRule?.relaxation?.relaxations?.[i];
+                    if (search_rule_relaxation && data.relaxation) { // If !data.relaxation, the relaxation was already applied.
+                        await apply_mr_mapping(
+                            ctx,
+                            assn,
+                            searchState,
+                            target,
+                            search_rule_relaxation,
+                            true,
+                            signErrors,
+                            state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
+                            data.extendedArea,
+                            includeAllAreas,
+                            mapped_attrs,
+                        );
+                    }
                     // Reset some aspects of the search state, while leaving others.
                     searchState.depth = 0;
                     searchState.poq = undefined;
@@ -812,8 +1023,8 @@ class OperationDispatcher {
                 }
             }
             else if (provide_relaxation_or_tightening && needs_tightening && rp?.tightenings?.length) {
-                for (const tightening of rp.tightenings.slice(0, ctx.config.maxRelaxationsOrTightenings)) {
-                    await apply_mr_mapping(
+                for (const [i, tightening] of rp.tightenings.slice(0, ctx.config.maxRelaxationsOrTightenings).entries()) {
+                    const [mapped_attrs] = await apply_mr_mapping(
                         ctx,
                         assn,
                         searchState,
@@ -824,7 +1035,24 @@ class OperationDispatcher {
                         state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
                         data.extendedArea,
                         includeAllAreas,
+                        new Set(),
                     );
+                    const search_rule_relaxation = searchState.governingSearchRule?.relaxation?.tightenings?.[i];
+                    if (search_rule_relaxation && data.relaxation) {  // If !data.relaxation, the relaxation was already applied.
+                        await apply_mr_mapping(
+                            ctx,
+                            assn,
+                            searchState,
+                            target,
+                            search_rule_relaxation,
+                            true,
+                            signErrors,
+                            state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
+                            data.extendedArea,
+                            includeAllAreas,
+                            mapped_attrs,
+                        );
+                    }
                     // Reset some aspects of the search state, while leaving others.
                     searchState.results.length = 0;
                     searchState.resultSets.length = 0;
@@ -1248,6 +1476,7 @@ class OperationDispatcher {
             excludedById: new Set(),
             matching_rule_substitutions: new Map(),
             notification: [],
+            effectiveEntryLimit: MAX_RESULTS,
         };
         await relatedEntryProcedure(
             ctx,

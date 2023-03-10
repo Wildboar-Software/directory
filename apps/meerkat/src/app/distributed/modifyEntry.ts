@@ -62,7 +62,6 @@ import {
     SecurityProblem_invalidSignature,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import {
-    BERElement,
     DERElement,
     ASN1Element,
     ASN1TagClass,
@@ -72,7 +71,6 @@ import {
     OBJECT_IDENTIFIER,
     TRUE_BIT,
     unpackBits,
-    TRUE,
 } from "asn1-ts";
 import {
     DER,
@@ -2591,11 +2589,11 @@ async function modifyEntry (
     // const isChild: boolean = target.dse.objectClass.has(id_oc_child.toString());
     const isEntry: boolean = (!isSubentry && !isAlias);
     const isFirstLevel: boolean = !!target.immediateSuperior?.dse.root;
-    const manageDSAIT: boolean = (data.serviceControls?.options?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
+    const manageDSAIT: boolean = (state.effectiveServiceControls?.[ServiceControlOptions_manageDSAIT] === TRUE_BIT);
     const noSubtypeSelection: boolean = (
-        data.serviceControls?.options?.[ServiceControlOptions_noSubtypeSelection] === TRUE_BIT);
+        state.effectiveServiceControls?.[ServiceControlOptions_noSubtypeSelection] === TRUE_BIT);
     const dontSelectFriends: boolean = (
-        data.serviceControls?.options?.[ServiceControlOptions_dontSelectFriends] === TRUE_BIT);
+        state.effectiveServiceControls?.[ServiceControlOptions_dontSelectFriends] === TRUE_BIT);
     const attributeSizeLimit: number | undefined = (
         Number.isSafeInteger(Number(data.serviceControls?.attributeSizeLimit))
         && (Number(data.serviceControls?.attributeSizeLimit) >= MINIMUM_MAX_ATTR_SIZE)
@@ -3787,16 +3785,18 @@ async function modifyEntry (
                 attributeSizeLimit,
                 noSubtypeSelection,
                 dontSelectFriends,
+                outputAttributeTypes: state.outputAttributeTypes,
             },
         );
+        const familyReturn = state.effectiveFamilyReturn ?? data.selection?.familyReturn;
         if (
             target.dse.familyMember
-            && data.selection?.familyReturn
-            && (data.selection.familyReturn.memberSelect !== FamilyReturn_memberSelect_contributingEntriesOnly)
-            && (data.selection.familyReturn.memberSelect !== FamilyReturn_memberSelect_participatingEntriesOnly)
+            && familyReturn
+            && (familyReturn.memberSelect !== FamilyReturn_memberSelect_contributingEntriesOnly)
+            && (familyReturn.memberSelect !== FamilyReturn_memberSelect_participatingEntriesOnly)
         ) {
-            const familySelect: Set<IndexableOID> | null = data.selection?.familyReturn?.familySelect?.length
-                ? new Set(data.selection.familyReturn.familySelect.map((oid) => oid.toString()))
+            const familySelect: Set<IndexableOID> | null = familyReturn.familySelect?.length
+                ? new Set(familyReturn.familySelect.map((oid) => oid.toString()))
                 : null;
             const family = await readFamily(ctx, target);
             const familyMembers: Vertex[] = readCompoundEntry(family).next().value;
@@ -3813,6 +3813,7 @@ async function modifyEntry (
                             selection: data.selection,
                             relevantSubentries,
                             operationContexts: data.operationContexts,
+                            outputAttributeTypes: state.outputAttributeTypes,
                         },
                     )),
             );

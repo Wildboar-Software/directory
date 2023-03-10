@@ -4,13 +4,6 @@ We will not promise any particular schedule of delivery of features or bug fixes
 at this time. However, the very high-level roadmap for Meerkat DSA can be
 broken down to the following versions.
 
-## Version 2.4.0 - Service Administration
-
-This update will introduce support for service administrative areas. This allows
-directory administrators to limit (including rate limit) what kind of searches
-may be performed. Service administrative areas can set a "lower boundary" on
-subtree searches.
-
 ## Version 2.5.0 - Non-Specific Subordinate References (NSSRs)
 
 This update will introduce support for Non-Specific Subordinate References

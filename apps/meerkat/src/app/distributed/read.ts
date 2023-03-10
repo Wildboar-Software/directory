@@ -328,9 +328,9 @@ async function read (
         : undefined;
 
     const noSubtypeSelection: boolean = (
-        data.serviceControls?.options?.[ServiceControlOptions_noSubtypeSelection] === TRUE_BIT);
+        state.effectiveServiceControls?.[ServiceControlOptions_noSubtypeSelection] === TRUE_BIT);
     const dontSelectFriends: boolean = (
-        data.serviceControls?.options?.[ServiceControlOptions_dontSelectFriends] === TRUE_BIT);
+        state.effectiveServiceControls?.[ServiceControlOptions_dontSelectFriends] === TRUE_BIT);
 
     /**
      * This is a hack to ensure that `read` returns up-to-date information
@@ -386,17 +386,19 @@ async function read (
             attributeSizeLimit,
             noSubtypeSelection,
             dontSelectFriends,
+            outputAttributeTypes: state.outputAttributeTypes,
         },
     );
 
+    const familyReturn = state.effectiveFamilyReturn ?? data.selection?.familyReturn;
     if (
         target.dse.familyMember
-        && data.selection?.familyReturn
-        && (data.selection.familyReturn.memberSelect !== FamilyReturn_memberSelect_contributingEntriesOnly)
-        && (data.selection.familyReturn.memberSelect !== FamilyReturn_memberSelect_participatingEntriesOnly)
+        && familyReturn
+        && (familyReturn.memberSelect !== FamilyReturn_memberSelect_contributingEntriesOnly)
+        && (familyReturn.memberSelect !== FamilyReturn_memberSelect_participatingEntriesOnly)
     ) {
-        const familySelect: Set<IndexableOID> | null = data.selection?.familyReturn?.familySelect?.length
-            ? new Set(data.selection.familyReturn.familySelect.map((oid) => oid.toString()))
+        const familySelect: Set<IndexableOID> | null = familyReturn.familySelect?.length
+            ? new Set(familyReturn.familySelect.map((oid) => oid.toString()))
             : null;
         const family = await readFamily(ctx, target);
         const familyMembers: Vertex[] = readCompoundEntry(family).next().value;
@@ -415,6 +417,7 @@ async function read (
                         operationContexts: data.operationContexts,
                         attributeSizeLimit,
                         noSubtypeSelection,
+                        outputAttributeTypes: state.outputAttributeTypes,
                     },
                 )),
         );

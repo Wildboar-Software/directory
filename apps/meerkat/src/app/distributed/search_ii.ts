@@ -35,7 +35,7 @@ import {
 import {
     search,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
-import search_i_ex, { SearchState } from "./search_i";
+import search_i_ex, { SearchState, update_search_state_with_search_rule } from "./search_i";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import {
     ServiceErrorData,
@@ -73,6 +73,11 @@ import {
 import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+import { getServiceAdminPoint } from "../dit/getServiceAdminPoint";
+import getEntryExistsFilter from "../database/entryExistsFilter";
+import { searchRules } from "@wildboar/x500/src/lib/collections/attributes";
+import { attributeValueFromDB } from "../database/attributeValueFromDB";
+import { MAX_RESULTS } from "../constants";
 
 const BYTES_IN_A_UUID: number = 16;
 
@@ -120,6 +125,51 @@ async function search_ii (
         (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
         && (assn.authorizedForSignedErrors)
     );
+
+    searchState.effectiveFilter = searchState.effectiveFilter ?? data.extendedFilter ?? data.filter;
+    searchState.effectiveEntryLimit = Number(data.serviceControls?.sizeLimit ?? MAX_RESULTS);
+    searchState.effectiveFamilyGrouping = data.familyGrouping;
+    searchState.effectiveFamilyReturn = data.selection?.familyReturn;
+
+    // NOTE: This is copied from Search (I)
+    if (state.chainingArguments.searchRuleId && !searchState.governingSearchRule) {
+        const searchRuleId = state.chainingArguments.searchRuleId;
+        const sap = getServiceAdminPoint(state.foundDSE);
+        if (sap) {
+            const governing_search_rule = (await ctx.db.attributeValue.findMany({
+                where: {
+                    entry: {
+                        ...getEntryExistsFilter(),
+                        immediate_superior_id: sap.dse.id,
+                        subentry: true,
+                    },
+                    type_oid: searchRules["&id"].toBytes(),
+                },
+                select: {
+                    tag_class: true,
+                    constructed: true,
+                    tag_number: true,
+                    content_octets: true,
+                },
+            }))
+                .map(attributeValueFromDB)
+                .map(searchRules.decoderFor["&Type"]!)
+                .find((sr) => (
+                    (sr.id === searchRuleId.id)
+                    && sr.dmdId.isEqualTo(searchRuleId.dmdId)
+                ));
+                ;
+            if (governing_search_rule) {
+                update_search_state_with_search_rule(data, searchState, governing_search_rule);
+            } else {
+                ctx.log.warn(ctx.i18n.t("log:unable_to_find_search_rule", {
+                    dmd_id: searchRuleId.dmdId.toString(),
+                    id: searchRuleId.id.toString(),
+                }));
+            }
+        }
+    }
+
     const requestor: DistinguishedName | undefined = data
         .securityParameters
         ?.certification_path
@@ -449,6 +499,9 @@ async function search_ii (
         ENTRIES_PER_BATCH,
         undefined,
         cursorId,
+        {
+            cp: true,
+        },
     );
     while (subordinatesInBatch.length) {
         for (const subordinate of subordinatesInBatch) {

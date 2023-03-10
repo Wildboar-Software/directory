@@ -163,7 +163,7 @@
                 "serve": {
                     "executor": "@nrwl/node:node",
                     "options": {
-                        "buildTarget": "meerkat:build",
+                        "buildTarget": "meerkat:build:dev",
                         "inspect": "inspect",
                         "port": 24010
                     }

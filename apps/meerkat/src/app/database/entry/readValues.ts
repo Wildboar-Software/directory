@@ -28,7 +28,7 @@ import groupByOID from "../../utils/groupByOID";
 import {
     TypeAndContextAssertion,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TypeAndContextAssertion.ta";
-import type {
+import {
     ContextAssertion,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ContextAssertion.ta";
 import {
@@ -41,6 +41,9 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
 import getAttributeSubtypes from "../../x500/getAttributeSubtypes";
 import getContextAssertionDefaults from "../../dit/getContextAssertionDefaults";
+import { ContextProfile, ResultAttribute } from "@wildboar/x500/src/lib/modules/ServiceAdministration/ResultAttribute.ta";
+import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 
 // TODO: Explore making this a temporalContext
 const DEFAULT_CAD: ContextSelection = {
@@ -54,6 +57,12 @@ interface ReadValuesOptions {
     readonly operationContexts?: ContextSelection;
     readonly noSubtypeSelection?: boolean;
     readonly dontSelectFriends?: boolean;
+
+    /**
+     * This is used by service administrative areas to further constrain the
+     * returned attribute types.
+     */
+    readonly outputAttributeTypes?: Map<IndexableOID, ResultAttribute>;
 }
 
 export
@@ -190,8 +199,7 @@ function determinePreference (
  *
  * @param ctx The context object
  * @param values The values to be filtered
- * @param selectedContexts An index of `TypeAndContextAssertion` by attribute
- *  type, or `null` if there are no selected contexts
+ * @param selectedContexts Index of `TypeAndContextAssertion` by attribute OIDs
  * @yields Values that survived the context assertions, if any.
  *
  * @generator
@@ -200,7 +208,7 @@ function determinePreference (
 function *filterByTypeAndContextAssertion (
     ctx: Context,
     values: Value[],
-    selectedContexts: Record<IndexableOID, TypeAndContextAssertion[]> | null,
+    selectedContexts: Record<IndexableOID, TypeAndContextAssertion[]>,
 ): IterableIterator<Value> {
     if (!selectedContexts) {
         yield *values;
@@ -254,6 +262,57 @@ function *filterByTypeAndContextAssertion (
     }
 }
 
+// This modifies values by reference!
+function getValueFilter (
+    ctx: Context,
+    outputTypes: Map<IndexableOID, ResultAttribute>,
+): (value: Value) => boolean {
+    return function (value: Value): boolean {
+        const key = value.type.toString();
+        const profile = outputTypes.get(key);
+        if (!profile) {
+            return false; // This shouldn't happen, because it should have never been read from the DB.
+        }
+        if (profile.outputValues) {
+            const matcher = getEqualityMatcherGetter(ctx)(value.type);
+            if (!matcher) {
+                return false; // No EMR defined for this type.
+            }
+            if ("selectedValues" in profile.outputValues) {
+                const namingMatcher = getNamingMatcherGetter(ctx);
+                const selected = profile
+                    .outputValues
+                    .selectedValues
+                    .some((v) => matcher(v, value.value, namingMatcher))
+                    ;
+                if (!selected) {
+                    return false;
+                }
+            }
+        }
+        if (profile.contexts && value.contexts?.length) {
+            const contextProfilesByOID: Map<IndexableOID, ContextProfile> = new Map();
+            for (const context of profile.contexts) {
+                contextProfilesByOID.set(context.contextType.toString(), context);
+            }
+            /* Context profiles with contextValue are handled before this
+            function is called, by creating TypeAndContextAssertion values and
+            checking those assertions along with the user-supplied TACAs. This
+            function just needs to filter out context types that are not
+            permitted in the output. */
+            value.contexts = value.contexts
+                .filter((c) => contextProfilesByOID.has(c.contextType.toString()));
+            if (value.contexts.length === 0) {
+                delete value.contexts;
+            }
+        }
+        return true;
+    };
+}
+
+let cachedUserAttributeDrivers: SpecialAttributeDatabaseReader[] | undefined;
+let cachedOperationalAttributeDrivers: SpecialAttributeDatabaseReader[] | undefined;
+
 /**
  * @summary Read the values of an entry
  * @description
@@ -272,10 +331,13 @@ function *filterByTypeAndContextAssertion (
  * - `dontSelectFriends`
  * - `noSubtypeSelection`
  * - Collective attributes
+ * - Search Rule Output Types and their context assertions
  *
  * @param ctx The context object
  * @param entry The DSE whose attributes are to be read
  * @param options Options
+ * @param reading_attributes Whether this function was called from
+ *  `readAttributes()`
  * @returns The values, grouped into user, operational, and collective values
  *
  * @function
@@ -286,15 +348,18 @@ async function readValues (
     ctx: Context,
     entry: Vertex,
     options?: ReadValuesOptions,
+    reading_attributes: boolean = false,
 ): Promise<ReadValuesReturn> {
+    const outputTypes = options?.outputAttributeTypes;
     const cads: TypeAndContextAssertion[] = options?.relevantSubentries
         ? await getContextAssertionDefaults(ctx, entry, options.relevantSubentries)
         : [];
+
     /**
      * EIS contexts > operationContexts > CAD subentries > locally-defined default > no context assertion.
      * Per ITU X.501 (2016), Section 8.9.2.2.
      */
-    const contextSelection: ContextSelection = options?.selection?.contextSelection
+    let contextSelection: ContextSelection = options?.selection?.contextSelection
         ?? options?.operationContexts
         ?? (cads.length
             ? {
@@ -302,45 +367,76 @@ async function readValues (
             }
             : undefined)
         ?? DEFAULT_CAD;
-    const selectedUserAttributes: Set<IndexableOID> | null = (
+    let selectedUserAttributes: Set<IndexableOID> | null = (
         options?.selection?.attributes
         && ("select" in options.selection.attributes)
     )
         ? new Set(options?.selection.attributes.select.map((oid) => oid.toString()))
         : null;
+
+    if (outputTypes) {
+        if (selectedUserAttributes) {
+            for (const attr of selectedUserAttributes.values()) {
+                if (!outputTypes.has(attr)) {
+                    selectedUserAttributes.delete(attr);
+                }
+            }
+        } else {
+            selectedUserAttributes = new Set(outputTypes.keys());
+        }
+    }
+
     if (selectedUserAttributes && options?.relevantSubentries && !options?.dontSelectFriends) {
         for (const attr of Array.from(selectedUserAttributes.values() ?? [])) {
             addFriends(options.relevantSubentries, selectedUserAttributes, ObjectIdentifier.fromString(attr));
         }
     }
-    const selectedOperationalAttributes: Set<IndexableOID> | null | undefined = options?.selection?.extraAttributes
+    let selectedOperationalAttributes: Set<IndexableOID> | null | undefined = options?.selection?.extraAttributes
         ? (("select" in options.selection.extraAttributes)
             ? new Set(options.selection.extraAttributes.select.map((oid) => oid.toString()))
             : null)
         : undefined;
+
+    if (outputTypes) {
+        if (selectedOperationalAttributes) {
+            for (const attr of selectedOperationalAttributes.values()) {
+                if (!outputTypes.has(attr)) {
+                    selectedOperationalAttributes.delete(attr);
+                }
+            }
+        } else if (selectedOperationalAttributes === null) {
+            selectedOperationalAttributes = new Set(outputTypes.keys());
+        }
+    }
+
     if (selectedOperationalAttributes && options?.relevantSubentries && !options?.dontSelectFriends) {
         for (const attr of Array.from(selectedOperationalAttributes.values() ?? [])) {
             addFriends(options.relevantSubentries, selectedOperationalAttributes, ObjectIdentifier.fromString(attr));
         }
     }
 
-    const uniqueAttributeTypes = Array.from(new Set(ctx.attributeTypes.values()));
+    // We cache these so we do not have to recompute this every time an entry is read.
+    if (!cachedUserAttributeDrivers || !cachedOperationalAttributeDrivers) {
+        const uniqueAttributeTypes = Array.from(new Set(ctx.attributeTypes.values()));
+        cachedUserAttributeDrivers = uniqueAttributeTypes
+            .filter((spec) => (!spec.usage || (spec.usage === AttributeUsage_userApplications)) && spec.driver)
+            .map((spec) => spec.driver!.readValues);
+        cachedOperationalAttributeDrivers = uniqueAttributeTypes
+            .filter((spec) => (spec.usage && (spec.usage !== AttributeUsage_userApplications)) && spec.driver)
+            .map((spec) => spec.driver!.readValues)
+    }
 
     const userAttributeReaderToExecute: SpecialAttributeDatabaseReader[] = selectedUserAttributes
         ? Array.from(selectedUserAttributes)
             .map((oid) => ctx.attributeTypes.get(oid)?.driver?.readValues)
             .filter((handler): handler is SpecialAttributeDatabaseReader => !!handler)
-        : uniqueAttributeTypes
-            .filter((spec) => (!spec.usage || (spec.usage === AttributeUsage_userApplications)) && spec.driver)
-            .map((spec) => spec.driver!.readValues);
+        : cachedUserAttributeDrivers;
 
     const operationalAttributeReadersToExecute: SpecialAttributeDatabaseReader[] = (
         selectedOperationalAttributes !== undefined
     )
         ? ((selectedOperationalAttributes === null)
-            ? uniqueAttributeTypes
-                .filter((spec) => (spec.usage && (spec.usage !== AttributeUsage_userApplications)) && spec.driver)
-                .map((spec) => spec.driver!.readValues)
+            ? cachedOperationalAttributeDrivers
             : Array.from(selectedOperationalAttributes)
                 .map((oid) => ctx.attributeTypes.get(oid)?.driver?.readValues)
                 .filter((handler): handler is SpecialAttributeDatabaseReader => !!handler))
@@ -350,7 +446,7 @@ async function readValues (
      * This variable exists to avoid an unnecessary database query.
      */
     const allUserAttributesUseDrivers = (selectedUserAttributes?.size === userAttributeReaderToExecute.length);
-    let userAttributes: Value[] = allUserAttributesUseDrivers
+    let userValues: Value[] = allUserAttributesUseDrivers
         ? []
         : (await ctx.db.attributeValue.findMany({
             where: {
@@ -401,7 +497,7 @@ async function readValues (
      */
     const allOperationalAttributesUseDrivers = (
         selectedOperationalAttributes?.size === operationalAttributeReadersToExecute.length);
-    let operationalAttributes: Value[] = (
+    let operationalValues: Value[] = (
         (selectedOperationalAttributes === undefined)
         || allOperationalAttributesUseDrivers
     )
@@ -440,14 +536,14 @@ async function readValues (
 
     for (const reader of userAttributeReaderToExecute) {
         try {
-            userAttributes.push(...await reader(ctx, entry, options?.relevantSubentries));
+            userValues.push(...await reader(ctx, entry, options?.relevantSubentries));
         } catch (e) {
             continue;
         }
     }
     for (const reader of operationalAttributeReadersToExecute) {
         try {
-            operationalAttributes.push(...await reader(ctx, entry, options?.relevantSubentries));
+            operationalValues.push(...await reader(ctx, entry, options?.relevantSubentries));
         } catch (e) {
             continue;
         }
@@ -469,11 +565,15 @@ async function readValues (
                 return selectedUserAttributes.has(attr.type.toString());
             });
 
+    if (outputTypes) {
+        collectiveValues = collectiveValues.filter((v) => outputTypes.has(v.type.toString()));
+    }
+
     const newAssertions: TypeAndContextAssertion[] = [];
     if ("selectedContexts" in contextSelection) {
         const valuesByType: Record<IndexableOID, Value[]> = groupByOID([
-            ...userAttributes,
-            ...operationalAttributes,
+            ...userValues,
+            ...operationalValues,
             ...collectiveValues,
         ], (value) => value.type);
         // This loop is just to handle TypeAndContextAssertion.[#].preference.
@@ -502,6 +602,41 @@ async function readValues (
         }
     }
 
+    // Convert context values in search rule result attributes into context assertions.
+    if (outputTypes) {
+        for (const resultAttr of outputTypes.values()) {
+            if (!resultAttr.contexts?.length) {
+                continue; // If there are no contexts, move on.
+            }
+            const contexts = resultAttr.contexts;
+            const contextsWithValues = contexts.filter((c) => c.contextValue?.length);
+            if (contextsWithValues.length === 0) {
+                continue;
+            }
+            if (!("selectedContexts" in contextSelection)) {
+                contextSelection = {
+                    selectedContexts: [],
+                };
+            }
+            /**
+             * Note that we do not have to merge these contexts with the user
+             * supplied contexts. This implementation can handle multiple
+             * TACAs of the same attribute type, so we just add more TACAs.
+             */
+            newAssertions.push(new TypeAndContextAssertion(
+                resultAttr.attributeType,
+                {
+                    all: contexts
+                        .filter((c) => c.contextValue?.length)
+                        .map((c) => new ContextAssertion(
+                            c.contextType,
+                            c.contextValue ?? [],
+                        )),
+                },
+            ));
+        }
+    }
+
     const selectedContexts = ("selectedContexts" in contextSelection)
         ? groupByOID<TypeAndContextAssertion>([
             ...contextSelection.selectedContexts,
@@ -509,28 +644,38 @@ async function readValues (
         ], (c) => c.type_)
         : null;
 
-    userAttributes = Array.from(filterByTypeAndContextAssertion(ctx, userAttributes, selectedContexts));
-    operationalAttributes = Array.from(filterByTypeAndContextAssertion(ctx, operationalAttributes, selectedContexts));
-    collectiveValues = Array.from(filterByTypeAndContextAssertion(ctx, collectiveValues, selectedContexts));
+    if (selectedContexts) {
+        userValues = Array.from(filterByTypeAndContextAssertion(ctx, userValues, selectedContexts));
+        operationalValues = Array.from(filterByTypeAndContextAssertion(ctx, operationalValues, selectedContexts));
+        collectiveValues = Array.from(filterByTypeAndContextAssertion(ctx, collectiveValues, selectedContexts));
+    }
+
+    /* Using `reading_attributes` is a performance hack. Since these functions
+    will have to index into a Map by an attribute object identifier, it will be
+    slightly more efficient to do this when all values are already grouped by
+    their attribute types. */
+    if (outputTypes && !reading_attributes) {
+        const valueFilter = getValueFilter(ctx, outputTypes);
+        userValues = userValues.filter(valueFilter);
+        operationalValues = operationalValues.filter(valueFilter);
+        collectiveValues = collectiveValues.filter(valueFilter);
+    }
 
     if (!options?.selection?.returnContexts) {
-        userAttributes = userAttributes.map((value) => ({
-            ...value,
-            contexts: undefined,
-        }));
-        operationalAttributes = operationalAttributes.map((value) => ({
-            ...value,
-            contexts: undefined,
-        }));
-        collectiveValues = collectiveValues.map((value) => ({
-            ...value,
-            contexts: undefined,
-        }));
+        for (const attr of userValues) {
+            delete attr.contexts;
+        }
+        for (const attr of operationalValues) {
+            delete attr.contexts;
+        }
+        for (const attr of collectiveValues) {
+            delete attr.contexts;
+        }
     }
 
     return {
-        userValues: userAttributes,
-        operationalValues: operationalAttributes,
+        userValues,
+        operationalValues,
         collectiveValues,
     };
 }

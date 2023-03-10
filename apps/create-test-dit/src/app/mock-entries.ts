@@ -118,6 +118,8 @@ import {
     CertificateListContent_revokedCertificates_Item as RevokedCert,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificateListContent-revokedCertificates-Item.ta";
 import { addDays } from "date-fns";
+import { organization } from "@wildboar/x500/src/lib/collections/objectClasses";
+import { businessCategory, organizationName } from "@wildboar/x500/src/lib/collections/attributes";
 
 const firstNames: string[] = [
     "Liam",
@@ -1431,6 +1433,112 @@ function createMockPersonAttributes (
         // ),
     ];
     return [ rdn, attributes, cn ];
+}
+
+const businessCategories: string[] = [
+    "Plumbing",
+    "Aeronautics",
+    "Finance",
+    "Technology",
+    "Healthcare",
+    "Welding",
+    "Entertainment",
+    "Education",
+    "Transportation",
+    "Government",
+    "Retail",
+    "Manufacturing",
+];
+
+export
+function createMockOrganizationAttributes (): [ RelativeDistinguishedName, Attribute[], string ] {
+    const randomId = randomInt(0, 10000);
+    const cityName = pickRandom(cityNames);
+    const stateName = pickRandom(stateNames);
+    const streetSpecific = pickRandom(lastNames);
+    const streetGeneric = pickRandom(genericStreetNames);
+    const street = `${randomInt(1000)} ${streetSpecific} ${streetGeneric}`;
+    const postal = randomInt(99999).toString().padStart(5, "0");
+    const address = [
+        street,
+        `${cityName}, ${stateName} ${postal}`,
+    ];
+    const phone = randomPhoneNumber();
+    const fax = new FacsimileTelephoneNumber(
+        randomPhoneNumber(),
+        undefined,
+    );
+    const category = pickRandom(businessCategories);
+    const password = randomBytes(6).toString("base64");
+    const desc = `This user's password is '${password}'.`;
+    const orgName = `Organization ${randomId}`;
+    const rdn: RelativeDistinguishedName = [
+        new AttributeTypeAndValue(
+            organizationName["&id"],
+            organizationName.encoderFor["&Type"]!({ uTF8String: orgName }, DER),
+        ),
+    ];
+    const attributes: Attribute[] = [
+        new Attribute(
+            objectClass["&id"],
+            [
+                organization["&id"],
+            ].map((oc) => objectClass.encoderFor["&Type"]!(oc, DER)),
+        ),
+        new Attribute(
+            organizationName["&id"],
+            [organizationName.encoderFor["&Type"]!({ uTF8String: orgName }, DER)],
+        ),
+        new Attribute(
+            localityName["&id"],
+            [localityName.encoderFor["&Type"]!({ uTF8String: cityName }, DER)],
+        ),
+        new Attribute(
+            stateOrProvinceName["&id"],
+            [stateOrProvinceName.encoderFor["&Type"]!({ uTF8String: stateName }, DER)],
+        ),
+        new Attribute(
+            streetAddress["&id"],
+            [streetAddress.encoderFor["&Type"]!({ uTF8String: street }, DER)],
+        ),
+        new Attribute(
+            physicalDeliveryOfficeName["&id"],
+            [physicalDeliveryOfficeName.encoderFor["&Type"]!({ uTF8String: cityName }, DER)],
+        ),
+        new Attribute(
+            postalAddress["&id"],
+            [postalAddress.encoderFor["&Type"]!(address.map((a) => ({ uTF8String: a })), DER)],
+        ),
+        new Attribute(
+            postalCode["&id"],
+            [postalCode.encoderFor["&Type"]!({ uTF8String: postal }, DER)],
+        ),
+        new Attribute(
+            postOfficeBox["&id"],
+            [postOfficeBox.encoderFor["&Type"]!({ uTF8String: "44A" }, DER)],
+        ),
+        new Attribute(
+            facsimileTelephoneNumber["&id"],
+            [facsimileTelephoneNumber.encoderFor["&Type"]!(fax, DER)],
+        ),
+        new Attribute(
+            internationalISDNNumber["&id"],
+            [internationalISDNNumber.encoderFor["&Type"]!(randomInt(10000000).toString(), DER)],
+        ),
+        new Attribute(
+            telephoneNumber["&id"],
+            [telephoneNumber.encoderFor["&Type"]!(phone, DER)],
+        ),
+        new Attribute(
+            description["&id"],
+            [description.encoderFor["&Type"]!({ uTF8String: desc }, DER)],
+        ),
+        new Attribute(
+            businessCategory["&id"],
+            [businessCategory.encoderFor["&Type"]!({ uTF8String: category }, DER)],
+        ),
+    ];
+    return [ rdn, attributes, orgName ];
 }
 
 export
