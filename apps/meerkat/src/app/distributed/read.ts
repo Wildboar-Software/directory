@@ -223,13 +223,10 @@ async function read (
         ? assn?.invocations.get(Number(state.invokeId.present))
         : undefined;
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
-    const isSubentry: boolean = target.dse.objectClass.has(id_sc_subentry.toString());
     const targetDN = getDistinguishedName(target);
-    const relevantSubentries: Vertex[] = isSubentry
-        ? []
-        : (await Promise.all(
-            state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
-        )).flat();
+    const relevantSubentries: Vertex[] = (await Promise.all(
+        state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
+    )).flat();
     const accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
         .reverse()
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
