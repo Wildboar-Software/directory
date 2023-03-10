@@ -74,6 +74,20 @@ structure exactly, and `C=US,O=Government,CN=Joseph R. Biden` and
 `C=US,O=Government,CN=Kamala Harris` are both compound entries, allowing you to
 test the intersection of compound entries and hierarchical groups.
 
+`C=US,ST=FL,L=MAR,L=Ocala` is a service administrative area as well as an access
+control inner area. Users one level beneath this DN may perform searches that
+are permitted by search rules that provide the following services:
+
+- White Pages, allowing users to search for a person's name and get their
+  phone number and address.
+- Yellow Pages, allowing users to search for organizations based on their
+  business category.
+- Grey Pages, allowing users to identify what person or service owns a given
+  phone number. ("Reverse phonebook" or "caller ID.")
+
+These search rules are defined at the bottom of the ASN.1 module at the
+[bottom of this page](#ocala-search-rules).
+
 ## Quipu DSA
 
 Quipu DSA, the X.500 directory in the
@@ -133,3 +147,196 @@ It is just a simple ExpressJS application that uses the
 [X.500 authentication TypeScript library](https://github.com/Wildboar-Software/directory/tree/master/libs/x500-auth-ts)
 (also hosted in the same repository), which in turn, uses the
 [X.500 Client TypeScript Library](https://github.com/Wildboar-Software/directory/tree/master/libs/x500-client-ts).
+
+## Ocala Search Rules
+
+See the bottom of this module for the value assignments
+`ocalaWhitePages`, `ocalaYellowPages`, and `ocalaGreyPages`. These search rules
+are present in `C=US,ST=FL,L=MAR,L=Ocala` in the demo DIT.
+
+```asn1
+WildboarSearchServices { 1 1 } -- This is not a real OID. It's just for syntactic correctness.
+DEFINITIONS ::=
+BEGIN
+
+--  EXPORTS All
+
+IMPORTS
+
+    -- from Rec. ITU-T X.520 | ISO/IEC 9594-6
+
+    surname, givenName, commonName, initials, generationQualifier, localityName,
+    stateOrProvinceName, businessCategory, telephoneNumber, postalAddress,
+    physicalDeliveryOfficeName, postalCode, postOfficeBox, streetAddress,
+    organizationName, description
+        FROM SelectedAttributeTypes
+        {joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9} WITH SUCCESSORS
+
+    REQUEST-ATTRIBUTE, RESULT-ATTRIBUTE, SEARCH-RULE, AllowedSubset
+        FROM ServiceAdministration
+        {joint-iso-itu-t ds(5) module(1) serviceAdministration(33) 9} WITH SUCCESSORS
+
+;
+
+-- Grey pages, sometimes called a "reverse telephone directory"
+-- Information on government agencies is often printed on blue pages or green pages.
+-- Blue pages are not really implementable with the X.500 schema.
+id-wildboar         OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 56490 }
+id-serviceTypes     OBJECT IDENTIFIER ::= { id-wildboar 59 }
+id-svc-whitePages   OBJECT IDENTIFIER ::= { id-serviceTypes 1 } -- Name to telephone
+id-svc-yellowPages  OBJECT IDENTIFIER ::= { id-serviceTypes 2 } -- Businesses by category
+id-svc-greyPages    OBJECT IDENTIFIER ::= { id-serviceTypes 3 } -- Telephone to name
+id-svc-bluePages    OBJECT IDENTIFIER ::= { id-serviceTypes 4 } -- Government agencies
+
+simpleSearchBy{ATTRIBUTE:attr} REQUEST-ATTRIBUTE ::= {
+    ATTRIBUTE TYPE      attr.&id
+}
+
+simpleSearchFor{ATTRIBUTE:attr} RESULT-ATTRIBUTE ::= {
+    ATTRIBUTE TYPE      attr.&id,
+}
+
+searchBySurname                 REQUEST-ATTRIBUTE ::= simpleSearchBy{surname}
+searchByGivenName               REQUEST-ATTRIBUTE ::= simpleSearchBy{givenName}
+searchByCommonName              REQUEST-ATTRIBUTE ::= simpleSearchBy{commonName}
+searchByInitials                REQUEST-ATTRIBUTE ::= simpleSearchBy{initials}
+searchByGenerationQualifier     REQUEST-ATTRIBUTE ::= simpleSearchBy{generationQualifier}
+searchByLocalityName            REQUEST-ATTRIBUTE ::= simpleSearchBy{localityName}
+searchByStateOrProvinceName     REQUEST-ATTRIBUTE ::= simpleSearchBy{stateOrProvinceName}
+searchByBusinessCategory        REQUEST-ATTRIBUTE ::= simpleSearchBy{businessCategory}
+searchByTelephoneNumber         REQUEST-ATTRIBUTE ::= simpleSearchBy{telephoneNumber}
+
+searchForTelephoneNumber                RESULT-ATTRIBUTE ::= simpleSearchFor{telephoneNumber}
+searchForPostalAddress                  RESULT-ATTRIBUTE ::= simpleSearchFor{postalAddress}
+searchForPhysicalDeliveryOfficeName     RESULT-ATTRIBUTE ::= simpleSearchFor{physicalDeliveryOfficeName}
+searchForPostalCode                     RESULT-ATTRIBUTE ::= simpleSearchFor{postalCode}
+searchForPostOfficeBox                  RESULT-ATTRIBUTE ::= simpleSearchFor{postOfficeBox}
+searchForStreetAddress                  RESULT-ATTRIBUTE ::= simpleSearchFor{streetAddress}
+searchForStateOrProvinceName            RESULT-ATTRIBUTE ::= simpleSearchFor{stateOrProvinceName}
+searchForSurname                        RESULT-ATTRIBUTE ::= simpleSearchFor{surname}
+searchForGivenName                      RESULT-ATTRIBUTE ::= simpleSearchFor{givenName}
+searchForCommonName                     RESULT-ATTRIBUTE ::= simpleSearchFor{commonName}
+searchForInitials                       RESULT-ATTRIBUTE ::= simpleSearchFor{initials}
+searchForGenerationQualifier            RESULT-ATTRIBUTE ::= simpleSearchFor{generationQualifier}
+searchForLocalityName                   RESULT-ATTRIBUTE ::= simpleSearchFor{localityName}
+searchForBusinessCategory               RESULT-ATTRIBUTE ::= simpleSearchFor{businessCategory}
+searchForOrganizationName               RESULT-ATTRIBUTE ::= simpleSearchFor{organizationName}
+searchForDescription                    RESULT-ATTRIBUTE ::= simpleSearchFor{description}
+
+PersonNameRequestAttributes REQUEST-ATTRIBUTE ::= {
+    searchByCommonName
+    | searchBySurname
+    | searchByGivenName
+    | searchByInitials
+    | searchByGenerationQualifier
+}
+
+PersonNameResultAttributes RESULT-ATTRIBUTE ::= {
+    searchForCommonName
+    | searchForSurname
+    | searchForGivenName
+    | searchForInitials
+    | searchForGenerationQualifier
+}
+
+AddressResultAttributes RESULT-ATTRIBUTE ::= {
+    searchForPostalAddress
+    | searchForPhysicalDeliveryOfficeName
+    | searchForPostalCode
+    | searchForPostOfficeBox
+    | searchForStreetAddress
+    | searchForLocalityName
+    | searchForStateOrProvinceName
+}
+
+whitePages {
+    OBJECT IDENTIFIER:dmdId,
+    INTEGER:id,
+    AllowedSubset:subsets,
+    INTEGER:defaultEntryLimit,
+    INTEGER:maxEntryLimit
+} SEARCH-RULE ::= {
+    DMD ID                  dmdId
+    SERVICE-TYPE            id-svc-whitePages
+    INPUT ATTRIBUTES        {
+        PersonNameRequestAttributes
+        | searchByLocalityName
+        | searchByStateOrProvinceName
+    }
+    OUTPUT ATTRIBUTES       {
+        PersonNameResultAttributes
+        | AddressResultAttributes
+        | searchForTelephoneNumber
+    }
+    ALLOWED SUBSET          subsets
+    IMPOSED SUBSET          oneLevel
+    ENTRY LIMIT             {
+        default             defaultEntryLimit,
+        max                 maxEntryLimit
+    }
+}
+
+yellowPages {
+    OBJECT IDENTIFIER:dmdId,
+    INTEGER:id,
+    AllowedSubset:subsets,
+    INTEGER:defaultEntryLimit,
+    INTEGER:maxEntryLimit
+} SEARCH-RULE ::= {
+    DMD ID                  dmdId
+    SERVICE-TYPE            id-svc-yellowPages
+    INPUT ATTRIBUTES        {
+        searchByLocalityName
+        | searchByStateOrProvinceName
+        | searchByBusinessCategory
+    }
+    OUTPUT ATTRIBUTES       {
+        searchForOrganizationName
+        | searchForCommonName
+        | searchForDescription
+        | searchForBusinessCategory
+        | searchForTelephoneNumber
+        AddressResultAttributes
+    }
+    ALLOWED SUBSET          subsets
+    IMPOSED SUBSET          oneLevel
+    ENTRY LIMIT             {
+        default             defaultEntryLimit,
+        max                 maxEntryLimit
+    }
+}
+
+greyPages {
+    OBJECT IDENTIFIER:dmdId,
+    INTEGER:id,
+    AllowedSubset:subsets,
+    INTEGER:defaultEntryLimit,
+    INTEGER:maxEntryLimit
+} SEARCH-RULE ::= {
+    DMD ID                  dmdId
+    SERVICE-TYPE            id-svc-greyPages
+    INPUT ATTRIBUTES        {searchByTelephoneNumber}
+    COMBINATION             attribute:telephoneNumber.&id
+    OUTPUT ATTRIBUTES       {
+        PersonNameResultAttributes
+        | AddressResultAttributes
+        | searchForTelephoneNumber
+        | searchForOrganizationName
+        | searchForBusinessCategory
+        | searchForDescription
+    }
+    ALLOWED SUBSET          subsets
+    ENTRY LIMIT             {
+        default             defaultEntryLimit,
+        max                 maxEntryLimit
+    }
+}
+
+-- Search Services for C=US,ST=FL,L=MAR,L=Ocala
+
+ocalaWhitePages     SEARCH-RULE ::= whitePages  {id-wildboar, 1, '010'B, 10, 50}
+ocalaYellowPages    SEARCH-RULE ::= yellowPages {id-wildboar, 2, '010'B, 50, 100}
+ocalaGreyPages      SEARCH-RULE ::= greyPages   {id-wildboar, 3, '010'B, 5, 10}
+
+END
+```

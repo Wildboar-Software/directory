@@ -12,6 +12,7 @@ import {
     AuthenticationLevel_basicLevels_level_simple,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
 import {
+    SubtreeSpecification,
     UserClasses,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/UserClasses.ta";
 import {
@@ -101,6 +102,8 @@ import {
 import {
     numSubordinates,
 } from "@wildboar/parity-schema/src/lib/modules/DS389CoreSchema/numSubordinates.oa";
+import { countryName, localityName, searchRules, stateOrProvinceName } from "@wildboar/x500/src/lib/collections/attributes";
+import { country, organization, person, residentialPerson } from "@wildboar/x500/src/lib/collections/objectClasses";
 
 const DENY_ALL_BITS: number[] = [
     GrantsAndDenials_denyAdd,
@@ -132,6 +135,20 @@ const GRANT_ALL_BITS: number[] = [
     GrantsAndDenials_grantRemove,
     GrantsAndDenials_grantRename,
     GrantsAndDenials_grantReturnDN,
+];
+
+const READ_ONLY_BITS: number[] = [
+    GrantsAndDenials_grantCompare,
+    GrantsAndDenials_grantBrowse,
+    GrantsAndDenials_grantFilterMatch,
+    GrantsAndDenials_grantInvoke,
+    GrantsAndDenials_grantRead,
+    GrantsAndDenials_grantReturnDN,
+];
+
+const READ_AND_INVOKE_BITS: number[] = [
+    GrantsAndDenials_grantInvoke,
+    GrantsAndDenials_grantRead,
 ];
 
 function createGrantsAndDenials (bitsToSet: number[]): GrantsAndDenials {
@@ -471,6 +488,151 @@ const GLOBAL_DIRECTORY_ADMIN_BASELINE: ACIItem = new ACIItem(
                         null,
                     ),
                     createGrantsAndDenials(GRANT_ALL_BITS),
+                ),
+            ],
+        ),
+    },
+);
+
+const ocala_dn: DistinguishedName = [
+    [
+        new AttributeTypeAndValue(
+            countryName["&id"],
+            countryName.encoderFor["&Type"]!("US", DER),
+        ),
+    ],
+    [
+        new AttributeTypeAndValue(
+            stateOrProvinceName["&id"],
+            stateOrProvinceName.encoderFor["&Type"]!({ uTF8String: "FL" }, DER),
+        ),
+    ],
+    [
+        new AttributeTypeAndValue(
+            localityName["&id"],
+            localityName.encoderFor["&Type"]!({ uTF8String: "MAR" }, DER),
+        ),
+    ],
+    [
+        new AttributeTypeAndValue(
+            localityName["&id"],
+            localityName.encoderFor["&Type"]!({ uTF8String: "Ocala" }, DER),
+        ),
+    ],
+];
+
+export
+const OCALA_USERS: ACIItem = new ACIItem(
+    {
+        uTF8String: "Ocala Users",
+    },
+    50,
+    {
+        basicLevels: new AuthenticationLevel_basicLevels(
+            AuthenticationLevel_basicLevels_level_simple,
+            undefined,
+            undefined,
+        ),
+    },
+    {
+        userFirst: new ACIItem_itemOrUserFirst_userFirst(
+            new UserClasses(
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                [ // Everybody one level beneath C=US,ST=FL,L=MAR,L=Ocala
+                    new SubtreeSpecification(
+                        ocala_dn,
+                        undefined,
+                        undefined,
+                        1,
+                    ),
+                ],
+            ),
+            [
+                // Allow all permissions on everything
+                new UserPermission(
+                    undefined,
+                    new ProtectedItems(
+                        null,
+                        null,
+                        undefined,
+                        undefined,
+                        null,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        {
+                            or: [
+                                {
+                                    item: organization["&id"],
+                                },
+                                {
+                                    item: residentialPerson["&id"],
+                                },
+                                {
+                                    item: person["&id"],
+                                },
+                            ],
+                        }
+                    ),
+                    createGrantsAndDenials(READ_ONLY_BITS),
+                ),
+            ],
+        ),
+    },
+);
+
+// NOTE: This needs to go in subentryACI.
+export
+const OCALA_USERS_SERVICES: ACIItem = new ACIItem(
+    {
+        uTF8String: "Ocala Users Services",
+    },
+    49,
+    {
+        basicLevels: new AuthenticationLevel_basicLevels(
+            AuthenticationLevel_basicLevels_level_simple,
+            undefined,
+            undefined,
+        ),
+    },
+    {
+        userFirst: new ACIItem_itemOrUserFirst_userFirst(
+            new UserClasses(
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                [ // Everybody one level beneath C=US,ST=FL,L=MAR,L=Ocala
+                    new SubtreeSpecification(
+                        ocala_dn,
+                        undefined,
+                        undefined,
+                        1,
+                    ),
+                ],
+            ),
+            [
+                // Allow all permissions on everything
+                new UserPermission(
+                    undefined,
+                    new ProtectedItems(
+                        null,
+                        undefined,
+                        [
+                            searchRules["&id"],
+                        ],
+                        [
+                            searchRules["&id"],
+                        ],
+                    ),
+                    createGrantsAndDenials(READ_AND_INVOKE_BITS),
                 ),
             ],
         ),

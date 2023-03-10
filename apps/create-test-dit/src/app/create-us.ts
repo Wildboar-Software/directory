@@ -50,6 +50,7 @@ import {
     createMockCertificate,
     createMockCRL,
     createMockPersonAttributes,
+    createMockOrganizationAttributes,
     createMockUsername,
     createMockEmail,
 } from "./mock-entries";
@@ -184,7 +185,222 @@ import {
     ExtensionAttribute,
 } from "@wildboar/x400/src/lib/modules/MTSAbstractService/ExtensionAttribute.ta";
 import { Promise as bPromise } from "bluebird";
+import { id_ar_serviceSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-serviceSpecificArea.va";
+import {
+    SubtreeSpecification,
+    _encode_SubtreeSpecification,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
+import {
+    EntryLimit,
+    ImposedSubset_oneLevel,
+    SearchRuleDescription,
+    _encode_SearchRuleDescription,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/SearchRuleDescription.ta";
+import {
+    RequestAttribute,
+} from "@wildboar/x500/src/lib/modules/ServiceAdministration/RequestAttribute.ta";
+import {
+    ATTRIBUTE,
+    ResultAttribute,
+} from "@wildboar/x500/src/lib/modules/ServiceAdministration/ResultAttribute.ta";
+import { OCALA_USERS, OCALA_USERS_SERVICES } from "./aci";
+import { _encode_ACIItem } from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
+import {
+    id_ar_accessControlInnerArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlInnerArea.va";
+import {
+    Guide,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/Guide.ta";
 
+const id_wildboar           = new ObjectIdentifier([ 1, 3, 6, 1, 4, 1, 56490 ]);
+const id_serviceTypes       = new ObjectIdentifier([ 59 ], id_wildboar);
+const id_svc_whitePages     = new ObjectIdentifier([ 1 ], id_serviceTypes);
+const id_svc_yellowPages    = new ObjectIdentifier([ 2 ], id_serviceTypes);
+const id_svc_greyPages      = new ObjectIdentifier([ 3 ], id_serviceTypes);
+
+function simpleSearchBy (attr: ATTRIBUTE): RequestAttribute {
+    return new RequestAttribute(
+        attr["&id"],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+    );
+}
+
+function simpleSearchFor (attr: ATTRIBUTE): ResultAttribute {
+    return new ResultAttribute(
+        attr["&id"],
+        undefined,
+        undefined,
+    );
+}
+
+const searchBySurname = simpleSearchBy(selat.surname);
+const searchByGivenName = simpleSearchBy(selat.givenName);
+const searchByCommonName = simpleSearchBy(selat.commonName);
+const searchByInitials = simpleSearchBy(selat.initials);
+const searchByGenerationQualifier = simpleSearchBy(selat.generationQualifier);
+const searchByLocalityName = simpleSearchBy(selat.localityName);
+const searchByStateOrProvinceName = simpleSearchBy(selat.stateOrProvinceName);
+const searchByBusinessCategory = simpleSearchBy(selat.businessCategory);
+const searchByTelephoneNumber = simpleSearchBy(selat.telephoneNumber);
+
+const searchForTelephoneNumber = simpleSearchFor(selat.telephoneNumber);
+const searchForPostalAddress = simpleSearchFor(selat.postalAddress);
+const searchForPhysicalDeliveryOfficeName = simpleSearchFor(selat.physicalDeliveryOfficeName);
+const searchForPostalCode = simpleSearchFor(selat.postalCode);
+const searchForPostOfficeBox = simpleSearchFor(selat.postOfficeBox);
+const searchForStreetAddress = simpleSearchFor(selat.streetAddress);
+const searchForStateOrProvinceName = simpleSearchFor(selat.stateOrProvinceName);
+const searchForSurname = simpleSearchFor(selat.surname);
+const searchForGivenName = simpleSearchFor(selat.givenName);
+const searchForCommonName = simpleSearchFor(selat.commonName);
+const searchForInitials = simpleSearchFor(selat.initials);
+const searchForGenerationQualifier = simpleSearchFor(selat.generationQualifier);
+const searchForLocalityName = simpleSearchFor(selat.localityName);
+const searchForBusinessCategory = simpleSearchFor(selat.businessCategory);
+const searchForOrganizationName = simpleSearchFor(selat.organizationName);
+const searchForDescription = simpleSearchFor(selat.description);
+
+const PersonNameRequestAttributes: RequestAttribute[] = [
+    searchByCommonName,
+    searchBySurname,
+    searchByGivenName,
+    searchByInitials,
+    searchByGenerationQualifier,
+];
+
+const PersonNameResultAttributes: ResultAttribute[] = [
+    searchForCommonName,
+    searchForSurname,
+    searchForGivenName,
+    searchForInitials,
+    searchForGenerationQualifier,
+];
+
+const AddressResultAttributes: ResultAttribute[] = [
+    searchForPostalAddress,
+    searchForPhysicalDeliveryOfficeName,
+    searchForPostalCode,
+    searchForPostOfficeBox,
+    searchForStreetAddress,
+    searchForLocalityName,
+    searchForStateOrProvinceName,
+];
+
+const whitePages = new SearchRuleDescription(
+    1,
+    id_wildboar,
+    id_svc_whitePages,
+    undefined,
+    [
+        ...PersonNameRequestAttributes,
+        searchByLocalityName,
+        searchByStateOrProvinceName,
+    ],
+    undefined,
+    [
+        ...PersonNameResultAttributes,
+        ...AddressResultAttributes,
+        searchForTelephoneNumber,
+    ],
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    new Uint8ClampedArray([ FALSE_BIT, TRUE_BIT, FALSE_BIT ]),
+    ImposedSubset_oneLevel,
+    new EntryLimit(10, 50),
+    [
+        {
+            uTF8String: "Ocala White Pages",
+        },
+    ],
+    {
+        uTF8String: "Find the address and phone number of a person by name",
+    },
+);
+
+const yellowPages = new SearchRuleDescription(
+    2,
+    id_wildboar,
+    id_svc_yellowPages,
+    undefined,
+    [
+        searchByLocalityName,
+        searchByStateOrProvinceName,
+        searchByBusinessCategory,
+    ],
+    undefined,
+    [
+        ...AddressResultAttributes,
+        searchForTelephoneNumber,
+        searchForOrganizationName,
+        searchForCommonName,
+        searchForDescription,
+        searchForBusinessCategory,
+    ],
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    new Uint8ClampedArray([ FALSE_BIT, TRUE_BIT, FALSE_BIT ]),
+    ImposedSubset_oneLevel,
+    new EntryLimit(50, 100),
+    [
+        {
+            uTF8String: "Ocala Yellow Pages",
+        },
+    ],
+    {
+        uTF8String: "Find local businesses by category",
+    },
+);
+
+const greyPages = new SearchRuleDescription(
+    3,
+    id_wildboar,
+    id_svc_greyPages,
+    undefined,
+    [searchByTelephoneNumber],
+    undefined,
+    [
+        ...PersonNameResultAttributes,
+        ...AddressResultAttributes,
+        searchForTelephoneNumber,
+        searchForOrganizationName,
+        searchForDescription,
+        searchForBusinessCategory,
+    ],
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    new Uint8ClampedArray([ FALSE_BIT, TRUE_BIT, FALSE_BIT ]),
+    ImposedSubset_oneLevel,
+    new EntryLimit(5, 10),
+    [
+        {
+            uTF8String: "Ocala Grey Pages",
+        },
+    ],
+    {
+        uTF8String: "Reverse phonebook: look up a person or organization by their phone number",
+    },
+);
 
 const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
     Array(9).fill(FALSE_BIT));
@@ -388,6 +604,133 @@ async function seedUS (
         ];
         const arg = createAddEntryArgument(deepDN, attributes);
         await idempotentAddEntry(ctx, conn, "C=US,ST=FL,L=HIL,L=Tampa", arg);
+    }
+
+    const marion_rdn: RelativeDistinguishedName = [
+        new AttributeTypeAndValue(
+            selat.localityName["&id"]!,
+            _encodeUTF8String("MAR", DER),
+        ),
+    ];
+    { // C=US,ST=FL,L=MAR
+        const name: string = "MAR";
+        const attributes: Attribute[] = [
+            new Attribute(
+                selat.objectClass["&id"],
+                [_encodeObjectIdentifier(seloc.locality["&id"], DER)],
+            ),
+            new Attribute(
+                selat.localityName["&id"],
+                [_encodeUTF8String(name, DER)],
+            ),
+        ];
+        const arg = createAddEntryArgument([ ...deepDN.slice(0, 2), marion_rdn ], attributes);
+        await idempotentAddEntry(ctx, conn, "C=US,ST=FL,L=MAR", arg);
+    }
+
+    const ocala_rdn: RelativeDistinguishedName = [
+        new AttributeTypeAndValue(
+            selat.localityName["&id"]!,
+            _encodeUTF8String("Ocala", DER),
+        ),
+    ];
+    { // C=US,ST=FL,L=MAR,L=Ocala
+        const name: string = "Ocala";
+        const attributes: Attribute[] = [
+            new Attribute(
+                selat.objectClass["&id"],
+                [_encodeObjectIdentifier(seloc.locality["&id"], DER)],
+            ),
+            new Attribute(
+                selat.administrativeRole["&id"],
+                [
+                    _encodeObjectIdentifier(id_ar_serviceSpecificArea, DER),
+                    _encodeObjectIdentifier(id_ar_accessControlInnerArea, DER),
+                ],
+            ),
+            new Attribute(
+                selat.localityName["&id"],
+                [_encodeUTF8String(name, DER)],
+            ),
+            // This is the ACI that permits Ocala users to invoke the search rules.
+            new Attribute(
+                selat.subentryACI["&id"],
+                [_encode_ACIItem(OCALA_USERS_SERVICES, DER)],
+            ),
+            new Attribute(
+                selat.searchGuide["&id"],
+                [
+                    selat.searchGuide.encoderFor["&Type"]!(new Guide(
+                        seloc.person["&id"],
+                        {
+                            type_: {
+                                equality: selat.telephoneNumber["&id"],
+                            },
+                        },
+                    ), DER),
+                    selat.searchGuide.encoderFor["&Type"]!(new Guide(
+                        seloc.organization["&id"],
+                        {
+                            type_: {
+                                equality: selat.businessCategory["&id"],
+                            },
+                        },
+                    ), DER),
+                ],
+            ),
+        ];
+        const arg = createAddEntryArgument([ ...deepDN.slice(0, 2), marion_rdn, ocala_rdn ], attributes);
+        await idempotentAddEntry(ctx, conn, "C=US,ST=FL,L=MAR,L=Ocala", arg);
+    }
+
+    {
+        const name: string = "Service and Access Control";
+        const subentry_rdn: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                selat.commonName["&id"]!,
+                _encodeUTF8String("Ocala", DER),
+            ),
+        ];
+        const dn: DistinguishedName = [
+            ...deepDN.slice(0, 2),
+            marion_rdn,
+            ocala_rdn,
+            subentry_rdn,
+        ];
+        const attributes: Attribute[] = [
+            new Attribute(
+                selat.objectClass["&id"],
+                [
+                    _encodeObjectIdentifier(seloc.subentry["&id"], DER),
+                    _encodeObjectIdentifier(seloc.serviceAdminSubentry["&id"], DER),
+                    _encodeObjectIdentifier(seloc.accessControlSubentry["&id"], DER),
+                ],
+            ),
+            new Attribute(
+                selat.commonName["&id"],
+                [_encodeUTF8String(name, DER)],
+            ),
+            new Attribute(
+                selat.subtreeSpecification["&id"],
+                [_encode_SubtreeSpecification(new SubtreeSpecification(), DER)],
+            ),
+            new Attribute(
+                selat.searchRules["&id"],
+                [
+                    _encode_SearchRuleDescription(whitePages, DER),
+                    _encode_SearchRuleDescription(yellowPages, DER),
+                    _encode_SearchRuleDescription(greyPages, DER),
+                ],
+            ),
+            new Attribute(
+                selat.prescriptiveACI["&id"],
+                [
+                    _encode_ACIItem(OCALA_USERS, DER),
+                ],
+            ),
+        ];
+        const arg = createAddEntryArgument(dn, attributes);
+        await idempotentAddEntry(ctx, conn, `C=US,ST=FL,L=MAR,L=Ocala,CN=${name}`, arg);
     }
 
     { // C=US,ST=FL,L=HIL,L=Tampa,L=Westchase
@@ -910,6 +1253,384 @@ async function seedUS (
         const arg = createAddEntryArgument(dn, attributes);
         await idempotentAddEntry(ctx, conn, "C=US,ST=FL,L=HIL,L=Tampa,O=Wildboar Software,CN=Code Peasants", arg);
     }
+
+    newEntryArgs.length = 0;
+
+    const ocalaDN: DistinguishedName = [
+        ...deepDN.slice(0, 2),
+        marion_rdn,
+        ocala_rdn,
+    ];
+
+    // People within C=US,ST=FL,L=MAR,L=Ocala
+    for (let i = 1; i < 500; i++) {
+        const otherObjectClasses: OBJECT_IDENTIFIER[] = [];
+        const isNatural: boolean = !(i % 2);
+        // const isPGPUser: boolean = !(i % 3);
+        const isPosixUser: boolean = !(i % 3);
+        const isShadowUser: boolean = !(i % 4);
+        const isEducated: boolean = !(i % 5);
+        const isOpenLDAPDisplayable: boolean = !(i % 6);
+        const hasUserSecurityInfo: boolean = !(i % 7);
+        const isQmailUser: boolean = !(i % 8);
+        const isPkiUser: boolean = !(i % 9);
+        const isMHSUser: boolean = !(i % 10);
+        const isSambaAccount: boolean = !(i % 11);
+        const isSambaSamAccount: boolean = !(i % 12);
+        const isInPeepantsGang: boolean = !(i % 13);
+        const isInGucciGang: boolean = !(i % 15);
+        const isPkiCA: boolean = !(i % 19);
+        const isDynamic: boolean = !(i % 21);
+        if (isNatural) {
+            otherObjectClasses.push(naturalPerson["&id"]);
+        }
+        if (isPosixUser) {
+            otherObjectClasses.push(posixAccount["&id"]);
+        }
+        if (isShadowUser) {
+            otherObjectClasses.push(shadowAccount["&id"]);
+        }
+        // Usage of this schema is unclear entirely.
+        // if (isPGPUser) {
+        //     otherObjectClasses.push(pgpKeyInfo["&id"]);
+        // }
+        if (isDynamic) {
+            otherObjectClasses.push(dynamicObject["&id"]);
+        }
+        if (isEducated) {
+            otherObjectClasses.push(eduPerson["&id"]);
+        }
+        if (isQmailUser) {
+            otherObjectClasses.push(qmailUser["&id"]);
+        }
+        if (isOpenLDAPDisplayable) {
+            otherObjectClasses.push(openLDAPdisplayableObject["&id"]);
+        }
+        if (hasUserSecurityInfo) {
+            otherObjectClasses.push(seloc.userSecurityInformation["&id"]);
+        }
+        if (isPkiCA) {
+            otherObjectClasses.push(seloc.pkiCA["&id"]);
+            otherObjectClasses.push(seloc.certificationAuthority["&id"]);
+            otherObjectClasses.push(seloc.certificationAuthority_V2["&id"]);
+        }
+        if (isPkiUser) {
+            otherObjectClasses.push(seloc.pkiUser["&id"]);
+            otherObjectClasses.push(seloc.strongAuthenticationUser["&id"]);
+        }
+        if (isSambaAccount) {
+            otherObjectClasses.push(sambaAccount["&id"]);
+        }
+        if (isSambaSamAccount) {
+            otherObjectClasses.push(sambaSamAccount["&id"]);
+        }
+        if (isMHSUser) {
+            otherObjectClasses.push(mhs_user["&id"]);
+            // edi-user is a structural object class.
+            // otherObjectClasses.push(edi_user["&id"]);
+        }
+        const [ rdn, attributes, cn ] = createMockPersonAttributes(otherObjectClasses);
+        const dn: DistinguishedName = [
+            ...ocalaDN,
+            rdn,
+        ];
+        if (isNatural) {
+            attributes.push(new Attribute(
+                emailAddress["&id"],
+                [emailAddress.encoderFor["&Type"]!(createMockEmail(), DER)],
+            ));
+            attributes.push(new Attribute(
+                unstructuredName["&id"],
+                [unstructuredName.encoderFor["&Type"]!({ directoryString: { uTF8String: "Big Chungus" } }, DER)],
+            ));
+            attributes.push(new Attribute(
+                unstructuredAddress["&id"],
+                [unstructuredAddress.encoderFor["&Type"]!({ uTF8String: "123 Drury lane, Atlanta, GA 12345" }, DER)],
+            ));
+            attributes.push(new Attribute(
+                dateOfBirth["&id"],
+                [dateOfBirth.encoderFor["&Type"]!(new Date(), DER)],
+            ));
+            attributes.push(new Attribute(
+                placeOfBirth["&id"],
+                [placeOfBirth.encoderFor["&Type"]!({ uTF8String: "Disney World" }, DER)],
+            ));
+            attributes.push(new Attribute(
+                gender["&id"],
+                [gender.encoderFor["&Type"]!((randomInt(999) % 2) ? "M" : "F", DER)],
+            ));
+            attributes.push(new Attribute(
+                countryOfCitizenship["&id"],
+                [countryOfCitizenship.encoderFor["&Type"]!("US", DER)],
+            ));
+            attributes.push(new Attribute(
+                countryOfResidence["&id"],
+                [countryOfResidence.encoderFor["&Type"]!("SE", DER)],
+            ));
+            attributes.push(new Attribute(
+                pseudonym["&id"],
+                [pseudonym.encoderFor["&Type"]!({ uTF8String: "Monkeyman 5000" }, DER)],
+            ));
+        }
+        if (isPosixUser) {
+            const userid: string = createMockUsername();
+            attributes.push(new Attribute(
+                uid["&id"],
+                [uid.encoderFor["&Type"]!({ uTF8String: userid }, DER)],
+            ));
+            attributes.push(new Attribute(
+                uidNumber["&id"],
+                [uidNumber.encoderFor["&Type"]!(1001, DER)],
+            ));
+            attributes.push(new Attribute(
+                gidNumber["&id"],
+                [gidNumber.encoderFor["&Type"]!(1001, DER)],
+            ));
+            attributes.push(new Attribute(
+                homeDirectory["&id"],
+                [homeDirectory.encoderFor["&Type"]!(`/home/${userid}`, DER)],
+            ));
+            attributes.push(new Attribute(
+                loginShell["&id"],
+                [loginShell.encoderFor["&Type"]!("/bin/bash", DER)],
+            ));
+        }
+        if (isShadowUser) {
+            const uidAlreadyPresent: boolean = attributes.some((a) => a.type_.isEqualTo(uid["&id"]));
+            if (!uidAlreadyPresent) {
+                const userid: string = createMockUsername();
+                attributes.push(new Attribute(
+                    uid["&id"],
+                    [uid.encoderFor["&Type"]!({ uTF8String: userid }, DER)],
+                ));
+            }
+            attributes.push(new Attribute(
+                shadowMin["&id"],
+                [shadowMin.encoderFor["&Type"]!(10, DER)],
+            ));
+            attributes.push(new Attribute(
+                shadowMax["&id"],
+                [shadowMax.encoderFor["&Type"]!(1999, DER)],
+            ));
+            attributes.push(new Attribute(
+                shadowLastChange["&id"],
+                [shadowLastChange.encoderFor["&Type"]!(358720449, DER)],
+            ));
+        }
+        if (isDynamic) {
+            const ttl = randomInt(600, 1500);
+            attributes.push(new Attribute(
+                entryTtl["&id"],
+                [entryTtl.encoderFor["&Type"]!(ttl, DER)],
+            ));
+        }
+        if (isEducated) {
+            attributes.push(new Attribute(
+                eduPersonAffiliation["&id"],
+                [eduPersonAffiliation.encoderFor["&Type"]!({ uTF8String: "University of Florida" }, DER)],
+            ));
+        }
+        if (isOpenLDAPDisplayable) {
+            const userid = createMockUsername();
+            attributes.push(new Attribute(
+                displayName["&id"],
+                [displayName.encoderFor["&Type"]!({ uTF8String: userid }, DER)],
+            ));
+        }
+        if (isQmailUser) {
+            attributes.push(new Attribute(
+                mail["&id"],
+                [mail.encoderFor["&Type"]!(createMockEmail(), DER)],
+            ));
+            attributes.push(new Attribute(
+                mailQuotaSize["&id"],
+                [mailQuotaSize.encoderFor["&Type"]!(350520, DER)],
+            ));
+        }
+        if (isSambaAccount) {
+            const uidAlreadyPresent: boolean = attributes.some((a) => a.type_.isEqualTo(uid["&id"]));
+            if (!uidAlreadyPresent) {
+                const userid: string = createMockUsername();
+                attributes.push(new Attribute(
+                    uid["&id"],
+                    [uid.encoderFor["&Type"]!({ uTF8String: userid }, DER)],
+                ));
+            }
+            attributes.push(new Attribute(
+                rid["&id"],
+                [rid.encoderFor["&Type"]!(randomInt(1000, 10000), DER)],
+            ));
+            attributes.push(new Attribute(
+                kickoffTime["&id"],
+                [kickoffTime.encoderFor["&Type"]!(randomInt(1000, 10000), DER)],
+            ));
+        }
+        if (isSambaSamAccount) {
+            const userid: string = createMockUsername();
+            attributes.push(new Attribute(
+                sambaSID["&id"],
+                [sambaSID.encoderFor["&Type"]!("S-1-5-21-1004336348-1177238915-682003330-512", DER)],
+            ));
+            attributes.push(new Attribute(
+                sambaDomainName["&id"],
+                [sambaDomainName.encoderFor["&Type"]!({ uTF8String: "WILDBOAR" }, DER)],
+            ));
+            attributes.push(new Attribute(
+                sambaProfilePath["&id"],
+                [sambaProfilePath.encoderFor["&Type"]!({ uTF8String: `C:\\\\Users\\${userid}` }, DER)],
+            ));
+        }
+        if (isMHSUser) {
+            const orAddress = new ORAddress(
+                new BuiltInStandardAttributes(
+                    {
+                        iso_3166_alpha2_code: "US",
+                    },
+                    {
+                        printable: "Your friendly totally non-monopoly ISP",
+                    },
+                    undefined,
+                    undefined,
+                    {
+                        printable: "asdf",
+                    },
+                    "Wildboar Software",
+                    undefined,
+                    new PersonalName(
+                        "Wilbur",
+                        "Jonathan",
+                        undefined,
+                        undefined,
+                    ),
+                    undefined,
+                ),
+                [
+                    new BuiltInDomainDefinedAttribute(
+                        "citizenId",
+                        "1235982850",
+                    ),
+                ],
+                [
+                    new ExtensionAttribute(
+                        1, // common-name
+                        _encodePrintableString("Bigboi", DER),
+                    ),
+                ],
+            );
+            attributes.push(new Attribute(
+                mhs_or_addresses["&id"],
+                [mhs_or_addresses.encoderFor["&Type"]!(orAddress, DER)],
+            ));
+            // attributes.push(new Attribute(
+            //     edi_name["&id"],
+            //     [edi_name.encoderFor["&Type"]!({ uTF8String: "$$$$Bigmunniii$$$$" }, DER)],
+            // ));
+        }
+        if (hasUserSecurityInfo) {
+            const alg = new AlgorithmIdentifier(
+                sha256WithRSAEncryption,
+                undefined,
+            );
+            const supportedAlg = new SupportedAlgorithm(
+                alg,
+                new Uint8ClampedArray([ TRUE_BIT, FALSE_BIT, TRUE_BIT, TRUE_BIT ]),
+                [
+                    new PolicyInformation(
+                        new ObjectIdentifier([ 2, 5, 3, 4, 6, 7, 1 ]),
+                        undefined,
+                    ),
+                ],
+            );
+            attributes.push(new Attribute(
+                selat.supportedAlgorithms["&id"],
+                [selat.supportedAlgorithms.encoderFor["&Type"]!(supportedAlg, DER)],
+            ));
+        }
+        if (isPkiCA) {
+            const randomCert = createMockCertificate(dn, dn);
+            attributes.push(new Attribute(
+                selat.cACertificate["&id"],
+                [
+                    _encode_Certificate(randomCert, DER),
+                ],
+            ));
+            const pair = new CertificatePair(
+                randomCert,
+                randomCert,
+            );
+            attributes.push(new Attribute(
+                selat.crossCertificatePair["&id"],
+                [
+                    _encode_CertificatePair(pair, DER),
+                ],
+            ));
+            const randomCRL = createMockCRL();
+            attributes.push(new Attribute(
+                selat.certificateRevocationList["&id"],
+                [
+                    _encode_CertificateList(randomCRL, DER),
+                ],
+            ));
+            attributes.push(new Attribute(
+                selat.eepkCertificateRevocationList["&id"],
+                [
+                    _encode_CertificateList(randomCRL, DER),
+                ],
+            ));
+            attributes.push(new Attribute(
+                selat.authorityRevocationList["&id"],
+                [
+                    _encode_CertificateList(randomCRL, DER),
+                ],
+            ));
+        }
+        if (isPkiUser) {
+            const randomCert = createMockCertificate();
+            attributes.push(new Attribute(
+                selat.userCertificate["&id"],
+                [
+                    _encode_Certificate(randomCert, DER),
+                ],
+            ));
+        }
+        if (isInPeepantsGang) {
+            peepantsGang.push(dn);
+        }
+        if (isInGucciGang) {
+            gucciGang.push(dn);
+        }
+        const arg = createAddEntryArgument(dn, attributes);
+        newEntryArgs.push([cn, arg]);
+    }
+
+    await bPromise.map(
+        newEntryArgs,
+        ([cn, arg]) => idempotentAddEntry(ctx, conn, `C=US,ST=FL,L=MAR,L=Ocala,CN=${cn}`, arg),
+        {
+            concurrency: 10,
+        },
+    );
+
+    newEntryArgs.length = 0;
+
+    // Organizations within C=US,ST=FL,L=MAR,L=Ocala
+    for (let i = 1; i < 500; i++) {
+        const [ rdn, attributes, orgName ] = createMockOrganizationAttributes();
+        const dn: DistinguishedName = [
+            ...ocalaDN,
+            rdn,
+        ];
+        const arg = createAddEntryArgument(dn, attributes);
+        newEntryArgs.push([orgName, arg]);
+    }
+
+    await bPromise.map(
+        newEntryArgs,
+        ([orgName, arg]) => idempotentAddEntry(ctx, conn, `C=US,ST=FL,L=MAR,L=Ocala,O=${orgName}`, arg),
+        {
+            concurrency: 10,
+        },
+    );
 
     { // C=US,ST=FL,L=HIL,L=Tampa,O=Wildboar Software,CN=CRL Dist Point #001
         const name: string = "CRL Dist Point #001";
