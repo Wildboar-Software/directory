@@ -1,6 +1,6 @@
 # Changelog for Meerkat DSA
 
-## Version 2.4.1
+## Version 2.4.2
 
 **SECURITY UPDATE**
 
@@ -9,6 +9,13 @@
 
 Meerkat DSA previously did not use `prescriptiveACI` from superior access
 control areas to govern access to subentries.
+
+## Version 2.4.1
+
+- Fix Denial-of-Service caused by failing assertion
+
+You do not have to do anything for this upgrade to work. Just update the
+version of Meerkat DSA you're using.
 
 ## Version 2.4.0
 
