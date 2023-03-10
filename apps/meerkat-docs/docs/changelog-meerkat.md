@@ -1,5 +1,15 @@
 # Changelog for Meerkat DSA
 
+## Version 2.4.1
+
+**SECURITY UPDATE**
+
+- Fix non-use of `prescriptiveACI` to regulate subentries in several access
+  control schemes.
+
+Meerkat DSA previously did not use `prescriptiveACI` from superior access
+control areas to govern access to subentries.
+
 ## Version 2.4.0
 
 - Service Administration

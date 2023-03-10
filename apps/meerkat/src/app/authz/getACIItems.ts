@@ -18,6 +18,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlInnerArea.va";
 import { entryACI, prescriptiveACI, subentryACI } from "@wildboar/x500/src/lib/collections/attributes";
 import { attributeValueFromDB, DBAttributeValue } from "../database/attributeValueFromDB";
+import { Prisma } from "@prisma/client";
 
 const AC_SUBENTRY: string = accessControlSubentry["&id"].toString();
 const AC_SPECIFIC: string = id_ar_accessControlSpecificArea.toString();
@@ -39,10 +40,14 @@ function aciFrom (row: DBAttributeValue): ACIItem {
  *  applicable access control administrative area
  * @param immediateSuperior The DSE that is immediately superior to `vertex`,
  *  supplied as a separate argument for when `vertex` does not exist yet
- * @param vertex The DSE whose relevant ACI items are to be determined
+ * @param vertex The DSE whose relevant ACI items are to be determined. This
+ *  may be `undefined` if the target entry does not exist yet, as will happen
+ *  when using the `addEntry` operation.
  * @param relevantSubentries The subentries whose subtree select for this entry,
  *  in order of descending administrative point
- * @param isSubentry Whether the DSE in question is a subentry
+ * @param isSubentry Whether the DSE in question is a subentry. This must be
+ *  supplied as an argument because the access-controlled entry may not exist
+ *  yet, as might happen in an `addEntry` operation.
  * @returns An array of ACI items that are in effect for the DSE in question.
  *
  * @function
@@ -51,53 +56,28 @@ export
 async function getACIItems (
     ctx: Context,
     accessControlScheme: OBJECT_IDENTIFIER | undefined,
-    immediateSuperior: Vertex | undefined,
+    immediateSuperior: Vertex | undefined, // TODO: Remove unused argument.
     vertex: Vertex | undefined,
     relevantSubentries: Vertex[],
-    isSubentry: boolean = false,
+    isSubentry: boolean,
 ): Promise<ACIItem[]> {
     if (!accessControlScheme) {
         return [];
     }
     const AC_SCHEME: string = accessControlScheme.toString();
-    if (isSubentry || vertex?.dse.subentry) {
-        return [
-            ...(accessControlSchemesThatUseSubentryACI.has(AC_SCHEME)
-                ? immediateSuperior?.dse.admPoint
-                    ? (await ctx.db.attributeValue.findMany({
-                        where: {
-                            entry_id: immediateSuperior.dse.id,
-                            type_oid: subentryACI["&id"].toBytes(),
-                        },
-                        select: {
-                            tag_class: true,
-                            constructed: true,
-                            tag_number: true,
-                            content_octets: true,
-                        },
-                    })).map(aciFrom)
-                    : []
-                : []),
-            ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
-                ? vertex
-                    ? (await ctx.db.attributeValue.findMany({
-                        where: {
-                            entry_id: vertex.dse.id,
-                            type_oid: entryACI["&id"].toBytes(),
-                        },
-                        select: {
-                            tag_class: true,
-                            constructed: true,
-                            tag_number: true,
-                            content_octets: true,
-                        },
-                    })).map(aciFrom)
-                    : []
-                : []),
-        ];
-    }
     const accessControlSubentries = relevantSubentries
-        .filter((sub) => sub.dse.objectClass.has(AC_SUBENTRY))
+        .filter((sub) => (
+            sub.dse.objectClass.has(AC_SUBENTRY)
+            && (
+                !isSubentry
+                /**
+                 * Subentries under the same admin point do not govern other
+                 * subentries within that admin point, but those from superior
+                 * admin points do.
+                 */
+                || (sub.immediateSuperior!.dse.id !== vertex?.dse.id)
+            )
+        ))
         .reverse();
     /**
      * It is not enough to simply stop once we've encountered the first subentry
@@ -124,48 +104,53 @@ async function getACIItems (
     if (indexOfFirstACSA === -1) {
         return [];
     }
-    const accessControlSubentriesWithinScope = accessControlSchemesThatUseInnerAreas.has(AC_SCHEME)
+    const useInnerAreas: boolean = accessControlSchemesThatUseInnerAreas.has(AC_SCHEME);
+    const usePrescriptiveACI: boolean = accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME);
+    const useEntryACI: boolean = accessControlSchemesThatUseEntryACI.has(AC_SCHEME);
+    const useSubentryACI: boolean = isSubentry && accessControlSchemesThatUseSubentryACI.has(AC_SCHEME);
+    const accessControlSubentriesWithinScope = useInnerAreas
         ? accessControlSubentries
             .slice(0, indexOfFirstACSA + 1)
             .filter((sub) => (
                 sub.immediateSuperior?.dse.admPoint?.administrativeRole.has(AC_SPECIFIC)
                 || sub.immediateSuperior?.dse.admPoint?.administrativeRole.has(AC_INNER)
             ))
-        : [ accessControlSubentries[0] ];
-    return [
-        ...(accessControlSchemesThatUsePrescriptiveACI.has(AC_SCHEME)
-            ? (await ctx.db.attributeValue.findMany({
-                    where: {
-                        entry_id: {
-                            in: accessControlSubentriesWithinScope.map((s) => s.dse.id),
-                        },
-                        type_oid: prescriptiveACI["&id"].toBytes(),
-                    },
-                    select: {
-                        tag_class: true,
-                        constructed: true,
-                        tag_number: true,
-                        content_octets: true,
-                    },
-                })).map(aciFrom)
-            : []),
-        ...(accessControlSchemesThatUseEntryACI.has(AC_SCHEME)
-            ? vertex
-                ? (await ctx.db.attributeValue.findMany({
-                    where: {
-                        entry_id: vertex.dse.id,
-                        type_oid: entryACI["&id"].toBytes(),
-                    },
-                    select: {
-                        tag_class: true,
-                        constructed: true,
-                        tag_number: true,
-                        content_octets: true,
-                    },
-                })).map(aciFrom)
-                : []
-            : []),
-    ];
+        : accessControlSubentries
+            .slice(0, indexOfFirstACSA + 1)
+            .filter((sub) => sub.immediateSuperior?.dse.admPoint?.administrativeRole.has(AC_SPECIFIC));
+
+    const aciQueries: Prisma.AttributeValueWhereInput[] = [];
+    if (usePrescriptiveACI) {
+        aciQueries.push({
+            entry_id: {
+                in: accessControlSubentriesWithinScope.map((s) => s.dse.id),
+            },
+            type_oid: prescriptiveACI["&id"].toBytes(),
+        });
+    }
+    if (vertex && useEntryACI) {
+        aciQueries.push({
+            entry_id: vertex.dse.id,
+            type_oid: entryACI["&id"].toBytes(),
+        });
+    }
+    if (vertex?.immediateSuperior && useSubentryACI) {
+        aciQueries.push({
+            entry_id: vertex.immediateSuperior.dse.id,
+            type_oid: subentryACI["&id"].toBytes(),
+        });
+    }
+    return (await ctx.db.attributeValue.findMany({
+        where: {
+            OR: aciQueries,
+        },
+        select: {
+            tag_class: true,
+            constructed: true,
+            tag_number: true,
+            content_octets: true,
+        },
+    })).map(aciFrom);
 }
 
 export default getACIItems;
