@@ -27,6 +27,29 @@ import printInvokeId from "../utils/printInvokeId";
 const ID_AUTONOMOUS: Buffer = id_ar_autonomousArea.toBytes();
 const ID_SERVICE: Buffer = id_ar_serviceSpecificArea.toBytes();
 
+/**
+ * @summary The Search Rule Check Procedure (II) defined in ITU Recommendation X.518.
+ * @description
+ *
+ * This function implements the procedure defined in
+ * [ITU Recommendation X.518 (2019)](https://www.itu.int/rec/T-REC-X.518/en),
+ * Section 19.3.2.2.3: the Search Rule Check Procedure (II).
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param state The operation dispatcher state
+ * @param target The target DSE
+ * @param searchArg The unsigned search argument data
+ * @param signErrors Whether to digitally sign errors
+ * @returns Nothing. This function only checks if any subordinate is a
+ *  continuation of the preceeding search's service administrative area and
+ *  throws an error if not.
+ * @throws {ServiceError} if there are no subordinates of the same service
+ *  administrative area in which to continue the chained search
+ *
+ * @function
+ * @async
+ */
 export
 async function searchRuleCheckProcedure_ii (
     ctx: Context,

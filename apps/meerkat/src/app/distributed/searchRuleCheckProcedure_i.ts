@@ -177,6 +177,23 @@ interface SearchRuleCheckResult {
     notification: Attribute[];
 }
 
+/**
+ * @summary Evaluate a search argument against a search rule
+ * @description
+ *
+ * This function evaluates a search argument against a search rule as described
+ * in [ITU Recommendation X.511 (2019)](https://www.itu.int/rec/T-REC-X.511/en),
+ * Section 15. If there is any failure, the clause and step of X.511 (2019),
+ * Section 15 on which validation failed is returned. Notification attributes
+ * are returned as well.
+ *
+ * @param ctx The context object
+ * @param search The unsigned search argument data
+ * @param rule The search rule to evaluate
+ * @returns Information about what failed validation, if anything
+ *
+ * @function
+ */
 export
 function check_search_rule (
     ctx: Context,
@@ -430,7 +447,6 @@ function check_search_rule (
         state.clause_and_step_failed = [3, controls_result.step_failed];
         return state;
     }
-    // TODO: Set effective controls.
     const matching_result = check_of_matching_use();
     if (matching_result.problem) {
         state.notification.push(new Attribute(
@@ -458,6 +474,27 @@ function check_search_rule (
     };
 }
 
+/**
+ * @summary The Search Rule Check Procedure (I) defined in ITU Recommendation X.518.
+ * @description
+ *
+ * This function implements the procedure defined in
+ * [ITU Recommendation X.518 (2019)](https://www.itu.int/rec/T-REC-X.518/en),
+ * Section 19.3.2.2.2: the Search Rule Check Procedure (I).
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param state The operation dispatcher state
+ * @param target The target DSE
+ * @param searchArg The unsigned search argument data
+ * @param signErrors Whether to digitally sign errors
+ * @returns The governing search rule, or `undefined` if none could be found
+ * @throws {ServiceError} if no search rules permit the search within a service
+ *  administrative area
+ *
+ * @function
+ * @async
+ */
 export
 async function searchRuleCheckProcedure_i (
     ctx: Context,

@@ -499,6 +499,9 @@ async function search_ii (
         ENTRIES_PER_BATCH,
         undefined,
         cursorId,
+        {
+            cp: true,
+        },
     );
     while (subordinatesInBatch.length) {
         for (const subordinate of subordinatesInBatch) {

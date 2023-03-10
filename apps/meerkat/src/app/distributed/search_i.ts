@@ -462,6 +462,22 @@ because, in the search algorithm, when doing a subtree search, even if an entry
 does not match, its subordinates still must be searched.
 */
 
+/**
+ * @summary Determine whether attributes can be queried from the `AttributeValue` table.
+ * @description
+ *
+ * This function determines if all attribute types specified in `types` can be
+ * queried via the `AttributeValue` table. This is the case if there is no
+ * driver defined for that attribute type, and the attribute type is neither a
+ * dummy or collective attribute type.
+ *
+ * @param ctx The context object
+ * @param types The attribute types to check
+ * @returns Whether the `AttributeValue` table can be filtered to select for
+ *  values of the specified types.
+ *
+ * @function
+ */
 function canFilterAttributeValueTable (
     ctx: Context,
     types: AttributeType[],
@@ -480,6 +496,20 @@ function canFilterAttributeValueTable (
     return true;
 }
 
+/**
+ * @summary Determine friend attribute types
+ * @description
+ *
+ * This function gets the friend attribute types of a given attribute type based
+ * on the target DSE.
+ *
+ * @param relevantSubentries Subentries whose subtree selected the target DSE
+ * @param type_ The anchor attribute type
+ * @returns An array of friend attribute types, not including the type specified
+ *  by `type_`.
+ *
+ * @function
+ */
 function addFriends (
     relevantSubentries: Vertex[],
     type_: OBJECT_IDENTIFIER,
@@ -501,6 +531,34 @@ function addFriends (
     return ret;
 }
 
+/**
+ * @summary Convert an X.500 filter item into a Prisma filter on the Entry table
+ * @description
+ *
+ * When using a search operation to filter entries, it may be possible to
+ * "pre-filter" said entries within the DBMS (MySQL, Postgres, etc.) before
+ * performing the more expensive work of loading those entries and evaluating
+ * the filter against them in memory. For instance, if the user is filtering for
+ * a `surname` of `Wilbur`, we can pre-filter entries that have an
+ * `AttributeValue` whose `normalized_str` is `WILBUR`, thereby greatly
+ * narrowing the number of entries Meerkat DSA has to actually load into memory
+ * and evaluate.
+ *
+ * This function implements such an optimization by converting the search filter
+ * item into a Prisma (that's the ORM used by Meerkat DSA) filter.
+ *
+ * @param ctx The context object
+ * @param filterItem The filter item to be converted
+ * @param relevantSubentries The subentries whose subtrees select for the target DSE.
+ * @param selectFriends Whether to select friend attribute types as well
+ * @param mr_subs Active matching rule substitutions (as imposed by relaxation or tightening)
+ * @param request_attributes Request attribute types (as imposed by search rules)
+ * @returns A Prisma filter for the `Entry` table, or `undefined` if this cannot
+ *  be produced
+ *
+ * @function
+ * @see {@link convertFilterToPrismaSelect}
+ */
 function convertFilterItemToPrismaSelect (
     ctx: Context,
     filterItem: FilterItem,
@@ -863,6 +921,39 @@ function convertFilterItemToPrismaSelect (
     }
 }
 
+/**
+ * @summary Convert an X.500 filter into a Prisma filter on the Entry table
+ * @description
+ *
+ * When using a search operation to filter entries, it may be possible to
+ * "pre-filter" said entries within the DBMS (MySQL, Postgres, etc.) before
+ * performing the more expensive work of loading those entries and evaluating
+ * the filter against them in memory. For instance, if the user is filtering for
+ * a `surname` of `Wilbur`, we can pre-filter entries that have an
+ * `AttributeValue` whose `normalized_str` is `WILBUR`, thereby greatly
+ * narrowing the number of entries Meerkat DSA has to actually load into memory
+ * and evaluate.
+ *
+ * This function implements such an optimization by converting the search filter
+ * into a Prisma (that's the ORM used by Meerkat DSA) filter.
+ *
+ * It is important that this is only used to filter entries when `baseObject`
+ * and `oneLevel` searches are used; if it is used to pre-filter in a `subtree`
+ * search, the search will fail to recurse into entries that themselves have
+ * subordinates that might match!
+ *
+ * @param ctx The context object
+ * @param filter The filter to be converted
+ * @param relevantSubentries The subentries whose subtrees select for the target DSE.
+ * @param selectFriends Whether to select friend attribute types as well
+ * @param mr_subs Active matching rule substitutions (as imposed by relaxation or tightening)
+ * @param request_attributes Request attribute types (as imposed by search rules)
+ * @returns A Prisma filter for the `Entry` table, or `undefined` if this cannot
+ *  be produced
+ *
+ * @function
+ * @see {@link convertFilterItemToPrismaSelect}
+ */
 function convertFilterToPrismaSelect (
     ctx: Context,
     filter: Filter,
@@ -930,6 +1021,18 @@ function getFamilyMembersToReturnById (
     }
 }
 
+/**
+ * @summary Determine whether a filter is a "match-all" filter
+ * @description
+ *
+ * This function returns a boolean indicating whether a filter will match all
+ * entries. Examples of such filters include `and:{}`.
+ *
+ * @param filter The filter to be evaluated
+ * @returns A boolean indicating whether the filter will match all entries
+ *
+ * @function
+ */
 function isMatchAllFilter (filter?: Filter): boolean {
     if (!filter) {
         return true;
@@ -1212,6 +1315,21 @@ async function apply_mr_mapping (
     return [mapped_attributes, new_mr_to_old];
 }
 
+/**
+ * @summary Update the operation dispatcher state with a search rule
+ * @description
+ *
+ * This function updates the operation dispatcher state with the restrictions
+ * imposed by a governing search rule so that these may be used in operation
+ * evaluation.
+ *
+ * @param data The unsigned search argument data
+ * @param state The operation dispatcher state
+ * @param governing_search_rule The governing search rule
+ *
+ * @function
+ * @see {@link update_search_state_with_search_rule}
+ */
 export
 function update_operation_dispatcher_state_with_search_rule (
     data: SearchArgumentData,
@@ -1249,12 +1367,25 @@ function update_operation_dispatcher_state_with_search_rule (
     }
 }
 
+/**
+ * @summary Update search operation state with a search rule
+ * @description
+ *
+ * This function updates the search operation state with the restrictions
+ * imposed by a governing search rule.
+ *
+ * @param data The unsigned search argument data
+ * @param searchState The search state to be updated
+ * @param governing_search_rule The governing search rule
+ *
+ * @function
+ * @see {@link update_operation_dispatcher_state_with_search_rule}
+ */
 export
 function update_search_state_with_search_rule (
     data: SearchArgumentData,
     searchState: SearchState,
     governing_search_rule: SearchRule,
-    is_search: boolean = true,
 ): void {
     searchState.governingSearchRule = governing_search_rule;
     if (governing_search_rule.outputAttributeTypes) {
@@ -1273,7 +1404,7 @@ function update_search_state_with_search_rule (
         data.hierarchySelections,
         data.searchControlOptions,
         data.serviceControls?.options,
-        is_search,
+        true,
     );
     searchState.effectiveHierarchySelections = effective_hs;
     searchState.effectiveSearchControls = effective_search_opts;
