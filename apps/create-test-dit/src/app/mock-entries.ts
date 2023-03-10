@@ -1453,6 +1453,7 @@ const businessCategories: string[] = [
 export
 function createMockOrganizationAttributes (): [ RelativeDistinguishedName, Attribute[], string ] {
     const randomId = randomInt(0, 10000);
+    const lastName = pickRandom(lastNames);
     const cityName = pickRandom(cityNames);
     const stateName = pickRandom(stateNames);
     const streetSpecific = pickRandom(lastNames);
@@ -1471,7 +1472,7 @@ function createMockOrganizationAttributes (): [ RelativeDistinguishedName, Attri
     const category = pickRandom(businessCategories);
     const password = randomBytes(6).toString("base64");
     const desc = `This user's password is '${password}'.`;
-    const orgName = `Organization ${randomId}`;
+    const orgName = `${lastName} ${category} #${randomId}`;
     const rdn: RelativeDistinguishedName = [
         new AttributeTypeAndValue(
             organizationName["&id"],
