@@ -97,6 +97,7 @@ data:
   no_timestamp: {{ .Values.no_timestamp | ternary 1 0 | quote }}
   ob_auto_accept: {{ .Values.ob_auto_accept | ternary 1 0 | quote }}
   open_top_level: {{ .Values.open_top_level | ternary 1 0 | quote }}
+  principled_service_admin: {{ .Values.principled_service_admin | ternary 1 0 | quote }}
   {{- if .Values.private_key_engine }}
   private_key_engine: {{ .Values.private_key_engine }}
   {{- end }}

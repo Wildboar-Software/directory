@@ -355,6 +355,7 @@ import getEntryExistsFilter from "../database/entryExistsFilter";
 import { attributeValueFromDB } from "../database/attributeValueFromDB";
 import { getEffectiveControlsFromSearchRule } from "../service/getEffectiveControlsFromSearchRule";
 import { id_ar_serviceSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-serviceSpecificArea.va";
+import { ID_AR_SERVICE, ID_AUTONOMOUS } from "../../oidstr";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 
@@ -3086,82 +3087,107 @@ async function search_i_ex (
         ? Math.min(searchState.effectiveEntryLimit, ctx.config.entriesPerSubordinatesPage * 10)
         : ctx.config.entriesPerSubordinatesPage;
 
-    const getNextBatchOfSubordinates = async (): Promise<Vertex[]> => readSubordinates(
-        ctx,
-        target,
-        /** 9967C6CD-DE0D-4F76-97D3-6D1686C39677
-         * "Why don't you just fetch `pageSize` number of entries?"
-         *
-         * Pagination fetches `pageSize` number of entries at _each level_ of search
-         * recursion. In other words, if you request a page size of 100, and, in the
-         * process, you recurse into the DIT ten layers deep, there will actually be
-         * 1000 entries loaded into memory at the deepest part. This means that a
-         * request could consume considerably higher memory than expected. To prevent
-         * this, a fixed page size is used. In the future, this may be configurable.
-         */
-        entriesPerSubordinatesPage,
-        undefined,
-        cursorId,
-        {
-            subentry: subentries,
-            EntryObjectClass: (searchFamilyInEffect
-                ? {
-                    some: {
-                        object_class: CHILD,
-                    },
-                }
-                : (assn instanceof LDAPAssociation)
-                    ? undefined
-                    : {
-                        none: {
+    const getNextBatchOfSubordinates = async (): Promise<Vertex[]> => {
+        if ( // If we are using Meerkat DSA's deviation for searches...
+            !ctx.config.principledServiceAdministration
+            && ( // ...and we are in a new service admin area...
+                ( /* Which can happen if the search was already within a service
+                    admin area and it is now in a new one...  */
+                    searchState.governingSearchRule // (search was already within admin area)
+                    && ( // (search is in a new area)
+                        target.dse.admPoint?.administrativeRole.has(ID_AR_SERVICE)
+                        || target.dse.admPoint?.administrativeRole.has(ID_AUTONOMOUS)
+                    )
+                )
+                /* Or if the search was _not_ within a service admin area to
+                begin with, and we have now encountered a service admin point. */
+                || (
+                    !searchState.governingSearchRule
+                    && target.dse.admPoint?.administrativeRole.has(ID_AR_SERVICE)
+                )
+            )
+        ) { // ...return no subordinates.
+            return [];
+        }
+        return readSubordinates(
+            ctx,
+            target,
+            /** 9967C6CD-DE0D-4F76-97D3-6D1686C39677
+             * "Why don't you just fetch `pageSize` number of entries?"
+             *
+             * Pagination fetches `pageSize` number of entries at _each level_ of search
+             * recursion. In other words, if you request a page size of 100, and, in the
+             * process, you recurse into the DIT ten layers deep, there will actually be
+             * 1000 entries loaded into memory at the deepest part. This means that a
+             * request could consume considerably higher memory than expected. To prevent
+             * this, a fixed page size is used. In the future, this may be configurable.
+             */
+            entriesPerSubordinatesPage,
+            undefined,
+            cursorId,
+            {
+                subentry: subentries,
+                EntryObjectClass: (searchFamilyInEffect
+                    ? {
+                        some: {
                             object_class: CHILD,
                         },
-                    }),
-            // This stops recursion into different service administrative areas.
-            AttributeValue: {
-                none: {
-                    type_oid: administrativeRole["&id"].toBytes(),
-                    content_octets: searchState.governingSearchRule
-                        ? {
-                            in: [
-                                id_ar_autonomousArea.toBytes(),
-                                id_ar_serviceSpecificArea.toBytes(),
-                            ],
-                        }
-                        : id_ar_serviceSpecificArea.toBytes(),
-                },
-            },
-            /**
-             * You can only use the pre-filtering optimization for oneLevel
-             * searches, because, if using subtree searches, you still have to
-             * recurse into the subordinates of results that don't match; that
-             * is not the case with oneLevel searches because there is no
-             * recursion.
-             *
-             * This also goes in an `AND` so that it does not overwrite the
-             * `EntryObjectClass` that comes earlier.
-             *
-             * For this to work, familyGrouping must also be entryOnly (the
-             * default), because this will not recurse into the child entries to
-             * check for matching values.
-             */
-            AND: (
-                searchState.effectiveFilter
-                && (searchState.effectiveSubset === SearchArgumentData_subset_oneLevel)
-                && (familyGrouping === FamilyGrouping_entryOnly)
-            )
-                ? convertFilterToPrismaSelect(
-                    ctx,
-                    searchState.effectiveFilter,
-                    relevantSubentries,
-                    !dontSelectFriends,
-                    searchState.matching_rule_substitutions,
-                    filterOptions["requestAttributes"],
+                    }
+                    : (assn instanceof LDAPAssociation)
+                        ? undefined
+                        : {
+                            none: {
+                                object_class: CHILD,
+                            },
+                        }),
+                // This stops recursion into different service administrative areas.
+                AttributeValue: ctx.config.principledServiceAdministration
+                    ? {
+                        none: {
+                            type_oid: administrativeRole["&id"].toBytes(),
+                            content_octets: searchState.governingSearchRule
+                                ? {
+                                    in: [
+                                        id_ar_autonomousArea.toBytes(),
+                                        id_ar_serviceSpecificArea.toBytes(),
+                                    ],
+                                }
+                                : id_ar_serviceSpecificArea.toBytes(),
+                        },
+                    }
+                    : undefined,
+                /**
+                 * You can only use the pre-filtering optimization for oneLevel
+                 * searches, because, if using subtree searches, you still have to
+                 * recurse into the subordinates of results that don't match; that
+                 * is not the case with oneLevel searches because there is no
+                 * recursion.
+                 *
+                 * This also goes in an `AND` so that it does not overwrite the
+                 * `EntryObjectClass` that comes earlier.
+                 *
+                 * For this to work, familyGrouping must also be entryOnly (the
+                 * default), because this will not recurse into the child entries to
+                 * check for matching values.
+                 */
+                AND: (
+                    searchState.effectiveFilter
+                    && (searchState.effectiveSubset === SearchArgumentData_subset_oneLevel)
+                    && (familyGrouping === FamilyGrouping_entryOnly)
                 )
-                : undefined,
+                    ? convertFilterToPrismaSelect(
+                        ctx,
+                        searchState.effectiveFilter,
+                        relevantSubentries,
+                        !dontSelectFriends,
+                        searchState.matching_rule_substitutions,
+                        filterOptions["requestAttributes"],
+                    )
+                    : undefined,
 
-        },
-    );
+            },
+        );
+    };
     let subordinatesInBatch = await getNextBatchOfSubordinates();
     while (subordinatesInBatch.length) {
         for (const subordinate of subordinatesInBatch) {
