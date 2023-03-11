@@ -1,5 +1,52 @@
 # Changelog for Meerkat DSA
 
+## Version 2.4.3
+
+Summary: small deviation introduced in which searches recurse one entry into
+other service administrative areas for the sake of DIT discoverability.
+
+### Changes
+
+The X.500 specifications mandate that searches are not to recurse into other
+service administrative areas, but this means that service admin points will not
+be discoverable at all via `search` operations. Since LDAP has no `list`
+operation, it also means that LDAP users will never be able to find any entry
+that lies in a different service administrative area (except by "guessing" that
+it exists).
+
+For example, if `C=US,ST=FL` is a service admin point, and a user performs a
+one-level search at `C=US`, the `ST=FL` subordinate will be hidden from the
+results entirely. The user will have no way of even finding `ST=FL` except for
+performing a `list` operation and noticing that this subordinate differs from
+the results obtained by a one-level search (since `list` is not governed by
+service administration).
+
+This version of Meerkat DSA onwards will deviate from the specification by
+recursing one entry into other service administrative areas so that the DIT is
+traversible to users. Continuing on the previous example, this means that, if a
+user performs a one-level search at `C=US`, the `ST=FL` subordinate will be
+returned. If a subtree search at `C=US` is performed, `ST=FL` will be returned
+as well, but none of its subordinates (the latter of which is technically
+correct behavior).
+
+If this is undesirable, meaning that you want Meerkat DSA to behave exactly as
+the specifications specify, fear not: this version of Meerkat DSA also
+introduces a new option, `MEERKAT_PRINCIPLED_SERVICE_ADMIN`, which, if set to
+`1`, disables this deviation. Meerkat DSA will thereby adhere strictly to the
+specifications and service admin points will be hidden from search results.
+
+:::note
+
+The above issue will be reported to the ITU working group that authors the X.500
+specifications, so it may be resolved in a future version.
+
+:::
+
+### Updating
+
+You do not have to do anything to upgrade to this version. Just update the
+Meerkat DSA version.
+
 ## Version 2.4.2
 
 **SECURITY UPDATE**
