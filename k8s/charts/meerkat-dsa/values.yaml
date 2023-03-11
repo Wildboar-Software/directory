@@ -176,6 +176,7 @@ no_console: false
 no_timestamp: false
 ob_auto_accept: false
 open_top_level: false
+principled_service_admin: false
 # private_key_engine: pkcs11
 prohibit_chaining: false
 remote_pwd_time_limit: 0

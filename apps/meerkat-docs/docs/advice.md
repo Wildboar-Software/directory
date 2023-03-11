@@ -18,3 +18,10 @@
   strong authentication and TLS, so that the authentication level of chained
   requests is not downgraded as documented
   [here](./distributed.md#restrictions-that-apply-to-both).
+- It is strongly advised that you avoid using service administration anywhere in
+  the DIT except for "leaf" areas. See
+  [this](./deviations-nuances.md#hidden-service-admin-areas) for more info. In
+  addition to this problem, nothing in service administrative areas clearly
+  indicates whether an entry has no subordinates in the result set because it
+  was a part of another service admin area or because it was truly a "leaf"
+  entry. This can be unintuitive for directory users.

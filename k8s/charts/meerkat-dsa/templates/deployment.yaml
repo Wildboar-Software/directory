@@ -515,6 +515,12 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: open_top_level
                   optional: true
+            - name: MEERKAT_PRINCIPLED_SERVICE_ADMIN
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: principled_service_admin
+                  optional: true
             - name: MEERKAT_PRIVATE_KEY_ENGINE
               valueFrom:
                 configMapKeyRef:

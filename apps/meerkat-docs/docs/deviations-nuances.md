@@ -347,6 +347,40 @@ be used to construct a `UserPwd` value (using the `encrypted` alternative), and
 that will be asserted. To reiterate, this does not violate the specifications,
 since this behavior is explicitly undefined therein.
 
+## Hidden Service Admin Areas
+
+The X.500 specifications mandate that searches are not to recurse into other
+service administrative areas, but this means that service admin points will not
+be discoverable at all via `search` operations. Since LDAP has no `list`
+operation, it also means that LDAP users will never be able to find any entry
+that lies in a different service administrative area (except by "guessing" that
+it exists).
+
+For example, if `C=US,ST=FL` is a service admin point, and a user performs a
+one-level search at `C=US`, the `ST=FL` subordinate will be hidden from the
+results entirely. The user will have no way of even finding `ST=FL` except for
+performing a `list` operation and noticing that this subordinate differs from
+the results obtained by a one-level search (since `list` is not governed by
+service administration).
+
+Meerkat DSA deviates from the specification by recursing one entry into other
+service administrative areas so that the DIT is traversible to users. Continuing
+on the previous example, this means that, if a user performs a one-level search
+at `C=US`, the `ST=FL` subordinate will be returned. If a subtree search at
+`C=US` is performed, `ST=FL` will be returned as well, but none of its
+subordinates (the latter of which is technically correct behavior).
+
+This behavior can be turned off by setting
+[`MEERKAT_PRINCIPLED_SERVICE_ADMIN`](./env.md#meerkat_principled_service_admin)
+to `1`.
+
+:::note
+
+The above issue will be reported to the ITU working group that authors the X.500
+specifications, so it may be resolved in a future version.
+
+:::
+
 ## Other Deviations
 
 There are other deviations that haven't been mentioned here. Most deviations
