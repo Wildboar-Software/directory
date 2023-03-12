@@ -19,6 +19,7 @@ import {
 import { entryACI, prescriptiveACI, subentryACI } from "@wildboar/x500/src/lib/collections/attributes";
 import { attributeValueFromDB, DBAttributeValue } from "../database/attributeValueFromDB";
 import { Prisma } from "@prisma/client";
+import accessControlSchemesThatUseASingleAdminPoint from "./accessControlSchemesThatUseASingleAdminPoint";
 
 const AC_SUBENTRY: string = accessControlSubentry["&id"].toString();
 const AC_SPECIFIC: string = id_ar_accessControlSpecificArea.toString();
@@ -65,6 +66,7 @@ async function getACIItems (
         return [];
     }
     const AC_SCHEME: string = accessControlScheme.toString();
+    const useSingleAccessPoint: boolean = accessControlSchemesThatUseASingleAdminPoint.has(AC_SCHEME);
     const accessControlSubentries = relevantSubentries
         .filter((sub) => (
             sub.dse.objectClass.has(AC_SUBENTRY)
@@ -74,8 +76,14 @@ async function getACIItems (
                  * Subentries under the same admin point do not govern other
                  * subentries within that admin point, but those from superior
                  * admin points do.
+                 *
+                 * We don't do this check if using simplified access control,
+                 * because it only uses a single access point.
                  */
-                || (sub.immediateSuperior!.dse.id !== vertex?.dse.id)
+                || (
+                    (sub.immediateSuperior!.dse.id !== vertex?.dse.id)
+                    || useSingleAccessPoint
+                )
             )
         ))
         .reverse();

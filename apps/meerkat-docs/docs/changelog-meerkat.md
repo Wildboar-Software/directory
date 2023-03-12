@@ -1,5 +1,16 @@
 # Changelog for Meerkat DSA
 
+## Version 2.4.4
+
+**SECURITY UPDATE**
+
+- Fix use of `prescriptiveACI` to regulate subentries in simplified access
+  control.
+
+This security bug was introduced as a result of version 2.4.2. You were
+unaffected if you did not use versions 2.4.2 or 2.4.3, or if you never used
+simplified access control.
+
 ## Version 2.4.3
 
 Summary: small deviation introduced in which searches recurse one entry into
