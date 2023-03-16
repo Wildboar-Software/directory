@@ -215,5 +215,12 @@
     "search_escaped_svc_admin_area": "Distributed search operation with invoke id {{iid}} attempted (maybe by accident) to escape a service administrative area.",
     "requestedServiceNotAvailable": "There are no search rules defined for the base object requested by invocation {{iid}}.",
     "invalid_matching_use": "Invalid matching use for attribute types: {{attrs}}",
-    "unrecognized_search_rule": "This DSA does not have a search rule that applies to the DSE with ID {{uuid}} that has a DMD ID of {{dmd_id}} and an ID of {{id}}."
+    "unrecognized_search_rule": "This DSA does not have a search rule that applies to the DSE with ID {{uuid}} that has a DMD ID of {{dmd_id}} and an ID of {{id}}.",
+    "validity_end_before_start": "Validity end time was before start time.",
+    "invalid_initiator": "Invalid initiator syntax.",
+    "agreement_entry_not_found": "Agreement entry not found.",
+    "entry_info_reqd_for_relayed_hob": "entryInfo is required for a relayed hierarhical operational binding establishment as a subordinate. This is so the local DSA can create this entry first.",
+    "failed_to_bind_to_other_dsa_for_dop": "Failed to bind to other DSA via DOP.",
+    "relayed_dop_timeout": "Relayed DOP operation timed out.",
+    "relayed_dop_other_error": "Unrecognized error in relayed DOP operation."
 }

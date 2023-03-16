@@ -127,6 +127,7 @@ async function becomeSubordinate (
                 );
             }
         } else {
+            // FIXME: If the existing entry is a glue entry, replace it.
             currentRoot = existingEntry;
         }
     }
@@ -261,7 +262,7 @@ async function becomeSubordinate (
         ],
         Boolean(createdCP.dse.alias),
         sup2sub.entryInfo,
-        undefined,
+        undefined, // TODO: Replicate subentry information upwards as well.
     );
 }
 

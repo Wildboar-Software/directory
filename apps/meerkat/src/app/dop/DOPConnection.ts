@@ -473,6 +473,31 @@ async function handleRequestAndErrors (
                 assn.reset();
                 assn.socket.destroy();
             }
+        }
+        else if (e instanceof errors.ChainedError) {
+            if (!e.errcode || !e.error) {
+                assn.rose.write_reject({
+                    invoke_id: request.invoke_id,
+                    problem: RejectReason.unknown_error,
+                });
+            } else {
+                stats.outcome.error.code = codeToString(e.errcode);
+                assn.rose.write_error({
+                    invoke_id: request.invoke_id,
+                    code: _encode_Code(e.errcode, DER),
+                    parameter: e.error,
+                });
+            }
+        }
+        else if (e instanceof errors.ChainedReject) {
+            stats.outcome.error.problem = e.reason;
+            assn.rose.write_reject({
+                invoke_id: request.invoke_id,
+                problem: e.reason,
+            });
+        }
+        else if (e instanceof errors.ChainedAbort) {
+            assn.rose.write_abort(e.reason);
         } else if (e instanceof UnknownOperationError) {
             assn.rose.write_reject({
                 invoke_id: request.invoke_id,

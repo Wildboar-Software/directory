@@ -1,12 +1,17 @@
 import type { MeerkatContext } from "../../ctx";
 import * as errors from "@wildboar/meerkat-types";
+import { Vertex } from "@wildboar/meerkat-types";
 import DOPAssociation from "../DOPConnection";
-import { INTEGER, FALSE, unpackBits } from "asn1-ts";
+import { INTEGER, FALSE, unpackBits, ASN1TagClass, ASN1Construction, OBJECT_IDENTIFIER, TRUE } from "asn1-ts";
 import type {
     EstablishOperationalBindingArgument,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgument.ta";
-import type {
-    EstablishOperationalBindingArgumentData,
+import {
+    AccessPoint,
+    _decode_AccessPoint,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+import {
+    EstablishOperationalBindingArgumentData, Validity,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgumentData.ta";
 import type {
     EstablishOperationalBindingResult,
@@ -43,10 +48,16 @@ import {
 import {
     SuperiorToSubordinate,
     _decode_SuperiorToSubordinate,
+    _encode_SuperiorToSubordinate,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinate.ta";
 import {
+    SubordinateToSuperior,
+    _decode_SubordinateToSuperior,
     _encode_SubordinateToSuperior,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
+import {
+    SubentryInfo,
+} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubentryInfo.ta";
 import type {
     Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
@@ -91,6 +102,23 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ProtectionRequest.ta";
 import { generateSignature } from "../../pki/generateSignature";
 import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
+import {
+    EstablishOperationalBindingArgumentData_initiator,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgumentData-initiator.ta";
+// import { _decode_AgreementID } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/AgreementID.ta";
+import { _decode_NonSpecificHierarchicalAgreement } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NonSpecificHierarchicalAgreement.ta";
+// import { _decode_ShadowingAgreementInfo } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
+import dnToVertex from "../../dit/dnToVertex";
+import getContextPrefixInfo from "../../hob/getContextPrefixInfo";
+import { getEntryAttributesToShareInOpBinding } from "../../dit/getEntryAttributesToShareInOpBinding";
+import {
+    Attribute,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+import rdnToID from "../../dit/rdnToID";
+import getVertexById from "../../database/getVertexById";
+import createEntry from "../../database/createEntry";
+import getAttributesFromSubentry from "../../dit/getAttributesFromSubentry";
+import { bindForOBM } from "../../net/bindToOtherDSA";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -101,6 +129,331 @@ function codeToString (code?: Code): string | undefined {
                 ? code.local.toString()
                 : undefined
         : undefined);
+}
+
+
+async function relayedEstablishOperationalBinding (
+    ctx: MeerkatContext,
+    assn: DOPAssociation,
+    invokeId: INTEGER,
+    bindingType: OBJECT_IDENTIFIER,
+    agreement: ASN1Element,
+    initiator: EstablishOperationalBindingArgumentData_initiator,
+    validFrom: Date,
+    validUntil: Date | undefined,
+    relayTo: AccessPoint,
+    signErrors: boolean,
+): Promise<EstablishOperationalBindingResult> {
+    let relay_agreement: ASN1Element | undefined;
+    let relay_init: EstablishOperationalBindingArgumentData_initiator | undefined;
+    let cp: Vertex | undefined;
+    if (bindingType.isEqualTo(id_op_binding_hierarchical)) {
+        const agr = _decode_HierarchicalAgreement(agreement);
+        if ("roleA_initiates" in initiator) {
+            const init = _decode_SuperiorToSubordinate(initiator.roleA_initiates);
+            // This is only checked for Role A, because Role B (subordinate)
+            // won't have this entry locally.
+            const supr_entry = await dnToVertex(ctx, ctx.dit.root, agr.immediateSuperior);
+            if (!supr_entry) {
+                throw new errors.OperationalBindingError(
+                    ctx.i18n.t("err:agreement_entry_not_found"),
+                    new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_invalidAgreement,
+                        bindingType,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            id_err_operationalBindingError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
+                    signErrors,
+                );
+            }
+            const immediateSuperiorInfo: Attribute[] = await getEntryAttributesToShareInOpBinding(ctx, supr_entry);
+            const new_sup2sub = new SuperiorToSubordinate(
+                await getContextPrefixInfo(ctx, supr_entry),
+                init.entryInfo,
+                immediateSuperiorInfo,
+            );
+            relay_agreement = agreement;
+            relay_init = {
+                roleA_initiates: _encode_SuperiorToSubordinate(new_sup2sub, DER),
+            };
+        } else if ("roleB_initiates"  in initiator) {
+            const init = _decode_SubordinateToSuperior(initiator.roleB_initiates);
+            let current: Vertex = ctx.dit.root;
+            for (const rdn of agr.immediateSuperior) {
+                const sub_id = await rdnToID(ctx, current.dse.id, rdn);
+                // Create the missing glue DSEs from the root DSE downward
+                if (sub_id) { // Entry already exists. Just read it.
+                    const existing_vertex = await getVertexById(ctx, current, sub_id);
+                    if (existing_vertex) {
+                        current = existing_vertex;
+                    } else {
+                        current = await createEntry(ctx, current, rdn, {
+                            glue: true,
+                        }, [], undefined, signErrors);
+                    }
+                } else { // Entry does not exist. Create glue DSE.
+                    current = await createEntry(ctx, current, rdn, {
+                        glue: true,
+                    }, [], undefined, signErrors);
+                }
+            }
+            if (!init.entryInfo) {
+                throw new Error(ctx.i18n.t("err:entry_info_reqd_for_relayed_hob"));
+            }
+            await validateEntry(
+                ctx,
+                assn,
+                current,
+                agr.immediateSuperior,
+                agr.rdn,
+                init.entryInfo,
+                FALSE,
+                TRUE,
+                {
+                    present: invokeId,
+                },
+                false,
+                signErrors,
+            );
+
+            // Create the subordinate with all attributes in `entryInfo`.
+            const entry = await createEntry(ctx, current, agr.rdn, {
+                entry: !init.alias,
+                alias: init.alias,
+                cp: true,
+            }, init.entryInfo ?? [], undefined, signErrors);
+            cp = entry;
+            const subentryInfos: SubentryInfo[] = [];
+            for (const subentry of init.subentries ?? []) {
+                // TODO: This does not validate that the entry is actually a subentry...
+                await validateEntry(
+                    ctx,
+                    assn,
+                    entry,
+                    [ ...agr.immediateSuperior, entry.dse.rdn ],
+                    subentry.rdn,
+                    subentry.info,
+                    FALSE,
+                    TRUE,
+                    {
+                        present: invokeId,
+                    },
+                    false,
+                    signErrors,
+                );
+                const sub = await createEntry(ctx, entry, subentry.rdn, {
+                    subentry: true,
+                }, subentry.info, undefined, signErrors);
+                const info = new SubentryInfo(
+                    sub.dse.rdn,
+                    await getAttributesFromSubentry(ctx, sub),
+                );
+                subentryInfos.push(info);
+            }
+            const sub2sup = new SubordinateToSuperior(
+                [
+                    ctx.dsa.accessPoint,
+                ],
+                !!entry.dse.alias,
+                await getEntryAttributesToShareInOpBinding(ctx, entry),
+                subentryInfos,
+            );
+            relay_agreement = agreement;
+            relay_init = {
+                roleB_initiates: _encode_SubordinateToSuperior(sub2sup, DER),
+            };
+            // TODO: Upon receiving a result, replace the glue entries.
+        } else {
+            throw new errors.MistypedArgumentError(ctx.i18n.t("err:invalid_initiator"));
+        }
+    }
+    else if (bindingType.isEqualTo(id_op_binding_non_specific_hierarchical)) {
+        const agr = _decode_NonSpecificHierarchicalAgreement(agreement);
+        if ("roleA_initiates" in initiator) {
+            // This is only checked for Role A, because Role B (subordinate)
+            // won't have this entry locally.
+            const supr_entry = await dnToVertex(ctx, ctx.dit.root, agr.immediateSuperior);
+            if (!supr_entry) {
+                throw new errors.OperationalBindingError(
+                    ctx.i18n.t("err:agreement_entry_not_found"),
+                    new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_invalidAgreement,
+                        bindingType,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            id_err_operationalBindingError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
+                    signErrors,
+                );
+            }
+            const immediateSuperiorInfo: Attribute[] = await getEntryAttributesToShareInOpBinding(ctx, supr_entry);
+            const new_sup2sub = new SuperiorToSubordinate(
+                await getContextPrefixInfo(ctx, supr_entry),
+                undefined,
+                immediateSuperiorInfo,
+            );
+            relay_agreement = agreement;
+            relay_init = {
+                roleA_initiates: _encode_SuperiorToSubordinate(new_sup2sub, DER),
+            };
+        } else if ("roleB_initiates" in initiator) {
+            // TODO: Role B needs to have access points policed / modified
+            relay_agreement = agreement;
+            relay_init = initiator;
+        } else {
+            throw new errors.MistypedArgumentError(ctx.i18n.t("err:invalid_initiator"));
+        }
+    }
+    // else if (bindingType.isEqualTo(id_op_binding_shadow)) {
+    //     if (!("roleA_initiates" in initiator) && !("roleB_initiates" in initiator)) {
+    //         throw new errors.MistypedArgumentError(ctx.i18n.t("err:invalid_initiator"));
+    //     }
+    //     const agr = _decode_ShadowingAgreementInfo(agreement);
+    // }
+    else {
+        // If bindingType is not understood, just submit the agreement and initiator unchanged.
+        relay_agreement = agreement;
+        relay_init = initiator;
+    }
+    // dop?.establishOperationalBinding()
+    const dop = await bindForOBM(ctx, assn, undefined, relayTo, undefined, signErrors);
+    if (!dop) {
+        throw new errors.OperationalBindingError(
+            ctx.i18n.t("err:failed_to_bind_to_other_dsa_for_dop"),
+            new OpBindingErrorParam(
+                OpBindingErrorParam_problem_currentlyNotDecidable,
+                bindingType,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    id_err_operationalBindingError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                undefined,
+                undefined,
+            ),
+            signErrors,
+        );
+    }
+    const outcome = await dop.establishOperationalBinding({
+        accessPoint: ctx.dsa.accessPoint,
+        agreement: relay_agreement,
+        initiator: relay_init,
+        bindingType,
+        cert_path: ctx.config.signing.certPath,
+        key: ctx.config.signing.key,
+        valid: new Validity(
+            {
+                time: {
+                    generalizedTime: validFrom,
+                },
+            },
+            validUntil
+                ? {
+                    time: {
+                        generalizedTime: validUntil,
+                    },
+                }
+                : {
+                    explicitTermination: null,
+                },
+        ),
+        bindingID: undefined,
+        _unrecognizedExtensionsList: [],
+    });
+    let err_message: string = "";
+    if ("result" in outcome) {
+        const result = outcome.result.parameter;
+        const data = getOptionallyProtectedValue(result);
+        if (
+            bindingType.isEqualTo(id_op_binding_hierarchical)
+            && ("roleA_replies" in data.initiator)
+            && cp?.dse.structuralObjectClass
+        ) {
+            const sup2sub = _decode_SuperiorToSubordinate(data.initiator.roleA_replies);
+            const agr = _decode_HierarchicalAgreement(agreement);
+            await becomeSubordinate( // FIXME: If the existing entry is a glue entry, replace it.
+                ctx,
+                relayTo,
+                agr,
+                sup2sub,
+                cp.dse.structuralObjectClass,
+                cp.dse.governingStructureRule,
+                signErrors,
+            );
+        }
+        return result;
+    }
+    else if ("error" in outcome) {
+        throw new errors.ChainedError(
+            ctx.i18n.t("err:chained_error"),
+            outcome.error.parameter,
+            outcome.error.code,
+            signErrors,
+        );
+    }
+    else if ("reject" in outcome) {
+        throw new errors.ChainedReject(
+            invokeId,
+            outcome.reject.problem,
+        );
+    }
+    else if ("abort" in outcome) {
+        throw new errors.ChainedAbort(outcome.abort);
+    }
+    else if ("timeout" in outcome) {
+        err_message = ctx.i18n.t("err:relayed_dop_timeout");
+    }
+    else {
+        err_message = ctx.i18n.t("err:relayed_dop_other_error");
+    }
+    throw new errors.OperationalBindingError(
+        err_message,
+        new OpBindingErrorParam(
+            OpBindingErrorParam_problem_currentlyNotDecidable,
+            bindingType,
+            undefined,
+            undefined,
+            [],
+            createSecurityParameters(
+                ctx,
+                signErrors,
+                assn.boundNameAndUID?.dn,
+                undefined,
+                id_err_operationalBindingError,
+            ),
+            ctx.dsa.accessPoint.ae_title.rdnSequence,
+            undefined,
+            undefined,
+        ),
+        signErrors,
+    );
 }
 
 /**
@@ -131,6 +484,106 @@ async function establishOperationalBinding (
     // DOP associations are ALWAYS authorized to receive signed responses.
     const signResult: boolean = (data.securityParameters?.target === ProtectionRequest_signed);
     const signErrors: boolean = (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed);
+    if (data.valid?.validFrom instanceof ASN1Element) {
+        throw new errors.OperationalBindingError(
+            ctx.i18n.t("err:unrecognized_ob_start_time_syntax"),
+            new OpBindingErrorParam(
+                OpBindingErrorParam_problem_invalidStartTime,
+                data.bindingType,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    id_err_operationalBindingError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                undefined,
+                undefined,
+            ),
+            signErrors,
+        );
+    }
+    if (data.valid?.validUntil instanceof ASN1Element) {
+        throw new errors.OperationalBindingError(
+            ctx.i18n.t("err:unrecognized_ob_end_time_syntax"),
+            new OpBindingErrorParam(
+                OpBindingErrorParam_problem_invalidEndTime,
+                data.bindingType,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    id_err_operationalBindingError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                undefined,
+                undefined,
+            ),
+            signErrors,
+        );
+    }
+
+    const now = new Date();
+    const validFrom = (data.valid?.validFrom && ("time" in data.valid.validFrom))
+        ? getDateFromOBTime(data.valid.validFrom.time)
+        : now;
+    const validUntil = (data.valid?.validUntil && ("time" in data.valid.validUntil))
+        ? getDateFromOBTime(data.valid.validUntil.time)
+        : undefined;
+
+    if (validUntil && (validUntil < validFrom)) {
+        throw new errors.OperationalBindingError(
+            ctx.i18n.t("err:validity_end_before_start"),
+            new OpBindingErrorParam(
+                OpBindingErrorParam_problem_invalidEndTime,
+                data.bindingType,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    id_err_operationalBindingError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                undefined,
+                undefined,
+            ),
+            signErrors,
+        );
+    }
+
+    const relayToElement = data._unrecognizedExtensionsList.find((ext) => (
+        (ext.tagClass === ASN1TagClass.private)
+        && (ext.tagNumber === 0)
+        && (ext.construction === ASN1Construction.constructed)
+    ))?.inner;
+    if (relayToElement) {
+        const relayToAccessPoint = _decode_AccessPoint(relayToElement);
+        return relayedEstablishOperationalBinding(
+            ctx,
+            assn,
+            invokeId,
+            data.bindingType,
+            data.agreement,
+            data.initiator,
+            validFrom,
+            validUntil,
+            relayToAccessPoint,
+            signErrors,
+        );
+    }
+
     const logInfo = {
         remoteFamily: assn.socket.remoteFamily,
         remoteAddress: assn.socket.remoteAddress,
@@ -205,61 +658,6 @@ async function establishOperationalBinding (
         ),
         signErrors,
     );
-
-    if (data.valid?.validFrom instanceof ASN1Element) {
-        throw new errors.OperationalBindingError(
-            ctx.i18n.t("err:unrecognized_ob_start_time_syntax"),
-            new OpBindingErrorParam(
-                OpBindingErrorParam_problem_invalidStartTime,
-                data.bindingType,
-                undefined,
-                undefined,
-                [],
-                createSecurityParameters(
-                    ctx,
-                    signErrors,
-                    assn.boundNameAndUID?.dn,
-                    undefined,
-                    id_err_operationalBindingError,
-                ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
-                undefined,
-            ),
-            signErrors,
-        );
-    }
-    if (data.valid?.validUntil instanceof ASN1Element) {
-        throw new errors.OperationalBindingError(
-            ctx.i18n.t("err:unrecognized_ob_end_time_syntax"),
-            new OpBindingErrorParam(
-                OpBindingErrorParam_problem_invalidEndTime,
-                data.bindingType,
-                undefined,
-                undefined,
-                [],
-                createSecurityParameters(
-                    ctx,
-                    signErrors,
-                    assn.boundNameAndUID?.dn,
-                    undefined,
-                    id_err_operationalBindingError,
-                ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                undefined,
-                undefined,
-            ),
-            signErrors,
-        );
-    }
-
-    const now = new Date();
-    const validFrom = (data.valid?.validFrom && ("time" in data.valid.validFrom))
-        ? getDateFromOBTime(data.valid.validFrom.time)
-        : now;
-    const validUntil = (data.valid?.validUntil && ("time" in data.valid.validUntil))
-        ? getDateFromOBTime(data.valid.validUntil.time)
-        : undefined;
 
     if (data.bindingType.isEqualTo(id_op_binding_hierarchical)) {
         const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(data.agreement);
