@@ -222,5 +222,6 @@
     "entry_info_reqd_for_relayed_hob": "entryInfo is required for a relayed hierarhical operational binding establishment as a subordinate. This is so the local DSA can create this entry first.",
     "failed_to_bind_to_other_dsa_for_dop": "Failed to bind to other DSA via DOP.",
     "relayed_dop_timeout": "Relayed DOP operation timed out.",
-    "relayed_dop_other_error": "Unrecognized error in relayed DOP operation."
+    "relayed_dop_other_error": "Unrecognized error in relayed DOP operation.",
+    "must_have_dsa_keys_for_relayed_dop": "You MUST use the DSA's certificate and private key to be authorized to invoke relayed DOP."
 }

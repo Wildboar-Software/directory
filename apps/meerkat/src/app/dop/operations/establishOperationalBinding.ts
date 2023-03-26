@@ -93,7 +93,7 @@ import {
 import { getDateFromOBTime } from "../getDateFromOBTime";
 import { printInvokeId } from "../../utils/printInvokeId";
 import { validateEntry, ValidateEntryReturn } from "../../x500/validateNewEntry";
-import { randomInt } from "crypto";
+import { randomInt, timingSafeEqual } from "crypto";
 import {
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ErrorProtectionRequest.ta";
@@ -119,6 +119,8 @@ import getVertexById from "../../database/getVertexById";
 import createEntry from "../../database/createEntry";
 import getAttributesFromSubentry from "../../dit/getAttributesFromSubentry";
 import { bindForOBM } from "../../net/bindToOtherDSA";
+import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
+import { SecurityProblem_insufficientAccessRights } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -569,6 +571,44 @@ async function establishOperationalBinding (
         && (ext.construction === ASN1Construction.constructed)
     ))?.inner;
     if (relayToElement) {
+        const user_cert = data.securityParameters?.certification_path?.userCertificate;
+        const dsa_cert = [ ...ctx.config.signing.certPath ?? [] ].pop();
+        const user_sig = packBits(user_cert?.signature ?? new Uint8ClampedArray());
+        const dsa_sig = packBits(dsa_cert?.signature ?? new Uint8ClampedArray());
+        /* We check if the request was signed with the exact same certificate
+        that the DSA is using for signatures. If they match, the user is
+        authorized on behalf of the DSA itself to establish a new operational
+        binding. We do not need to check the signatures or certification path
+        here, because it was already done before this function was invoked. */
+        if (
+            !("signed" in arg)
+            || !user_cert
+            || !dsa_cert
+            || (user_cert.toBeSigned.serialNumber !== dsa_cert.toBeSigned.serialNumber)
+            || (user_sig.length !== dsa_sig.length)
+            || !timingSafeEqual(user_sig, dsa_sig)
+        ) {
+            throw new errors.SecurityError(
+                ctx.i18n.t("err:must_have_dsa_keys_for_relayed_dop"),
+                new SecurityErrorData(
+                    SecurityProblem_insufficientAccessRights,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
         const relayToAccessPoint = _decode_AccessPoint(relayToElement);
         return relayedEstablishOperationalBinding(
             ctx,

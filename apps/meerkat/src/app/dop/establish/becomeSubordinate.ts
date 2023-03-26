@@ -136,17 +136,25 @@ async function becomeSubordinate (
             const createdEntry = await createContextPrefixEntry(ctx, vertex, currentRoot, last);
             currentRoot = createdEntry;
         } else {
-            // if (existingEntry.dse.glue) {
-            //     const createdEntry = await createContextPrefixEntry(ctx, vertex, currentRoot, last);
-            //     await ctx.db.entry.updateMany({
-            //         where: {
-            //             immediate_superior_id: existingEntry.dse.id,
-            //         },
-            //         data: {
-            //             immediate_superior_id: createdEntry.dse.id,
-            //         },
-            //     });
-            // }
+            /**
+             * In theory, this entry being of type "glue" should mean that it
+             * has no attributes, and therefore, there should be no problem with
+             * fully replacing it.
+             *
+             * Ideally, creating the entry and swapping it should be done as a
+             * transaction, but unfortunately, this cannot be with Meerkat DSA!
+             */
+            if (existingEntry.dse.glue) {
+                const createdEntry = await createContextPrefixEntry(ctx, vertex, currentRoot, last);
+                await ctx.db.entry.updateMany({
+                    where: {
+                        immediate_superior_id: existingEntry.dse.id,
+                    },
+                    data: {
+                        immediate_superior_id: createdEntry.dse.id,
+                    },
+                });
+            }
             currentRoot = existingEntry;
         }
     }
