@@ -1,4 +1,3 @@
-import type { Context } from "@wildboar/meerkat-types";
 import type DOPAssociation from "../DOPConnection";
 import * as errors from "@wildboar/meerkat-types";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -6,6 +5,7 @@ import type {
     TerminateOperationalBindingArgument,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingArgument.ta";
 import type {
+    OperationalBindingID,
     TerminateOperationalBindingArgumentData,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingArgumentData.ta";
 import type {
@@ -24,8 +24,9 @@ import {
 import {
     OpBindingErrorParam_problem_unsupportedBindingType,
     OpBindingErrorParam_problem_invalidID,
+    OpBindingErrorParam_problem_currentlyNotDecidable,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam-problem.ta";
-import { FALSE, unpackBits } from "asn1-ts";
+import { ASN1Construction, ASN1TagClass, FALSE, OBJECT_IDENTIFIER, unpackBits } from "asn1-ts";
 import { differenceInMilliseconds } from "date-fns";
 import terminate from "../terminateByID";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
@@ -67,6 +68,80 @@ import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import { MeerkatContext } from "../../ctx";
+import { AccessPoint, _decode_AccessPoint } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+import { terminateByTypeAndBindingID } from "../terminateByTypeAndBindingID";
+
+
+async function relayedTerminateOperationalBinding (
+    ctx: MeerkatContext,
+    assn: DOPAssociation,
+    invokeId: InvokeId,
+    bindingType: OBJECT_IDENTIFIER,
+    bindingID: OperationalBindingID,
+    relayTo: AccessPoint,
+    signErrors: boolean,
+): Promise<TerminateOperationalBindingResult> {
+    const outcome = await terminateByTypeAndBindingID(
+        ctx,
+        assn,
+        relayTo,
+        bindingType,
+        bindingID,
+        FALSE,
+        signErrors,
+    );
+    let err_message: string = "";
+    if ("result" in outcome) {
+        return outcome.result.parameter;
+    }
+    else if ("error" in outcome) {
+        throw new errors.ChainedError(
+            ctx.i18n.t("err:chained_error"),
+            outcome.error.parameter,
+            outcome.error.code,
+            signErrors,
+        );
+    }
+    else if ("reject" in outcome) {
+        throw new errors.ChainedReject(
+            ("present" in invokeId)
+                ? invokeId.present
+                : -1,
+            outcome.reject.problem,
+        );
+    }
+    else if ("abort" in outcome) {
+        throw new errors.ChainedAbort(outcome.abort);
+    }
+    else if ("timeout" in outcome) {
+        err_message = ctx.i18n.t("err:relayed_dop_timeout");
+    }
+    else {
+        err_message = ctx.i18n.t("err:relayed_dop_other_error");
+    }
+    throw new errors.OperationalBindingError(
+        err_message,
+        new OpBindingErrorParam(
+            OpBindingErrorParam_problem_currentlyNotDecidable,
+            bindingType,
+            undefined,
+            undefined,
+            [],
+            createSecurityParameters(
+                ctx,
+                signErrors,
+                assn.boundNameAndUID?.dn,
+                undefined,
+                id_err_operationalBindingError,
+            ),
+            ctx.dsa.accessPoint.ae_title.rdnSequence,
+            undefined,
+            undefined,
+        ),
+        signErrors,
+    );
+}
 
 /**
  * @summary Terminates an operational binding, as described in ITU Recommendation X.501.
@@ -85,7 +160,7 @@ import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
  */
 export
 async function terminateOperationalBinding (
-    ctx: Context,
+    ctx: MeerkatContext,
     assn: DOPAssociation,
     invokeId: InvokeId,
     arg: TerminateOperationalBindingArgument,
@@ -128,6 +203,25 @@ async function terminateOperationalBinding (
         association_id: assn.id,
         invokeID: printInvokeId(invokeId),
     });
+
+    const relayToElement = data._unrecognizedExtensionsList.find((ext) => (
+        (ext.tagClass === ASN1TagClass.private)
+        && (ext.tagNumber === 0)
+        && (ext.construction === ASN1Construction.constructed)
+    ))?.inner;
+    if (relayToElement) {
+        const relayToAccessPoint = _decode_AccessPoint(relayToElement);
+        return relayedTerminateOperationalBinding(
+            ctx,
+            assn,
+            invokeId,
+            data.bindingType,
+            data.bindingID,
+            relayToAccessPoint,
+            signErrors,
+        );
+    }
+
     const NOT_SUPPORTED_ERROR = new errors.OperationalBindingError(
         ctx.i18n.t("err:ob_type_unrecognized", {
             obtype: data.bindingType.toString(),
