@@ -398,7 +398,7 @@ async function relayedEstablishOperationalBinding (
         ) {
             const sup2sub = _decode_SuperiorToSubordinate(data.initiator.roleA_replies);
             const agr = _decode_HierarchicalAgreement(agreement);
-            await becomeSubordinate( // FIXME: If the existing entry is a glue entry, replace it.
+            await becomeSubordinate(
                 ctx,
                 relayTo,
                 agr,

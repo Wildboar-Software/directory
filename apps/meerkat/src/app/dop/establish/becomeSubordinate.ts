@@ -1,4 +1,4 @@
-import type { Context, PendingUpdates } from "@wildboar/meerkat-types";
+import type { Context, PendingUpdates, Vertex } from "@wildboar/meerkat-types";
 import {
     HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
@@ -6,7 +6,6 @@ import type {
     SuperiorToSubordinate,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinate.ta";
 import {
-    MasterAndShadowAccessPoints,
     SubordinateToSuperior,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
 import {
@@ -37,6 +36,64 @@ import type {
     OBJECT_CLASS,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
 import { INTEGER } from "asn1-ts";
+import { Vertex as X500Vertex } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/Vertex.ta";
+
+async function createContextPrefixEntry (
+    ctx: Context,
+    vertex: X500Vertex,
+    currentRoot: Vertex,
+    last: boolean,
+): Promise<Vertex> {
+    const immSuprAccessPoints = vertex.accessPoints;
+    const immSupr: boolean = Boolean(immSuprAccessPoints && last);
+    const createdEntry = await createEntry(
+        ctx,
+        currentRoot,
+        vertex.rdn,
+        {
+            /**
+             * NOTE: This defaults to `true` in `createEntry()`.
+             *
+             * ITU Recommendation X.518 (2019), Section 24.3.1.1 states
+             * that, during the establishment of a new HOB, the
+             * superior DSA shall create entries...
+             *
+             * > and, as appropriate, a DSE of type rhob and entry to
+             * > represent the immediateSuperiorInfo .
+             *
+             * It is not clear when the DSE becomes of type `entry`.
+             * The hypothetical DIT provided in Annex P of ITU
+             * Recommendation X.501 never shows any `immSupr` having
+             * type `entry`. I think `entry` should never be used for
+             * any entry created in a context prefix.
+             */
+            entry: false,
+            glue: (!vertex.admPointInfo && !vertex.accessPoints),
+            rhob: Boolean(vertex.admPointInfo),
+            immSupr,
+        },
+        vertex.admPointInfo ?? [],
+        [],
+    );
+    await Promise.all(
+        vertex.accessPoints?.map((ap) => saveAccessPoint(
+            ctx, ap, Knowledge.SPECIFIC, createdEntry.dse.id)) ?? [],
+    );
+    for (const subentry of (vertex.subentries ?? [])) {
+        await createEntry(
+            ctx,
+            createdEntry,
+            subentry.rdn,
+            {
+                subentry: true,
+                rhob: true,
+            },
+            subentry.info ?? [],
+            [],
+        );
+    }
+    return createdEntry;
+}
 
 /**
  * @summary Create the necessary DSEs to establish a new context prefix
@@ -73,61 +130,23 @@ async function becomeSubordinate (
     let currentRoot = ctx.dit.root;
     for (let i = 0; i < sup2sub.contextPrefixInfo.length; i++) {
         const vertex = sup2sub.contextPrefixInfo[i];
-        let immSuprAccessPoints: MasterAndShadowAccessPoints | undefined = undefined;
         const last: boolean = (sup2sub.contextPrefixInfo.length === (i + 1));
         const existingEntry = await dnToVertex(ctx, currentRoot, [ vertex.rdn ]);
         if (!existingEntry) {
-            immSuprAccessPoints = vertex.accessPoints;
-            const immSupr: boolean = Boolean(immSuprAccessPoints && last);
-            const createdEntry = await createEntry(
-                ctx,
-                currentRoot,
-                vertex.rdn,
-                {
-                    /**
-                     * NOTE: This defaults to `true` in `createEntry()`.
-                     *
-                     * ITU Recommendation X.518 (2019), Section 24.3.1.1 states
-                     * that, during the establishment of a new HOB, the
-                     * superior DSA shall create entries...
-                     *
-                     * > and, as appropriate, a DSE of type rhob and entry to
-                     * > represent the immediateSuperiorInfo .
-                     *
-                     * It is not clear when the DSE becomes of type `entry`.
-                     * The hypothetical DIT provided in Annex P of ITU
-                     * Recommendation X.501 never shows any `immSupr` having
-                     * type `entry`. I think `entry` should never be used for
-                     * any entry created in a context prefix.
-                     */
-                    entry: false,
-                    glue: (!vertex.admPointInfo && !vertex.accessPoints),
-                    rhob: Boolean(vertex.admPointInfo),
-                    immSupr,
-                },
-                vertex.admPointInfo ?? [],
-                [],
-            );
-            await Promise.all(
-                vertex.accessPoints?.map((ap) => saveAccessPoint(
-                    ctx, ap, Knowledge.SPECIFIC, createdEntry.dse.id)) ?? [],
-            );
+            const createdEntry = await createContextPrefixEntry(ctx, vertex, currentRoot, last);
             currentRoot = createdEntry;
-            for (const subentry of (vertex.subentries ?? [])) {
-                await createEntry(
-                    ctx,
-                    currentRoot,
-                    subentry.rdn,
-                    {
-                        subentry: true,
-                        rhob: true,
-                    },
-                    subentry.info ?? [],
-                    [],
-                );
-            }
         } else {
-            // FIXME: If the existing entry is a glue entry, replace it.
+            // if (existingEntry.dse.glue) {
+            //     const createdEntry = await createContextPrefixEntry(ctx, vertex, currentRoot, last);
+            //     await ctx.db.entry.updateMany({
+            //         where: {
+            //             immediate_superior_id: existingEntry.dse.id,
+            //         },
+            //         data: {
+            //             immediate_superior_id: createdEntry.dse.id,
+            //         },
+            //     });
+            // }
             currentRoot = existingEntry;
         }
     }
