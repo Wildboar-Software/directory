@@ -38,6 +38,7 @@ import type {
 import { INTEGER } from "asn1-ts";
 import { Vertex as X500Vertex } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/Vertex.ta";
 
+export
 async function createContextPrefixEntry (
     ctx: Context,
     vertex: X500Vertex,
