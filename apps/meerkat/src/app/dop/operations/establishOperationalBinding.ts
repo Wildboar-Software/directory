@@ -1558,6 +1558,7 @@ async function establishOperationalBinding (
                     requested_time: new Date(),
                 },
                 select: {
+                    id: true,
                     uuid: true,
                 },
             });
@@ -1628,6 +1629,7 @@ async function establishOperationalBinding (
                     agreement,
                     init,
                     signErrors,
+                    created.id,
                 );
                 ctx.log.info(ctx.i18n.t("log:establishOperationalBinding", {
                     context: "succeeded",

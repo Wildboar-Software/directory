@@ -127,7 +127,6 @@
     "not_supported_by_ldap": "Not supported by LDAP.",
     "unrecognized_ldap_extension": "Unrecognized LDAP extension: {{ext}}.",
     "superior_dsa_would_not_rename": "Superior DSA refused to allow RDN change to the subordinate context prefix. {{e}}",
-    "could_not_find_cp": "Could not find context prefix associated with operational binding {{uuid}}.",
     "could_not_find_supr": "Could not find superior associated with operational binding {{uuid}}.",
     "invalid_reference_no_reason_to_search_here": "Invalid reference: there is no context prefix under the target object, and therefore no reason to continue the search or list in this DSA; alternatively, you may have set the manageDSAIT flag and the object simply does not exist in this DSA.",
     "cannot_reverse_roles_in_hob": "Cannot reverse roles in a hierarchical operational binding.",
@@ -223,5 +222,6 @@
     "failed_to_bind_to_other_dsa_for_dop": "Failed to bind to other DSA via DOP.",
     "relayed_dop_timeout": "Relayed DOP operation timed out.",
     "relayed_dop_other_error": "Unrecognized error in relayed DOP operation.",
-    "must_have_dsa_keys_for_relayed_dop": "You MUST use the DSA's certificate and private key to be authorized to invoke relayed DOP."
+    "must_have_dsa_keys_for_relayed_dop": "You MUST use the DSA's certificate and private key to be authorized to invoke relayed DOP.",
+    "nhob_subordinate_changed_agreement": "NHOB subordinate DSA attempted to modify operational binding {{uuid}} with a new immediate superior distinguished name in the agreement, which is prohibited. The agreement was automatically rejected."
 }

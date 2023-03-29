@@ -67,6 +67,8 @@ import { randomInt } from "crypto";
  * @param agreement The hierarchical agreement
  * @param sub2sup The `SubordinateToSuperior` argument of the NHOB
  * @param signErrors Whether to cryptographically sign errors
+ * @param nhob_id The binding identifier of the NHOB used to become the
+ *  superior DSA.
  * @returns A `SuperiorToSubordinate` that can be returned to the superior DSA
  *  in a Directory Operational Binding Management Protocol (DOP) result
  *
@@ -80,6 +82,7 @@ async function becomeNonSpecificSuperior (
     agreement: NonSpecificHierarchicalAgreement,
     sub2sup: NHOBSubordinateToSuperior,
     signErrors: boolean,
+    nhob_id: number,
 ): Promise<NHOBSuperiorToSubordinate> {
     const superior = await dnToVertex(ctx, ctx.dit.root, agreement.immediateSuperior);
     if (!superior) {
@@ -163,6 +166,7 @@ async function becomeNonSpecificSuperior (
         },
     });
 
+    const nsk_group = BigInt(randomInt(1_000_000_000));
     await Promise.all(
         sub2sup.accessPoints
             ?.map((ap) => saveAccessPoint(
@@ -171,7 +175,8 @@ async function becomeNonSpecificSuperior (
                 Knowledge.NON_SPECIFIC,
                 superior.dse.id,
                 undefined,
-                BigInt(randomInt(1_000_000_000)),
+                nsk_group,
+                nhob_id,
             )) ?? [],
     );
     const immediateSuperiorInfo: Attribute[] = await getEntryAttributesToShareInOpBinding(ctx, superior);

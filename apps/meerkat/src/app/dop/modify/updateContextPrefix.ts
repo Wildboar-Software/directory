@@ -1,7 +1,4 @@
 import { Context, Vertex, OperationalBindingError } from "@wildboar/meerkat-types";
-import {
-    HierarchicalAgreement,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
 import type {
     SuperiorToSubordinateModification,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinateModification.ta";
@@ -66,18 +63,7 @@ import {
 import saveAccessPoint from "../../database/saveAccessPoint";
 import dseFromDatabaseEntry from "../../database/dseFromDatabaseEntry";
 import { strict as assert } from "assert";
-
-/**
- * @description
- *
- * This is for RECEIVING an update to the CP, not creating one.
- *
- * @param ctx The context object
- * @param oldAgreement The old hierarchical agreement
- * @param init
- * @param mod
- * @returns
- */
+import { NHOBSuperiorToSubordinate } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NHOBSuperiorToSubordinate.ta";
 
 /**
  * @summary Apply an update to a context prefix given by a superior DSA
@@ -88,7 +74,7 @@ import { strict as assert } from "assert";
  *
  * @param ctx The context object
  * @param uuid The UUID of the operational binding
- * @param oldAgreement The old hierarchical agreement
+ * @param oldAgreementImmediateSuperior The old hierarchical agreement's immediateSuperior
  * @param mod The update to the context prefix
  * @param signErrors Whether to cryptographically sign errors
  *
@@ -99,22 +85,15 @@ export
 async function updateContextPrefix (
     ctx: Context,
     uuid: string,
-    oldAgreement: HierarchicalAgreement,
-    mod: SuperiorToSubordinateModification,
+    oldAgreementImmediateSuperior: DistinguishedName,
+    mod: SuperiorToSubordinateModification | NHOBSuperiorToSubordinate, // These two types are identical.
     signErrors: boolean,
 ): Promise<void> {
-
-    // Because we use the agreement's RDN to find the entry, it's critical that
-    // the agreement in the database is kept in sync with the entry's RDN.
-    const oldDN: DistinguishedName = [
-        ...oldAgreement.immediateSuperior,
-        oldAgreement.rdn,
-    ];
-
-    const oldCP = await dnToVertex(ctx, ctx.dit.root, oldDN);
-    if (!oldCP) {
+    const oldDN: DistinguishedName = oldAgreementImmediateSuperior;
+    const oldImmediateSuperior = await dnToVertex(ctx, ctx.dit.root, oldDN);
+    if (!oldImmediateSuperior) {
         throw new OperationalBindingError(
-            ctx.i18n.t("err:could_not_find_cp", { uuid }),
+            ctx.i18n.t("err:could_not_find_supr", { uuid }),
             new OpBindingErrorParam(
                 OpBindingErrorParam_problem_invalidBindingType,
                 id_op_binding_hierarchical,
@@ -135,31 +114,7 @@ async function updateContextPrefix (
             signErrors,
         );
     }
-
-    const oldImmediateSuperior = oldCP.immediateSuperior;
     let currentOld: Vertex | undefined = oldImmediateSuperior;
-    if (!currentOld) {
-        throw new OperationalBindingError(
-            ctx.i18n.t("err:could_not_find_supr", { uuid }),
-            new OpBindingErrorParam(
-                OpBindingErrorParam_problem_invalidBindingType,
-                id_op_binding_hierarchical,
-                undefined,
-                undefined,
-                [],
-                createSecurityParameters(
-                    ctx,
-                    signErrors,
-                    undefined,
-                    undefined,
-                    operationalBindingError["&errorCode"],
-                ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                false,
-                undefined,
-            ),
-        );
-    }
     while (
         currentOld
         && currentOld.immediateSuperior
@@ -167,27 +122,11 @@ async function updateContextPrefix (
     ) {
         currentOld = currentOld.immediateSuperior;
     }
-    const highestDseThatSuperiorDSAMayModify: Vertex | undefined = currentOld;
+    const highestDseThatSuperiorDSAMayModify: Vertex | undefined = oldImmediateSuperior;
     if (!highestDseThatSuperiorDSAMayModify) {
         throw new Error("29d3463f-f151-4ded-a926-3381a43ac628");
     }
     const highestModifiableDN = getDistinguishedName(highestDseThatSuperiorDSAMayModify);
-
-    await ctx.db.entry.update({
-        where: {
-            id: oldCP.dse.id,
-        },
-        data: {
-            deleteTimestamp: new Date(),
-            immediate_superior_id: null,
-        },
-        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-    });
-
-    // Mark the subordinate DSE / CP as "deleted" and set its immediate_superior_id to `null`.
-    // Modify the context prefix.
-    // "Un-delete" the subordinate DSE and set its immediate_superior_id to the new superior.
-    // Reload the DIT, starting from the first DSE the HOB superior could not modify.
 
     let currentRoot = highestDseThatSuperiorDSAMayModify;
     // Can you trust mod.contextPrefixInfo.length? Yes, because the superior DSA may move its entries.
@@ -250,7 +189,7 @@ async function updateContextPrefix (
                     [],
                 );
             }
-            const oldRDN: RDN = oldAgreement.immediateSuperior[i];
+            const oldRDN: RDN = oldAgreementImmediateSuperior[i];
             const oldVertex = await dnToVertex(ctx, currentRoot, [ oldRDN ]);
             if (oldVertex) {
                 await deleteEntry(ctx, oldVertex);
@@ -364,16 +303,14 @@ async function updateContextPrefix (
     //     await writeEntryAttributes(ctx, subr, values);
     // }
 
-    ctx.db.entry.update({
+    await ctx.db.entry.updateMany({
         where: {
-            id: oldCP.dse.id,
+            immediate_superior_id: oldImmediateSuperior.dse.id,
         },
         data: {
-            deleteTimestamp: null,
             immediate_superior_id: currentRoot.dse.id,
         },
-        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-    }).then(); // INTENTIONAL_NO_AWAIT
+    });
 
     (immSuprAccessPoints ?? [])
         .map((mosap) => new AccessPoint(

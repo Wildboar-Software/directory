@@ -31,6 +31,7 @@ import {
     OpBindingErrorParam_problem_roleAssignment,
     OpBindingErrorParam_problem_duplicateID,
     OpBindingErrorParam_problem_invalidNewID,
+    OpBindingErrorParam_problem_currentlyNotDecidable,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam-problem.ta";
 import type {
     Code,
@@ -106,6 +107,22 @@ import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 import stringifyDN from "../../x500/stringifyDN";
+import {
+    id_op_binding_non_specific_hierarchical,
+} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
+import {
+    NHOBSuperiorToSubordinate,
+    _decode_NHOBSuperiorToSubordinate,
+} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NHOBSuperiorToSubordinate.ta";
+import {
+    NHOBSubordinateToSuperior,
+    _decode_NHOBSubordinateToSuperior,
+} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NHOBSubordinateToSuperior.ta";
+import {
+    _decode_NonSpecificHierarchicalAgreement,
+} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NonSpecificHierarchicalAgreement.ta";
+import dnToID from "../../dit/dnToID";
+import { randomInt } from "crypto";
 
 function getInitiator (init: Initiator): OperationalBindingInitiator {
     // NOTE: Initiator is not extensible, so this is an exhaustive list.
@@ -461,7 +478,7 @@ async function modifyOperationalBinding (
     const access_point_id: number | undefined = createdAccessPoint ?? opBinding.access_point?.id;
     const created = await ctx.db.operationalBinding.create({
         data: {
-            accepted: true,
+            accepted: undefined,
             previous: {
                 connect: {
                     id: opBinding.id,
@@ -566,56 +583,56 @@ async function modifyOperationalBinding (
         select: {
             id: true,
             uuid: true,
+            binding_type: true,
+            binding_identifier: true,
         },
     });
+
+    /**
+     * @summary Wait for approval of a proposed operational binding
+     * @description
+     *
+     * This function waits for the manual or automated approval of a proposed
+     * operational binding. It also times out if no decision is made within a
+     * defined time limit.
+     *
+     * @param uuid The UUID of the operation binding whose approval is sought.
+     * @returns A promise resolving a boolean indicating whether the operational
+     *  binding was accepted or rejected, or `undefined` if the decision timed
+     *  out.
+     *
+     * @function
+     */
+    const getApproval = (uuid: string): Promise<boolean | undefined> => Promise.race<boolean | undefined>([
+        new Promise<boolean>((resolve) => {
+            ctx.operationalBindingControlEvents.once(uuid, (approved: boolean) => {
+                resolve(approved);
+            });
+        }),
+        new Promise<undefined>((resolve) => setTimeout(() => resolve(undefined), 300_000)),
+        new Promise<boolean>((resolve) => {
+            if (ctx.config.ob.autoAccept) {
+                ctx.log.info(ctx.i18n.t("log:auto_accepted_ob", {
+                    type: data.bindingType.toString(),
+                    obid: data.bindingID?.identifier.toString(),
+                    uuid,
+                }), {
+                    type: data.bindingType.toString(),
+                    obid: data.bindingID?.identifier.toString(),
+                    uuid,
+                });
+                resolve(true);
+            }
+        }),
+    ]);
 
     const oldAgreementElement = (() => {
         const el = new BERElement();
         el.fromBytes(opBinding.agreement_ber);
         return el;
     })();
-    if (data.bindingType.isEqualTo(id_op_binding_hierarchical)) {
-        const oldAgreement: HierarchicalAgreement = _decode_HierarchicalAgreement(oldAgreementElement);
-        const newAgreement: HierarchicalAgreement = data.newAgreement
-            ? _decode_HierarchicalAgreement(data.newAgreement)
-            : oldAgreement;
 
-        await ctx.db.operationalBinding.update({
-            where: {
-                id: created.id,
-            },
-            data: {
-                new_context_prefix_rdn: rdnToJson(newAgreement.rdn),
-                immediate_superior: newAgreement.immediateSuperior.map(rdnToJson),
-            },
-            select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-        });
-
-        if (!data.initiator) {
-            throw new OperationalBindingError(
-                // REVIEW: How does this error message make sense?
-                ctx.i18n.t("err:cannot_reverse_roles_in_hob"),
-                new OpBindingErrorParam(
-                    OpBindingErrorParam_problem_roleAssignment,
-                    id_op_binding_hierarchical,
-                    undefined,
-                    undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        signErrors,
-                        assn.boundNameAndUID?.dn,
-                        undefined,
-                        id_err_operationalBindingError,
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    false,
-                    undefined,
-                ),
-                signErrors,
-            );
-        }
-
+    const getResult = () => {
         const resultData = new ModifyOperationalBindingResultData(
             data.newBindingID,
             data.bindingType,
@@ -688,6 +705,50 @@ async function modifyOperationalBinding (
                     unsigned: resultData,
                 },
             };
+        return result;
+    };
+
+    if (data.bindingType.isEqualTo(id_op_binding_hierarchical)) {
+        const oldAgreement: HierarchicalAgreement = _decode_HierarchicalAgreement(oldAgreementElement);
+        const newAgreement: HierarchicalAgreement = data.newAgreement
+            ? _decode_HierarchicalAgreement(data.newAgreement)
+            : oldAgreement;
+
+        await ctx.db.operationalBinding.update({
+            where: {
+                id: created.id,
+            },
+            data: {
+                new_context_prefix_rdn: rdnToJson(newAgreement.rdn),
+                immediate_superior: newAgreement.immediateSuperior.map(rdnToJson),
+            },
+            select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
+        });
+
+        if (!data.initiator) {
+            throw new OperationalBindingError(
+                // REVIEW: How does this error message make sense?
+                ctx.i18n.t("err:cannot_reverse_roles_in_hob"),
+                new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_roleAssignment,
+                    id_op_binding_hierarchical,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    false,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
         if ("roleA_initiates" in data.initiator) {
             const init: SuperiorToSubordinateModification = _decode_SuperiorToSubordinateModification(data.initiator.roleA_initiates);
             if (!compareDistinguishedName(
@@ -717,7 +778,85 @@ async function modifyOperationalBinding (
                     signErrors,
                 );
             }
-            await updateContextPrefix(ctx, created.uuid, newAgreement, init, signErrors);
+            const agreement_dn_changed: boolean = !compareDistinguishedName(
+                [ ...oldAgreement.immediateSuperior, oldAgreement.rdn ],
+                [ ...newAgreement.immediateSuperior, newAgreement.rdn ],
+                NAMING_MATCHER,
+            );
+            if (agreement_dn_changed) { // If the agreement DN changes, we need to request DSA admin approval.
+                const approved: boolean | undefined = await getApproval(created.uuid);
+                await ctx.db.operationalBinding.update({
+                    where: {
+                        id: created.id,
+                    },
+                    data: {
+                        accepted: approved ?? null,
+                    },
+                    select: {
+                        id: true,
+                    },
+                });
+                if (approved === undefined) {
+                    throw new errors.OperationalBindingError(
+                        ctx.i18n.t("err:ob_rejected", {
+                            context: "timeout",
+                            uuid: created.uuid,
+                        }),
+                        new OpBindingErrorParam(
+                            OpBindingErrorParam_problem_currentlyNotDecidable,
+                            data.bindingType,
+                            undefined,
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                signErrors,
+                                assn.boundNameAndUID?.dn,
+                                undefined,
+                                id_err_operationalBindingError,
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            undefined,
+                            undefined,
+                        ),
+                        signErrors,
+                    );
+                } else if (approved === false) {
+                    throw new errors.OperationalBindingError(
+                        ctx.i18n.t("err:ob_rejected", {
+                            uuid: created.uuid,
+                        }),
+                        new OpBindingErrorParam(
+                            OpBindingErrorParam_problem_invalidAgreement,
+                            data.bindingType,
+                            undefined,
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                signErrors,
+                                assn.boundNameAndUID?.dn,
+                                undefined,
+                                id_err_operationalBindingError,
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            undefined,
+                            undefined,
+                        ),
+                        signErrors,
+                    );
+                }
+            } else { // If the agreement DN does not change, the modification is auto-accepted.
+                await ctx.db.operationalBinding.update({
+                    where: {
+                        id: created.id,
+                    },
+                    data: {
+                        accepted: true,
+                    }
+                });
+            }
+            await updateContextPrefix(ctx, created.uuid, newAgreement.immediateSuperior, init, signErrors);
             ctx.log.info(ctx.i18n.t("log:modifyOperationalBinding", {
                 context: "succeeded",
                 type: data.bindingType.toString(),
@@ -730,7 +869,7 @@ async function modifyOperationalBinding (
                 association_id: assn.id,
                 invokeID: printInvokeId(invokeId),
             });
-            return result;
+            return getResult();
         } else if ("roleB_initiates" in data.initiator) {
             const init: SubordinateToSuperior = _decode_SubordinateToSuperior(data.initiator.roleB_initiates);
             await updateLocalSubr(ctx, assn, invokeId, oldAgreement, newAgreement, init, signErrors);
@@ -746,7 +885,7 @@ async function modifyOperationalBinding (
                 association_id: assn.id,
                 invokeID: printInvokeId(invokeId),
             });
-            return result;
+            return getResult();
         } else {
             throw new errors.OperationalBindingError(
                 ctx.i18n.t("err:unrecognized_ob_initiator_syntax"),
@@ -770,7 +909,257 @@ async function modifyOperationalBinding (
                 signErrors,
             );
         }
-    } else {
+    } else if (data.bindingType.isEqualTo(id_op_binding_non_specific_hierarchical)) {
+        if (!data.initiator) {
+            throw new OperationalBindingError(
+                // FIXME: How does this error message make sense?
+                ctx.i18n.t("err:cannot_reverse_roles_in_hob"),
+                new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_roleAssignment,
+                    id_op_binding_hierarchical,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    false,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
+        const oldAgreement = _decode_NonSpecificHierarchicalAgreement(oldAgreementElement);
+        const newAgreement = data.newAgreement
+            ? _decode_NonSpecificHierarchicalAgreement(data.newAgreement)
+            : oldAgreement;
+        if ("roleA_initiates" in data.initiator) {
+            const init: NHOBSuperiorToSubordinate = _decode_NHOBSuperiorToSubordinate(data.initiator.roleA_initiates);
+            if (!compareDistinguishedName(
+                newAgreement.immediateSuperior,
+                init.contextPrefixInfo.map((rdn) => rdn.rdn),
+                NAMING_MATCHER,
+            )) {
+                throw new errors.OperationalBindingError(
+                    ctx.i18n.t("err:hob_contextprefixinfo_did_not_match"),
+                    new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_invalidAgreement,
+                        data.bindingType,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            id_err_operationalBindingError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
+                    signErrors,
+                );
+            }
+            const agreement_dn_changed: boolean = !compareDistinguishedName(
+                oldAgreement.immediateSuperior,
+                newAgreement.immediateSuperior,
+                NAMING_MATCHER,
+            );
+            if (agreement_dn_changed) { // If the agreement DN changes, we need to request DSA admin approval.
+                const approved: boolean | undefined = await getApproval(created.uuid);
+                await ctx.db.operationalBinding.update({
+                    where: {
+                        id: created.id,
+                    },
+                    data: {
+                        accepted: approved ?? null,
+                    },
+                    select: {
+                        id: true,
+                    },
+                });
+                if (approved === undefined) {
+                    throw new errors.OperationalBindingError(
+                        ctx.i18n.t("err:ob_rejected", {
+                            context: "timeout",
+                            uuid: created.uuid,
+                        }),
+                        new OpBindingErrorParam(
+                            OpBindingErrorParam_problem_currentlyNotDecidable,
+                            data.bindingType,
+                            undefined,
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                signErrors,
+                                assn.boundNameAndUID?.dn,
+                                undefined,
+                                id_err_operationalBindingError,
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            undefined,
+                            undefined,
+                        ),
+                        signErrors,
+                    );
+                } else if (approved === false) {
+                    throw new errors.OperationalBindingError(
+                        ctx.i18n.t("err:ob_rejected", {
+                            uuid: created.uuid,
+                        }),
+                        new OpBindingErrorParam(
+                            OpBindingErrorParam_problem_invalidAgreement,
+                            data.bindingType,
+                            undefined,
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                signErrors,
+                                assn.boundNameAndUID?.dn,
+                                undefined,
+                                id_err_operationalBindingError,
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            undefined,
+                            undefined,
+                        ),
+                        signErrors,
+                    );
+                }
+            } else { // If the agreement DN does not change, the modification is auto-accepted.
+                await ctx.db.operationalBinding.update({
+                    where: {
+                        id: created.id,
+                    },
+                    data: {
+                        accepted: true,
+                    }
+                });
+            }
+            await updateContextPrefix(ctx, created.uuid, newAgreement.immediateSuperior, init, signErrors);
+            ctx.log.info(ctx.i18n.t("log:modifyOperationalBinding", {
+                context: "succeeded",
+                type: data.bindingType.toString(),
+                bid: data.bindingID?.identifier.toString(),
+                aid: assn.id,
+            }), {
+                remoteFamily: assn.socket.remoteFamily,
+                remoteAddress: assn.socket.remoteAddress,
+                remotePort: assn.socket.remotePort,
+                association_id: assn.id,
+                invokeID: printInvokeId(invokeId),
+            });
+            return getResult();
+        }
+        else if ("roleB_initiates" in data.initiator) {
+            const agreement_dn_changed: boolean = !compareDistinguishedName(
+                oldAgreement.immediateSuperior,
+                newAgreement.immediateSuperior,
+                NAMING_MATCHER,
+            );
+            /**
+             * The subordinate DSA does not determine the distinguished name of
+             * the agreement at all, so if the subordinate submits a changed DN,
+             * it can only be a mistake or malicious activity, so it is
+             * automatically rejected.
+             */
+            if (agreement_dn_changed) {
+                throw new errors.OperationalBindingError(
+                    ctx.i18n.t("err:nhob_subordinate_changed_agreement", {
+                        uuid: created.uuid,
+                    }),
+                    new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_invalidAgreement,
+                        data.bindingType,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            id_err_operationalBindingError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
+                    signErrors,
+                );
+            }
+            const init: NHOBSubordinateToSuperior = _decode_NHOBSubordinateToSuperior(data.initiator.roleB_initiates);
+            // Just update the access points.
+            // init.accessPoints
+            const nssr_id = await dnToID(ctx, ctx.dit.root.dse.id, oldAgreement.immediateSuperior);
+            await ctx.db.accessPoint.deleteMany({
+                where: {
+                    entry_id: nssr_id,
+                    knowledge_type: Knowledge.NON_SPECIFIC,
+                    nssr_binding_identifier: created.binding_identifier,
+                },
+            });
+            const nsk_group = BigInt(randomInt(1_000_000_000));
+            await Promise.all(
+                init.accessPoints
+                    ?.map((ap) => saveAccessPoint(
+                        ctx,
+                        ap,
+                        Knowledge.NON_SPECIFIC,
+                        nssr_id,
+                        undefined,
+                        nsk_group,
+                        created.binding_identifier,
+                    )) ?? [],
+            );
+            ctx.log.info(ctx.i18n.t("log:modifyOperationalBinding", {
+                context: "succeeded",
+                type: data.bindingType.toString(),
+                bid: data.bindingID?.identifier.toString(),
+                aid: assn.id,
+            }), {
+                remoteFamily: assn.socket.remoteFamily,
+                remoteAddress: assn.socket.remoteAddress,
+                remotePort: assn.socket.remotePort,
+                association_id: assn.id,
+                invokeID: printInvokeId(invokeId),
+            });
+            return getResult();
+        }
+        else {
+            throw new errors.OperationalBindingError(
+                ctx.i18n.t("err:unrecognized_ob_initiator_syntax"),
+                new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_invalidAgreement,
+                    data.bindingType,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
+    }
+    else {
         throw NOT_SUPPORTED_ERROR;
     }
 }

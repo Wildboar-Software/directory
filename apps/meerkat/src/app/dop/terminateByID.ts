@@ -42,6 +42,7 @@ async function terminate (
             initiator: true,
             outbound: true,
             binding_type: true,
+            binding_identifier: true,
         },
     });
     if (!ob) {
@@ -93,7 +94,8 @@ async function terminate (
                             knowledge_type: Knowledge.NON_SPECIFIC,
                             operational_bindings: {
                                 some: {
-                                    id,
+                                    binding_type: ob.binding_type,
+                                    binding_identifier: ob.binding_identifier,
                                 },
                             },
                         },
