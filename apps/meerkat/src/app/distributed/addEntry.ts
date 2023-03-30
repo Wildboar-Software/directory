@@ -1,4 +1,4 @@
-import { Context, IndexableOID, Value, Vertex, ClientAssociation, OperationReturn } from "@wildboar/meerkat-types";
+import { Context, IndexableOID, Value, Vertex, ClientAssociation, OperationReturn, ChainedError } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
 import {
@@ -44,6 +44,7 @@ import {
     SecurityErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
+    Attribute,
     ServiceErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import {
@@ -176,7 +177,7 @@ import { getEntryExistsFilter } from "../database/entryExistsFilter";
 import {
     _encode_SuperiorToSubordinate,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinate.ta";
-import { compareAuthenticationLevel } from "@wildboar/x500";
+import { compareAuthenticationLevel, compareDistinguishedName } from "@wildboar/x500";
 import { UserPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
 import {
     id_ar_pwdAdminSpecificArea,
@@ -194,6 +195,11 @@ import { attributeError } from "@wildboar/x500/src/lib/modules/DirectoryAbstract
 import {
     AttributeProblem_constraintViolation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
+import { bindForChaining } from "../net/bindToOtherDSA";
+import { dSAProblem } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dSAProblem.oa";
+import {
+    id_pr_targetDsaUnavailable,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-targetDsaUnavailable.va";
 
 const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
 const ID_AC_SPECIFIC: string = id_ar_accessControlSpecificArea.toString();
@@ -1044,6 +1050,115 @@ async function addEntry (
                 signErrors,
             );
         }
+
+        const targetSystem = data.targetSystem;
+        const targetSystem_refers_to_non_specific_subordinate_dsa: boolean = !!(
+            immediateSuperior.dse.nssr
+                ?.nonSpecificKnowledge
+                .some((nssk) => nssk
+                    .some((mosap) => compareDistinguishedName(
+                        mosap.ae_title.rdnSequence,
+                        targetSystem.ae_title.rdnSequence,
+                        NAMING_MATCHER,
+                    )))
+        );
+        // DEVIATION: This is not defined in the specifications.
+        if (targetSystem_refers_to_non_specific_subordinate_dsa) {
+            const dsp_client = await bindForChaining(
+                ctx,
+                assn,
+                op,
+                targetSystem,
+                state.chainingArguments.aliasDereferenced,
+                signErrors,
+            );
+            if (!dsp_client) {
+                throw new Error(); // FIXME: serviceError?
+            }
+            /* Instead of using the APInfo Procedure, we just use the X.500
+            Client SDK, since this is non-standard behavior anyway. */
+            const outcome = await dsp_client.addEntry({
+                ...argument,
+                object: data.object,
+                entry: data.entry,
+                chaining: state.chainingArguments,
+            });
+            if ("result" in outcome) {
+                return {
+                    result: outcome.result.parameter,
+                    stats: {
+                        request: ctx.config.bulkInsertMode
+                            ? undefined
+                            : failover(() => ({
+                                operationCode: codeToString(id_opcode_addEntry),
+                                ...getStatisticsFromCommonArguments(data),
+                                targetNameLength: targetDN.length,
+                            }), undefined),
+                    },
+                };
+            }
+            else if ("error" in outcome) {
+                // TODO: Attempt to decode the error so some information about it can be logged.
+                throw new ChainedError(
+                    ctx.i18n.t("err:chained_error"),
+                    outcome.error.parameter,
+                    outcome.error.code,
+                    signErrors,
+                );
+            }
+            else if (("reject" in outcome) || ("abort" in outcome)) {
+                throw new errors.ServiceError(
+                    ctx.i18n.t("err:could_not_add_entry_to_remote_dsa"),
+                    new ServiceErrorData(
+                        ServiceProblem_unwillingToPerform,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            serviceError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                    signErrors,
+                );
+            }
+            // else if ("timeout" in outcome) {
+            //     throw new Error();
+            // }
+            // else if ("other" in outcome) {
+            //     throw new Error();
+            // }
+            else {
+                throw new errors.ServiceError(
+                    ctx.i18n.t("err:could_not_add_entry_to_remote_dsa"),
+                    new ServiceErrorData(
+                        ServiceProblem_unwillingToPerform,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            serviceError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        [
+                            new Attribute(
+                                dSAProblem["&id"],
+                                [dSAProblem.encoderFor["&Type"]!(id_pr_targetDsaUnavailable, DER)],
+                            ),
+                        ],
+                    ),
+                    signErrors,
+                );
+            }
+        }
+
         const { arg: obArg, response: obResponse } = await establishSubordinate(
             ctx,
             immediateSuperior,
