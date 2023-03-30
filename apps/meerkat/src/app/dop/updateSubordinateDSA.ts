@@ -46,6 +46,11 @@ import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import { OperationOutcome } from "@wildboar/rose-transport";
+import { dSAProblem } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dSAProblem.oa";
+import {
+    id_pr_targetDsaUnavailable,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-targetDsaUnavailable.va";
+import { DER } from "asn1-ts/dist/node/functional";
 
 // dSAOperationalBindingManagementBind OPERATION ::= dSABind
 
@@ -218,7 +223,7 @@ async function updateSubordinateDSA (
 ): Promise<OperationOutcome<typeof modifyOperationalBinding["&ResultType"]>> {
     const connectionTimeout: number | undefined = options?.timeLimitInMilliseconds;
     const startTime = new Date();
-    const timeoutTime: Date | undefined = connectionTimeout
+    const timeoutTime: Date | undefined = connectionTimeout // TODO: Fix non-use
         ? addMilliseconds(startTime, connectionTimeout)
         : undefined;
     const assn = await bindForOBM(ctx, undefined, undefined, targetSystem, aliasDereferenced, signErrors);
@@ -242,6 +247,12 @@ async function updateSubordinateDSA (
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
                 aliasDereferenced,
+                [
+                    new Attribute(
+                        dSAProblem["&id"],
+                        [dSAProblem.encoderFor["&Type"]!(id_pr_targetDsaUnavailable, DER)],
+                    ),
+                ],
             ),
             signErrors,
         );

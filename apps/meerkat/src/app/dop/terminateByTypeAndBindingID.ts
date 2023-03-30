@@ -22,6 +22,12 @@ import { OperationOutcome } from "@wildboar/rose-transport";
 import {
     TerminateOperationalBindingResult,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingResult.ta";
+import { dSAProblem } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dSAProblem.oa";
+import {
+    id_pr_targetDsaUnavailable,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-targetDsaUnavailable.va";
+import { DER } from "asn1-ts/dist/node/functional";
+import { Attribute } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
 
 /**
  * @summary Notifies another DSA about a termination of an operational binding.
@@ -67,6 +73,12 @@ async function terminateByTypeAndBindingID (
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
                 aliasDereferenced,
+                [
+                    new Attribute(
+                        dSAProblem["&id"],
+                        [dSAProblem.encoderFor["&Type"]!(id_pr_targetDsaUnavailable, DER)],
+                    ),
+                ],
             ),
             signErrors,
         );

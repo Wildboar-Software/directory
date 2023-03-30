@@ -88,6 +88,10 @@ import {
     ModifyOperationalBindingResult,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingResult.ta";
 import { getEntryAttributesToShareInOpBinding } from "../dit/getEntryAttributesToShareInOpBinding";
+import { dSAProblem } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dSAProblem.oa";
+import {
+    id_pr_targetDsaUnavailable,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-targetDsaUnavailable.va";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -207,6 +211,12 @@ async function updateSuperiorDSA (
                         ),
                         ctx.dsa.accessPoint.ae_title.rdnSequence,
                         aliasDereferenced,
+                        [
+                            new Attribute(
+                                dSAProblem["&id"],
+                                [dSAProblem.encoderFor["&Type"]!(id_pr_targetDsaUnavailable, DER)],
+                            ),
+                        ],
                     ),
                     signErrors,
                 );
