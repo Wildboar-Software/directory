@@ -36,7 +36,10 @@ import type {
     OBJECT_CLASS,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
 import { INTEGER } from "asn1-ts";
-import { Vertex as X500Vertex } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/Vertex.ta";
+import { SubentryInfo, Vertex as X500Vertex } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/Vertex.ta";
+import readSubordinates from "../../dit/readSubordinates";
+import readAttributes from "../../database/entry/readAttributes";
+import subentryEIS from "../subentryEIS";
 
 export
 async function createContextPrefixEntry (
@@ -266,6 +269,32 @@ async function becomeSubordinate (
         ]);
     }
 
+    const subentryInfos: SubentryInfo[] = [];
+    const subordinates = await readSubordinates(ctx, createdCP, undefined, undefined, undefined, {
+        subentry: true,
+    });
+    subentryInfos.push(
+        ...await Promise.all(
+            subordinates
+                .filter((sub) => sub.dse.subentry)
+                .map(async (sub): Promise<SubentryInfo> => {
+                    const {
+                        userAttributes,
+                        operationalAttributes,
+                    } = await readAttributes(ctx, sub, {
+                        selection: subentryEIS,
+                    });
+                    return new SubentryInfo(
+                        sub.dse.rdn,
+                        [
+                            ...userAttributes,
+                            ...operationalAttributes,
+                        ],
+                    );
+                }),
+        ),
+    );
+
     const myAccessPoint = ctx.dsa.accessPoint;
     return new SubordinateToSuperior(
         [
@@ -290,7 +319,13 @@ async function becomeSubordinate (
         ],
         Boolean(createdCP.dse.alias),
         sup2sub.entryInfo,
-        undefined, // TODO: Replicate subentry information upwards as well.
+        /* In theory, there should be no subentries underneath a new context
+        prefix, but Meerkat DSA does not delete context prefixes when an
+        operational binding terminates so they can be "repatriated." That means
+        that we need to check for subentry information. */
+        (subentryInfos.length > 0)
+            ? subentryInfos
+            : undefined,
     );
 }
 
