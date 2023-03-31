@@ -61,6 +61,10 @@ export interface Metadata {
  */
 export interface ConfigDSA {
   name: string;
+  aeTitle?: string;
+  /**
+   * @minItems 1
+   */
   accessPoints: [ConfigAccessPoint, ...ConfigAccessPoint[]];
   [k: string]: unknown;
 }
@@ -69,6 +73,9 @@ export interface ConfigDSA {
  * via the `definition` "ConfigAccessPoint".
  */
 export interface ConfigAccessPoint {
+  /**
+   * @minItems 1
+   */
   urls: [string, ...string[]];
   category?: "master" | "shadow" | "writeableCopy";
   "disable-start-tls"?: boolean;

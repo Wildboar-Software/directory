@@ -142,6 +142,9 @@ export
                         type: "string",
                         minLength: 1,
                     },
+                    aeTitle: {
+                        type: "string",
+                    },
                     accessPoints: {
                         type: "array",
                         items: {

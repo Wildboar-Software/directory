@@ -140,6 +140,9 @@ exports.schema = {
                     type: "string",
                     minLength: 1
                 },
+                aeTitle: {
+                    type: "string"
+                },
                 accessPoints: {
                     type: "array",
                     items: {
@@ -173,8 +176,7 @@ exports.schema = {
                         },
                     ]
                 }
-            },
-            additionalProperties: true
+            }
         },
         AlgorithmIdentifier: {
             type: "object",

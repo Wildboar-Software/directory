@@ -5,6 +5,6 @@ JSONSchema and TypeScript types for the
 
 ## Build
 
-1. Compile `index.ts` to `index.js`: `tsc ./source/index.ts`.
-2. Convert `index.js` to `index.json`: `node -e 'console.log(JSON.stringify(require(\"./source/index.js\").default));' > .\source\index.json`.
+1. Compile `index.ts` to `index.js`: `tsc ./src/index.ts`.
+2. Convert `index.js` to `index.json`: `node -e 'console.log(JSON.stringify(require("./src/index.js").default));' > ./src/index.json`.
 3. Convert `index.json` to `index.d.ts`: `node ./tools/compileInterfaces.js`.
