@@ -166,12 +166,13 @@ Here is a breakdown of what each field means.
 | `credentials`                    | An array of credentials. Ordering is not significant.                                          |
 | `contexts`                       | An array of configuration contexts. Ordering is not significant.                               |
 | `dsas.*.name`                    | A case-sensitive name for a DSA only used within this configuration file.                      |
+| `dsas.*.aeTitle`                 | A conditionally case-sensitive distinguished name of the AE title of this DSA.                 |
 | `dsas.*.accessPoints`            | An array of access points by which the DSA can be reached, in order of descending preference.  |
 | `dsas.*.accessPoints.*.urls`     | An array of URLs for accessing a given access point, listed in order of descending preference. |
 | `dsas.*.accessPoints.*.category` | `master`, `shadow`, or `writeableCopy` depending on what the DSA is.                           |
 | `credentials.*.name`             | A case-sensitive name for a credential.                                                        |
 | `credentials.*.credential`       | The actual credential itself, which may take on multiple different forms.                      |
-| `credentials.*.credentia.type`   | The type discriminator for a credential. Usually `simple`, `strong`, or `sasl`.                |
+| `credentials.*.credential.type`  | The type discriminator for a credential. Usually `simple`, `strong`, or `sasl`.                |
 | `contexts.*.name`                | The case-sensitive name of the context only used within this configuration file.               |
 | `contexts.*.context`             | The context itself.                                                                            |
 | `contexts.*.context.dsa`         | The name of the DSA for this context.                                                          |
