@@ -47,7 +47,7 @@ async function getContextPrefixInfo (
 ): Promise<DITcontext> {
     const contextPrefixInfo: DITcontext = [];
     let current: Vertex | undefined = immediateSuperiorOfNewContextPrefix;
-    while (current) {
+    while (current && !current.dse.root) {
         const admPointInfo: Attribute[] = [];
         const subentryInfos: SubentryInfo[] = [];
         const accessPoints: MasterAndShadowAccessPoints = [];

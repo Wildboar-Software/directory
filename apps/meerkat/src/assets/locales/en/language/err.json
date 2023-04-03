@@ -88,7 +88,7 @@
     "parent_dse_not_permissible": "Parent DSE is not of a permissible DSE type.",
     "unrecognized_ob_start_time_syntax": "Unrecognized operational binding start time syntax.",
     "unrecognized_ob_end_time_syntax": "Unrecognized operational binding end time syntax.",
-    "hob_contextprefixinfo_did_not_match": "Operational binding contextPrefixInfo did not match immediateSuperior.",
+    "hob_contextprefixinfo_did_not_match": "Operational binding contextPrefixInfo did not match immediateSuperior. Agreement DN=({{agreement_dn}}). Init DN=({{init_dn}}).",
     "ob_rejected": "Operational binding {{uuid}} rejected.",
     "ob_rejected@timeout": "Operational binding {{uuid}} was automatically rejected due to timing out.",
     "unrecognized_ob_initiator_syntax": "Operational binding initiator syntax unrecognized.",

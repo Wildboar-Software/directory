@@ -730,13 +730,17 @@ async function modifyOperationalBinding (
         }
         if ("roleA_initiates" in data.initiator) {
             const init: SuperiorToSubordinateModification = _decode_SuperiorToSubordinateModification(data.initiator.roleA_initiates);
+            const cp_info_dn = init.contextPrefixInfo.map((rdn) => rdn.rdn);
             if (!compareDistinguishedName(
                 newAgreement.immediateSuperior,
-                init.contextPrefixInfo.map((rdn) => rdn.rdn),
+                cp_info_dn,
                 NAMING_MATCHER,
             )) {
                 throw new errors.OperationalBindingError(
-                    ctx.i18n.t("err:hob_contextprefixinfo_did_not_match"),
+                    ctx.i18n.t("err:hob_contextprefixinfo_did_not_match", {
+                        agreement_dn: stringifyDN(ctx, newAgreement.immediateSuperior),
+                        cp_info_dn: stringifyDN(ctx, cp_info_dn),
+                    }),
                     new OpBindingErrorParam(
                         OpBindingErrorParam_problem_invalidAgreement,
                         data.bindingType,
@@ -899,13 +903,17 @@ async function modifyOperationalBinding (
             : oldAgreement;
         if ("roleA_initiates" in data.initiator) {
             const init: NHOBSuperiorToSubordinate = _decode_NHOBSuperiorToSubordinate(data.initiator.roleA_initiates);
+            const cp_info_dn = init.contextPrefixInfo.map((rdn) => rdn.rdn);
             if (!compareDistinguishedName(
                 newAgreement.immediateSuperior,
-                init.contextPrefixInfo.map((rdn) => rdn.rdn),
+                cp_info_dn,
                 NAMING_MATCHER,
             )) {
                 throw new errors.OperationalBindingError(
-                    ctx.i18n.t("err:hob_contextprefixinfo_did_not_match"),
+                    ctx.i18n.t("err:hob_contextprefixinfo_did_not_match", {
+                        agreement_dn: stringifyDN(ctx, newAgreement.immediateSuperior),
+                        cp_info_dn: stringifyDN(ctx, cp_info_dn),
+                    }),
                     new OpBindingErrorParam(
                         OpBindingErrorParam_problem_invalidAgreement,
                         data.bindingType,

@@ -133,6 +133,10 @@ import {
 import becomeNonSpecificSuperior from "../establish/becomeNonSpecificSuperior";
 import becomeSuperior from "../establish/becomeSuperior";
 import { Prisma } from "@prisma/client";
+import stringifyDN from "../../x500/stringifyDN";
+import type {
+    DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -890,13 +894,17 @@ async function establishOperationalBinding (
                     signErrors,
                 );
             }
+            const cp_info_dn = init.contextPrefixInfo.map((rdn) => rdn.rdn);
             if (!compareDistinguishedName(
                 agreement.immediateSuperior,
-                init.contextPrefixInfo.map((rdn) => rdn.rdn),
+                cp_info_dn,
                 NAMING_MATCHER,
             )) {
                 throw new errors.OperationalBindingError(
-                    ctx.i18n.t("err:hob_contextprefixinfo_did_not_match"),
+                    ctx.i18n.t("err:hob_contextprefixinfo_did_not_match", {
+                        agreement_dn: stringifyDN(ctx, agreement.immediateSuperior),
+                        cp_info_dn: stringifyDN(ctx, cp_info_dn),
+                    }),
                     new OpBindingErrorParam(
                         OpBindingErrorParam_problem_invalidAgreement,
                         data.bindingType,
@@ -1297,13 +1305,17 @@ async function establishOperationalBinding (
         const agreement = _decode_NonSpecificHierarchicalAgreement(data.agreement);
         if ("roleA_initiates" in data.initiator) {
             const init = _decode_NHOBSuperiorToSubordinate(data.initiator.roleA_initiates);
+            const cp_info_dn: DistinguishedName = init.contextPrefixInfo.map((rdn) => rdn.rdn);
             if (!compareDistinguishedName(
                 agreement.immediateSuperior,
-                init.contextPrefixInfo.map((rdn) => rdn.rdn),
+                cp_info_dn,
                 NAMING_MATCHER,
             )) {
                 throw new errors.OperationalBindingError(
-                    ctx.i18n.t("err:hob_contextprefixinfo_did_not_match"),
+                    ctx.i18n.t("err:hob_contextprefixinfo_did_not_match", {
+                        agreement_dn: stringifyDN(ctx, agreement.immediateSuperior),
+                        cp_info_dn: stringifyDN(ctx, cp_info_dn),
+                    }),
                     new OpBindingErrorParam(
                         OpBindingErrorParam_problem_invalidAgreement,
                         data.bindingType,
