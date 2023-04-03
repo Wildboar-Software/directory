@@ -58,6 +58,8 @@ import config_view from "./yargs/config_view";
 import config_init from "./yargs/config_init";
 import config_set_context from "./yargs/config_set_context";
 import config_current_context from "./yargs/config_current_context";
+import dop_become_nssr from "./yargs/dop_become_nssr";
+import dop_join_nssr from "./yargs/dop_join_nssr";
 
 export
 interface ProtocolArgs {
@@ -247,6 +249,12 @@ async function main () {
                     })
                     .command(dap_search(ctx))
                     .demandCommand()
+            })
+            .command("dop", "Directory Operational Binding Management Protocol", (dopYargs) => {
+                add_protocol_args(dopYargs)
+                .command(dop_become_nssr(ctx))
+                .command(dop_join_nssr(ctx))
+                .demandCommand()
             })
             .command("seed-countries <base>", "seed directory with countries", (seedYargs) => {
                 return seedYargs

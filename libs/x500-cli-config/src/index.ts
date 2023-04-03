@@ -142,6 +142,9 @@ export
                         type: "string",
                         minLength: 1,
                     },
+                    aeTitle: {
+                        type: "string",
+                    },
                     accessPoints: {
                         type: "array",
                         items: {
@@ -351,137 +354,144 @@ export type DistinguishedName = string;
  * via the `definition` "ConfigPassword".
  */
 export type ConfigPassword =
-    | {
-        unprotected: string;
-        [k: string]: unknown;
+  | {
+      unprotected: string;
+      [k: string]: unknown;
     }
-    | {
-        protected: ConfigProtectedPassword;
-        [k: string]: unknown;
+  | {
+      protected: ConfigProtectedPassword;
+      [k: string]: unknown;
     };
 
 /**
  * Configuration file for configuring X.500 directory tools.
  */
 export interface X500ClientConfig {
-    apiVersion: string;
-    kind: "X500ClientConfig";
-    metadata: Metadata;
-    "current-context"?: string;
-    "preference-profiles"?: {
-        [k: string]: unknown;
-    }[];
-    dsas: ConfigDSA[];
-    credentials: ConfigCredential[];
-    contexts: ConfigContext[];
+  apiVersion: string;
+  kind: "X500ClientConfig";
+  metadata: Metadata;
+  "current-context"?: string;
+  "preference-profiles"?: {
     [k: string]: unknown;
+  }[];
+  dsas: ConfigDSA[];
+  credentials: ConfigCredential[];
+  contexts: ConfigContext[];
+  [k: string]: unknown;
 }
 /**
  * This interface was referenced by `X500ClientConfig`'s JSON-Schema
  * via the `definition` "Metadata".
  */
 export interface Metadata {
-    name: string;
-    namespace?: string;
-    labels?: {
-        [k: string]: string;
-    };
-    annotations?: {
-        [k: string]: string;
-    };
-    [k: string]: unknown;
+  name: string;
+  namespace?: string;
+  labels?: {
+    [k: string]: string;
+  };
+  annotations?: {
+    [k: string]: string;
+  };
+  [k: string]: unknown;
 }
 /**
  * This interface was referenced by `X500ClientConfig`'s JSON-Schema
  * via the `definition` "ConfigDSA".
  */
 export interface ConfigDSA {
-    name: string;
-    accessPoints: [ConfigAccessPoint, ...ConfigAccessPoint[]];
-    [k: string]: unknown;
+  name: string;
+  aeTitle?: string;
+  /**
+   * @minItems 1
+   */
+  accessPoints: [ConfigAccessPoint, ...ConfigAccessPoint[]];
+  [k: string]: unknown;
 }
 /**
  * This interface was referenced by `X500ClientConfig`'s JSON-Schema
  * via the `definition` "ConfigAccessPoint".
  */
 export interface ConfigAccessPoint {
-    urls: [string, ...string[]];
-    category?: "master" | "shadow" | "writeableCopy";
-    "disable-start-tls"?: boolean;
-    "insecure-skip-tls-verify"?: boolean;
-    "certificate-authority"?: string;
-    [k: string]: unknown;
+  /**
+   * @minItems 1
+   */
+  urls: [string, ...string[]];
+  category?: "master" | "shadow" | "writeableCopy";
+  "disable-start-tls"?: boolean;
+  "insecure-skip-tls-verify"?: boolean;
+  "certificate-authority"?: string;
+  [k: string]: unknown;
 }
 /**
  * This interface was referenced by `X500ClientConfig`'s JSON-Schema
  * via the `definition` "ConfigCredential".
  */
 export interface ConfigCredential {
-    name: string;
-    credential: ConfigSimpleCredentials | ConfigStrongCredentials | ConfigSASLCredentials;
-    [k: string]: unknown;
+  name: string;
+  credential: ConfigSimpleCredentials | ConfigStrongCredentials | ConfigSASLCredentials;
+  [k: string]: unknown;
 }
 /**
  * This interface was referenced by `X500ClientConfig`'s JSON-Schema
  * via the `definition` "ConfigSimpleCredentials".
  */
 export interface ConfigSimpleCredentials {
-    type: "simple";
-    name: DistinguishedName;
-    password?: ConfigPassword;
-    [k: string]: unknown;
+  type: "simple";
+  name: DistinguishedName;
+  password?: ConfigPassword;
+  [k: string]: unknown;
 }
 /**
  * This interface was referenced by `X500ClientConfig`'s JSON-Schema
  * via the `definition` "ConfigProtectedPassword".
  */
 export interface ConfigProtectedPassword {
-    algorithmIdentifier: AlgorithmIdentifier;
-    /**
-     * The hexadecimal-encoded hash of the password.
-     */
-    hashValue: string;
-    [k: string]: unknown;
+  algorithmIdentifier: AlgorithmIdentifier;
+  /**
+   * The hexadecimal-encoded hash of the password.
+   */
+  hashValue: string;
+  [k: string]: unknown;
 }
 /**
  * This interface was referenced by `X500ClientConfig`'s JSON-Schema
  * via the `definition` "AlgorithmIdentifier".
  */
 export interface AlgorithmIdentifier {
-    algorithm: string;
-    [k: string]: unknown;
+  algorithm: string;
+  [k: string]: unknown;
 }
 /**
  * This interface was referenced by `X500ClientConfig`'s JSON-Schema
  * via the `definition` "ConfigStrongCredentials".
  */
 export interface ConfigStrongCredentials {
-    type: "strong";
-    name?: DistinguishedName;
-    keyPath?: string;
-    certPath?: string;
-    attrCertPath?: string;
-    [k: string]: unknown;
+  type: "strong";
+  name?: DistinguishedName;
+  keyPath?: string;
+  certPath?: string;
+  attrCertPath?: string;
+  [k: string]: unknown;
 }
 /**
  * This interface was referenced by `X500ClientConfig`'s JSON-Schema
  * via the `definition` "ConfigSASLCredentials".
  */
 export interface ConfigSASLCredentials {
-    type: "sasl";
-    [k: string]: unknown;
+  type: "sasl";
+  [k: string]: unknown;
 }
 /**
  * This interface was referenced by `X500ClientConfig`'s JSON-Schema
  * via the `definition` "ConfigContext".
  */
 export interface ConfigContext {
-    name: string;
-    context: {
-        dsa: string;
-        credential?: string;
-        preferences?: string;
-        [k: string]: unknown;
-    };
+  name: string;
+  context: {
+    dsa: string;
+    credential?: string;
+    preferences?: string;
     [k: string]: unknown;
+  };
+  [k: string]: unknown;
 }

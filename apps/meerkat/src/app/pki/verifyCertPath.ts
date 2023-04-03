@@ -2317,8 +2317,6 @@ async function verifyCertPath (
             policy_mappings_that_occurred: [], // FIXME:
             user_constrained_policies: [], // FIXME:
             warnings: [], // FIXME:
-            endEntityKeyUsage: new Uint8ClampedArray(),
-            endEntityExtKeyUsage: [],
             endEntityPrivateKeyNotBefore: state.endEntityPrivateKeyNotBefore,
             endEntityPrivateKeyNotAfter: state.endEntityPrivateKeyNotAfter,
             userNotices: [],

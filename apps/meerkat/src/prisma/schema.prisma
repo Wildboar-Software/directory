@@ -270,6 +270,12 @@ model AccessPoint {
   // entry to which this access point belongs.
   nsk_group BigInt?
 
+  // If this access point was added by an NHOB, this will contain the OB
+  // identifier so that, when access points are replaced by modifications to the
+  // NHOB, only those associated with the modified operational binding can
+  // easily be identified and removed.
+  nssr_binding_identifier Int?
+
   // Whether to trust this DSA for Identity-Based Requester Authentication, as
   // described in ITU Recommendation X.518 (2019), Section 22.1.1, meaning that
   // the originator and authenticationLevel fields of the chaining arguments
@@ -279,9 +285,9 @@ model AccessPoint {
   // Whether this DSA may receive cross references, if requested.
   disclose_cross_refs Boolean @default(false)
 
-  active      Boolean                  @default(true)
-  created_at  DateTime                 @default(now())
-  credentials AccessPointCredentials[]
+  active               Boolean                  @default(true)
+  created_at           DateTime                 @default(now())
+  credentials          AccessPointCredentials[]
 
   @@index([entry_id])
 }

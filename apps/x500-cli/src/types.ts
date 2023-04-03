@@ -6,6 +6,14 @@ import type { Request } from "@wildboar/x500/src/lib/types/Request";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import type { X500ClientConfig } from "@wildboar/x500-cli-config";
 import type { Logger } from "winston";
+import { KeyObject } from "crypto";
+import { CertificationPath } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
+import {
+    AttributeCertificationPath,
+} from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/AttributeCertificationPath.ta";
+import {
+    DistinguishedName,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 
 export
 type UUID = string;
@@ -45,6 +53,10 @@ interface Connection {
     writeOperation: (req: Omit<Request, "invokeId">) => Promise<ResultOrError>;
     close: () => Promise<void>;
     events: ConnectionEventEmitter;
+    signingKey?: KeyObject | null;
+    certPath?: CertificationPath | null;
+    attrCertPath?: AttributeCertificationPath | null;
+    called_ae_title?: DistinguishedName;
 }
 
 export type ValuePrinter = (ctx: Context, value: ASN1Element) => string | undefined;

@@ -126,6 +126,7 @@
     "web_admin_http": "Web admin console: {{method}} {{path}} from {{host}}",
     "anon_bind_disabled": "COULD_BAN={{host}}; Client {{host}} attempted to bind anonymously, but anonymous binds are disabled.",
     "invalid_credentials": "COULD_BAN={{host}}; Client {{host}} attempted to bind with invalid credentials.",
+    "invalid_credentials@strong": "COULD_BAN={{host}}; Client {{host}} attempted to bind with invalid credentials. verifyToken() return={{vtr}}.",
     "hob_invalid_entryInfo": "The potential superior DSA supplied entryInfo that describes an entry that is invalid for this reason: {{e}}.",
     "cert_path_invalid@arg": "COULD_BAN={{host}}; Invalid certification path for association {{aid}} on invocation {{iid}}.",
     "cert_path_invalid@result": "Invalid certification path in result of invocation {{iid}} from access point {{ap}}.",
@@ -250,5 +251,6 @@
     "search_complete": "Search complete for invocation {{iid}} by association {{aid}}.",
     "search_complete@limit": "Search limit reached for invocation {{iid}} by association {{aid}}: {{limit}}",
     "multiple_search_rules_of_same_user_class": "Detected multiple permitted and applicable search rules having user class {{user_class}}. It may be desirable to re-work the search rule definitions.",
-    "unable_to_find_search_rule": "Unable to find search rule {{id}} within DMD {{dmd_id}}. Search invocation {{iid}} will proceed without regulation by this rule."
+    "unable_to_find_search_rule": "Unable to find search rule {{id}} within DMD {{dmd_id}}. Search invocation {{iid}} will proceed without regulation by this rule.",
+    "awaiting_ob_approval": "Awaiting DSA administrator approval of operational binding {{uuid}}."
 }

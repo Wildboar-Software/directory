@@ -243,6 +243,13 @@ noted below are nuances in Meerkat DSA:
   `defaultValues` field is unused, because the specification does not define how
   it is to be used. As such, Meerkat DSA simply joins all default values defined
   in each item in this set as though there were no `entryType` field at all.
+- When HOBs and NHOBs are terminated, the subordinate DSEs are not deleted from
+  the subordinate DSA. This is so these entries can be "repatriated": reused for
+  later.
+- When the last subordinate entry underneath an NSSR is deleted, the NHOB will
+  not be automatically terminated. This is so more entries could be added back
+  to the subordinate DSA, if desired. This is NOT the case with a hierarchical
+  operational binding (HOB).
 
 ## The "Never Contributing" Bug
 

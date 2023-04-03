@@ -67,6 +67,8 @@ import { URL } from "url";
  * @param nsk_group The non-specific knowledge group. This is an arbitrary
  *  integer that must be identical for access points that fall within the same
  *  non-specific knowledge attribute for an entry
+ * @param nhob_id If this access point was added by an NHOB for a subordinate
+ *  DSA, this is the binding ID of the NHOB
  * @returns The database ID of the newly added access point
  *
  * @function
@@ -80,6 +82,7 @@ async function saveAccessPoint (
     entry_id?: number,
     is_consumer_of_id?: number,
     nsk_group?: bigint,
+    nhob_id?: number,
 ): Promise<number> {
     const ber: Buffer = ((): Buffer => {
         if (ap instanceof AccessPoint) {
@@ -115,6 +118,7 @@ async function saveAccessPoint (
             is_consumer_of_id,
             ber,
             nsk_group,
+            nssr_binding_identifier: nhob_id,
             active: true,
             NSAP: {
                 createMany: {

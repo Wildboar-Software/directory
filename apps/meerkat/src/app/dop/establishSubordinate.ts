@@ -55,6 +55,11 @@ import {
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingResult.ta";
 import { OperationOutcome } from "@wildboar/rose-transport";
 import { CommonEstablishOptions } from "@wildboar/x500-client-ts";
+import { dSAProblem } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/dSAProblem.oa";
+import {
+    id_pr_targetDsaUnavailable,
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-targetDsaUnavailable.va";
+import { DER } from "asn1-ts/dist/node/functional";
 
 // dSAOperationalBindingManagementBind OPERATION ::= dSABind
 
@@ -229,6 +234,12 @@ async function establishSubordinate (
                 ),
                 ctx.dsa.accessPoint.ae_title.rdnSequence,
                 aliasDereferenced,
+                [
+                    new Attribute(
+                        dSAProblem["&id"],
+                        [dSAProblem.encoderFor["&Type"]!(id_pr_targetDsaUnavailable, DER)],
+                    ),
+                ],
             ),
             signErrors,
         );

@@ -226,7 +226,11 @@ async function attemptStrongAuth (
              * we just return a vague "invalid credentials"
              */
             default: {
-                ctx.log.warn(ctx.i18n.t("log:invalid_credentials", logInfo), logInfo);
+                ctx.log.warn(ctx.i18n.t("log:invalid_credentials", {
+                    context: "strong",
+                    ...logInfo,
+                    vtr: tokenResult,
+                }), logInfo);
                 throw new BindErrorClass(
                     ctx.i18n.t("err:invalid_credentials"),
                     invalidCredentialsData,
