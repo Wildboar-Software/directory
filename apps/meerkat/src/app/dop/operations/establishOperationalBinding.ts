@@ -398,6 +398,12 @@ async function relayedEstablishOperationalBinding (
                 },
         ),
         bindingID: undefined,
+        securityParameters: createSecurityParameters(
+            ctx,
+            true,
+            relayTo.ae_title.rdnSequence,
+            id_op_establishOperationalBinding,
+        ),
         _unrecognizedExtensionsList: [],
     });
     let err_message: string = "";

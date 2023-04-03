@@ -28,6 +28,9 @@ import {
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-targetDsaUnavailable.va";
 import { DER } from "asn1-ts/dist/node/functional";
 import { Attribute } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+import {
+    id_op_terminateOperationalBinding,
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-op-terminateOperationalBinding.va";
 
 /**
  * @summary Notifies another DSA about a termination of an operational binding.
@@ -89,6 +92,12 @@ async function terminateByTypeAndBindingID (
         _unrecognizedExtensionsList: [],
         cert_path: ctx.config.signing.certPath,
         key: ctx.config.signing.key,
+        securityParameters: createSecurityParameters(
+            ctx,
+            true,
+            targetSystem.ae_title.rdnSequence,
+            id_op_terminateOperationalBinding,
+        ),
     });
 }
 
