@@ -106,14 +106,14 @@
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "2.2.0",
-    "@nrwl/cli": "15.5.1",
-    "@nrwl/eslint-plugin-nx": "15.5.1",
-    "@nrwl/jest": "15.5.1",
-    "@nrwl/js": "15.5.1",
-    "@nrwl/linter": "15.5.1",
-    "@nrwl/node": "15.5.1",
-    "@nrwl/nx-cloud": "15.0.2",
-    "@nrwl/workspace": "15.5.1",
+    "@nrwl/cli": "15.9.2",
+    "@nrwl/eslint-plugin-nx": "15.9.2",
+    "@nrwl/jest": "15.9.2",
+    "@nrwl/js": "15.9.2",
+    "@nrwl/linter": "15.9.2",
+    "@nrwl/node": "15.9.2",
+    "@nrwl/nx-cloud": "15.3.5",
+    "@nrwl/workspace": "15.9.2",
     "@nx-go/nx-go": "^2.7.0",
     "@nx-plus/docusaurus": "15.0.0-rc.0",
     "@types/bluebird": "^3.5.38",
@@ -124,7 +124,7 @@
     "@types/express-session": "^1.17.5",
     "@types/fast-levenshtein": "^0.0.2",
     "@types/flat": "^5.0.2",
-    "@types/jest": "29.2.5",
+    "@types/jest": "29.4.4",
     "@types/js-yaml": "^4.0.5",
     "@types/json-schema": "^7.0.11",
     "@types/node": "18.11.18",
@@ -138,9 +138,9 @@
     "@typescript-eslint/parser": "5.48.1",
     "eslint": "8.31.0",
     "eslint-config-prettier": "8.6.0",
-    "jest": "29.3.1",
+    "jest": "29.4.3",
     "json-schema-to-typescript": "^11.0.2",
-    "nx": "15.5.1",
+    "nx": "15.9.2",
     "prettier": "2.8.3",
     "prettier-plugin-organize-imports": "^3.2.2",
     "prisma": "^4.12.0",
@@ -152,3 +152,4 @@
     "webpack-merge": "^5.8.0"
   }
 }
+

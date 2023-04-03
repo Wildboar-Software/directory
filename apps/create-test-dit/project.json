@@ -1,0 +1,49 @@
+{
+    "name": "create-test-dit",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "apps/create-test-dit/src",
+    "projectType": "application",
+    "targets": {
+        "build": {
+            "executor": "@nrwl/webpack:webpack",
+            "outputs": ["{options.outputPath}"],
+            "options": {
+                "outputPath": "dist/apps/create-test-dit",
+                "main": "apps/create-test-dit/src/main.ts",
+                "tsConfig": "apps/create-test-dit/tsconfig.app.json",
+                "assets": ["apps/create-test-dit/src/assets"],
+                "target": "node",
+                "compiler": "tsc"
+            },
+            "configurations": {
+                "production": {
+                    "optimization": true,
+                    "extractLicenses": true,
+                    "inspect": false
+                }
+            }
+        },
+        "serve": {
+            "executor": "@nrwl/node:node",
+            "options": {
+                "buildTarget": "create-test-dit:build"
+            }
+        },
+        "lint": {
+            "executor": "@nrwl/linter:eslint",
+            "outputs": ["{options.outputFile}"],
+            "options": {
+                "lintFilePatterns": ["apps/create-test-dit/**/*.ts"]
+            }
+        },
+        "test": {
+            "executor": "@nrwl/jest:jest",
+            "outputs": ["{workspaceRoot}/coverage/apps/create-test-dit"],
+            "options": {
+                "jestConfig": "apps/create-test-dit/jest.config.ts",
+                "passWithNoTests": true
+            }
+        }
+    },
+    "tags": []
+}

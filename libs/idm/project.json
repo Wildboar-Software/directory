@@ -1,0 +1,35 @@
+{
+    "name": "idm",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "libs/idm/src",
+    "projectType": "library",
+    "targets": {
+        "build": {
+            "executor": "@nrwl/js:tsc",
+            "outputs": ["{options.outputPath}"],
+            "options": {
+                "outputPath": "dist/libs/idm",
+                "tsConfig": "libs/idm/tsconfig.lib.json",
+                "packageJson": "libs/idm/package.json",
+                "main": "libs/idm/src/index.ts",
+                "assets": ["libs/idm/*.md"]
+            }
+        },
+        "lint": {
+            "executor": "@nrwl/linter:eslint",
+            "options": {
+                "lintFilePatterns": ["libs/idm/**/*.ts"]
+            },
+            "outputs": ["{options.outputFile}"]
+        },
+        "test": {
+            "executor": "@nrwl/jest:jest",
+            "outputs": ["{workspaceRoot}/coverage/libs/idm"],
+            "options": {
+                "jestConfig": "libs/idm/jest.config.ts",
+                "passWithNoTests": true
+            }
+        }
+    },
+    "tags": []
+}

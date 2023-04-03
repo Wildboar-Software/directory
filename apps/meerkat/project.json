@@ -1,0 +1,64 @@
+{
+    "name": "meerkat",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "apps/meerkat/src",
+    "projectType": "application",
+    "targets": {
+        "build": {
+            "executor": "@nrwl/webpack:webpack",
+            "outputs": ["{options.outputPath}"],
+            "options": {
+                "outputPath": "dist/apps/meerkat",
+                "main": "apps/meerkat/src/main.ts",
+                "tsConfig": "apps/meerkat/tsconfig.app.json",
+                "webpackConfig": "apps/meerkat/webpack.config.js",
+                "assets": [
+                    "apps/meerkat/src/assets",
+                    "apps/meerkat/src/prisma",
+                    "apps/meerkat/src/README.md"
+                ],
+                "memoryLimit": 4096,
+                "maxWorkers": 4,
+                "generatePackageJson": true,
+                "sourceMap": true,
+                "target": "node",
+                "compiler": "tsc"
+            },
+            "configurations": {
+                "production": {
+                    "optimization": true,
+                    "extractLicenses": true,
+                    "inspect": false
+                },
+                "dev": {
+                    "optimization": false,
+                    "extractLicenses": false
+                }
+            }
+        },
+        "serve": {
+            "executor": "@nrwl/node:node",
+            "options": {
+                "buildTarget": "meerkat:build:dev",
+                "inspect": "inspect",
+                "port": 24010
+            }
+        },
+        "lint": {
+            "executor": "@nrwl/linter:eslint",
+            "options": {
+                "lintFilePatterns": ["apps/meerkat/**/*.ts"]
+            },
+            "outputs": ["{options.outputFile}"]
+        },
+        "test": {
+            "executor": "@nrwl/jest:jest",
+            "outputs": ["{workspaceRoot}/coverage/apps/meerkat"],
+            "options": {
+                "jestConfig": "apps/meerkat/jest.config.ts",
+                "passWithNoTests": true
+            }
+        }
+    },
+    "tags": []
+}

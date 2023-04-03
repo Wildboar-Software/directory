@@ -1,0 +1,35 @@
+{
+    "name": "x500-cli-config",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "libs/x500-cli-config/src",
+    "projectType": "library",
+    "targets": {
+        "build": {
+            "executor": "@nrwl/js:tsc",
+            "outputs": ["{options.outputPath}"],
+            "options": {
+                "outputPath": "dist/libs/x500-cli-config",
+                "tsConfig": "libs/x500-cli-config/tsconfig.lib.json",
+                "packageJson": "libs/x500-cli-config/package.json",
+                "main": "libs/x500-cli-config/src/index.ts",
+                "assets": ["libs/x500-cli-config/*.md"]
+            }
+        },
+        "lint": {
+            "executor": "@nrwl/linter:eslint",
+            "outputs": ["{options.outputFile}"],
+            "options": {
+                "lintFilePatterns": ["libs/x500-cli-config/**/*.ts"]
+            }
+        },
+        "test": {
+            "executor": "@nrwl/jest:jest",
+            "outputs": ["{workspaceRoot}/coverage/libs/x500-cli-config"],
+            "options": {
+                "jestConfig": "libs/x500-cli-config/jest.config.ts",
+                "passWithNoTests": true
+            }
+        }
+    },
+    "tags": []
+}

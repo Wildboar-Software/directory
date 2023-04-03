@@ -1,0 +1,57 @@
+{
+    "name": "x500-cli",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "apps/x500-cli/src",
+    "projectType": "application",
+    "targets": {
+        "build": {
+            "executor": "@nrwl/webpack:webpack",
+            "outputs": ["{options.outputPath}"],
+            "options": {
+                "outputPath": "dist/apps/x500-cli",
+                "main": "apps/x500-cli/src/main.ts",
+                "tsConfig": "apps/x500-cli/tsconfig.app.json",
+                "assets": [
+                    "apps/x500-cli/src/assets",
+                    "apps/x500-cli/src/README.md"
+                ],
+                "memoryLimit": 1024,
+                "maxWorkers": 1,
+                "generatePackageJson": true,
+                "webpackConfig": "apps/x500-cli/webpack.config.js",
+                "externalDependencies": "none",
+                "target": "node",
+                "compiler": "tsc"
+            },
+            "configurations": {
+                "production": {
+                    "optimization": true,
+                    "extractLicenses": true,
+                    "inspect": false
+                }
+            }
+        },
+        "serve": {
+            "executor": "@nrwl/node:node",
+            "options": {
+                "buildTarget": "x500-cli:build"
+            }
+        },
+        "lint": {
+            "executor": "@nrwl/linter:eslint",
+            "options": {
+                "lintFilePatterns": ["apps/x500-cli/**/*.ts"]
+            },
+            "outputs": ["{options.outputFile}"]
+        },
+        "test": {
+            "executor": "@nrwl/jest:jest",
+            "outputs": ["{workspaceRoot}/coverage/apps/x500-cli"],
+            "options": {
+                "jestConfig": "apps/x500-cli/jest.config.ts",
+                "passWithNoTests": true
+            }
+        }
+    },
+    "tags": []
+}
