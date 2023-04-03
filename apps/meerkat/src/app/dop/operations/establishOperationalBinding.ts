@@ -26,9 +26,9 @@ import {
 import {
     id_op_binding_non_specific_hierarchical,
 } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
-import {
-    id_op_binding_shadow,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
+// import {
+//     id_op_binding_shadow,
+// } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
 import {
     OpBindingErrorParam,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam.ta";
@@ -122,9 +122,17 @@ import { bindForOBM } from "../../net/bindToOtherDSA";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import { SecurityProblem_insufficientAccessRights } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import { becomeNonSpecificSubordinate } from "../establish/becomeNonSpecificSubordinate";
-import { _decode_NHOBSubordinateToSuperior, _encode_NHOBSubordinateToSuperior } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NHOBSubordinateToSuperior.ta";
-import { _decode_NHOBSuperiorToSubordinate, _encode_NHOBSuperiorToSubordinate } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NHOBSuperiorToSubordinate.ta";
+import {
+    _decode_NHOBSubordinateToSuperior,
+    _encode_NHOBSubordinateToSuperior,
+} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NHOBSubordinateToSuperior.ta";
+import {
+    _decode_NHOBSuperiorToSubordinate,
+    _encode_NHOBSuperiorToSubordinate,
+} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NHOBSuperiorToSubordinate.ta";
 import becomeNonSpecificSuperior from "../establish/becomeNonSpecificSuperior";
+import becomeSuperior from "../establish/becomeSuperior";
+import { Prisma } from "@prisma/client";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -136,7 +144,6 @@ function codeToString (code?: Code): string | undefined {
                 : undefined
         : undefined);
 }
-
 
 async function relayedEstablishOperationalBinding (
     ctx: MeerkatContext,
@@ -752,30 +759,95 @@ async function establishOperationalBinding (
         ]);
     };
 
-    const NOT_SUPPORTED_ERROR = new errors.OperationalBindingError(
-        ctx.i18n.t("err:ob_type_unrecognized", {
-            obtype: data.bindingType.toString(),
-        }),
-        new OpBindingErrorParam(
-            OpBindingErrorParam_problem_unsupportedBindingType,
-            data.bindingType,
-            undefined,
-            undefined,
-            [],
-            createSecurityParameters(
-                ctx,
-                signErrors,
-                assn.boundNameAndUID?.dn,
-                undefined,
-                id_err_operationalBindingError,
-            ),
-            ctx.dsa.accessPoint.ae_title.rdnSequence,
-            undefined,
-            undefined,
-        ),
-        signErrors,
+    const access_point_id = await saveAccessPoint(ctx, data.accessPoint, Knowledge.OB_REQUEST);
+    const bindingID = new OperationalBindingID(
+        newBindingIdentifier,
+        0,
     );
-
+    const ob_db_data: Omit<Omit<Prisma.OperationalBindingCreateInput, "initiator_ber">, "initiator"> = {
+        outbound: false,
+        binding_type: data.bindingType.toString(),
+        binding_identifier: Number(bindingID.identifier),
+        binding_version: Number(bindingID.version),
+        agreement_ber: Buffer.from(data.agreement.toBytes().buffer),
+        access_point: {
+            connect: {
+                id: access_point_id,
+            },
+        },
+        validity_start: validFrom,
+        validity_end: validUntil,
+        security_certification_path: sp?.certification_path
+            ? Buffer.from(_encode_CertificationPath(sp.certification_path, DER).toBytes().buffer)
+            : undefined,
+        security_name: sp?.name?.map((rdn) => rdnToJson(rdn)),
+        security_time: sp?.time
+            ? getDateFromTime(sp.time)
+            : undefined,
+        security_random: sp?.random
+            ? Buffer.from(packBits(sp.random).buffer)
+            : undefined,
+        security_target: (sp?.target !== undefined)
+            ? Number(sp.target)
+            : undefined,
+        security_operationCode: codeToString(sp?.operationCode),
+        security_errorProtection: (sp?.errorProtection !== undefined)
+            ? Number(sp.errorProtection)
+            : undefined,
+        security_errorCode: codeToString(sp?.errorCode),
+        source_ip: assn.socket.remoteAddress,
+        source_tcp_port: assn.socket.remotePort,
+        source_credentials_type: ((): number | null => {
+            if (!assn.bind) {
+                return null;
+            }
+            if (!assn.bind.credentials) {
+                return null;
+            }
+            if ("simple" in assn.bind.credentials) {
+                return 0;
+            }
+            if ("strong" in assn.bind.credentials) {
+                return 1;
+            }
+            if ("external" in assn.bind.credentials) {
+                return 2;
+            }
+            if ("spkm" in assn.bind.credentials) {
+                return 3;
+            }
+            return 4;
+        })(),
+        source_certificate_path: (
+            assn.bind?.credentials
+            && ("strong" in assn.bind.credentials)
+            && assn.bind.credentials.strong.certification_path
+        )
+            ? Buffer.from(_encode_CertificationPath(assn.bind.credentials.strong.certification_path, DER).toBytes().buffer)
+            : undefined,
+        source_attr_cert_path: (
+            assn.bind?.credentials
+            && ("strong" in assn.bind.credentials)
+            && assn.bind.credentials.strong.attributeCertificationPath
+        )
+            ? Buffer.from(_encode_ACP(assn.bind.credentials.strong.attributeCertificationPath, DER).toBytes().buffer)
+            : undefined,
+        source_bind_token: (
+            assn.bind?.credentials
+            && ("strong" in assn.bind.credentials)
+        )
+            ? Buffer.from(_encode_Token(assn.bind.credentials.strong.bind_token, DER).toBytes().buffer)
+            : undefined,
+        source_strong_name: (
+            assn.bind?.credentials
+            && ("strong" in assn.bind.credentials)
+            && assn.bind.credentials.strong.name
+        )
+            ? assn.bind.credentials.strong.name.map(rdnToJson)
+            : undefined,
+        supply_contexts: null,
+        requested_time: new Date(),
+    };
     if (data.bindingType.isEqualTo(id_op_binding_hierarchical)) {
         const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(data.agreement);
         if ("roleA_initiates" in data.initiator) {
@@ -888,99 +960,13 @@ async function establishOperationalBinding (
                 );
             }
 
-            const access_point_id = await saveAccessPoint(ctx, data.accessPoint, Knowledge.OB_REQUEST);
-            const bindingID = new OperationalBindingID(
-                newBindingIdentifier,
-                0,
-            );
             const created = await ctx.db.operationalBinding.create({
                 data: {
-                    outbound: false,
-                    binding_type: data.bindingType.toString(),
-                    binding_identifier: Number(bindingID.identifier),
-                    binding_version: Number(bindingID.version),
-                    agreement_ber: Buffer.from(data.agreement.toBytes().buffer),
-                    access_point: {
-                        connect: {
-                            id: access_point_id,
-                        },
-                    },
+                    ...ob_db_data,
                     initiator: OperationalBindingInitiator.ROLE_A,
                     initiator_ber: Buffer.from(data.initiator.roleA_initiates.toBytes()),
-                    validity_start: validFrom,
-                    validity_end: validUntil,
-                    security_certification_path: sp?.certification_path
-                        ? Buffer.from(_encode_CertificationPath(sp.certification_path, DER).toBytes().buffer)
-                        : undefined,
-                    security_name: sp?.name?.map((rdn) => rdnToJson(rdn)),
-                    security_time: sp?.time
-                        ? getDateFromTime(sp.time)
-                        : undefined,
-                    security_random: sp?.random
-                        ? Buffer.from(packBits(sp.random).buffer)
-                        : undefined,
-                    security_target: (sp?.target !== undefined)
-                        ? Number(sp.target)
-                        : undefined,
-                    security_operationCode: codeToString(sp?.operationCode),
-                    security_errorProtection: (sp?.errorProtection !== undefined)
-                        ? Number(sp.errorProtection)
-                        : undefined,
-                    security_errorCode: codeToString(sp?.errorCode),
                     new_context_prefix_rdn: rdnToJson(agreement.rdn),
                     immediate_superior: agreement.immediateSuperior.map(rdnToJson),
-                    source_ip: assn.socket.remoteAddress,
-                    source_tcp_port: assn.socket.remotePort,
-                    source_credentials_type: ((): number | null => {
-                        if (!assn.bind) {
-                            return null;
-                        }
-                        if (!assn.bind.credentials) {
-                            return null;
-                        }
-                        if ("simple" in assn.bind.credentials) {
-                            return 0;
-                        }
-                        if ("strong" in assn.bind.credentials) {
-                            return 1;
-                        }
-                        if ("external" in assn.bind.credentials) {
-                            return 2;
-                        }
-                        if ("spkm" in assn.bind.credentials) {
-                            return 3;
-                        }
-                        return 4;
-                    })(),
-                    source_certificate_path: (
-                        assn.bind?.credentials
-                        && ("strong" in assn.bind.credentials)
-                        && assn.bind.credentials.strong.certification_path
-                    )
-                        ? Buffer.from(_encode_CertificationPath(assn.bind.credentials.strong.certification_path, DER).toBytes().buffer)
-                        : undefined,
-                    source_attr_cert_path: (
-                        assn.bind?.credentials
-                        && ("strong" in assn.bind.credentials)
-                        && assn.bind.credentials.strong.attributeCertificationPath
-                    )
-                        ? Buffer.from(_encode_ACP(assn.bind.credentials.strong.attributeCertificationPath, DER).toBytes().buffer)
-                        : undefined,
-                    source_bind_token: (
-                        assn.bind?.credentials
-                        && ("strong" in assn.bind.credentials)
-                    )
-                        ? Buffer.from(_encode_Token(assn.bind.credentials.strong.bind_token, DER).toBytes().buffer)
-                        : undefined,
-                    source_strong_name: (
-                        assn.bind?.credentials
-                        && ("strong" in assn.bind.credentials)
-                        && assn.bind.credentials.strong.name
-                    )
-                        ? assn.bind.credentials.strong.name.map(rdnToJson)
-                        : undefined,
-                    supply_contexts: null,
-                    requested_time: new Date(),
                 },
                 select: {
                     uuid: true,
@@ -1140,51 +1126,166 @@ async function establishOperationalBinding (
                 throw e;
             }
         } else if ("roleB_initiates" in data.initiator) {
-            throw NOT_SUPPORTED_ERROR;
-            // TODO: Get approval.
-            // const init: SubordinateToSuperior = _decode_SubordinateToSuperior(data.initiator.roleB_initiates);
-            // const reply = await becomeSuperior(ctx, assn, invokeId, agreement, init);
-            // return {
-            //     unsigned: new EstablishOperationalBindingResultData(
-            //         data.bindingType,
-            //         data.bindingID,
-            //         ctx.dsa.accessPoint,
-            //         {
-            //             roleA_replies: _encode_SuperiorToSubordinate(reply, DER),
-            //         },
-            //         [],
-            //         createSecurityParameters(
-            //             ctx,
-            //             undefined,
-            //             id_op_establishOperationalBinding,
-            //         ),
-            //         ctx.dsa.accessPoint.ae_title.rdnSequence,
-            //         undefined,
-            //         undefined,
-            //     ),
-            // };
-        } else {
-            throw new errors.OperationalBindingError(
-                ctx.i18n.t("err:unrecognized_ob_initiator_syntax"),
-                new OpBindingErrorParam(
-                    OpBindingErrorParam_problem_invalidAgreement,
+            const init: SubordinateToSuperior = _decode_SubordinateToSuperior(data.initiator.roleB_initiates);
+            const created = await ctx.db.operationalBinding.create({
+                data: {
+                    ...ob_db_data,
+                    initiator: OperationalBindingInitiator.ROLE_B,
+                    initiator_ber: Buffer.from(data.initiator.roleB_initiates.toBytes()),
+                    new_context_prefix_rdn: rdnToJson(agreement.rdn),
+                    immediate_superior: agreement.immediateSuperior.map(rdnToJson),
+                },
+                select: {
+                    uuid: true,
+                },
+            });
+            const approved: boolean | undefined = await getApproval(created.uuid);
+            await ctx.db.operationalBinding.update({
+                where: {
+                    uuid: created.uuid,
+                },
+                data: {
+                    accepted: approved,
+                },
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
+            });
+            if (approved === undefined) {
+                throw new errors.OperationalBindingError(
+                    ctx.i18n.t("err:ob_rejected", {
+                        context: "timeout",
+                        uuid: created.uuid,
+                    }),
+                    new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_currentlyNotDecidable,
+                        data.bindingType,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            id_err_operationalBindingError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
+                    signErrors,
+                );
+            } else if (approved === false) {
+                throw new errors.OperationalBindingError(
+                    ctx.i18n.t("err:ob_rejected", {
+                        uuid: created.uuid,
+                    }),
+                    new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_invalidAgreement,
+                        data.bindingType,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            id_err_operationalBindingError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
+                    signErrors,
+                );
+            }
+            try {
+                const reply = await becomeSuperior(ctx, assn, { present: invokeId }, agreement, init, signErrors);
+                ctx.log.info(ctx.i18n.t("log:establishOperationalBinding", {
+                    context: "succeeded",
+                    type: data.bindingType.toString(),
+                    bid: data.bindingID?.identifier.toString(),
+                    aid: assn.id,
+                }), {
+                    remoteFamily: assn.socket.remoteFamily,
+                    remoteAddress: assn.socket.remoteAddress,
+                    remotePort: assn.socket.remotePort,
+                    association_id: assn.id,
+                    invokeID: printInvokeId({ present: invokeId }),
+                });
+                const resultData = new EstablishOperationalBindingResultData(
                     data.bindingType,
-                    undefined,
-                    undefined,
+                    bindingID,
+                    ctx.dsa.accessPoint,
+                    {
+                        roleB_replies: _encode_SuperiorToSubordinate(reply, DER),
+                    },
                     [],
                     createSecurityParameters(
                         ctx,
-                        signErrors,
+                        signResult,
                         assn.boundNameAndUID?.dn,
-                        undefined,
-                        id_err_operationalBindingError,
+                        id_op_establishOperationalBinding,
                     ),
                     ctx.dsa.accessPoint.ae_title.rdnSequence,
                     undefined,
                     undefined,
-                ),
-                signErrors,
-            );
+                );
+                if (!signResult) {
+                    return {
+                        unsigned: resultData,
+                    };
+                }
+                const resultDataBytes = _encode_EstablishOperationalBindingResultData(resultData, DER).toBytes();
+                const key = ctx.config.signing?.key;
+                if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
+                    return {
+                        unsigned: resultData,
+                    };
+                }
+                const signingResult = generateSignature(key, resultDataBytes);
+                if (!signingResult) {
+                    return {
+                        unsigned: resultData,
+                    };
+                }
+                const [ sigAlg, sigValue ] = signingResult;
+                return {
+                    signed: new SIGNED(
+                        resultData,
+                        sigAlg,
+                        unpackBits(sigValue),
+                        undefined,
+                        undefined,
+                    ),
+                };
+            } catch (e) {
+                if (e instanceof errors.OperationalBindingError) {
+                    ctx.db.operationalBinding.update({
+                        where: {
+                            uuid: created.uuid,
+                        },
+                        data: {
+                            accepted: false,
+                            last_ob_problem: e.data.problem,
+                        },
+                        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
+                    }).then().catch();
+                } else {
+                    ctx.db.operationalBinding.update({
+                        where: {
+                            uuid: created.uuid,
+                        },
+                        data: {
+                            accepted: false,
+                        },
+                        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
+                    }).then().catch();
+                }
+                throw e;
+            }
+        } else {
+            throw new errors.MistypedArgumentError(ctx.i18n.t("err:unrecognized_ob_initiator_syntax"));
         }
     } else if (data.bindingType.isEqualTo(id_op_binding_non_specific_hierarchical)) {
         const agreement = _decode_NonSpecificHierarchicalAgreement(data.agreement);
@@ -1217,99 +1318,12 @@ async function establishOperationalBinding (
                     signErrors,
                 );
             }
-
-            const access_point_id = await saveAccessPoint(ctx, data.accessPoint, Knowledge.OB_REQUEST);
-            const bindingID = new OperationalBindingID(
-                newBindingIdentifier,
-                0,
-            );
             const created = await ctx.db.operationalBinding.create({
                 data: {
-                    outbound: false,
-                    binding_type: data.bindingType.toString(),
-                    binding_identifier: Number(bindingID.identifier),
-                    binding_version: Number(bindingID.version),
-                    agreement_ber: Buffer.from(data.agreement.toBytes().buffer),
-                    access_point: {
-                        connect: {
-                            id: access_point_id,
-                        },
-                    },
+                    ...ob_db_data,
                     initiator: OperationalBindingInitiator.ROLE_A,
                     initiator_ber: Buffer.from(data.initiator.roleA_initiates.toBytes()),
-                    validity_start: validFrom,
-                    validity_end: validUntil,
-                    security_certification_path: sp?.certification_path
-                        ? Buffer.from(_encode_CertificationPath(sp.certification_path, DER).toBytes().buffer)
-                        : undefined,
-                    security_name: sp?.name?.map((rdn) => rdnToJson(rdn)),
-                    security_time: sp?.time
-                        ? getDateFromTime(sp.time)
-                        : undefined,
-                    security_random: sp?.random
-                        ? Buffer.from(packBits(sp.random).buffer)
-                        : undefined,
-                    security_target: (sp?.target !== undefined)
-                        ? Number(sp.target)
-                        : undefined,
-                    security_operationCode: codeToString(sp?.operationCode),
-                    security_errorProtection: (sp?.errorProtection !== undefined)
-                        ? Number(sp.errorProtection)
-                        : undefined,
-                    security_errorCode: codeToString(sp?.errorCode),
                     immediate_superior: agreement.immediateSuperior.map(rdnToJson),
-                    source_ip: assn.socket.remoteAddress,
-                    source_tcp_port: assn.socket.remotePort,
-                    source_credentials_type: ((): number | null => {
-                        if (!assn.bind) {
-                            return null;
-                        }
-                        if (!assn.bind.credentials) {
-                            return null;
-                        }
-                        if ("simple" in assn.bind.credentials) {
-                            return 0;
-                        }
-                        if ("strong" in assn.bind.credentials) {
-                            return 1;
-                        }
-                        if ("external" in assn.bind.credentials) {
-                            return 2;
-                        }
-                        if ("spkm" in assn.bind.credentials) {
-                            return 3;
-                        }
-                        return 4;
-                    })(),
-                    source_certificate_path: (
-                        assn.bind?.credentials
-                        && ("strong" in assn.bind.credentials)
-                        && assn.bind.credentials.strong.certification_path
-                    )
-                        ? Buffer.from(_encode_CertificationPath(assn.bind.credentials.strong.certification_path, DER).toBytes().buffer)
-                        : undefined,
-                    source_attr_cert_path: (
-                        assn.bind?.credentials
-                        && ("strong" in assn.bind.credentials)
-                        && assn.bind.credentials.strong.attributeCertificationPath
-                    )
-                        ? Buffer.from(_encode_ACP(assn.bind.credentials.strong.attributeCertificationPath, DER).toBytes().buffer)
-                        : undefined,
-                    source_bind_token: (
-                        assn.bind?.credentials
-                        && ("strong" in assn.bind.credentials)
-                    )
-                        ? Buffer.from(_encode_Token(assn.bind.credentials.strong.bind_token, DER).toBytes().buffer)
-                        : undefined,
-                    source_strong_name: (
-                        assn.bind?.credentials
-                        && ("strong" in assn.bind.credentials)
-                        && assn.bind.credentials.strong.name
-                    )
-                        ? assn.bind.credentials.strong.name.map(rdnToJson)
-                        : undefined,
-                    supply_contexts: null,
-                    requested_time: new Date(),
                 },
                 select: {
                     uuid: true,
@@ -1467,98 +1481,12 @@ async function establishOperationalBinding (
         }
         else if ("roleB_initiates" in data.initiator) {
             const init = _decode_NHOBSubordinateToSuperior(data.initiator.roleB_initiates);
-            const access_point_id = await saveAccessPoint(ctx, data.accessPoint, Knowledge.OB_REQUEST);
-            const bindingID = new OperationalBindingID(
-                newBindingIdentifier,
-                0,
-            );
             const created = await ctx.db.operationalBinding.create({
                 data: {
-                    outbound: false,
-                    binding_type: data.bindingType.toString(),
-                    binding_identifier: Number(bindingID.identifier),
-                    binding_version: Number(bindingID.version),
-                    agreement_ber: Buffer.from(data.agreement.toBytes().buffer),
-                    access_point: {
-                        connect: {
-                            id: access_point_id,
-                        },
-                    },
-                    initiator: OperationalBindingInitiator.ROLE_A,
+                    ...ob_db_data,
+                    initiator: OperationalBindingInitiator.ROLE_B,
                     initiator_ber: Buffer.from(data.initiator.roleB_initiates.toBytes()),
-                    validity_start: validFrom,
-                    validity_end: validUntil,
-                    security_certification_path: sp?.certification_path
-                        ? Buffer.from(_encode_CertificationPath(sp.certification_path, DER).toBytes().buffer)
-                        : undefined,
-                    security_name: sp?.name?.map((rdn) => rdnToJson(rdn)),
-                    security_time: sp?.time
-                        ? getDateFromTime(sp.time)
-                        : undefined,
-                    security_random: sp?.random
-                        ? Buffer.from(packBits(sp.random).buffer)
-                        : undefined,
-                    security_target: (sp?.target !== undefined)
-                        ? Number(sp.target)
-                        : undefined,
-                    security_operationCode: codeToString(sp?.operationCode),
-                    security_errorProtection: (sp?.errorProtection !== undefined)
-                        ? Number(sp.errorProtection)
-                        : undefined,
-                    security_errorCode: codeToString(sp?.errorCode),
                     immediate_superior: agreement.immediateSuperior.map(rdnToJson),
-                    source_ip: assn.socket.remoteAddress,
-                    source_tcp_port: assn.socket.remotePort,
-                    source_credentials_type: ((): number | null => {
-                        if (!assn.bind) {
-                            return null;
-                        }
-                        if (!assn.bind.credentials) {
-                            return null;
-                        }
-                        if ("simple" in assn.bind.credentials) {
-                            return 0;
-                        }
-                        if ("strong" in assn.bind.credentials) {
-                            return 1;
-                        }
-                        if ("external" in assn.bind.credentials) {
-                            return 2;
-                        }
-                        if ("spkm" in assn.bind.credentials) {
-                            return 3;
-                        }
-                        return 4;
-                    })(),
-                    source_certificate_path: (
-                        assn.bind?.credentials
-                        && ("strong" in assn.bind.credentials)
-                        && assn.bind.credentials.strong.certification_path
-                    )
-                        ? Buffer.from(_encode_CertificationPath(assn.bind.credentials.strong.certification_path, DER).toBytes().buffer)
-                        : undefined,
-                    source_attr_cert_path: (
-                        assn.bind?.credentials
-                        && ("strong" in assn.bind.credentials)
-                        && assn.bind.credentials.strong.attributeCertificationPath
-                    )
-                        ? Buffer.from(_encode_ACP(assn.bind.credentials.strong.attributeCertificationPath, DER).toBytes().buffer)
-                        : undefined,
-                    source_bind_token: (
-                        assn.bind?.credentials
-                        && ("strong" in assn.bind.credentials)
-                    )
-                        ? Buffer.from(_encode_Token(assn.bind.credentials.strong.bind_token, DER).toBytes().buffer)
-                        : undefined,
-                    source_strong_name: (
-                        assn.bind?.credentials
-                        && ("strong" in assn.bind.credentials)
-                        && assn.bind.credentials.strong.name
-                    )
-                        ? assn.bind.credentials.strong.name.map(rdnToJson)
-                        : undefined,
-                    supply_contexts: null,
-                    requested_time: new Date(),
                 },
                 select: {
                     id: true,
@@ -1719,32 +1647,34 @@ async function establishOperationalBinding (
             }
         }
         else {
-            throw new errors.OperationalBindingError(
-                ctx.i18n.t("err:unrecognized_ob_initiator_syntax"),
-                new OpBindingErrorParam(
-                    OpBindingErrorParam_problem_invalidAgreement,
-                    data.bindingType,
-                    undefined,
-                    undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        signErrors,
-                        assn.boundNameAndUID?.dn,
-                        undefined,
-                        id_err_operationalBindingError,
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
-                    undefined,
-                ),
-                signErrors,
-            );
+            throw new errors.MistypedArgumentError(ctx.i18n.t("err:unrecognized_ob_initiator_syntax"));
         }
-    } else if (data.bindingType.isEqualTo(id_op_binding_shadow)) {
-        throw NOT_SUPPORTED_ERROR;
+    // } else if (data.bindingType.isEqualTo(id_op_binding_shadow)) {
+    //     throw NOT_SUPPORTED_ERROR;
     } else {
-        throw NOT_SUPPORTED_ERROR;
+        throw new errors.OperationalBindingError(
+            ctx.i18n.t("err:ob_type_unrecognized", {
+                obtype: data.bindingType.toString(),
+            }),
+            new OpBindingErrorParam(
+                OpBindingErrorParam_problem_unsupportedBindingType,
+                data.bindingType,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    id_err_operationalBindingError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                undefined,
+                undefined,
+            ),
+            signErrors,
+        );
     }
 }
 

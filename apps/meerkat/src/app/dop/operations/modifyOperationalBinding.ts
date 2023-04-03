@@ -225,30 +225,6 @@ async function modifyOperationalBinding (
         invokeID: printInvokeId(invokeId),
     });
 
-    const NOT_SUPPORTED_ERROR = new errors.OperationalBindingError(
-        ctx.i18n.t("err:ob_type_unrecognized", {
-            obtype: data.bindingType.toString(),
-        }),
-        new OpBindingErrorParam(
-            OpBindingErrorParam_problem_unsupportedBindingType,
-            data.bindingType,
-            undefined,
-            undefined,
-            [],
-            createSecurityParameters(
-                ctx,
-                signErrors,
-                assn.boundNameAndUID?.dn,
-                undefined,
-                id_err_operationalBindingError,
-            ),
-            ctx.dsa.accessPoint.ae_title.rdnSequence,
-            undefined,
-            undefined,
-        ),
-        signErrors,
-    );
-
     if (data.bindingID.identifier != data.newBindingID.identifier) {
         throw new errors.OperationalBindingError(
             ctx.i18n.t("err:ob_binding_id_identifier_changed", {
@@ -890,27 +866,7 @@ async function modifyOperationalBinding (
             });
             return getResult();
         } else {
-            throw new errors.OperationalBindingError(
-                ctx.i18n.t("err:unrecognized_ob_initiator_syntax"),
-                new OpBindingErrorParam(
-                    OpBindingErrorParam_problem_invalidAgreement,
-                    data.bindingType,
-                    undefined,
-                    undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        signErrors,
-                        assn.boundNameAndUID?.dn,
-                        undefined,
-                        id_err_operationalBindingError,
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
-                    undefined,
-                ),
-                signErrors,
-            );
+            throw new errors.MistypedArgumentError(ctx.i18n.t("err:unrecognized_ob_initiator_syntax"));
         }
     } else if (data.bindingType.isEqualTo(id_op_binding_non_specific_hierarchical)) {
         if (!data.initiator) {
@@ -1139,31 +1095,33 @@ async function modifyOperationalBinding (
             return getResult();
         }
         else {
-            throw new errors.OperationalBindingError(
-                ctx.i18n.t("err:unrecognized_ob_initiator_syntax"),
-                new OpBindingErrorParam(
-                    OpBindingErrorParam_problem_invalidAgreement,
-                    data.bindingType,
-                    undefined,
-                    undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        signErrors,
-                        assn.boundNameAndUID?.dn,
-                        undefined,
-                        id_err_operationalBindingError,
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
-                    undefined,
-                ),
-                signErrors,
-            );
+            throw new errors.MistypedArgumentError(ctx.i18n.t("err:unrecognized_ob_initiator_syntax"));
         }
     }
     else {
-        throw NOT_SUPPORTED_ERROR;
+        throw new errors.OperationalBindingError(
+            ctx.i18n.t("err:ob_type_unrecognized", {
+                obtype: data.bindingType.toString(),
+            }),
+            new OpBindingErrorParam(
+                OpBindingErrorParam_problem_unsupportedBindingType,
+                data.bindingType,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    id_err_operationalBindingError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                undefined,
+                undefined,
+            ),
+            signErrors,
+        );
     }
 }
 

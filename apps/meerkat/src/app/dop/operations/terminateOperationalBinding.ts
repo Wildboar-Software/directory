@@ -262,30 +262,6 @@ async function terminateOperationalBinding (
         );
     }
 
-    const NOT_SUPPORTED_ERROR = new errors.OperationalBindingError(
-        ctx.i18n.t("err:ob_type_unrecognized", {
-            obtype: data.bindingType.toString(),
-        }),
-        new OpBindingErrorParam(
-            OpBindingErrorParam_problem_unsupportedBindingType,
-            data.bindingType,
-            undefined,
-            undefined,
-            [],
-            createSecurityParameters(
-                ctx,
-                signErrors,
-                assn.boundNameAndUID?.dn,
-                undefined,
-                id_err_operationalBindingError,
-            ),
-            ctx.dsa.accessPoint.ae_title.rdnSequence,
-            undefined,
-            undefined,
-        ),
-        signErrors,
-    );
-
     const now = new Date();
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const obs = (await ctx.db.operationalBinding.findMany({
@@ -444,7 +420,29 @@ async function terminateOperationalBinding (
             };
         }
         default: {
-            throw NOT_SUPPORTED_ERROR;
+            throw new errors.OperationalBindingError(
+                ctx.i18n.t("err:ob_type_unrecognized", {
+                    obtype: data.bindingType.toString(),
+                }),
+                new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_unsupportedBindingType,
+                    data.bindingType,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+                signErrors,
+            );
         }
     }
 }
