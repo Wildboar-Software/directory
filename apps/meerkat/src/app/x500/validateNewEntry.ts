@@ -772,7 +772,7 @@ async function validateEntry (
             const atLeastOneAttributeHasAValue: boolean = attrs
                 .some((attr) => (
                     (attr.values.length > 0)
-                    || ((attr.valuesWithContext ?? 0) > 0)
+                    || ((attr.valuesWithContext?.length ?? 0) > 0)
                 ));
             if (atLeastOneAttributeHasAValue) {
                 missingMandatoryAttributes.delete(at);
