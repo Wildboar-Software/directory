@@ -225,7 +225,7 @@ async function terminateOperationalBinding (
             !("signed" in arg)
             || !user_cert
             || !dsa_cert
-            || (user_cert.toBeSigned.serialNumber !== dsa_cert.toBeSigned.serialNumber)
+            || (user_cert.toBeSigned.serialNumber.toString() !== dsa_cert.toBeSigned.serialNumber.toString())
             || (user_sig.length !== dsa_sig.length)
             || !timingSafeEqual(user_sig, dsa_sig)
         ) {
