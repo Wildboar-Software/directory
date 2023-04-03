@@ -272,5 +272,3 @@ Any other concern notwithstanding, clients SHOULD attempt to prevent
 transmission of security-sensitive operations, such as `changePassword`, over
 unencrypted transports, or to at least remind users that an insecure transport
 is in use.
-
-TODO: Document calling-AE-title configuration.

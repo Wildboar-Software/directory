@@ -9,4 +9,15 @@ increments.
 
 ## Incrementing the Version
 
-TODO:
+Unfortunately, there is no sure fire way to bump the version currently. I just
+search for all files containing the current version and increment those.
+Currently, the files I change are:
+
+- `./.github/workflows/meerkat.yml`
+- `./apps/meerkat-docs/docs/changelog-meerkat.md`
+- `./apps/meerkat-docs/docs/conformance.md`
+- `./k8s/charts/meerkat-dsa/Chart.yaml`
+- `./pkg/control`
+- `./pkg/docker-compose.yaml`
+- `./pkg/meerkat-dsa.rb`
+- `./snap/snapcraft.yaml`

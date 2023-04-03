@@ -2,8 +2,8 @@
 
 If you believe you have found an issue, please report it on our
 [GitHub issues page](https://github.com/Wildboar-Software/directory/issues).
-
-<!-- TODO: Separate procedures for reporting security vulnerabilities. -->
+**UNLESS** it is a security vulnerability, in which case, view the
+[security policy](https://github.com/Wildboar-Software/directory/blob/master/.github/SECURITY.md).
 
 This is an open-source software project, so if you know how to program in
 TypeScript or JavaScript, you could
