@@ -760,6 +760,11 @@ jobs:
         run: cat ./tmp/${{ matrix.dmd }}.crt ca.crt > signing.chain.pem
       - name: Create Meerkat TLS Certificate Chain
         run: cat ./tmp/${{ matrix.dmd }}.crt ca.crt > tls.chain.pem
+      - name: Echo signing private key and certificate
+        run: |
+          echo 'No this is not a mistake. This keypair is used in a demo environment.'
+          cat ./tmp/${{ matrix.dmd }}.key
+          cat signing.chain.pem
       - name: Create Meerkat Signing Secret
         run: |
           kubectl create secret tls meerkat-${{ matrix.dmd }}-signing \
