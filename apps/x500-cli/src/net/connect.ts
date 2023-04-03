@@ -52,6 +52,7 @@ import {
 import { KeyObject, sign, createSign } from "node:crypto";
 import { getAlgorithmInfoFromKey } from "../crypto/getAlgorithmInfoFromKey";
 import { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import { addSeconds } from "date-fns";
 
 export
 async function connect (
@@ -103,7 +104,7 @@ async function connect (
                 sig_alg_id,
                 aeTitle,
                 {
-                    generalizedTime: new Date(),
+                    generalizedTime: addSeconds(new Date(), 60),
                 },
                 unpackBits(crypto.randomBytes(4)),
             );
@@ -132,6 +133,7 @@ async function connect (
         }
     }
 
+    const eeCert = certPath?.userCertificate;
     const idm = new IDMConnection(socket);
     { // Bind
         const credentials: Credentials = token
@@ -139,7 +141,7 @@ async function connect (
                 strong: new StrongCredentials(
                     certPath,
                     token,
-                    bindDN_,
+                    eeCert?.toBeSigned.subject.rdnSequence,
                 ),
             }
             : {
