@@ -1412,6 +1412,7 @@ async function establishOperationalBinding (
                     ctx,
                     data.accessPoint,
                     init,
+                    signErrors,
                 );
                 ctx.log.info(ctx.i18n.t("log:establishOperationalBinding", {
                     context: "succeeded",

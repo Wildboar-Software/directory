@@ -47,6 +47,7 @@ async function createContextPrefixEntry (
     vertex: X500Vertex,
     currentRoot: Vertex,
     last: boolean,
+    signErrors: boolean,
 ): Promise<Vertex> {
     const immSuprAccessPoints = vertex.accessPoints;
     const immSupr: boolean = Boolean(immSuprAccessPoints && last);
@@ -77,7 +78,8 @@ async function createContextPrefixEntry (
             immSupr,
         },
         vertex.admPointInfo ?? [],
-        [],
+        undefined,
+        signErrors,
     );
     await Promise.all(
         vertex.accessPoints?.map((ap) => saveAccessPoint(
@@ -137,7 +139,7 @@ async function becomeSubordinate (
         const last: boolean = (sup2sub.contextPrefixInfo.length === (i + 1));
         const existingEntry = await dnToVertex(ctx, currentRoot, [ vertex.rdn ]);
         if (!existingEntry) {
-            const createdEntry = await createContextPrefixEntry(ctx, vertex, currentRoot, last);
+            const createdEntry = await createContextPrefixEntry(ctx, vertex, currentRoot, last, signErrors);
             currentRoot = createdEntry;
         } else {
             /**
@@ -149,7 +151,7 @@ async function becomeSubordinate (
              * transaction, but unfortunately, this cannot be with Meerkat DSA!
              */
             if (existingEntry.dse.glue) {
-                const createdEntry = await createContextPrefixEntry(ctx, vertex, currentRoot, last);
+                const createdEntry = await createContextPrefixEntry(ctx, vertex, currentRoot, last, signErrors);
                 await ctx.db.entry.updateMany({
                     where: {
                         immediate_superior_id: existingEntry.dse.id,
@@ -179,6 +181,8 @@ async function becomeSubordinate (
                 : undefined,
         },
         sup2sub.entryInfo ?? [],
+        undefined,
+        signErrors,
     );
     /**
      * These steps below "swap out" an existing entry with the entry created by
@@ -216,8 +220,8 @@ async function becomeSubordinate (
                 ctx,
                 createdCP.immediateSuperior!,
                 sup2sub.immediateSuperiorInfo?.flatMap(valuesFromAttribute) ?? [],
-                [],
                 undefined,
+                false, // Do not check for existing values. This is essential for things like createTimestamp.
                 signErrors,
             ),
         ]);
@@ -240,7 +244,9 @@ async function becomeSubordinate (
                 ctx,
                 createdCP.immediateSuperior!,
                 sup2sub.immediateSuperiorInfo?.flatMap(valuesFromAttribute) ?? [],
-                [],
+                undefined,
+                false, // Do not check for existing values. This is essential for things like createTimestamp.
+                signErrors,
             ),
         );
     }

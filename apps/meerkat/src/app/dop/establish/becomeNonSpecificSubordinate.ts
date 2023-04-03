@@ -51,6 +51,7 @@ async function becomeNonSpecificSubordinate (
     ctx: Context,
     superiorAccessPoint: AccessPoint,
     sup2sub: NHOBSuperiorToSubordinate,
+    signErrors: boolean,
 ): Promise<NHOBSubordinateToSuperior> {
     let currentRoot = ctx.dit.root;
     for (let i = 0; i < sup2sub.contextPrefixInfo.length; i++) {
@@ -58,7 +59,7 @@ async function becomeNonSpecificSubordinate (
         const last: boolean = (sup2sub.contextPrefixInfo.length === (i + 1));
         const existingEntry = await dnToVertex(ctx, currentRoot, [ vertex.rdn ]);
         if (!existingEntry) {
-            const createdEntry = await createContextPrefixEntry(ctx, vertex, currentRoot, last);
+            const createdEntry = await createContextPrefixEntry(ctx, vertex, currentRoot, last, signErrors);
             currentRoot = createdEntry;
         } else {
             /**
@@ -70,7 +71,7 @@ async function becomeNonSpecificSubordinate (
              * transaction, but unfortunately, this cannot be with Meerkat DSA!
              */
             if (existingEntry.dse.glue) {
-                const createdEntry = await createContextPrefixEntry(ctx, vertex, currentRoot, last);
+                const createdEntry = await createContextPrefixEntry(ctx, vertex, currentRoot, last, signErrors);
                 await ctx.db.entry.updateMany({
                     where: {
                         immediate_superior_id: existingEntry.dse.id,
@@ -89,7 +90,9 @@ async function becomeNonSpecificSubordinate (
             ctx,
             currentRoot,
             sup2sub.immediateSuperiorInfo?.flatMap(valuesFromAttribute) ?? [],
-            [],
+            undefined,
+            false, // Do not check for existing values. This is essential for things like createTimestamp.
+            signErrors,
         ),
     );
 
