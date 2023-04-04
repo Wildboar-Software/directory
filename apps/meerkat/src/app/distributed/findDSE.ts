@@ -1298,10 +1298,10 @@ export
             nssrEncountered = true;
         }
         const nextRDNToBeResolved = state.chainingArguments.operationProgress?.nextRDNToBeResolved;
-        if (
+        if ( // Step 6
             (i === nextRDNToBeResolved)
-            // Is checking for shadow enough to determine if !master?
-            || (state.chainingArguments.nameResolveOnMaster && dse_i.dse.shadow)
+            && state.chainingArguments.nameResolveOnMaster
+            && dse_i.dse.shadow // TODO: Is checking for shadow enough to determine if !master?
         ) {
             throw new errors.ServiceError(
                 ctx.i18n.t("err:could_not_resolve_name_on_master"),
