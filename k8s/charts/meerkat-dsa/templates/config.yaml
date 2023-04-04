@@ -9,8 +9,8 @@ data:
   administrator_email: {{ .Values.administrator_email }}
   {{- end }}
   administrator_email_public: {{ .Values.administrator_email_public | default false | ternary 1 0 | quote }}
-  bind_min_sleep_ms: {{ .Values.bind_min_sleep_ms | default 1000 | quote }}
-  bind_sleep_range_ms: {{ .Values.bind_sleep_range_ms | default 3000 | quote }}
+  bind_min_sleep_ms: {{ .Values.bind_min_sleep_ms | quote }}
+  bind_sleep_range_ms: {{ .Values.bind_sleep_range_ms | quote }}
   bulk_insert_mode: {{ .Values.bulk_insert_mode | ternary 1 0 | quote }}
   {{- if .Values.client_cert_engine }}
   client_cert_engine: {{ .Values.client_cert_engine }}
@@ -53,13 +53,13 @@ data:
   ldap_port: {{ .Values.ldap_port | default 389 | quote }}
   ldaps_port: {{ .Values.ldaps_port | default 636 | quote }}
   log_bound_dn: {{ .Values.log_bound_dn | default false | ternary 1 0 | quote }}
-  local_qualifier_points_for_using_ssl3: {{ .Values.local_qualifier_points_for_using_starttls | default 8 | quote }}
-  local_qualifier_points_for_using_starttls: {{ .Values.local_qualifier_points_for_using_starttls | default 16 | quote }}
-  local_qualifier_points_for_using_tls: {{ .Values.local_qualifier_points_for_using_starttls | default 32 | quote }}
-  local_qualifier_points_for_using_tls_1_0: {{ .Values.local_qualifier_points_for_using_starttls | default 16 | quote }}
-  local_qualifier_points_for_using_tls_1_1: {{ .Values.local_qualifier_points_for_using_starttls | default 32 | quote }}
-  local_qualifier_points_for_using_tls_1_2: {{ .Values.local_qualifier_points_for_using_starttls | default 64 | quote }}
-  local_qualifier_points_for_using_tls_1_3: {{ .Values.local_qualifier_points_for_using_starttls | default 128 | quote }}
+  local_qualifier_points_for_using_ssl3: {{ .Values.local_qualifier_points_for_using_ssl3 | quote }}
+  local_qualifier_points_for_using_starttls: {{ .Values.local_qualifier_points_for_using_starttls | quote }}
+  local_qualifier_points_for_using_tls: {{ .Values.local_qualifier_points_for_using_tls | quote }}
+  local_qualifier_points_for_using_tls_1_0: {{ .Values.local_qualifier_points_for_using_tls_1_0 | quote }}
+  local_qualifier_points_for_using_tls_1_1: {{ .Values.local_qualifier_points_for_using_tls_1_1 | quote }}
+  local_qualifier_points_for_using_tls_1_2: {{ .Values.local_qualifier_points_for_using_tls_1_2 | quote }}
+  local_qualifier_points_for_using_tls_1_3: {{ .Values.local_qualifier_points_for_using_tls_1_3 | quote }}
   {{- if .Values.log_file }}
   log_file: {{ .Values.log_file | quote }}
   log_file_max_size: {{ .Values.log_file_max_size | default 1000000 | quote }}
@@ -79,14 +79,14 @@ data:
   max_connections_per_address: {{ .Values.max_connections_per_address | default 100 | quote }}
   max_idm_pdu_size: {{ .Values.max_idm_pdu_size | default "1000000" | quote }}
   max_idm_segments: {{ .Values.max_idm_segments | default 10 | quote }}
-  max_pre_bind_requests: {{ .Values.max_pre_bind_requests | default 2 | quote }}
+  max_pre_bind_requests: {{ .Values.max_pre_bind_requests | quote }}
   max_relaxations: {{ .Values.max_relaxations | default 3 | quote }}
-  min_auth_level_for_chaining: {{ .Values.min_auth_level_for_chaining | default 1 | quote }}
-  min_auth_level_for_ob: {{ .Values.min_auth_level_for_ob | default 1 | quote }}
+  min_auth_level_for_chaining: {{ .Values.min_auth_level_for_chaining | quote }}
+  min_auth_level_for_ob: {{ .Values.min_auth_level_for_ob | quote }}
   min_auth_local_qualifier_for_chaining: {{ .Values.min_auth_local_qualifier_for_chaining | default 0 | quote }}
   min_auth_local_qualifier_for_ob: {{ .Values.min_auth_local_qualifier_for_ob | default 0 | quote }}
   min_transfer_speed_bytes_per_minute: {{ .Values.min_transfer_speed_bytes_per_minute | default 1000 | quote }}
-  mru_vertex_ttl: {{ .Values.mru_vertex_ttl | default 500 | quote }}
+  mru_vertex_ttl: {{ .Values.mru_vertex_ttl | quote }}
   {{- if .Values.my_access_point_nsaps }}
   # NOTE: The `join` function is not documented currently.
   # See: https://stackoverflow.com/questions/47668793/helm-generate-comma-separated-list
@@ -161,14 +161,14 @@ data:
   # See: https://stackoverflow.com/questions/47668793/helm-generate-comma-separated-list
   signing_bind_acceptable_cert_policies: {{ join ", " .Values.signing_bind_acceptable_cert_policies }}
   {{- end }}
-  signing_bind_crl_dp_attempts_per_cert: {{ .Values.signing_bind_crl_dp_attempts_per_cert | default 3 | quote }}
-  signing_bind_max_endpoints_per_crl_dp: {{ .Values.signing_bind_max_endpoints_per_crl_dp | default 3 | quote }}
-  signing_bind_ocsp_checkiness: {{ .Values.signing_bind_ocsp_checkiness | default -1 | quote }}
-  signing_bind_ocsp_max_requests_per_cert: {{ .Values.signing_bind_ocsp_max_requests_per_cert | default 3 | quote }}
+  signing_bind_crl_dp_attempts_per_cert: {{ .Values.signing_bind_crl_dp_attempts_per_cert | quote }}
+  signing_bind_max_endpoints_per_crl_dp: {{ .Values.signing_bind_max_endpoints_per_crl_dp | quote }}
+  signing_bind_ocsp_checkiness: {{ .Values.signing_bind_ocsp_checkiness | quote }}
+  signing_bind_ocsp_max_requests_per_cert: {{ .Values.signing_bind_ocsp_max_requests_per_cert | quote }}
   signing_bind_ocsp_sign_requests: {{ .Values.signing_bind_ocsp_sign_requests | ternary 1 0 | quote }}
-  signing_bind_ocsp_timeout: {{ .Values.signing_bind_ocsp_timeout | default 5 | quote }}
+  signing_bind_ocsp_timeout: {{ .Values.signing_bind_ocsp_timeout | quote }}
   signing_bind_ocsp_unknown_is_failure: {{ .Values.signing_bind_ocsp_unknown_is_failure | ternary 1 0 | quote }}
-  signing_bind_remote_crl_cache_ttl: {{ .Values.signing_bind_remote_crl_cache_ttl | default 3600 | quote }}
+  signing_bind_remote_crl_cache_ttl: {{ .Values.signing_bind_remote_crl_cache_ttl | quote }}
   signing_bind_remote_crl_checkiness: {{ .Values.signing_bind_remote_crl_checkiness | default 0 | quote }}
   signing_bind_remote_crl_size_limit: {{ .Values.signing_bind_remote_crl_size_limit | default "1000000" | quote }}
   {{- if .Values.signing_bind_remote_crl_supported_protocols }}
@@ -180,22 +180,22 @@ data:
   signing_bind_tolerate_unavailable_remote_crl: {{ .Values.signing_bind_tolerate_unavailable_remote_crl | ternary 1 0 | quote }}
   # signing_ca_file: use signingCaConfigName
   # signing_cert_chain: use signingSecretName
-  signing_crl_dp_attempts_per_cert: {{ .Values.signing_crl_dp_attempts_per_cert | default 3 | quote }}
+  signing_crl_dp_attempts_per_cert: {{ .Values.signing_crl_dp_attempts_per_cert | quote }}
   # signing_crl_file: use signingCrlConfigName
   signing_disable_verification: {{ .Values.signing_disable_verification | ternary 1 0 | quote }}
-  signing_errors_min_auth_level: {{ .Values.signing_errors_min_auth_level | default 1 | quote }}
+  signing_errors_min_auth_level: {{ .Values.signing_errors_min_auth_level | quote }}
   signing_errors_min_auth_local_qualifier: {{ .Values.signing_errors_min_auth_local_qualifier | default 0 | quote }}
   signing_errors_min_auth_signed: {{ .Values.signing_errors_min_auth_signed | ternary 1 0 | quote }}
   # signing_key: signingSecretName
-  signing_max_endpoints_per_crl_dp: {{ .Values.signing_errors_min_auth_level | default 3 | quote }}
-  signing_min_auth_level: {{ .Values.signing_min_auth_level | default 1 | quote }}
+  signing_max_endpoints_per_crl_dp: {{ .Values.signing_max_endpoints_per_crl_dp | quote }}
+  signing_min_auth_level: {{ .Values.signing_min_auth_level | quote }}
   signing_min_auth_local_qualifier: {{ .Values.signing_min_auth_local_qualifier | default 0 | quote }}
   signing_min_auth_signed: {{ .Values.signing_min_auth_signed | ternary 1 0 | quote }}
   signing_ocsp_checkiness: {{ .Values.signing_ocsp_checkiness | default -1 | quote }}
-  signing_ocsp_max_requests_per_cert: {{ .Values.signing_ocsp_max_requests_per_cert | default 3 | quote }}
+  signing_ocsp_max_requests_per_cert: {{ .Values.signing_ocsp_max_requests_per_cert | quote }}
   signing_ocsp_replay_window: {{ .Values.signing_ocsp_replay_window | default 15 | quote }}
   signing_ocsp_response_size_limit: {{ .Values.signing_ocsp_response_size_limit | default 10000 | quote }}
-  signing_ocsp_sign_requests: {{ .Values.signing_min_auth_signed | ternary 1 0 | quote }}
+  signing_ocsp_sign_requests: {{ .Values.signing_ocsp_sign_requests | ternary 1 0 | quote }}
   signing_ocsp_timeout: {{ .Values.signing_ocsp_timeout | default 5 | quote }}
   signing_ocsp_unknown_is_failure: {{ .Values.signing_ocsp_unknown_is_failure | ternary 1 0 | quote }}
   {{- if .Values.signing_permitted_algorithms }}
@@ -240,7 +240,7 @@ data:
   tls_max_version: {{ .Values.tls_max_version }}
   {{- end }}
   tls_ocsp_checkiness: {{ .Values.tls_ocsp_checkiness | default -1 | quote }}
-  tls_ocsp_max_requests_per_cert: {{ .Values.tls_ocsp_max_requests_per_cert | default 3 | quote }}
+  tls_ocsp_max_requests_per_cert: {{ .Values.tls_ocsp_max_requests_per_cert | quote }}
   tls_ocsp_replay_window: {{ .Values.tls_ocsp_replay_window | default 15 | quote }}
   tls_ocsp_response_size_limit: {{ .Values.tls_ocsp_response_size_limit | default "10000" | quote }}
   tls_ocsp_sign_requests: {{ .Values.tls_ocsp_sign_requests | ternary 1 0 | quote }}
@@ -260,7 +260,7 @@ data:
   {{- if .Values.trust_for_ibra }}
   trust_for_ibra: {{ .Values.trust_for_ibra | quote }}
   {{- end }}
-  use_database_when_there_are_x_subordinates: {{ .Values.use_database_when_there_are_x_subordinates | default "1000" | quote }}
+  use_database_when_there_are_x_subordinates: {{ .Values.use_database_when_there_are_x_subordinates | quote }}
   {{- if .Values.vendor_name }}
   vendor_name: {{ .Values.vendor_name | quote }}
   {{- end }}
