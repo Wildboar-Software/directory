@@ -2,7 +2,8 @@ import { Argv } from "yargs";
 
 export
 interface CommonAddOptions {
-    targetSystem?: string[];
+    "target-ae-title"?: string;
+    "target-naddr"?: string[];
     preferChaining?: boolean;
     chainingProhibited?: boolean;
     localScope?: boolean;
@@ -16,7 +17,11 @@ interface CommonAddOptions {
 export
 function add_common_add_opts <T> (args: Argv<T>): Argv<T & CommonAddOptions> {
     return args
-        .option("targetSystem", {
+        .option("target-ae-title", {
+            type: "string",
+            description: "Distinguished name of the DSA application entity named in the `targetSystem` parameter",
+        })
+        .option("target-naddr", {
             type: "array",
             description: "URLs of the target DSAs to receive this entry via a newly established hierarchical operational binding",
             string: true, // TODO: Add this to all other array options.

@@ -78,6 +78,12 @@ function scopeOfReferralFromString (str?: string): ServiceControls_scopeOfReferr
     }
 }
 
+const msg1 = [
+    "You must provide both the `target-naddr` option and `target-ae-title` "
+    + "option if you wish to use the `targetSystem` parameter to add an entry "
+    + "in another DSA."
+].join("");
+
 export
 async function do_addEntry (
     ctx: Context,
@@ -86,16 +92,23 @@ async function do_addEntry (
     attributes: Attribute[],
 ): Promise<void> {
     const objectName: DistinguishedName = destringifyDN(ctx, argv.object);
-    const targetSystem: AccessPoint | undefined = argv.targetSystem
+    if (
+        (!argv["target-naddr"]?.length && argv["target-ae-title"])
+        || (argv["target-naddr"]?.length && !argv["target-ae-title"])
+    ) {
+        ctx.log.error(msg1);
+        process.exit(1);
+    }
+    const targetSystem: AccessPoint | undefined = (argv["target-naddr"]?.length && argv["target-ae-title"])
         ? new AccessPoint(
             {
-                rdnSequence: [],
+                rdnSequence: destringifyDN(ctx, argv["target-ae-title"]),
             },
             new PresentationAddress(
                 undefined,
                 undefined,
                 undefined,
-                argv.targetSystem.map((url: string) => uriToNSAP(url, false)),
+                argv["target-naddr"].map((url: string) => uriToNSAP(url, false)),
             ),
             undefined,
         )
