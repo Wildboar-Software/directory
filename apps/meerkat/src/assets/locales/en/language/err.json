@@ -217,11 +217,15 @@
     "unrecognized_search_rule": "This DSA does not have a search rule that applies to the DSE with ID {{uuid}} that has a DMD ID of {{dmd_id}} and an ID of {{id}}.",
     "validity_end_before_start": "Validity end time was before start time.",
     "invalid_initiator": "Invalid initiator syntax.",
+    "invalid_initiator@other_dsa": "Invalid initiator syntax received in DOP result from other DSA. Operational binding {{uuid}} will be terminated..",
     "agreement_entry_not_found": "Agreement entry not found.",
     "entry_info_reqd_for_relayed_hob": "entryInfo is required for a relayed hierarhical operational binding establishment as a subordinate. This is so the local DSA can create this entry first.",
     "failed_to_bind_to_other_dsa_for_dop": "Failed to bind to other DSA via DOP.",
     "relayed_dop_timeout": "Relayed DOP operation timed out.",
     "relayed_dop_other_error": "Unrecognized error in relayed DOP operation.",
     "must_have_dsa_keys_for_relayed_dop": "You MUST use the DSA's certificate and private key to be authorized to invoke relayed DOP.",
-    "nhob_subordinate_changed_agreement": "NHOB subordinate DSA attempted to modify operational binding {{uuid}} with a new immediate superior distinguished name in the agreement, which is prohibited. The agreement was automatically rejected."
+    "nhob_subordinate_changed_agreement": "NHOB subordinate DSA attempted to modify operational binding {{uuid}} with a new immediate superior distinguished name in the agreement, which is prohibited. The agreement was automatically rejected.",
+    "other_dsa_reversed_ob_role": "Other DSA attempted to reverse operational binding role. Operational binding {{uuid}} will be terminated.",
+    "other_dsa_changed_ob_type": "Other DSA returned a DOP result that changed the binding type. The operational binding will not be recognized.",
+    "other_dsa_did_not_choose_binding_id": "Other DSA did not choose an identifier for this operational binding. The operational binding will not be recognized."
 }

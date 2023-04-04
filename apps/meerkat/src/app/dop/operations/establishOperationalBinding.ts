@@ -40,6 +40,8 @@ import {
     OpBindingErrorParam_problem_duplicateID,
     OpBindingErrorParam_problem_currentlyNotDecidable,
     OpBindingErrorParam_problem_parametersMissing,
+    OpBindingErrorParam_problem_roleAssignment,
+    OpBindingErrorParam_problem_invalidID,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam-problem.ta";
 import {
     HierarchicalAgreement,
@@ -106,8 +108,12 @@ import {
     EstablishOperationalBindingArgumentData_initiator,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgumentData-initiator.ta";
 // import { _decode_AgreementID } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/AgreementID.ta";
-import { _decode_NonSpecificHierarchicalAgreement } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NonSpecificHierarchicalAgreement.ta";
-// import { _decode_ShadowingAgreementInfo } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
+import {
+    _decode_NonSpecificHierarchicalAgreement,
+} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NonSpecificHierarchicalAgreement.ta";
+// import {
+//     _decode_ShadowingAgreementInfo,
+// } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
 import dnToVertex from "../../dit/dnToVertex";
 import getContextPrefixInfo from "../../hob/getContextPrefixInfo";
 import { getEntryAttributesToShareInOpBinding } from "../../dit/getEntryAttributesToShareInOpBinding";
@@ -120,7 +126,9 @@ import createEntry from "../../database/createEntry";
 import getAttributesFromSubentry from "../../dit/getAttributesFromSubentry";
 import { bindForOBM } from "../../net/bindToOtherDSA";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
-import { SecurityProblem_insufficientAccessRights } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+import {
+    SecurityProblem_insufficientAccessRights,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import { becomeNonSpecificSubordinate } from "../establish/becomeNonSpecificSubordinate";
 import {
     _decode_NHOBSubordinateToSuperior,
@@ -137,6 +145,8 @@ import stringifyDN from "../../x500/stringifyDN";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import { top } from "@wildboar/x500/src/lib/collections/objectClasses";
+import terminateByTypeAndBindingID from "../terminateByTypeAndBindingID";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -335,7 +345,6 @@ async function relayedEstablishOperationalBinding (
                 roleA_initiates: _encode_SuperiorToSubordinate(new_sup2sub, DER),
             };
         } else if ("roleB_initiates" in initiator) {
-            // TODO: Role B needs to have access points policed / modified
             relay_agreement = agreement;
             relay_init = initiator;
         } else {
@@ -378,6 +387,12 @@ async function relayedEstablishOperationalBinding (
             signErrors,
         );
     }
+    const sp = createSecurityParameters(
+        ctx,
+        true,
+        relayTo.ae_title.rdnSequence,
+        id_op_establishOperationalBinding,
+    );
     const outcome = await dop.establishOperationalBinding({
         accessPoint: ctx.dsa.accessPoint,
         agreement: relay_agreement,
@@ -402,35 +417,322 @@ async function relayedEstablishOperationalBinding (
                 },
         ),
         bindingID: undefined,
-        securityParameters: createSecurityParameters(
-            ctx,
-            true,
-            relayTo.ae_title.rdnSequence,
-            id_op_establishOperationalBinding,
-        ),
+        securityParameters: sp,
         _unrecognizedExtensionsList: [],
     });
     let err_message: string = "";
     if ("result" in outcome) {
         const result = outcome.result.parameter;
         const data = getOptionallyProtectedValue(result);
-        if (
-            bindingType.isEqualTo(id_op_binding_hierarchical)
-            && ("roleA_replies" in data.initiator)
-            && cp?.dse.structuralObjectClass
-        ) {
-            const sup2sub = _decode_SuperiorToSubordinate(data.initiator.roleA_replies);
-            const agr = _decode_HierarchicalAgreement(agreement);
-            await becomeSubordinate(
-                ctx,
-                relayTo,
-                agr,
-                sup2sub,
-                cp.dse.structuralObjectClass,
-                cp.dse.governingStructureRule,
-                signErrors,
+        if (!data.bindingID) {
+            throw new errors.OperationalBindingError(
+                ctx.i18n.t("err:other_dsa_did_not_choose_binding_id"),
+                new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_invalidID,
+                    bindingType,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                ),
             );
         }
+        if (!data.bindingType.isEqualTo(bindingType)) {
+            throw new errors.OperationalBindingError(
+                ctx.i18n.t("err:other_dsa_changed_ob_type"),
+                new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_unsupportedBindingType,
+                    bindingType,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                ),
+            );
+        }
+        const access_point_id = await saveAccessPoint(ctx, relayTo, Knowledge.OB_REQUEST);
+        const ob_db_data: Prisma.OperationalBindingCreateInput = {
+            outbound: true,
+            binding_type: bindingType.toString(),
+            binding_identifier: Number(data.bindingID.identifier),
+            binding_version: Number(data.bindingID.version),
+            agreement_ber: Buffer.from(agreement.toBytes().buffer),
+            initiator: (() => {
+                if ("roleA_initiates" in relay_init) {
+                    return OperationalBindingInitiator.ROLE_A;
+                }
+                else if ("roleB_initiates" in relay_init) {
+                    return OperationalBindingInitiator.ROLE_B;
+                }
+                else {
+                    return OperationalBindingInitiator.SYMMETRIC;
+                }
+            })(),
+            initiator_ber: (() => {
+                if ("roleA_initiates" in relay_init) {
+                    return Buffer.from(relay_init.roleA_initiates.toBytes());
+                }
+                else if ("roleB_initiates" in relay_init) {
+                    return Buffer.from(relay_init.roleB_initiates.toBytes());
+                }
+                else {
+                    return Buffer.from(relay_init.symmetric.toBytes());
+                }
+            })(),
+            access_point: {
+                connect: {
+                    id: access_point_id,
+                },
+            },
+            validity_start: validFrom,
+            validity_end: validUntil,
+            security_certification_path: sp?.certification_path
+                ? Buffer.from(_encode_CertificationPath(sp.certification_path, DER).toBytes().buffer)
+                : undefined,
+            security_name: sp?.name?.map((rdn) => rdnToJson(rdn)),
+            security_time: sp?.time
+                ? getDateFromTime(sp.time)
+                : undefined,
+            security_random: sp?.random
+                ? Buffer.from(packBits(sp.random).buffer)
+                : undefined,
+            security_target: (sp?.target !== undefined)
+                ? Number(sp.target)
+                : undefined,
+            security_operationCode: codeToString(sp?.operationCode),
+            security_errorProtection: (sp?.errorProtection !== undefined)
+                ? Number(sp.errorProtection)
+                : undefined,
+            security_errorCode: codeToString(sp?.errorCode),
+            source_ip: assn.socket.remoteAddress,
+            source_tcp_port: assn.socket.remotePort,
+            source_credentials_type: 1,
+            source_certificate_path: sp?.certification_path
+                ? Buffer.from(_encode_CertificationPath(sp.certification_path, DER).toBytes().buffer)
+                : undefined,
+            source_strong_name: ctx.dsa.accessPoint.ae_title.rdnSequence.map(rdnToJson),
+            supply_contexts: null,
+            requested_time: new Date(),
+        };
+        const new_ob = await ctx.db.operationalBinding.create({
+            data: ob_db_data,
+            select: {
+                id: true,
+                uuid: true,
+            },
+        });
+        const ROLE_REVERSAL_ERROR = new errors.OperationalBindingError(
+            ctx.i18n.t("err:other_dsa_reversed_ob_role", { uuid: new_ob.uuid }),
+            new OpBindingErrorParam(
+                OpBindingErrorParam_problem_roleAssignment,
+                bindingType,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    id_err_operationalBindingError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                undefined,
+            ),
+        );
+        const INVALID_INIT_SYNTAX_ERROR = new errors.OperationalBindingError(
+            ctx.i18n.t("err:invalid_initiator", {
+                context: "other_dsa",
+                uuid: new_ob.uuid,
+            }),
+            new OpBindingErrorParam(
+                OpBindingErrorParam_problem_roleAssignment,
+                bindingType,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    id_err_operationalBindingError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                undefined,
+            ),
+        );
+        const bindingID = data.bindingID;
+        const revert_operational_binding = () => {
+            terminateByTypeAndBindingID(
+                ctx,
+                assn,
+                relayTo,
+                bindingType,
+                bindingID,
+                false,
+                signErrors,
+            )
+                .then(() => {
+                    ctx.log.info(ctx.i18n.t("log:terminated_ob", {
+                        context: "reversed",
+                        uuid: new_ob.uuid,
+                    }));
+                })
+                .catch((e) => {
+                    ctx.telemetry.trackException({
+                        exception: e,
+                        properties: {
+                            obUUID: new_ob.uuid,
+                            obType: id_op_binding_hierarchical.toString(),
+                            obid: bindingID.identifier,
+                            obver: bindingID.version,
+                            administratorEmail: ctx.config.administratorEmail,
+                            invokeID: invokeId.toString(),
+                        },
+                        measurements: {
+                            bytesRead: assn.socket.bytesRead,
+                            bytesWritten: assn.socket.bytesWritten,
+                        },
+                    });
+                    ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+                        obid: bindingID.identifier.toString(),
+                        obver: bindingID.version.toString(),
+                        e: e.message,
+                    }), {
+                        remoteFamily: assn.socket.remoteFamily,
+                        remoteAddress: assn.socket.remoteAddress,
+                        remotePort: assn.socket.remotePort,
+                        association_id: assn.id,
+                        invokeID: invokeId.toString(),
+                    });
+                });
+        };
+        if (bindingType.isEqualTo(id_op_binding_hierarchical)) {
+            if ("roleA_replies" in data.initiator) {
+                if (!("roleB_initiates" in initiator)) {
+                    revert_operational_binding();
+                    throw ROLE_REVERSAL_ERROR;
+                }
+                if (!cp) {
+                    revert_operational_binding();
+                    throw new errors.UnknownError("2b97303d-c535-4771-be8d-aa49f2bd5970");
+                }
+                const sup2sub = _decode_SuperiorToSubordinate(data.initiator.roleA_replies);
+                const agr = _decode_HierarchicalAgreement(agreement);
+                await becomeSubordinate(
+                    ctx,
+                    relayTo,
+                    agr,
+                    sup2sub,
+                    cp.dse.structuralObjectClass ?? top["&id"],
+                    cp.dse.governingStructureRule,
+                    signErrors,
+                );
+            }
+            else if ("roleB_replies" in data.initiator) {
+                if (!("roleA_initiates" in initiator)) {
+                    revert_operational_binding();
+                    throw ROLE_REVERSAL_ERROR;
+                }
+                const sub2sup = _decode_SubordinateToSuperior(data.initiator.roleB_replies);
+                const agr = _decode_HierarchicalAgreement(agreement);
+                await becomeSuperior(
+                    ctx,
+                    assn,
+                    { present: invokeId },
+                    agr,
+                    sub2sup,
+                    signErrors,
+                );
+            }
+            else {
+                revert_operational_binding();
+                throw INVALID_INIT_SYNTAX_ERROR;
+            }
+        }
+        else if (bindingType.isEqualTo(id_op_binding_non_specific_hierarchical)) {
+            if ("roleA_replies" in data.initiator) {
+                if (!("roleB_initiates" in initiator)) {
+                    revert_operational_binding();
+                    throw ROLE_REVERSAL_ERROR;
+                }
+                const sup2sub = _decode_NHOBSuperiorToSubordinate(data.initiator.roleA_replies);
+                _decode_NonSpecificHierarchicalAgreement(agreement); // Just for validation.
+                await becomeNonSpecificSubordinate(
+                    ctx,
+                    relayTo,
+                    sup2sub,
+                    signErrors,
+                );
+            }
+            else if ("roleB_replies" in data.initiator) {
+                if (!("roleA_initiates" in initiator)) {
+                    revert_operational_binding();
+                    throw ROLE_REVERSAL_ERROR;
+                }
+                const sub2sup = _decode_NHOBSubordinateToSuperior(data.initiator.roleB_replies);
+                const agr = _decode_NonSpecificHierarchicalAgreement(agreement);
+                await becomeNonSpecificSuperior(
+                    ctx,
+                    assn,
+                    agr,
+                    sub2sup,
+                    signErrors,
+                    new_ob.id,
+                );
+            }
+            else {
+                revert_operational_binding();
+                throw INVALID_INIT_SYNTAX_ERROR;
+            }
+        }
+        else {
+            revert_operational_binding();
+            new errors.OperationalBindingError(
+                ctx.i18n.t("err:ob_type_unrecognized", { obtype: bindingType.toString() }),
+                new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_unsupportedBindingType,
+                    bindingType,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                ),
+            );
+        }
+        await ctx.db.operationalBinding.update({
+            where: {
+                id: new_ob.id,
+            },
+            data: {
+                accepted: true,
+            },
+        });
         return result;
     }
     else if ("error" in outcome) {

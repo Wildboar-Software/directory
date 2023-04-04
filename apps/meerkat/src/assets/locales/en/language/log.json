@@ -98,6 +98,7 @@
     "failed_init_telemetry": "Failed to initialize telemetry. {{e}}",
     "terminating_ob@cp": "Terminating operational binding {{uuid}} because its context prefix is being deleted.",
     "terminated_ob@cp": "Terminated operational binding {{uuid}} because its context prefix is being deleted.",
+    "terminated_ob@reversed": "Terminated operational binding {{uuid}} because there was an error in the DOP result, so the binding is being reverted.",
     "removing_a_context_prefix": "Removing context prefix {{uuid}}.",
     "updating_superior_dsa@subentry": "Updating superior DSA because one of the context prefix's subentries were deleted.",
     "failed_to_update_superior_dsa": "Failed to update superior DSA with error {{e}}",
