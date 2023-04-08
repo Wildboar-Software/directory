@@ -84,7 +84,6 @@
     "invalid_nextrdntoberesolved": "Invalid nextRDNToBeResolved {{next}}.",
     "joins_unsupported": "Joins are entirely unsupported by this server.",
     "not_authz_search_base_object": "Not authorized to search the base object entry.",
-    "not_authz_superior": "No such superior or not authorized to know about it.",
     "parent_dse_not_permissible": "Parent DSE is not of a permissible DSE type.",
     "unrecognized_ob_start_time_syntax": "Unrecognized operational binding start time syntax.",
     "unrecognized_ob_end_time_syntax": "Unrecognized operational binding end time syntax.",
