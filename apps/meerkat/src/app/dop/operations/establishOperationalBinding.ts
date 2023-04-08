@@ -1900,7 +1900,7 @@ async function establishOperationalBinding (
                     bindingID,
                     ctx.dsa.accessPoint,
                     {
-                        roleB_replies: _encode_NHOBSuperiorToSubordinate(reply, DER),
+                        roleA_replies: _encode_NHOBSuperiorToSubordinate(reply, DER),
                     },
                     [],
                     createSecurityParameters(
