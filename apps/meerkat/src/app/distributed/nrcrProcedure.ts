@@ -228,7 +228,7 @@ async function nrcrProcedure (
                 return outcome.error;
             }
         }
-        let allServiceErrors: boolean = true;
+        let allUnableToProceed: boolean = true;
         for (const ap of cref.accessPoints) {
             if (op?.abandonTime) {
                 op.events.emit("abandon");
@@ -269,6 +269,7 @@ async function nrcrProcedure (
                 continue;
             }
             if (("result" in outcome) && outcome.result) {
+                allUnableToProceed = false;
                 try {
                     return chainedRead.decoderFor["&ResultType"]!(outcome.result.parameter);
                 } catch (e) {
@@ -290,17 +291,20 @@ async function nrcrProcedure (
                         continue;
                     }
                     const errorData = getOptionallyProtectedValue(errorParam);
-                    if (
-                        (errorData.problem === ServiceProblem_unableToProceed)
-                        || (errorData.problem === ServiceProblem_busy)
+                    // Step 7, bullet point 1
+                    if (errorData.problem === ServiceProblem_unableToProceed) {
+                        // allUnableToProceed = false;
+                        continue;
+                    }
+                    allUnableToProceed = false;
+                    if ( // Step 7, bullet point 2
+                        (errorData.problem === ServiceProblem_busy)
                         || (errorData.problem === ServiceProblem_unavailable)
                         || (errorData.problem === ServiceProblem_unwillingToPerform)
                     ) {
-                        if (errorData.problem !== ServiceProblem_unableToProceed) {
-                            allServiceErrors = false;
-                        }
                         continue;
                     } else if (errorData.problem === ServiceProblem_invalidReference) {
+                        // Step 7, bullet point 3
                         throw new errors.ServiceError(
                             ctx.i18n.t("err:dit_error"),
                             new ServiceErrorData(
@@ -322,16 +326,22 @@ async function nrcrProcedure (
                     } else {
                         return outcome.error;
                     }
-                } else {
-                    allServiceErrors = false;
-                    continue;
+                } else { // Step 7, bullet point 3
+                    // This will have the effect of returning the referral to
+                    // the operation dispatcher.
+                    throw new errors.ChainedError(
+                        ctx.i18n.t("log:chained_error"),
+                        outcome.error.parameter,
+                        outcome.error.code,
+                        signErrors,
+                    );
                 }
+            } else {
+                allUnableToProceed = false;
             }
         } // End of NSSR access point loop.
-        if (allServiceErrors) {
-            // partialNameResolution simply will not be available for
-            // internally-generated requests so that operationEvaluation() does
-            // not have to be re-written to tolerate an undefined association.
+
+        if (allUnableToProceed) {
             if (partialNameResolution && assn) {
                 state.partialName = TRUE;
                 state.entrySuitable = TRUE;
