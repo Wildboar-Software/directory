@@ -501,22 +501,22 @@ function addSubschemaSubentryArgument (
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     4,
                     nf.dMDNameForm["&id"],
-                    [1, 2, 3, 8, 11],
+                    [1, 2, 3, 8, 11, 18],
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     5,
                     nf.dSANameForm["&id"],
-                    [1, 4, 8, 11],
+                    [1, 4, 8, 11, 4, 18],
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     6,
                     nf.deviceNameForm["&id"],
-                    [1, 2, 3, 4, 5, 8, 11, 12, 13, 14, 15, 16, 17],
+                    [1, 2, 3, 4, 5, 8, 11, 12, 13, 14, 15, 16, 17, 18],
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     7,
                     nf.gONNameForm["&id"],
-                    [1, 2, 3, 8, 11],
+                    [1, 2, 3, 8, 11, 18],
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     8,
@@ -526,22 +526,22 @@ function addSubschemaSubentryArgument (
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     9,
                     nf.orgPersonNameForm["&id"],
-                    [1, 2, 3, 8, 11],
+                    [1, 2, 3, 8, 11, 18],
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     10,
                     nf.orgRoleNameForm["&id"],
-                    [1, 2, 3, 8, 11],
+                    [1, 2, 3, 8, 11, 18],
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     11,
                     nf.orgUnitNameForm["&id"],
-                    [1, 2, 3, 8, 11],
+                    [1, 2, 3, 8, 11, 18],
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     12,
                     nf.personNameForm["&id"],
-                    [1, 2, 3, 8, 11],
+                    [1, 2, 3, 8, 11, 18],
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     13,
@@ -551,7 +551,7 @@ function addSubschemaSubentryArgument (
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     14,
                     nf.applProcessNameForm["&id"],
-                    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+                    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 18],
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     15,
@@ -561,12 +561,17 @@ function addSubschemaSubentryArgument (
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     16,
                     nf.cRLDistPtNameForm["&id"],
-                    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18],
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     17,
                     inetOrgPersonNameForm["&id"],
-                    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18],
+                ), DER),
+                // This allows organizations in the top level.
+                _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
+                    18,
+                    nf.orgNameForm["&id"],
                 ), DER),
             ],
             undefined,
