@@ -493,7 +493,7 @@ function addSubschemaSubentryArgument (
             [
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     1,
-                    nf.countryNameForm["&id"],
+                    nf.orgNameForm["&id"], // NOTE: This differs from the C=* top-level admin areas.
                 ), DER),
                 _encode_DITStructureRuleDescription(new DITStructureRuleDescription(
                     2,
