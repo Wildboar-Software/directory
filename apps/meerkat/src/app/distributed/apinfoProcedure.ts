@@ -72,6 +72,7 @@ import stringifyDN from "../x500/stringifyDN";
 import { bindForChaining } from "../net/bindToOtherDSA";
 import { OperationOutcome } from "@wildboar/rose-transport";
 import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
+import { ContinuationReference } from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
 
 /**
  * @summary The Access Point Information Procedure, as defined in ITU Recommendation X.518.
@@ -87,6 +88,7 @@ import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
  * @param state The operation dispatcher state
  * @param signErrors Whether to cryptographically sign errors
  * @param chainingProhibited Whether chaining was prohibited
+ * @param cref The continuation reference
  * @returns A result or error
  *
  * @function
@@ -101,6 +103,7 @@ async function apinfoProcedure (
     state: OperationDispatcherState,
     signErrors: boolean,
     chainingProhibited: boolean,
+    cref: ContinuationReference,
 ): Promise<OperationOutcome | null> {
     const op = ("present" in state.invokeId)
         ? assn?.invocations.get(Number(state.invokeId.present))
@@ -112,11 +115,13 @@ async function apinfoProcedure (
     const nameResolveOnMaster: BOOLEAN = req.chaining.nameResolveOnMaster
         ?? ChainingArguments._default_value_for_nameResolveOnMaster;
     const nameResolutionIsProceeding: boolean = (req.chaining.operationProgress?.nameResolutionPhase === proceeding);
+
     const chainingArgs: ChainingArguments = cloneChainingArguments(req.chaining, {
         nameResolveOnMaster: (
             (nameResolutionIsProceeding && nameResolveOnMaster)
             || (isModificationOperation(req.opCode) && (req.chaining.referenceType === nssr))
         ),
+        referenceType: cref.referenceType,
         securityParameters: createSecurityParameters(
             ctx,
             ctx.config.chaining.signChainedRequests,

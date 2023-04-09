@@ -148,7 +148,7 @@ async function scrProcedure (
                 opCode: id_opcode_search,
                 argument: _encode_SearchArgument(arg, DER),
             };
-            const response = await apinfoProcedure(ctx, api, req, assn, state, signErrors, chainingProhibited);
+            const response = await apinfoProcedure(ctx, api, req, assn, state, signErrors, chainingProhibited, cr);
             if (!response) {
                 ctx.log.debug(ctx.i18n.t("log:scr_null_response", logMsgInfo), logInfo);
                 continue;

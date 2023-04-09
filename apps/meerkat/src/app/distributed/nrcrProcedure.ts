@@ -219,6 +219,7 @@ async function nrcrProcedure (
                 state,
                 signErrors,
                 chainingProhibited,
+                cref,
             );
             if (!outcome) {
                 continue;
@@ -261,6 +262,7 @@ async function nrcrProcedure (
                     state,
                     signErrors,
                     chainingProhibited,
+                    cref,
                 );
             } catch {
                 continue;

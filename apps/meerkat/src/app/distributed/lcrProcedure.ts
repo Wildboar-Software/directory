@@ -171,7 +171,7 @@ async function lcrProcedure (
                 opCode: id_opcode_list,
                 argument: _encode_ListArgument(arg, DER),
             };
-            const response = await apinfoProcedure(ctx, api, req, assn, state, signErrors, chainingProhibited);
+            const response = await apinfoProcedure(ctx, api, req, assn, state, signErrors, chainingProhibited, cr);
             if (!response) {
                 ctx.log.debug(ctx.i18n.t("log:lcr_null_response", logMsgInfo), logInfo);
                 unexplore();

@@ -561,8 +561,6 @@ export
                     }
                 } else { // m !== 0
                     // Target Not Found, Step 4 (continued).
-                    // In a first-level DSA, the root DSE should have an NSSR.
-                    // Basically, a root DSE will always have a type of either subr or nssr.
                     (ctx.dit.root.dse.nssr?.nonSpecificKnowledge ?? []).forEach((knowledge): void => {
                         const [masters, shadows] = splitIntoMastersAndShadows(knowledge);
                         const recommendedAP = shadows[0] ?? masters[0];
