@@ -88,6 +88,12 @@ are permitted by search rules that provide the following services:
 These search rules are defined at the bottom of the ASN.1 module at the
 [bottom of this page](#ocala-search-rules).
 
+Finally, the top-level entry, `O=UN` is meant to represent United Nations. When
+the demo DIT is created, it has no entries under it. It's primary purpose is to
+serve as a Non-Specific Subordinate Reference (NSSR) within one or more
+(currently, manually established) Non-Specific Hierarchical Operational
+Bindingds (NHOBs).
+
 ## Quipu DSA
 
 Quipu DSA, the X.500 directory in the

@@ -23,6 +23,7 @@ import {
     localityName,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localityName.oa";
 import { sleep } from "./app/utils";
+import seedUN from "./app/create-un";
 
 program.version("1.0.0");
 
@@ -50,6 +51,7 @@ async function main () {
             ctx.log.info(`Created global directory administrator cn=admin with password '${adminPassword}'.`);
             const adminConnection = await bind(ctx, options["accessPoint"], adminDN, adminPassword);
             await createCountries(ctx, adminConnection);
+            await seedUN(ctx, adminConnection);
             await seedUS(ctx, adminConnection);
             await adminConnection.close();
             break;
