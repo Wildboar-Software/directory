@@ -200,6 +200,7 @@ import { dSAProblem } from "@wildboar/x500/src/lib/modules/SelectedAttributeType
 import {
     id_pr_targetDsaUnavailable,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-targetDsaUnavailable.va";
+import DSPAssociation from "../dsp/DSPConnection";
 
 const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
 const ID_AC_SPECIFIC: string = id_ar_accessControlSpecificArea.toString();
@@ -1550,11 +1551,24 @@ async function addEntry (
         op.pointOfNoReturnTime = new Date();
     }
 
+    /* DEVIATION: This is done to accomodate the creation of new context
+    prefixes using chained `addEntry` under an NSSR. */
+    const cp: boolean = (
+        !!immediateSuperior.dse.immSupr?.specificKnowledge?.length
+        && (assn instanceof DSPAssociation)
+        && !!assn.boundNameAndUID?.dn?.length
+        && immediateSuperior.dse.immSupr.specificKnowledge
+            .some((sk) => compareDistinguishedName(
+                assn.boundNameAndUID!.dn,
+                sk.ae_title.rdnSequence,
+                NAMING_MATCHER))
+    );
     const newEntry = await createEntry(ctx, immediateSuperior, rdn, {
         governingStructureRule: governingStructureRule
             ? Number(governingStructureRule)
             : undefined,
         structuralObjectClass: structuralObjectClass.toString(),
+        cp,
     }, data.entry, user?.dn);
     immediateSuperior.subordinates?.push(newEntry);
     ctx.log.debug(ctx.i18n.t("log:add_entry", {

@@ -85,6 +85,11 @@ async function createContextPrefixEntry (
         vertex.accessPoints?.map((ap) => saveAccessPoint(
             ctx, ap, Knowledge.SPECIFIC, createdEntry.dse.id)) ?? [],
     );
+    if (immSupr) {
+        createdEntry.dse.immSupr = {
+            specificKnowledge: vertex.accessPoints ?? [],
+        };
+    }
     for (const subentry of (vertex.subentries ?? [])) {
         await createEntry(
             ctx,
