@@ -435,27 +435,55 @@ export
 
     const candidateRefsEmpty_yes_branch = async (): Promise<void> => {
         if (partialNameResolution === FALSE) {
-            throw new errors.NameError(
-                ctx.i18n.t("err:entry_not_found"),
-                new NameErrorData(
-                    NameProblem_noSuchObject,
-                    {
-                        rdnSequence: needleDN.slice(0, i),
-                    },
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        signErrors,
-                        assn?.boundNameAndUID?.dn,
+            const nextRDNToBeResolved = state.chainingArguments.operationProgress?.nextRDNToBeResolved;
+            /* DEVIATION: Search for bd34be10-ce99-4d0a-9385-d993a53f3fd9. Same
+            condition as used there so as to avoid disclosing the presence of
+            entries via the use of error oracles. */
+            if ( // This same exact condition is used elsewhere in Find DSE.
+                (state.chainingArguments.referenceType === ReferenceType_nonSpecificSubordinate)
+                && (nextRDNToBeResolved === (i + 1))
+            ) {
+                throw new errors.ServiceError(
+                    ctx.i18n.t("err:unable_to_proceed"),
+                    new ServiceErrorData(
+                        ServiceProblem_unableToProceed,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn?.boundNameAndUID?.dn,
+                            undefined,
+                            serviceError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
                         undefined,
-                        nameError["&errorCode"],
                     ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    state.chainingArguments.aliasDereferenced,
-                    undefined,
-                ),
-                signErrors,
-            );
+                    signErrors,
+                );
+            } else {
+                throw new errors.NameError(
+                    ctx.i18n.t("err:entry_not_found"),
+                    new NameErrorData(
+                        NameProblem_noSuchObject,
+                        {
+                            rdnSequence: needleDN.slice(0, i),
+                        },
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn?.boundNameAndUID?.dn,
+                            undefined,
+                            nameError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        undefined,
+                    ),
+                    signErrors,
+                );
+            }
         } else {
             state.entrySuitable = true;
             state.foundDSE = dse_i;
@@ -1204,27 +1232,61 @@ export
                                     signErrors,
                                 );
                             }
-                            throw new errors.NameError(
-                                ctx.i18n.t("err:entry_not_found"),
-                                new NameErrorData(
-                                    NameProblem_noSuchObject,
-                                    {
-                                        rdnSequence: childDN,
-                                    },
-                                    [],
-                                    createSecurityParameters(
-                                        ctx,
-                                        signErrors,
-                                        assn?.boundNameAndUID?.dn,
+                            const nextRDNToBeResolved = state.chainingArguments.operationProgress?.nextRDNToBeResolved;
+                            /* Checking permission to discover entries itself is
+                            a deviation from the specification, but this is a
+                            further deviation to avoid disclosing the presence
+                            of an entry. If the entry does not exist within an
+                            NSSR, and the user does not have permission to
+                            discover it, we want the error to be "unable to
+                            proceed" so that the directory as a whole simply
+                            behaves as though the entry does not exist.
+                            bd34be10-ce99-4d0a-9385-d993a53f3fd9 */
+                            if ( // This same exact condition is used elsewhere in Find DSE.
+                                (state.chainingArguments.referenceType === ReferenceType_nonSpecificSubordinate)
+                                && (nextRDNToBeResolved === (i + 1))
+                            ) {
+                                throw new errors.ServiceError(
+                                    ctx.i18n.t("err:unable_to_proceed"),
+                                    new ServiceErrorData(
+                                        ServiceProblem_unableToProceed,
+                                        [],
+                                        createSecurityParameters(
+                                            ctx,
+                                            signErrors,
+                                            assn?.boundNameAndUID?.dn,
+                                            undefined,
+                                            serviceError["&errorCode"],
+                                        ),
+                                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                                        state.chainingArguments.aliasDereferenced,
                                         undefined,
-                                        nameError["&errorCode"],
                                     ),
-                                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                                    state.chainingArguments.aliasDereferenced,
-                                    undefined,
-                                ),
-                                signErrors,
-                            );
+                                    signErrors,
+                                );
+                            } else {
+                                throw new errors.NameError(
+                                    ctx.i18n.t("err:entry_not_found"),
+                                    new NameErrorData(
+                                        NameProblem_noSuchObject,
+                                        {
+                                            rdnSequence: childDN,
+                                        },
+                                        [],
+                                        createSecurityParameters(
+                                            ctx,
+                                            signErrors,
+                                            assn?.boundNameAndUID?.dn,
+                                            undefined,
+                                            nameError["&errorCode"],
+                                        ),
+                                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                                        state.chainingArguments.aliasDereferenced,
+                                        undefined,
+                                    ),
+                                    signErrors,
+                                );
+                            }
                         }
                     }
                     i++;
