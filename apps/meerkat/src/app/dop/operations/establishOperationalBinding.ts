@@ -174,10 +174,41 @@ async function relayedEstablishOperationalBinding (
     let relay_agreement: ASN1Element | undefined;
     let relay_init: EstablishOperationalBindingArgumentData_initiator | undefined;
     let cp: Vertex | undefined;
+    const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     if (bindingType.isEqualTo(id_op_binding_hierarchical)) {
         const agr = _decode_HierarchicalAgreement(agreement);
         if ("roleA_initiates" in initiator) {
             const init = _decode_SuperiorToSubordinate(initiator.roleA_initiates);
+            const last_vertex = init.contextPrefixInfo[init.contextPrefixInfo.length - 1];
+            for (const ap of last_vertex?.accessPoints ?? []) {
+                if (compareDistinguishedName(
+                    ap.ae_title.rdnSequence,
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    NAMING_MATCHER,
+                )) {
+                    throw new errors.OperationalBindingError(
+                        ctx.i18n.t("err:cannot_establish_ob_with_self"),
+                        new OpBindingErrorParam(
+                            OpBindingErrorParam_problem_roleAssignment,
+                            bindingType,
+                            undefined,
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                signErrors,
+                                assn.boundNameAndUID?.dn,
+                                undefined,
+                                id_err_operationalBindingError,
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            undefined,
+                            undefined,
+                        ),
+                        signErrors,
+                    );
+                }
+            }
             // This is only checked for Role A, because Role B (subordinate)
             // won't have this entry locally.
             const supr_entry = await dnToVertex(ctx, ctx.dit.root, agr.immediateSuperior);
@@ -216,6 +247,35 @@ async function relayedEstablishOperationalBinding (
             };
         } else if ("roleB_initiates"  in initiator) {
             const init = _decode_SubordinateToSuperior(initiator.roleB_initiates);
+            for (const ap of init.accessPoints ?? []) {
+                if (compareDistinguishedName(
+                    ap.ae_title.rdnSequence,
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    NAMING_MATCHER,
+                )) {
+                    throw new errors.OperationalBindingError(
+                        ctx.i18n.t("err:cannot_establish_ob_with_self"),
+                        new OpBindingErrorParam(
+                            OpBindingErrorParam_problem_roleAssignment,
+                            bindingType,
+                            undefined,
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                signErrors,
+                                assn.boundNameAndUID?.dn,
+                                undefined,
+                                id_err_operationalBindingError,
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            undefined,
+                            undefined,
+                        ),
+                        signErrors,
+                    );
+                }
+            }
             let current: Vertex = ctx.dit.root;
             for (const rdn of agr.immediateSuperior) {
                 const sub_id = await rdnToID(ctx, current.dse.id, rdn);
@@ -1164,6 +1224,36 @@ async function establishOperationalBinding (
         const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(data.agreement);
         if ("roleA_initiates" in data.initiator) {
             const init: SuperiorToSubordinate = _decode_SuperiorToSubordinate(data.initiator.roleA_initiates);
+            const last_vertex = init.contextPrefixInfo[init.contextPrefixInfo.length - 1];
+            for (const ap of last_vertex?.accessPoints ?? []) {
+                if (compareDistinguishedName(
+                    ap.ae_title.rdnSequence,
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    NAMING_MATCHER,
+                )) {
+                    throw new errors.OperationalBindingError(
+                        ctx.i18n.t("err:cannot_establish_ob_with_self"),
+                        new OpBindingErrorParam(
+                            OpBindingErrorParam_problem_roleAssignment,
+                            data.bindingType,
+                            undefined,
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                signErrors,
+                                assn.boundNameAndUID?.dn,
+                                undefined,
+                                id_err_operationalBindingError,
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            undefined,
+                            undefined,
+                        ),
+                        signErrors,
+                    );
+                }
+            }
             if (!init.entryInfo?.length) {
                 /**
                  * Technically, a HOB allows the subordinate DSA to establish
@@ -1443,6 +1533,35 @@ async function establishOperationalBinding (
             }
         } else if ("roleB_initiates" in data.initiator) {
             const init: SubordinateToSuperior = _decode_SubordinateToSuperior(data.initiator.roleB_initiates);
+            for (const ap of init.accessPoints ?? []) {
+                if (compareDistinguishedName(
+                    ap.ae_title.rdnSequence,
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    NAMING_MATCHER,
+                )) {
+                    throw new errors.OperationalBindingError(
+                        ctx.i18n.t("err:cannot_establish_ob_with_self"),
+                        new OpBindingErrorParam(
+                            OpBindingErrorParam_problem_roleAssignment,
+                            data.bindingType,
+                            undefined,
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                signErrors,
+                                assn.boundNameAndUID?.dn,
+                                undefined,
+                                id_err_operationalBindingError,
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            undefined,
+                            undefined,
+                        ),
+                        signErrors,
+                    );
+                }
+            }
             const created = await ctx.db.operationalBinding.create({
                 data: {
                     ...ob_db_data,
@@ -1607,6 +1726,36 @@ async function establishOperationalBinding (
         const agreement = _decode_NonSpecificHierarchicalAgreement(data.agreement);
         if ("roleA_initiates" in data.initiator) {
             const init = _decode_NHOBSuperiorToSubordinate(data.initiator.roleA_initiates);
+            const last_vertex = init.contextPrefixInfo[init.contextPrefixInfo.length - 1];
+            for (const ap of last_vertex?.accessPoints ?? []) {
+                if (compareDistinguishedName(
+                    ap.ae_title.rdnSequence,
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    NAMING_MATCHER,
+                )) {
+                    throw new errors.OperationalBindingError(
+                        ctx.i18n.t("err:cannot_establish_ob_with_self"),
+                        new OpBindingErrorParam(
+                            OpBindingErrorParam_problem_roleAssignment,
+                            data.bindingType,
+                            undefined,
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                signErrors,
+                                assn.boundNameAndUID?.dn,
+                                undefined,
+                                id_err_operationalBindingError,
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            undefined,
+                            undefined,
+                        ),
+                        signErrors,
+                    );
+                }
+            }
             const cp_info_dn: DistinguishedName = init.contextPrefixInfo.map((rdn) => rdn.rdn);
             if (!compareDistinguishedName(
                 agreement.immediateSuperior,
@@ -1802,6 +1951,35 @@ async function establishOperationalBinding (
         }
         else if ("roleB_initiates" in data.initiator) {
             const init = _decode_NHOBSubordinateToSuperior(data.initiator.roleB_initiates);
+            for (const ap of init.accessPoints ?? []) {
+                if (compareDistinguishedName(
+                    ap.ae_title.rdnSequence,
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    NAMING_MATCHER,
+                )) {
+                    throw new errors.OperationalBindingError(
+                        ctx.i18n.t("err:cannot_establish_ob_with_self"),
+                        new OpBindingErrorParam(
+                            OpBindingErrorParam_problem_roleAssignment,
+                            data.bindingType,
+                            undefined,
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                signErrors,
+                                assn.boundNameAndUID?.dn,
+                                undefined,
+                                id_err_operationalBindingError,
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            undefined,
+                            undefined,
+                        ),
+                        signErrors,
+                    );
+                }
+            }
             const created = await ctx.db.operationalBinding.create({
                 data: {
                     ...ob_db_data,
