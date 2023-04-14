@@ -1052,6 +1052,32 @@ async function addEntry (
             );
         }
 
+        // This DSA will not establish an operational binding with itself.
+        if (compareDistinguishedName(
+            data.targetSystem.ae_title.rdnSequence,
+            ctx.dsa.accessPoint.ae_title.rdnSequence,
+            NAMING_MATCHER,
+        )) {
+            throw new errors.ServiceError(
+                ctx.i18n.t("err:cannot_establish_ob_with_self"),
+                new ServiceErrorData(
+                    ServiceProblem_unwillingToPerform,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        serviceError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    state.chainingArguments.aliasDereferenced,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
+
         const targetSystem = data.targetSystem;
         const targetSystem_refers_to_non_specific_subordinate_dsa: boolean = !!(
             immediateSuperior.dse.nssr
