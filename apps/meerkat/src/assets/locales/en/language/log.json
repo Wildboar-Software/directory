@@ -255,5 +255,6 @@
     "multiple_search_rules_of_same_user_class": "Detected multiple permitted and applicable search rules having user class {{user_class}}. It may be desirable to re-work the search rule definitions.",
     "unable_to_find_search_rule": "Unable to find search rule {{id}} within DMD {{dmd_id}}. Search invocation {{iid}} will proceed without regulation by this rule.",
     "awaiting_ob_approval": "Awaiting DSA administrator approval of operational binding {{uuid}}.",
-    "not_authz_discover": "Association {{aid}} is not authorized to discover DN '{{dn}}'."
+    "not_authz_discover": "Association {{aid}} is not authorized to discover DN '{{dn}}'.",
+    "entry_not_found@nssr": "Candidate refs empty under NSSR. i={{i}}."
 }

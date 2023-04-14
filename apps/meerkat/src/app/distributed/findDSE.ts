@@ -437,6 +437,12 @@ export
     const candidateRefsEmpty_yes_branch = async (): Promise<void> => {
         if (partialNameResolution === FALSE) {
             const nextRDNToBeResolved = state.chainingArguments.operationProgress?.nextRDNToBeResolved;
+            if (state.chainingArguments.referenceType === ReferenceType_nonSpecificSubordinate) {
+                ctx.log.debug(ctx.i18n.t("log:entry_not_found", {
+                    context: "nssr",
+                    i,
+                }));
+            }
             /* DEVIATION: Search for bd34be10-ce99-4d0a-9385-d993a53f3fd9. Same
             condition as used there so as to avoid disclosing the presence of
             entries via the use of error oracles. */
