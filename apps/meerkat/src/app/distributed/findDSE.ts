@@ -448,7 +448,7 @@ export
             entries via the use of error oracles. */
             if ( // This same exact condition is used elsewhere in Find DSE.
                 (state.chainingArguments.referenceType === ReferenceType_nonSpecificSubordinate)
-                && (nextRDNToBeResolved === (i + 1))
+                && (Number(nextRDNToBeResolved ?? -1) === Number(i + 1))
             ) {
                 throw new errors.ServiceError(
                     ctx.i18n.t("err:unable_to_proceed"),
@@ -662,7 +662,7 @@ export
                 }
                 if (
                     (state.chainingArguments.referenceType === ReferenceType_nonSpecificSubordinate)
-                    && (nextRDNToBeResolved === (i + 1))
+                    && (Number(nextRDNToBeResolved ?? -1) === Number(i + 1))
                 ) {
                     throw new errors.ServiceError(
                         ctx.i18n.t("err:unable_to_proceed"),
@@ -1255,7 +1255,7 @@ export
                             bd34be10-ce99-4d0a-9385-d993a53f3fd9 */
                             if ( // This same exact condition is used elsewhere in Find DSE.
                                 (state.chainingArguments.referenceType === ReferenceType_nonSpecificSubordinate)
-                                && (nextRDNToBeResolved === (i + 1))
+                                && (Number(nextRDNToBeResolved ?? -1) === Number(i + 1))
                             ) {
                                 throw new errors.ServiceError(
                                     ctx.i18n.t("err:unable_to_proceed"),
