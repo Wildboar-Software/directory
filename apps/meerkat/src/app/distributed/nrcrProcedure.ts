@@ -205,12 +205,12 @@ async function nrcrProcedure (
         }
         assert(cref.accessPoints[0]);
         checkTimeLimit();
-        ctx.log.debug(ctx.i18n.t("log:continuing_name_resolution", {
-            opid: req.chaining.operationIdentifier ?? "ABSENT",
-            dn: stringifyDN(ctx, cref.targetObject.rdnSequence),
-        }));
         const isNSSR = (cref.referenceType === ReferenceType_nonSpecificSubordinate);
         if (!isNSSR) {
+            ctx.log.debug(ctx.i18n.t("log:continuing_name_resolution", {
+                opid: req.chaining.operationIdentifier ?? "ABSENT",
+                dn: stringifyDN(ctx, cref.targetObject.rdnSequence),
+            }));
             const outcome = await apinfoProcedure(
                 ctx,
                 cref.accessPoints[0],
@@ -229,6 +229,12 @@ async function nrcrProcedure (
                 return outcome.error;
             }
         }
+        ctx.log.debug(ctx.i18n.t("log:continuing_name_resolution", {
+            context: "nssr",
+            opid: req.chaining.operationIdentifier ?? "ABSENT",
+            dn: stringifyDN(ctx, cref.targetObject.rdnSequence),
+            i: cref.operationProgress?.nextRDNToBeResolved?.toString(),
+        }));
         let allUnableToProceed: boolean = true;
         for (const ap of cref.accessPoints) {
             if (op?.abandonTime) {

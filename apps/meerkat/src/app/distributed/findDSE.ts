@@ -140,6 +140,7 @@ import { Prisma } from "@prisma/client";
 import getEqualityNormalizer from "../x500/getEqualityNormalizer";
 import { isModificationOperation } from "@wildboar/x500";
 import { EXT_BIT_USE_ALIAS_ON_UPDATE } from "@wildboar/x500/src/lib/dap/extensions";
+import stringifyDN from "../x500/stringifyDN";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -1202,6 +1203,10 @@ export
                         );
 
                         if (!authorizedToDiscover) {
+                            ctx.log.info(ctx.i18n.t("log:not_authz_discover", {
+                                aid: assn?.id ?? "INTERNAL",
+                                dn: stringifyDN(ctx, needleDN).slice(0, 1024),
+                            }));
                             const { authorized: authorizedToDiscoverOnError } = bacACDF(
                                 relevantTuples,
                                 user,
