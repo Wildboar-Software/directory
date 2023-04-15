@@ -203,7 +203,6 @@ function withinThisDSA (vertex: Vertex) {
         // && !vertex.dse.supr // Goes in the root
         && !vertex.dse.subr
         && !vertex.dse.rhob
-        && !vertex.dse.nssr
         && !vertex.dse.sa
         && !vertex.dse.xr
         && !vertex.dse.glue
