@@ -47,11 +47,11 @@ async function getContextPrefixInfo (
 ): Promise<DITcontext> {
     const contextPrefixInfo: DITcontext = [];
     let current: Vertex | undefined = immediateSuperiorOfNewContextPrefix;
+    let immSupr: boolean = true;
     while (current && !current.dse.root) {
         const admPointInfo: Attribute[] = [];
         const subentryInfos: SubentryInfo[] = [];
         const accessPoints: MasterAndShadowAccessPoints = [];
-        let contextPrefixEncountered: boolean = false;
 
         if (current.dse.admPoint) {
             admPointInfo.push(...await getEntryAttributesToShareInOpBinding(ctx, current));
@@ -65,20 +65,19 @@ async function getContextPrefixInfo (
                 ));
             }
 
-            // The DIT context should only contain one CP.
-            if (!contextPrefixEncountered && current.dse.cp) {
+            if (immSupr) {
                 accessPoints.push(
                     new MasterOrShadowAccessPoint(
                         ctx.dsa.accessPoint.ae_title,
                         ctx.dsa.accessPoint.address,
                         ctx.dsa.accessPoint.protocolInformation,
-                        (!current.dse.shadow && !current.dse.cp.supplierKnowledge)
+                        (!current.dse.shadow && !current.dse.cp?.supplierKnowledge?.length)
                             ? MasterOrShadowAccessPoint_category_master
                             : MasterOrShadowAccessPoint_category_shadow,
                         false,
                     ),
                 );
-                contextPrefixEncountered = true;
+                immSupr = false;
             }
         }
 
@@ -87,7 +86,7 @@ async function getContextPrefixInfo (
             (admPointInfo.length > 0) ? admPointInfo : undefined,
             (subentryInfos.length > 0) ? subentryInfos : undefined,
             (accessPoints.length > 0) ? accessPoints : undefined,
-        ))
+        ));
         current = current.immediateSuperior;
     }
     return contextPrefixInfo.reverse();
