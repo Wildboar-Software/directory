@@ -338,7 +338,7 @@ async function nrcrProcedure (
                     // This will have the effect of returning the referral to
                     // the operation dispatcher.
                     throw new errors.ChainedError(
-                        ctx.i18n.t("log:chained_error"),
+                        ctx.i18n.t("err:chained_error"),
                         outcome.error.parameter,
                         outcome.error.code,
                         signErrors,
