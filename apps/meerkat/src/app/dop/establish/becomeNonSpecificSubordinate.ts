@@ -82,7 +82,7 @@ async function becomeNonSpecificSubordinate (
                         immediate_superior_id: createdEntry.dse.id,
                     },
                 });
-            } else if (last) { // The superior DSA may update access points on hte immSupr
+            } else if (last) { // The superior DSA may update access points on the immSupr.
                 await Promise.all(
                     vertex.accessPoints
                         ?.map((ap) => saveAccessPoint(
