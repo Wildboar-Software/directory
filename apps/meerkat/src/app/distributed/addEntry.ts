@@ -59,6 +59,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
 import createEntry from "../database/createEntry";
 import {
+    ServiceProblem_unavailable,
     ServiceProblem_unwillingToPerform,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import {
@@ -1015,7 +1016,11 @@ async function addEntry (
     // We also do not check if manageDSAIT is set. Even though that would seem
     // to contradict the use of targetSystem, but there's not really any problem
     // here using both.
-    if (data.targetSystem) {
+    if (data.targetSystem && !compareDistinguishedName(
+        data.targetSystem.ae_title.rdnSequence,
+        ctx.dsa.accessPoint.ae_title.rdnSequence,
+        NAMING_MATCHER,
+    )) {
         const insufficientAuthForChaining = assn && (
             (
                 ("basicLevels" in assn.authLevel)
@@ -1052,32 +1057,6 @@ async function addEntry (
             );
         }
 
-        // This DSA will not establish an operational binding with itself.
-        if (compareDistinguishedName(
-            data.targetSystem.ae_title.rdnSequence,
-            ctx.dsa.accessPoint.ae_title.rdnSequence,
-            NAMING_MATCHER,
-        )) {
-            throw new errors.ServiceError(
-                ctx.i18n.t("err:cannot_establish_ob_with_self"),
-                new ServiceErrorData(
-                    ServiceProblem_unwillingToPerform,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        signErrors,
-                        assn.boundNameAndUID?.dn,
-                        undefined,
-                        serviceError["&errorCode"],
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    state.chainingArguments.aliasDereferenced,
-                    undefined,
-                ),
-                signErrors,
-            );
-        }
-
         const targetSystem = data.targetSystem;
         const targetSystem_refers_to_non_specific_subordinate_dsa: boolean = !!(
             immediateSuperior.dse.nssr
@@ -1100,7 +1079,29 @@ async function addEntry (
                 signErrors,
             );
             if (!dsp_client) {
-                throw new Error(); // FIXME: serviceError?
+                throw new errors.ServiceError(
+                    ctx.i18n.t("err:could_not_add_entry_to_remote_dsa"),
+                    new ServiceErrorData(
+                        ServiceProblem_unavailable,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            serviceError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        state.chainingArguments.aliasDereferenced,
+                        [
+                            new Attribute(
+                                dSAProblem["&id"],
+                                [dSAProblem.encoderFor["&Type"]!(id_pr_targetDsaUnavailable, DER)],
+                            ),
+                        ],
+                    ),
+                    signErrors,
+                );
             }
             /* Instead of using the APInfo Procedure, we just use the X.500
             Client SDK, since this is non-standard behavior anyway. */
