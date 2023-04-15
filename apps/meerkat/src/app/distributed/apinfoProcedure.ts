@@ -122,6 +122,7 @@ async function apinfoProcedure (
             || (isModificationOperation(req.opCode) && (req.chaining.referenceType === nssr))
         ),
         referenceType: cref.referenceType,
+        operationProgress: cref.operationProgress,
         securityParameters: createSecurityParameters(
             ctx,
             ctx.config.chaining.signChainedRequests,

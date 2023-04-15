@@ -441,7 +441,7 @@ export
                 ctx.log.debug(ctx.i18n.t("log:entry_not_found", {
                     context: "nssr",
                     i,
-                    n: nextRDNToBeResolved,
+                    n: nextRDNToBeResolved?.toString(),
                 }));
             }
             /* DEVIATION: Search for bd34be10-ce99-4d0a-9385-d993a53f3fd9. Same
