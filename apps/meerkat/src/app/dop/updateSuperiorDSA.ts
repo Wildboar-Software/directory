@@ -92,6 +92,7 @@ import { dSAProblem } from "@wildboar/x500/src/lib/modules/SelectedAttributeType
 import {
     id_pr_targetDsaUnavailable,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-targetDsaUnavailable.va";
+import { id_op_binding_non_specific_hierarchical } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -150,6 +151,9 @@ async function updateSuperiorDSA (
     // TODO: Make these all update in parallel.
     for (const hob of activeHOBs) {
         if (!hob.access_point) {
+            continue;
+        }
+        if (hob.binding_type === id_op_binding_non_specific_hierarchical.toString()) {
             continue;
         }
         const argreementElement = new BERElement();

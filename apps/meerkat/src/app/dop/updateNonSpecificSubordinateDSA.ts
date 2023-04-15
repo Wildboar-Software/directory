@@ -5,9 +5,6 @@ import type {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 import { bindForOBM } from "../net/bindToOtherDSA";
 import {
-    RelativeDistinguishedName as RDN,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
-import {
     modifyOperationalBinding,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/modifyOperationalBinding.oa";
 import {
@@ -16,9 +13,6 @@ import {
 import {
     SuperiorToSubordinate as SuperiorToSubordinateModification,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinate.ta";
-import {
-    HierarchicalAgreement,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
 import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
@@ -51,6 +45,8 @@ import {
     id_pr_targetDsaUnavailable,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-targetDsaUnavailable.va";
 import { DER } from "asn1-ts/dist/node/functional";
+import { NonSpecificHierarchicalAgreement } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NonSpecificHierarchicalAgreement.ta";
+import { getEntryAttributesToShareInOpBinding } from "../dit/getEntryAttributesToShareInOpBinding";
 
 export
 interface UpdateSubordinateOptions {
@@ -70,7 +66,6 @@ interface UpdateSubordinateOptions {
  * @param immediateSuperior The immediate superior vertex
  * @param immediateSuperiorInfo Attributes of the immediate superior that are to
  *  be disclosed to the subordinate
- * @param subordinateRDN The subordinate entry's RDN
  * @param targetSystem The remote DSA that is being updated
  * @param aliasDereferenced Whether an alias was dereferenced leading up to this
  * @param options Options
@@ -80,12 +75,10 @@ interface UpdateSubordinateOptions {
  * @async
  */
 export
-async function updateSubordinateDSA (
+async function updateNonSpecificSubordinateDSA (
     ctx: MeerkatContext,
     currentBindingID: OperationalBindingID,
     immediateSuperior: Vertex,
-    immediateSuperiorInfo: Attribute[] | undefined,
-    subordinateRDN: RDN,
     targetSystem: AccessPoint,
     aliasDereferenced?: boolean,
     options?: UpdateSubordinateOptions,
@@ -193,14 +186,13 @@ async function updateSubordinateDSA (
     const sup2sub = new SuperiorToSubordinateModification(
         ditContext.reverse(),
         undefined, // entryInfo is ABSENT in SuperiorToSubordinateModification
-        immediateSuperiorInfo,
+        await getEntryAttributesToShareInOpBinding(ctx, immediateSuperior),
     );
-    const agreement = new HierarchicalAgreement(
-        subordinateRDN,
+    const agreement = new NonSpecificHierarchicalAgreement(
         getDistinguishedName(immediateSuperior),
     );
 
-    return assn.modifyHOBWithSubordinate({
+    return assn.modifyNHOBWithSubordinate({
         bindingID: currentBindingID,
         accessPoint: ctx.dsa.accessPoint,
         initiator: sup2sub,
@@ -216,4 +208,4 @@ async function updateSubordinateDSA (
     });
 }
 
-export default updateSubordinateDSA;
+export default updateNonSpecificSubordinateDSA;

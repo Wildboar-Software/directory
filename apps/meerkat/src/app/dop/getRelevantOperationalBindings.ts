@@ -3,13 +3,14 @@ import {
     id_op_binding_hierarchical,
 } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
 import { OperationalBindingInitiator } from "@prisma/client";
+import { id_op_binding_non_specific_hierarchical } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
 
 /**
  * @summary Get active hierarchical operational bindings
  * @description
  *
  * This function returns information about the hierarchical operational bindings
- * that are still active.
+ * that are still active, including NHOBs.
  *
  * @param ctx The context object
  * @param localDSAIsSuperior Whether the local DSA is the superior DSA
@@ -29,7 +30,12 @@ function getRelevantOperationalBindings (ctx: Context, localDSAIsSuperior: boole
             next_version: {
                 none: {},
             },
-            binding_type: id_op_binding_hierarchical.toString(),
+            binding_type: {
+                in: [
+                    id_op_binding_hierarchical.toString(),
+                    id_op_binding_non_specific_hierarchical.toString(),
+                ],
+            },
             accepted: true,
             terminated_time: null,
             validity_start: {
@@ -65,8 +71,11 @@ function getRelevantOperationalBindings (ctx: Context, localDSAIsSuperior: boole
         select: {
             id: true,
             uuid: true,
+            binding_type: true,
             binding_identifier: true,
             binding_version: true,
+            initiator: true,
+            initiator_ber: true,
             access_point: {
                 select: {
                     id: true,

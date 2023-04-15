@@ -446,6 +446,12 @@ async function removeEntry (
             if (!ob.access_point) {
                 continue;
             }
+            if (ob.binding_type !== id_op_binding_hierarchical.toString()) {
+                /* DEVIATION: The specifications say that an NHOB should be
+                deleted once the last subordinate is deleted, but Meerkat DSA
+                does not do this so that the NHOB can be re-used. */
+                continue;
+            }
             const argreementElement = new BERElement();
             argreementElement.fromBytes(ob.agreement_ber);
             const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(argreementElement);
