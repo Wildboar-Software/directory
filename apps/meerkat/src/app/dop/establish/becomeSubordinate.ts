@@ -165,6 +165,16 @@ async function becomeSubordinate (
                         immediate_superior_id: createdEntry.dse.id,
                     },
                 });
+            } else if (last) { // The superior DSA may update access points on hte immSupr
+                await Promise.all(
+                    vertex.accessPoints
+                        ?.map((ap) => saveAccessPoint(
+                            ctx,
+                            ap,
+                            Knowledge.SPECIFIC,
+                            existingEntry.dse.id,
+                        )) ?? [],
+                );
             }
             currentRoot = existingEntry;
         }

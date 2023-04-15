@@ -27,6 +27,8 @@ import {
     NHOBSuperiorToSubordinate,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NHOBSuperiorToSubordinate.ta";
 import { createContextPrefixEntry } from "./becomeSubordinate";
+import saveAccessPoint from "../../database/saveAccessPoint";
+import { Knowledge } from "@prisma/client";
 
 /**
  * @summary Create the necessary DSEs to establish a new non-specifi context prefix
@@ -80,13 +82,33 @@ async function becomeNonSpecificSubordinate (
                         immediate_superior_id: createdEntry.dse.id,
                     },
                 });
+            } else if (last) { // The superior DSA may update access points on hte immSupr
+                await Promise.all(
+                    vertex.accessPoints
+                        ?.map((ap) => saveAccessPoint(
+                            ctx,
+                            ap,
+                            Knowledge.SPECIFIC,
+                            existingEntry.dse.id,
+                        )) ?? [],
+                );
             }
             currentRoot = existingEntry;
         }
     }
 
-    await ctx.db.$transaction(
-        await addValues(
+    await ctx.db.$transaction([
+        /* This is in response to noticing that the administrative role values
+        were doubled up from being present in both the contextPrefixInfo and
+        immediateSuperiorInfo, but we just delete all attribute values to be
+        thorough. This is important, since we do not check whether these values
+        exist in this entry already or not. */
+        ctx.db.attributeValue.deleteMany({
+            where: {
+                entry_id: currentRoot.dse.id,
+            },
+        }),
+        ...await addValues(
             ctx,
             currentRoot,
             sup2sub.immediateSuperiorInfo?.flatMap(valuesFromAttribute) ?? [],
@@ -94,7 +116,7 @@ async function becomeNonSpecificSubordinate (
             false, // Do not check for existing values. This is essential for things like createTimestamp.
             signErrors,
         ),
-    );
+    ]);
 
     const firstLevel: boolean = await isFirstLevelDSA(ctx);
     if (!firstLevel) { // Update superiorKnowledge

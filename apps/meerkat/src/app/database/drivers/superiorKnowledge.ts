@@ -51,6 +51,14 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     if (!vertex.dse.root) {
         return;
     }
+    const already_present = await ctx.db.accessPoint.findFirst({
+        where: {
+            ber: Buffer.from(value.value.toBytes()),
+        },
+    });
+    if (already_present) { // Just to avoid saving multiple identical access points.
+        return;
+    }
     const decoded = superiorKnowledge.decoderFor["&Type"]!(value.value);
     if (vertex.dse.supr) {
         if (vertex.dse.supr.superiorKnowledge) {
