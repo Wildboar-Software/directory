@@ -68,6 +68,14 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import { strict as assert } from "assert";
 
+const invalidCredentialsData = new DirectoryBindErrorData(
+    versions,
+    {
+        securityError: SecurityProblem_invalidCredentials,
+    },
+    // No security parameters will be provided for failed auth attempts.
+);
+
 /**
  * @summary X.500 Directory Access Protocol (DSP) bind operation
  * @description
@@ -141,13 +149,6 @@ async function bind (
             },
         };
     }
-    const invalidCredentialsData = new DirectoryBindErrorData(
-        versions,
-        {
-            securityError: SecurityProblem_invalidCredentials,
-        },
-        // No security parameters will be provided for failed auth attempts.
-    );
     if ("simple" in arg.credentials) {
         const foundEntry = await dnToVertex(ctx, ctx.dit.root, arg.credentials.simple.name);
         if (!arg.credentials.simple.password) {
