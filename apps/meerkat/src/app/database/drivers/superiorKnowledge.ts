@@ -53,8 +53,11 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     }
     const already_present = await ctx.db.accessPoint.findFirst({
         where: {
+            entry_id: vertex.dse.id,
+            active: true,
             ber: Buffer.from(value.value.toBytes()),
         },
+        select: { id: true },
     });
     if (already_present) { // Just to avoid saving multiple identical access points.
         return;
