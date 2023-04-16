@@ -2052,6 +2052,9 @@ async function modifyDN (
         const affectedPrefix = target.dse.subentry
             ? targetDN.slice(0, -1)
             : targetDN;
+        ctx.log.info(ctx.i18n.t("log:updating_subordinate_dsas", {
+            dn: stringifyDN(ctx, targetDN),
+        }));
         updateAffectedSubordinateDSAs(ctx, affectedPrefix); // INTENTIONAL_NO_AWAIT
     }
 

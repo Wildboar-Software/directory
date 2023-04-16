@@ -81,8 +81,12 @@ async function updateAffectedSubordinateDSAs (
                 : agreement.immediateSuperior;
             const immSuprDSE = await dnToVertex(ctx, ctx.dit.root, newDN);
             if (!immSuprDSE) {
+                ctx.log.warn(ctx.i18n.t("log:could_not_find_nssr", {
+                    obid: hob.binding_identifier.toString(),
+                }));
                 continue; // TODO: Is this the proper response?
             }
+            // TODO: Update the access point named on the establish request rather than the NSK.
             const aps = await ctx.db.accessPoint.findMany({
                 where: {
                     category: MasterOrShadowAccessPoint_category_master,
@@ -104,9 +108,17 @@ async function updateAffectedSubordinateDSAs (
                         return _decode_MasterOrShadowAccessPoint(el);
                     })
                     .filter((mosap) => ((mosap.category ?? MasterOrShadowAccessPoint_category_master) === MasterOrShadowAccessPoint_category_master)));
+            if (nonSpecificKnowledge.length === 0) {
+                ctx.log.warn(ctx.i18n.t("log:no_masters_to_update", {
+                    obid: hob.binding_identifier.toString(),
+                }));
+            }
             for (const masters of nonSpecificKnowledge) {
                 const master = masters[0];
                 if (!master) {
+                    ctx.log.warn(ctx.i18n.t("log:no_masters_to_update", {
+                        obid: hob.binding_identifier.toString(),
+                    }));
                     continue;
                 }
                 const bindingID = new OperationalBindingID(
@@ -139,6 +151,7 @@ async function updateAffectedSubordinateDSAs (
                         }));
                     });
             }
+            return;
         }
         const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(argreementElement);
         if (!isPrefix(ctx, affectedPrefix, agreement.immediateSuperior)) {
