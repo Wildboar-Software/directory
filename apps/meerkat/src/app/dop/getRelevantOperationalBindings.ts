@@ -85,6 +85,7 @@ function getRelevantOperationalBindings (ctx: Context, localDSAIsSuperior: boole
             agreement_ber: true,
             validity_start: true,
             validity_end: true,
+            outbound: true,
         },
     });
 }

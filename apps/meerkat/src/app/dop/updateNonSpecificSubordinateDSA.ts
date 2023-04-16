@@ -47,6 +47,7 @@ import {
 import { DER } from "asn1-ts/dist/node/functional";
 import { NonSpecificHierarchicalAgreement } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NonSpecificHierarchicalAgreement.ta";
 import { getEntryAttributesToShareInOpBinding } from "../dit/getEntryAttributesToShareInOpBinding";
+import stringifyDN from "../x500/stringifyDN";
 
 export
 interface UpdateSubordinateOptions {
@@ -84,6 +85,11 @@ async function updateNonSpecificSubordinateDSA (
     options?: UpdateSubordinateOptions,
     signErrors: boolean = false,
 ): Promise<OperationOutcome<typeof modifyOperationalBinding["&ResultType"]>> {
+    ctx.log.info(ctx.i18n.t("log:updating_subordinate", {
+        context: "nssr",
+        ae_title: stringifyDN(ctx, targetSystem.ae_title.rdnSequence),
+        obid: currentBindingID.identifier.toString(),
+    }));
     const connectionTimeout: number | undefined = options?.timeLimitInMilliseconds;
     const startTime = new Date();
     const timeoutTime: Date | undefined = connectionTimeout // TODO: Fix non-use

@@ -39,6 +39,8 @@ import { _decode_MasterOrShadowAccessPoint } from "@wildboar/x500/src/lib/module
  * @param ctx The context object
  * @param affectedPrefix The distinguished name of the subtree of all entries
  *  affected by an operation.
+ * @param newPrefix The distinguished name of the new prefix, if the prefix
+ *  was changed.
  *
  * @function
  * @async
@@ -47,15 +49,20 @@ export
 async function updateAffectedSubordinateDSAs (
     ctx: MeerkatContext,
     affectedPrefix: DistinguishedName,
+    newPrefix?: DistinguishedName,
 ): Promise<void> {
     const activeHOBs = await getRelevantOperationalBindings(ctx, true);
     for (const hob of activeHOBs) {
         if (!hob.access_point) {
             continue;
         }
+        const i_am_superior: boolean = (
+            ((hob.initiator === OperationalBindingInitiator.ROLE_A) && hob.outbound)
+            || ((hob.initiator === OperationalBindingInitiator.ROLE_B) && !hob.outbound)
+        );
         if (
             (hob.binding_type === id_op_binding_non_specific_hierarchical.toString())
-            && (hob.initiator === OperationalBindingInitiator.ROLE_B)
+            && !i_am_superior
         ) { // Subordinates in an NHOB do not have to update the superior on entry changes.
             continue;
         }
@@ -63,12 +70,18 @@ async function updateAffectedSubordinateDSAs (
         argreementElement.fromBytes(hob.agreement_ber);
         if (hob.binding_type === id_op_binding_non_specific_hierarchical.toString()) {
             const agreement = _decode_NonSpecificHierarchicalAgreement(argreementElement);
-            const immSuprDSE = await dnToVertex(ctx, ctx.dit.root, agreement.immediateSuperior);
-            if (!immSuprDSE) {
-                continue; // TODO: Is this the proper response?
-            }
             if (!isPrefix(ctx, affectedPrefix, agreement.immediateSuperior)) {
                 continue;
+            }
+            const newDN = newPrefix
+                ? [
+                    ...newPrefix,
+                    ...agreement.immediateSuperior.slice(newPrefix.length),
+                ]
+                : agreement.immediateSuperior;
+            const immSuprDSE = await dnToVertex(ctx, ctx.dit.root, newDN);
+            if (!immSuprDSE) {
+                continue; // TODO: Is this the proper response?
             }
             const aps = await ctx.db.accessPoint.findMany({
                 where: {
