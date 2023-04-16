@@ -2053,9 +2053,10 @@ async function modifyDN (
             ? targetDN.slice(0, -1)
             : targetDN;
         ctx.log.info(ctx.i18n.t("log:updating_subordinate_dsas", {
+            context: "moddn",
             dn: stringifyDN(ctx, targetDN),
         }));
-        updateAffectedSubordinateDSAs(ctx, affectedPrefix); // INTENTIONAL_NO_AWAIT
+        updateAffectedSubordinateDSAs(ctx, affectedPrefix, destinationDN); // INTENTIONAL_NO_AWAIT
     }
 
     // TODO: Update shadows

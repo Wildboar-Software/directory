@@ -227,6 +227,5 @@
     "other_dsa_reversed_ob_role": "Other DSA attempted to reverse operational binding role. Operational binding {{uuid}} will be terminated.",
     "other_dsa_changed_ob_type": "Other DSA returned a DOP result that changed the binding type. The operational binding will not be recognized.",
     "other_dsa_did_not_choose_binding_id": "Other DSA did not choose an identifier for this operational binding. The operational binding will not be recognized.",
-    "cannot_establish_ob_with_self": "Cannot establish operational binding with self.",
-    "could_not_find_nssr": "Could not find NSSR for NHOB {{obid}}."
+    "cannot_establish_ob_with_self": "Cannot establish operational binding with self."
 }

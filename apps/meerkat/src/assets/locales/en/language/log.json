@@ -260,5 +260,6 @@
     "not_authz_discover": "Association {{aid}} is not authorized to discover DN '{{dn}}'.",
     "entry_not_found@nssr": "Candidate refs empty under NSSR. i={{i}}. Next RDN to be Resolved={{n}}.",
     "no_masters_to_update@nhob": "No master subordinate DSAs to update for NHOB {{obid}}.",
-    "updating_subordinate_dsas@moddn": "Updating subordinate DSAs (if any), because DSE '{{dn}}' was moved or renamed."
+    "updating_subordinate_dsas@moddn": "Updating subordinate DSAs (if any), because DSE '{{dn}}' was moved or renamed.",
+    "could_not_find_nssr": "Could not find NSSR for NHOB {{obid}}."
 }
