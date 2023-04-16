@@ -250,6 +250,13 @@ noted below are nuances in Meerkat DSA:
   not be automatically terminated. This is so more entries could be added back
   to the subordinate DSA, if desired. This is NOT the case with a hierarchical
   operational binding (HOB).
+- When an `addEntry` operation is chained, Meerkat DSA checks if its superior
+  DSE is of type `immSupr`, and that the chained request came from one of the
+  superior DSAs. If so, the new entry is marked as having type `cp`. This is so
+  the `addEntry`'s `targetSystem` parameter can be used to add new context
+  prefixes beneath a Non-Specific Subordinate Reference (NSSR). Having entries
+  of type `cp` beneath an NSSR are essential for list and search operations to
+  work correctly across NHOBs.
 
 ## The "Never Contributing" Bug
 
