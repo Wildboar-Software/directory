@@ -1077,17 +1077,22 @@ async function establishOperationalBinding (
         // TODO: Loop until you find an available ID.
     }
 
+    const bindingID = new OperationalBindingID(
+        newBindingIdentifier,
+        0,
+    );
     const logInfo = {
         remoteFamily: assn.socket.remoteFamily,
         remoteAddress: assn.socket.remoteAddress,
         remotePort: assn.socket.remotePort,
         association_id: assn.id,
         invokeID: printInvokeId({ present: invokeId }),
+        binding_id: bindingID.identifier.toString(),
     };
     ctx.log.info(ctx.i18n.t("log:establishOperationalBinding", {
         context: "started",
         type: data.bindingType.toString(),
-        bid: data.bindingID?.identifier.toString(),
+        bid: bindingID.identifier.toString(),
         aid: assn.id,
     }), logInfo);
     /**
@@ -1106,36 +1111,31 @@ async function establishOperationalBinding (
      * @function
      */
     const getApproval = (uuid: string): Promise<boolean | undefined> => {
+        if (ctx.config.ob.autoAccept) {
+            ctx.log.info(ctx.i18n.t("log:auto_accepted_ob", {
+                type: data.bindingType.toString(),
+                obid: bindingID.identifier.toString(),
+                uuid,
+            }), {
+                type: data.bindingType.toString(),
+                obid: bindingID.identifier.toString(),
+                uuid,
+            });
+            return Promise.resolve(true);
+        }
         ctx.log.warn(ctx.i18n.t("log:awaiting_ob_approval", { uuid }));
-        return Promise.race<boolean | undefined>([
-            new Promise<boolean>((resolve) => {
+        return new Promise((resolve, reject) => {
+            setTimeout(resolve, 300_000);
+            new Promise<boolean>((resolve2) => {
                 ctx.operationalBindingControlEvents.once(uuid, (approved: boolean) => {
-                    resolve(approved);
+                    resolve2(approved);
                 });
-            }),
-            new Promise<undefined>((resolve) => setTimeout(() => resolve(undefined), 300_000)),
-            new Promise<boolean>((resolve) => {
-                if (ctx.config.ob.autoAccept) {
-                    ctx.log.info(ctx.i18n.t("log:auto_accepted_ob", {
-                        type: data.bindingType.toString(),
-                        obid: data.bindingID?.identifier.toString(),
-                        uuid,
-                    }), {
-                        type: data.bindingType.toString(),
-                        obid: data.bindingID?.identifier.toString(),
-                        uuid,
-                    });
-                    resolve(true);
-                }
-            }),
-        ]);
+            }).then(resolve, reject);
+        });
     };
 
     const access_point_id = await saveAccessPoint(ctx, data.accessPoint, Knowledge.OB_REQUEST);
-    const bindingID = new OperationalBindingID(
-        newBindingIdentifier,
-        0,
-    );
+
     const ob_db_data: Omit<Omit<Prisma.OperationalBindingCreateInput, "initiator_ber">, "initiator"> = {
         outbound: false,
         binding_type: data.bindingType.toString(),
@@ -1451,7 +1451,7 @@ async function establishOperationalBinding (
                 ctx.log.info(ctx.i18n.t("log:establishOperationalBinding", {
                     context: "succeeded",
                     type: data.bindingType.toString(),
-                    bid: data.bindingID?.identifier.toString(),
+                    bid: bindingID.identifier.toString(),
                     aid: assn.id,
                 }), {
                     remoteFamily: assn.socket.remoteFamily,
@@ -1639,7 +1639,7 @@ async function establishOperationalBinding (
                 ctx.log.info(ctx.i18n.t("log:establishOperationalBinding", {
                     context: "succeeded",
                     type: data.bindingType.toString(),
-                    bid: data.bindingID?.identifier.toString(),
+                    bid: bindingID.identifier.toString(),
                     aid: assn.id,
                 }), {
                     remoteFamily: assn.socket.remoteFamily,
@@ -1868,7 +1868,7 @@ async function establishOperationalBinding (
                 ctx.log.info(ctx.i18n.t("log:establishOperationalBinding", {
                     context: "succeeded",
                     type: data.bindingType.toString(),
-                    bid: data.bindingID?.identifier.toString(),
+                    bid: bindingID.identifier.toString(),
                     aid: assn.id,
                 }), {
                     remoteFamily: assn.socket.remoteFamily,
@@ -2064,7 +2064,7 @@ async function establishOperationalBinding (
                 ctx.log.info(ctx.i18n.t("log:establishOperationalBinding", {
                     context: "succeeded",
                     type: data.bindingType.toString(),
-                    bid: data.bindingID?.identifier.toString(),
+                    bid: bindingID.identifier.toString(),
                     aid: assn.id,
                 }), {
                     remoteFamily: assn.socket.remoteFamily,

@@ -580,29 +580,27 @@ async function modifyOperationalBinding (
      * @function
      */
     const getApproval = (uuid: string): Promise<boolean | undefined> => {
+        if (ctx.config.ob.autoAccept) {
+            ctx.log.info(ctx.i18n.t("log:auto_accepted_ob", {
+                type: data.bindingType.toString(),
+                obid: data.bindingID.identifier.toString(),
+                uuid,
+            }), {
+                type: data.bindingType.toString(),
+                obid: data.bindingID.identifier.toString(),
+                uuid,
+            });
+            return Promise.resolve(true);
+        }
         ctx.log.warn(ctx.i18n.t("log:awaiting_ob_approval", { uuid }));
-        return Promise.race<boolean | undefined>([
-            new Promise<boolean>((resolve) => {
+        return new Promise((resolve, reject) => {
+            setTimeout(resolve, 300_000);
+            new Promise<boolean>((resolve2) => {
                 ctx.operationalBindingControlEvents.once(uuid, (approved: boolean) => {
-                    resolve(approved);
+                    resolve2(approved);
                 });
-            }),
-            new Promise<undefined>((resolve) => setTimeout(() => resolve(undefined), 300_000)),
-            new Promise<boolean>((resolve) => {
-                if (ctx.config.ob.autoAccept) {
-                    ctx.log.info(ctx.i18n.t("log:auto_accepted_ob", {
-                        type: data.bindingType.toString(),
-                        obid: data.bindingID?.identifier.toString(),
-                        uuid,
-                    }), {
-                        type: data.bindingType.toString(),
-                        obid: data.bindingID?.identifier.toString(),
-                        uuid,
-                    });
-                    resolve(true);
-                }
-            }),
-        ]);
+            }).then(resolve, reject);
+        });
     };
 
     const oldAgreementElement = (() => {
