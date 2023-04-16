@@ -867,7 +867,7 @@ async function modifyOperationalBinding (
                     }
                 });
             }
-            await updateContextPrefix(ctx, created.uuid, newAgreement.immediateSuperior, init, signErrors);
+            await updateContextPrefix(ctx, created.uuid, oldAgreement.immediateSuperior, init, signErrors);
             ctx.log.info(ctx.i18n.t("log:modifyOperationalBinding", {
                 context: "succeeded",
                 type: data.bindingType.toString(),
@@ -1099,7 +1099,7 @@ async function modifyOperationalBinding (
                     }
                 });
             }
-            await updateContextPrefix(ctx, created.uuid, newAgreement.immediateSuperior, init, signErrors);
+            await updateContextPrefix(ctx, created.uuid, oldAgreement.immediateSuperior, init, signErrors);
             ctx.log.info(ctx.i18n.t("log:modifyOperationalBinding", {
                 context: "succeeded",
                 type: data.bindingType.toString(),
