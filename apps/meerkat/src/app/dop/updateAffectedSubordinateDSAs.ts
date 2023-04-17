@@ -111,6 +111,7 @@ async function updateAffectedSubordinateDSAs (
                     .filter((mosap) => ((mosap.category ?? MasterOrShadowAccessPoint_category_master) === MasterOrShadowAccessPoint_category_master)));
             if (nonSpecificKnowledge.length === 0) {
                 ctx.log.warn(ctx.i18n.t("log:no_masters_to_update", {
+                    context: "nhob",
                     obid: hob.binding_identifier.toString(),
                 }));
             }
@@ -118,6 +119,7 @@ async function updateAffectedSubordinateDSAs (
                 const master = masters[0];
                 if (!master) {
                     ctx.log.warn(ctx.i18n.t("log:no_masters_to_update", {
+                        context: "nhob",
                         obid: hob.binding_identifier.toString(),
                     }));
                     continue;
