@@ -8,15 +8,10 @@ import {
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import type {
-    RelativeDistinguishedName as RDN,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
 import dnToVertex from "../../dit/dnToVertex";
 import { Knowledge } from "@prisma/client";
-import deleteEntry from "../../database/deleteEntry";
 import { DER } from "asn1-ts/dist/node/functional";
 import createEntry from "../../database/createEntry";
-import getDistinguishedName from "../../x500/getDistinguishedName";
 import addAttributes from "../../database/entry/addAttributes";
 import removeAttribute from "../../database/entry/removeAttribute";
 // import {
@@ -126,21 +121,38 @@ async function updateContextPrefix (
     if (!highestDseThatSuperiorDSAMayModify) {
         throw new Error("29d3463f-f151-4ded-a926-3381a43ac628");
     }
-    const highestModifiableDN = getDistinguishedName(highestDseThatSuperiorDSAMayModify);
+    // const highestModifiableDN = getDistinguishedName(highestDseThatSuperiorDSAMayModify);
 
-    let currentRoot = highestDseThatSuperiorDSAMayModify;
     // Can you trust mod.contextPrefixInfo.length? Yes, because the superior DSA may move its entries.
     let immSuprAccessPoints: MasterAndShadowAccessPoints | undefined = undefined;
-    for (let i = highestModifiableDN.length - 1; i < mod.contextPrefixInfo.length; i++) {
+    let superiorDSAMayModify: boolean = false;
+    let oldDSE: Vertex | undefined = ctx.dit.root;
+    let newDSE: Vertex | undefined = ctx.dit.root;
+    for (let i = 0; i < mod.contextPrefixInfo.length; i++) {
+        if (!newDSE) {
+            // Assertion failure.
+            throw new Error("0f42754f-80ac-4ddb-89b9-56833be44141");
+        }
+        oldDSE = await dnToVertex(ctx, oldDSE, oldAgreementImmediateSuperior.slice(i, i + 1));
+        if (!oldDSE) {
+            // The old DSE does not exist.
+            throw new Error("481a627d-a910-4519-9a18-4cb3a139f4c1");
+        }
+        if (highestDseThatSuperiorDSAMayModify.dse.id === oldDSE.dse.id) {
+            superiorDSAMayModify = true;
+        }
+        if (!superiorDSAMayModify) {
+            continue;
+        }
         const vertex = mod.contextPrefixInfo[i];
         const last: boolean = (mod.contextPrefixInfo.length === (i + 1));
         immSuprAccessPoints = vertex.accessPoints;
         const immSupr: boolean = Boolean(immSuprAccessPoints && last);
-        const existingEntry = await dnToVertex(ctx, currentRoot, [ vertex.rdn ]);
-        if (!existingEntry) {
+        const maybeNewDSE = await dnToVertex(ctx, newDSE, [ vertex.rdn ]);
+        if (!maybeNewDSE) {
             const createdEntry = await createEntry(
                 ctx,
-                currentRoot,
+                newDSE,
                 vertex.rdn,
                 {
                     glue: (!vertex.admPointInfo && !vertex.accessPoints),
@@ -189,36 +201,31 @@ async function updateContextPrefix (
                     [],
                 );
             }
-            const oldRDN: RDN = oldAgreementImmediateSuperior[i];
-            const oldVertex = await dnToVertex(ctx, currentRoot, [ oldRDN ]);
-            if (oldVertex) {
-                await deleteEntry(ctx, oldVertex);
-            }
-            currentRoot = createdEntry;
+            newDSE = createdEntry;
         } else {
-            currentRoot = existingEntry;
+            newDSE = maybeNewDSE;
             if (vertex.admPointInfo) {
                 const deletions = (
                     await Promise.all(
                         vertex.admPointInfo
-                            .map((attr) => removeAttribute(ctx, currentRoot, attr.type_, []))
+                            .map((attr) => removeAttribute(ctx, newDSE!, attr.type_, []))
                     )
                 ).flat();
                 await ctx.db.$transaction([
                     ctx.db.attributeValue.deleteMany({
                         where: {
-                            entry_id: currentRoot.dse.id,
+                            entry_id: newDSE.dse.id,
                         },
                     }),
                     ...deletions,
-                    ...await addAttributes(ctx, currentRoot, vertex.admPointInfo, undefined, false, signErrors),
+                    ...await addAttributes(ctx, newDSE, vertex.admPointInfo, undefined, false, signErrors),
                 ]);
                 for (const subentry of vertex.subentries ?? []) {
-                    const oldSubentry = await dnToVertex(ctx, currentRoot, [ subentry.rdn ]);
+                    const oldSubentry = await dnToVertex(ctx, newDSE, [ subentry.rdn ]);
                     if (!oldSubentry) {
                         await createEntry(
                             ctx,
-                            currentRoot,
+                            newDSE,
                             subentry.rdn,
                             {
                                 subentry: true,
@@ -253,7 +260,7 @@ async function updateContextPrefix (
                         }),
                         ...subentryDeletions,
                         ...subentryInfoDeletions,
-                        ...await addAttributes(ctx, currentRoot, subentry.info, undefined, false, signErrors),
+                        ...await addAttributes(ctx, newDSE, subentry.info, undefined, false, signErrors),
                     ]);
                 }
             } else { // This point is no longer an administrative point, or never was.
@@ -264,18 +271,18 @@ async function updateContextPrefix (
                             accessControlScheme["&id"],
                             subentryACI["&id"],
                         ]
-                            .map((type_) => removeAttribute(ctx, currentRoot, type_)),
+                            .map((type_) => removeAttribute(ctx, newDSE!, type_)),
                     )
                 ).flat();
                 await ctx.db.$transaction(deletions);
             }
-            if (currentRoot.dse.shadow) {
+            if (newDSE.dse.shadow) {
                 continue; // We don't modify shadow entries.
             }
         }
     }
 
-    if (mod.immediateSuperiorInfo) {
+    if (mod.immediateSuperiorInfo && newDSE) {
         const deletions = (
             await Promise.all(
                 mod.immediateSuperiorInfo
@@ -283,13 +290,13 @@ async function updateContextPrefix (
                     //     attr.type_.isEqualTo(objectClass["&id"])
                     //     || attr.type_.isEqualTo(entryACI["&id"])
                     // ))
-                    .map((attr) => removeAttribute(ctx, currentRoot, attr.type_))
+                    .map((attr) => removeAttribute(ctx, newDSE!, attr.type_))
             )
         ).flat();
         await ctx.db.$transaction([
             ctx.db.attributeValue.deleteMany({
                 where: {
-                    entry_id: currentRoot.dse.id,
+                    entry_id: newDSE.dse.id,
                     // type_oid: {
                     //     notIn: [
                     //         objectClass["&id"].toBytes(),
@@ -299,7 +306,7 @@ async function updateContextPrefix (
                 },
             }),
             ...deletions,
-            ...await addAttributes(ctx, currentRoot, mod.immediateSuperiorInfo, undefined, false, signErrors),
+            ...await addAttributes(ctx, newDSE, mod.immediateSuperiorInfo, undefined, false, signErrors),
         ]);
     }
 
@@ -314,7 +321,7 @@ async function updateContextPrefix (
             immediate_superior_id: oldImmediateSuperior.dse.id,
         },
         data: {
-            immediate_superior_id: currentRoot.dse.id,
+            immediate_superior_id: newDSE.dse.id,
         },
     });
 
