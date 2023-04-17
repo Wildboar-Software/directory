@@ -214,18 +214,18 @@ async function updateContextPrefix (
                 await ctx.db.$transaction([
                     ctx.db.attributeValue.deleteMany({
                         where: {
-                            entry_id: newDSE.dse.id,
+                            entry_id: newDSE!.dse.id,
                         },
                     }),
                     ...deletions,
-                    ...await addAttributes(ctx, newDSE, vertex.admPointInfo, undefined, false, signErrors),
+                    ...await addAttributes(ctx, newDSE!, vertex.admPointInfo, undefined, false, signErrors),
                 ]);
                 for (const subentry of vertex.subentries ?? []) {
-                    const oldSubentry = await dnToVertex(ctx, newDSE, [ subentry.rdn ]);
+                    const oldSubentry = await dnToVertex(ctx, newDSE!, [ subentry.rdn ]);
                     if (!oldSubentry) {
                         await createEntry(
                             ctx,
-                            newDSE,
+                            newDSE!,
                             subentry.rdn,
                             {
                                 subentry: true,
@@ -260,7 +260,7 @@ async function updateContextPrefix (
                         }),
                         ...subentryDeletions,
                         ...subentryInfoDeletions,
-                        ...await addAttributes(ctx, newDSE, subentry.info, undefined, false, signErrors),
+                        ...await addAttributes(ctx, newDSE!, subentry.info, undefined, false, signErrors),
                     ]);
                 }
             } else { // This point is no longer an administrative point, or never was.
@@ -276,9 +276,9 @@ async function updateContextPrefix (
                 ).flat();
                 await ctx.db.$transaction(deletions);
             }
-            if (newDSE.dse.shadow) {
-                continue; // We don't modify shadow entries.
-            }
+            // if (newDSE?.dse.shadow) {
+            //     continue; // We don't modify shadow entries.
+            // }
         }
     }
 
@@ -306,7 +306,7 @@ async function updateContextPrefix (
                 },
             }),
             ...deletions,
-            ...await addAttributes(ctx, newDSE, mod.immediateSuperiorInfo, undefined, false, signErrors),
+            ...await addAttributes(ctx, newDSE!, mod.immediateSuperiorInfo, undefined, false, signErrors),
         ]);
     }
 
@@ -321,7 +321,7 @@ async function updateContextPrefix (
             immediate_superior_id: oldImmediateSuperior.dse.id,
         },
         data: {
-            immediate_superior_id: newDSE.dse.id,
+            immediate_superior_id: newDSE!.dse.id,
         },
     });
 
