@@ -93,6 +93,7 @@ async function updateAffectedSubordinateDSAs (
                     active: true,
                     entry_id: immSuprDSE.dse.id,
                     knowledge_type: Knowledge.NON_SPECIFIC,
+                    nssr_binding_identifier: hob.binding_identifier,
                 },
                 select: {
                     ber: true,
