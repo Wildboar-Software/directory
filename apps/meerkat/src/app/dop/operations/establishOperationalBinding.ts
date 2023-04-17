@@ -595,6 +595,7 @@ async function relayedEstablishOperationalBinding (
             select: {
                 id: true,
                 uuid: true,
+                binding_identifier: true,
             },
         });
         const ROLE_REVERSAL_ERROR = new errors.OperationalBindingError(
@@ -755,7 +756,7 @@ async function relayedEstablishOperationalBinding (
                     agr,
                     sub2sup,
                     signErrors,
-                    new_ob.id,
+                    new_ob.binding_identifier,
                 );
             }
             else {
@@ -1990,6 +1991,7 @@ async function establishOperationalBinding (
                 select: {
                     id: true,
                     uuid: true,
+                    binding_identifier: true,
                 },
             });
             const approved: boolean | undefined = await getApproval(created.uuid);
@@ -2059,7 +2061,7 @@ async function establishOperationalBinding (
                     agreement,
                     init,
                     signErrors,
-                    created.id,
+                    created.binding_identifier,
                 );
                 ctx.log.info(ctx.i18n.t("log:establishOperationalBinding", {
                     context: "succeeded",
