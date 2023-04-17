@@ -19,12 +19,12 @@ import createEntry from "../../database/createEntry";
 import getDistinguishedName from "../../x500/getDistinguishedName";
 import addAttributes from "../../database/entry/addAttributes";
 import removeAttribute from "../../database/entry/removeAttribute";
-import {
-    objectClass,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
-import {
-    entryACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/entryACI.oa";
+// import {
+//     objectClass,
+// } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+// import {
+//     entryACI,
+// } from "@wildboar/x500/src/lib/modules/BasicAccessControl/entryACI.oa";
 import {
     prescriptiveACI,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/prescriptiveACI.oa";
@@ -211,7 +211,7 @@ async function updateContextPrefix (
                         },
                     }),
                     ...deletions,
-                    ...await addAttributes(ctx, currentRoot, vertex.admPointInfo),
+                    ...await addAttributes(ctx, currentRoot, vertex.admPointInfo, undefined, false, signErrors),
                 ]);
                 for (const subentry of vertex.subentries ?? []) {
                     const oldSubentry = await dnToVertex(ctx, currentRoot, [ subentry.rdn ]);
@@ -253,7 +253,7 @@ async function updateContextPrefix (
                         }),
                         ...subentryDeletions,
                         ...subentryInfoDeletions,
-                        ...await addAttributes(ctx, currentRoot, subentry.info),
+                        ...await addAttributes(ctx, currentRoot, subentry.info, undefined, false, signErrors),
                     ]);
                 }
             } else { // This point is no longer an administrative point, or never was.
@@ -279,21 +279,27 @@ async function updateContextPrefix (
         const deletions = (
             await Promise.all(
                 mod.immediateSuperiorInfo
-                    .filter((attr) => (
-                        attr.type_.isEqualTo(objectClass["&id"])
-                        || attr.type_.isEqualTo(entryACI["&id"])
-                    ))
+                    // .filter((attr) => (
+                    //     attr.type_.isEqualTo(objectClass["&id"])
+                    //     || attr.type_.isEqualTo(entryACI["&id"])
+                    // ))
                     .map((attr) => removeAttribute(ctx, currentRoot, attr.type_))
             )
         ).flat();
         await ctx.db.$transaction([
-            // ctx.db.attributeValue.deleteMany({
-            //     where: {
-            //         entry_id: currentRoot.dse.id,
-            //     },
-            // }),
+            ctx.db.attributeValue.deleteMany({
+                where: {
+                    entry_id: currentRoot.dse.id,
+                    // type_oid: {
+                    //     notIn: [
+                    //         objectClass["&id"].toBytes(),
+                    //         entryACI["&id"].toBytes(),
+                    //     ],
+                    // },
+                },
+            }),
             ...deletions,
-            ...await addAttributes(ctx, currentRoot, mod.immediateSuperiorInfo),
+            ...await addAttributes(ctx, currentRoot, mod.immediateSuperiorInfo, undefined, false, signErrors),
         ]);
     }
 
