@@ -105,9 +105,9 @@ async function updateContextPrefix (
     // Can you trust mod.contextPrefixInfo.length? Yes, because the superior DSA may move its entries.
     let immSuprAccessPoints: MasterAndShadowAccessPoints | undefined = undefined;
     let superiorDSAMayModify: boolean = false;
-    let currentRoot: Vertex | undefined = ctx.dit.root;
+    let currentRoot: Vertex = ctx.dit.root;
     for (let i = 0; i < agreementDN.length; i++) {
-        const already_existing_dse = await dnToVertex(ctx, currentRoot!, agreementDN.slice(i, i + 1));
+        const already_existing_dse = await dnToVertex(ctx, currentRoot, agreementDN.slice(i, i + 1));
         if (already_existing_dse?.dse.id === highestDseThatSuperiorDSAMayModify.dse.id) {
             superiorDSAMayModify = true;
         }
@@ -184,7 +184,7 @@ async function updateContextPrefix (
                     //     attr.type_.isEqualTo(objectClass["&id"])
                     //     || attr.type_.isEqualTo(entryACI["&id"])
                     // ))
-                    .map((attr) => removeAttribute(ctx, currentRoot!, attr.type_))
+                    .map((attr) => removeAttribute(ctx, currentRoot, attr.type_))
             )
         ).flat();
         await ctx.db.$transaction([
@@ -200,7 +200,7 @@ async function updateContextPrefix (
                 },
             }),
             ...deletions,
-            ...await addAttributes(ctx, currentRoot!, mod.immediateSuperiorInfo, undefined, false, signErrors),
+            ...await addAttributes(ctx, currentRoot, mod.immediateSuperiorInfo, undefined, false, signErrors),
         ]);
     }
 
