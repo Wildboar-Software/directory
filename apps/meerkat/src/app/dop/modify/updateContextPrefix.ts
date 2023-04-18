@@ -36,6 +36,22 @@ import dseFromDatabaseEntry from "../../database/dseFromDatabaseEntry";
 import { strict as assert } from "assert";
 import { NHOBSuperiorToSubordinate } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NHOBSuperiorToSubordinate.ta";
 import deleteEntry from "../../database/deleteEntry";
+import { RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
+
+async function partiallyResolveDN (ctx: Context, dn: DistinguishedName): Promise<Vertex> {
+    let current: Vertex = ctx.dit.root;
+    let i: number = 0;
+    let rdn: RelativeDistinguishedName = dn[i];
+    while (rdn) {
+        const vertex = await dnToVertex(ctx, current, [ rdn ]);
+        if (!vertex) {
+            break;
+        }
+        current = vertex;
+        rdn = dn[++i];
+    }
+    return current;
+}
 
 /**
  * @summary Apply an update to a context prefix given by a superior DSA
@@ -87,7 +103,7 @@ async function updateContextPrefix (
         );
     }
     const agreementDN = mod.contextPrefixInfo.map((v) => v.rdn);
-    let current_new = await dnToVertex(ctx, ctx.dit.root, agreementDN);
+    let current_new = await partiallyResolveDN(ctx, agreementDN);
     while (
         current_new
         && current_new.immediateSuperior
@@ -95,12 +111,7 @@ async function updateContextPrefix (
     ) {
         current_new = current_new.immediateSuperior;
     }
-    const highestDseThatSuperiorDSAMayModify: Vertex | undefined = current_new;
-    if (!highestDseThatSuperiorDSAMayModify) {
-        throw new Error("29d3463f-f151-4ded-a926-3381a43ac628");
-    }
-    // const highestModifiableDN = getDistinguishedName(highestDseThatSuperiorDSAMayModify);
-
+    const highestDseThatSuperiorDSAMayModify: Vertex = current_new;
 
     // Can you trust mod.contextPrefixInfo.length? Yes, because the superior DSA may move its entries.
     let immSuprAccessPoints: MasterAndShadowAccessPoints | undefined = undefined;
