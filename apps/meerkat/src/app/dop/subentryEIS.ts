@@ -1,32 +1,17 @@
 import {
     EntryInformationSelection,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
-import { commonName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
-import { subtreeSpecification } from "@wildboar/x500/src/lib/modules/InformationFramework/subtreeSpecification.oa";
-import { prescriptiveACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/prescriptiveACI.oa";
-import { entryACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/entryACI.oa";
-import { contextAssertionDefaults } from "@wildboar/x500/src/lib/modules/InformationFramework/contextAssertionDefaults.oa";
-import { searchRules } from "@wildboar/x500/src/lib/modules/InformationFramework/searchRules.oa";
-import { pwdAttribute } from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAttribute.oa";
-import { pwdModifyEntryAllowed } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdModifyEntryAllowed.oa";
-import { pwdChangeAllowed } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdChangeAllowed.oa";
-import { pwdMaxAge } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMaxAge.oa";
-import { pwdExpiryAge } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryAge.oa";
-import { pwdMinLength } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMinLength.oa";
-import { pwdVocabulary } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdVocabulary.oa";
-import { pwdAlphabet } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdAlphabet.oa";
-import { pwdDictionaries } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdDictionaries.oa";
-import { pwdExpiryWarning } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdExpiryWarning.oa";
-import { pwdGraces } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdGraces.oa";
-import { pwdFailureDuration } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFailureDuration.oa";
-import { pwdLockoutDuration } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdLockoutDuration.oa";
-import { pwdMaxFailures } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMaxFailures.oa";
-import { pwdMaxTimeInHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMaxTimeInHistory.oa";
-import { pwdMinTimeInHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdMinTimeInHistory.oa";
-import { pwdHistorySlots } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdHistorySlots.oa";
-import { pwdRecentlyExpiredDuration } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdRecentlyExpiredDuration.oa";
-import { pwdEncAlg } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdEncAlg.oa";
-import { aliasedEntryName } from "@wildboar/x500/src/lib/modules/InformationFramework/aliasedEntryName.oa";
+import * as x500at from "@wildboar/x500/src/lib/collections/attributes";
+import {
+    entryUUID,
+} from "@wildboar/parity-schema/src/lib/modules/UUID/entryUUID.oa";
+import {
+    entryDN,
+} from "@wildboar/parity-schema/src/lib/modules/RFC5020EntryDN/entryDN.oa";
+import {
+    superiorUUID,
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/superiorUUID.oa";
+import { TRUE } from "asn1-ts";
 
 /**
  * @summary Selects attributes of a subentry that are to be shared in a hierarchical operational binding
@@ -42,41 +27,63 @@ export
 const subentryEIS = new EntryInformationSelection(
     {
         select: [
-            commonName["&id"],
-            aliasedEntryName["&id"],
+            x500at.commonName["&id"],
+            x500at.pwdAttribute["&id"],
+            x500at.objectClass["&id"],
         ],
     },
     undefined,
     {
         select: [
-            entryACI["&id"],
-            prescriptiveACI["&id"],
-            subtreeSpecification["&id"],
-            contextAssertionDefaults["&id"],
-            searchRules["&id"],
-            pwdAttribute["&id"],
-            pwdModifyEntryAllowed["&id"],
-            pwdChangeAllowed["&id"],
-            pwdMaxAge["&id"],
-            pwdExpiryAge["&id"],
-            pwdMinLength["&id"],
-            pwdVocabulary["&id"],
-            pwdAlphabet["&id"],
-            pwdDictionaries["&id"],
-            pwdExpiryWarning["&id"],
-            pwdGraces["&id"],
-            pwdFailureDuration["&id"],
-            pwdLockoutDuration["&id"],
-            pwdMaxFailures["&id"],
-            pwdMaxTimeInHistory["&id"],
-            pwdMinTimeInHistory["&id"],
-            pwdHistorySlots["&id"],
-            pwdRecentlyExpiredDuration["&id"],
-            pwdEncAlg["&id"],
+            x500at.attributeTypes["&id"],
+            x500at.contextAssertionDefaults["&id"],
+            x500at.contextTypes["&id"],
+            x500at.createTimestamp["&id"],
+            x500at.dITContentRules["&id"],
+            x500at.dITContextUse["&id"],
+            x500at.dITStructureRules["&id"],
+            x500at.dseType["&id"],
+            x500at.entryACI["&id"],
+            x500at.friends["&id"],
+            x500at.governingStructureRule["&id"],
+            x500at.ldapSyntaxes["&id"],
+            x500at.matchingRules["&id"],
+            x500at.matchingRuleUse["&id"],
+            x500at.modifyTimestamp["&id"],
+            x500at.nameForms["&id"],
+            x500at.objectClasses["&id"],
+            x500at.prescriptiveACI["&id"],
+            x500at.pwdAlphabet["&id"],
+            x500at.pwdChangeAllowed["&id"],
+            x500at.pwdDictionaries["&id"],
+            x500at.pwdEncAlg["&id"],
+            x500at.pwdExpiryAge["&id"],
+            x500at.pwdExpiryWarning["&id"],
+            x500at.pwdFailureDuration["&id"],
+            x500at.pwdGraces["&id"],
+            x500at.pwdHistorySlots["&id"],
+            x500at.pwdLockoutDuration["&id"],
+            x500at.pwdMaxAge["&id"],
+            x500at.pwdMaxFailures["&id"],
+            x500at.pwdMaxTimeInHistory["&id"],
+            x500at.pwdMinLength["&id"],
+            x500at.pwdMinTimeInHistory["&id"],
+            x500at.pwdModifyEntryAllowed["&id"],
+            x500at.pwdRecentlyExpiredDuration["&id"],
+            x500at.pwdVocabulary["&id"],
+            x500at.searchRules["&id"],
+            x500at.structuralObjectClass["&id"],
+            x500at.subschemaTimestamp["&id"],
+            x500at.subtreeSpecification["&id"],
+            entryUUID["&id"],
+            entryDN["&id"],
+            superiorUUID["&id"],
         ],
     },
-    undefined,
-    undefined,
+    {
+        allContexts: null,
+    },
+    TRUE,
     undefined,
 );
 

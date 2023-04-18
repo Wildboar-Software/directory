@@ -224,6 +224,15 @@ async function updateContextPrefix (
     await ctx.db.entry.updateMany({
         where: {
             immediate_superior_id: oldImmediateSuperior.dse.id,
+            subentry: true,
+        },
+        data: {
+            deleteTimestamp: new Date(),
+        },
+    });
+    await ctx.db.entry.updateMany({
+        where: {
+            immediate_superior_id: oldImmediateSuperior.dse.id,
         },
         data: {
             immediate_superior_id: currentRoot!.dse.id,
