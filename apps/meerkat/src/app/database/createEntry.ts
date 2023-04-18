@@ -81,6 +81,7 @@ async function createEntry (
         && !entryInit.immSupr
         && !entryInit.glue
         && !entryInit.sa
+        && !entryInit.subentry
         && !isAlias
         && !isSubentry
     );
