@@ -184,10 +184,10 @@ export class HomeController {
                 ? stringifyDN(this.ctx, cpdn)
                 : undefined,
             agreement_bytes: ob.agreement_ber
-                ? breakIntoLines(ob.agreement_ber.toString("hex"), 60)
+                ? breakIntoLines(ob.agreement_ber.toString("hex"), 60).join("\n")
                 : undefined,
             init_param_bytes: ob.initiator_ber
-                ? breakIntoLines(ob.initiator_ber.toString("hex"), 60)
+                ? breakIntoLines(ob.initiator_ber.toString("hex"), 60).join("\n")
                 : undefined,
             previous_uuid: ob.previous?.uuid,
         };

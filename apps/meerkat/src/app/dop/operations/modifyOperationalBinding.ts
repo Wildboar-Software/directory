@@ -263,6 +263,8 @@ async function modifyOperationalBinding (
             /**
              * This is a hack for getting the latest version: we are selecting
              * operational bindings that have no next version.
+             *
+             * See: https://github.com/prisma/prisma/discussions/2772#discussioncomment-1712222
              */
             next_version: {
                 none: {},
@@ -810,12 +812,8 @@ async function modifyOperationalBinding (
                          * operational binding has no "previous"es that
                          * point to it.
                          */
-                        previous: approved
-                            ? {
-                                connect: {
-                                    id: opBinding.id,
-                                },
-                            }
+                        previous_id: approved
+                            ? opBinding.id
                             : undefined,
                     },
                     select: {
@@ -1062,6 +1060,9 @@ async function modifyOperationalBinding (
                     },
                     data: {
                         accepted: approved ?? null,
+                        previous_id: approved
+                            ? opBinding.id
+                            : undefined,
                     },
                     select: {
                         id: true,

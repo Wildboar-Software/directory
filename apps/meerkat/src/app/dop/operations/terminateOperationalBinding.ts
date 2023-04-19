@@ -73,6 +73,7 @@ import { AccessPoint, _decode_AccessPoint } from "@wildboar/x500/src/lib/modules
 import { terminateByTypeAndBindingID } from "../terminateByTypeAndBindingID";
 import { timingSafeEqual } from "crypto";
 import { id_op_binding_non_specific_hierarchical } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
+import stringifyDN from "../../x500/stringifyDN";
 
 
 async function relayedTerminateOperationalBinding (
@@ -286,8 +287,10 @@ async function terminateOperationalBinding (
         },
         select: {
             id: true,
+            uuid: true,
             access_point: {
                 select: {
+                    id: true,
                     ae_title: true,
                 },
             },
@@ -301,6 +304,7 @@ async function terminateOperationalBinding (
                 ? ob.access_point.ae_title.map((rdn: Record<string, string>) => rdnFromJson(rdn))
                 : undefined;
             if (!authorized_ae_title) {
+                ctx.log.warn(ctx.i18n.t("log:ap_missing_ae_title", { id: ob.access_point.id }));
                 return false;
             }
             const modifier_is_originator: boolean = compareDistinguishedName(
@@ -308,6 +312,16 @@ async function terminateOperationalBinding (
                 assn.boundNameAndUID!.dn,
                 NAMING_MATCHER,
             );
+            if (!modifier_is_originator) {
+                const logInfo = {
+                    type: data.bindingType.toString(),
+                    obid: data.bindingID?.identifier.toString(),
+                    uuid: ob.uuid,
+                    owner: stringifyDN(ctx, authorized_ae_title),
+                    impostor: stringifyDN(ctx, assn.boundNameAndUID!.dn),
+                };
+                ctx.log.warn(ctx.i18n.t("log:ob_terminate_attempt_by_other_ae", logInfo), logInfo);
+            }
             return modifier_is_originator;
         });
 
