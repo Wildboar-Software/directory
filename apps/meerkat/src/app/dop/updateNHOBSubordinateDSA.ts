@@ -196,11 +196,6 @@ async function updateNHOBSubordinateDSA (
         throw new Error("f323a12d-92e6-49e3-9e10-50302c58639e");
     }
     const ob_db_data: Prisma.OperationalBindingCreateInput = {
-        // previous: {
-        //     connect: {
-        //         id: nhob_id,
-        //     },
-        // },
         outbound: true,
         binding_type: id_op_binding_non_specific_hierarchical.toString(),
         binding_identifier: Number(currentBindingID.identifier),
@@ -277,7 +272,7 @@ async function updateNHOBSubordinateDSA (
                 }), logInfo);
                 return;
             }
-            if (Number(resultData.newBindingID.identifier) === Number(currentBindingID.identifier)) {
+            if (Number(resultData.newBindingID.identifier) !== Number(currentBindingID.identifier)) {
                 ctx.log.error(ctx.i18n.t("log:ob_result_mismatch_id", {
                     iid: printInvokeId(response.result.invoke_id),
                     requested: currentBindingID.identifier.toString(),

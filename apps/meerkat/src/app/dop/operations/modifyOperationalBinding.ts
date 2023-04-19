@@ -455,11 +455,11 @@ async function modifyOperationalBinding (
     const created = await ctx.db.operationalBinding.create({
         data: {
             accepted: undefined,
-            previous: {
-                connect: {
-                    id: opBinding.id,
-                },
-            },
+            // previous: {
+            //     connect: {
+            //         id: opBinding.id,
+            //     },
+            // },
             outbound: false,
             binding_type: data.bindingType.toString(),
             binding_identifier: Number(data.newBindingID.identifier),
@@ -802,6 +802,21 @@ async function modifyOperationalBinding (
                     },
                     data: {
                         accepted: approved ?? null,
+                        /**
+                         * Previous is not set until the update succeeds,
+                         * because `getRelevantOperationalBindings`
+                         * determines which is the latest of all versions of
+                         * a given operational binding based on which
+                         * operational binding has no "previous"es that
+                         * point to it.
+                         */
+                        previous: approved
+                            ? {
+                                connect: {
+                                    id: opBinding.id,
+                                },
+                            }
+                            : undefined,
                     },
                     select: {
                         id: true,
@@ -864,7 +879,20 @@ async function modifyOperationalBinding (
                     },
                     data: {
                         accepted: true,
-                    }
+                        /**
+                         * Previous is not set until the update succeeds,
+                         * because `getRelevantOperationalBindings`
+                         * determines which is the latest of all versions of
+                         * a given operational binding based on which
+                         * operational binding has no "previous"es that
+                         * point to it.
+                         */
+                        previous: {
+                            connect: {
+                                id: opBinding.id,
+                            },
+                        },
+                    },
                 });
             }
             await updateContextPrefix(ctx, created.uuid, oldAgreement.immediateSuperior, init, signErrors);

@@ -274,7 +274,7 @@ async function updateSuperiorDSA (
             const encodedSub2Sup = _encode_SubordinateToSuperior(sub2sup, DER);
             const newOB = await ctx.db.operationalBinding.create({
                 data: {
-                    accepted: false,
+                    accepted: undefined,
                     outbound: true,
                     binding_type: id_op_binding_hierarchical.toString(),
                     binding_identifier: Number(bindingID.identifier),
@@ -379,6 +379,7 @@ async function updateSuperiorDSA (
                                 context: "oberror",
                                 problem: obErrorData.problem,
                             }));
+                            assn.unbind().then().catch(); // INTENTIONAL_NO_AWAIT
                             break;
                         }
                     } else {
@@ -386,15 +387,26 @@ async function updateSuperiorDSA (
                             context: "errcode",
                             code: codeToString(response.error.code),
                         }));
+                        assn.unbind().then().catch(); // INTENTIONAL_NO_AWAIT
                         break;
                     }
                 } else {
                     ctx.log.error(ctx.i18n.t("log:update_superior_dsa", {
                         context: "nocode",
                     }));
+                    assn.unbind().then().catch(); // INTENTIONAL_NO_AWAIT
                     break;
                 }
             }
+            await ctx.db.operationalBinding.update({
+                where: {
+                    uuid: newOB.uuid,
+                },
+                data: {
+                    accepted: false,
+                },
+            });
+            assn.unbind().then().catch(); // INTENTIONAL_NO_AWAIT
         } catch (e) {
             ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
                 obid: bindingID.identifier.toString(),
