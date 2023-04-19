@@ -54,6 +54,7 @@ import {
     RelativeDistinguishedName as RDN,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
 import printInvokeId from "../utils/printInvokeId";
+import saveAccessPoint from "../database/saveAccessPoint";
 
 /**
  * @summary Updates a subordinate DSA of changes that may affect a hierarchical operational binding
@@ -188,11 +189,16 @@ async function updateHOBSubordinateDSA (
         },
         select: {
             terminated_time: true,
+            access_point_id: true,
         },
     });
     if (!previous_ob) {
         // This should basically never happen.
         throw new Error("f7d19fdf-0eb2-44f9-bf7d-0e170c36c0dd");
+    }
+    if (!previous_ob.access_point_id) {
+        // This is more plausible, but it is still a bug if it happens.
+        throw new Error("f323a12d-92e6-49e3-9e10-50302c58639e");
     }
     const ob_db_data: Prisma.OperationalBindingCreateInput = {
         previous: {
@@ -207,7 +213,11 @@ async function updateHOBSubordinateDSA (
         agreement_ber: Buffer.from(agr_element.toBytes().buffer),
         initiator: OperationalBindingInitiator.ROLE_A,
         initiator_ber: Buffer.from(_encode_SuperiorToSubordinateModification(sup2sub, BER).toBytes()),
-        // access_point: null,
+        access_point: {
+            connect: {
+                id: previous_ob.access_point_id,
+            },
+        },
         validity_start: new Date(),
         validity_end: previous_ob.terminated_time,
         supply_contexts: null,
@@ -260,7 +270,7 @@ async function updateHOBSubordinateDSA (
         let newBindingID = new OperationalBindingID(
             currentBindingID.identifier,
             Number(currentBindingID.version) + 1,
-        )
+        );
         if ("protected_" in response.result.parameter) {
             const param = response.result.parameter.protected_;
             const resultData = getOptionallyProtectedValue(param);
