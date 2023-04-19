@@ -54,7 +54,6 @@ import {
     RelativeDistinguishedName as RDN,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
 import printInvokeId from "../utils/printInvokeId";
-import saveAccessPoint from "../database/saveAccessPoint";
 
 /**
  * @summary Updates a subordinate DSA of changes that may affect a hierarchical operational binding
@@ -282,7 +281,7 @@ async function updateHOBSubordinateDSA (
                 }), logInfo);
                 return;
             }
-            if (Number(resultData.newBindingID.identifier) === Number(currentBindingID.identifier)) {
+            if (Number(resultData.newBindingID.identifier) !== Number(currentBindingID.identifier)) {
                 ctx.log.error(ctx.i18n.t("log:ob_result_mismatch_id", {
                     iid: printInvokeId(response.result.invoke_id),
                     requested: currentBindingID.identifier.toString(),
