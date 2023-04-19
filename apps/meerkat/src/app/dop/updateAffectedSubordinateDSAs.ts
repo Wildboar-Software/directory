@@ -154,7 +154,7 @@ async function updateAffectedSubordinateDSAs (
                         }));
                     });
             }
-            return;
+            continue;
         }
         const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(argreementElement);
         if (!isPrefix(ctx, affectedPrefix, agreement.immediateSuperior)) {
