@@ -104,6 +104,7 @@
     "removing_a_context_prefix": "Removing context prefix {{uuid}}.",
     "updating_superior_dsa@subentry": "Updating superior DSA because one of the context prefix's subentries were deleted.",
     "updating_subordinate@nssr": "Updating NHOB {{obid}} with subordinate DSA '{{ae_title}}' because a prefix of the NSSR changed.",
+    "updating_subordinate@hob": "Updating HOB {{obid}} with subordinate DSA '{{ae_title}}' because a prefix of the subordinate context prefix changed.",
     "failed_to_update_superior_dsa": "Failed to update superior DSA with error {{e}}",
     "updated_superior_dsa": "Successfully updated superior DSA.",
     "establishing_hob_via_add_entry": "AddEntry.targetSystem instigated an attempt to create a HOB beneath DSE {{uuid}}.",
@@ -261,5 +262,14 @@
     "entry_not_found@nssr": "Candidate refs empty under NSSR. i={{i}}. Next RDN to be Resolved={{n}}.",
     "no_masters_to_update@nhob": "No master subordinate DSAs to update for NHOB {{obid}}.",
     "updating_subordinate_dsas@moddn": "Updating subordinate DSAs (if any), because DSE '{{dn}}' was moved or renamed.",
-    "could_not_find_nssr": "Could not find NSSR for NHOB {{obid}}."
+    "could_not_find_nssr": "Could not find NSSR for NHOB {{obid}}.",
+    "ob_result_mismatch_type": "DOP invocation {{iid}} result returned a binding type, {{returned}}, which mismatched that of the requested operational binding type, {{requested}}.",
+    "ob_result_mismatch_id": "DOP invocation {{iid}} result returned an OB identifier, {{returned}}, which mismatched that of the requested OB identifier, {{requested}}.",
+    "ob_result_lesser_version": "DOP invocation {{iid}} result returned an OB version, {{returned}}, which was equal to or less than the local DSA's known current version, {{requested}}.",
+    "received_operationalBindingError": "Received Operational Binding Error with problem {{problem}} for invocation {{iid}}.",
+    "received_securityError": "Received Security Error with problem {{problem}} for invocation {{iid}}.",
+    "received_other_error": "Received an error for invocation {{iid}} with error code {{code}} and parameter (as hex): {{param}}",
+    "received_rejection": "Received reject for operation {{iid}} with reason code {{reason}}.",
+    "received_abort": "Received abort with reason code {{reason}}.",
+    "received_other_problem": "Other problem initiating remote operation: {{problem}}."
 }

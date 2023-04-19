@@ -11,9 +11,7 @@ import {
     _decode_AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 import isPrefix from "../x500/isPrefix";
-import updateSubordinateDSA from "./updateSubordinateDSA";
-import updateNonSpecificSubordinateDSA from "./updateNonSpecificSubordinateDSA";
-import { strict as assert } from "assert";
+import updateNHOBSubordinateDSA from "./updateNHOBSubordinateDSA";
 import { OperationalBindingID } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
 import type {
     DistinguishedName,
@@ -21,11 +19,9 @@ import type {
 import {
     id_op_binding_non_specific_hierarchical,
 } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
-import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
+import { OperationalBindingInitiator } from "@prisma/client";
 import { _decode_NonSpecificHierarchicalAgreement } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NonSpecificHierarchicalAgreement.ta";
-import { MasterOrShadowAccessPoint_category_master } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint-category.ta";
-import _ from "lodash";
-import { _decode_MasterOrShadowAccessPoint } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint.ta";
+import updateHOBSubordinateDSA from "./updateHOBSubordinateDSA";
 
 /**
  * @summary Update subordinate DSAs when entries that relate to an operational binding are created, modified, or deleted.
@@ -66,8 +62,15 @@ async function updateAffectedSubordinateDSAs (
         ) { // Subordinates in an NHOB do not have to update the superior on entry changes.
             continue;
         }
+        const accessPointElement = new BERElement();
+        accessPointElement.fromBytes(hob.access_point.ber);
+        const accessPoint: AccessPoint = _decode_AccessPoint(accessPointElement);
         const argreementElement = new BERElement();
         argreementElement.fromBytes(hob.agreement_ber);
+        const bindingID = new OperationalBindingID(
+            hob.binding_identifier,
+            hob.binding_version,
+        );
         if (hob.binding_type === id_op_binding_non_specific_hierarchical.toString()) {
             const agreement = _decode_NonSpecificHierarchicalAgreement(argreementElement);
             if (!isPrefix(ctx, affectedPrefix, agreement.immediateSuperior)) {
@@ -86,135 +89,61 @@ async function updateAffectedSubordinateDSAs (
                 }));
                 continue; // TODO: Is this the proper response?
             }
-            // TODO: Update the access point named on the establish request rather than the NSK.
-            const aps = await ctx.db.accessPoint.findMany({
-                where: {
-                    category: MasterOrShadowAccessPoint_category_master,
-                    active: true,
-                    entry_id: immSuprDSE.dse.id,
-                    knowledge_type: Knowledge.NON_SPECIFIC,
-                    nssr_binding_identifier: hob.binding_identifier,
-                },
-                select: {
-                    ber: true,
-                    nsk_group: true,
-                },
-            });
-            const nsk_groups = _.groupBy(aps, (n) => n.nsk_group);
-            const nonSpecificKnowledge = Object.values(nsk_groups)
-                .map((masaps) => masaps
-                    .map((mosap) => {
-                        const el = new BERElement();
-                        el.fromBytes(mosap.ber);
-                        return _decode_MasterOrShadowAccessPoint(el);
-                    })
-                    .filter((mosap) => ((mosap.category ?? MasterOrShadowAccessPoint_category_master) === MasterOrShadowAccessPoint_category_master)));
-            if (nonSpecificKnowledge.length === 0) {
-                ctx.log.warn(ctx.i18n.t("log:no_masters_to_update", {
-                    context: "nhob",
-                    obid: hob.binding_identifier.toString(),
-                }));
-            }
-            for (const masters of nonSpecificKnowledge) {
-                const master = masters[0];
-                if (!master) {
-                    ctx.log.warn(ctx.i18n.t("log:no_masters_to_update", {
-                        context: "nhob",
-                        obid: hob.binding_identifier.toString(),
+            updateNHOBSubordinateDSA( // INTENTIONAL_NO_AWAIT
+                ctx,
+                hob.id,
+                bindingID,
+                immSuprDSE,
+                accessPoint,
+                undefined,
+                undefined,
+            )
+                .catch((e) => {
+                    ctx.log.warn(ctx.i18n.t("log:failed_to_update_nhob", {
+                        obid: bindingID.identifier.toString(),
+                        version: bindingID.version.toString(),
+                        e: e.message,
                     }));
-                    continue;
-                }
-                const bindingID = new OperationalBindingID(
-                    hob.binding_identifier,
-                    hob.binding_version,
-                );
-                updateNonSpecificSubordinateDSA(
-                    ctx,
-                    bindingID,
-                    immSuprDSE,
-                    master,
-                    undefined,
-                    undefined,
-                    undefined,
-                )
-                    .then((response) => {
-                        if (!("result" in response)) {
-                            ctx.log.warn(ctx.i18n.t("log:failed_to_update_nhob", {
-                                obid: bindingID.identifier.toString(),
-                                version: bindingID.version.toString(),
-                                e: JSON.stringify(response),
-                            }));
-                        }
-                    })
-                    .catch((e) => {
-                        ctx.log.warn(ctx.i18n.t("log:failed_to_update_nhob", {
-                            obid: bindingID.identifier.toString(),
-                            version: bindingID.version.toString(),
-                            e: e.message,
-                        }));
-                    });
-            }
+                });
             continue;
         }
         const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(argreementElement);
         if (!isPrefix(ctx, affectedPrefix, agreement.immediateSuperior)) {
             continue;
         }
-        const bindingID = new OperationalBindingID(
-            hob.binding_identifier,
-            hob.binding_version,
-        );
-        const accessPointElement = new BERElement();
-        accessPointElement.fromBytes(hob.access_point.ber);
-        const accessPoint: AccessPoint = _decode_AccessPoint(accessPointElement);
         const subrDN: DistinguishedName = [
             ...agreement.immediateSuperior,
             agreement.rdn,
         ];
-        try {
-            const subr = await dnToVertex(ctx, ctx.dit.root, subrDN);
-            if (!subr) {
-                ctx.log.warn(ctx.i18n.t("log:subr_for_hob_not_found", {
-                    obid: bindingID.identifier.toString(),
-                    version: bindingID.version.toString(),
-                }));
-                continue;
-            }
-            assert(subr.immediateSuperior);
-            // We do not await the return value. This can run independently
-            // of returning from the operation.
-            updateSubordinateDSA(
-                ctx,
-                bindingID,
-                subr.immediateSuperior,
-                undefined,
-                subr.dse.rdn,
-                accessPoint,
-            )
-                .then((response) => {
-                    if (!("result" in response)) {
-                        ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
-                            obid: bindingID.identifier.toString(),
-                            version: bindingID.version.toString(),
-                            e: JSON.stringify(response),
-                        }));
-                    }
-                })
-                .catch((e) => {
-                    ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
-                        obid: bindingID.identifier.toString(),
-                        version: bindingID.version.toString(),
-                        e: e.message,
-                    }));
-                });
-        } catch (e) {
-            ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+        const subr = await dnToVertex(ctx, ctx.dit.root, subrDN);
+        if (!subr) {
+            ctx.log.warn(ctx.i18n.t("log:subr_for_hob_not_found", {
                 obid: bindingID.identifier.toString(),
                 version: bindingID.version.toString(),
-                e: e.message,
             }));
             continue;
         }
+        if (!subr.immediateSuperior) {
+            // This should never happen.
+            throw new Error("9f0dedf1-baf3-4383-8458-5ceff363140c");
+        }
+        // We do not await the return value. This can run independently
+        // of returning from the operation.
+        updateHOBSubordinateDSA( // INTENTIONAL_NO_AWAIT
+            ctx,
+            hob.id,
+            bindingID,
+            subr.immediateSuperior,
+            subr.dse.rdn,
+            accessPoint,
+        )
+            .catch((e) => {
+                ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
+                    obid: bindingID.identifier.toString(),
+                    version: bindingID.version.toString(),
+                    e: e.message,
+                }));
+            });
     }
 }
 
