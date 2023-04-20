@@ -28,23 +28,23 @@ function create (ctx: Context): CommandModule {
                 .option("naddr", {
                     alias: "n",
                     type: "string",
-                    describe: "A network address of the DSA with which to establish the NHOB",
+                    describe: "A network address of the DSA with which to terminate the NHOB",
                     array: true,
                 })
                 .option("p-selector", {
                     alias: "p",
                     type: "string",
-                    describe: "A presentation selector of the DSA with which to establish the NHOB",
+                    describe: "A presentation selector of the DSA with which to terminate the NHOB",
                 })
                 .option("s-selector", {
                     alias: "s",
                     type: "string",
-                    describe: "A session selector of the DSA with which to establish the NHOB",
+                    describe: "A session selector of the DSA with which to terminate the NHOB",
                 })
                 .option("t-selector", {
                     alias: "t",
                     type: "string",
-                    describe: "A transport selector of the DSA with which to establish the NHOB",
+                    describe: "A transport selector of the DSA with which to terminate the NHOB",
                 })
                 .option("at", {
                     alias: "a",
