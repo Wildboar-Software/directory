@@ -1112,21 +1112,25 @@ async function establishOperationalBinding (
      * @function
      */
     const getApproval = (uuid: string): Promise<boolean | undefined> => {
+        const logInfo = {
+            type: data.bindingType.toString(),
+            obid: bindingID.identifier.toString(),
+            uuid,
+        };
         if (ctx.config.ob.autoAccept) {
             ctx.log.info(ctx.i18n.t("log:auto_accepted_ob", {
                 type: data.bindingType.toString(),
                 obid: bindingID.identifier.toString(),
                 uuid,
-            }), {
-                type: data.bindingType.toString(),
-                obid: bindingID.identifier.toString(),
-                uuid,
-            });
+            }), logInfo);
             return Promise.resolve(true);
         }
         ctx.log.warn(ctx.i18n.t("log:awaiting_ob_approval", { uuid }));
         return new Promise((resolve, reject) => {
-            setTimeout(resolve, 300_000);
+            setTimeout(() => {
+                ctx.log.warn(ctx.i18n.t("log:ob_proposal_timed_out"), { uuid }, logInfo);
+                resolve(undefined);
+            }, 300_000);
             new Promise<boolean>((resolve2) => {
                 ctx.operationalBindingControlEvents.once(uuid, (approved: boolean) => {
                     resolve2(approved);
@@ -1385,7 +1389,7 @@ async function establishOperationalBinding (
                     uuid: created.uuid,
                 },
                 data: {
-                    accepted: approved,
+                    accepted: approved ?? null,
                 },
                 select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             });
@@ -1508,6 +1512,10 @@ async function establishOperationalBinding (
                     ),
                 };
             } catch (e) {
+                ctx.log.error(ctx.i18n.t("log:err_establishing_ob", {
+                    uuid: created.uuid,
+                    e,
+                }));
                 if (e instanceof errors.OperationalBindingError) {
                     ctx.db.operationalBinding.update({
                         where: {
@@ -1581,7 +1589,7 @@ async function establishOperationalBinding (
                     uuid: created.uuid,
                 },
                 data: {
-                    accepted: approved,
+                    accepted: approved ?? null,
                 },
                 select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             });
@@ -1696,6 +1704,10 @@ async function establishOperationalBinding (
                     ),
                 };
             } catch (e) {
+                ctx.log.error(ctx.i18n.t("log:err_establishing_ob", {
+                    uuid: created.uuid,
+                    e,
+                }));
                 if (e instanceof errors.OperationalBindingError) {
                     ctx.db.operationalBinding.update({
                         where: {
@@ -1805,7 +1817,7 @@ async function establishOperationalBinding (
                     uuid: created.uuid,
                 },
                 data: {
-                    accepted: approved,
+                    accepted: approved ?? null,
                 },
                 select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             });
@@ -1925,6 +1937,10 @@ async function establishOperationalBinding (
                     ),
                 };
             } catch (e) {
+                ctx.log.error(ctx.i18n.t("log:err_establishing_ob", {
+                    uuid: created.uuid,
+                    e,
+                }));
                 if (e instanceof errors.OperationalBindingError) {
                     ctx.db.operationalBinding.update({
                         where: {
@@ -2000,7 +2016,7 @@ async function establishOperationalBinding (
                     uuid: created.uuid,
                 },
                 data: {
-                    accepted: approved,
+                    accepted: approved ?? null,
                 },
                 select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             });
@@ -2122,6 +2138,10 @@ async function establishOperationalBinding (
                     ),
                 };
             } catch (e) {
+                ctx.log.error(ctx.i18n.t("log:err_establishing_ob", {
+                    uuid: created.uuid,
+                    e,
+                }));
                 if (e instanceof errors.OperationalBindingError) {
                     ctx.db.operationalBinding.update({
                         where: {

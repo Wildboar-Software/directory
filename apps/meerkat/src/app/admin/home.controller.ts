@@ -199,6 +199,7 @@ export class HomeController {
                 : undefined,
             previous_uuid: ob.previous?.uuid,
             ap_ae_title,
+            requested_time: ob.requested_time.toISOString(),
         };
         return templateVariables;
     }

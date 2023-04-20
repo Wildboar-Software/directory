@@ -298,6 +298,7 @@ async function terminateOperationalBinding (
     }))
         .filter((ob) => {
             if (!ob.access_point) {
+                ctx.log.warn(ctx.i18n.t("log:ob_has_no_access_point", { uuid: ob.uuid }));
                 return false;
             }
             const authorized_ae_title: DistinguishedName | undefined = Array.isArray(ob.access_point.ae_title)

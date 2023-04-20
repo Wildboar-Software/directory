@@ -286,7 +286,7 @@ async function updateSuperiorDSA (
                         },
                     },
                     initiator: OperationalBindingInitiator.ROLE_B,
-                    initiator_ber: Buffer.from(encodedSub2Sup.toBytes().buffer),
+                    initiator_ber: Buffer.from(encodedSub2Sup.toBytes()),
                     validity_start: hob.validity_start,
                     validity_end: hob.validity_end,
                     new_context_prefix_rdn: rdnToJson(newCP.dse.rdn),

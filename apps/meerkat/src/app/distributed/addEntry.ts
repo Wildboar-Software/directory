@@ -1301,7 +1301,7 @@ async function addEntry (
                     ? Number(resultData.bindingID.version)
                     : 0,
                 agreement_ber: Buffer.from(
-                    hierarchicalOperationalBinding.encoderFor["&Agreement"]!(agreement, DER).toBytes().buffer,
+                    hierarchicalOperationalBinding.encoderFor["&Agreement"]!(agreement, DER).toBytes()
                 ),
                 access_point: {
                     connect: {
@@ -1309,7 +1309,7 @@ async function addEntry (
                     },
                 },
                 initiator: OperationalBindingInitiator.ROLE_A,
-                initiator_ber: Buffer.from(_encode_SuperiorToSubordinate(obArg.initiator, DER).toBytes().buffer),
+                initiator_ber: Buffer.from(_encode_SuperiorToSubordinate(obArg.initiator, DER).toBytes()),
                 validity_start: validFrom,
                 validity_end: validUntil,
                 new_context_prefix_rdn: rdnToJson(agreement.rdn),
@@ -1330,6 +1330,7 @@ async function addEntry (
                 signErrors,
             );
         } catch (e) {
+            // TODO: Terminate the OB
             ctx.db.operationalBinding.update({
                 where: {
                     uuid: createdOB.uuid,

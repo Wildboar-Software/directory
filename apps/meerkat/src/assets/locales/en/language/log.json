@@ -273,5 +273,7 @@
     "received_rejection": "Received reject for operation {{iid}} with reason code {{reason}}.",
     "received_abort": "Received abort with reason code {{reason}}.",
     "received_other_problem": "Other problem initiating remote operation: {{problem}}.",
-    "ob_has_no_access_point": "Operational binding {{uuid}} has no access point defined."
+    "ob_has_no_access_point": "Operational binding {{uuid}} has no access point defined.",
+    "ob_proposal_timed_out": "Proposed operational binding {{uuid}} timed out and therefore was auto-rejected.",
+    "err_establishing_ob": "Error establishing operational binding {{uuid}}: {{e}}"
 }

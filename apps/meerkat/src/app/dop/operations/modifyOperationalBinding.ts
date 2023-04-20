@@ -478,7 +478,7 @@ async function modifyOperationalBinding (
                 ? getInitiator(data.initiator)
                 : opBinding.initiator,
             initiator_ber: data.initiator
-                ? Buffer.from(getInitiatorParam(data.initiator).toBytes().buffer)
+                ? Buffer.from(getInitiatorParam(data.initiator).toBytes())
                 : opBinding.initiator_ber,
             validity_start: validFrom,
             validity_end: validUntil,
@@ -578,21 +578,25 @@ async function modifyOperationalBinding (
      * @function
      */
     const getApproval = (uuid: string): Promise<boolean | undefined> => {
+        const logInfo = {
+            type: data.bindingType.toString(),
+            obid: data.bindingID.identifier.toString(),
+            uuid,
+        };
         if (ctx.config.ob.autoAccept) {
             ctx.log.info(ctx.i18n.t("log:auto_accepted_ob", {
                 type: data.bindingType.toString(),
                 obid: data.bindingID.identifier.toString(),
                 uuid,
-            }), {
-                type: data.bindingType.toString(),
-                obid: data.bindingID.identifier.toString(),
-                uuid,
-            });
+            }), logInfo);
             return Promise.resolve(true);
         }
         ctx.log.warn(ctx.i18n.t("log:awaiting_ob_approval", { uuid }));
         return new Promise((resolve, reject) => {
-            setTimeout(resolve, 300_000);
+            setTimeout(() => {
+                ctx.log.warn(ctx.i18n.t("log:ob_proposal_timed_out"), { uuid }, logInfo);
+                resolve(undefined);
+            }, 300_000);
             new Promise<boolean>((resolve2) => {
                 ctx.operationalBindingControlEvents.once(uuid, (approved: boolean) => {
                     resolve2(approved);
@@ -934,6 +938,28 @@ async function modifyOperationalBinding (
                     );
                 }
             }
+            // We auto-accept changes to the subordinate entry by the subordinate DSA.
+            await ctx.db.operationalBinding.update({
+                where: {
+                    id: created.id,
+                },
+                data: {
+                    accepted: true,
+                    /**
+                     * Previous is not set until the update succeeds,
+                     * because `getRelevantOperationalBindings`
+                     * determines which is the latest of all versions of
+                     * a given operational binding based on which
+                     * operational binding has no "previous"es that
+                     * point to it.
+                     */
+                    previous: {
+                        connect: {
+                            id: opBinding.id,
+                        },
+                    },
+                },
+            });
             await updateLocalSubr(ctx, assn, invokeId, oldAgreement, newAgreement, init, signErrors);
             ctx.log.info(ctx.i18n.t("log:modifyOperationalBinding", {
                 context: "succeeded",
@@ -1121,7 +1147,20 @@ async function modifyOperationalBinding (
                     },
                     data: {
                         accepted: true,
-                    }
+                        /**
+                         * Previous is not set until the update succeeds,
+                         * because `getRelevantOperationalBindings`
+                         * determines which is the latest of all versions of
+                         * a given operational binding based on which
+                         * operational binding has no "previous"es that
+                         * point to it.
+                         */
+                        previous: {
+                            connect: {
+                                id: opBinding.id,
+                            },
+                        },
+                    },
                 });
             }
             await updateContextPrefix(ctx, created.uuid, oldAgreement.immediateSuperior, init, signErrors);
@@ -1206,8 +1245,28 @@ async function modifyOperationalBinding (
                     );
                 }
             }
-            // Just update the access points.
-            // init.accessPoints
+            // We auto-accept changes made by the subordinate DSA.
+            await ctx.db.operationalBinding.update({
+                where: {
+                    id: created.id,
+                },
+                data: {
+                    accepted: true,
+                    /**
+                     * Previous is not set until the update succeeds,
+                     * because `getRelevantOperationalBindings`
+                     * determines which is the latest of all versions of
+                     * a given operational binding based on which
+                     * operational binding has no "previous"es that
+                     * point to it.
+                     */
+                    previous: {
+                        connect: {
+                            id: opBinding.id,
+                        },
+                    },
+                },
+            });
             const nssr_id = await dnToID(ctx, ctx.dit.root.dse.id, oldAgreement.immediateSuperior);
             await ctx.db.accessPoint.deleteMany({
                 where: {
