@@ -1,7 +1,7 @@
 # Conformance
 
-In the statements below, the term "Meerkat DSA" refers to version 2.4.4 of
-Meerkat DSA, hence these statements are only claimed for version 2.4.4 of
+In the statements below, the term "Meerkat DSA" refers to version 2.5.0 of
+Meerkat DSA, hence these statements are only claimed for version 2.5.0 of
 Meerkat DSA.
 
 ## X.519 Conformance Statement
@@ -37,7 +37,7 @@ The following is an exhaustive list of all ISO Transport Over TCP (ITOT) applica
 | Supported? | Operational Binding Type                           | Object Identifier  |
 |------------|----------------------------------------------------|--------------------|
 | Yes        | Hierarchical Operational Binding (HOB)             | 2.5.19.2           |
-| No         | Non-Specific Hierarchical Operation Binding (NHOB) | 2.5.19.3           |
+| Yes        | Non-Specific Hierarchical Operation Binding (NHOB) | 2.5.19.3           |
 | No         | Shadowing Operational Binding (SOB)                | 2.5.19.1           |
 
 #### C. First-Level DSA Support
