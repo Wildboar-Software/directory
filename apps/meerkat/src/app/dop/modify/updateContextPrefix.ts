@@ -238,6 +238,14 @@ async function updateContextPrefix (
             immediate_superior_id: currentRoot!.dse.id,
         },
     });
+    await ctx.db.accessPoint.updateMany({
+        where: {
+            entry_id: oldImmediateSuperior.dse.id,
+        },
+        data: {
+            entry_id: currentRoot!.dse.id,
+        },
+    });
 
     (immSuprAccessPoints ?? [])
         .map((mosap) => new AccessPoint(
