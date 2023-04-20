@@ -155,6 +155,11 @@ export class HomeController {
                         uuid: true,
                     },
                 },
+                access_point: {
+                    select: {
+                        ae_title: true,
+                    },
+                }
             },
         });
         if (!ob) {
@@ -172,6 +177,9 @@ export class HomeController {
         const status: string = (ob.accepted === null)
             ? "WAITING DECISION"
             : (ob.accepted ? "ACCEPTED" : "REJECTED");
+        const ap_ae_title: string | undefined = Array.isArray(ob.access_point?.ae_title)
+            ? stringifyDN(this.ctx, ob.access_point!.ae_title.map((rdn: Record<string, string>) => rdnFromJson(rdn)))
+            : undefined;
         const templateVariables = {
             csrfToken: req.csrfToken(),
             ...ob,
@@ -190,6 +198,7 @@ export class HomeController {
                 ? breakIntoLines(ob.initiator_ber.toString("hex"), 60).join("\n")
                 : undefined,
             previous_uuid: ob.previous?.uuid,
+            ap_ae_title,
         };
         return templateVariables;
     }

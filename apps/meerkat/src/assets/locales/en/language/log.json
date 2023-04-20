@@ -272,5 +272,6 @@
     "received_other_error": "Received an error for invocation {{iid}} with error code {{code}} and parameter (as hex): {{param}}",
     "received_rejection": "Received reject for operation {{iid}} with reason code {{reason}}.",
     "received_abort": "Received abort with reason code {{reason}}.",
-    "received_other_problem": "Other problem initiating remote operation: {{problem}}."
+    "received_other_problem": "Other problem initiating remote operation: {{problem}}.",
+    "ob_has_no_access_point": "Operational binding {{uuid}} has no access point defined."
 }

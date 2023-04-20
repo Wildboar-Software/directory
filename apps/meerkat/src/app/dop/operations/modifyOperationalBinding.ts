@@ -305,6 +305,7 @@ async function modifyOperationalBinding (
     }))
         .find((ob) => {
             if (!ob.access_point) {
+                ctx.log.warn(ctx.i18n.t("log:ob_has_no_access_point", { uuid: ob.uuid }));
                 return false;
             }
             const authorized_ae_title: DistinguishedName | undefined = Array.isArray(ob.access_point.ae_title)
@@ -457,11 +458,6 @@ async function modifyOperationalBinding (
     const created = await ctx.db.operationalBinding.create({
         data: {
             accepted: undefined,
-            // previous: {
-            //     connect: {
-            //         id: opBinding.id,
-            //     },
-            // },
             outbound: false,
             binding_type: data.bindingType.toString(),
             binding_identifier: Number(data.newBindingID.identifier),
