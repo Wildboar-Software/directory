@@ -60,6 +60,7 @@ const sidebars = {
             items: [
                 'tutorial01',
                 'tutorial02',
+                'tutorial03',
             ],
         },
         {

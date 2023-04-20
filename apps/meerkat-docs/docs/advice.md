@@ -25,3 +25,7 @@
   indicates whether an entry has no subordinates in the result set because it
   was a part of another service admin area or because it was truly a "leaf"
   entry. This can be unintuitive for directory users.
+- NHOBs should be avoided. There is almost no scenario in which it is preferable
+  to let subordinate DSAs have uncoordinated competition over a subordinate
+  namespace. Performance will almost certainly be worse. In almost every case,
+  normal hierarchical operational bindings should be preferred.

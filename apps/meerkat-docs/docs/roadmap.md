@@ -4,12 +4,6 @@ We will not promise any particular schedule of delivery of features or bug fixes
 at this time. However, the very high-level roadmap for Meerkat DSA can be
 broken down to the following versions.
 
-## Version 2.5.0 - Non-Specific Subordinate References (NSSRs)
-
-This update will introduce support for Non-Specific Subordinate References
-(NSSRs). These are entries whose subordinate namespace is a "free-for-all"
-among one or more participating DSAs.
-
 ## Version 2.6.0 - Shadowing
 
 This update will introduce support for the Directory Information Shadowing
