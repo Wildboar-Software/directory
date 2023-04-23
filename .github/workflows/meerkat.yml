@@ -4,11 +4,6 @@ on:
   push:
     tags:
       - v3.*
-      - v2.*
-    #   - v1.*
-    # Temporary, so I don't have to keep adding BS tags.
-    branches:
-      - master
 
 env:
   CLUSTER_NAME: production

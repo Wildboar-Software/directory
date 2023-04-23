@@ -1,5 +1,12 @@
 # Demo
 
+:::info
+
+The demo environment is now shut down temporarily. It will be back online in
+late 2023.
+
+:::
+
 [Wildboar Software](https://wildboarsoftware.com/) hosts a demo environment of
 Meerkat DSA instances, that are bound together by operational bindings. You can
 connect to any of these access points via Directory Access Protocol over
