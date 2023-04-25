@@ -15,6 +15,11 @@ import {
     _decode_NonSpecificHierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NonSpecificHierarchicalAgreement.ta";
 import dnToVertex from "../dit/dnToVertex";
+import {
+    id_op_binding_shadow,
+} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
+import { removeConsumer } from "./terminate/removeConsumer";
+import { removeSupplier } from "./terminate/removeSupplier";
 
 /**
  * @summary Terminates an operational binding by its database ID.
@@ -121,6 +126,20 @@ async function terminate (
                 // DEVIATION: The specification says that the subordinate DSA
                 // must delete all information on the operational binding, but
                 // it is not clear what needs to happen to the superior entries.
+            }
+            break;
+        }
+        case (id_op_binding_shadow.toString()): {
+            const iAmSupplier: boolean = (
+                // The initiator was the supplier and this DSA was the initiator...
+                ((ob.initiator === OperationalBindingInitiator.ROLE_A) && (ob.outbound))
+                // ...or, the initiator was the consumer, and this DSA was NOT the initiator.
+                || ((ob.initiator === OperationalBindingInitiator.ROLE_B) && (!ob.outbound))
+            );
+            if (iAmSupplier) {
+                await removeConsumer(ctx, ob.binding_identifier);
+            } else {
+                await removeSupplier(ctx, ob.binding_identifier);
             }
             break;
         }

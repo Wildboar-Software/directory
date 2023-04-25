@@ -26,9 +26,9 @@ import {
 import {
     id_op_binding_non_specific_hierarchical,
 } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
-// import {
-//     id_op_binding_shadow,
-// } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
+import {
+    id_op_binding_shadow,
+} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
 import {
     OpBindingErrorParam,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam.ta";
@@ -76,7 +76,7 @@ import {
 import rdnToJson from "../../x500/rdnToJson";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER, _encodeNull } from "asn1-ts/dist/node/functional";
 import createSecurityParameters from "../../x500/createSecurityParameters";
 import {
     id_err_operationalBindingError,
@@ -140,13 +140,20 @@ import {
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NHOBSuperiorToSubordinate.ta";
 import becomeNonSpecificSuperior from "../establish/becomeNonSpecificSuperior";
 import becomeSuperior from "../establish/becomeSuperior";
-import { Prisma } from "@prisma/client";
+import { Prisma, ShadowedKnowledgeType } from "@prisma/client";
 import stringifyDN from "../../x500/stringifyDN";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import { top } from "@wildboar/x500/src/lib/collections/objectClasses";
 import terminateByTypeAndBindingID from "../terminateByTypeAndBindingID";
+import {
+    ShadowingAgreementInfo,
+    _decode_ShadowingAgreementInfo,
+} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
+import { becomeShadowConsumer } from "../establish/becomeShadowConsumer";
+import { becomeShadowSupplier } from "../establish/becomeShadowSupplier";
+import dnToID from "../../dit/dnToID";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -411,12 +418,49 @@ async function relayedEstablishOperationalBinding (
             throw new errors.MistypedArgumentError(ctx.i18n.t("err:invalid_initiator"));
         }
     }
-    // else if (bindingType.isEqualTo(id_op_binding_shadow)) {
-    //     if (!("roleA_initiates" in initiator) && !("roleB_initiates" in initiator)) {
-    //         throw new errors.MistypedArgumentError(ctx.i18n.t("err:invalid_initiator"));
-    //     }
-    //     const agr = _decode_ShadowingAgreementInfo(agreement);
-    // }
+    else if (bindingType.isEqualTo(id_op_binding_shadow)) {
+        if (!("roleA_initiates" in initiator) && !("roleB_initiates" in initiator)) {
+            throw new errors.MistypedArgumentError(ctx.i18n.t("err:invalid_initiator"));
+        }
+        const agr = _decode_ShadowingAgreementInfo(agreement);
+        const agreementDN = agr.shadowSubject.area.contextPrefix;
+        const replicatedCP = await dnToID(ctx, ctx.dit.root.dse.id, agreementDN);
+        if (!replicatedCP) {
+            throw new errors.OperationalBindingError(
+                ctx.i18n.t("err:cannot_find_local_base_entry_to_replicate"),
+                new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_invalidAgreement,
+                    bindingType,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
+        // There is no validation other than checking that the CP exists.
+        relay_agreement = agreement;
+        if ("roleA_initiates" in initiator) {
+            relay_init = {
+                roleA_initiates: _encodeNull(null, DER),
+            };
+        }
+        else {
+            relay_init = {
+                roleB_initiates: _encodeNull(null, DER),
+            };
+        }
+    }
     else {
         // If bindingType is not understood, just submit the agreement and initiator unchanged.
         relay_agreement = agreement;
@@ -1141,11 +1185,29 @@ async function establishOperationalBinding (
 
     const access_point_id = await saveAccessPoint(ctx, data.accessPoint, Knowledge.OB_REQUEST);
 
-    const ob_db_data: Omit<Omit<Prisma.OperationalBindingCreateInput, "initiator_ber">, "initiator"> = {
+    const ob_db_data: Prisma.OperationalBindingCreateInput = {
         outbound: false,
         binding_type: data.bindingType.toString(),
         binding_identifier: Number(bindingID.identifier),
         binding_version: Number(bindingID.version),
+        initiator: (() => {
+            if ("roleA_initiates" in data.initiator) {
+                return OperationalBindingInitiator.ROLE_A;
+            }
+            if ("roleB_initiates" in data.initiator) {
+                return OperationalBindingInitiator.ROLE_A;
+            }
+            return OperationalBindingInitiator.SYMMETRIC;
+        })(),
+        initiator_ber: (() => {
+            if ("roleA_initiates" in data.initiator) {
+                return Buffer.from(data.initiator.roleA_initiates.toBytes());
+            }
+            if ("roleB_initiates" in data.initiator) {
+                return Buffer.from(data.initiator.roleB_initiates.toBytes());
+            }
+            return Buffer.from(data.initiator.symmetric.toBytes());
+        })(),
         agreement_ber: Buffer.from(data.agreement.toBytes().buffer),
         access_point: {
             connect: {
@@ -2170,8 +2232,420 @@ async function establishOperationalBinding (
         else {
             throw new errors.MistypedArgumentError(ctx.i18n.t("err:unrecognized_ob_initiator_syntax"));
         }
-    // } else if (data.bindingType.isEqualTo(id_op_binding_shadow)) {
-    //     throw NOT_SUPPORTED_ERROR;
+    } else if (data.bindingType.isEqualTo(id_op_binding_shadow)) {
+        const agreement = _decode_ShadowingAgreementInfo(data.agreement);
+        const master_ap_id = agreement.master
+            ? await saveAccessPoint(ctx, agreement.master, Knowledge.OB_SHADOW_MASTER)
+            : undefined;
+        const updateMode = agreement.updateMode ?? ShadowingAgreementInfo._default_value_for_updateMode;
+        const schedule = ("supplierInitiated" in updateMode)
+            ? ("scheduled" in updateMode.supplierInitiated)
+                ? updateMode.supplierInitiated.scheduled
+                : undefined
+            : ("consumerInitiated" in updateMode)
+                ? updateMode.consumerInitiated
+                : undefined;
+        const created = await ctx.db.operationalBinding.create({
+            data: {
+                ...ob_db_data,
+                initiator: OperationalBindingInitiator.ROLE_A,
+                // initiator_ber: Buffer.from(data.initiator.roleA_initiates.toBytes()),
+                shadowed_context_prefix: agreement.shadowSubject.area.contextPrefix.map(rdnToJson),
+                knowledge_type: (agreement.shadowSubject.knowledge === undefined)
+                    ? undefined
+                    : ({
+                        Knowledge_knowledgeType_both: ShadowedKnowledgeType.BOTH,
+                        Knowledge_knowledgeType_master: ShadowedKnowledgeType.MASTER,
+                        Knowledge_knowledgeType_shadow: ShadowedKnowledgeType.SHADOW,
+                    })[agreement.shadowSubject.knowledge.knowledgeType],
+                subordinates: agreement.shadowSubject.subordinates,
+                supply_contexts: (agreement.shadowSubject.supplyContexts === undefined)
+                    ? undefined
+                    : (() => {
+                        const sc = agreement.shadowSubject.supplyContexts;
+                        if ("allContexts" in sc) {
+                            return "";
+                        } else if ("selectedContexts" in sc) {
+                            return sc.selectedContexts
+                                .map((s) => s.toString())
+                                .join(",");
+                        }
+                        return undefined;
+                    })(),
+                supplier_initiated: agreement.updateMode
+                    ? ("supplierInitiated" in agreement.updateMode)
+                    : false,
+                periodic_beginTime: schedule?.periodic?.beginTime,
+                periodic_windowSize: schedule?.periodic?.windowSize
+                    ? Number(schedule.periodic.windowSize)
+                    : undefined,
+                periodic_updateInterval: schedule?.periodic?.updateInterval
+                    ? Number(schedule.periodic.updateInterval)
+                    : undefined,
+                othertimes: schedule?.othertimes,
+                master_access_point_id: master_ap_id as undefined, // TODO: This is giving me a weird type error.
+                secondary_shadows: agreement.secondaryShadows,
+            },
+            select: {
+                uuid: true,
+            },
+        });
+        if ("roleA_initiates" in data.initiator) {
+            // Shadow supplier is initiating the OB.
+            const approved: boolean | undefined = await getApproval(created.uuid);
+            await ctx.db.operationalBinding.update({
+                where: {
+                    uuid: created.uuid,
+                },
+                data: {
+                    accepted: approved ?? null,
+                },
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
+            });
+            if (approved === undefined) {
+                throw new errors.OperationalBindingError(
+                    ctx.i18n.t("err:ob_rejected", {
+                        context: "timeout",
+                        uuid: created.uuid,
+                    }),
+                    new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_currentlyNotDecidable,
+                        data.bindingType,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            id_err_operationalBindingError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
+                    signErrors,
+                );
+            } else if (approved === false) {
+                throw new errors.OperationalBindingError(
+                    ctx.i18n.t("err:ob_rejected", {
+                        uuid: created.uuid,
+                    }),
+                    new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_invalidAgreement,
+                        data.bindingType,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            id_err_operationalBindingError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
+                    signErrors,
+                );
+            }
+            try {
+                const cpVertex = await becomeShadowConsumer(ctx, agreement, data.accessPoint, bindingID);
+                await ctx.db.operationalBinding.update({
+                    where: {
+                        uuid: created.uuid,
+                    },
+                    data: {
+                        entry_id: cpVertex.dse.id,
+                    },
+                    select: {
+                        id: true,
+                    },
+                });
+                ctx.log.info(ctx.i18n.t("log:establishOperationalBinding", {
+                    context: "succeeded",
+                    type: data.bindingType.toString(),
+                    bid: bindingID.identifier.toString(),
+                    aid: assn.id,
+                }), {
+                    remoteFamily: assn.socket.remoteFamily,
+                    remoteAddress: assn.socket.remoteAddress,
+                    remotePort: assn.socket.remotePort,
+                    association_id: assn.id,
+                    invokeID: printInvokeId({ present: invokeId }),
+                });
+                const resultData = new EstablishOperationalBindingResultData(
+                    data.bindingType,
+                    bindingID,
+                    ctx.dsa.accessPoint,
+                    {
+                        roleB_replies: _encodeNull(null, DER),
+                    },
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signResult,
+                        assn.boundNameAndUID?.dn,
+                        id_op_establishOperationalBinding,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                );
+                if (!signResult) {
+                    return {
+                        unsigned: resultData,
+                    };
+                }
+                const resultDataBytes = _encode_EstablishOperationalBindingResultData(resultData, DER).toBytes();
+                const key = ctx.config.signing?.key;
+                if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
+                    return {
+                        unsigned: resultData,
+                    };
+                }
+                const signingResult = generateSignature(key, resultDataBytes);
+                if (!signingResult) {
+                    return {
+                        unsigned: resultData,
+                    };
+                }
+                const [ sigAlg, sigValue ] = signingResult;
+                return {
+                    signed: new SIGNED(
+                        resultData,
+                        sigAlg,
+                        unpackBits(sigValue),
+                        undefined,
+                        undefined,
+                    ),
+                };
+            } catch (e) {
+                ctx.log.error(ctx.i18n.t("log:err_establishing_ob", {
+                    uuid: created.uuid,
+                    e,
+                }));
+                if (e instanceof errors.OperationalBindingError) {
+                    ctx.db.operationalBinding.update({
+                        where: {
+                            uuid: created.uuid,
+                        },
+                        data: {
+                            accepted: false,
+                            last_ob_problem: e.data.problem,
+                        },
+                        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
+                    }).then().catch();
+                } else {
+                    ctx.db.operationalBinding.update({
+                        where: {
+                            uuid: created.uuid,
+                        },
+                        data: {
+                            accepted: false,
+                        },
+                        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
+                    }).then().catch();
+                }
+                throw e;
+            }
+        } else if ("roleB_initiates" in data.initiator) {
+            // Shadow consumer is initiating the OB.
+            const approved: boolean | undefined = await getApproval(created.uuid);
+            await ctx.db.operationalBinding.update({
+                where: {
+                    uuid: created.uuid,
+                },
+                data: {
+                    accepted: approved ?? null,
+                },
+                select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
+            });
+            if (approved === undefined) {
+                throw new errors.OperationalBindingError(
+                    ctx.i18n.t("err:ob_rejected", {
+                        context: "timeout",
+                        uuid: created.uuid,
+                    }),
+                    new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_currentlyNotDecidable,
+                        data.bindingType,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            id_err_operationalBindingError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
+                    signErrors,
+                );
+            } else if (approved === false) {
+                throw new errors.OperationalBindingError(
+                    ctx.i18n.t("err:ob_rejected", {
+                        uuid: created.uuid,
+                    }),
+                    new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_invalidAgreement,
+                        data.bindingType,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            id_err_operationalBindingError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
+                    signErrors,
+                );
+            }
+            const cpVertex = await dnToVertex(ctx, ctx.dit.root, agreement.shadowSubject.area.contextPrefix);
+            if (!cpVertex) {
+                ctx.log.warn(ctx.i18n.t("err:no_such_object", {
+                    context: "shadow_supplier_cp",
+                    obid: bindingID.identifier.toString(),
+                    cp: stringifyDN(ctx, agreement.shadowSubject.area.contextPrefix).slice(0, 2048),
+                }));
+                throw new errors.OperationalBindingError(
+                    ctx.i18n.t("err:no_such_object"),
+                    new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_unsupportedBindingType,
+                        data.bindingType,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            id_err_operationalBindingError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
+                    signErrors,
+                );
+            }
+            try {
+                await ctx.db.operationalBinding.update({
+                    where: {
+                        uuid: created.uuid,
+                    },
+                    data: {
+                        entry_id: cpVertex.dse.id,
+                    },
+                    select: {
+                        id: true,
+                    },
+                });
+                await becomeShadowSupplier(ctx, bindingID, cpVertex, data.accessPoint);
+                ctx.log.info(ctx.i18n.t("log:establishOperationalBinding", {
+                    context: "succeeded",
+                    type: data.bindingType.toString(),
+                    bid: bindingID.identifier.toString(),
+                    aid: assn.id,
+                }), {
+                    remoteFamily: assn.socket.remoteFamily,
+                    remoteAddress: assn.socket.remoteAddress,
+                    remotePort: assn.socket.remotePort,
+                    association_id: assn.id,
+                    invokeID: printInvokeId({ present: invokeId }),
+                });
+                const resultData = new EstablishOperationalBindingResultData(
+                    data.bindingType,
+                    bindingID,
+                    ctx.dsa.accessPoint,
+                    {
+                        roleA_replies: _encodeNull(null, DER),
+                    },
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signResult,
+                        assn.boundNameAndUID?.dn,
+                        id_op_establishOperationalBinding,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                );
+                if (!signResult) {
+                    return {
+                        unsigned: resultData,
+                    };
+                }
+                const resultDataBytes = _encode_EstablishOperationalBindingResultData(resultData, DER).toBytes();
+                const key = ctx.config.signing?.key;
+                if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
+                    return {
+                        unsigned: resultData,
+                    };
+                }
+                const signingResult = generateSignature(key, resultDataBytes);
+                if (!signingResult) {
+                    return {
+                        unsigned: resultData,
+                    };
+                }
+                const [ sigAlg, sigValue ] = signingResult;
+                return {
+                    signed: new SIGNED(
+                        resultData,
+                        sigAlg,
+                        unpackBits(sigValue),
+                        undefined,
+                        undefined,
+                    ),
+                };
+            } catch (e) {
+                ctx.log.error(ctx.i18n.t("log:err_establishing_ob", {
+                    uuid: created.uuid,
+                    e,
+                }));
+                if (e instanceof errors.OperationalBindingError) {
+                    ctx.db.operationalBinding.update({
+                        where: {
+                            uuid: created.uuid,
+                        },
+                        data: {
+                            accepted: false,
+                            last_ob_problem: e.data.problem,
+                        },
+                        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
+                    }).then().catch();
+                } else {
+                    ctx.db.operationalBinding.update({
+                        where: {
+                            uuid: created.uuid,
+                        },
+                        data: {
+                            accepted: false,
+                        },
+                        select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
+                    }).then().catch();
+                }
+                throw e;
+            }
+        } else {
+            throw new errors.MistypedArgumentError(ctx.i18n.t("err:unrecognized_ob_initiator_syntax"));
+        }
     } else {
         throw new errors.OperationalBindingError(
             ctx.i18n.t("err:ob_type_unrecognized", {

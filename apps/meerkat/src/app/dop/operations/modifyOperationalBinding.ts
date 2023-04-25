@@ -123,6 +123,10 @@ import {
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NonSpecificHierarchicalAgreement.ta";
 import dnToID from "../../dit/dnToID";
 import { randomInt } from "crypto";
+import { id_op_binding_shadow } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
+import {
+    _decode_ShadowingAgreementInfo,
+} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
 
 function getInitiator (init: Initiator): OperationalBindingInitiator {
     // NOTE: Initiator is not extensible, so this is an exhaustive list.
@@ -295,6 +299,7 @@ async function modifyOperationalBinding (
             initiator: true,
             initiator_ber: true,
             agreement_ber: true,
+            outbound: true,
             access_point: {
                 select: {
                     id: true,
@@ -1305,6 +1310,134 @@ async function modifyOperationalBinding (
         else {
             throw new errors.MistypedArgumentError(ctx.i18n.t("err:unrecognized_ob_initiator_syntax"));
         }
+    }
+    else if (data.bindingType.isEqualTo(id_op_binding_shadow)) {
+        const approved = await getApproval(opBinding.uuid);
+        if (!approved) {
+            await ctx.db.operationalBinding.update({
+                where: {
+                    id: created.id,
+                },
+                data: {
+                    accepted: approved ?? null,
+                },
+            });
+        }
+        if (approved === undefined) {
+            throw new errors.OperationalBindingError(
+                ctx.i18n.t("err:ob_rejected", {
+                    context: "timeout",
+                    uuid: created.uuid,
+                }),
+                new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_currentlyNotDecidable,
+                    data.bindingType,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+                signErrors,
+            );
+        } else if (approved === false) {
+            throw new errors.OperationalBindingError(
+                ctx.i18n.t("err:ob_rejected", {
+                    uuid: created.uuid,
+                }),
+                new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_invalidAgreement,
+                    data.bindingType,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
+        const oldAgreement = _decode_ShadowingAgreementInfo(oldAgreementElement);
+        const newAgreement = data.newAgreement
+            ? _decode_ShadowingAgreementInfo(data.newAgreement)
+            : oldAgreement;
+        const oldCP = oldAgreement.shadowSubject.area.contextPrefix;
+        const newCP = newAgreement.shadowSubject.area.contextPrefix;
+        if (!compareDistinguishedName(oldCP, newCP, NAMING_MATCHER)) {
+            throw new errors.OperationalBindingError(
+                ctx.i18n.t("err:cannot_change_replicated_base_name"),
+                new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_invalidAgreement,
+                    data.bindingType,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
+        await ctx.db.operationalBinding.update({
+            where: {
+                id: created.id,
+            },
+            data: {
+                accepted: approved ?? null,
+                /**
+                 * Previous is not set until the update succeeds,
+                 * because `getRelevantOperationalBindings`
+                 * determines which is the latest of all versions of
+                 * a given operational binding based on which
+                 * operational binding has no "previous"es that
+                 * point to it.
+                 */
+                previous: approved
+                    ? {
+                        connect: {
+                            id: opBinding.id,
+                        },
+                    }
+                    : undefined,
+            },
+        });
+        ctx.log.info(ctx.i18n.t("log:modifyOperationalBinding", {
+            context: "succeeded",
+            type: data.bindingType.toString(),
+            bid: data.bindingID?.identifier.toString(),
+            aid: assn.id,
+        }), {
+            remoteFamily: assn.socket.remoteFamily,
+            remoteAddress: assn.socket.remoteAddress,
+            remotePort: assn.socket.remotePort,
+            association_id: assn.id,
+            invokeID: printInvokeId(invokeId),
+        });
+        return getResult();
     }
     else {
         throw new errors.OperationalBindingError(
