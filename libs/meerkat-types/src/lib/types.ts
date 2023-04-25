@@ -2111,6 +2111,14 @@ interface Configuration {
 
     };
 
+    /** Directory Information Shadowing Protocol (DISP) options. */
+    disp: {
+
+        /** Whether DISP is enabled. */
+        enabled: boolean;
+
+    };
+
 }
 
 /**

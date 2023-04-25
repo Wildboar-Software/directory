@@ -173,6 +173,12 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: default_entry_ttl
                   optional: true
+            - name: MEERKAT_ENABLE_DISP
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: enable_disp
+                  optional: true
             - name: MEERKAT_ENABLE_DOP
               valueFrom:
                 configMapKeyRef:

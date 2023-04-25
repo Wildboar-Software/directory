@@ -287,6 +287,10 @@ can be an NID or name.
 
 If set to `0`, this disables Directory Access Protocol (DAP).
 
+## MEERKAT_ENABLE_DISP
+
+If set to `1`, this enables Directory Information Shadowing Protocol (DISP).
+
 ## MEERKAT_ENABLE_DOP
 
 If set to `1`, this enables Directory Operational Binding Management Protocol

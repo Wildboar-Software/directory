@@ -276,5 +276,7 @@
     "ob_has_no_access_point": "Operational binding {{uuid}} has no access point defined.",
     "ob_proposal_timed_out": "Proposed operational binding {{uuid}} timed out and therefore was auto-rejected.",
     "err_establishing_ob": "Error establishing operational binding {{uuid}}: {{e}}",
-    "no_such_object@shadow_supplier_cp": "Cannot honor proposed shadow operational binding {{obid}} because this proposed context prefix does not exist: '{{cp}}'."
+    "no_such_object@shadow_supplier_cp": "Cannot honor proposed shadow operational binding {{obid}} because this proposed context prefix does not exist: '{{cp}}'.",
+    "no_last_update": "DISP association {{aid}} reported a last update time of {{time}} for operational binding {{obid}}, but this DSA does not know of any such previous update.",
+    "last_shadow_update_disputed": "DISP association {{aid}} reported a last update time of {{req_time}} for operational binding {{obid}}, but this DSA believes the last shadow update was {{local_time}}."
 }

@@ -72,6 +72,8 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directoryOperationalBindingManagementAC.va";
 import { AbortReason } from "@wildboar/rose-transport";
 import { createWriteStream } from "node:fs";
+import { disp_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/disp-ip.oa";
+import DISPAssociation from "./disp/DISPConnection";
 
 /**
  * @summary Check for Meerkat DSA updates
@@ -333,6 +335,9 @@ function attachUnboundEventListenersToIDMConnection (
         } else if (idmBind.protocolID.isEqualTo(dop_ip["&id"]!) && ctx.config.dop.enabled) {
             const rose = rose_transport_from_idm_socket(ctx, idm);
             conn = new DOPAssociation(ctx, rose);
+        } else if (idmBind.protocolID.isEqualTo(disp_ip["&id"]!) && ctx.config.disp.enabled) {
+            const rose = rose_transport_from_idm_socket(ctx, idm);
+            conn = new DISPAssociation(ctx, rose);
         } else {
             idm.writeAbort(Abort_invalidProtocol);
             startTimes.delete(idm.s);
