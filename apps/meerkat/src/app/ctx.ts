@@ -993,6 +993,9 @@ const config: Configuration = {
             || (process.env.MEERKAT_DANGEROUSLY_ENABLE_DOP === "1")
         ),
     },
+    disp: {
+        enabled: (process.env.MEERKAT_ENABLE_DISP === "1"),
+    },
 };
 
 const ctx: MeerkatContext = {

@@ -117,8 +117,9 @@ chaining_tls_optional: false
 default_entry_ttl: 60
 # ecdh_curves: P-521:P-384:P-256
 enable_dap: true
-enable_dop: false
-enable_dsp: false
+enable_disp: true
+enable_dop: true
+enable_dsp: true
 entries_per_subordinates_page: 100
 forbid_anonymous_bind: false
 honor_cipher_order: true

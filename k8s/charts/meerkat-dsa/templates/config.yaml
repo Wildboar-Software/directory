@@ -20,6 +20,7 @@ data:
   chaining_sign_requests: {{ .Values.chaining_sign_requests | default true | ternary 1 0 | quote }}
   chaining_tls_optional: {{ .Values.chaining_tls_optional | ternary 1 0 | quote }}
   default_entry_ttl: {{ .Values.default_entry_ttl | default "60" | quote }}
+  enable_disp: {{ .Values.enable_disp | ternary 1 0 | quote }}
   enable_dop: {{ .Values.enable_dop | ternary 1 0 | quote }}
   enable_dsp: {{ .Values.enable_dsp | ternary 1 0 | quote }}
   {{- if .Values.ecdh_curves }}
