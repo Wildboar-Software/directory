@@ -232,5 +232,6 @@
     "cannot_change_replicated_base_name": "Cannot change replicated base name in shadowing.",
     "cannot_find_local_base_entry_to_replicate": "Cannot find local entry to serve as the base entry of the replicated area.",
     "sob_not_found": "Shadowing agreement ID {{obid}} does not exist.",
-    "unsupported_shadow_update_strategy": "Unsupported shadow update strategy."
+    "unsupported_shadow_update_strategy": "Unsupported shadow update strategy.",
+    "shadow_update_time_backwards": "Shadow supplier supplied a shadow update that is older than this DSA's most up-to-date time."
 }

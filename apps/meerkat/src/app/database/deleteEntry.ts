@@ -49,6 +49,7 @@ async function deleteChildren (ctx: Context, id: number): Promise<void> {
     ]);
 }
 
+// TODO: Make this recursively delete all entries beneath it?
 /**
  * @summary Delete a DSE
  * @description

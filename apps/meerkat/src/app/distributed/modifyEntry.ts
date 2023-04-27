@@ -315,7 +315,7 @@ const notPermittedData =  (
  *
  * @function
  */
-function isAcceptableTypeForAlterValues (el: ASN1Element): boolean {
+export function isAcceptableTypeForAlterValues (el: ASN1Element): boolean {
     return (
         (el.tagClass === ASN1TagClass.universal)
         && (
@@ -2449,6 +2449,7 @@ async function executeEntryModification (
         return executeReplaceValues(attrWithDefaultContexts, ...commonArguments);
     }
     else {
+        // TODO: Log not-understood alternative.
         return []; // Any other alternative not understood.
     }
 }
