@@ -278,5 +278,7 @@
     "err_establishing_ob": "Error establishing operational binding {{uuid}}: {{e}}",
     "no_such_object@shadow_supplier_cp": "Cannot honor proposed shadow operational binding {{obid}} because this proposed context prefix does not exist: '{{cp}}'.",
     "no_last_update": "DISP association {{aid}} reported a last update time of {{time}} for operational binding {{obid}}, but this DSA does not know of any such previous update.",
-    "last_shadow_update_disputed": "DISP association {{aid}} reported a last update time of {{req_time}} for operational binding {{obid}}, but this DSA believes the last shadow update was {{local_time}}."
+    "last_shadow_update_disputed": "DISP association {{aid}} reported a last update time of {{req_time}} for operational binding {{obid}}, but this DSA believes the last shadow update was {{local_time}}.",
+    "sdse_incremental_change_not_understood": "Incremental change for SDSE '{{dn}}' not understood. This change will not be applied.",
+    "sdse_rename_not_agreed_upon": "Cannot rename SDSE '{{old_dn}}' to '{{new_dn}}' because it would fall outside of the shadowed subtree agreed upon by shadowing operational binding {{obid}}. This entry will remain unchanged."
 }
