@@ -72,6 +72,7 @@ interface ReadValuesReturn {
     collectiveValues: Value[];
     // incompleteEntry: boolean;
     // derivedEntry: boolean; // If joins or families are used.
+    attValIncomplete: Set<IndexableOID>;
 };
 
 // EntryInformationSelection ::= SET {
@@ -200,6 +201,8 @@ function determinePreference (
  * @param ctx The context object
  * @param values The values to be filtered
  * @param selectedContexts Index of `TypeAndContextAssertion` by attribute OIDs
+ * @param filteredTypes A mutable set of string-form OIDs of attribute types
+ *  that were filtered out due to these context assertions.
  * @yields Values that survived the context assertions, if any.
  *
  * @generator
@@ -209,6 +212,7 @@ function *filterByTypeAndContextAssertion (
     ctx: Context,
     values: Value[],
     selectedContexts: Record<IndexableOID, TypeAndContextAssertion[]>,
+    filteredTypes: Set<IndexableOID>,
 ): IterableIterator<Value> {
     if (!selectedContexts) {
         yield *values;
@@ -221,7 +225,6 @@ function *filterByTypeAndContextAssertion (
             yield value;
             continue;
         }
-        // const TYPE_OID: string = value.type.toString();
         const typeAndContextAssertions = [
             // TYPE_OID, // This is already included from `getParentAttributeTypes()`
             ALL_ATTRIBUTE_TYPES,
@@ -232,11 +235,7 @@ function *filterByTypeAndContextAssertion (
             yield value; // There are no context assertions for this attribute type.
             continue;
         }
-        const contexts = (value.contexts ?? []).map((c) => new X500Context(
-            c.contextType,
-            c.contextValues,
-            c.fallback,
-        ));
+        const contexts = value.contexts;
         let everyTacaMatched: boolean = true;
         for (const taca of typeAndContextAssertions) {
             if ("all" in taca.contextAssertions) {
@@ -258,6 +257,8 @@ function *filterByTypeAndContextAssertion (
         }
         if (everyTacaMatched) {
             yield value;
+        } else {
+            filteredTypes.add(value.type.toString());
         }
     }
 }
@@ -350,6 +351,7 @@ async function readValues (
     options?: ReadValuesOptions,
     reading_attributes: boolean = false,
 ): Promise<ReadValuesReturn> {
+    const attValIncomplete: Set<IndexableOID> = new Set();
     const outputTypes = options?.outputAttributeTypes;
     const cads: TypeAndContextAssertion[] = options?.relevantSubentries
         ? await getContextAssertionDefaults(ctx, entry, options.relevantSubentries)
@@ -645,9 +647,12 @@ async function readValues (
         : null;
 
     if (selectedContexts) {
-        userValues = Array.from(filterByTypeAndContextAssertion(ctx, userValues, selectedContexts));
-        operationalValues = Array.from(filterByTypeAndContextAssertion(ctx, operationalValues, selectedContexts));
-        collectiveValues = Array.from(filterByTypeAndContextAssertion(ctx, collectiveValues, selectedContexts));
+        userValues = Array
+            .from(filterByTypeAndContextAssertion(ctx, userValues, selectedContexts, attValIncomplete));
+        operationalValues = Array
+            .from(filterByTypeAndContextAssertion(ctx, operationalValues, selectedContexts, attValIncomplete));
+        collectiveValues = Array
+            .from(filterByTypeAndContextAssertion(ctx, collectiveValues, selectedContexts, attValIncomplete));
     }
 
     /* Using `reading_attributes` is a performance hack. Since these functions
@@ -677,6 +682,7 @@ async function readValues (
         userValues,
         operationalValues,
         collectiveValues,
+        attValIncomplete,
     };
 }
 
