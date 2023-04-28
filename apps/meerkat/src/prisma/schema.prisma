@@ -285,9 +285,9 @@ model AccessPoint {
   // Whether this DSA may receive cross references, if requested.
   disclose_cross_refs Boolean @default(false)
 
-  active               Boolean                  @default(true)
-  created_at           DateTime                 @default(now())
-  credentials          AccessPointCredentials[]
+  active      Boolean                  @default(true)
+  created_at  DateTime                 @default(now())
+  credentials AccessPointCredentials[]
 
   @@index([entry_id])
 }
@@ -784,4 +784,24 @@ model PostalCodeBoundaryPoints {
   easting        Int // in meters
 
   @@index([postal_code_id])
+}
+
+enum ShadowIncrementType {
+  OTHER // A fallback for future-extensibility.
+  ADD
+  REMOVE
+  MODIFY
+  MULTI // If incremental steps are ever compressed, they may contain multiple different types of updates.
+}
+
+// Pending incremental updates to be replicated to shadow consumers
+model PendingShadowIncrementalStepRefresh {
+  id                 Int      @id @default(autoincrement())
+  binding_identifier Int // The binding identifier of the applicable shadow operational binding
+  time               DateTime @default(now()) // The time the original supplier-side change was made.
+  ber                Bytes // BER-encoded IncrementalStepRefresh.
+  submitted          Boolean  @default(false) // Whether the updateShadow was sent containing this step.
+  acknowledged       Boolean  @default(false) // Whether the updateShadow containing this step received a result.
+  rename             Boolean  @default(false) // Whether the step renamed a shadowed DSE.
+  type               ShadowIncrementType
 }
