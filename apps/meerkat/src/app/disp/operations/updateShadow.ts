@@ -150,6 +150,7 @@ function sdse_type_to_dse_type (t: SDSEType): DSEType {
 
 const MAX_DEPTH: number = 10_000;
 
+export
 function convert_refinement_to_prisma_filter (ref: Refinement): Partial<Prisma.EntryWhereInput> {
     if ("item" in ref) {
         return {
