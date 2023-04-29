@@ -3,7 +3,9 @@ import {
     DOPClient,
     create_dsp_client,
     create_dop_client,
+    create_disp_client,
     rose_from_presentation_address,
+    DISPClient,
 } from "@wildboar/x500-client-ts";
 import { MeerkatContext } from "../ctx";
 import {
@@ -12,6 +14,18 @@ import {
 import {
     id_ac_directoryOperationalBindingManagementAC,
 } from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directoryOperationalBindingManagementAC.va";
+// import {
+//     id_ac_shadowConsumerInitiatedAC,
+// } from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowConsumerInitiatedAC.va";
+// import {
+//     id_ac_shadowConsumerInitiatedAsynchronousAC,
+// } from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowConsumerInitiatedAsynchronousAC.va";
+// import {
+//     id_ac_shadowSupplierInitiatedAC,
+// } from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowSupplierInitiatedAC.va";
+// import {
+//     id_ac_shadowSupplierInitiatedAsynchronousAC,
+// } from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowSupplierInitiatedAsynchronousAC.va";
 import {
     DSABindArgument,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindArgument.ta";
@@ -484,6 +498,28 @@ async function bindForOBM (
         assn,
         id_ac_directoryOperationalBindingManagementAC,
         create_dop_client,
+        op,
+        accessPoint,
+        aliasDereferenced,
+        signErrors,
+    );
+}
+
+export
+async function bindForDISP (
+    ctx: MeerkatContext,
+    assn: ClientAssociation | undefined,
+    op: OperationInvocationInfo | undefined,
+    accessPoint: AccessPoint,
+    applicationContext: OBJECT_IDENTIFIER,
+    aliasDereferenced?: BOOLEAN,
+    signErrors: boolean = false,
+): Promise<DISPClient | null> {
+    return dsa_bind(
+        ctx,
+        assn,
+        applicationContext,
+        create_disp_client,
         op,
         accessPoint,
         aliasDereferenced,

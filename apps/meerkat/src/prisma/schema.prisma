@@ -567,6 +567,12 @@ enum ShadowedKnowledgeType {
   BOTH
 }
 
+enum ShadowUpdateStrategy {
+  TOTAL
+  INCREMENTAL
+  EXTERNAL
+}
+
 model OperationalBinding {
   id                 Int                         @id @default(autoincrement())
   entry_id           Int? // This is valuable for pointing to the CP of a shadowed context or HOB.
@@ -628,13 +634,17 @@ model OperationalBinding {
   source_attr_cert_path   Bytes?
 
   // Status
-  requested_time      DateTime  @default(now())
-  responded_time      DateTime?
-  terminated_time     DateTime?
-  accepted            Boolean?
-  last_update         DateTime?
-  last_ob_problem     Int?      @db.SmallInt
-  last_shadow_problem Int?      @db.SmallInt
+  requested_time                  DateTime              @default(now())
+  responded_time                  DateTime?
+  terminated_time                 DateTime?
+  accepted                        Boolean?
+  last_update                     DateTime? // Should not be used. Use local_last_update and remote_last_update.
+  last_ob_problem                 Int?                  @db.SmallInt
+  last_shadow_problem             Int?                  @db.SmallInt
+  local_last_update               DateTime? // Time this DSA thinks the last shadow update was
+  remote_last_update              DateTime? // Time the remote DSA thinks the last shadow update was. If this DSA is the supplier, this is populated from the requestShadowUpdate.
+  requested_strategy              ShadowUpdateStrategy?
+  requested_strategy_external_ber Bytes
 
   next_version OperationalBinding[] @relation("previous")
 
@@ -796,12 +806,14 @@ enum ShadowIncrementType {
 
 // Pending incremental updates to be replicated to shadow consumers
 model PendingShadowIncrementalStepRefresh {
-  id                 Int      @id @default(autoincrement())
+  id                 Int                 @id @default(autoincrement())
   binding_identifier Int // The binding identifier of the applicable shadow operational binding
-  time               DateTime @default(now()) // The time the original supplier-side change was made.
+  time               DateTime            @default(now()) // The time the original supplier-side change was made.
   ber                Bytes // BER-encoded IncrementalStepRefresh.
-  submitted          Boolean  @default(false) // Whether the updateShadow was sent containing this step.
-  acknowledged       Boolean  @default(false) // Whether the updateShadow containing this step received a result.
-  rename             Boolean  @default(false) // Whether the step renamed a shadowed DSE.
+  submitted          Boolean             @default(false) // Whether the updateShadow was sent containing this step.
+  acknowledged       Boolean             @default(false) // Whether the updateShadow containing this step received a result.
+  rename             Boolean             @default(false) // Whether the step renamed a shadowed DSE.
   type               ShadowIncrementType
+
+  @@index([binding_identifier, time])
 }
