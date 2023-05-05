@@ -35,7 +35,9 @@ import {
     _decode_AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
-import { OperationalBindingID } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
+import {
+    OperationalBindingID,
+} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
@@ -128,6 +130,11 @@ import { stringifyDN } from "../x500/stringifyDN";
 import { printInvokeId } from "../utils/printInvokeId";
 import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
 import { getEntryExistsFilter } from "../database/entryExistsFilter";
+import { getShadowIncrementalSteps } from "../dop/getRelevantSOBs";
+import {
+    SubordinateChanges,
+} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SubordinateChanges.ta";
+import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh";
 
 const PARENT: string = id_oc_parent.toString();
 const CHILD: string = id_oc_child.toString();
@@ -539,7 +546,19 @@ async function removeEntry (
         // 1. Remove the entry or alias entry.
         // 2. Continue at step 7.
     }
-    // TODO: Step 7: Update shadows.
+    const sobs = await getShadowIncrementalSteps(ctx, target, { remove: null });
+    for (const [ sob_id, sob_obid, sob_change ] of sobs) {
+        const change = new SubordinateChanges(
+            target.dse.rdn,
+            sob_change,
+        );
+        saveIncrementalRefresh(ctx, sob_id, target.immediateSuperior!, change)
+            .then() // INTENTIONAL_NO_AWAIT
+            .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_save_incremental_update_step", {
+                sob_id: sob_obid,
+                e,
+            })));
+    }
 
     if (op?.abandonTime) {
         op.events.emit("abandon");

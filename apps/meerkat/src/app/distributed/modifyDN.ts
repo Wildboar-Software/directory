@@ -183,6 +183,9 @@ import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
 import { getEntryExistsFilter } from "../database/entryExistsFilter";
 import { Prisma } from "@prisma/client";
 import getEqualityNormalizer from "../x500/getEqualityNormalizer";
+import { getShadowIncrementalSteps } from "../dop/getRelevantSOBs";
+import { SubordinateChanges } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SubordinateChanges.ta";
+import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh";
 
 /**
  * @summary Determine whether a DSE is local to this DSA
@@ -2059,7 +2062,24 @@ async function modifyDN (
         updateAffectedSubordinateDSAs(ctx, affectedPrefix, destinationDN); // INTENTIONAL_NO_AWAIT
     }
 
-    // TODO: Update shadows
+    const sobs = await getShadowIncrementalSteps(ctx, target, {
+        rename: data.newSuperior
+            ? { newDN: [ ...superiorDN, newRDN ] }
+            : { newRDN },
+    });
+    for (const [ sob_id, sob_obid, sob_change ] of sobs) {
+        const change = new SubordinateChanges(
+            oldRDN,
+            sob_change,
+        );
+        saveIncrementalRefresh(ctx, sob_id, target.immediateSuperior, change)
+            .then() // INTENTIONAL_NO_AWAIT
+            .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_save_incremental_update_step", {
+                sob_id: sob_obid,
+                e,
+            })));
+    }
+
     const signResults: boolean = (
         (data.securityParameters?.target === ProtectionRequest_signed)
         && assn.authorizedForSignedResults

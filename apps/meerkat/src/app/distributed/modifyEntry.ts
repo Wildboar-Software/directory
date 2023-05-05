@@ -269,6 +269,10 @@ import {
     CHECK_PWD_QUALITY_OK,
 } from "../password/checkPasswordQuality";
 import { attributeValueFromDB } from "../database/attributeValueFromDB";
+import { IncrementalStepRefresh, SubordinateChanges } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SubordinateChanges.ta";
+import { getShadowIncrementalSteps } from "../dop/getRelevantSOBs";
+import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh";
+import getSDSEContent from "../disp/getSDSEContent";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -3743,7 +3747,19 @@ async function modifyEntry (
         }
     }
 
-    // TODO: Update Shadows
+    const sobs = await getShadowIncrementalSteps(ctx, target, { modify: data.changes });
+    for (const [ sob_id, sob_obid, sob_change ] of sobs) {
+        const change = new SubordinateChanges(
+            target.dse.rdn,
+            sob_change,
+        );
+        saveIncrementalRefresh(ctx, sob_id, target.immediateSuperior!, change)
+            .then() // INTENTIONAL_NO_AWAIT
+            .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_save_incremental_update_step", {
+                sob_id: sob_obid,
+                e,
+            })));
+    }
 
     const signResults: boolean = (
         (data.securityParameters?.target === ProtectionRequest_signed)

@@ -18,6 +18,7 @@ import { ObjectIdentifier } from "asn1-ts";
 import {
     id_ce_extKeyUsage,
 } from "@wildboar/x500/src/lib/modules/CertificateExtensions/id-ce-extKeyUsage.va";
+import { id_oa_allAttributeTypes } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-allAttributeTypes.va";
 
 export const updatesDomain: string = "updates.meerkat.wildboar.software";
 export const telemetryDomain: string = "telemetry.meerkat.wildboar.software";
@@ -74,7 +75,7 @@ export const id_anyExtendedKeyUsage = new ObjectIdentifier([ 0 ], id_ce_extKeyUs
 /**
  * Defined in IETF RFC 5280.
  */
- export const id_pkix = new ObjectIdentifier([ 1, 3, 6, 1, 5, 5, 7 ]);
+export const id_pkix = new ObjectIdentifier([ 1, 3, 6, 1, 5, 5, 7 ]);
 
 /**
  * Defined in IETF RFC 5280.
@@ -84,9 +85,11 @@ export const id_kp = new ObjectIdentifier([ 3 ], id_pkix);
 /**
  * Defined in IETF RFC 5280.
  */
- export const id_kp_serverAuth      = new ObjectIdentifier([ 1 ], id_kp);
- export const id_kp_clientAuth      = new ObjectIdentifier([ 2 ], id_kp);
- export const id_kp_codeSigning     = new ObjectIdentifier([ 3 ], id_kp);
- export const id_kp_emailProtection = new ObjectIdentifier([ 4 ], id_kp);
- export const id_kp_timeStamping    = new ObjectIdentifier([ 8 ], id_kp);
- export const id_kp_OCSPSigning     = new ObjectIdentifier([ 9 ], id_kp);
+export const id_kp_serverAuth      = new ObjectIdentifier([ 1 ], id_kp);
+export const id_kp_clientAuth      = new ObjectIdentifier([ 2 ], id_kp);
+export const id_kp_codeSigning     = new ObjectIdentifier([ 3 ], id_kp);
+export const id_kp_emailProtection = new ObjectIdentifier([ 4 ], id_kp);
+export const id_kp_timeStamping    = new ObjectIdentifier([ 8 ], id_kp);
+export const id_kp_OCSPSigning     = new ObjectIdentifier([ 9 ], id_kp);
+
+export const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();

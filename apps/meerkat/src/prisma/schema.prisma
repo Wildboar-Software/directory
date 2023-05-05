@@ -644,7 +644,7 @@ model OperationalBinding {
   local_last_update               DateTime? // Time this DSA thinks the last shadow update was
   remote_last_update              DateTime? // Time the remote DSA thinks the last shadow update was. If this DSA is the supplier, this is populated from the requestShadowUpdate.
   requested_strategy              ShadowUpdateStrategy?
-  requested_strategy_external_ber Bytes
+  requested_strategy_external_ber Bytes?
 
   next_version OperationalBinding[] @relation("previous")
 
