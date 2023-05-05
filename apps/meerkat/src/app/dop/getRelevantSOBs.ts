@@ -169,7 +169,6 @@ async function getShadowIncrementalSteps (
                 },
             ],
         },
-
         select: {
             id: true,
             binding_identifier: true,
