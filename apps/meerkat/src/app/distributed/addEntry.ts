@@ -202,6 +202,11 @@ import {
     id_pr_targetDsaUnavailable,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-targetDsaUnavailable.va";
 import DSPAssociation from "../dsp/DSPConnection";
+import { getShadowIncrementalSteps } from "../dop/getRelevantSOBs";
+import {
+    SubordinateChanges,
+} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SubordinateChanges.ta";
+import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh";
 
 const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
 const ID_AC_SPECIFIC: string = id_ar_accessControlSpecificArea.toString();
@@ -1700,7 +1705,20 @@ async function addEntry (
         }
     }
 
-    // TODO: Update shadows
+    const sobs = await getShadowIncrementalSteps(ctx, newEntry, { add: data.entry });
+    for (const [ sob_id, sob_obid, sob_change ] of sobs) {
+        const change = new SubordinateChanges(
+            newEntry.dse.rdn,
+            sob_change,
+        );
+        saveIncrementalRefresh(ctx, sob_id, immediateSuperior, change)
+            .then() // INTENTIONAL_NO_AWAIT
+            .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_save_incremental_update_step", {
+                sob_id: sob_obid,
+                e,
+            })));
+    }
+
     const signResults: boolean = (
         (data.securityParameters?.target === ProtectionRequest_signed)
         && assn.authorizedForSignedResults
