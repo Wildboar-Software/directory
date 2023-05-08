@@ -1,6 +1,7 @@
 import { BERElement } from "asn1-ts";
 import type { MeerkatContext } from "../ctx";
 import {
+    ShadowingAgreementInfo,
     _decode_AccessPoint,
     _decode_ShadowingAgreementInfo,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
@@ -38,6 +39,8 @@ export
 async function createShadowUpdate (
     ctx: MeerkatContext,
     obid: number,
+    // totalRefreshOverride?: ShadowingAgreementInfo,
+    forceTotalRefresh: boolean = false,
 ): Promise<void> {
     const ob = await ctx.db.operationalBinding.findUnique({
         where: {
@@ -98,7 +101,8 @@ async function createShadowUpdate (
     }
 
     const performTotalRefresh: boolean = (
-        !ob.local_last_update // If this DSA never replicated to this consumer at all,
+        forceTotalRefresh
+        || !ob.local_last_update // If this DSA never replicated to this consumer at all,
         // ...or, the reported last update time is behind the local last update time.
         || (ob.remote_last_update && (ob.remote_last_update < ob.local_last_update))
         || (ob.requested_strategy === ShadowUpdateStrategy.TOTAL)
@@ -197,7 +201,7 @@ async function createShadowUpdate (
     if (performTotalRefresh) {
         const total = await createTotalRefresh(ctx, obid);
         if (!total) {
-            // This isn't supposed to happen.
+            // TODO: This isn't supposed to happen. Close the association, at least.
             return;
         }
         updatedInfo = { total };

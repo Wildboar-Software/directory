@@ -50,6 +50,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowProblem.ta";
 import {
     ShadowingAgreementInfo,
+    UnitOfReplication,
     _decode_AccessPoint,
     _decode_ShadowingAgreementInfo,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
@@ -92,7 +93,7 @@ import { LocalName } from "@wildboar/x500/src/lib/modules/InformationFramework/L
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import readSubordinates from "../../dit/readSubordinates";
 import { Refinement } from "@wildboar/x500/src/lib/modules/InformationFramework/Refinement.ta";
-import { Prisma } from "@prisma/client";
+import { OperationalBindingInitiator, Prisma } from "@prisma/client";
 import createEntry from "../../database/createEntry";
 import stringifyDN from "../../x500/stringifyDN";
 import { ContentChange } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ContentChange.ta";
@@ -105,6 +106,10 @@ import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import removeValues from "../../database/entry/removeValues";
 import readValuesOfType from "../../utils/readValuesOfType";
 import { isAcceptableTypeForAlterValues } from "../../distributed/modifyEntry";
+import getDistinguishedName from "../../x500/getDistinguishedName";
+import subtreeIntersection from "../../x500/subtreeIntersection";
+import { AreaSpecification } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/AreaSpecification.ta";
+import { createShadowUpdate } from "../createShadowUpdate";
 
 /**
  * @summary Convert an SDSEType into its equivalent DSEType
@@ -894,6 +899,97 @@ async function updateShadow (
             ),
             signErrors,
         );
+    }
+
+    const possibly_related_sobs = await ctx.db.operationalBinding.findMany({
+        where: {
+            /**
+             * This is a hack for getting the latest version: we are selecting
+             * operational bindings that have no next version.
+             */
+            next_version: {
+                none: {},
+            },
+            binding_type: id_op_binding_shadow.toString(),
+            entry_id: {
+                in: (() => {
+                    const dse_ids: number[] = [];
+                    let current: Vertex | undefined = cpVertex;
+                    while (current) {
+                        dse_ids.push(current.dse.id);
+                        current = current.immediateSuperior;
+                    }
+                    return dse_ids;
+                })(),
+            },
+            accepted: true,
+            terminated_time: null,
+            validity_start: {
+                lte: now,
+            },
+            AND: [
+                {
+                    OR: [
+                        {
+                            validity_end: null,
+                        },
+                        {
+                            validity_end: {
+                                gte: now,
+                            },
+                        },
+                    ],
+                },
+                {
+                    OR: [ // This DSA is the supplier if one of these conditions are true.
+                        { // This DSA initiated an OB in which it is the supplier.
+                            initiator: OperationalBindingInitiator.ROLE_A,
+                            outbound: true,
+                        },
+                        { // This DSA accepted an OB from a consumer.
+                            initiator: OperationalBindingInitiator.ROLE_B,
+                            outbound: false,
+                        },
+                    ],
+                },
+            ],
+        },
+        select: {
+            id: true,
+            binding_identifier: true,
+            agreement_ber: true,
+        },
+    });
+    /*
+        Maybe you could:
+        1. Identify SOBs that might be affected by the context prefix.
+        2. If total refresh, any SOBs that overlap will also get a total refresh.
+        3. If incremental update,
+            a. Identify any SOBs that overlap. For each:
+                a. Find intersection of subtree specifications.
+                b. Filter out incremental steps that fall outside of the intersection.
+                c. Select attributes / contexts that are relevant for the
+                   operational binding.
+                d. Save the new incremental step.
+
+        "Overlapping" should ignore object classes, since these cannot be known
+        from the subtree specification alone.
+    */
+    for (const sob of possibly_related_sobs) {
+        const el = new BERElement();
+        el.fromBytes(sob.agreement_ber);
+        const agreement1 = agreement;
+        const agreement2 = _decode_ShadowingAgreementInfo(el);
+        const cp_dn_1 = cp_dn;
+        const cp_dn_2 = agreement2.shadowSubject.area.contextPrefix;
+        const subtree1 = agreement1.shadowSubject.area.replicationArea;
+        const subtree2 = agreement2.shadowSubject.area.replicationArea;
+        const intersection = subtreeIntersection(ctx, subtree1, subtree2, cp_dn_1, cp_dn_2);
+        if (!intersection) {
+            continue; // There is no overlap in the subtree specifications. Check the next SOB for overlap.
+        }
+        // TODO: Cascade the incremental updates to secondary shadows instead of performing a total refresh.
+        await createShadowUpdate(ctx, sob.id, true);
     }
 
     return {

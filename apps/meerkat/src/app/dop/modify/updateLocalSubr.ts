@@ -1,4 +1,4 @@
-import { ClientAssociation, OperationalBindingError } from "@wildboar/meerkat-types";
+import { Vertex, ClientAssociation, OperationalBindingError } from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../../ctx";
 import {
     HierarchicalAgreement,
@@ -7,7 +7,7 @@ import {
     SubordinateToSuperior,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
 import dnToVertex from "../../dit/dnToVertex";
-import { Knowledge } from "@prisma/client";
+import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
 import * as errors from "@wildboar/meerkat-types";
 import {
     SecurityErrorData,
@@ -45,6 +45,8 @@ import { operationalBindingError } from "@wildboar/x500/src/lib/modules/Operatio
 import saveAccessPoint from "../../database/saveAccessPoint";
 import { ASN1Construction } from "asn1-ts";
 import getEqualityNormalizer from "../../x500/getEqualityNormalizer";
+import { id_op_binding_shadow } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
+import { createShadowUpdate } from "../../disp/createShadowUpdate";
 
 /**
  * @summary Update an update to a local subr DSE given by a subordinate DSA
@@ -269,6 +271,69 @@ async function updateLocalSubr (
             ]);
         }
     }
+
+    const now = new Date();
+    const possibly_related_sobs = await ctx.db.operationalBinding.findMany({
+        where: {
+            /**
+             * This is a hack for getting the latest version: we are selecting
+             * operational bindings that have no next version.
+             */
+            next_version: {
+                none: {},
+            },
+            binding_type: id_op_binding_shadow.toString(),
+            entry_id: {
+                in: (() => {
+                    const dse_ids: number[] = [];
+                    let current: Vertex | undefined = superior;
+                    while (current) {
+                        dse_ids.push(current.dse.id);
+                        current = current.immediateSuperior;
+                    }
+                    return dse_ids;
+                })(),
+            },
+            accepted: true,
+            terminated_time: null,
+            validity_start: {
+                lte: now,
+            },
+            AND: [
+                {
+                    OR: [
+                        {
+                            validity_end: null,
+                        },
+                        {
+                            validity_end: {
+                                gte: now,
+                            },
+                        },
+                    ],
+                },
+                {
+                    OR: [ // This DSA is the supplier if one of these conditions are true.
+                        { // This DSA initiated an OB in which it is the supplier.
+                            initiator: OperationalBindingInitiator.ROLE_A,
+                            outbound: true,
+                        },
+                        { // This DSA accepted an OB from a consumer.
+                            initiator: OperationalBindingInitiator.ROLE_B,
+                            outbound: false,
+                        },
+                    ],
+                },
+            ],
+        },
+        select: {
+            id: true,
+            binding_identifier: true,
+            agreement_ber: true,
+        },
+    });
+    // TODO: Cascade the incremental updates to secondary shadows instead of performing a total refresh.
+    await Promise.all(possibly_related_sobs.map((sob) => createShadowUpdate(ctx, sob.id, true)));
 }
 
 export default updateLocalSubr;

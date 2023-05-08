@@ -192,6 +192,7 @@ export
 async function createTotalRefresh (
     ctx: Context,
     obid: number,
+    totalRefreshOverride?: ShadowingAgreementInfo,
 ): Promise<TotalRefresh | undefined> {
     const ob = await ctx.db.operationalBinding.findUnique({
         where: {
@@ -207,7 +208,7 @@ async function createTotalRefresh (
     }
     const agreementElement = new BERElement();
     agreementElement.fromBytes(ob.agreement_ber);
-    const agreement = _decode_ShadowingAgreementInfo(agreementElement);
+    const agreement = totalRefreshOverride ?? _decode_ShadowingAgreementInfo(agreementElement);
     const cp_dn = agreement.shadowSubject.area.contextPrefix;
     const base_dn = agreement.shadowSubject.area.replicationArea.base
         ? [ ...cp_dn, ...agreement.shadowSubject.area.replicationArea.base ]
