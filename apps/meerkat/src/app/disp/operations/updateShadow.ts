@@ -1,5 +1,5 @@
 import { MeerkatContext } from "../../ctx";
-import { Vertex, Context, ShadowError, Value } from "@wildboar/meerkat-types";
+import { Vertex, Context, ShadowError, Value, UnknownError } from "@wildboar/meerkat-types";
 import {
     UpdateShadowArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/UpdateShadowArgument.ta";
@@ -39,6 +39,7 @@ import {
 import { ShadowErrorData } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowErrorData.ta";
 import {
     ShadowProblem_invalidAgreementID,
+    ShadowProblem_invalidInformationReceived,
     ShadowProblem_updateAlreadyReceived,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowProblem.ta";
 import createSecurityParameters from "../../x500/createSecurityParameters";
@@ -110,6 +111,7 @@ import getDistinguishedName from "../../x500/getDistinguishedName";
 import subtreeIntersection from "../../x500/subtreeIntersection";
 import { AreaSpecification } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/AreaSpecification.ta";
 import { createShadowUpdate } from "../createShadowUpdate";
+import { ShadowProblem_unwillingToPerform } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowProblem.ta";
 
 /**
  * @summary Convert an SDSEType into its equivalent DSEType
@@ -190,12 +192,15 @@ function convert_refinement_to_prisma_filter (ref: Refinement): Partial<Prisma.E
 // NOTE: minimum of subtree does not need to be checked. It is forbidden in shadowing subtrees.
 async function applyTotalRefresh (
     ctx: Context,
+    assn: DISPAssociation,
     vertex: Vertex,
     refresh: TotalRefresh,
     agreement: ShadowingAgreementInfo,
     depth: number,
     signErrors: boolean,
     localName: LocalName,
+    recursion_fanout: number = 1,
+    subordinates_page_size: number = 100,
 ): Promise<void> { // TODO: Maybe return the DN of the problematic DSE, if any?
 
     // Skip over everything up until we reach the base of the shadowed subtree.
@@ -210,7 +215,7 @@ async function applyTotalRefresh (
         if (!sub) {
             throw new Error();
         }
-        return applyTotalRefresh(ctx, sub, refresh.subtree[0], agreement, depth + 1, signErrors, []);
+        return applyTotalRefresh(ctx, assn, sub, refresh.subtree[0], agreement, depth + 1, signErrors, []);
     }
 
     const namingMatcher = getNamingMatcherGetter(ctx);
@@ -297,19 +302,37 @@ async function applyTotalRefresh (
         }
         const objectClasses = Array.from(sub.dse.objectClass).map(ObjectIdentifier.fromString);
         if (refinement && !objectClassesWithinRefinement(objectClasses, refinement)) {
-            throw new Error(); // FIXME:
+            throw new ShadowError(
+                ctx.i18n.t("err:shadow_update_with_unauthorized_object_classes"),
+                new ShadowErrorData(
+                    ShadowProblem_invalidInformationReceived,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_errcode_shadowError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    FALSE,
+                    undefined,
+                ),
+            );
         }
         processed_subordinate_ids.add(sub.dse.id);
-        return applyTotalRefresh(ctx, sub, subtree, agreement, depth + 1, signErrors, [ ...localName, sub.dse.rdn ]);
+        return applyTotalRefresh(ctx, assn, sub, subtree, agreement, depth + 1, signErrors, [ ...localName, sub.dse.rdn ]);
     }, {
-        concurrency: 4, // FIXME:
+        concurrency: recursion_fanout,
     });
 
     /* What follows is removing all shadow DSEs that fall within the agreement
     but were not explicitly mentioned in the TotalRefresh. */
     let cursorId: number | undefined;
     const getNextBatchOfUnmentionedSubordinates = () => {
-        return readSubordinates(ctx, vertex, 100, undefined, cursorId, { // TODO: Configurable page size.
+        return readSubordinates(ctx, vertex, subordinates_page_size, undefined, cursorId, {
             id: {
                 notIn: Array.from(processed_subordinate_ids),
             },
@@ -336,6 +359,7 @@ async function applyTotalRefresh (
         solution. */
         await bPromise.map(subordinates, (subordinate: Vertex) => applyTotalRefresh(
             ctx,
+            assn,
             subordinate,
             deletion_refresh,
             agreement,
@@ -343,7 +367,7 @@ async function applyTotalRefresh (
             signErrors,
             [ ...localName, subordinate.dse.rdn ],
         ), {
-            concurrency: 4, // FIXME:
+            concurrency: recursion_fanout,
         });
         const last_subordinate = subordinates[subordinates.length - 1];
         cursorId = last_subordinate?.dse.id;
@@ -450,6 +474,7 @@ async function applyEntryModification (
 
 async function applyContentChange (
     ctx: Context,
+    assn: DISPAssociation,
     vertex: Vertex,
     change: ContentChange,
     localName: LocalName,
@@ -464,11 +489,26 @@ async function applyContentChange (
             ? [ ...cp, ...localName.slice(0, -1), change.rename.newRDN ]
             : change.rename.newDN;
         const newRDN = getRDN(newDN);
-        if (!newRDN) {
-            throw new Error(); // FIXME:
-        }
-        if (newRDN.length === 0) {
-            throw new Error(); // FIXME:
+        if (!newRDN || (newRDN.length === 0)) {
+            throw new ShadowError(
+                ctx.i18n.t("err:shadow_rename_invalid_dn"),
+                new ShadowErrorData(
+                    ShadowProblem_invalidInformationReceived,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_errcode_shadowError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    FALSE,
+                    undefined,
+                ),
+            );
         }
         const objectClasses = Array.from(vertex.dse.objectClass).map(ObjectIdentifier.fromString);
         const subtree = agreement.shadowSubject.area.replicationArea;
@@ -479,7 +519,25 @@ async function applyContentChange (
                 new_dn: stringifyDN(ctx, newDN),
                 obid: obid.identifier.toString(),
             }));
-            throw new Error(); // FIXME:
+            throw new ShadowError(
+                ctx.i18n.t("err:shadow_rename_leaves_shadow_subtree"),
+                new ShadowErrorData(
+                    ShadowProblem_invalidInformationReceived,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_errcode_shadowError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    FALSE,
+                    undefined,
+                ),
+            );
         }
         const new_superior = await dnToVertex(ctx, ctx.dit.root, newDN.slice(0, -1));
         if (!new_superior) {
@@ -487,7 +545,25 @@ async function applyContentChange (
         }
         const existingEntry = await rdnToID(ctx, new_superior.dse.id, newRDN);
         if (existingEntry) {
-            throw new Error(); // FIXME:
+            throw new ShadowError(
+                ctx.i18n.t("err:shadow_rename_already_exists"),
+                new ShadowErrorData(
+                    ShadowProblem_invalidInformationReceived,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_errcode_shadowError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    FALSE,
+                    undefined,
+                ),
+            );
         }
         await renameEntry(ctx, vertex, new_superior, newRDN);
     }
@@ -573,6 +649,7 @@ Also note: this function was partly copied from `applyTotalRefresh()`.
 */
 async function applyIncrementalRefreshStep (
     ctx: Context,
+    assn: DISPAssociation,
     vertex: Vertex,
     refresh: IncrementalStepRefresh,
     agreement: ShadowingAgreementInfo,
@@ -580,6 +657,7 @@ async function applyIncrementalRefreshStep (
     signErrors: boolean,
     localName: LocalName,
     obid: OperationalBindingID,
+    recursion_fanout: number = 1,
 ): Promise<void> {
 
     // Skip over everything up until we reach the base of the shadowed subtree.
@@ -596,6 +674,7 @@ async function applyIncrementalRefreshStep (
         }
         return applyIncrementalRefreshStep(
             ctx,
+            assn,
             sub,
             refresh.subordinateUpdates[0].changes,
             agreement,
@@ -664,7 +743,7 @@ async function applyIncrementalRefreshStep (
         }
         else if ("modify" in refresh.sDSEChanges) {
             const change = refresh.sDSEChanges.modify;
-            await applyContentChange(ctx, vertex, change, localName, agreement, obid, signErrors);
+            await applyContentChange(ctx, assn, vertex, change, localName, agreement, obid, signErrors);
         }
         else {
             const dn = [ ...agreement.shadowSubject.area.contextPrefix, ...localName ];
@@ -691,6 +770,7 @@ async function applyIncrementalRefreshStep (
         if (refresh.sDSEChanges && "add" in refresh.sDSEChanges) {
             return applyIncrementalRefreshStep(
                 ctx,
+                assn,
                 vertex,
                 sub_update.changes,
                 agreement, depth + 1,
@@ -705,11 +785,30 @@ async function applyIncrementalRefreshStep (
         }
         const objectClasses = Array.from(sub.dse.objectClass).map(ObjectIdentifier.fromString);
         if (refinement && !objectClassesWithinRefinement(objectClasses, refinement)) {
-            throw new Error(); // FIXME:
+            throw new ShadowError(
+                ctx.i18n.t("err:shadow_update_with_unauthorized_object_classes"),
+                new ShadowErrorData(
+                    ShadowProblem_invalidInformationReceived,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_errcode_shadowError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    FALSE,
+                    undefined,
+                ),
+            );
         }
         processed_subordinate_ids.add(sub.dse.id);
         return applyIncrementalRefreshStep(
             ctx,
+            assn,
             sub,
             sub_update.changes,
             agreement,
@@ -719,7 +818,7 @@ async function applyIncrementalRefreshStep (
             obid,
         );
     }, {
-        concurrency: 4, // FIXME:
+        concurrency: recursion_fanout,
     });
 }
 
@@ -787,6 +886,8 @@ async function updateShadow (
             },
             binding_identifier: true,
             binding_version: true,
+            initiator: true,
+            outbound: true,
         },
     });
     const signErrors: boolean = true;
@@ -812,7 +913,34 @@ async function updateShadow (
             signErrors,
         );
     }
-    // TODO: Validate that the roles are not reversed.
+    const iAmSupplier: boolean = (
+        // The initiator was the supplier and this DSA was the initiator...
+        ((ob.initiator === OperationalBindingInitiator.ROLE_A) && (ob.outbound))
+        // ...or, the initiator was the consumer, and this DSA was NOT the initiator.
+        || ((ob.initiator === OperationalBindingInitiator.ROLE_B) && (!ob.outbound))
+    );
+    if (iAmSupplier) {
+        throw new ShadowError(
+            ctx.i18n.t("err:shadow_role_reversal"),
+            new ShadowErrorData(
+                ShadowProblem_unwillingToPerform,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    id_errcode_shadowError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                FALSE,
+                undefined,
+            ),
+            signErrors,
+        );
+    }
     if (ob.last_update && (ob.last_update.getTime() > data.updateTime.getTime())) {
         throw new ShadowError(
             ctx.i18n.t("err:shadow_update_time_backwards"),
@@ -846,20 +974,25 @@ async function updateShadow (
     let cpVertex = await dnToVertex(ctx, ctx.dit.root, cp_dn);
     if (!cpVertex) {
         if (!ob.access_point) {
-            throw new Error("7a61413e-7b28-4dd8-a216-54f3c855b0e0"); // TODO:
+            throw new UnknownError(ctx.i18n.t("log:shadow_ob_with_no_access_point", {
+                obid: ob.binding_identifier.toString(),
+            }));
         }
         const apElement = new BERElement();
         apElement.fromBytes(ob.access_point.ber);
         const ap = _decode_AccessPoint(apElement);
         await becomeShadowConsumer(ctx, agreement, ap, bindingID);
         cpVertex = await dnToVertex(ctx, ctx.dit.root, cp_dn);
-        // TODO: Log creation of the CP.
+        ctx.log.info(ctx.i18n.t("log:shadow_cp_created"), {
+            dn: stringifyDN(ctx, cp_dn),
+        });
     }
     if (!cpVertex) {
-        throw new Error("730902b2-bc68-4fbd-8e71-3f301c1c0ccd"); // TODO:
+        // This should never happen. We create the CP if it does not exist.
+        throw new Error("730902b2-bc68-4fbd-8e71-3f301c1c0ccd");
     }
     if ("noRefresh" in data.updatedInfo) {
-        // TODO: Log
+        ctx.log.info(ctx.i18n.t("log:shadow_update_no_refresh", { obid: ob.binding_identifier.toString() }));
         return {
             null_: null,
         };
@@ -869,13 +1002,35 @@ async function updateShadow (
         // TODO: Check that update complies with agreement.
         // - and that, if there is no SDSE, there are also no subordinates.
         // - and validate SDSEType.
-        await applyTotalRefresh(ctx, cpVertex, refresh, agreement, 0, signErrors, []);
+        await applyTotalRefresh(
+            ctx,
+            assn,
+            cpVertex,
+            refresh,
+            agreement,
+            0,
+            signErrors,
+            [],
+            1, // TODO: Make configurable.
+            100, // TODO: Make configurable.
+        );
     }
     else if ("incremental" in data.updatedInfo) {
         const refresh = data.updatedInfo.incremental;
         // TODO: Check that update complies with agreement.
         for (const step of refresh) {
-            await applyIncrementalRefreshStep(ctx, cpVertex, step, agreement, 0, signErrors, [], bindingID);
+            await applyIncrementalRefreshStep(
+                ctx,
+                assn,
+                cpVertex,
+                step,
+                agreement,
+                0,
+                signErrors,
+                [],
+                bindingID,
+                1,
+            );
         }
     }
     else {
