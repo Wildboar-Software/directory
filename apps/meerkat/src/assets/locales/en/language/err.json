@@ -233,5 +233,10 @@
     "cannot_find_local_base_entry_to_replicate": "Cannot find local entry to serve as the base entry of the replicated area.",
     "sob_not_found": "Shadowing agreement ID {{obid}} does not exist.",
     "unsupported_shadow_update_strategy": "Unsupported shadow update strategy.",
-    "shadow_update_time_backwards": "Shadow supplier supplied a shadow update that is older than this DSA's most up-to-date time."
+    "shadow_update_time_backwards": "Shadow supplier supplied a shadow update that is older than this DSA's most up-to-date time.",
+    "shadow_update_with_unauthorized_object_classes": "Received shadow update with unauthorized object classes.",
+    "shadow_role_reversal": "You are the shadow consumer, not the supplier. This DSA is supposed to update your shadows!",
+    "shadow_rename_invalid_dn": "Shadow update renamed a shadowed DSE to a forbidden or invalid name.",
+    "shadow_rename_leaves_shadow_subtree": "Shadowed rename update causes a DSE to leave the shadowed subtree.",
+    "shadow_rename_already_exists": "Shadowed update renames a DSE to a DSE that already exists."
 }

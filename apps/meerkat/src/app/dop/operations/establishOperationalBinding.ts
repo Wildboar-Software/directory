@@ -154,6 +154,7 @@ import {
 import { becomeShadowConsumer } from "../establish/becomeShadowConsumer";
 import { becomeShadowSupplier } from "../establish/becomeShadowSupplier";
 import dnToID from "../../dit/dnToID";
+import { createShadowUpdate } from "../../disp/createShadowUpdate";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -181,6 +182,7 @@ async function relayedEstablishOperationalBinding (
     let relay_agreement: ASN1Element | undefined;
     let relay_init: EstablishOperationalBindingArgumentData_initiator | undefined;
     let cp: Vertex | undefined;
+    let ob_entry: Vertex | undefined;
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     if (bindingType.isEqualTo(id_op_binding_hierarchical)) {
         const agr = _decode_HierarchicalAgreement(agreement);
@@ -242,6 +244,7 @@ async function relayedEstablishOperationalBinding (
                     signErrors,
                 );
             }
+            ob_entry = supr_entry;
             const immediateSuperiorInfo: Attribute[] = await getEntryAttributesToShareInOpBinding(ctx, supr_entry);
             const new_sup2sub = new SuperiorToSubordinate(
                 await getContextPrefixInfo(ctx, supr_entry),
@@ -328,6 +331,7 @@ async function relayedEstablishOperationalBinding (
                 cp: true,
             }, init.entryInfo ?? [], undefined, signErrors);
             cp = entry;
+            ob_entry = entry;
             const subentryInfos: SubentryInfo[] = [];
             for (const subentry of init.subentries ?? []) {
                 // TODO: This does not validate that the entry is actually a subentry...
@@ -401,6 +405,7 @@ async function relayedEstablishOperationalBinding (
                     signErrors,
                 );
             }
+            ob_entry = supr_entry;
             const immediateSuperiorInfo: Attribute[] = await getEntryAttributesToShareInOpBinding(ctx, supr_entry);
             const new_sup2sub = new SuperiorToSubordinate(
                 await getContextPrefixInfo(ctx, supr_entry),
@@ -466,7 +471,6 @@ async function relayedEstablishOperationalBinding (
         relay_agreement = agreement;
         relay_init = initiator;
     }
-    // dop?.establishOperationalBinding()
     const dop = await bindForOBM(ctx, assn, undefined, relayTo, undefined, signErrors);
     if (!dop) {
         throw new errors.OperationalBindingError(
@@ -838,6 +842,68 @@ async function relayedEstablishOperationalBinding (
                 accepted: true,
             },
         });
+        const now = new Date();
+        const possibly_related_sobs = await ctx.db.operationalBinding.findMany({
+            where: {
+                /**
+                 * This is a hack for getting the latest version: we are selecting
+                 * operational bindings that have no next version.
+                 */
+                next_version: {
+                    none: {},
+                },
+                binding_type: id_op_binding_shadow.toString(),
+                entry_id: {
+                    in: (() => {
+                        const dse_ids: number[] = [];
+                        let current: Vertex | undefined = ob_entry;
+                        while (current) {
+                            dse_ids.push(current.dse.id);
+                            current = current.immediateSuperior;
+                        }
+                        return dse_ids;
+                    })(),
+                },
+                accepted: true,
+                terminated_time: null,
+                validity_start: {
+                    lte: now,
+                },
+                AND: [
+                    {
+                        OR: [
+                            {
+                                validity_end: null,
+                            },
+                            {
+                                validity_end: {
+                                    gte: now,
+                                },
+                            },
+                        ],
+                    },
+                    {
+                        OR: [ // This DSA is the supplier if one of these conditions are true.
+                            { // This DSA initiated an OB in which it is the supplier.
+                                initiator: OperationalBindingInitiator.ROLE_A,
+                                outbound: true,
+                            },
+                            { // This DSA accepted an OB from a consumer.
+                                initiator: OperationalBindingInitiator.ROLE_B,
+                                outbound: false,
+                            },
+                        ],
+                    },
+                ],
+            },
+            select: {
+                id: true,
+                binding_identifier: true,
+                agreement_ber: true,
+            },
+        });
+        // TODO: Cascade the incremental updates to secondary shadows instead of performing a total refresh.
+        await Promise.all(possibly_related_sobs.map((sob) => createShadowUpdate(ctx, sob.id, true)));
         return result;
     }
     else if ("error" in outcome) {
