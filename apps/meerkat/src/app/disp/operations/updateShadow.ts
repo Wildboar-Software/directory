@@ -888,6 +888,8 @@ async function updateShadow (
             binding_version: true,
             initiator: true,
             outbound: true,
+            requested_time: true,
+            responded_time: true,
         },
     });
     const signErrors: boolean = true;
@@ -981,7 +983,10 @@ async function updateShadow (
         const apElement = new BERElement();
         apElement.fromBytes(ob.access_point.ber);
         const ap = _decode_AccessPoint(apElement);
-        await becomeShadowConsumer(ctx, agreement, ap, bindingID);
+        const ob_time: Date = ob.responded_time
+            ? new Date(Math.max(ob.requested_time.valueOf(), ob.responded_time.valueOf()))
+            : ob.requested_time;
+        await becomeShadowConsumer(ctx, agreement, ap, bindingID, ob.id, ob_time);
         cpVertex = await dnToVertex(ctx, ctx.dit.root, cp_dn);
         ctx.log.info(ctx.i18n.t("log:shadow_cp_created"), {
             dn: stringifyDN(ctx, cp_dn),

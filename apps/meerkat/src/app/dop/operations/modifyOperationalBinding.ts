@@ -127,6 +127,7 @@ import { id_op_binding_shadow } from "@wildboar/x500/src/lib/modules/DirectoryOp
 import {
     _decode_ShadowingAgreementInfo,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
+import scheduleShadowUpdates from "../../disp/scheduleShadowUpdates";
 
 function getInitiator (init: Initiator): OperationalBindingInitiator {
     // NOTE: Initiator is not extensible, so this is an exhaustive list.
@@ -564,6 +565,10 @@ async function modifyOperationalBinding (
             uuid: true,
             binding_type: true,
             binding_identifier: true,
+            responded_time: true,
+            requested_time: true,
+            initiator: true,
+            outbound: true,
         },
     });
 
@@ -1425,6 +1430,18 @@ async function modifyOperationalBinding (
                     : undefined,
             },
         });
+        const iAmSupplier: boolean = (
+            // The initiator was the supplier and this DSA was the initiator...
+            ((created.initiator === OperationalBindingInitiator.ROLE_A) && (created.outbound))
+            // ...or, the initiator was the consumer, and this DSA was NOT the initiator.
+            || ((created.initiator === OperationalBindingInitiator.ROLE_B) && (!created.outbound))
+        );
+        ctx.pendingShadowingUpdateCycles.delete(created.binding_identifier);
+        ctx.shadowUpdateCycles.delete(created.binding_identifier);
+        const ob_time: Date = created.responded_time
+            ? new Date(Math.max(created.requested_time.valueOf(), created.responded_time.valueOf()))
+            : created.requested_time;
+        scheduleShadowUpdates(ctx, newAgreement, created.id, created.binding_identifier, ob_time, iAmSupplier);
         ctx.log.info(ctx.i18n.t("log:modifyOperationalBinding", {
             context: "succeeded",
             type: data.bindingType.toString(),

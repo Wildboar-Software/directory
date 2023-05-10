@@ -1117,6 +1117,8 @@ const ctx: MeerkatContext = {
     jobQueue: [],
     systemProposedRelaxations: new Map(),
     systemProposedTightenings: new Map(),
+    pendingShadowingUpdateCycles: new Map(),
+    shadowUpdateCycles: new Map(),
 };
 
 export default ctx;
