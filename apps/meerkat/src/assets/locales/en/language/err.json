@@ -238,5 +238,7 @@
     "shadow_role_reversal": "You are the shadow consumer, not the supplier. This DSA is supposed to update your shadows!",
     "shadow_rename_invalid_dn": "Shadow update renamed a shadowed DSE to a forbidden or invalid name.",
     "shadow_rename_leaves_shadow_subtree": "Shadowed rename update causes a DSE to leave the shadowed subtree.",
-    "shadow_rename_already_exists": "Shadowed update renames a DSE to a DSE that already exists."
+    "shadow_rename_already_exists": "Shadowed update renames a DSE to a DSE that already exists.",
+    "scheduled_shadow_update_failure": "This DSA received an error when trying to update the shadow consumer for operational binding {{obid}}: {{e}}",
+    "scheduled_shadow_update_request_failure": "This DSA received an error when trying to request an update from the shadow supplier for operational binding {{obid}}: {{e}}"
 }

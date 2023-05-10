@@ -130,6 +130,10 @@ async function terminate (
             break;
         }
         case (id_op_binding_shadow.toString()): {
+            // We can delete these, supplier or not, since OBs are supposed to
+            // be unique across (type, id).
+            ctx.pendingShadowingUpdateCycles.delete(ob.binding_identifier);
+            ctx.shadowUpdateCycles.delete(ob.binding_identifier);
             const iAmSupplier: boolean = (
                 // The initiator was the supplier and this DSA was the initiator...
                 ((ob.initiator === OperationalBindingInitiator.ROLE_A) && (ob.outbound))

@@ -72,8 +72,13 @@ import { MeerkatContext } from "../../ctx";
 import { AccessPoint, _decode_AccessPoint } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 import { terminateByTypeAndBindingID } from "../terminateByTypeAndBindingID";
 import { timingSafeEqual } from "crypto";
-import { id_op_binding_non_specific_hierarchical } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
+import {
+    id_op_binding_non_specific_hierarchical,
+} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
 import stringifyDN from "../../x500/stringifyDN";
+import {
+    id_op_binding_shadow,
+} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
 
 
 async function relayedTerminateOperationalBinding (
@@ -418,6 +423,7 @@ async function terminateOperationalBinding (
     switch (data.bindingType.toString()) {
         case (id_op_binding_hierarchical.toString()):
         case (id_op_binding_non_specific_hierarchical.toString()):
+        case (id_op_binding_shadow.toString()):
         {
             for (const ob of obs) {
                 safeSetTimeout(

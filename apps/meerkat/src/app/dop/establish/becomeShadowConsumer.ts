@@ -1,4 +1,5 @@
-import type { Context, Vertex } from "@wildboar/meerkat-types";
+import { MeerkatContext } from "../../ctx";
+import type { Vertex } from "@wildboar/meerkat-types";
 import {
     ShadowingAgreementInfo,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
@@ -14,13 +15,16 @@ import {
 import {
     OperationalBindingID,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
+import scheduleShadowUpdates from "../../disp/scheduleShadowUpdates";
 
 export
 async function becomeShadowConsumer (
-    ctx: Context,
+    ctx: MeerkatContext,
     agreement: ShadowingAgreementInfo,
     initiator: AccessPoint,
     obid: OperationalBindingID,
+    ob_db_id: number,
+    ob_time: Date,
 ): Promise<Vertex> {
 
     // Create the context prefix
@@ -98,6 +102,7 @@ async function becomeShadowConsumer (
         currentRoot.dse.cp = {};
         currentRoot.dse.cp.supplierKnowledge = [ supplier ];
     }
+    scheduleShadowUpdates(ctx, agreement, ob_db_id, Number(obid.identifier), ob_time, false);
     // Already saved before this is function is called.
     // if (agreement.master) {
     //     await saveAccessPoint(ctx, agreement.master, Knowledge.OB_SHADOW_MASTER, currentRoot.dse.id); // TODO: What type should this be?

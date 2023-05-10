@@ -102,6 +102,8 @@ import type {
 import type {
     PwdResponseValue,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue.ta";
+import { Timeout } from "safe-timers";
+
 
 type EventReceiver<T> = (params: T) => void;
 
@@ -3038,6 +3040,41 @@ interface Context {
      * tightening (a smaller result set as a result of a more strict filter).
      */
     systemProposedTightenings: Map<IndexableOID, OBJECT_IDENTIFIER>;
+
+    /**
+     * A mapping of the shadow operational binding IDs for which the
+     * updateMode is on a periodic basis to a timeout function that will add
+     * a function that updates the shadow at such a period once the shadowing
+     * time has begun.
+     *
+     * The function described above will be added in `shadowUpdateCycles` once
+     * the shadowing time begins.
+     *
+     * To be clear, this basically exists because, even if an operational
+     * binding has been agreed to, the shadowing may begin at a different
+     * `beginTime`. This map is basically for storing shadow operational
+     * bindings that have not started yet, or, after a reboot of this DSA,
+     * shadow update cycles that need to begin at specific time to be "in sync"
+     * with the scheduled update windows. For instance, if the shadowing shall
+     * begin on Sunday and repeat every week, this DSA cannot start updating
+     * consumers on a weekly basis right after a reboot: it must wait until
+     * Sunday to begin the weekly cycle.
+     *
+     * @see {@link shadowUpdateCycles}
+     */
+    pendingShadowingUpdateCycles: Map<number, Timeout>;
+
+    /**
+     * A mapping of the shadow operational binding IDs for which the updateMode
+     * is on a periodic basis to a timer function that will perform the shadow
+     * updates at the intervals specified in the agreement.
+     *
+     * Entries are added to this after the timeouts present in
+     * `pendingShadowingUpdateCycles`.
+     *
+     * @see {@link pendingShadowingUpdateCycles}
+     */
+    shadowUpdateCycles: Map<number, NodeJS.Timer>;
 }
 
 /**

@@ -1,12 +1,11 @@
 import { BERElement } from "asn1-ts";
 import type { MeerkatContext } from "../ctx";
 import {
-    ShadowingAgreementInfo,
     _decode_AccessPoint,
     _decode_ShadowingAgreementInfo,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
 import dnToVertex from "../dit/dnToVertex";
-import { ShadowUpdateStrategy } from "@prisma/client";
+import { OperationalBindingInitiator, ShadowUpdateStrategy } from "@prisma/client";
 import { bindForDISP } from "../net/bindToOtherDSA";
 import {
     id_ac_shadowSupplierInitiatedAsynchronousAC,
@@ -54,6 +53,8 @@ async function createShadowUpdate (
             local_last_update: true,
             remote_last_update: true,
             requested_strategy: true,
+            initiator: true,
+            outbound: true,
             access_point: {
                 select: {
                     ber: true,
@@ -117,84 +118,92 @@ async function createShadowUpdate (
         ob.binding_identifier,
         ob.binding_version,
     );
-    const coordinateOutcome = await disp_client.coordinateShadowUpdate({
-        agreementID: bindingID,
-        lastUpdate: ob.local_last_update ?? undefined,
-        updateStrategy: {
-            standard: performTotalRefresh
-                ? CoordinateShadowUpdateArgumentData_updateStrategy_standard_total
-                : CoordinateShadowUpdateArgumentData_updateStrategy_standard_incremental,
-        },
-        securityParameters: createSecurityParameters(
-            ctx,
-            !!(ctx.config.signing.certPath && ctx.config.signing.key),
-            accessPoint.ae_title.rdnSequence,
-            id_opcode_coordinateShadowUpdate,
-        ),
-        cert_path: ctx.config.signing.certPath,
-        key: ctx.config.signing.key,
-        _unrecognizedExtensionsList: [],
-    });
-    if ("result" in coordinateOutcome) {
-        ctx.log.debug(ctx.i18n.t("log:coordinated_shadow_update", {
-            context: performTotalRefresh ? "total" : "incremental",
-            obid: ob.binding_identifier,
-        }));
-    }
-    else if ("error" in coordinateOutcome) {
-        if (compareCode(coordinateOutcome.error.code, id_errcode_shadowError)) {
-            const error = shadowError.decoderFor["&ParameterType"]!(coordinateOutcome.error.parameter);
-            const errData = getOptionallyProtectedValue(error);
-            const logInfo = {
-                performer: errData.performer && stringifyDN(ctx, errData.performer),
-                aliasDereferenced: errData.aliasDereferenced,
-                lastUpdate: errData.lastUpdate?.toISOString(),
-                signed: ("signed" in error),
-                problem: errData.problem,
-                start_time: errData.updateWindow?.start?.toISOString(),
-                stop_time: errData.updateWindow?.stop?.toISOString(),
-            };
-            const problem: string | undefined = errData.problem > 12
-                ? undefined
-                : errData.problem.toString();
-            ctx.log.warn(ctx.i18n.t("log:shadow_error_coordinating_shadow", {
-                context: problem,
+    const iAmSupplier: boolean = (
+        // The initiator was the supplier and this DSA was the initiator...
+        ((ob.initiator === OperationalBindingInitiator.ROLE_A) && (ob.outbound))
+        // ...or, the initiator was the consumer, and this DSA was NOT the initiator.
+        || ((ob.initiator === OperationalBindingInitiator.ROLE_B) && (!ob.outbound))
+    );
+    if (iAmSupplier) {
+        const coordinateOutcome = await disp_client.coordinateShadowUpdate({
+            agreementID: bindingID,
+            lastUpdate: ob.local_last_update ?? undefined,
+            updateStrategy: {
+                standard: performTotalRefresh
+                    ? CoordinateShadowUpdateArgumentData_updateStrategy_standard_total
+                    : CoordinateShadowUpdateArgumentData_updateStrategy_standard_incremental,
+            },
+            securityParameters: createSecurityParameters(
+                ctx,
+                !!(ctx.config.signing.certPath && ctx.config.signing.key),
+                accessPoint.ae_title.rdnSequence,
+                id_opcode_coordinateShadowUpdate,
+            ),
+            cert_path: ctx.config.signing.certPath,
+            key: ctx.config.signing.key,
+            _unrecognizedExtensionsList: [],
+        });
+        if ("result" in coordinateOutcome) {
+            ctx.log.debug(ctx.i18n.t("log:coordinated_shadow_update", {
+                context: performTotalRefresh ? "total" : "incremental",
                 obid: ob.binding_identifier,
-            }), logInfo);
-        } else {
-            ctx.log.warn(ctx.i18n.t("log:error_coordinating_shadow", {
-                obid: ob.binding_identifier,
-                code: printCode(coordinateOutcome.error.code),
             }));
         }
-        return;
-    }
-    else if ("reject" in coordinateOutcome) {
-        ctx.log.warn(ctx.i18n.t("log:coordinating_shadow_rejected", {
-            obid: ob.binding_identifier,
-            code: coordinateOutcome.reject.problem.toString(),
-        }));
-        return;
-    }
-    else if ("abort" in coordinateOutcome) {
-        ctx.log.warn(ctx.i18n.t("log:coordinating_shadow_aborted", {
-            obid: ob.binding_identifier,
-            code: coordinateOutcome.abort.toString(),
-        }));
-        return;
-    }
-    else if ("timeout" in coordinateOutcome) {
-        ctx.log.warn(ctx.i18n.t("log:coordinating_shadow_timeout", {
-            obid: ob.binding_identifier,
-        }));
-        return;
-    }
-    else {
-        ctx.log.warn(ctx.i18n.t("log:coordinating_shadow_other_problem", {
-            obid: ob.binding_identifier,
-            data: coordinateOutcome.other,
-        }));
-        return;
+        else if ("error" in coordinateOutcome) {
+            if (compareCode(coordinateOutcome.error.code, id_errcode_shadowError)) {
+                const error = shadowError.decoderFor["&ParameterType"]!(coordinateOutcome.error.parameter);
+                const errData = getOptionallyProtectedValue(error);
+                const logInfo = {
+                    performer: errData.performer && stringifyDN(ctx, errData.performer),
+                    aliasDereferenced: errData.aliasDereferenced,
+                    lastUpdate: errData.lastUpdate?.toISOString(),
+                    signed: ("signed" in error),
+                    problem: errData.problem,
+                    start_time: errData.updateWindow?.start?.toISOString(),
+                    stop_time: errData.updateWindow?.stop?.toISOString(),
+                };
+                const problem: string | undefined = errData.problem > 12
+                    ? undefined
+                    : errData.problem.toString();
+                ctx.log.warn(ctx.i18n.t("log:shadow_error_coordinating_shadow", {
+                    context: problem,
+                    obid: ob.binding_identifier,
+                }), logInfo);
+            } else {
+                ctx.log.warn(ctx.i18n.t("log:error_coordinating_shadow", {
+                    obid: ob.binding_identifier,
+                    code: printCode(coordinateOutcome.error.code),
+                }));
+            }
+            return;
+        }
+        else if ("reject" in coordinateOutcome) {
+            ctx.log.warn(ctx.i18n.t("log:coordinating_shadow_rejected", {
+                obid: ob.binding_identifier,
+                code: coordinateOutcome.reject.problem.toString(),
+            }));
+            return;
+        }
+        else if ("abort" in coordinateOutcome) {
+            ctx.log.warn(ctx.i18n.t("log:coordinating_shadow_aborted", {
+                obid: ob.binding_identifier,
+                code: coordinateOutcome.abort.toString(),
+            }));
+            return;
+        }
+        else if ("timeout" in coordinateOutcome) {
+            ctx.log.warn(ctx.i18n.t("log:coordinating_shadow_timeout", {
+                obid: ob.binding_identifier,
+            }));
+            return;
+        }
+        else {
+            ctx.log.warn(ctx.i18n.t("log:coordinating_shadow_other_problem", {
+                obid: ob.binding_identifier,
+                data: coordinateOutcome.other,
+            }));
+            return;
+        }
     }
     let updatedInfo: RefreshInformation;
     const now = new Date();

@@ -2353,7 +2353,10 @@ async function establishOperationalBinding (
                 secondary_shadows: agreement.secondaryShadows,
             },
             select: {
+                id: true,
                 uuid: true,
+                responded_time: true,
+                requested_time: true,
             },
         });
         if ("roleA_initiates" in data.initiator) {
@@ -2418,8 +2421,19 @@ async function establishOperationalBinding (
                     signErrors,
                 );
             }
+            const ob_time: Date = created.responded_time
+                ? new Date(Math.max(created.requested_time.valueOf(), created.responded_time.valueOf()))
+                : created.requested_time;
             try {
-                const cpVertex = await becomeShadowConsumer(ctx, agreement, data.accessPoint, bindingID);
+
+                const cpVertex = await becomeShadowConsumer(
+                    ctx,
+                    agreement,
+                    data.accessPoint,
+                    bindingID,
+                    created.id,
+                    ob_time,
+                );
                 await ctx.db.operationalBinding.update({
                     where: {
                         uuid: created.uuid,
@@ -2621,7 +2635,18 @@ async function establishOperationalBinding (
                         id: true,
                     },
                 });
-                await becomeShadowSupplier(ctx, bindingID, cpVertex, data.accessPoint);
+                const ob_time: Date = created.responded_time
+                    ? new Date(Math.max(created.requested_time.valueOf(), created.responded_time.valueOf()))
+                    : created.requested_time;
+                await becomeShadowSupplier(
+                    ctx,
+                    bindingID,
+                    cpVertex,
+                    data.accessPoint,
+                    agreement,
+                    created.id,
+                    ob_time,
+                );
                 ctx.log.info(ctx.i18n.t("log:establishOperationalBinding", {
                     context: "succeeded",
                     type: data.bindingType.toString(),
