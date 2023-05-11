@@ -166,7 +166,9 @@ max_pre_bind_requests: 0
 max_relaxations: 3
 min_auth_level_for_chaining: 1
 min_auth_level_for_ob: 1
+min_auth_level_for_disp: 1
 min_auth_local_qualifier_for_chaining: 0
+min_auth_local_qualifier_for_disp: 0
 min_auth_local_qualifier_for_ob: 0
 min_transfer_speed_bytes_per_minute: 1000
 mru_vertex_ttl: 500
@@ -264,6 +266,7 @@ signing_remote_crl_supported_protocols:
   - "http2"
 signing_remote_crl_timeout: 5
 signing_required_for_chaining: true
+signing_required_for_disp: true
 signing_required_for_ob: true
 signing_tolerate_unavailable_remote_crl: true
 # sslkeylog_file: /var/log/sslkeylog

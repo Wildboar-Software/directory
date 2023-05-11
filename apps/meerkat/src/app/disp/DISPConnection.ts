@@ -299,6 +299,53 @@ async function handleRequestAndErrors (
     };
     const startTime = Date.now();
     try {
+        if (
+            !("basicLevels" in assn.authLevel)
+            || compareAuthenticationLevel( // Returns true if a > b.
+                ctx.config.shadowing.minAuthRequired,
+                new AuthenticationLevel_basicLevels(
+                    assn.authLevel.basicLevels.level,
+                    assn.authLevel.basicLevels.localQualifier,
+                    isArgumentSigned(request.code, request.parameter),
+                ),
+            )
+        ) {
+            const had: string = ("basicLevels" in assn.authLevel)
+                ? authLevelToDiagnosticString(new AuthenticationLevel_basicLevels(
+                    assn.authLevel.basicLevels.level,
+                    assn.authLevel.basicLevels.localQualifier,
+                    isArgumentSigned(request.code, request.parameter),
+                ))
+                : "EXTERNAL";
+            throw new SecurityError(
+                ctx.i18n.t("err:not_authorized_ob", {
+                    required: authLevelToDiagnosticString(ctx.config.ob.minAuthRequired),
+                    had,
+                }),
+                new SecurityErrorData(
+                    SecurityProblem_inappropriateAuthentication,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        true,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        securityError["&errorCode"],
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    false,
+                    undefined,
+                ),
+                /**
+                 * It is difficult to extract the errorProtection from DOP
+                 * arguments, because security parameters has a different tag
+                 * based on the arguments.
+                 */
+                false,
+            );
+        }
         await handleRequest(ctx, assn, request);
         ctx.telemetry.trackRequest({
             name: codeToString(request.code),

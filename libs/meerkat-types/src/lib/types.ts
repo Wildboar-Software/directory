@@ -2002,6 +2002,10 @@ interface Configuration {
      */
     bindSleepRangeInMilliseconds: number;
 
+    /**
+     * Configuration options pertaining to the Directory Operational Binding
+     * Management Protocol (DOP).
+     */
     ob: {
 
         /**
@@ -2016,6 +2020,20 @@ interface Configuration {
          * for testing purposes.
          */
         autoAccept: boolean;
+
+    };
+
+    /**
+     * Configuration options pertaining to the Directory Information Shadowing
+     * Protocol (DISP).
+     */
+    shadowing: {
+
+        /**
+         * The the minimum authentication level required for Meerkat DSA to
+         * accept DISP requests.
+         */
+        minAuthRequired: AuthenticationLevel_basicLevels;
 
     };
 
