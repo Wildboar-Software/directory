@@ -1,5 +1,5 @@
 import { MeerkatContext } from "../../ctx";
-import { Vertex, Context, ShadowError, Value, UnknownError } from "@wildboar/meerkat-types";
+import { Vertex, Context, ShadowError, Value, UnknownError, IndexableOID } from "@wildboar/meerkat-types";
 import {
     UpdateShadowArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/UpdateShadowArgument.ta";
@@ -51,7 +51,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowProblem.ta";
 import {
     ShadowingAgreementInfo,
-    UnitOfReplication,
     _decode_AccessPoint,
     _decode_ShadowingAgreementInfo,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
@@ -86,7 +85,7 @@ import {
 import deleteEntry from "../../database/deleteEntry";
 import { stripEntry } from "../../database/stripEntry";
 import { Attribute } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Attribute.ta";
-import { dseType } from "@wildboar/x500/src/lib/collections/attributes";
+import { clearance, createTimestamp, dseType, objectClass } from "@wildboar/x500/src/lib/collections/attributes";
 import { DER } from "asn1-ts/dist/node/functional";
 import addAttributes from "../../database/entry/addAttributes";
 import bPromise from "bluebird";
@@ -107,11 +106,18 @@ import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import removeValues from "../../database/entry/removeValues";
 import readValuesOfType from "../../utils/readValuesOfType";
 import { isAcceptableTypeForAlterValues } from "../../distributed/modifyEntry";
-import getDistinguishedName from "../../x500/getDistinguishedName";
 import subtreeIntersection from "../../x500/subtreeIntersection";
-import { AreaSpecification } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/AreaSpecification.ta";
-import { createShadowUpdate } from "../createShadowUpdate";
-import { ShadowProblem_unwillingToPerform } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowProblem.ta";
+import { updateShadowConsumer } from "../createShadowUpdate";
+import {
+    ShadowProblem_unwillingToPerform,
+} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowProblem.ta";
+import {
+    ClassAttributeSelection,
+} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ClassAttributeSelection.ta";
+import {
+    AttributeUsage_userApplications,
+    AttributeUsage_dSAOperation,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
 
 /**
  * @summary Convert an SDSEType into its equivalent DSEType
@@ -188,11 +194,196 @@ function convert_refinement_to_prisma_filter (ref: Refinement): Partial<Prisma.E
     }
 }
 
+function checkPermittedAttributeTypes (
+    ctx: Context,
+    assn: DISPAssociation,
+    agreement: ShadowingAgreementInfo,
+    attributes: Attribute[],
+    signErrors: boolean,
+    obid: number,
+    currentObjectClasses?: Set<IndexableOID>,
+    modification: boolean = false,
+): void {
+    // createTimestamp seems to be the only always-required attribute type.
+    let createTimestampPresent: boolean = false;
+    const objectClasses: Set<IndexableOID> = currentObjectClasses ?? new Set();
+    for (const attr of attributes) {
+        if (attr.values.length === 0) {
+            continue;
+        }
+        if (attr.type_.isEqualTo(objectClass["&id"])) {
+            attr.values.forEach((v) => objectClasses.add(v.objectIdentifier.toString()));
+        }
+        if (attr.type_.isEqualTo(createTimestamp["&id"])) {
+            createTimestampPresent = true;
+        }
+    }
+    if (!modification && !createTimestampPresent) {
+        throw new ShadowError(
+            ctx.i18n.t("err:shadow_update_missing_create_timestamp"),
+            new ShadowErrorData(
+                ShadowProblem_invalidInformationReceived,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    id_errcode_shadowError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                FALSE,
+                undefined,
+            ),
+            signErrors,
+        );
+    }
+    let all_user_attributes: boolean = false;
+    const inclusions: Set<IndexableOID> = new Set();
+    const exclusions: Set<IndexableOID> = new Set();
+    for (const class_attrs of agreement.shadowSubject.attributes) {
+        const attrs = class_attrs.classAttributes ?? ClassAttributeSelection._default_value_for_classAttributes;
+
+        // The fact that objectClass contains superclasses implicitly satisfies
+        // the application of the attribute selection to subclasses.
+        const applies: boolean = !class_attrs.class_ || objectClasses.has(class_attrs.class_.toString());
+        if (!applies) {
+            continue;
+        }
+        if ("allAttributes" in attrs) {
+            all_user_attributes = true;
+        }
+        else if ("include" in attrs) {
+            for (const x of attrs.include) {
+                const KEY: string = x.toString();
+                inclusions.add(KEY);
+                exclusions.delete(KEY);
+            }
+        }
+        else if ("exclude" in attrs) {
+            for (const x of attrs.exclude) {
+                exclusions.add(x.toString());
+            }
+        }
+        else {
+            // TODO:
+        }
+    }
+    for (const attr of attributes) {
+        const ATTR_TYPE = attr.type_.toString();
+        const attr_spec = ctx.attributeTypes.get(ATTR_TYPE);
+        if (!attr_spec) {
+            if (
+                !all_user_attributes
+                && !(inclusions.has(ATTR_TYPE) && !exclusions.has(ATTR_TYPE))
+            ) {
+                throw new ShadowError(
+                    ctx.i18n.t("err:attr_type_not_authz_by_shadow_agreement", {
+                        oid: ATTR_TYPE,
+                        obid,
+                    }),
+                    new ShadowErrorData(
+                        ShadowProblem_invalidInformationReceived,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            id_errcode_shadowError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        FALSE,
+                        undefined,
+                    ),
+                    signErrors,
+                );
+            }
+            /* We don't recognize the attribute type, but it was allowed by
+            the shadowing agreement. */
+            continue;
+        }
+        const usage = attr_spec.usage ?? AttributeUsage_userApplications;
+        if (usage === AttributeUsage_dSAOperation) {
+            /* dSAOperation attribute types are never okay to replicate. */
+            throw new ShadowError(
+                ctx.i18n.t("err:not_authz_replicate_dsa_operation_attr_type", {
+                    oid: ATTR_TYPE,
+                }),
+                new ShadowErrorData(
+                    ShadowProblem_invalidInformationReceived,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_errcode_shadowError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    FALSE,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
+        const user_attr: boolean = (usage === AttributeUsage_userApplications);
+        if (!user_attr) {
+            /* Directory operation and distributed operation attribute types
+            are always permitted for replication, because there are some that
+            are implicitly allowed even if not included in the shadowing
+            agreement, such as access control-related attributes. The
+            operational attribute types permitted are so broad that there is no
+            point in trying to validate it. */
+            continue;
+        }
+        /* Finally, we check if the userApplications attribute was agreed upon
+        for replication in the shadowing agreement. */
+        if (
+            !all_user_attributes
+            && !(inclusions.has(ATTR_TYPE) && !exclusions.has(ATTR_TYPE))
+            && !attr.type_.isEqualTo(objectClass["&id"])
+            && !attr.type_.isEqualTo(clearance["&id"])
+        ) {
+            throw new ShadowError(
+                ctx.i18n.t("err:attr_type_not_authz_by_shadow_agreement", {
+                    oid: ATTR_TYPE,
+                    obid,
+                }),
+                new ShadowErrorData(
+                    ShadowProblem_invalidInformationReceived,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_errcode_shadowError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    FALSE,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
+    }
+}
+
 // TODO: It may be possible to separate the validation from the update.
 // NOTE: minimum of subtree does not need to be checked. It is forbidden in shadowing subtrees.
 async function applyTotalRefresh (
     ctx: Context,
     assn: DISPAssociation,
+    obid: OperationalBindingID,
     vertex: Vertex,
     refresh: TotalRefresh,
     agreement: ShadowingAgreementInfo,
@@ -215,7 +406,7 @@ async function applyTotalRefresh (
         if (!sub) {
             throw new Error();
         }
-        return applyTotalRefresh(ctx, assn, sub, refresh.subtree[0], agreement, depth + 1, signErrors, []);
+        return applyTotalRefresh(ctx, assn, obid, sub, refresh.subtree[0], agreement, depth + 1, signErrors, []);
     }
 
     const namingMatcher = getNamingMatcherGetter(ctx);
@@ -247,6 +438,7 @@ async function applyTotalRefresh (
     }
     await stripEntry(ctx, vertex);
     const dse_type = sdse_type_to_dse_type(refresh.sDSE.sDSEType);
+    checkPermittedAttributeTypes(ctx, assn, agreement, refresh.sDSE.attributes, signErrors, Number(obid.identifier));
     const promises = await addAttributes(ctx, vertex, [
         ...refresh.sDSE.attributes,
         new Attribute(
@@ -323,7 +515,17 @@ async function applyTotalRefresh (
             );
         }
         processed_subordinate_ids.add(sub.dse.id);
-        return applyTotalRefresh(ctx, assn, sub, subtree, agreement, depth + 1, signErrors, [ ...localName, sub.dse.rdn ]);
+        return applyTotalRefresh(
+            ctx,
+            assn,
+            obid,
+            sub,
+            subtree,
+            agreement,
+            depth + 1,
+            signErrors,
+            [ ...localName, sub.dse.rdn ],
+        );
     }, {
         concurrency: recursion_fanout,
     });
@@ -360,6 +562,7 @@ async function applyTotalRefresh (
         await bPromise.map(subordinates, (subordinate: Vertex) => applyTotalRefresh(
             ctx,
             assn,
+            obid,
             subordinate,
             deletion_refresh,
             agreement,
@@ -416,17 +619,41 @@ function getValueAlterer (toBeAddedElement: ASN1Element): (value: Value) => Valu
 
 async function applyEntryModification (
     ctx: Context,
+    assn: DISPAssociation,
+    agreement: ShadowingAgreementInfo,
     vertex: Vertex,
     mod: EntryModification,
     signErrors: boolean,
+    currentObjectClasses: Set<IndexableOID>,
+    obid: number,
 ): Promise<any[]> {
     if ("addAttribute" in mod) {
+        checkPermittedAttributeTypes(
+            ctx,
+            assn,
+            agreement,
+            [ mod.addAttribute ],
+            signErrors,
+            obid,
+            currentObjectClasses,
+            true,
+        );
         return ctx.db.$transaction(await addAttributes(ctx, vertex, [ mod.addAttribute ], undefined, false, signErrors));
     }
     else if ("removeAttribute" in mod) {
         return ctx.db.$transaction(await removeAttribute(ctx, vertex, mod.removeAttribute));
     }
     else if ("addValues" in mod) {
+        checkPermittedAttributeTypes(
+            ctx,
+            assn,
+            agreement,
+            [ mod.addValues ],
+            signErrors,
+            obid,
+            currentObjectClasses,
+            true,
+        );
         return ctx.db.$transaction(await addValues(ctx, vertex, valuesFromAttribute(mod.addValues), undefined, false, signErrors));
     }
     else if ("removeValues" in mod) {
@@ -459,6 +686,16 @@ async function applyEntryModification (
         ]);
     }
     else if ("replaceValues" in mod) {
+        checkPermittedAttributeTypes(
+            ctx,
+            assn,
+            agreement,
+            [ mod.replaceValues ],
+            signErrors,
+            obid,
+            currentObjectClasses,
+            true,
+        );
         return ctx.db.$transaction([
             ...(await removeAttribute(ctx, vertex, mod.replaceValues.type_)),
             // Second to last argument to addValues() is false, because we don't want to check
@@ -569,12 +806,39 @@ async function applyContentChange (
     }
     if (change.attributeChanges) {
         if ("replace" in change.attributeChanges) {
+            const attrs = change.attributeChanges.replace;
+            let currentObjectClasses = vertex.dse.objectClass;
+            for (const attr of attrs) {
+                if (!attr.type_.isEqualTo(objectClass["&id"])) {
+                    continue;
+                }
+                currentObjectClasses = new Set(attr.values.map((v) => v.objectIdentifier.toString()));
+            }
+            checkPermittedAttributeTypes(
+                ctx,
+                assn,
+                agreement,
+                attrs,
+                signErrors,
+                Number(obid.identifier),
+                currentObjectClasses,
+                true,
+            );
             await Promise.all(change.attributeChanges.replace
                 .map((rep) => replaceAttribute(ctx, vertex, rep, signErrors)));
         } else {
             const modifications = change.attributeChanges.changes;
             for (const mod of modifications) {
-                await applyEntryModification(ctx, vertex, mod, signErrors);
+                await applyEntryModification(
+                    ctx,
+                    assn,
+                    agreement,
+                    vertex,
+                    mod,
+                    signErrors,
+                    vertex.dse.objectClass,
+                    Number(obid.identifier),
+                );
             }
         }
     }
@@ -666,11 +930,11 @@ async function applyIncrementalRefreshStep (
     if (depth < (cp_length + base.length)) {
         // In the future, this may be relaxed.
         if (!refresh.subordinateUpdates || (refresh.subordinateUpdates.length !== 1)) {
-            throw new Error();
+            throw new Error(); // FIXME:
         }
         const sub = await dnToVertex(ctx, vertex, [ refresh.subordinateUpdates[0].subordinate ]);
         if (!sub) {
-            throw new Error();
+            throw new Error(); // FIXME:
         }
         return applyIncrementalRefreshStep(
             ctx,
@@ -717,6 +981,7 @@ async function applyIncrementalRefreshStep (
             if (!rdn) {
                 return;
             }
+            checkPermittedAttributeTypes(ctx, assn, agreement, change.attributes, signErrors, Number(obid.identifier));
             const dse_type = sdse_type_to_dse_type(change.sDSEType);
             const attributes = [
                 ...change.attributes,
@@ -915,6 +1180,49 @@ async function updateShadow (
             signErrors,
         );
     }
+    if (!ob.access_point) {
+        throw new UnknownError(ctx.i18n.t("log:shadow_ob_with_no_access_point", {
+            obid: ob.binding_identifier.toString(),
+        }));
+    }
+    const apElement = new BERElement();
+    apElement.fromBytes(ob.access_point.ber);
+    const remoteAccessPoint = _decode_AccessPoint(apElement);
+    const namingMatcher = getNamingMatcherGetter(ctx);
+    if (
+        !assn.boundNameAndUID?.dn?.length
+        || !compareDistinguishedName(
+            assn.boundNameAndUID.dn,
+            remoteAccessPoint.ae_title.rdnSequence,
+            namingMatcher,
+        )
+    ) {
+        throw new ShadowError(
+            ctx.i18n.t("err:not_authz_to_update_shadow", {
+                dn: assn.boundNameAndUID
+                    ? stringifyDN(ctx, assn.boundNameAndUID.dn)
+                    : "",
+                obid: data.agreementID.identifier.toString(),
+            }),
+            new ShadowErrorData(
+                ShadowProblem_unwillingToPerform,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    id_errcode_shadowError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                FALSE,
+                undefined,
+            ),
+            signErrors,
+        );
+    }
     const iAmSupplier: boolean = (
         // The initiator was the supplier and this DSA was the initiator...
         ((ob.initiator === OperationalBindingInitiator.ROLE_A) && (ob.outbound))
@@ -975,18 +1283,10 @@ async function updateShadow (
     const cp_dn = agreement.shadowSubject.area.contextPrefix;
     let cpVertex = await dnToVertex(ctx, ctx.dit.root, cp_dn);
     if (!cpVertex) {
-        if (!ob.access_point) {
-            throw new UnknownError(ctx.i18n.t("log:shadow_ob_with_no_access_point", {
-                obid: ob.binding_identifier.toString(),
-            }));
-        }
-        const apElement = new BERElement();
-        apElement.fromBytes(ob.access_point.ber);
-        const ap = _decode_AccessPoint(apElement);
         const ob_time: Date = ob.responded_time
             ? new Date(Math.max(ob.requested_time.valueOf(), ob.responded_time.valueOf()))
             : ob.requested_time;
-        await becomeShadowConsumer(ctx, agreement, ap, bindingID, ob.id, ob_time);
+        await becomeShadowConsumer(ctx, agreement, remoteAccessPoint, bindingID, ob.id, ob_time);
         cpVertex = await dnToVertex(ctx, ctx.dit.root, cp_dn);
         ctx.log.info(ctx.i18n.t("log:shadow_cp_created"), {
             dn: stringifyDN(ctx, cp_dn),
@@ -1004,12 +1304,10 @@ async function updateShadow (
     }
     else if ("total" in data.updatedInfo) {
         const refresh = data.updatedInfo.total;
-        // TODO: Check that update complies with agreement.
-        // - and that, if there is no SDSE, there are also no subordinates.
-        // - and validate SDSEType.
         await applyTotalRefresh(
             ctx,
             assn,
+            bindingID,
             cpVertex,
             refresh,
             agreement,
@@ -1022,7 +1320,6 @@ async function updateShadow (
     }
     else if ("incremental" in data.updatedInfo) {
         const refresh = data.updatedInfo.incremental;
-        // TODO: Check that update complies with agreement.
         for (const step of refresh) {
             await applyIncrementalRefreshStep(
                 ctx,
@@ -1149,7 +1446,7 @@ async function updateShadow (
             continue; // There is no overlap in the subtree specifications. Check the next SOB for overlap.
         }
         // TODO: Cascade the incremental updates to secondary shadows instead of performing a total refresh.
-        await createShadowUpdate(ctx, sob.id, true);
+        await updateShadowConsumer(ctx, sob.id, true);
     }
 
     return {

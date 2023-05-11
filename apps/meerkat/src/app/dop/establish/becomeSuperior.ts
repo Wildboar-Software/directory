@@ -58,7 +58,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
 import { getEntryAttributesToShareInOpBinding } from "../../dit/getEntryAttributesToShareInOpBinding";
 import { id_op_binding_shadow } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
-import { createShadowUpdate } from "../../disp/createShadowUpdate";
+import { updateShadowConsumer } from "../../disp/createShadowUpdate";
 
 /**
  * @summary Create a new subr reference, thereby becoming a superior DSA
@@ -268,7 +268,7 @@ async function becomeSuperior (
         },
     });
     // TODO: Cascade the incremental updates to secondary shadows instead of performing a total refresh.
-    await Promise.all(possibly_related_sobs.map((sob) => createShadowUpdate(ctx, sob.id, true)));
+    await Promise.all(possibly_related_sobs.map((sob) => updateShadowConsumer(ctx, sob.id, true)));
     const immediateSuperiorInfo: Attribute[] = await getEntryAttributesToShareInOpBinding(ctx, superior);
     return new SuperiorToSubordinate(
         await getContextPrefixInfo(ctx, subr.immediateSuperior!),

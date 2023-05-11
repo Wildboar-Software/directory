@@ -76,7 +76,7 @@ import { disp_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/di
 import DISPAssociation from "./disp/DISPConnection";
 import { id_op_binding_shadow } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
 import { OperationalBindingInitiator } from "@prisma/client";
-import { createShadowUpdate } from "./disp/createShadowUpdate";
+import { updateShadowConsumer } from "./disp/createShadowUpdate";
 import {
     _decode_ShadowingAgreementInfo,
     ShadowingAgreementInfo,
