@@ -2,7 +2,7 @@ import type { MeerkatContext } from "../ctx";
 import {
     ShadowingAgreementInfo,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
-import { createShadowUpdate } from "./createShadowUpdate";
+import { updateShadowConsumer } from "./createShadowUpdate";
 import { addSeconds, differenceInMilliseconds } from "date-fns";
 import { setTimeout as safeSetTimeout } from "safe-timers";
 import request_a_shadow_update from "./requestAShadowUpdate";
@@ -31,7 +31,7 @@ function scheduleShadowUpdates (
         ctx.pendingShadowingUpdateCycles.delete(ob_id);
         if (iAmSupplier) {
             const timer = setInterval(() => {
-                createShadowUpdate(ctx, ob_db_id)
+                updateShadowConsumer(ctx, ob_db_id)
                     .then(() => {
                         ctx.log.info(ctx.i18n.t("log:updated_shadow_consumer", {
                             obid: ob_id.toString(),

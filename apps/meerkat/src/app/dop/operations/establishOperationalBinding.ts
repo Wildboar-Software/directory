@@ -154,7 +154,7 @@ import {
 import { becomeShadowConsumer } from "../establish/becomeShadowConsumer";
 import { becomeShadowSupplier } from "../establish/becomeShadowSupplier";
 import dnToID from "../../dit/dnToID";
-import { createShadowUpdate } from "../../disp/createShadowUpdate";
+import { updateShadowConsumer } from "../../disp/createShadowUpdate";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -903,7 +903,7 @@ async function relayedEstablishOperationalBinding (
             },
         });
         // TODO: Cascade the incremental updates to secondary shadows instead of performing a total refresh.
-        await Promise.all(possibly_related_sobs.map((sob) => createShadowUpdate(ctx, sob.id, true)));
+        await Promise.all(possibly_related_sobs.map((sob) => updateShadowConsumer(ctx, sob.id, true)));
         return result;
     }
     else if ("error" in outcome) {

@@ -42,7 +42,7 @@ import readAttributes from "../../database/entry/readAttributes";
 import subentryEIS from "../subentryEIS";
 import { id_op_binding_shadow } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
 import { _decode_ShadowingAgreementInfo } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
-import { createShadowUpdate } from "../../disp/createShadowUpdate";
+import { updateShadowConsumer } from "../../disp/createShadowUpdate";
 import { MeerkatContext } from "../../ctx";
 import { dnWithinSubtreeSpecification } from "@wildboar/x500";
 
@@ -382,7 +382,7 @@ async function becomeSubordinate (
         },
     });
     // TODO: Cascade the incremental updates to secondary shadows instead of performing a total refresh.
-    await Promise.all(possibly_related_sobs.map((sob) => createShadowUpdate(ctx, sob.id, true)));
+    await Promise.all(possibly_related_sobs.map((sob) => updateShadowConsumer(ctx, sob.id, true)));
     const myAccessPoint = ctx.dsa.accessPoint;
     return new SubordinateToSuperior(
         [

@@ -38,7 +38,7 @@ import { NHOBSuperiorToSubordinate } from "@wildboar/x500/src/lib/modules/Hierar
 import deleteEntry from "../../database/deleteEntry";
 import { RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
 import { id_op_binding_shadow } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
-import { createShadowUpdate } from "../../disp/createShadowUpdate";
+import { updateShadowConsumer } from "../../disp/createShadowUpdate";
 import { MeerkatContext } from "../../ctx";
 
 async function partiallyResolveDN (ctx: Context, dn: DistinguishedName): Promise<Vertex> {
@@ -335,7 +335,7 @@ async function updateContextPrefix (
         },
     });
     // TODO: Cascade the incremental updates to secondary shadows instead of performing a total refresh.
-    await Promise.all(possibly_related_sobs.map((sob) => createShadowUpdate(ctx, sob.id, true)));
+    await Promise.all(possibly_related_sobs.map((sob) => updateShadowConsumer(ctx, sob.id, true)));
 }
 
 export default updateContextPrefix;

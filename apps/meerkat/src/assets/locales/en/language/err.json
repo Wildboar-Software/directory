@@ -240,5 +240,10 @@
     "shadow_rename_leaves_shadow_subtree": "Shadowed rename update causes a DSE to leave the shadowed subtree.",
     "shadow_rename_already_exists": "Shadowed update renames a DSE to a DSE that already exists.",
     "scheduled_shadow_update_failure": "This DSA received an error when trying to update the shadow consumer for operational binding {{obid}}: {{e}}",
-    "scheduled_shadow_update_request_failure": "This DSA received an error when trying to request an update from the shadow supplier for operational binding {{obid}}: {{e}}"
+    "scheduled_shadow_update_request_failure": "This DSA received an error when trying to request an update from the shadow supplier for operational binding {{obid}}: {{e}}",
+    "not_authz_to_update_shadow": "Bound DSA '{{dn}}' is not authorized to update shadows for shadow operational binding {{obid}}.",
+    "shadow_update_failure": "This DSA received an error when trying to update the shadow consumer for operational binding {{obid}}: {{e}}",
+    "shadow_update_missing_create_timestamp": "Shadow update missing createTimestamp attribute value.",
+    "attr_type_not_authz_by_shadow_agreement": "Attribute type {{oid}} not authorized to be replicated by the shadowing operational agreement {{obid}}.",
+    "not_authz_replicate_dsa_operation_attr_type": "Attribute type {{oid}} not authorized to be replicated because it is of dSAOperation usage."
 }

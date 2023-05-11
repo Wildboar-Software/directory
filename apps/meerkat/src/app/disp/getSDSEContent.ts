@@ -13,6 +13,62 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ClassAttributeSelection.ta";
 import valuesFromAttribute from "../x500/valuesFromAttribute";
 import attributesFromValues from "../x500/attributesFromValues";
+import * as x500at from "@wildboar/x500/src/lib/collections/attributes";
+import { userPwdHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdHistory.oa";
+import { userPwdRecentlyExpired } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdRecentlyExpired.oa";
+import {
+    entryUUID,
+} from "@wildboar/parity-schema/src/lib/modules/UUID/entryUUID.oa";
+import {
+    superiorUUID,
+} from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/superiorUUID.oa";
+
+export
+const mandatoryReplicatedAttributeTypes: string[] = [
+    x500at.createTimestamp["&id"].toString(),
+    x500at.modifyTimestamp["&id"].toString(),
+    x500at.pwdModifyEntryAllowed["&id"].toString(),
+    x500at.pwdChangeAllowed["&id"].toString(),
+    x500at.pwdMaxAge["&id"].toString(),
+    x500at.pwdExpiryAge["&id"].toString(),
+    x500at.pwdMinLength["&id"].toString(),
+    x500at.pwdVocabulary["&id"].toString(),
+    x500at.pwdAlphabet["&id"].toString(),
+    x500at.pwdDictionaries["&id"].toString(),
+    x500at.pwdExpiryWarning["&id"].toString(),
+    x500at.pwdGraces["&id"].toString(),
+    x500at.pwdFailureDuration["&id"].toString(),
+    x500at.pwdLockoutDuration["&id"].toString(),
+    x500at.pwdMaxFailures["&id"].toString(),
+    x500at.pwdMaxTimeInHistory["&id"].toString(),
+    x500at.pwdMinTimeInHistory["&id"].toString(),
+    x500at.pwdHistorySlots["&id"].toString(),
+    x500at.pwdRecentlyExpiredDuration["&id"].toString(),
+    x500at.pwdEncAlg["&id"].toString(),
+    x500at.pwdStartTime["&id"].toString(),
+    x500at.pwdExpiryTime["&id"].toString(),
+    x500at.pwdEndTime["&id"].toString(),
+    x500at.pwdAttribute["&id"].toString(),
+    userPwdHistory["&id"].toString(),
+    userPwdRecentlyExpired["&id"].toString(),
+    x500at.pwdAdminSubentryList["&id"].toString(),
+    x500at.subentryACI["&id"].toString(),
+    x500at.entryACI["&id"].toString(),
+    x500at.subentryACI["&id"].toString(),
+    x500at.accessControlScheme["&id"].toString(),
+    x500at.clearance["&id"].toString(),
+    x500at.specificKnowledge["&id"].toString(),
+    x500at.nonSpecificKnowledge["&id"].toString(),
+    x500at.objectClasses["&id"].toString(),
+    x500at.administrativeRole["&id"].toString(),
+    x500at.governingStructureRule["&id"].toString(),
+    x500at.structuralObjectClass["&id"].toString(),
+    x500at.subschemaTimestamp["&id"].toString(),
+    entryUUID["&id"].toString(),
+    superiorUUID["&id"].toString(),
+    x500at.searchRules["&id"].toString(),
+    x500at.subtreeSpecification["&id"].toString(),
+];
 
 export
 async function getSDSEContent (
@@ -46,7 +102,7 @@ async function getSDSEContent (
 
     // NOTE: operational attributes should be in `include`.
     let all_user_attributes: boolean = false;
-    const inclusions: Set<IndexableOID> = new Set();
+    const inclusions: Set<IndexableOID> = new Set(mandatoryReplicatedAttributeTypes);
     const exclusions: Set<IndexableOID> = new Set();
 
     for (const class_attrs of agreement.shadowSubject.attributes) {

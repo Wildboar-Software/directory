@@ -46,7 +46,7 @@ import saveAccessPoint from "../../database/saveAccessPoint";
 import { ASN1Construction } from "asn1-ts";
 import getEqualityNormalizer from "../../x500/getEqualityNormalizer";
 import { id_op_binding_shadow } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
-import { createShadowUpdate } from "../../disp/createShadowUpdate";
+import { updateShadowConsumer } from "../../disp/createShadowUpdate";
 
 /**
  * @summary Update an update to a local subr DSE given by a subordinate DSA
@@ -333,7 +333,7 @@ async function updateLocalSubr (
         },
     });
     // TODO: Cascade the incremental updates to secondary shadows instead of performing a total refresh.
-    await Promise.all(possibly_related_sobs.map((sob) => createShadowUpdate(ctx, sob.id, true)));
+    await Promise.all(possibly_related_sobs.map((sob) => updateShadowConsumer(ctx, sob.id, true)));
 }
 
 export default updateLocalSubr;

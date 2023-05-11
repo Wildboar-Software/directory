@@ -47,7 +47,9 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
 import valuesFromAttribute from "../x500/valuesFromAttribute";
 import { AttributeErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
-import { AttributeErrorData_problems_Item } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData-problems-Item.ta";
+import {
+    AttributeErrorData_problems_Item,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData-problems-Item.ta";
 import {
     AttributeProblem_contextViolation,
     AttributeProblem_undefinedAttributeType,
@@ -261,7 +263,9 @@ import {
     pwdModifyEntryAllowed,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdModifyEntryAllowed.oa";
 import { getAdministrativePoints } from "../dit/getAdministrativePoints";
-import { id_ar_pwdAdminSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-pwdAdminSpecificArea.va";
+import {
+    id_ar_pwdAdminSpecificArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-pwdAdminSpecificArea.va";
 import { pwdAdminSubentry } from "@wildboar/x500/src/lib/collections/objectClasses";
 import { UserPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
 import {
@@ -269,10 +273,11 @@ import {
     CHECK_PWD_QUALITY_OK,
 } from "../password/checkPasswordQuality";
 import { attributeValueFromDB } from "../database/attributeValueFromDB";
-import { IncrementalStepRefresh, SubordinateChanges } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SubordinateChanges.ta";
+import {
+    SubordinateChanges,
+} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SubordinateChanges.ta";
 import { getShadowIncrementalSteps } from "../dop/getRelevantSOBs";
 import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh";
-import getSDSEContent from "../disp/getSDSEContent";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;

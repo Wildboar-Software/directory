@@ -1,5 +1,5 @@
 import { MeerkatContext } from "../../ctx";
-import { ShadowError } from "@wildboar/meerkat-types";
+import { ShadowError, UnknownError } from "@wildboar/meerkat-types";
 import {
     CoordinateShadowUpdateArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/CoordinateShadowUpdateArgument.ta";
@@ -9,19 +9,22 @@ import {
 import DISPAssociation from "../DISPConnection";
 import { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
 import { Versions_v2 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";
-import { FALSE, TRUE_BIT } from "asn1-ts";
+import { BERElement, FALSE, TRUE_BIT } from "asn1-ts";
 import { verifySIGNED } from "../../pki/verifySIGNED";
 import {
     _encode_CoordinateShadowUpdateArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/CoordinateShadowUpdateArgumentData.ta";
-import { getOptionallyProtectedValue } from "@wildboar/x500";
+import { compareDistinguishedName, getOptionallyProtectedValue } from "@wildboar/x500";
 import { id_op_binding_shadow } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
 import { ShadowErrorData } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowErrorData.ta";
-import { ShadowProblem_invalidAgreementID } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowProblem.ta";
+import { ShadowProblem_invalidAgreementID, ShadowProblem_unwillingToPerform } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowProblem.ta";
 import createSecurityParameters from "../../x500/createSecurityParameters";
 import { id_errcode_shadowError } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-shadowError.va";
 import { ShadowProblem_unsupportedStrategy } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowProblem.ta";
 import { differenceInSeconds } from "date-fns";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import { _decode_AccessPoint } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
+import stringifyDN from "../../x500/stringifyDN";
 
 // coordinateShadowUpdate OPERATION ::= {
 //     ARGUMENT  CoordinateShadowUpdateArgument
@@ -134,6 +137,12 @@ async function coordinateShadowUpdate (
         select: {
             id: true,
             last_update: true,
+            binding_identifier: true,
+            access_point: {
+                select: {
+                    ber: true,
+                },
+            },
         },
     });
     const signErrors: boolean = true;
@@ -168,6 +177,49 @@ async function coordinateShadowUpdate (
             ctx.i18n.t("err:sob_not_found", { obid: data.agreementID.identifier.toString() }),
             new ShadowErrorData(
                 ShadowProblem_invalidAgreementID,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    id_errcode_shadowError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                FALSE,
+                undefined,
+            ),
+            signErrors,
+        );
+    }
+    if (!ob.access_point) {
+        throw new UnknownError(ctx.i18n.t("log:shadow_ob_with_no_access_point", {
+            obid: ob.binding_identifier.toString(),
+        }));
+    }
+    const apElement = new BERElement();
+    apElement.fromBytes(ob.access_point.ber);
+    const remoteAccessPoint = _decode_AccessPoint(apElement);
+    const namingMatcher = getNamingMatcherGetter(ctx);
+    if (
+        !assn.boundNameAndUID?.dn?.length
+        || !compareDistinguishedName(
+            assn.boundNameAndUID.dn,
+            remoteAccessPoint.ae_title.rdnSequence,
+            namingMatcher,
+        )
+    ) {
+        throw new ShadowError(
+            ctx.i18n.t("err:not_authz_to_update_shadow", {
+                dn: assn.boundNameAndUID
+                    ? stringifyDN(ctx, assn.boundNameAndUID.dn)
+                    : "",
+                obid: data.agreementID.identifier.toString(),
+            }),
+            new ShadowErrorData(
+                ShadowProblem_unwillingToPerform,
                 undefined,
                 undefined,
                 [],

@@ -1,6 +1,7 @@
 import { BERElement } from "asn1-ts";
 import type { MeerkatContext } from "../ctx";
 import {
+    ShadowingAgreementInfo,
     _decode_AccessPoint,
     _decode_ShadowingAgreementInfo,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
@@ -35,7 +36,7 @@ import stringifyDN from "../x500/stringifyDN";
 import printCode from "../utils/printCode";
 
 export
-async function createShadowUpdate (
+async function updateShadowConsumer (
     ctx: MeerkatContext,
     obid: number,
     // totalRefreshOverride?: ShadowingAgreementInfo,
@@ -118,13 +119,15 @@ async function createShadowUpdate (
         ob.binding_identifier,
         ob.binding_version,
     );
-    const iAmSupplier: boolean = (
-        // The initiator was the supplier and this DSA was the initiator...
-        ((ob.initiator === OperationalBindingInitiator.ROLE_A) && (ob.outbound))
-        // ...or, the initiator was the consumer, and this DSA was NOT the initiator.
-        || ((ob.initiator === OperationalBindingInitiator.ROLE_B) && (!ob.outbound))
-    );
-    if (iAmSupplier) {
+    const updateMode = agreement.updateMode ?? ShadowingAgreementInfo._default_value_for_updateMode;
+    const needsCoordinate: boolean = (!("consumerInitiated" in updateMode));
+    // const iAmSupplier: boolean = (
+    //     // The initiator was the supplier and this DSA was the initiator...
+    //     ((ob.initiator === OperationalBindingInitiator.ROLE_A) && (ob.outbound))
+    //     // ...or, the initiator was the consumer, and this DSA was NOT the initiator.
+    //     || ((ob.initiator === OperationalBindingInitiator.ROLE_B) && (!ob.outbound))
+    // );
+    if (needsCoordinate) {
         const coordinateOutcome = await disp_client.coordinateShadowUpdate({
             agreementID: bindingID,
             lastUpdate: ob.local_last_update ?? undefined,
@@ -204,6 +207,8 @@ async function createShadowUpdate (
             }));
             return;
         }
+    } else {
+        // FIXME: Check if requestShadowUpdate request has been sent.
     }
     let updatedInfo: RefreshInformation;
     const now = new Date();
