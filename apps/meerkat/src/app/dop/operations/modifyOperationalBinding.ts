@@ -125,9 +125,12 @@ import dnToID from "../../dit/dnToID";
 import { randomInt } from "crypto";
 import { id_op_binding_shadow } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
 import {
+    ShadowingAgreementInfo,
     _decode_ShadowingAgreementInfo,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
 import scheduleShadowUpdates from "../../disp/scheduleShadowUpdates";
+import { AttributeUsage_dSAOperation } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+import { subSeconds } from "date-fns";
 
 function getInitiator (init: Initiator): OperationalBindingInitiator {
     // NOTE: Initiator is not extensible, so this is an exhaustive list.
@@ -1382,6 +1385,113 @@ async function modifyOperationalBinding (
         const newAgreement = data.newAgreement
             ? _decode_ShadowingAgreementInfo(data.newAgreement)
             : oldAgreement;
+
+        if (newAgreement.shadowSubject.area.replicationArea.minimum) {
+            throw new errors.OperationalBindingError(
+                ctx.i18n.t("err:min_not_allowed_in_shadow_agreement"),
+                new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_invalidAgreement,
+                    data.bindingType,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
+        for (const class_attr of newAgreement.shadowSubject.attributes) {
+            if (!class_attr.classAttributes) {
+                continue;
+            }
+            if ("include" in class_attr.classAttributes) {
+                const include = class_attr.classAttributes.include;
+                for (const attr of include) {
+                    const ATTR_TYPE = attr.toString();
+                    const usage = ctx.attributeTypes.get(ATTR_TYPE)?.usage;
+                    if (usage === AttributeUsage_dSAOperation) {
+                        throw new errors.OperationalBindingError(
+                            ctx.i18n.t("err:not_authz_replicate_dsa_operation_attr_type", {
+                                oid: ATTR_TYPE,
+                            }),
+                            new OpBindingErrorParam(
+                                OpBindingErrorParam_problem_invalidAgreement,
+                                data.bindingType,
+                                undefined,
+                                undefined,
+                                [],
+                                createSecurityParameters(
+                                    ctx,
+                                    signErrors,
+                                    assn.boundNameAndUID?.dn,
+                                    undefined,
+                                    id_err_operationalBindingError,
+                                ),
+                                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                                undefined,
+                                undefined,
+                            ),
+                            signErrors,
+                        );
+                    }
+                }
+            }
+        }
+        const updateMode = newAgreement.updateMode ?? ShadowingAgreementInfo._default_value_for_updateMode;
+        const schedule = ("supplierInitiated" in updateMode)
+            ? ("scheduled" in updateMode.supplierInitiated)
+                ? updateMode.supplierInitiated.scheduled
+                : undefined
+            : ("consumerInitiated" in updateMode)
+                ? updateMode.consumerInitiated
+                : undefined;
+        if (schedule?.periodic) {
+            const period = schedule.periodic;
+            if (
+                !Number.isSafeInteger(period.updateInterval)
+                || (period.updateInterval <= 0)
+                || Number.isSafeInteger(period.windowSize)
+                || (period.windowSize <= 0)
+            ) {
+                throw new errors.MistypedArgumentError(ctx.i18n.t("err:nonsense_shadow_update_schedule"));
+            }
+            const updateInterval = Number(period.updateInterval);
+            const windowSize = Number(period.windowSize);
+            // beginTime validation not performed so that the previous value could be used.
+            if (windowSize > updateInterval) {
+                throw new errors.OperationalBindingError(
+                    ctx.i18n.t("err:sob_window_size_gte_update_interval"),
+                    new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_invalidAgreement,
+                        data.bindingType,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            id_err_operationalBindingError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
+                    signErrors,
+                );
+            }
+        }
+
         const oldCP = oldAgreement.shadowSubject.area.contextPrefix;
         const newCP = newAgreement.shadowSubject.area.contextPrefix;
         if (!compareDistinguishedName(oldCP, newCP, NAMING_MATCHER)) {
