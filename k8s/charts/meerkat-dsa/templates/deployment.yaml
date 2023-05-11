@@ -461,6 +461,12 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: min_auth_level_for_chaining
                   optional: true
+            - name: MEERKAT_MIN_AUTH_LEVEL_FOR_DISP
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: min_auth_level_for_disp
+                  optional: true
             - name: MEERKAT_MIN_AUTH_LEVEL_FOR_OB
               valueFrom:
                 configMapKeyRef:
@@ -472,6 +478,12 @@ spec:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: min_auth_local_qualifier_for_chaining
+                  optional: true
+            - name: MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_DISP
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: min_auth_local_qualifier_for_disp
                   optional: true
             - name: MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_OB
               valueFrom:
@@ -930,6 +942,12 @@ spec:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: signing_required_for_chaining
+                  optional: true
+            - name: MEERKAT_SIGNING_REQUIRED_FOR_DISP
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_required_for_disp
                   optional: true
             - name: MEERKAT_SIGNING_REQUIRED_FOR_OB
               valueFrom:

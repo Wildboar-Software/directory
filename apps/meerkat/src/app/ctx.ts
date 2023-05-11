@@ -949,6 +949,13 @@ const config: Configuration = {
         ),
         autoAccept: (process.env.MEERKAT_OB_AUTO_ACCEPT === "1"),
     },
+    shadowing: {
+        minAuthRequired: parseAuthLevel(
+            process.env.MEERKAT_MIN_AUTH_LEVEL_FOR_DISP ?? "1",
+            process.env.MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_DISP ?? "128",
+            process.env.MEERKAT_SIGNING_REQUIRED_FOR_DISP,
+        ),
+    },
     sentinelDomain: process.env.MEERKAT_SENTINEL_DOMAIN,
     administratorEmail: process.env.MEERKAT_ADMINISTRATOR_EMAIL,
     administratorEmailPublic: (process.env.MEERKAT_ADMINISTRATOR_EMAIL_PUBLIC === "1"),

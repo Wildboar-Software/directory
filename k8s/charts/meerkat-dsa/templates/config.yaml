@@ -84,8 +84,10 @@ data:
   max_pre_bind_requests: {{ .Values.max_pre_bind_requests | quote }}
   max_relaxations: {{ .Values.max_relaxations | default 3 | quote }}
   min_auth_level_for_chaining: {{ .Values.min_auth_level_for_chaining | quote }}
+  min_auth_level_for_disp: {{ .Values.min_auth_level_for_disp | quote }}
   min_auth_level_for_ob: {{ .Values.min_auth_level_for_ob | quote }}
   min_auth_local_qualifier_for_chaining: {{ .Values.min_auth_local_qualifier_for_chaining | default 0 | quote }}
+  min_auth_local_qualifier_for_disp: {{ .Values.min_auth_local_qualifier_for_disp | default 0 | quote }}
   min_auth_local_qualifier_for_ob: {{ .Values.min_auth_local_qualifier_for_ob | default 0 | quote }}
   min_transfer_speed_bytes_per_minute: {{ .Values.min_transfer_speed_bytes_per_minute | default 1000 | quote }}
   mru_vertex_ttl: {{ .Values.mru_vertex_ttl | quote }}
@@ -215,6 +217,7 @@ data:
   {{- end }}
   signing_remote_crl_timeout: {{ .Values.signing_remote_crl_timeout | default 5 | quote }}
   signing_required_for_chaining: {{ .Values.signing_required_for_chaining | ternary 1 0 | quote }}
+  signing_required_for_disp: {{ .Values.signing_required_for_disp | ternary 1 0 | quote }}
   signing_required_for_ob: {{ .Values.signing_required_for_ob | ternary 1 0 | quote }}
   signing_tolerate_unavailable_remote_crl: {{ .Values.signing_tolerate_unavailable_remote_crl | ternary 1 0 | quote }}
   {{- if .Values.sslkeylog_file }}
