@@ -155,6 +155,10 @@ import { becomeShadowConsumer } from "../establish/becomeShadowConsumer";
 import { becomeShadowSupplier } from "../establish/becomeShadowSupplier";
 import dnToID from "../../dit/dnToID";
 import { updateShadowConsumer } from "../../disp/createShadowUpdate";
+import { AttributeUsage_dSAOperation } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+import { subWeeks } from "date-fns";
+import { subYears } from "date-fns";
+import { subSeconds } from "date-fns";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -1502,8 +1506,6 @@ async function establishOperationalBinding (
             const created = await ctx.db.operationalBinding.create({
                 data: {
                     ...ob_db_data,
-                    initiator: OperationalBindingInitiator.ROLE_A,
-                    initiator_ber: Buffer.from(data.initiator.roleA_initiates.toBytes()),
                     new_context_prefix_rdn: rdnToJson(agreement.rdn),
                     immediate_superior: agreement.immediateSuperior.map(rdnToJson),
                 },
@@ -1702,8 +1704,6 @@ async function establishOperationalBinding (
             const created = await ctx.db.operationalBinding.create({
                 data: {
                     ...ob_db_data,
-                    initiator: OperationalBindingInitiator.ROLE_B,
-                    initiator_ber: Buffer.from(data.initiator.roleB_initiates.toBytes()),
                     new_context_prefix_rdn: rdnToJson(agreement.rdn),
                     immediate_superior: agreement.immediateSuperior.map(rdnToJson),
                 },
@@ -1931,8 +1931,6 @@ async function establishOperationalBinding (
             const created = await ctx.db.operationalBinding.create({
                 data: {
                     ...ob_db_data,
-                    initiator: OperationalBindingInitiator.ROLE_A,
-                    initiator_ber: Buffer.from(data.initiator.roleA_initiates.toBytes()),
                     immediate_superior: agreement.immediateSuperior.map(rdnToJson),
                 },
                 select: {
@@ -2128,8 +2126,6 @@ async function establishOperationalBinding (
             const created = await ctx.db.operationalBinding.create({
                 data: {
                     ...ob_db_data,
-                    initiator: OperationalBindingInitiator.ROLE_B,
-                    initiator_ber: Buffer.from(data.initiator.roleB_initiates.toBytes()),
                     immediate_superior: agreement.immediateSuperior.map(rdnToJson),
                 },
                 select: {
@@ -2300,9 +2296,66 @@ async function establishOperationalBinding (
         }
     } else if (data.bindingType.isEqualTo(id_op_binding_shadow)) {
         const agreement = _decode_ShadowingAgreementInfo(data.agreement);
-        const master_ap_id = agreement.master
-            ? await saveAccessPoint(ctx, agreement.master, Knowledge.OB_SHADOW_MASTER)
-            : undefined;
+        if (agreement.shadowSubject.area.replicationArea.minimum) {
+            throw new errors.OperationalBindingError(
+                ctx.i18n.t("err:min_not_allowed_in_shadow_agreement"),
+                new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_invalidAgreement,
+                    data.bindingType,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
+        for (const class_attr of agreement.shadowSubject.attributes) {
+            if (!class_attr.classAttributes) {
+                continue;
+            }
+            if ("include" in class_attr.classAttributes) {
+                const include = class_attr.classAttributes.include;
+                for (const attr of include) {
+                    const ATTR_TYPE = attr.toString();
+                    const usage = ctx.attributeTypes.get(ATTR_TYPE)?.usage;
+                    if (usage === AttributeUsage_dSAOperation) {
+                        throw new errors.OperationalBindingError(
+                            ctx.i18n.t("err:not_authz_replicate_dsa_operation_attr_type", {
+                                oid: ATTR_TYPE,
+                            }),
+                            new OpBindingErrorParam(
+                                OpBindingErrorParam_problem_invalidAgreement,
+                                data.bindingType,
+                                undefined,
+                                undefined,
+                                [],
+                                createSecurityParameters(
+                                    ctx,
+                                    signErrors,
+                                    assn.boundNameAndUID?.dn,
+                                    undefined,
+                                    id_err_operationalBindingError,
+                                ),
+                                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                                undefined,
+                                undefined,
+                            ),
+                            signErrors,
+                        );
+                    }
+                }
+            }
+        }
         const updateMode = agreement.updateMode ?? ShadowingAgreementInfo._default_value_for_updateMode;
         const schedule = ("supplierInitiated" in updateMode)
             ? ("scheduled" in updateMode.supplierInitiated)
@@ -2311,11 +2364,75 @@ async function establishOperationalBinding (
             : ("consumerInitiated" in updateMode)
                 ? updateMode.consumerInitiated
                 : undefined;
+        if (schedule?.periodic) {
+            const period = schedule.periodic;
+            if (
+                !Number.isSafeInteger(period.updateInterval)
+                || (period.updateInterval <= 0)
+                || Number.isSafeInteger(period.windowSize)
+                || (period.windowSize <= 0)
+            ) {
+                throw new errors.MistypedArgumentError(ctx.i18n.t("err:nonsense_shadow_update_schedule"));
+            }
+            const updateInterval = Number(period.updateInterval);
+            const windowSize = Number(period.windowSize);
+            if (period.beginTime) {
+                const tenPeriodsAgo = subSeconds(new Date(), updateInterval * 10);
+                if (tenPeriodsAgo.valueOf() > period.beginTime.valueOf()) {
+                    // We don't allow SOBs that start too many periods in the past.
+                    throw new errors.OperationalBindingError(
+                        ctx.i18n.t("err:sob_begin_time_too_far_in_past"),
+                        new OpBindingErrorParam(
+                            OpBindingErrorParam_problem_invalidAgreement,
+                            data.bindingType,
+                            undefined,
+                            undefined,
+                            [],
+                            createSecurityParameters(
+                                ctx,
+                                signErrors,
+                                assn.boundNameAndUID?.dn,
+                                undefined,
+                                id_err_operationalBindingError,
+                            ),
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            undefined,
+                            undefined,
+                        ),
+                        signErrors,
+                    );
+                }
+            }
+            if (windowSize > updateInterval) {
+                throw new errors.OperationalBindingError(
+                    ctx.i18n.t("err:sob_window_size_gte_update_interval"),
+                    new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_invalidAgreement,
+                        data.bindingType,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            id_err_operationalBindingError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
+                    signErrors,
+                );
+            }
+        }
+        const master_ap_id = agreement.master
+            ? await saveAccessPoint(ctx, agreement.master, Knowledge.OB_SHADOW_MASTER)
+            : undefined;
         const created = await ctx.db.operationalBinding.create({
             data: {
                 ...ob_db_data,
-                initiator: OperationalBindingInitiator.ROLE_A,
-                // initiator_ber: Buffer.from(data.initiator.roleA_initiates.toBytes()),
                 shadowed_context_prefix: agreement.shadowSubject.area.contextPrefix.map(rdnToJson),
                 knowledge_type: (agreement.shadowSubject.knowledge === undefined)
                     ? undefined
@@ -2425,7 +2542,6 @@ async function establishOperationalBinding (
                 ? new Date(Math.max(created.requested_time.valueOf(), created.responded_time.valueOf()))
                 : created.requested_time;
             try {
-
                 const cpVertex = await becomeShadowConsumer(
                     ctx,
                     agreement,

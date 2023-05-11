@@ -245,5 +245,9 @@
     "shadow_update_failure": "This DSA received an error when trying to update the shadow consumer for operational binding {{obid}}: {{e}}",
     "shadow_update_missing_create_timestamp": "Shadow update missing createTimestamp attribute value.",
     "attr_type_not_authz_by_shadow_agreement": "Attribute type {{oid}} not authorized to be replicated by the shadowing operational agreement {{obid}}.",
-    "not_authz_replicate_dsa_operation_attr_type": "Attribute type {{oid}} not authorized to be replicated because it is of dSAOperation usage."
+    "not_authz_replicate_dsa_operation_attr_type": "Attribute type {{oid}} not authorized to be replicated because it is of dSAOperation usage.",
+    "min_not_allowed_in_shadow_agreement": "The replicated area specified in a shadowing agreement may not have a 'minimum'.",
+    "nonsense_shadow_update_schedule": "The proposed shadow update schedule is nonsense.",
+    "sob_begin_time_too_far_in_past": "The shadow operational binding's proposed beginTime is too far in the past.",
+    "sob_window_size_gte_update_interval": "The shadow operational binding's window size cannot be greater than or equal to the update interval."
 }
