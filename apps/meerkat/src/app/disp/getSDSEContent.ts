@@ -75,6 +75,7 @@ async function getSDSEContent (
     ctx: Context,
     vertex: Vertex,
     agreement: ShadowingAgreementInfo,
+    knowledgeOnly: boolean = false,
 ): Promise<SDSEContent> {
     // root , glue , cp , entry , alias , subr , nssr , admPoint , subEntry and sa.
     const sdse_type = new Uint8ClampedArray([
@@ -99,6 +100,30 @@ async function getSDSEContent (
         vertex.dse.familyMember ? TRUE_BIT : FALSE_BIT, // familyMember
         FALSE_BIT, // ditBridge
     ]);
+
+    if (knowledgeOnly) {
+        const {
+            operationalAttributes: attributes,
+        } = await readAttributes(ctx, vertex, {
+            selection: new EntryInformationSelection(
+                undefined,
+                undefined,
+                {
+                    select: [
+                        x500at.specificKnowledge["&id"],
+                        x500at.nonSpecificKnowledge["&id"],
+                    ],
+                },
+            ),
+        });
+        return new SDSEContent(
+            sdse_type,
+            FALSE, // Leave this alone. It needs to be set once we've assembled the subordinates.
+            FALSE,
+            attributes,
+            undefined,
+        );
+    }
 
     // NOTE: operational attributes should be in `include`.
     let all_user_attributes: boolean = false;

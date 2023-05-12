@@ -268,6 +268,7 @@ async function becomeSuperior (
         },
     });
     // TODO: Cascade the incremental updates to secondary shadows instead of performing a total refresh.
+    // A total refresh is the only mechanism that updates extended knowledge, currently!
     await Promise.all(possibly_related_sobs.map((sob) => updateShadowConsumer(ctx, sob.id, true)));
     const immediateSuperiorInfo: Attribute[] = await getEntryAttributesToShareInOpBinding(ctx, superior);
     return new SuperiorToSubordinate(

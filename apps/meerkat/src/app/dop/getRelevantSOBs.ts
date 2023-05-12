@@ -29,7 +29,6 @@ import { Attribute } from "@wildboar/pki-stub/src/lib/modules/InformationFramewo
 import { ALL_ATTRIBUTE_TYPES } from "../constants";
 import getAttributeParentTypes from "../x500/getAttributeParentTypes";
 import { ContentChange, ContentChange_rename } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ContentChange.ta";
-import { SDSEContent } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SDSEContent.ta";
 import { EntryModification } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryModification.ta";
 import getSDSEContent from "../disp/getSDSEContent";
 

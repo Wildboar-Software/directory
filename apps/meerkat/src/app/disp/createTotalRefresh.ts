@@ -6,7 +6,7 @@ import {
 import { Subtree } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/Subtree.ta";
 import { SDSEContent } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SDSEContent.ta";
 import { TotalRefresh } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/TotalRefresh.ta";
-import { BERElement } from "asn1-ts";
+import { BERElement, BOOLEAN, FALSE } from "asn1-ts";
 import dnToVertex from "../dit/dnToVertex";
 import readSubordinates from "../dit/readSubordinates";
 import { convert_refinement_to_prisma_filter } from "./operations/updateShadow";
@@ -84,7 +84,8 @@ async function createTotalRefreshFromVertex (
     obid: number,
     localName: LocalName,
     depth: number,
-): Promise<TotalRefresh | undefined> {
+    extKnowledgeOnly: boolean = false,
+): Promise<[refresh: TotalRefresh, to_be_pruned: boolean] | undefined> {
 
     const namingMatcher = getNamingMatcherGetter(ctx);
     let is_chopped_before: boolean = false;
@@ -106,20 +107,35 @@ async function createTotalRefreshFromVertex (
         })
         ?? false;
 
-    if (is_chopped && is_chopped_before) {
-        return; // We don't process this DSE.
+    const getExtendedKnowledge: BOOLEAN = (agreement.shadowSubject.knowledge?.extendedKnowledge ?? FALSE);
+    let extended: boolean = false;
+
+    if (is_chopped && is_chopped_before && !extKnowledgeOnly) {
+        if (getExtendedKnowledge) {
+            extended = true;
+        } else {
+            return; // We don't process this DSE.
+        }
     }
 
-    const content = await getSDSEContent(ctx, vertex, agreement);
+    const content = await getSDSEContent(ctx, vertex, agreement, getExtendedKnowledge);
 
     const max = agreement.shadowSubject.area.replicationArea.maximum;
     const max_depth = Math.min(Number(max ?? MAX_DEPTH), MAX_DEPTH);
-    if (depth >= max_depth) {
-        return;
+    if ((depth >= max_depth) && !extKnowledgeOnly) {
+        if (getExtendedKnowledge) {
+            extended = true;
+        } else {
+            return;
+        }
     }
 
-    if (is_chopped && !is_chopped_before) {
-        return; // We don't process this DSE's subordinates.
+    if (is_chopped && !is_chopped_before && !extKnowledgeOnly) {
+        if (getExtendedKnowledge) {
+            extended = true;
+        } else {
+            return; // We don't process this DSE's subordinates.
+        }
     }
 
     const refinement = agreement.shadowSubject.area.replicationArea.specificationFilter;
@@ -154,6 +170,7 @@ async function createTotalRefreshFromVertex (
             obid,
             [ ...localName, subordinate.dse.rdn ],
             depth + 1,
+            extended,
         ), {
             concurrency: 4, // FIXME:
         });
@@ -162,11 +179,11 @@ async function createTotalRefreshFromVertex (
         subordinates = await getNextBatchOfUnmentionedSubordinates();
         for (let i = 0; i < sub_refreshes.length; i++) {
             const sr = sub_refreshes[i];
-            if (!sr) {
+            if (!sr || sr[1]) { // If the subordinate is chopped or to be pruned...
                 continue;
             }
             const rdn = subordinates[i].dse.rdn;
-            subtrees.push(new Subtree(rdn, sr.sDSE, sr.subtree));
+            subtrees.push(new Subtree(rdn, sr[0].sDSE, sr[0].subtree));
         }
     }
     const allSubordinatesCount = (await ctx.db.entry.count({
@@ -176,16 +193,37 @@ async function createTotalRefreshFromVertex (
         },
     }));
     const subComplete: boolean = (allSubordinatesCount === subtrees.length);
-    return new TotalRefresh(
-        new SDSEContent(
-            content.sDSEType,
-            subComplete,
-            content.attComplete,
-            content.attributes,
-            content.attValIncomplete,
-        ),
-        subtrees,
+    /**
+     * This SDSE is to be pruned from the total refresh if we are (1) just
+     * fetching subordinate references per `extendedKnowledge` (see X.525) AND
+     * (2) this is a leaf DSE and (3) there are no subordinate references
+     * associated with it.
+     *
+     * Theoretically, if there are subordinate references that are beneath the
+     * replicated area, but not leaf nodes, they could get cut off, but that
+     * arrangement makes no sense anyway. As far as I know, a `subr` or `nssr`
+     * should always be a leaf node in a valid DSAIT.
+     */
+    const to_be_pruned: boolean = (
+        extKnowledgeOnly
+        && (allSubordinatesCount === 0)
+        && (content.attributes.length === 0)
     );
+    return [
+        new TotalRefresh(
+            content
+                ? new SDSEContent(
+                    content.sDSEType,
+                    subComplete,
+                    content.attComplete,
+                    content.attributes,
+                    content.attValIncomplete,
+                )
+                : undefined,
+            subtrees,
+        ),
+        to_be_pruned,
+    ];
 }
 
 export
@@ -217,12 +255,12 @@ async function createTotalRefresh (
     if (!base) {
         throw new Error();
     }
-    return createTotalRefreshFromVertex(
+    return (await createTotalRefreshFromVertex(
         ctx,
         base,
         agreement,
         obid,
         [],
         base_dn.length,
-    );
+    ))?.[0];
 }

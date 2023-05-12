@@ -6,7 +6,7 @@ import {
     _decode_ShadowingAgreementInfo,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
 import dnToVertex from "../dit/dnToVertex";
-import { OperationalBindingInitiator, ShadowUpdateStrategy } from "@prisma/client";
+import { ShadowUpdateStrategy } from "@prisma/client";
 import { bindForDISP } from "../net/bindToOtherDSA";
 import {
     id_ac_shadowSupplierInitiatedAsynchronousAC,
