@@ -9,6 +9,7 @@ import {
 import DISPAssociation from "../DISPConnection";
 import { verifySIGNED } from "../../pki/verifySIGNED";
 import {
+    UpdateWindow,
     _encode_UpdateShadowArgumentData,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/UpdateShadowArgumentData.ta";
 import { InvokeId } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/InvokeId.ta";
@@ -40,6 +41,7 @@ import { ShadowErrorData } from "@wildboar/x500/src/lib/modules/DirectoryShadowA
 import {
     ShadowProblem_invalidAgreementID,
     ShadowProblem_invalidInformationReceived,
+    ShadowProblem_unsuitableTiming,
     ShadowProblem_updateAlreadyReceived,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowProblem.ta";
 import createSecurityParameters from "../../x500/createSecurityParameters";
@@ -118,6 +120,7 @@ import {
     AttributeUsage_userApplications,
     AttributeUsage_dSAOperation,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+import { addSeconds } from "date-fns";
 
 /**
  * @summary Convert an SDSEType into its equivalent DSEType
@@ -1155,6 +1158,7 @@ async function updateShadow (
             outbound: true,
             requested_time: true,
             responded_time: true,
+            local_last_update: true,
         },
     });
     const signErrors: boolean = true;
@@ -1280,6 +1284,58 @@ async function updateShadow (
     const agreementElement = new BERElement();
     agreementElement.fromBytes(ob.agreement_ber);
     const agreement = _decode_ShadowingAgreementInfo(agreementElement);
+
+    const updateMode = agreement.updateMode ?? ShadowingAgreementInfo._default_value_for_updateMode;
+    const schedule = (("supplierInitiated" in updateMode) && ("scheduled" in updateMode.supplierInitiated))
+        ? updateMode.supplierInitiated.scheduled
+        : (("consumerInitiated" in updateMode)
+            ? updateMode.consumerInitiated
+            : undefined);
+    if (schedule?.periodic && !schedule.othertimes) {
+        const ob_time: Date = ob.responded_time
+            ? new Date(Math.max(ob.requested_time.valueOf(), ob.responded_time.valueOf()))
+            : ob.requested_time;
+        let period_start = schedule.periodic.beginTime ?? ob_time;
+        let next_period_start = period_start;
+        let i = 0;
+        while (i++ < 1_000_000) {
+            next_period_start = addSeconds(period_start, Number(schedule.periodic.updateInterval));
+            if (next_period_start.valueOf() >= now.valueOf()) {
+                period_start = next_period_start;
+                break;
+            }
+        }
+        const end_of_period = addSeconds(period_start, Number(schedule.periodic.windowSize));
+        const updateWindow = new UpdateWindow(
+            next_period_start,
+            addSeconds(next_period_start, Number(schedule.periodic.windowSize)),
+        );
+        if (now.valueOf() >= end_of_period.valueOf()) {
+            throw new ShadowError(
+                ctx.i18n.t("err:shadow_update_outside_of_window", {
+                    obid: data.agreementID.identifier.toString(),
+                }),
+                new ShadowErrorData(
+                    ShadowProblem_unsuitableTiming,
+                    ob.local_last_update ?? undefined,
+                    updateWindow,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_errcode_shadowError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    FALSE,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
+    }
+
     const cp_dn = agreement.shadowSubject.area.contextPrefix;
     let cpVertex = await dnToVertex(ctx, ctx.dit.root, cp_dn);
     if (!cpVertex) {

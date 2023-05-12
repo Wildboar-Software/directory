@@ -249,5 +249,8 @@
     "min_not_allowed_in_shadow_agreement": "The replicated area specified in a shadowing agreement may not have a 'minimum'.",
     "nonsense_shadow_update_schedule": "The proposed shadow update schedule is nonsense.",
     "sob_begin_time_too_far_in_past": "The shadow operational binding's proposed beginTime is too far in the past.",
-    "sob_window_size_gte_update_interval": "The shadow operational binding's window size cannot be greater than or equal to the update interval."
+    "sob_window_size_gte_update_interval": "The shadow operational binding's window size cannot be greater than or equal to the update interval.",
+    "shadow_update_outside_of_window": "Shadow update for operational binding {{obid}} cannot happen now: it is currently outside of the agreed upon update window.",
+    "sob_supplier_initiated_op_not_authz": "Shadow operational binding {{obid}} is not supplier-initiated. You are not permitted to use this operation.",
+    "sob_consumer_initiated_op_not_authz": "Shadow operational binding {{obid}} is not consumer-initiated. You are not permitted to use this operation."
 }
