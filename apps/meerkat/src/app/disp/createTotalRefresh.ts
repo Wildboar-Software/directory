@@ -108,6 +108,7 @@ async function createTotalRefreshFromVertex (
         ?? false;
 
     const getExtendedKnowledge: BOOLEAN = (agreement.shadowSubject.knowledge?.extendedKnowledge ?? FALSE);
+    const getSubordinateInfo: BOOLEAN = (agreement.shadowSubject.subordinates ?? FALSE);
     let extended: boolean = false;
 
     if (is_chopped && is_chopped_before && !extKnowledgeOnly) {
@@ -118,7 +119,14 @@ async function createTotalRefreshFromVertex (
         }
     }
 
-    const content = await getSDSEContent(ctx, vertex, agreement, getExtendedKnowledge);
+    const content = await getSDSEContent(
+        ctx,
+        vertex,
+        agreement,
+        extended,
+        getSubordinateInfo,
+        agreement.shadowSubject.knowledge?.knowledgeType,
+    );
 
     const max = agreement.shadowSubject.area.replicationArea.maximum;
     const max_depth = Math.min(Number(max ?? MAX_DEPTH), MAX_DEPTH);
