@@ -3,7 +3,7 @@ import {
     ShadowingAgreementInfo,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
 import { SDSEContent } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/Subtree.ta";
-import { FALSE, FALSE_BIT, ObjectIdentifier, TRUE, TRUE_BIT } from "asn1-ts";
+import { FALSE, FALSE_BIT, ObjectIdentifier, TRUE, TRUE_BIT, NULL } from "asn1-ts";
 import readAttributes from "../database/entry/readAttributes";
 import {
     EntryInformationSelection,
@@ -22,9 +22,14 @@ import {
 import {
     superiorUUID,
 } from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/superiorUUID.oa";
+import { AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
+import {
+
+} from "@wildboar/x500/"
+import { Knowledge_knowledgeType, Knowledge_knowledgeType_both, Knowledge_knowledgeType_master, Knowledge_knowledgeType_shadow } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/Knowledge-knowledgeType.ta";
 
 export
-const mandatoryReplicatedAttributeTypes: string[] = [
+const mandatoryReplicatedAttributeTypesStr: IndexableOID[] = [
     x500at.createTimestamp["&id"].toString(),
     x500at.modifyTimestamp["&id"].toString(),
     x500at.pwdModifyEntryAllowed["&id"].toString(),
@@ -71,11 +76,65 @@ const mandatoryReplicatedAttributeTypes: string[] = [
 ];
 
 export
+const mandatoryReplicatedAttributeTypes: AttributeType[] = [
+    x500at.createTimestamp["&id"],
+    x500at.modifyTimestamp["&id"],
+    x500at.pwdModifyEntryAllowed["&id"],
+    x500at.pwdChangeAllowed["&id"],
+    x500at.pwdMaxAge["&id"],
+    x500at.pwdExpiryAge["&id"],
+    x500at.pwdMinLength["&id"],
+    x500at.pwdVocabulary["&id"],
+    x500at.pwdAlphabet["&id"],
+    x500at.pwdDictionaries["&id"],
+    x500at.pwdExpiryWarning["&id"],
+    x500at.pwdGraces["&id"],
+    x500at.pwdFailureDuration["&id"],
+    x500at.pwdLockoutDuration["&id"],
+    x500at.pwdMaxFailures["&id"],
+    x500at.pwdMaxTimeInHistory["&id"],
+    x500at.pwdMinTimeInHistory["&id"],
+    x500at.pwdHistorySlots["&id"],
+    x500at.pwdRecentlyExpiredDuration["&id"],
+    x500at.pwdEncAlg["&id"],
+    x500at.pwdStartTime["&id"],
+    x500at.pwdExpiryTime["&id"],
+    x500at.pwdEndTime["&id"],
+    x500at.pwdAttribute["&id"],
+    userPwdHistory["&id"],
+    userPwdRecentlyExpired["&id"],
+    x500at.pwdAdminSubentryList["&id"],
+    x500at.subentryACI["&id"],
+    x500at.entryACI["&id"],
+    x500at.subentryACI["&id"],
+    x500at.accessControlScheme["&id"],
+    x500at.clearance["&id"],
+    x500at.specificKnowledge["&id"],
+    x500at.nonSpecificKnowledge["&id"],
+    x500at.objectClasses["&id"],
+    x500at.administrativeRole["&id"],
+    x500at.governingStructureRule["&id"],
+    x500at.structuralObjectClass["&id"],
+    x500at.subschemaTimestamp["&id"],
+    entryUUID["&id"],
+    superiorUUID["&id"],
+    x500at.searchRules["&id"],
+    x500at.subtreeSpecification["&id"],
+];
+
+const glue_sdse_type = new Uint8ClampedArray([
+    FALSE_BIT, // root
+    TRUE_BIT, // glue
+]);
+
+export
 async function getSDSEContent (
     ctx: Context,
     vertex: Vertex,
     agreement: ShadowingAgreementInfo,
-    knowledgeOnly: boolean = false,
+    extendedKnowledge: boolean = false,
+    replicateSubordinates: boolean = false,
+    knowledgeTypes?: Knowledge_knowledgeType,
 ): Promise<SDSEContent> {
     // root , glue , cp , entry , alias , subr , nssr , admPoint , subEntry and sa.
     const sdse_type = new Uint8ClampedArray([
@@ -101,7 +160,67 @@ async function getSDSEContent (
         FALSE_BIT, // ditBridge
     ]);
 
-    if (knowledgeOnly) {
+    if (
+        (replicateSubordinates || extendedKnowledge) // If we are traversing the extended area,...
+        && !(vertex.dse.subr || vertex.dse.nssr) // ...and this DSE is not a subordinate reference.
+    ) {
+        // Return a glue DSE.
+        return new SDSEContent(
+            glue_sdse_type,
+            FALSE, // Leave this alone. It needs to be set once we've assembled the subordinates.
+            FALSE,
+            [],
+            undefined,
+        );
+    }
+
+    const knowledgeSelection: AttributeType[] = [];
+    if (knowledgeTypes === Knowledge_knowledgeType_both) {
+        knowledgeSelection.push(x500at.supplierKnowledge["&id"]);
+        knowledgeSelection.push(x500at.consumerKnowledge["&id"]);
+    }
+    else if (knowledgeTypes === Knowledge_knowledgeType_master) {
+        knowledgeSelection.push(x500at.supplierKnowledge["&id"]);
+    }
+    else if (knowledgeTypes === Knowledge_knowledgeType_shadow) {
+        knowledgeSelection.push(x500at.consumerKnowledge["&id"]);
+    }
+    if (extendedKnowledge) {
+        knowledgeSelection.push(x500at.specificKnowledge["&id"]);
+        knowledgeSelection.push(x500at.nonSpecificKnowledge["&id"]);
+    }
+
+    if (replicateSubordinates) {
+        const {
+            userAttributes,
+            operationalAttributes,
+        } = await readAttributes(ctx, vertex, {
+            selection: new EntryInformationSelection(
+                {
+                    allUserAttributes: null,
+                },
+                undefined,
+                {
+                    select: [
+                        ...mandatoryReplicatedAttributeTypes,
+                        ...knowledgeSelection,
+                    ],
+                },
+                {
+                    allContexts: null,
+                },
+                TRUE,
+            ),
+        });
+        return new SDSEContent(
+            sdse_type,
+            FALSE, // Leave this alone. It needs to be set once we've assembled the subordinates.
+            FALSE,
+            [ ...userAttributes, ...operationalAttributes ],
+            undefined,
+        );
+    }
+    else if (extendedKnowledge) {
         const {
             operationalAttributes: attributes,
         } = await readAttributes(ctx, vertex, {
@@ -109,10 +228,7 @@ async function getSDSEContent (
                 undefined,
                 undefined,
                 {
-                    select: [
-                        x500at.specificKnowledge["&id"],
-                        x500at.nonSpecificKnowledge["&id"],
-                    ],
+                    select: knowledgeSelection,
                 },
             ),
         });
@@ -127,7 +243,10 @@ async function getSDSEContent (
 
     // NOTE: operational attributes should be in `include`.
     let all_user_attributes: boolean = false;
-    const inclusions: Set<IndexableOID> = new Set(mandatoryReplicatedAttributeTypes);
+    const inclusions: Set<IndexableOID> = new Set([
+        ...mandatoryReplicatedAttributeTypesStr,
+        ...knowledgeSelection.map((oid) => oid.toString()),
+    ]);
     const exclusions: Set<IndexableOID> = new Set();
 
     for (const class_attrs of agreement.shadowSubject.attributes) {
