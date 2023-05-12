@@ -17,14 +17,16 @@ import {
 import { compareDistinguishedName, getOptionallyProtectedValue } from "@wildboar/x500";
 import { id_op_binding_shadow } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
 import { ShadowErrorData } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowErrorData.ta";
-import { ShadowProblem_invalidAgreementID, ShadowProblem_unwillingToPerform } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowProblem.ta";
+import { ShadowProblem_invalidAgreementID, ShadowProblem_invalidSequencing, ShadowProblem_unsuitableTiming, ShadowProblem_unwillingToPerform } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowProblem.ta";
 import createSecurityParameters from "../../x500/createSecurityParameters";
 import { id_errcode_shadowError } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-errcode-shadowError.va";
 import { ShadowProblem_unsupportedStrategy } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowProblem.ta";
-import { differenceInSeconds } from "date-fns";
+import { addSeconds, differenceInSeconds } from "date-fns";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import { _decode_AccessPoint } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 import stringifyDN from "../../x500/stringifyDN";
+import { ShadowingAgreementInfo, _decode_ShadowingAgreementInfo } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
+import { UpdateWindow } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/UpdateWindow.ta";
 
 // coordinateShadowUpdate OPERATION ::= {
 //     ARGUMENT  CoordinateShadowUpdateArgument
@@ -138,6 +140,10 @@ async function coordinateShadowUpdate (
             id: true,
             last_update: true,
             binding_identifier: true,
+            agreement_ber: true,
+            requested_time: true,
+            responded_time: true,
+            local_last_update: true,
             access_point: {
                 select: {
                     ber: true,
@@ -253,6 +259,82 @@ async function coordinateShadowUpdate (
             }));
         }
     }
+    const agreementElement = new BERElement();
+    agreementElement.fromBytes(ob.agreement_ber);
+    const agreement = _decode_ShadowingAgreementInfo(agreementElement);
+    const updateMode = agreement.updateMode ?? ShadowingAgreementInfo._default_value_for_updateMode;
+    if (!("supplierInitiated" in updateMode)) {
+        throw new ShadowError(
+            ctx.i18n.t("err:sob_supplier_initiated_op_not_authz", {
+                obid: data.agreementID.identifier.toString(),
+            }),
+            new ShadowErrorData(
+                ShadowProblem_invalidSequencing, // The spec is not clear what this error should be thrown.
+                ob.local_last_update ?? undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    id_errcode_shadowError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                FALSE,
+                undefined,
+            ),
+            signErrors,
+        );
+    }
+    const schedule = ("scheduled" in updateMode.supplierInitiated)
+        ? updateMode.supplierInitiated.scheduled
+        : undefined;
+    if (schedule?.periodic && !schedule.othertimes) {
+        const ob_time: Date = ob.responded_time
+            ? new Date(Math.max(ob.requested_time.valueOf(), ob.responded_time.valueOf()))
+            : ob.requested_time;
+        let period_start = schedule.periodic.beginTime ?? ob_time;
+        let next_period_start = period_start;
+        let i = 0;
+        while (i++ < 1_000_000) {
+            next_period_start = addSeconds(period_start, Number(schedule.periodic.updateInterval));
+            if (next_period_start.valueOf() >= now.valueOf()) {
+                period_start = next_period_start;
+                break;
+            }
+        }
+        const end_of_period = addSeconds(period_start, Number(schedule.periodic.windowSize));
+        const updateWindow = new UpdateWindow(
+            next_period_start,
+            addSeconds(next_period_start, Number(schedule.periodic.windowSize)),
+        );
+        if (now.valueOf() >= end_of_period.valueOf()) {
+            throw new ShadowError(
+                ctx.i18n.t("err:shadow_update_outside_of_window", {
+                    obid: data.agreementID.identifier.toString(),
+                }),
+                new ShadowErrorData(
+                    ShadowProblem_unsuitableTiming,
+                    ob.local_last_update ?? undefined,
+                    updateWindow,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_errcode_shadowError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    FALSE,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
+    }
+
     return{
         null_: null,
     };
