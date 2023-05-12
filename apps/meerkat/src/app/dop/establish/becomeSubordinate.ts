@@ -16,7 +16,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint-category.ta";
 import dnToVertex from "../../dit/dnToVertex";
 import valuesFromAttribute from "../../x500/valuesFromAttribute";
-import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
+import { Knowledge } from "@prisma/client";
 import { DER } from "asn1-ts/dist/node/functional";
 import createEntry from "../../database/createEntry";
 import addValues from "../../database/entry/addValues";
@@ -35,16 +35,12 @@ import isFirstLevelDSA from "../../dit/isFirstLevelDSA";
 import type {
     OBJECT_CLASS,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
-import { BERElement, INTEGER } from "asn1-ts";
+import { INTEGER } from "asn1-ts";
 import { SubentryInfo, Vertex as X500Vertex } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/Vertex.ta";
 import readSubordinates from "../../dit/readSubordinates";
 import readAttributes from "../../database/entry/readAttributes";
 import subentryEIS from "../subentryEIS";
-import { id_op_binding_shadow } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
-import { _decode_ShadowingAgreementInfo } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
-import { updateShadowConsumer } from "../../disp/createShadowUpdate";
 import { MeerkatContext } from "../../ctx";
-import { dnWithinSubtreeSpecification } from "@wildboar/x500";
 
 export
 async function createContextPrefixEntry (
@@ -321,68 +317,6 @@ async function becomeSubordinate (
         ),
     );
 
-    const now = new Date();
-    const possibly_related_sobs = await ctx.db.operationalBinding.findMany({
-        where: {
-            /**
-             * This is a hack for getting the latest version: we are selecting
-             * operational bindings that have no next version.
-             */
-            next_version: {
-                none: {},
-            },
-            binding_type: id_op_binding_shadow.toString(),
-            entry_id: {
-                in: (() => {
-                    const dse_ids: number[] = [];
-                    let current: Vertex | undefined = createdCP;
-                    while (current) {
-                        dse_ids.push(current.dse.id);
-                        current = current.immediateSuperior;
-                    }
-                    return dse_ids;
-                })(),
-            },
-            accepted: true,
-            terminated_time: null,
-            validity_start: {
-                lte: now,
-            },
-            AND: [
-                {
-                    OR: [
-                        {
-                            validity_end: null,
-                        },
-                        {
-                            validity_end: {
-                                gte: now,
-                            },
-                        },
-                    ],
-                },
-                {
-                    OR: [ // This DSA is the supplier if one of these conditions are true.
-                        { // This DSA initiated an OB in which it is the supplier.
-                            initiator: OperationalBindingInitiator.ROLE_A,
-                            outbound: true,
-                        },
-                        { // This DSA accepted an OB from a consumer.
-                            initiator: OperationalBindingInitiator.ROLE_B,
-                            outbound: false,
-                        },
-                    ],
-                },
-            ],
-        },
-        select: {
-            id: true,
-            binding_identifier: true,
-            agreement_ber: true,
-        },
-    });
-    // TODO: Cascade the incremental updates to secondary shadows instead of performing a total refresh.
-    await Promise.all(possibly_related_sobs.map((sob) => updateShadowConsumer(ctx, sob.id, true)));
     const myAccessPoint = ctx.dsa.accessPoint;
     return new SubordinateToSuperior(
         [
