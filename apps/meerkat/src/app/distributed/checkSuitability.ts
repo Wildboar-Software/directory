@@ -1,4 +1,10 @@
-import { Context, Vertex, ClientAssociation, ServiceError } from "@wildboar/meerkat-types";
+import {
+    Context,
+    Vertex,
+    ClientAssociation,
+    ServiceError,
+    IndexableOID,
+} from "@wildboar/meerkat-types";
 import type { ASN1Element, BIT_STRING } from "asn1-ts";
 import type { Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
 import { id_opcode_compare } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-compare.va";
@@ -17,6 +23,9 @@ import {
     SearchArgument,
     _decode_SearchArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
+import {
+    _decode_ReadArgument,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta";
 import { strict as assert } from "assert";
 import isModificationOperation from "@wildboar/x500/src/lib/utils/isModificationOperation";
 import unmetCriticalExtension from "../x500/unmetCriticalExtension";
@@ -30,9 +39,98 @@ import createSecurityParameters from "../x500/createSecurityParameters";
 import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
-import getShadowingAgreementInfo from "../dit/getShadowingAgreementInfo";
+// import getShadowingAgreementInfo from "../dit/getShadowingAgreementInfo";
 import filterCanBeUsedInShadowedArea from "../x500/filterCanBeUsedInShadowedArea";
 import { getEntryExistsFilter } from "../database/entryExistsFilter";
+import {
+    EntryInformationSelection_infoTypes_attributeTypesAndValues as typesAndValues,
+    EntryInformationSelection_infoTypes_attributeTypesOnly as typesOnly,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection-infoTypes.ta";
+import { EntryInformationSelection } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
+import {
+    id_op_binding_shadow,
+} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
+import {
+    ShadowingAgreementInfo,
+    _decode_ShadowingAgreementInfo,
+} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
+import { BERElement, ObjectIdentifier } from "asn1-ts";
+import getDistinguishedName from "../x500/getDistinguishedName";
+import { dnWithinSubtreeSpecification } from "@wildboar/x500";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import { UnitOfReplication } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/UnitOfReplication.ta";
+import { ClassAttributeSelection } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ClassAttributeSelection.ta";
+
+export
+async function getRelevantShadowingAgreement (
+    ctx: Context,
+    vertex: Vertex,
+): Promise<ShadowingAgreementInfo[]> {
+    const dse_ids: number[] = [];
+    let current: Vertex | undefined = vertex;
+    while (current) {
+        dse_ids.push(current.dse.id);
+        current = current.immediateSuperior;
+    }
+
+    const now = new Date();
+    const sobs = await ctx.db.operationalBinding.findMany({
+        where: {
+            /**
+             * This is a hack for getting the latest version: we are selecting
+             * operational bindings that have no next version.
+             */
+            next_version: {
+                none: {},
+            },
+            binding_type: id_op_binding_shadow.toString(),
+            entry_id: {
+                in: dse_ids,
+            },
+            accepted: true,
+            terminated_time: null,
+            validity_start: {
+                lte: now,
+            },
+            OR: [
+                {
+                    validity_end: null,
+                },
+                {
+                    validity_end: {
+                        gte: now,
+                    },
+                },
+            ],
+        },
+        select: {
+            id: true,
+            binding_identifier: true,
+            agreement_ber: true,
+        },
+    });
+    const ret: ShadowingAgreementInfo[] = [];
+    for (const sob of sobs) {
+        const el = new BERElement();
+        el.fromBytes(sob.agreement_ber);
+        const agreement = _decode_ShadowingAgreementInfo(el);
+        const cp_dn = agreement.shadowSubject.area.contextPrefix;
+        const dn = getDistinguishedName(vertex);
+        const objectClasses = Array.from(vertex.dse.objectClass).map(ObjectIdentifier.fromString);
+        const subtree = agreement.shadowSubject.area.replicationArea;
+        const NAMING_MATCHER = getNamingMatcherGetter(ctx);
+        const subordinates = agreement.shadowSubject.subordinates ?? UnitOfReplication._default_value_for_subordinates;
+        if (
+            !dnWithinSubtreeSpecification(dn, objectClasses, subtree, cp_dn, NAMING_MATCHER)
+            && !(subordinates && (vertex.dse.subr || vertex.dse.nssr))
+        ) {
+            continue;
+        }
+        ret.push(agreement);
+    }
+    return ret;
+}
+
 
 /**
  * @summary Determine if a shadow DSE is complete.
@@ -195,6 +293,75 @@ async function checkSuitabilityProcedure (
         return vertex.dse.shadow.subordinateCompleteness;
     } else if (compareCode(operationType, id_opcode_read)) {
         // DEVIATION: Information selection is not evaluated against the shadowed info.
+        // return true;
+        const readArg = _decode_ReadArgument(encodedArgument!);
+        const readData = getOptionallyProtectedValue(readArg);
+        const tav = (Number(readData.selection?.infoTypes ?? typesAndValues) === typesAndValues);
+        const types_only = (Number(readData.selection?.infoTypes ?? typesAndValues) === typesOnly);
+        if (!readData.selection) {
+            return (
+                vertex.dse.shadow.attributeCompleteness
+                && (vertex.dse.shadow.attributeValuesIncomplete.size === 0)
+            );
+        }
+        const attributes = readData.selection.attributes ?? EntryInformationSelection._default_value_for_attributes;
+        if ("allUserAttributes" in attributes) {
+            if (types_only) {
+                return vertex.dse.shadow.attributeCompleteness;
+            } else {
+                return (
+                    vertex.dse.shadow.attributeCompleteness
+                    && (vertex.dse.shadow.attributeValuesIncomplete.size === 0)
+                );
+            }
+        }
+        else if ("select" in attributes) {
+            const sel = attributes.select;
+            if (tav) {
+                for (const s of sel) {
+                    if (vertex.dse.shadow.attributeValuesIncomplete.has(s.toString())) {
+                        return false;
+                    }
+                }
+            }
+            if (!vertex.dse.shadow.attributeCompleteness) {
+                const replicated_attrs: Set<IndexableOID> = new Set();
+                const shadow_agreements = await getRelevantShadowingAgreement(ctx, vertex);
+                for (const sag of shadow_agreements) {
+                    for (const attrs of sag.shadowSubject.attributes) {
+                        if (
+                            attrs.class_
+                            && !vertex.dse.objectClass.has(attrs.class_.toString())
+                        ) {
+                            continue;
+                        }
+                        const attr_sel = attrs.classAttributes
+                            ?? ClassAttributeSelection._default_value_for_classAttributes;
+                        if ("allAttributes" in attr_sel) {
+                            // If all attributes are replicated, we can return.
+                            // The entry is suitable.
+                            return true;
+                        }
+                        else if ("include" in attr_sel) {
+                            for (const i of attr_sel.include) {
+                                replicated_attrs.add(i.toString());
+                            }
+                        }
+                        else if ("exclude" in attr_sel) {
+                            for (const x of attr_sel.exclude) {
+                                replicated_attrs.delete(x.toString());
+                            }
+                        }
+                    }
+                }
+                for (const sel_attr of sel) {
+                    if (!replicated_attrs.has(sel_attr.toString())) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
         return true;
     } else if (compareCode(operationType, id_opcode_search)) {
         assert(searchArgument || encodedArgument); // This should NEVER be called without passing this in if it is a search.
@@ -220,8 +387,8 @@ async function checkSuitabilityProcedure (
             if (excludeShadows) {
                 return false;
             }
-            const shadowingAgreement = await getShadowingAgreementInfo(ctx, vertex);
-            if (!shadowingAgreement) {
+            const shadowingAgreements = await getRelevantShadowingAgreement(ctx, vertex);
+            if (shadowingAgreements.length === 0) {
                 return false; // The shadowing agreement might have expired and this is a stale shadow.
             }
             if (searchArgData.subset === SearchArgumentData_subset_oneLevel) {
@@ -231,9 +398,11 @@ async function checkSuitabilityProcedure (
                 }
             }
             if (searchArgData.filter) {
-                // DEVIATION: This is almost GUARANTEED to be incorrect.
-                if (!filterCanBeUsedInShadowedArea(searchArgData.filter, shadowingAgreement)) {
-                    return false;
+                for (const shadowingAgreement of shadowingAgreements) {
+                    // DEVIATION: This is almost GUARANTEED to be incorrect.
+                    if (!filterCanBeUsedInShadowedArea(searchArgData.filter, shadowingAgreement)) {
+                        return false;
+                    }
                 }
             }
             // DEVIATION: Information selection is not evaluated against the shadowed info.
