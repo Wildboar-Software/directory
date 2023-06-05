@@ -364,9 +364,12 @@ async function checkSuitabilityProcedure (
         }
         return true;
     } else if (compareCode(operationType, id_opcode_search)) {
-        assert(searchArgument || encodedArgument); // This should NEVER be called without passing this in if it is a search.
+        if (!(searchArgument || encodedArgument)) {
+            throw new Error(); // Meerkat DSA just hangs and exhausts CPU if you assert(false).
+        } // This should NEVER be called without passing this in if it is a search.
         const argument = searchArgument ?? _decode_SearchArgument(encodedArgument!);
         const searchArgData = getOptionallyProtectedValue(argument);
+        // Step 8
         if (searchArgData.searchAliases && vertex.dse.alias) {
             return !excludeShadows;
         }
@@ -383,7 +386,7 @@ async function checkSuitabilityProcedure (
         if (
             (searchArgData.subset === SearchArgumentData_subset_oneLevel)
             || (searchArgData.subset === SearchArgumentData_subset_wholeSubtree)
-        ) {
+        ) { // Step 10.
             if (excludeShadows) {
                 return false;
             }
@@ -405,15 +408,55 @@ async function checkSuitabilityProcedure (
                     }
                 }
             }
+            const user_attrs = searchArgData.selection?.attributes
+                ?? EntryInformationSelection._default_value_for_attributes;
+            if ("select" in user_attrs) {
+                const sel = user_attrs.select;
+                const replicated_attrs: Set<IndexableOID> = new Set();
+                for (const sag of shadowingAgreements) {
+                    for (const attrs of sag.shadowSubject.attributes) {
+                        if (
+                            attrs.class_
+                            && !vertex.dse.objectClass.has(attrs.class_.toString())
+                        ) {
+                            continue;
+                        }
+                        const attr_sel = attrs.classAttributes
+                            ?? ClassAttributeSelection._default_value_for_classAttributes;
+                        if ("allAttributes" in attr_sel) {
+                            // If all attributes are replicated, we can return.
+                            // The entry is suitable.
+                            return true;
+                        }
+                        else if ("include" in attr_sel) {
+                            for (const i of attr_sel.include) {
+                                replicated_attrs.add(i.toString());
+                            }
+                        }
+                        else if ("exclude" in attr_sel) {
+                            for (const x of attr_sel.exclude) {
+                                replicated_attrs.delete(x.toString());
+                            }
+                        }
+                    }
+                }
+                for (const sel_attr of sel) {
+                    if (!replicated_attrs.has(sel_attr.toString())) {
+                        return false;
+                    }
+                }
+            }
             // DEVIATION: Information selection is not evaluated against the shadowed info.
             return true;
         } else if (searchArgData.subset === SearchArgumentData_subset_baseObject) {
+            // Step 7.
             return isComplete(vertex);
         } else {
             return !excludeShadows; // Unknown subset.
         }
     } else if (compareCode(operationType, id_opcode_compare)) {
         // ~~Bail out if matching rules are not supported by DSA.~~ Actually, let's let the compare function handle this.
+        // Step 7.
         return isComplete(vertex);
     } else {
         return true;
