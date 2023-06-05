@@ -121,6 +121,7 @@ import {
     AttributeUsage_dSAOperation,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
 import { addSeconds } from "date-fns";
+import { RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
 
 /**
  * @summary Convert an SDSEType into its equivalent DSEType
@@ -395,11 +396,15 @@ async function applyTotalRefresh (
     localName: LocalName,
     recursion_fanout: number = 1,
     subordinates_page_size: number = 100,
+    subordinates_only: boolean = false,
+    creatingRDN: RelativeDistinguishedName | undefined = undefined,
 ): Promise<void> { // TODO: Maybe return the DN of the problematic DSE, if any?
 
     // Skip over everything up until we reach the base of the shadowed subtree.
     const cp_length = agreement.shadowSubject.area.contextPrefix.length;
     const base = agreement.shadowSubject.area.replicationArea.base ?? [];
+
+    // TODO: This could be put before the subordinates loop to benefit from tail recursion.
     if (depth < (cp_length + base.length)) {
         // In the future, this may be relaxed.
         if (!refresh.subtree || (refresh.subtree.length !== 1)) {
@@ -432,50 +437,101 @@ async function applyTotalRefresh (
         })
         ?? false;
 
-    if (is_chopped && is_chopped_before) {
-        return; // We don't process this DSE.
+    let start_replicating_subordinates: boolean = subordinates_only;
+    const replicating_subrs: boolean = (
+        (agreement.shadowSubject.knowledge?.extendedKnowledge
+        || agreement.shadowSubject.subordinates)
+        ?? false
+    );
+    if (is_chopped && is_chopped_before && !replicating_subrs) {
+        if (replicating_subrs) {
+            start_replicating_subordinates = true;
+        } else {
+            return; // We don't process this DSE.
+        }
     }
 
     if (!refresh.sDSE) {
         return deleteEntry(ctx, vertex, true);
     }
-    await stripEntry(ctx, vertex);
     const dse_type = sdse_type_to_dse_type(refresh.sDSE.sDSEType);
     checkPermittedAttributeTypes(ctx, assn, agreement, refresh.sDSE.attributes, signErrors, Number(obid.identifier));
-    const promises = await addAttributes(ctx, vertex, [
-        ...refresh.sDSE.attributes,
-        new Attribute(
-            dseType["&id"],
-            [dseType.encoderFor["&Type"]!(dse_type, DER)],
-        ),
-    ], undefined, false, signErrors);
-    // TODO: Can I put the promises from stripEntry() in the transaction below?
-    await ctx.db.$transaction([
-        ...promises,
-        ctx.db.entry.update({
-            where: {
-                id: vertex.dse.id,
-            },
-            data: {
-                subordinate_completeness: refresh.sDSE.subComplete ?? FALSE,
+    if (subordinates_only) {
+        const isGlue: boolean = (dse_type[DSEType_glue] === TRUE_BIT);
+        const isSubr: boolean = (dse_type[DSEType_subr] === TRUE_BIT);
+        const isNssr: boolean = (dse_type[DSEType_nssr] === TRUE_BIT);
+        if (!isGlue || !isSubr || !isNssr) {
+            return;
+        }
+    }
+    if (creatingRDN) {
+        vertex = await createEntry(
+            ctx,
+            vertex,
+            creatingRDN,
+            {
+                subordinate_completeness: refresh.sDSE.subComplete,
                 attribute_completeness: refresh.sDSE.attComplete,
+                EntryAttributeValuesIncomplete: {
+                    createMany: {
+                        data: refresh.sDSE.attValIncomplete?.map((oid) => ({
+                            entry_id: vertex.dse.id,
+                            attribute_type: oid.toString(),
+                        })) ?? [],
+                    },
+                },
+                lastShadowUpdate: new Date(),
             },
-        }),
-        ctx.db.entryAttributeValuesIncomplete.createMany({
-            data: refresh.sDSE.attValIncomplete?.map((oid) => ({
-                entry_id: vertex.dse.id,
-                attribute_type: oid.toString(),
-            })) ?? [],
-        }),
-    ]);
+            refresh.sDSE.attributes,
+            undefined,
+            true,
+        );
+    } else {
+        await stripEntry(ctx, vertex);
+        const promises = await addAttributes(ctx, vertex, [
+            ...refresh.sDSE.attributes,
+            new Attribute(
+                dseType["&id"],
+                [dseType.encoderFor["&Type"]!(dse_type, DER)],
+            ),
+        ], undefined, false, signErrors);
+        // TODO: Can I put the promises from stripEntry() in the transaction below?
+        await ctx.db.$transaction([
+            ...promises,
+            ctx.db.entry.update({
+                where: {
+                    id: vertex.dse.id,
+                },
+                data: {
+                    subordinate_completeness: refresh.sDSE.subComplete ?? FALSE,
+                    attribute_completeness: refresh.sDSE.attComplete,
+                    lastShadowUpdate: new Date(),
+                },
+            }),
+            ctx.db.entryAttributeValuesIncomplete.createMany({
+                data: refresh.sDSE.attValIncomplete?.map((oid) => ({
+                    entry_id: vertex.dse.id,
+                    attribute_type: oid.toString(),
+                })) ?? [],
+            }),
+        ]);
+    }
     const max = agreement.shadowSubject.area.replicationArea.maximum;
     const max_depth = Math.min(cp_length + Number(max ?? MAX_DEPTH), MAX_DEPTH);
     if (depth >= max_depth) {
-        return;
+        if (replicating_subrs) {
+            start_replicating_subordinates = true;
+        } else {
+            return;
+        }
     }
 
     if (is_chopped && !is_chopped_before) {
-        return; // We don't process this DSE's subordinates.
+        if (replicating_subrs) {
+            start_replicating_subordinates = true;
+        } else {
+            return; // We don't process this DSE's subordinates.
+        }
     }
 
     if (!refresh.subtree || (refresh.subtree.length === 0)) {
@@ -492,42 +548,45 @@ async function applyTotalRefresh (
     const processed_subordinate_ids: Set<number> = new Set();
     await bPromise.map(refresh.subtree, async (subtree: Subtree) => {
         const sub = await dnToVertex(ctx, vertex, [ subtree.rdn ]);
-        if (!sub) {
-            return;
-        }
-        const objectClasses = Array.from(sub.dse.objectClass).map(ObjectIdentifier.fromString);
-        if (refinement && !objectClassesWithinRefinement(objectClasses, refinement)) {
-            throw new ShadowError(
-                ctx.i18n.t("err:shadow_update_with_unauthorized_object_classes"),
-                new ShadowErrorData(
-                    ShadowProblem_invalidInformationReceived,
-                    undefined,
-                    undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        signErrors,
-                        assn.boundNameAndUID?.dn,
+        if (sub) {
+            const objectClasses = Array.from(sub.dse.objectClass).map(ObjectIdentifier.fromString);
+            if (refinement && !objectClassesWithinRefinement(objectClasses, refinement)) {
+                throw new ShadowError(
+                    ctx.i18n.t("err:shadow_update_with_unauthorized_object_classes"),
+                    new ShadowErrorData(
+                        ShadowProblem_invalidInformationReceived,
                         undefined,
-                        id_errcode_shadowError,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            id_errcode_shadowError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        FALSE,
+                        undefined,
                     ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    FALSE,
-                    undefined,
-                ),
-            );
+                );
+            }
+            processed_subordinate_ids.add(sub.dse.id);
         }
-        processed_subordinate_ids.add(sub.dse.id);
         return applyTotalRefresh(
             ctx,
             assn,
             obid,
-            sub,
+            sub ?? vertex,
             subtree,
             agreement,
             depth + 1,
             signErrors,
-            [ ...localName, sub.dse.rdn ],
+            [ ...localName, sub?.dse.rdn ?? subtree.rdn ],
+            recursion_fanout,
+            subordinates_page_size,
+            start_replicating_subordinates,
+            subtree.rdn,
         );
     }, {
         concurrency: recursion_fanout,
@@ -925,11 +984,14 @@ async function applyIncrementalRefreshStep (
     localName: LocalName,
     obid: OperationalBindingID,
     recursion_fanout: number = 1,
+    subordinates_only: boolean = false,
 ): Promise<void> {
 
     // Skip over everything up until we reach the base of the shadowed subtree.
     const cp_length = agreement.shadowSubject.area.contextPrefix.length;
     const base = agreement.shadowSubject.area.replicationArea.base ?? [];
+
+    // TODO: This could be put before the subordinates loop to benefit from tail recursion.
     if (depth < (cp_length + base.length)) {
         // In the future, this may be relaxed.
         if (!refresh.subordinateUpdates || (refresh.subordinateUpdates.length !== 1)) {
@@ -972,8 +1034,18 @@ async function applyIncrementalRefreshStep (
         })
         ?? false;
 
-    if (is_chopped && is_chopped_before) {
-        return; // We don't process this DSE.
+    let start_replicating_subordinates: boolean = subordinates_only;
+    const replicating_subrs: boolean = (
+        (agreement.shadowSubject.knowledge?.extendedKnowledge
+        || agreement.shadowSubject.subordinates)
+        ?? false
+    );
+    if (is_chopped && is_chopped_before && !replicating_subrs) {
+        if (replicating_subrs) {
+            start_replicating_subordinates = true;
+        } else {
+            return; // We don't process this DSE.
+        }
     }
 
     if (refresh.sDSEChanges) {
@@ -986,6 +1058,14 @@ async function applyIncrementalRefreshStep (
             }
             checkPermittedAttributeTypes(ctx, assn, agreement, change.attributes, signErrors, Number(obid.identifier));
             const dse_type = sdse_type_to_dse_type(change.sDSEType);
+            if (subordinates_only) {
+                const isGlue: boolean = (dse_type[DSEType_glue] === TRUE_BIT);
+                const isSubr: boolean = (dse_type[DSEType_subr] === TRUE_BIT);
+                const isNssr: boolean = (dse_type[DSEType_nssr] === TRUE_BIT);
+                if (!isGlue || !isSubr || !isNssr) {
+                    return;
+                }
+            }
             const attributes = [
                 ...change.attributes,
                 new Attribute(
@@ -1024,11 +1104,19 @@ async function applyIncrementalRefreshStep (
     const max = agreement.shadowSubject.area.replicationArea.maximum;
     const max_depth = Math.min(cp_length + Number(max ?? MAX_DEPTH), MAX_DEPTH);
     if (depth >= max_depth) {
-        return;
+        if (replicating_subrs) {
+            start_replicating_subordinates = true;
+        } else {
+            return;
+        }
     }
 
     if (is_chopped && !is_chopped_before) {
-        return; // We don't process this DSE's subordinates.
+        if (replicating_subrs) {
+            start_replicating_subordinates = true;
+        } else {
+            return; // We don't process this DSE's subordinates.
+        }
     }
 
     const refinement = agreement.shadowSubject.area.replicationArea.specificationFilter;
@@ -1084,6 +1172,8 @@ async function applyIncrementalRefreshStep (
             signErrors,
             [ ...localName, sub.dse.rdn ],
             obid,
+            recursion_fanout,
+            start_replicating_subordinates,
         );
     }, {
         concurrency: recursion_fanout,
