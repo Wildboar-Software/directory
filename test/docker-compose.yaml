@@ -1,0 +1,187 @@
+# DO NOT deploy Meerkat DSA to a production environment with these settings.
+# These settings include relaxed or disabled security features which you need in
+# a production environment. This is for testing only.
+version: '3.7'
+
+services:
+  dsa1:
+    # image: ghcr.io/wildboar-software/meerkat-dsa:latest
+    build:
+      context: ..
+      dockerfile: meerkat.dockerfile
+    # env_file:
+    #   - .env
+    environment:
+      # What appears in this section overrides anything in .env.
+      DATABASE_URL: mysql://us_user:asdf_us@db:3306/directory_us
+      MEERKAT_OPEN_TOP_LEVEL: 1
+      MEERKAT_OB_AUTO_ACCEPT: 1
+      MEERKAT_MY_ACCESS_POINT_NSAPS: idm://dsa1:4632
+      MEERKAT_MIN_AUTH_LEVEL_FOR_CHAINING: 0
+      MEERKAT_MIN_AUTH_LEVEL_FOR_DISP: 0
+      MEERKAT_MIN_AUTH_LEVEL_FOR_OB: 0
+      MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_CHAINING: 0
+      MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_DISP: 0
+      MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_OB: 0
+      MEERKAT_SIGNING_REQUIRED_FOR_CHAINING: 0
+      MEERKAT_SIGNING_REQUIRED_FOR_DISP: 0
+      MEERKAT_SIGNING_REQUIRED_FOR_OB: 0
+      MEERKAT_BIND_MIN_SLEEP_MS: 0
+      MEERKAT_BIND_SLEEP_RANGE_MS: 0
+      MEERKAT_ENABLE_DAP: 1
+      MEERKAT_ENABLE_DISP: 1
+      MEERKAT_ENABLE_DOP: 1
+      MEERKAT_ENABLE_DSP: 1
+      MEERKAT_TRUST_FOR_IBRA: 1
+      # MEERKAT_TLS_CERT_FILE: /data/keypair/cert.pem
+      # MEERKAT_TLS_KEY_FILE: /data/keypair/key.pem
+      # MEERKAT_SIGNING_CERTS_CHAIN_FILE: /data/keypair/cert.pem
+      # MEERKAT_SIGNING_KEY_FILE: /data/keypair/key.pem
+      # MEERKAT_INIT_JS: /data/init.mjs
+    hostname: 'dsa1'
+    labels:
+      author: Wildboar Software
+      app: meerkat
+      version: "2.6.0"
+    ports:
+      - '1389:389/tcp' # LDAP TCP Port
+      - '14632:4632/tcp' # IDM Socket
+      - '18080:18080/tcp' # Web administration console
+    volumes: []
+      # - type: bind
+      #   source: ./data
+      #   target: /data
+      #   read_only: true
+    depends_on:
+      init-us:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+
+  dsa2:
+    # image: ghcr.io/wildboar-software/meerkat-dsa:latest
+    build:
+      context: ..
+      dockerfile: meerkat.dockerfile
+    # env_file:
+    #   - .env
+    environment:
+      # What appears in this section overrides anything in .env.
+      DATABASE_URL: mysql://gb_user:asdf_gb@db:3306/directory_gb
+      MEERKAT_OPEN_TOP_LEVEL: 1
+      MEERKAT_OB_AUTO_ACCEPT: 1
+      MEERKAT_MY_ACCESS_POINT_NSAPS: idm://dsa2:4632
+      MEERKAT_MIN_AUTH_LEVEL_FOR_CHAINING: 0
+      MEERKAT_MIN_AUTH_LEVEL_FOR_DISP: 0
+      MEERKAT_MIN_AUTH_LEVEL_FOR_OB: 0
+      MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_CHAINING: 0
+      MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_DISP: 0
+      MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_OB: 0
+      MEERKAT_SIGNING_REQUIRED_FOR_CHAINING: 0
+      MEERKAT_SIGNING_REQUIRED_FOR_DISP: 0
+      MEERKAT_SIGNING_REQUIRED_FOR_OB: 0
+      MEERKAT_BIND_MIN_SLEEP_MS: 0
+      MEERKAT_BIND_SLEEP_RANGE_MS: 0
+      MEERKAT_ENABLE_DAP: 1
+      MEERKAT_ENABLE_DISP: 1
+      MEERKAT_ENABLE_DOP: 1
+      MEERKAT_ENABLE_DSP: 1
+      MEERKAT_TRUST_FOR_IBRA: 1
+      # MEERKAT_TLS_CERT_FILE: /data/keypair/cert.pem
+      # MEERKAT_TLS_KEY_FILE: /data/keypair/key.pem
+      # MEERKAT_SIGNING_CERTS_CHAIN_FILE: /data/keypair/cert.pem
+      # MEERKAT_SIGNING_KEY_FILE: /data/keypair/key.pem
+      # MEERKAT_INIT_JS: /data/init.mjs
+    hostname: 'dsa2'
+    labels:
+      author: Wildboar Software
+      app: meerkat
+      version: "2.6.0"
+    ports:
+      - '2389:389/tcp' # LDAP TCP Port
+      - '24632:4632/tcp' # IDM Socket
+      - '28080:18080/tcp' # Web administration console
+    volumes: []
+      # - type: bind
+      #   source: ./data
+      #   target: /data
+      #   read_only: true
+    depends_on:
+      init-gb:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+
+  init-us:
+    build:
+      context: ..
+      dockerfile: meerkat.dockerfile
+    # env_file:
+    #   - .env
+    environment:
+      # What appears in this section overrides anything in .env.
+      DATABASE_URL: mysql://us_user:asdf_us@db:3306/directory_us
+    # entrypoint: /bin/sh
+    entrypoint: /usr/local/bin/npx
+    command:
+      # - /usr/local/bin/npx
+      - prisma
+      - migrate
+      - deploy
+      - --schema=/srv/meerkat/prisma/schema.prisma
+    depends_on:
+      db:
+        condition: service_healthy
+
+  init-gb:
+    build:
+      context: ..
+      dockerfile: meerkat.dockerfile
+    # env_file:
+    #   - .env
+    environment:
+      # What appears in this section overrides anything in .env.
+      DATABASE_URL: mysql://gb_user:asdf_gb@db:3306/directory_gb
+    # entrypoint: /bin/sh
+    entrypoint: /usr/local/bin/npx
+    command:
+      # - /usr/local/bin/npx
+      - prisma
+      - migrate
+      - deploy
+      - --schema=/srv/meerkat/prisma/schema.prisma
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql
+    command: --default-authentication-plugin=mysql_native_password
+    # command: --default-authentication-plugin=mysql_native_password --slow-query-log=ON --slow-query-log-file=/var/lib/mysqllog/slow.log --long-query-time=2
+    # restart: always
+    # This gets rid of the "mbind: Operation not permitted" error message in the MySQL logs.
+    # See: https://thegeekbin.com/mbind-operation-not-permitted-docker-mysql/
+    healthcheck:
+      test: mysqladmin ping -h 127.0.0.1 -u $$MYSQL_USER --password=$$MYSQL_PASSWORD
+      start_period: 5s
+      interval: 5s
+      timeout: 5s
+      retries: 55
+    security_opt:
+      - "seccomp=unconfined"
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+    ports:
+      - '3306:3306/tcp'
+    volumes:
+      # - data:/var/lib/mysql
+      # - './data/mysql:/var/lib/mysqllog:rw'
+      - './sql:/docker-entrypoint-initdb.d:ro'
+
+# volumes:
+#   data: {}
+
+# networks:
+#   default:
+#     external:
+#       name: meerkat-deploy
