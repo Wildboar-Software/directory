@@ -60,6 +60,7 @@ import config_set_context from "./yargs/config_set_context";
 import config_current_context from "./yargs/config_current_context";
 import dop_become_nssr from "./yargs/dop_become_nssr";
 import dop_join_nssr from "./yargs/dop_join_nssr";
+import dop_shadow from "./yargs/dop_shadow";
 import dop_terminate from "./yargs/dop_terminate";
 
 export
@@ -253,8 +254,17 @@ async function main () {
             })
             .command("dop", "Directory Operational Binding Management Protocol", (dopYargs) => {
                 add_protocol_args(dopYargs)
+                // .command(
+                //     "<supply|consume>",
+                //     "Supply or consume a replicated area (shadow)",
+                //     a => a
+                //         .command()
+                //         .demandCommand(),
+                // )
                 .command(dop_become_nssr(ctx))
                 .command(dop_join_nssr(ctx))
+                .command(dop_shadow(ctx, "consume"))
+                .command(dop_shadow(ctx, "supply"))
                 .command(dop_terminate(ctx))
                 .demandCommand()
             })
