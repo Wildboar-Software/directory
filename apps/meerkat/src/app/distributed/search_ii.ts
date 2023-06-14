@@ -532,6 +532,7 @@ async function search_ii (
             }
             const suitable: boolean = await checkSuitabilityProcedure(
                 ctx,
+                state,
                 assn,
                 subordinate,
                 search["&operationCode"]!,

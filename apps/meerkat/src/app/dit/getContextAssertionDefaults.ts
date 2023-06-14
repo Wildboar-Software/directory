@@ -32,7 +32,7 @@ const CAD_SUBENTRY: string = contextAssertionSubentry["&id"].toString();
 export
 async function getContextAssertionDefaults (
     ctx: Context,
-    entry: Vertex,
+    entry: Vertex, // TODO: Remove unused parameter
     relevantSubentries: Vertex[],
 ): Promise<TypeAndContextAssertion[]> {
     const cadSubentries = relevantSubentries
