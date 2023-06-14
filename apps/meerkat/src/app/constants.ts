@@ -93,3 +93,5 @@ export const id_kp_timeStamping    = new ObjectIdentifier([ 8 ], id_kp);
 export const id_kp_OCSPSigning     = new ObjectIdentifier([ 9 ], id_kp);
 
 export const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
+
+export const ALL_USER_ATTRIBUTES_KEY: string = "*";

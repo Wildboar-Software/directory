@@ -356,6 +356,7 @@ import { attributeValueFromDB } from "../database/attributeValueFromDB";
 import { getEffectiveControlsFromSearchRule } from "../service/getEffectiveControlsFromSearchRule";
 import { id_ar_serviceSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-serviceSpecificArea.va";
 import { ID_AR_SERVICE, ID_AUTONOMOUS } from "../../oidstr";
+import { isMatchAllFilter } from "../x500/isMatchAllFilter";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 
@@ -1019,34 +1020,6 @@ function getFamilyMembersToReturnById (
         default: {
             throw new errors.MistypedArgumentError();
         }
-    }
-}
-
-/**
- * @summary Determine whether a filter is a "match-all" filter
- * @description
- *
- * This function returns a boolean indicating whether a filter will match all
- * entries. Examples of such filters include `and:{}`.
- *
- * @param filter The filter to be evaluated
- * @returns A boolean indicating whether the filter will match all entries
- *
- * @function
- */
-function isMatchAllFilter (filter?: Filter): boolean {
-    if (!filter) {
-        return true;
-    }
-    if ("item" in filter) {
-        return (("present" in filter.item)
-            && filter.item.present.isEqualTo(objectClass["&id"]));
-    } else if ("and" in filter) {
-        return filter.and.every(isMatchAllFilter);
-    } else if ("or" in filter) {
-        return filter.or.some(isMatchAllFilter);
-    } else {
-        return false;
     }
 }
 
@@ -2231,6 +2204,7 @@ async function search_i_ex (
         } else {
             const suitable: boolean = await checkSuitabilityProcedure(
                 ctx,
+                state,
                 assn,
                 target,
                 search["&operationCode"]!,

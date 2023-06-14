@@ -757,6 +757,7 @@ export
     const targetFoundSubprocedure = async (): Promise<Vertex | undefined> => {
         const suitable: boolean = await checkSuitabilityProcedure(
             ctx,
+            state,
             assn,
             dse_i,
             state.operationCode,

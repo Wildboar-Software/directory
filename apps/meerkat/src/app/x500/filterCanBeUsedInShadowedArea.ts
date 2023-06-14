@@ -14,6 +14,10 @@ import type {
 import {
     id_oa_allAttributeTypes,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oa-allAttributeTypes.va";
+import { Context, IndexableOID } from "@wildboar/meerkat-types";
+import { ClassAttributeSelection } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ClassAttributeSelection.ta";
+import getAncestorObjectClasses from "./getAncestorObjectClasses";
+import { ALL_USER_ATTRIBUTES_KEY } from "../constants";
 
 export
 function typeCanBeUsedInShadowedArea (
@@ -48,8 +52,11 @@ function typeCanBeUsedInShadowedArea (
 
 export
 function filterItemCanBeUsedInShadowedArea (
+    ctx: Context,
     item: FilterItem,
     agreement: ShadowingAgreementInfo,
+    includedUserAttributes: Set<IndexableOID>,
+    excludedUserAttributes: Set<IndexableOID>,
     applicableObjectClasses?: OBJECT_IDENTIFIER[], // Object classes found in the same AND or OR set.
 ): boolean {
     const objectClasses: Set<string> = new Set(
@@ -63,20 +70,38 @@ function filterItemCanBeUsedInShadowedArea (
                 || objectClasses.has(asel.class_.toString())
             ));
 
-    const allInAll: boolean = agreement.shadowSubject.attributes
-        .some((attr) => (
-            (attr.class_ === undefined)
-            && (
-                !attr.classAttributes
-                || ("allAttributes" in attr.classAttributes)
-            )
-        ));
-
-    const allInSome: boolean = agreement.shadowSubject.attributes
-        .some((attr) => (
-            !attr.classAttributes
-            || ("allAttributes" in attr.classAttributes)
-        ));
+    /**
+     * The reason this variable is necessary is that, if an attribute type is
+     * explicitly excluded, we don't want to immediately delete it from the
+     * includedUserAttributes set, because there might have been another
+     * subfilter that included it. We wait until the end of this function to
+     * merge the locally-included attributes with the includedUserAttributes.
+     */
+    const localIncludedAttrs: Set<IndexableOID> = new Set();
+    let allInAll: boolean = false;
+    let allInSome: boolean = false;
+    for (const attr_sel of agreement.shadowSubject.attributes) {
+        const selected = attr_sel.classAttributes
+            ?? ClassAttributeSelection._default_value_for_classAttributes;
+        if (!("allAttributes" in selected)) {
+            continue;
+        }
+        if (attr_sel.class_) {
+            allInSome = true;
+            for (const oc of getAncestorObjectClasses(ctx, attr_sel.class_.toString())) {
+                const oc_spec = ctx.objectClasses.get(oc);
+                for (const attr of oc_spec?.mandatoryAttributes.values() ?? []) {
+                    localIncludedAttrs.add(attr);
+                }
+                for (const attr of oc_spec?.optionalAttributes.values() ?? []) {
+                    localIncludedAttrs.add(attr);
+                }
+            }
+        } else {
+            includedUserAttributes.add(ALL_USER_ATTRIBUTES_KEY);
+            allInAll = true;
+        }
+    }
 
     const explicitlyExcluded: Set<string> = new Set(
         applicableAttributeSelections
@@ -105,6 +130,22 @@ function filterItemCanBeUsedInShadowedArea (
                 return sel.classAttributes.include.map((attr) => attr.toString());
             }),
     );
+
+
+    for (const exc of explicitlyExcluded.values()) {
+        // Include has priority, so you don't need to check exclude.
+        // (Exclude only has priority over all attributes.)
+        localIncludedAttrs.delete(exc);
+        excludedUserAttributes.add(exc);
+    }
+    // Include has priority, so it comes AFTER exclude.
+    for (const inc of explicitlyIncluded.values()) {
+        localIncludedAttrs.add(inc);
+        excludedUserAttributes.delete(inc);
+    }
+    for (const attr of localIncludedAttrs) {
+        includedUserAttributes.add(attr);
+    }
 
     // If we're selecting all contexts and all attributes for all classes, and
     // there are no exclusions to override, the filter will always work.
@@ -205,8 +246,11 @@ function filterItemCanBeUsedInShadowedArea (
 // For this reason, the response will err "false."
 export
 function filterCanBeUsedInShadowedArea (
+    ctx: Context,
     filter: Filter,
     agreement: ShadowingAgreementInfo,
+    includedUserAttributes: Set<IndexableOID>,
+    excludedUserAttributes: Set<IndexableOID>,
     applicableObjectClasses?: OBJECT_IDENTIFIER[],
 ): boolean {
     const objectClasses: Set<string> = new Set(
@@ -250,7 +294,14 @@ function filterCanBeUsedInShadowedArea (
     }
 
     if ("item" in filter) {
-        return filterItemCanBeUsedInShadowedArea(filter.item, agreement, applicableObjectClasses);
+        return filterItemCanBeUsedInShadowedArea(
+            ctx,
+            filter.item,
+            agreement,
+            includedUserAttributes,
+            excludedUserAttributes,
+            applicableObjectClasses,
+        );
     } else if ("and" in filter) {
         const newObjectClasses = filter.and
             .map((sub) => (
@@ -260,7 +311,14 @@ function filterCanBeUsedInShadowedArea (
                 && sub.item.equality.assertion.objectIdentifier
             ))
             .filter((oid: false | OBJECT_IDENTIFIER): oid is OBJECT_IDENTIFIER => !!oid);
-        return filter.and.every((sub) => filterCanBeUsedInShadowedArea(sub, agreement, newObjectClasses));
+        return filter.and.every((sub) => filterCanBeUsedInShadowedArea(
+            ctx,
+            sub,
+            agreement,
+            includedUserAttributes,
+            excludedUserAttributes,
+            newObjectClasses,
+        ));
     } else if ("or" in filter) {
         const newObjectClasses = filter.or
             .map((sub) => (
@@ -271,10 +329,24 @@ function filterCanBeUsedInShadowedArea (
             ))
             .filter((oid: false | OBJECT_IDENTIFIER): oid is OBJECT_IDENTIFIER => !!oid);
         // This is intentionally .every().
-        return filter.or.every((sub) => filterCanBeUsedInShadowedArea(sub, agreement, newObjectClasses));
+        return filter.or.every((sub) => filterCanBeUsedInShadowedArea(
+            ctx,
+            sub,
+            agreement,
+            includedUserAttributes,
+            excludedUserAttributes,
+            newObjectClasses,
+        ));
     } else if ("not" in filter) {
         // This is intentionally NOT inverted.
-        return filterCanBeUsedInShadowedArea(filter.not, agreement, applicableObjectClasses);
+        return filterCanBeUsedInShadowedArea(
+            ctx,
+            filter.not,
+            agreement,
+            includedUserAttributes,
+            excludedUserAttributes,
+            applicableObjectClasses,
+        );
     } else {
         return false;
     }

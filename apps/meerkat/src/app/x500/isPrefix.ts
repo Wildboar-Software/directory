@@ -10,7 +10,8 @@ import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
  * @description
  *
  * This function returns `true` if the distinguished name given by `prefix` is,
- * in fact, a prefix of the distinguished name given by `name`.
+ * in fact, a prefix of the distinguished name given by `name`. It also returns
+ * `true` if both names are equal.
  *
  * @param ctx The context object
  * @param prefix The asserted prefix distinguished name
