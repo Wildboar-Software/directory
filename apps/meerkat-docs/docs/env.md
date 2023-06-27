@@ -182,6 +182,20 @@ The file contents should look like this if you open them up in a text editor:
 This does not affect the production of signed arguments, results, or errors, nor
 does it affect TLS.
 
+## MEERKAT_ATTR_CERT_DURATION
+
+An integer indicating the number of seconds that an attribute certificate
+produced via the
+[Attribute Certificate Request extension](./attr-cert.md#the-attrcertreq-extension)
+will last. In other words, the `notBeforeTime` of the produced attribute
+certificate will be set to the current time, and the `notAfterTime` will be set
+to the current time, plus the number of seconds indicated by this configuration
+value.
+
+If set to `0` or any non-positive integer value, this feature will be disabled.
+This defaults to 3600, meaning that attribute certificates will be valid for
+one hour by default.
+
 ## MEERKAT_BIND_MIN_SLEEP_MS
 
 This is the amount of time in milliseconds (at minimum) that Meerkat DSA will

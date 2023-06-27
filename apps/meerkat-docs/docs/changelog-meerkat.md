@@ -1,6 +1,6 @@
 # Changelog for Meerkat DSA
 
-## Version 2.5.0
+## Version 2.6.0
 
 - Support Non-Specific Hierarchical Operational Bindings (NHOBs), which allow
   entries in multiple directories to share / compete for the same namespace.

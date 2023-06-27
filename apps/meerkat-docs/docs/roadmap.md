@@ -4,19 +4,19 @@ We will not promise any particular schedule of delivery of features or bug fixes
 at this time. However, the very high-level roadmap for Meerkat DSA can be
 broken down to the following versions.
 
-## Version 2.6.0 - Shadowing
+## Version 2.7.0 - Shadowing
 
 This update will introduce support for the Directory Information Shadowing
 Protocol (DISP). This will allow directory information to be replicated to
 other DSAs to produce read-only copies.
 
-## Version 2.7.0 - Cross References
+## Version 2.8.0 - Cross References
 
 This update will introduce support for cross references, allowing DSAs to share
 routing information pertaining to other known DSAs. This will allow the entire
 DIT to become more discoverable and performant.
 
-## Version 2.8.0 - Schema Update ("Wildboar Schema")
+## Version 2.9.0 - Schema Update ("Wildboar Schema")
 
 This update will introduce thousands of new schema objects defined by Wildboar
 Software into the default schema. This is desirable so that X.500 directories
@@ -28,7 +28,7 @@ using a `married` auxiliary object class that permits the presence of a
 administrators everywhere to define their own equivalent object classes, thereby
 duplicating work and reducing inter-domain compatibility.
 
-## Version 2.9.0 and Beyond
+## Version 2.10.0 and Beyond
 
 Not much can be said about anything this far in the future. However, these
 features need to be introduced at some point:

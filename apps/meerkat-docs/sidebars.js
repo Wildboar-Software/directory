@@ -38,6 +38,7 @@ const sidebars = {
                 'advice',
                 'usage',
                 'zonal',
+                'attr-cert',
                 'telemetry',
                 'conformance',
                 'deviations-nuances',

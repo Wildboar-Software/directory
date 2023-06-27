@@ -225,7 +225,7 @@ function createAttributeCertificate (
         serialNumber,
         new AttCertValidityPeriod(
             now,
-            addSeconds(now, 5), // TODO: Make this configurable.
+            addSeconds(now, ctx.config.attributeCertificateDuration),
         ),
         attributes,
         undefined,
@@ -703,7 +703,12 @@ async function read (
         && (ext.tagNumber === 0)
     ));
     const extensions: ASN1Element[] = [];
-    if (createAttrCertElement && signResults) {
+    const attrCertsEnabled: boolean = !!(
+        ctx.config.attributeCertificateDuration
+        && (ctx.config.attributeCertificateDuration > 0)
+        && Number.isSafeInteger(ctx.config.attributeCertificateDuration)
+    );
+    if (createAttrCertElement && signResults && attrCertsEnabled) {
         const ac_els = createAttrCertElement.inner.sequence
             .filter((el) => el.tagClass === ASN1TagClass.context);
         const single_use: BOOLEAN = ac_els.find((el) => el.tagNumber === 0)?.inner.boolean ?? FALSE;

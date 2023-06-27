@@ -2087,6 +2087,19 @@ interface Configuration {
      */
     maxRelaxationsOrTightenings: number;
 
+    /**
+     * An integer indicating the number of seconds that an attribute certificate
+     * produced via the Attribute Certificate Request extension
+     * will last. In other words, the `notBeforeTime` of the produced attribute
+     * certificate will be set to the current time, and the `notAfterTime` will
+     * be set to the current time, plus the number of seconds indicated by this
+     * configuration value.
+     *
+     * If set to `0` or any non-positive integer value, this feature will be
+     * disabled.
+     */
+    attributeCertificateDuration: number;
+
     /** Directory Access Protocol (DAP) options. */
     dap: {
 
