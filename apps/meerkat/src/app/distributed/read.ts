@@ -1,5 +1,19 @@
 import { Vertex, ClientAssociation, OperationReturn, IndexableOID } from "@wildboar/meerkat-types";
-import { ObjectIdentifier, TRUE_BIT, FALSE_BIT, OBJECT_IDENTIFIER, unpackBits } from "asn1-ts";
+import {
+    ObjectIdentifier,
+    TRUE_BIT,
+    FALSE_BIT,
+    OBJECT_IDENTIFIER,
+    unpackBits,
+    ASN1TagClass,
+    FALSE,
+    BOOLEAN,
+    TRUE,
+    ASN1Element,
+    DERElement,
+    ASN1Construction,
+    OCTET_STRING,
+} from "asn1-ts";
 import type { MeerkatContext } from "../ctx";
 import * as errors from "@wildboar/meerkat-types";
 import {
@@ -24,9 +38,6 @@ import getDistinguishedName from "../x500/getDistinguishedName";
 import {
     EntryInformation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformation.ta";
-import {
-    id_sc_subentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-sc-subentry.va";
 import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
 import {
     SecurityProblem_insufficientAccessRights,
@@ -56,7 +67,7 @@ import {
     securityError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 import type { OperationDispatcherState } from "./OperationDispatcher";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER, _encodeBitString } from "asn1-ts/dist/node/functional";
 import readPermittedEntryInformation from "../database/entry/readPermittedEntryInformation";
 import codeToString from "@wildboar/x500/src/lib/stringifiers/codeToString";
 import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
@@ -125,6 +136,118 @@ import type {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import { printInvokeId } from "../utils/printInvokeId";
 import dseFromDatabaseEntry from "../database/dseFromDatabaseEntry";
+import {
+    TBSAttributeCertificate,
+    _encode_TBSAttributeCertificate,
+} from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/TBSAttributeCertificate.ta";
+import { AttCertVersion_v2 } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttCertVersion.ta";
+import { Holder } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/Holder.ta";
+import { AttCertIssuer } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttCertIssuer.ta";
+import { IssuerSerial } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/IssuerSerial.ta";
+import * as crypto from "node:crypto";
+import { AttCertValidityPeriod } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttCertValidityPeriod.ta";
+import { addSeconds } from "date-fns";
+import { Extension } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/Extension.ta";
+import { singleUse } from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/singleUse.oa";
+import { noAssertion } from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/noAssertion.oa";
+import { _encode_AlgorithmIdentifier } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
+
+function createAttributeCertificate (
+    ctx: MeerkatContext,
+    dn: DistinguishedName,
+    attributes: Attribute[],
+    single_use: boolean,
+    no_assertion: boolean,
+): OCTET_STRING | undefined {
+    const key = ctx.config.signing.key;
+    const certPath = ctx.config.signing.certPath;
+    if (!key || !certPath) {
+        return undefined;
+    }
+    const myCert = certPath[certPath.length - 1];
+    if (!myCert) {
+        return undefined;
+    }
+    // Sign bullshit data so we can just get the signature algorithm.
+    const sigAlg = generateSignature(key, new Uint8Array([ 1 ]))?.[0];
+    if (!sigAlg) {
+        return undefined;
+    }
+    const serialNumber = crypto.randomBytes(16);
+    serialNumber[0] &= 0b0111_1111; // Ensure serial is not negative.
+    const now = new Date();
+    const extensions: Extension[] = [];
+    if (single_use) {
+        extensions.push(new Extension(
+            singleUse["&id"]!,
+            TRUE,
+            Buffer.from([ 0x05, 0x00 ]),
+        ));
+    }
+    if (no_assertion) {
+        extensions.push(new Extension(
+            noAssertion["&id"]!,
+            TRUE,
+            Buffer.from([ 0x05, 0x00 ]),
+        ));
+    }
+    const tbs = new TBSAttributeCertificate(
+        AttCertVersion_v2,
+        new Holder(
+            undefined,
+            [
+                {
+                    directoryName: {
+                        rdnSequence: dn,
+                    },
+                },
+            ],
+        ),
+        new AttCertIssuer(
+            [
+                {
+                    directoryName: {
+                        rdnSequence: ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    },
+                },
+            ],
+            new IssuerSerial(
+                [
+                    {
+                        directoryName: myCert.toBeSigned.issuer,
+                    },
+                ],
+                myCert.toBeSigned.serialNumber,
+                myCert.toBeSigned.issuerUniqueIdentifier,
+            ),
+        ),
+        sigAlg,
+        serialNumber,
+        new AttCertValidityPeriod(
+            now,
+            addSeconds(now, 5), // TODO: Make this configurable.
+        ),
+        attributes,
+        undefined,
+        undefined,
+        (extensions.length > 0) ? extensions : undefined,
+    );
+    const tbsElement = _encode_TBSAttributeCertificate(tbs, DER);
+    const tbsBytes = tbsElement.toBytes();
+    const signingResult = generateSignature(key, tbsBytes);
+    if (!signingResult) {
+        return undefined;
+    }
+    const [ sigAlg2, sigValue ] = signingResult;
+    if (!sigAlg.algorithm.isEqualTo(sigAlg2.algorithm)) { // These should be equal.
+        return undefined;
+    }
+    return DERElement.fromSequence([
+        tbsElement,
+        _encode_AlgorithmIdentifier(sigAlg, DER),
+        _encodeBitString(unpackBits(sigValue), DER),
+    ]).toBytes();
+}
 
 /**
  * @summary The read operation, as specified in ITU Recommendation X.511.
@@ -575,6 +698,34 @@ async function read (
         (data.securityParameters?.target === ProtectionRequest_signed)
         && (!assn || assn.authorizedForSignedResults)
     );
+    const createAttrCertElement = data._unrecognizedExtensionsList.find((ext) => (
+        (ext.tagClass === ASN1TagClass.private)
+        && (ext.tagNumber === 0)
+    ));
+    const extensions: ASN1Element[] = [];
+    if (createAttrCertElement && signResults) {
+        const ac_els = createAttrCertElement.inner.sequence
+            .filter((el) => el.tagClass === ASN1TagClass.context);
+        const single_use: BOOLEAN = ac_els.find((el) => el.tagNumber === 0)?.inner.boolean ?? FALSE;
+        const no_assertion: BOOLEAN = ac_els.find((el) => el.tagNumber === 1)?.inner.boolean ?? FALSE;
+        const attributes = permittedEntryInfo.information
+            .flatMap((info) => ("attribute" in info) ? info.attribute : []);
+        const attrCert: OCTET_STRING | undefined = createAttributeCertificate(
+            ctx,
+            targetDN,
+            attributes,
+            single_use,
+            no_assertion,
+        );
+        if (attrCert) {
+            const outer = new DERElement();
+            outer.tagClass = ASN1TagClass.private;
+            outer.construction = ASN1Construction.primitive;
+            outer.tagNumber = 0;
+            outer.value = attrCert;
+            extensions.push(outer);
+        }
+    }
     const resultData: ReadResultData = new ReadResultData(
         new EntryInformation(
             {
@@ -595,7 +746,7 @@ async function read (
         )
             ? modifyRights
             : undefined,
-        [],
+        extensions,
         createSecurityParameters(
             ctx,
             signResults,
