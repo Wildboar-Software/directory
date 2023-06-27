@@ -708,7 +708,7 @@ async function read (
         && (ctx.config.attributeCertificateDuration > 0)
         && Number.isSafeInteger(ctx.config.attributeCertificateDuration)
     );
-    if (createAttrCertElement && signResults && attrCertsEnabled) {
+    if (createAttrCertElement && assn?.authorizedForSignedResults && attrCertsEnabled) {
         const ac_els = createAttrCertElement.inner.sequence
             .filter((el) => el.tagClass === ASN1TagClass.context);
         const single_use: BOOLEAN = ac_els.find((el) => el.tagNumber === 0)?.inner.boolean ?? FALSE;
