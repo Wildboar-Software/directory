@@ -36,19 +36,19 @@ function attributesFromValues (values: Value[]): Attribute[] {
                 valuesWithoutContexts.push(atav);
             }
         }
+        const vwc = valuesWithContexts
+            .map((atav) => new Attribute_valuesWithContext_Item(
+                atav.value,
+                Array.from(atav.contexts?.values() ?? []).map((context) => new Context(
+                    context.contextType,
+                    context.contextValues,
+                    context.fallback,
+                )),
+            ));
         attrs.push(new Attribute(
             atavs[0].type,
-            valuesWithoutContexts
-                .map((atav) => atav.value),
-            valuesWithContexts
-                .map((atav) => new Attribute_valuesWithContext_Item(
-                    atav.value,
-                    Array.from(atav.contexts?.values() ?? []).map((context) => new Context(
-                        context.contextType,
-                        context.contextValues,
-                        context.fallback,
-                    )),
-                )),
+            valuesWithoutContexts.map((atav) => atav.value),
+            (vwc.length > 0) ? vwc : undefined,
         ));
     }
     return attrs;

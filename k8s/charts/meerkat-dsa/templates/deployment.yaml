@@ -125,6 +125,12 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: administrator_email_public
                   optional: true
+            - name: MEERKAT_ATTR_CERT_DURATION
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: attr_cert_duration
+                  optional: true
             - name: MEERKAT_BIND_MIN_SLEEP_MS
               valueFrom:
                 configMapKeyRef:

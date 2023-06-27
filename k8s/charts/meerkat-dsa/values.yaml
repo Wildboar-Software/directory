@@ -105,6 +105,8 @@ databaseSecretName: meerkat-database-secret
 
 # administrator_email: jonathan@wilbur.space
 # administrator_email_public: true
+# TODO: attr cert chain file?
+attr_cert_duration: 3600
 bind_min_sleep_ms: 1000
 bind_sleep_range_ms: 3000
 bulk_insert_mode: false

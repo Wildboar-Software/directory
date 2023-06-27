@@ -49,6 +49,7 @@ import dap_mod_become_pwdsub from "./yargs/dap_mod_become_pwdsub";
 import dap_mod_become_subschema from "./yargs/dap_mod_become_subschema";
 import dap_mod_become_svcsub from "./yargs/dap_mod_become_svcsub";
 import dap_mod_become_acsub from "./yargs/dap_mod_become_acsub";
+import dap_read from "./yargs/dap_read";
 import dap_search from "./yargs/dap_search";
 import do_seedCountries from "./commands/util/seed-countries";
 import bind from "./net/bind";
@@ -228,16 +229,7 @@ async function main () {
                         await do_modifyDN(ctx, connection, argv);
                         await connection.close();
                     })
-                    .command("read <object>", "Read an entry", (readYargs) => {
-                        return readYargs
-                            .positional("object", {
-                                describe: "The object to read",
-                            });
-                    }, async (argv) => {
-                        const connection = await bind(ctx, argv);
-                        await do_read(ctx, connection, argv);
-                        await connection.close();
-                    })
+                    .command(dap_read(ctx))
                     .command("remove <object>", "Remove an entry", (removeYargs) => {
                         return removeYargs
                             .positional("object", {

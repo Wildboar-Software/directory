@@ -556,6 +556,9 @@ const config: Configuration = {
     maxRelaxationsOrTightenings: process.env.MEERKAT_MAX_RELAXATIONS
         ? Number.parseInt(process.env.MEERKAT_MAX_RELAXATIONS, 10)
         : 3,
+    attributeCertificateDuration: process.env.MEERKAT_ATTR_CERT_DURATION
+        ? Number.parseInt(process.env.MEERKAT_ATTR_CERT_DURATION, 10)
+        : 3600,
     authn: {
         lookupPkiPathForUncertifiedStrongAuth: (process.env.MEERKAT_LOOKUP_UNCERT_STRONG_AUTH === "1"),
         attributeCertificationPath,
