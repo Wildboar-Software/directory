@@ -148,6 +148,8 @@ interface ROSETransportEvents {
     "abort": (param: AbortReason) => unknown;
     "start_tls": (params: StartTLSParameters) => unknown;
     "start_tls_response": (params: TLSResponseParameters) => unknown; // Code is taken from IDM's `TLSResponse`.
+    "tls_socket": (socket: TLSSocket) => unknown;
+    "tls": () => unknown;
 }
 
 export
