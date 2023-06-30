@@ -11,6 +11,7 @@ import type { StartTLS } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecifi
 import type { TLSResponse } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/TLSResponse.ta";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import type { EventEmitter } from "events";
+import type { TLSSocket } from "tls";
 
 export
 interface EventMap {
@@ -30,6 +31,7 @@ interface EventMap {
     segmentDataLength: number;
     warning: number;
     tls: void;
+    tlsSocket: TLSSocket;
     [other: number]: ResultOrError; // The opcode is the event type.
 };
 
