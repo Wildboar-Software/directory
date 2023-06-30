@@ -153,8 +153,8 @@ async function createConnection (
             if (certs.length) {
                 certPath = new CertificationPath(
                     certs[certs.length - 1],
-                    certs
-                        .slice(0, -1)
+                    [ ...certs.slice(0, -1) ]
+                        .reverse()
                         .map((cert) => new CertificatePair(cert, undefined)),
                 );
             }
