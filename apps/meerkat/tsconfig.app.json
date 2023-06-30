@@ -5,7 +5,8 @@
         "module": "esnext",
         "types": ["node"],
         "esModuleInterop": true,
-        "resolveJsonModule": true
+        "resolveJsonModule": true,
+        "sourceMap": false
     },
     "exclude": [
         "**/*.spec.ts",
