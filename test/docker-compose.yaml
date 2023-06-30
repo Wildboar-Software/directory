@@ -69,7 +69,7 @@ services:
     # image: ghcr.io/wildboar-software/meerkat-dsa:latest
     build:
       context: ..
-      dockerfile: meerkat.dockerfile
+      dockerfile: meerkat.test.dockerfile
     # env_file:
     #   - .env
     environment:
@@ -129,7 +129,7 @@ services:
   init-us:
     build:
       context: ..
-      dockerfile: meerkat.dockerfile
+      dockerfile: meerkat.test.dockerfile
     # env_file:
     #   - .env
     environment:
@@ -150,7 +150,7 @@ services:
   init-gb:
     build:
       context: ..
-      dockerfile: meerkat.dockerfile
+      dockerfile: meerkat.test.dockerfile
     # env_file:
     #   - .env
     environment:
