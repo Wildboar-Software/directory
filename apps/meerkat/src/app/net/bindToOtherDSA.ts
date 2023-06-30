@@ -268,45 +268,46 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
             if (tls_response) {
                 if ("response" in tls_response) {
                     if (tls_response.response === 0) {
-                        const tlsSocket = new TLSSocket(rose.socket!, {
-                            ...ctx.config.tls,
-                            rejectUnauthorized: ctx.config.tls.rejectUnauthorizedServers,
-                            isServer: false,
-                        });
-                        if (ctx.config.tls.log_tls_secrets) {
-                            tlsSocket.on("keylog", (line) => {
-                                ctx.log.debug(ctx.i18n.t("log:keylog", {
-                                    peer: uriString,
-                                    key: line.toString("latin1"),
-                                }));
-                            });
-                        }
-                        if (ctx.config.tls.sslkeylog_file) {
-                            const keylogFile = createWriteStream(ctx.config.tls.sslkeylog_file, { flags: "a" });
-                            tlsSocket.on("keylog", (line) => keylogFile.write(line));
-                        }
-                        tlsSocket.once("secureConnect", () => {
-                            if (!tlsSocket.authorized && ctx.config.tls.rejectUnauthorizedServers) {
-                                tlsSocket.destroy(); // Destroy for immediate and complete denial.
-                                ctx.log.warn(ctx.i18n.t("err:tls_auth_failure", {
-                                    url: uriString,
-                                    e: tlsSocket.authorizationError,
-                                }));
-                                if (isDebugging && tlsSocket.authorizationError) {
-                                    console.error(tlsSocket.authorizationError);
+                        rose.events.once("tls_socket", (tlsSocket) => {
+                            if (ctx.config.tls.log_tls_secrets) {
+                                tlsSocket.on("keylog", (line) => {
+                                    ctx.log.debug(ctx.i18n.t("log:keylog", {
+                                        peer: uriString,
+                                        key: line.toString("latin1"),
+                                    }));
+                                });
+                            }
+                            if (ctx.config.tls.sslkeylog_file) {
+                                const keylogFile = createWriteStream(ctx.config.tls.sslkeylog_file, { flags: "a" });
+                                tlsSocket.on("keylog", (line) => keylogFile.write(line));
+                            }
+                            tlsSocket.once("secureConnect", () => {
+                                if (!tlsSocket.authorized && ctx.config.tls.rejectUnauthorizedServers) {
+                                    tlsSocket.destroy(); // Destroy for immediate and complete denial.
+                                    ctx.log.warn(ctx.i18n.t("err:tls_auth_failure", {
+                                        url: uriString,
+                                        e: tlsSocket.authorizationError,
+                                    }));
+                                    if (isDebugging && tlsSocket.authorizationError) {
+                                        console.error(tlsSocket.authorizationError);
+                                    }
                                 }
-                            }
-                        });
-                        tlsSocket.once("OCSPResponse", getOnOCSPResponseCallback(ctx, (valid, code) => {
-                            ctx.log.warn(ctx.i18n.t("log:ocsp_response_invalid", {
-                                code,
-                                aet: stringifyDN(ctx, accessPoint.ae_title.rdnSequence),
+                            });
+                            tlsSocket.once("OCSPResponse", getOnOCSPResponseCallback(ctx, (valid, code) => {
+                                ctx.log.warn(ctx.i18n.t("log:ocsp_response_invalid", {
+                                    code,
+                                    aet: stringifyDN(ctx, accessPoint.ae_title.rdnSequence),
+                                }));
+                                if (!valid) {
+                                    socket.end();
+                                }
                             }));
-                            if (!valid) {
-                                socket.end();
-                            }
-                        }));
-                        rose.socket = tlsSocket;
+                            rose.socket = tlsSocket;
+                        });
+                        await new Promise<void>((resolve, reject) => {
+                            rose.events.once("tls", resolve);
+                            rose.events.once("error_", reject);
+                        });
                         tls_in_use = true;
                         ctx.log.debug(ctx.i18n.t("log:start_tls_result_received", {
                             url: uriString,
@@ -340,7 +341,7 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
                     }), logInfo);
                 } else if ("timeout" in tls_response) {
                     ctx.log.debug(ctx.i18n.t("log:start_tls_timeout_received", {
-                        uri: uriString,
+                        url: uriString,
                     }), logInfo);
                     return null;
                 } else {
@@ -361,28 +362,6 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
                 }), logInfo);
                 continue;
             }
-        } else if (!(rose.socket instanceof TLSSocket)) {
-            // We can use non-null assertion here, because Meerkat does
-            // not support any ROSE transport that does not involve a
-            // TCP or TLS socket.
-            const tls_socket = new TLSSocket(rose.socket!, {
-                ...ctx.config.tls,
-                rejectUnauthorized: ctx.config.tls.rejectUnauthorizedServers,
-                isServer: false,
-            });
-            if (ctx.config.tls.log_tls_secrets) {
-                tls_socket.on("keylog", (line) => {
-                    ctx.log.debug(ctx.i18n.t("log:keylog", {
-                        peer: uriString,
-                        key: line.toString("latin1"),
-                    }));
-                });
-            }
-            if (ctx.config.tls.sslkeylog_file) {
-                const keylogFile = createWriteStream(ctx.config.tls.sslkeylog_file, { flags: "a" });
-                tls_socket.on("keylog", (line) => keylogFile.write(line));
-            }
-            rose.socket = tls_socket;
         }
 
         const c: ClientType = client_getter(rose);
