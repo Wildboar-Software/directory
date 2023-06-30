@@ -888,8 +888,8 @@ const RU_ACCESS_POINT = new AccessPoint(
 
 const countriesToCreate: [ string, AccessPoint | undefined ][] = [
     [ "US", undefined ], // US will be inside of the root DSA.
-    [ "GB", GB_ACCESS_POINT ],
-    [ "RU", RU_ACCESS_POINT ],
+    [ "GB", undefined ],
+    [ "RU", undefined ],
 ];
 
 export
