@@ -14,6 +14,7 @@ services:
     environment:
       # What appears in this section overrides anything in .env.
       DATABASE_URL: mysql://us_user:asdf_us@db:3306/directory_us
+      MEERKAT_IDM_PORT: 4632
       MEERKAT_OPEN_TOP_LEVEL: 1
       MEERKAT_OB_AUTO_ACCEPT: 1
       MEERKAT_MY_ACCESS_POINT_NSAPS: idm://dsa1:4632
@@ -33,10 +34,15 @@ services:
       MEERKAT_ENABLE_DOP: 1
       MEERKAT_ENABLE_DSP: 1
       MEERKAT_TRUST_FOR_IBRA: 1
-      # MEERKAT_TLS_CERT_FILE: /data/keypair/cert.pem
-      # MEERKAT_TLS_KEY_FILE: /data/keypair/key.pem
-      # MEERKAT_SIGNING_CERTS_CHAIN_FILE: /data/keypair/cert.pem
-      # MEERKAT_SIGNING_KEY_FILE: /data/keypair/key.pem
+      MEERKAT_TLS_CA_FILE: /pki/god.crt
+      MEERKAT_TLS_CERT_FILE: /pki/dsa1.tls.chain.crt
+      MEERKAT_TLS_KEY_FILE: /pki/dsa1.key.pem
+      MEERKAT_SIGNING_CA_FILE: /pki/god.crt
+      MEERKAT_SIGNING_CERTS_CHAIN_FILE: /pki/dsa1.tls.chain.crt
+      MEERKAT_SIGNING_KEY_FILE: /pki/dsa1.key.pem
+      MEERKAT_WEB_ADMIN_PORT: 18080
+      MEERKAT_TLS_MIN_VERSION: 'TLSv1.2'
+      MEERKAT_TLS_MAX_VERSION: 'TLSv1.2'
       # MEERKAT_INIT_JS: /data/init.mjs
     hostname: 'dsa1'
     labels:
@@ -47,11 +53,12 @@ services:
       - '1389:389/tcp' # LDAP TCP Port
       - '14632:4632/tcp' # IDM Socket
       - '18080:18080/tcp' # Web administration console
-    volumes: []
-      # - type: bind
-      #   source: ./data
-      #   target: /data
-      #   read_only: true
+      - '19229:9229/tcp' # NodeJS Debugging
+    volumes:
+      - type: bind
+        source: ./pki
+        target: /pki
+        read_only: true
     depends_on:
       init-us:
         condition: service_completed_successfully
@@ -68,6 +75,7 @@ services:
     environment:
       # What appears in this section overrides anything in .env.
       DATABASE_URL: mysql://gb_user:asdf_gb@db:3306/directory_gb
+      MEERKAT_IDM_PORT: 4632
       MEERKAT_OPEN_TOP_LEVEL: 1
       MEERKAT_OB_AUTO_ACCEPT: 1
       MEERKAT_MY_ACCESS_POINT_NSAPS: idm://dsa2:4632
@@ -87,10 +95,15 @@ services:
       MEERKAT_ENABLE_DOP: 1
       MEERKAT_ENABLE_DSP: 1
       MEERKAT_TRUST_FOR_IBRA: 1
-      # MEERKAT_TLS_CERT_FILE: /data/keypair/cert.pem
-      # MEERKAT_TLS_KEY_FILE: /data/keypair/key.pem
-      # MEERKAT_SIGNING_CERTS_CHAIN_FILE: /data/keypair/cert.pem
-      # MEERKAT_SIGNING_KEY_FILE: /data/keypair/key.pem
+      MEERKAT_TLS_CA_FILE: /pki/god.crt
+      MEERKAT_TLS_CERT_FILE: /pki/dsa2.tls.chain.crt
+      MEERKAT_TLS_KEY_FILE: /pki/dsa2.key.pem
+      MEERKAT_SIGNING_CA_FILE: /pki/god.crt
+      MEERKAT_SIGNING_CERTS_CHAIN_FILE: /pki/dsa2.tls.chain.crt
+      MEERKAT_SIGNING_KEY_FILE: /pki/dsa2.key.pem
+      MEERKAT_WEB_ADMIN_PORT: 18080
+      MEERKAT_TLS_MIN_VERSION: 'TLSv1.2'
+      MEERKAT_TLS_MAX_VERSION: 'TLSv1.2'
       # MEERKAT_INIT_JS: /data/init.mjs
     hostname: 'dsa2'
     labels:
@@ -101,11 +114,12 @@ services:
       - '2389:389/tcp' # LDAP TCP Port
       - '24632:4632/tcp' # IDM Socket
       - '28080:18080/tcp' # Web administration console
-    volumes: []
-      # - type: bind
-      #   source: ./data
-      #   target: /data
-      #   read_only: true
+      - '29229:9229/tcp' # NodeJS Debugging
+    volumes:
+      - type: bind
+        source: ./pki
+        target: /pki
+        read_only: true
     depends_on:
       init-gb:
         condition: service_completed_successfully
