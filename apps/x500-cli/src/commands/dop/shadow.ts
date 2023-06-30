@@ -302,24 +302,26 @@ async function do_shadow (
         : {
             consumerInitiated: schedule,
         };
-    const master = new AccessPoint(
-        {
-            rdnSequence: destringifyDN(ctx, argv["master-ae-title"]),
-        },
-        new PresentationAddress(
-            (typeof argv["master-p-selector"] === "string")
-                ? Buffer.from(argv["p-selector"], "hex")
-                : undefined,
-            (typeof argv["master-s-selector"] === "string")
-                ? Buffer.from(argv["s-selector"], "hex")
-                : undefined,
-            (typeof argv["master-t-selector"] === "string")
-                ? Buffer.from(argv["t-selector"], "hex")
-                : undefined,
-            argv["master-naddr"].map((naddr: string) => uriToNSAP(naddr, naddr.toLowerCase().startsWith("itot"))),
-        ),
-        undefined, // Protocol information unsupported.
-    );
+    const master = argv["master-ae-title"]
+        ? new AccessPoint(
+            {
+                rdnSequence: destringifyDN(ctx, argv["master-ae-title"]),
+            },
+            new PresentationAddress(
+                (typeof argv["master-p-selector"] === "string")
+                    ? Buffer.from(argv["p-selector"], "hex")
+                    : undefined,
+                (typeof argv["master-s-selector"] === "string")
+                    ? Buffer.from(argv["s-selector"], "hex")
+                    : undefined,
+                (typeof argv["master-t-selector"] === "string")
+                    ? Buffer.from(argv["t-selector"], "hex")
+                    : undefined,
+                argv["master-naddr"].map((naddr: string) => uriToNSAP(naddr, naddr.toLowerCase().startsWith("itot"))),
+            ),
+            undefined, // Protocol information unsupported.
+        )
+        : undefined;
     const agreement = new ShadowingAgreementInfo(
         area,
         updateMode,
