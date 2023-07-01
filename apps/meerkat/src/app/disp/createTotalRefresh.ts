@@ -184,7 +184,6 @@ async function createTotalRefreshFromVertex (
         });
         const last_subordinate = subordinates[subordinates.length - 1];
         cursorId = last_subordinate?.dse.id;
-        subordinates = await getNextBatchOfUnmentionedSubordinates();
         for (let i = 0; i < sub_refreshes.length; i++) {
             const sr = sub_refreshes[i];
             if (!sr || sr[1]) { // If the subordinate is chopped or to be pruned...
@@ -193,6 +192,7 @@ async function createTotalRefreshFromVertex (
             const rdn = subordinates[i].dse.rdn;
             subtrees.push(new Subtree(rdn, sr[0].sDSE, sr[0].subtree));
         }
+        subordinates = await getNextBatchOfUnmentionedSubordinates();
     }
     const allSubordinatesCount = (await ctx.db.entry.count({
         where: {
