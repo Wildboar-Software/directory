@@ -1434,9 +1434,9 @@ async function updateShadow (
             : ob.requested_time;
         await becomeShadowConsumer(ctx, agreement, remoteAccessPoint, bindingID, ob.id, ob_time);
         cpVertex = await dnToVertex(ctx, ctx.dit.root, cp_dn);
-        ctx.log.info(ctx.i18n.t("log:shadow_cp_created"), {
+        ctx.log.info(ctx.i18n.t("log:shadow_cp_created", {
             dn: stringifyDN(ctx, cp_dn),
-        });
+        }));
     }
     if (!cpVertex) {
         // This should never happen. We create the CP if it does not exist.
