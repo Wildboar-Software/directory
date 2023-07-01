@@ -41,8 +41,10 @@ services:
       MEERKAT_SIGNING_CERTS_CHAIN_FILE: /pki/dsa1.tls.chain.crt
       MEERKAT_SIGNING_KEY_FILE: /pki/dsa1.key.pem
       MEERKAT_WEB_ADMIN_PORT: 18080
-      MEERKAT_TLS_MIN_VERSION: 'TLSv1.2'
-      MEERKAT_TLS_MAX_VERSION: 'TLSv1.2'
+      # These need to be set really high so the large shadow updates can make it.
+      MEERKAT_IDM_BUFFER_SIZE: "1000000000"
+      MEERKAT_MAX_IDM_PDU_SIZE: "1000000000"
+      MEERKAT_MAX_IDM_SEGMENTS: 100
       # MEERKAT_INIT_JS: /data/init.mjs
     hostname: 'dsa1'
     labels:
@@ -102,8 +104,10 @@ services:
       MEERKAT_SIGNING_CERTS_CHAIN_FILE: /pki/dsa2.tls.chain.crt
       MEERKAT_SIGNING_KEY_FILE: /pki/dsa2.key.pem
       MEERKAT_WEB_ADMIN_PORT: 18080
-      MEERKAT_TLS_MIN_VERSION: 'TLSv1.2'
-      MEERKAT_TLS_MAX_VERSION: 'TLSv1.2'
+      # These need to be set really high so the large shadow updates can make it.
+      MEERKAT_IDM_BUFFER_SIZE: "1000000000"
+      MEERKAT_MAX_IDM_PDU_SIZE: "1000000000"
+      MEERKAT_MAX_IDM_SEGMENTS: 100
       # MEERKAT_INIT_JS: /data/init.mjs
     hostname: 'dsa2'
     labels:
