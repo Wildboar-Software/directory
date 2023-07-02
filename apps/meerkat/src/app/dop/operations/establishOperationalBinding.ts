@@ -153,11 +153,8 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
 import { becomeShadowConsumer } from "../establish/becomeShadowConsumer";
 import { becomeShadowSupplier } from "../establish/becomeShadowSupplier";
-import dnToID from "../../dit/dnToID";
 import { updateShadowConsumer } from "../../disp/createShadowUpdate";
 import { AttributeUsage_dSAOperation } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
-import { subWeeks } from "date-fns";
-import { subYears } from "date-fns";
 import { subSeconds } from "date-fns";
 
 // TODO: Use printCode()
@@ -433,8 +430,8 @@ async function relayedEstablishOperationalBinding (
         }
         const agr = _decode_ShadowingAgreementInfo(agreement);
         const agreementDN = agr.shadowSubject.area.contextPrefix;
-        const replicatedCP = await dnToID(ctx, ctx.dit.root.dse.id, agreementDN);
-        if (!replicatedCP) {
+        cp = await dnToVertex(ctx, ctx.dit.root, agreementDN);
+        if (!cp) {
             throw new errors.OperationalBindingError(
                 ctx.i18n.t("err:cannot_find_local_base_entry_to_replicate"),
                 new OpBindingErrorParam(
@@ -648,6 +645,8 @@ async function relayedEstablishOperationalBinding (
                 id: true,
                 uuid: true,
                 binding_identifier: true,
+                responded_time: true,
+                requested_time: true,
             },
         });
         const ROLE_REVERSAL_ERROR = new errors.OperationalBindingError(
@@ -814,6 +813,28 @@ async function relayedEstablishOperationalBinding (
             else {
                 revert_operational_binding();
                 throw INVALID_INIT_SYNTAX_ERROR;
+            }
+        }
+        else if (bindingType.isEqualTo(id_op_binding_shadow)) {
+            await ctx.db.operationalBinding.update({
+                where: {
+                    uuid: new_ob.uuid,
+                },
+                data: {
+                    entry_id: cp!.dse.id,
+                },
+                select: {
+                    id: true,
+                },
+            });
+            if ("roleA_initiates" in initiator) {
+                const agr = _decode_ShadowingAgreementInfo(agreement);
+                const ob_time: Date = new_ob.responded_time
+                    ? new Date(Math.max(new_ob.requested_time.valueOf(), new_ob.responded_time.valueOf()))
+                    : new_ob.requested_time;
+                await becomeShadowSupplier(ctx, bindingID, cp!, relayTo, agr, new_ob.id, ob_time);
+            } else {
+                // TODO: Is there anything to do here if we are consumer?
             }
         }
         else {
