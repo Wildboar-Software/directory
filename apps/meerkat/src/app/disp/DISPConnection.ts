@@ -793,7 +793,7 @@ class DISPAssociation extends ClientAssociation {
                 // idmFramesReceived: this.idm.getFramesReceived(),
             },
         });
-        this.ctx.log.warn(this.ctx.i18n.t("log:connection_unbound", {
+        this.ctx.log.info(this.ctx.i18n.t("log:connection_unbound", {
             ctype: DISPAssociation.name,
             cid: this.id,
             protocol: "DISP",
