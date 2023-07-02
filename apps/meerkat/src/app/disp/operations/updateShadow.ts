@@ -85,7 +85,6 @@ import {
     DSEType_subr,
 } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/DSEType.ta";
 import deleteEntry from "../../database/deleteEntry";
-import { stripEntry } from "../../database/stripEntry";
 import { Attribute } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Attribute.ta";
 import { clearance, createTimestamp, dseType, objectClass } from "@wildboar/x500/src/lib/collections/attributes";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -398,7 +397,8 @@ async function applyTotalRefresh (
     subordinates_page_size: number = 100,
     subordinates_only: boolean = false,
     creatingRDN: RelativeDistinguishedName | undefined = undefined,
-): Promise<void> { // TODO: Maybe return the DN of the problematic DSE, if any?
+): Promise<number | undefined> { // Return the ID of the created entry, if any.
+    let created_dse_database_id: number | undefined;
 
     // Skip over everything up until we reach the base of the shadowed subtree.
     const cp_length = agreement.shadowSubject.area.contextPrefix.length;
@@ -408,11 +408,11 @@ async function applyTotalRefresh (
     if (depth < (cp_length + base.length)) {
         // In the future, this may be relaxed.
         if (!refresh.subtree || (refresh.subtree.length !== 1)) {
-            throw new Error();
+            throw new Error("9af326e0-f1a3-448b-bdc2-e48b95464b36");
         }
         const sub = await dnToVertex(ctx, vertex, [ refresh.subtree[0].rdn ]);
         if (!sub) {
-            throw new Error();
+            throw new Error("6be73719-242a-471a-a65a-e3ac05da8f74");
         }
         return applyTotalRefresh(ctx, assn, obid, sub, refresh.subtree[0], agreement, depth + 1, signErrors, []);
     }
@@ -452,7 +452,8 @@ async function applyTotalRefresh (
     }
 
     if (!refresh.sDSE) {
-        return deleteEntry(ctx, vertex, true);
+        await deleteEntry(ctx, vertex, true);
+        return;
     }
     const dse_type = sdse_type_to_dse_type(refresh.sDSE.sDSEType);
     checkPermittedAttributeTypes(ctx, assn, agreement, refresh.sDSE.attributes, signErrors, Number(obid.identifier));
@@ -465,6 +466,7 @@ async function applyTotalRefresh (
         }
     }
     if (creatingRDN) {
+        // TODO: I don't think this handles the entry already existing.
         vertex = await createEntry(
             ctx,
             vertex,
@@ -487,43 +489,45 @@ async function applyTotalRefresh (
             undefined,
             true,
         );
-    } else {
-        await stripEntry(ctx, vertex);
-        const promises = await addAttributes(ctx, vertex, [
-            ...refresh.sDSE.attributes,
-            new Attribute(
-                dseType["&id"],
-                [dseType.encoderFor["&Type"]!(dse_type, DER)],
-            ),
-        ], undefined, false, signErrors);
-        // TODO: Can I put the promises from stripEntry() in the transaction below?
-        await ctx.db.$transaction([
-            ...promises,
-            ctx.db.entry.update({
-                where: {
-                    id: vertex.dse.id,
-                },
-                data: {
-                    subordinate_completeness: refresh.sDSE.subComplete ?? FALSE,
-                    attribute_completeness: refresh.sDSE.attComplete,
-                    lastShadowUpdate: new Date(),
-                },
-            }),
-            ctx.db.entryAttributeValuesIncomplete.createMany({
-                data: refresh.sDSE.attValIncomplete?.map((oid) => ({
-                    entry_id: vertex.dse.id,
-                    attribute_type: oid.toString(),
-                })) ?? [],
-            }),
-        ]);
+        created_dse_database_id = vertex.dse.id;
     }
+    // else { // What was the point of this?
+    //     await stripEntry(ctx, vertex);
+    //     const promises = await addAttributes(ctx, vertex, [
+    //         ...refresh.sDSE.attributes,
+    //         new Attribute(
+    //             dseType["&id"],
+    //             [dseType.encoderFor["&Type"]!(dse_type, DER)],
+    //         ),
+    //     ], undefined, false, signErrors);
+    //     // TODO: Can I put the promises from stripEntry() in the transaction below?
+    //     await ctx.db.$transaction([
+    //         ...promises,
+    //         ctx.db.entry.update({
+    //             where: {
+    //                 id: vertex.dse.id,
+    //             },
+    //             data: {
+    //                 subordinate_completeness: refresh.sDSE.subComplete ?? FALSE,
+    //                 attribute_completeness: refresh.sDSE.attComplete,
+    //                 lastShadowUpdate: new Date(),
+    //             },
+    //         }),
+    //         ctx.db.entryAttributeValuesIncomplete.createMany({
+    //             data: refresh.sDSE.attValIncomplete?.map((oid) => ({
+    //                 entry_id: vertex.dse.id,
+    //                 attribute_type: oid.toString(),
+    //             })) ?? [],
+    //         }),
+    //     ]);
+    // }
     const max = agreement.shadowSubject.area.replicationArea.maximum;
     const max_depth = Math.min(cp_length + Number(max ?? MAX_DEPTH), MAX_DEPTH);
     if (depth >= max_depth) {
         if (replicating_subrs) {
             start_replicating_subordinates = true;
         } else {
-            return;
+            return created_dse_database_id;
         }
     }
 
@@ -531,7 +535,7 @@ async function applyTotalRefresh (
         if (replicating_subrs) {
             start_replicating_subordinates = true;
         } else {
-            return; // We don't process this DSE's subordinates.
+            return created_dse_database_id; // We don't process this DSE's subordinates.
         }
     }
 
@@ -542,12 +546,12 @@ async function applyTotalRefresh (
                 immediate_superior_id: vertex.dse.id,
             },
         });
-        return;
+        return created_dse_database_id;
     }
 
     const refinement = agreement.shadowSubject.area.replicationArea.specificationFilter;
     const processed_subordinate_ids: Set<number> = new Set();
-    await bPromise.map(refresh.subtree, async (subtree: Subtree) => {
+    const possible_created_ids = await bPromise.map(refresh.subtree, async (subtree: Subtree) => {
         const sub = await dnToVertex(ctx, vertex, [ subtree.rdn ]);
         if (sub) {
             const objectClasses = Array.from(sub.dse.objectClass).map(ObjectIdentifier.fromString);
@@ -592,6 +596,12 @@ async function applyTotalRefresh (
     }, {
         concurrency: recursion_fanout,
     });
+    for (const id of possible_created_ids) {
+        if (id === undefined) {
+            continue;
+        }
+        processed_subordinate_ids.add(id);
+    }
 
     /* What follows is removing all shadow DSEs that fall within the agreement
     but were not explicitly mentioned in the TotalRefresh. */
@@ -639,6 +649,7 @@ async function applyTotalRefresh (
         cursorId = last_subordinate?.dse.id;
         subordinates = await getNextBatchOfUnmentionedSubordinates();
     }
+    return created_dse_database_id;
 }
 
 async function replaceAttribute (
