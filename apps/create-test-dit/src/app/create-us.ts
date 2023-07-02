@@ -760,7 +760,7 @@ async function seedUS (
     const peepantsGang: DistinguishedName[] = [];
     const newEntryArgs: [cn: string, arg: AddEntryArgument][] = [];
     // Create random people
-    for (let i = 1; i < 1000; i++) {
+    for (let i = 1; i < 10; i++) {
         // TODO: pgpKeyInfo
         // TODO: simpleSecurityObject
         // TODO: uidObject
