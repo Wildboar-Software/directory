@@ -163,6 +163,13 @@ async function do_shadow (
             }
         }
     }
+    // If the user specifies no selections, we replicate all user attributes.
+    if (attr_selection.length === 0) {
+        attr_selection.push(new ClassAttributeSelection(
+            undefined,
+            { allAttributes: null },
+        ));
+    }
     let master_knowledge: boolean = false;
     let shadow_knowledge: boolean = false;
     if (argv["master-knowledge"]) {
