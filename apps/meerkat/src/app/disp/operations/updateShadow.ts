@@ -470,6 +470,7 @@ async function applyTotalRefresh (
             vertex,
             creatingRDN,
             {
+                shadow: true,
                 subordinate_completeness: refresh.sDSE.subComplete ?? FALSE,
                 attribute_completeness: refresh.sDSE.attComplete,
                 EntryAttributeValuesIncomplete: {
