@@ -323,8 +323,11 @@ async function setEntryPassword (
                 },
                 select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),
-            ctx.db.passwordHistory.create({
-                data: {
+            ctx.db.passwordHistory.upsert({
+                update: {
+                    entry_id: vertex.dse.id,
+                },
+                create: {
                     entry_id: vertex.dse.id,
                     password: Buffer.from(_encode_UserPwd({
                         encrypted: new UserPwd_encrypted(
@@ -332,7 +335,13 @@ async function setEntryPassword (
                             encrypted,
                         ),
                     }, DER).toBytes()),
-                    time: new Date(),
+                    time: now,
+                },
+                where: {
+                    entry_id_time: {
+                        entry_id: vertex.dse.id,
+                        time: now,
+                    },
                 },
                 select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),
@@ -373,11 +382,20 @@ async function setEntryPassword (
                 },
                 select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),
-            ctx.db.passwordHistory.create({
-                data: {
+            ctx.db.passwordHistory.upsert({
+                update: {
+                    entry_id: vertex.dse.id,
+                },
+                create: {
                     entry_id: vertex.dse.id,
                     password: Buffer.from(_encode_UserPwd(pwd, DER).toBytes()),
-                    time: new Date(),
+                    time: now,
+                },
+                where: {
+                    entry_id_time: {
+                        entry_id: vertex.dse.id,
+                        time: now,
+                    },
                 },
                 select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),
