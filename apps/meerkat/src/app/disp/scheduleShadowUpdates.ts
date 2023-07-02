@@ -6,6 +6,7 @@ import { updateShadowConsumer } from "./createShadowUpdate";
 import { addSeconds, differenceInMilliseconds } from "date-fns";
 import { setTimeout as safeSetTimeout } from "safe-timers";
 import request_a_shadow_update from "./requestAShadowUpdate";
+import isDebugging from "is-debugging";
 
 export
 function scheduleShadowUpdates (
@@ -23,30 +24,46 @@ function scheduleShadowUpdates (
             ? updateMode.consumerInitiated
             : undefined);
     if (!schedule?.periodic) {
+        ctx.log.debug(ctx.i18n.t("log:sob_no_schedule", { obid: ob_id }));
+        return;
+    }
+    const supplierInitiated: boolean = ("supplierInitiated" in updateMode);
+    if (
+        !(iAmSupplier && supplierInitiated) // If I am not the supplier of a supplier-initiated shadow...
+        && !(!iAmSupplier && !supplierInitiated) // ...nor a consumer of a consumer-initiated shadow
+    ) { // ...there is nothing for me to schedule.
+        ctx.log.debug(ctx.i18n.t("log:sob_no_scheduling_needed", { obid: ob_id }));
         return;
     }
     const periods = schedule.periodic;
     const now = new Date();
-    const scheduleShadowUpdates = () => {
+    const scheduleShadowUpdates_ = () => {
         ctx.pendingShadowingUpdateCycles.delete(ob_id);
-        if (iAmSupplier) {
-            const timer = setInterval(() => {
+        if (iAmSupplier && supplierInitiated) {
+            const update = () => {
                 updateShadowConsumer(ctx, ob_db_id)
                     .then(() => {
                         ctx.log.info(ctx.i18n.t("log:updated_shadow_consumer", {
+                            context: "scheduled",
                             obid: ob_id.toString(),
                         }));
                     })
                     .catch((e) => {
+
                         ctx.log.error(ctx.i18n.t("err:scheduled_shadow_update_failure", {
                             e,
                             obid: ob_id.toString(),
                         }));
+                        if (isDebugging) {
+                            console.error(e);
+                        }
                     });
-            }, Number(periods.updateInterval) * 1000);
+            };
+            update();
+            const timer = setInterval(update, Number(periods.updateInterval) * 1000);
             ctx.shadowUpdateCycles.set(ob_id, timer);
         } else {
-            const timer = setInterval(() => {
+            const update = () => {
                 request_a_shadow_update(ctx, ob_db_id)
                     .then()
                     .catch((e) => {
@@ -54,20 +71,29 @@ function scheduleShadowUpdates (
                             e,
                             obid: ob_id.toString(),
                         }));
+                        if (isDebugging) {
+                            console.error(e);
+                        }
                     });
-            }, Number(periods.updateInterval) * 1000);
+            };
+            update();
+            const timer = setInterval(update, Number(periods.updateInterval) * 1000);
             ctx.shadowUpdateCycles.set(ob_id, timer);
         }
     };
-    let nextUpdateTime: Date = periods.beginTime ?? ob_time;
-    while (nextUpdateTime < now) {
-        // TODO: Use a better algorithm to identify the next update time.
-        nextUpdateTime = addSeconds(nextUpdateTime, Number(periods.updateInterval));
+    if (periods.beginTime) {
+        let nextUpdateTime: Date = periods.beginTime;
+        while (nextUpdateTime < now) {
+            // TODO: Use a better algorithm to identify the next update time.
+            nextUpdateTime = addSeconds(nextUpdateTime, Number(periods.updateInterval));
+        }
+        const time_until_first_update = Math.abs(differenceInMilliseconds(now, nextUpdateTime))
+            + 5000; // Plus five seconds just to avoid updating before the window due to imprecision.
+        const timeout = safeSetTimeout(scheduleShadowUpdates_, time_until_first_update);
+        ctx.pendingShadowingUpdateCycles.set(ob_id, timeout);
+    } else {
+        scheduleShadowUpdates_();
     }
-    const time_until_first_update = Math.abs(differenceInMilliseconds(now, nextUpdateTime))
-        + 1000; // Plus one second just to avoid updating before the window due to imprecision.
-    const timeout = safeSetTimeout(scheduleShadowUpdates, time_until_first_update);
-    ctx.pendingShadowingUpdateCycles.set(ob_id, timeout);
 }
 
 export default scheduleShadowUpdates;
