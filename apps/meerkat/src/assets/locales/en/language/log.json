@@ -352,5 +352,7 @@
     "requesting_shadow_rejected": "Shadow update request for operational binding {{obid}} was rejected using reason code {{code}}.",
     "requesting_shadow_aborted": "Shadow update request for operational binding {{obid}} was aborted using reason code {{code}}.",
     "requesting_shadow_timeout": "Shadow update request for operational binding {{obid}} timed out.",
-    "requesting_shadow_other_problem": "Shadow update request for operational binding {{obid}} encountered some other problem: {{data}}."
+    "requesting_shadow_other_problem": "Shadow update request for operational binding {{obid}} encountered some other problem: {{data}}.",
+    "sob_no_schedule": "No periodic schedule for shadowing operational binding {{obid}}. Nothing to schedule.",
+    "sob_no_scheduling_needed": "Scheduling for shadowing operational binding {{obid}} is other DSA's responsibility."
 }
