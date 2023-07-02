@@ -816,19 +816,65 @@ async function relayedEstablishOperationalBinding (
             }
         }
         else if (bindingType.isEqualTo(id_op_binding_shadow)) {
+            const agr = _decode_ShadowingAgreementInfo(agreement);
+            const master_ap_id = agr.master
+                ? await saveAccessPoint(ctx, agr.master, Knowledge.OB_SHADOW_MASTER)
+                : undefined;
+            const updateMode = agr.updateMode ?? ShadowingAgreementInfo._default_value_for_updateMode;
+            const schedule = ("supplierInitiated" in updateMode)
+                ? ("scheduled" in updateMode.supplierInitiated)
+                    ? updateMode.supplierInitiated.scheduled
+                    : undefined
+                : ("consumerInitiated" in updateMode)
+                    ? updateMode.consumerInitiated
+                    : undefined;
             await ctx.db.operationalBinding.update({
                 where: {
                     uuid: new_ob.uuid,
                 },
                 data: {
                     entry_id: cp!.dse.id,
+                    shadowed_context_prefix: agr.shadowSubject.area.contextPrefix.map(rdnToJson),
+                    knowledge_type: (agr.shadowSubject.knowledge === undefined)
+                        ? undefined
+                        : ({
+                            Knowledge_knowledgeType_both: ShadowedKnowledgeType.BOTH,
+                            Knowledge_knowledgeType_master: ShadowedKnowledgeType.MASTER,
+                            Knowledge_knowledgeType_shadow: ShadowedKnowledgeType.SHADOW,
+                        })[agr.shadowSubject.knowledge.knowledgeType],
+                    subordinates: agr.shadowSubject.subordinates,
+                    supply_contexts: (agr.shadowSubject.supplyContexts === undefined)
+                        ? undefined
+                        : (() => {
+                            const sc = agr.shadowSubject.supplyContexts;
+                            if ("allContexts" in sc) {
+                                return "";
+                            } else if ("selectedContexts" in sc) {
+                                return sc.selectedContexts
+                                    .map((s) => s.toString())
+                                    .join(",");
+                            }
+                            return undefined;
+                        })(),
+                    supplier_initiated: agr.updateMode
+                        ? ("supplierInitiated" in agr.updateMode)
+                        : false,
+                    periodic_beginTime: schedule?.periodic?.beginTime,
+                    periodic_windowSize: schedule?.periodic?.windowSize
+                        ? Number(schedule.periodic.windowSize)
+                        : undefined,
+                    periodic_updateInterval: schedule?.periodic?.updateInterval
+                        ? Number(schedule.periodic.updateInterval)
+                        : undefined,
+                    othertimes: schedule?.othertimes,
+                    master_access_point_id: master_ap_id as undefined, // TODO: This is giving me a weird type error.
+                    secondary_shadows: agr.secondaryShadows,
                 },
                 select: {
                     id: true,
                 },
             });
             if ("roleA_initiates" in initiator) {
-                const agr = _decode_ShadowingAgreementInfo(agreement);
                 const ob_time: Date = new_ob.responded_time
                     ? new Date(Math.max(new_ob.requested_time.valueOf(), new_ob.responded_time.valueOf()))
                     : new_ob.requested_time;
