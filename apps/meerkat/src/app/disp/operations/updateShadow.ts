@@ -1454,7 +1454,7 @@ async function updateShadow (
             ctx,
             assn,
             bindingID,
-            cpVertex,
+            ctx.dit.root, // The refresh starts from the root.
             refresh,
             agreement,
             0,
