@@ -16,6 +16,9 @@ import {
     OperationalBindingID,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OperationalBindingID.ta";
 import scheduleShadowUpdates from "../../disp/scheduleShadowUpdates";
+import type { Prisma } from "@prisma/client";
+import { ASN1Construction } from "asn1-ts";
+import getEqualityNormalizer from "../../x500/getEqualityNormalizer";
 
 export
 async function becomeShadowConsumer (
@@ -30,15 +33,34 @@ async function becomeShadowConsumer (
     // Create the context prefix
     let materialized_path: string = "";
     let currentRoot = ctx.dit.root;
+    const NORMALIZER_GETTER = getEqualityNormalizer(ctx);
     for (const rdn of agreement.shadowSubject.area.contextPrefix) {
         const sub = await dnToVertex(ctx, currentRoot, [ rdn ]);
         if (!sub) {
             const { id, dseUUID } = await ctx.db.entry.create({
                 data: {
+                    immediate_superior_id: currentRoot.dse.id,
                     glue: true,
                     materialized_path,
                     createTimestamp: new Date(),
                     modifyTimestamp: new Date(),
+                    RDN: {
+                        createMany: {
+                            data: rdn.map((atav, i): Prisma.DistinguishedValueCreateWithoutEntryInput => ({
+                                type_oid: atav.type_.toBytes(),
+                                tag_class: atav.value.tagClass,
+                                constructed: (atav.value.construction === ASN1Construction.constructed),
+                                tag_number: atav.value.tagNumber,
+                                content_octets: Buffer.from(
+                                    atav.value.value.buffer,
+                                    atav.value.value.byteOffset,
+                                    atav.value.value.byteLength,
+                                ),
+                                order_index: i,
+                                normalized_str: NORMALIZER_GETTER(atav.type_)?.(ctx, atav.value),
+                            })),
+                        },
+                    },
                 },
                 select: {
                     id: true,
