@@ -13,7 +13,7 @@ import { convert_refinement_to_prisma_filter } from "./operations/updateShadow";
 import bPromise from "bluebird";
 import { LocalName } from "@wildboar/x500/src/lib/modules/InformationFramework/LocalName.ta";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
-import { compareDistinguishedName } from "@wildboar/x500";
+import { compareDistinguishedName, getRDN } from "@wildboar/x500";
 import getEntryExistsFilter from "../database/entryExistsFilter";
 import getSDSEContent from "./getSDSEContent";
 
@@ -263,7 +263,7 @@ async function createTotalRefresh (
     if (!base) {
         throw new Error();
     }
-    return (await createTotalRefreshFromVertex(
+    const baseRefresh = (await createTotalRefreshFromVertex(
         ctx,
         base,
         agreement,
@@ -271,4 +271,26 @@ async function createTotalRefresh (
         [],
         base_dn.length,
     ))?.[0];
+    if (!baseRefresh) {
+        return undefined;
+    }
+    const baseSubtree = new Subtree(
+        getRDN(base_dn)!,
+        baseRefresh.sDSE,
+        baseRefresh.subtree,
+    );
+    let rootRefresh = baseSubtree;
+    let current = base.immediateSuperior;
+    while (current && !current.dse.root) {
+        rootRefresh = new Subtree(
+            current.dse.rdn,
+            undefined,
+            [rootRefresh],
+        );
+        current = current.immediateSuperior;
+    }
+    return new TotalRefresh(
+        undefined,
+        [rootRefresh],
+    );
 }
