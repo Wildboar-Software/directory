@@ -75,14 +75,14 @@ async function do_modify_become_admpoint (
         administrativeRoles.push(id_ar_pwdAdminSpecificArea);
     }
     const modifications: EntryModification[] = [
-            {
-                replaceValues: new Attribute(
-                    administrativeRole["&id"],
-                    administrativeRoles
-                        .map((oid) => _encodeObjectIdentifier(oid, DER)),
-                    undefined,
-                ),
-            },
+        {
+            replaceValues: new Attribute(
+                administrativeRole["&id"],
+                administrativeRoles
+                    .map((oid) => _encodeObjectIdentifier(oid, DER)),
+                undefined,
+            ),
+        },
     ];
     if (argv.accessControlScheme) {
         const accessControlSchemeOID = ObjectIdentifier
