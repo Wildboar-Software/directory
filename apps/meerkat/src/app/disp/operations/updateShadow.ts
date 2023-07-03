@@ -381,6 +381,7 @@ function checkPermittedAttributeTypes (
     }
 }
 
+// TODO: Collect statistics to report in logging.
 // TODO: It may be possible to separate the validation from the update.
 // NOTE: minimum of subtree does not need to be checked. It is forbidden in shadowing subtrees.
 async function applyTotalRefresh (
@@ -969,6 +970,7 @@ async function applyContentChange (
     ]);
 }
 
+// TODO: Collect statistics to report in logging.
 /*
 
 There was some ambiguity in X.525 surrounding whether or not the incremental
@@ -1086,6 +1088,7 @@ async function applyIncrementalRefreshStep (
                 ),
             ];
             vertex = await createEntry(ctx, immediate_superior, rdn, {
+                shadow: true,
                 subordinate_completeness: change.subComplete ?? FALSE,
                 attribute_completeness: change.attComplete,
                 EntryAttributeValuesIncomplete: {
@@ -1134,13 +1137,14 @@ async function applyIncrementalRefreshStep (
     const refinement = agreement.shadowSubject.area.replicationArea.specificationFilter;
     await bPromise.map(refresh.subordinateUpdates ?? [], async (sub_update) => {
         // If the change is add, `vertex` will be the immediate superior.
-        if (refresh.sDSEChanges && "add" in refresh.sDSEChanges) {
+        if (sub_update.changes.sDSEChanges && "add" in sub_update.changes.sDSEChanges) {
             return applyIncrementalRefreshStep(
                 ctx,
                 assn,
                 vertex,
                 sub_update.changes,
-                agreement, depth + 1,
+                agreement,
+                depth + 1,
                 signErrors,
                 [ ...localName, sub_update.subordinate ],
                 obid,
@@ -1476,6 +1480,10 @@ async function updateShadow (
     }
     else if ("incremental" in data.updatedInfo) {
         const refresh = data.updatedInfo.incremental;
+        ctx.log.debug(ctx.i18n.t("log:shadow_incremental_steps_count", {
+            obid: data.agreementID.identifier.toString(),
+            steps: refresh.length,
+        }));
         for (const step of refresh) {
             await applyIncrementalRefreshStep(
                 ctx,
