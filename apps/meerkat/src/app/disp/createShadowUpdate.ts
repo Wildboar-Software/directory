@@ -228,7 +228,7 @@ async function updateShadowConsumer (
         const since: Date = ob.remote_last_update ?? ob.local_last_update!;
         const steps = await ctx.db.pendingShadowIncrementalStepRefresh.findMany({
             where: {
-                binding_identifier: ob.binding_identifier,
+                binding_identifier: obid,
                 time: {
                     gt: since,
                 },
@@ -241,28 +241,30 @@ async function updateShadowConsumer (
                 time: "asc",
             },
         });
-        updatedInfo = (steps.length > 0)
-            ? {
+        if (steps.length > 0) {
+            updatedInfo = {
                 incremental: steps.map(({ ber }) => {
                     const el = new BERElement();
                     el.fromBytes(ber);
                     return _decode_IncrementalStepRefresh(el);
                 }),
-            }
-            : {
+            };
+            step_ids = steps.map((s) => s.id);
+            await ctx.db.pendingShadowIncrementalStepRefresh.updateMany({
+                where: {
+                    id: {
+                        in: step_ids,
+                    },
+                },
+                data: {
+                    submitted: true,
+                },
+            });
+        } else {
+            updatedInfo = {
                 noRefresh: null,
             };
-        step_ids = steps.map((s) => s.id);
-        await ctx.db.pendingShadowIncrementalStepRefresh.updateMany({
-            where: {
-                id: {
-                    in: step_ids,
-                },
-            },
-            data: {
-                submitted: true,
-            },
-        });
+        }
     }
     const updateOutcome = await disp_client.updateShadow({
         agreementID: bindingID,
