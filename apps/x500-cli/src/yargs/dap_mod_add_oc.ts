@@ -35,7 +35,7 @@ export // eslint-disable-next-line @typescript-eslint/ban-types
 function create (ctx: Context): CommandModule<{}, ModAddObjectClassArgs> {
     return {
         command: "oc <object> <identifier>",
-        describe: "Add a name form to a subschema subentry",
+        describe: "Add an object class definition to a subschema subentry",
         builder: (y) => {
             return y
                 .positional("object", {

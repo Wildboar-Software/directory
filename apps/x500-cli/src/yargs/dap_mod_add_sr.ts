@@ -32,7 +32,7 @@ export // eslint-disable-next-line @typescript-eslint/ban-types
 function create (ctx: Context): CommandModule<{}, ModAddStructureRuleArgs> {
     return {
         command: "sr <object> <ruleid> <nameform>",
-        describe: "Add a DIT Structure Rule to a subschema subentry",
+        describe: "Add a DIT structure rule to a subschema subentry",
         builder: (y) => {
             return y
                 .positional("object", {
