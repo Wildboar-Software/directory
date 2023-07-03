@@ -1007,11 +1007,11 @@ async function applyIncrementalRefreshStep (
     if (depth < (cp_length + base.length)) {
         // In the future, this may be relaxed.
         if (!refresh.subordinateUpdates || (refresh.subordinateUpdates.length !== 1)) {
-            throw new Error(); // FIXME:
+            throw new Error("29a2ac56-10fe-4354-b61b-ceeca9c632e0");
         }
         const sub = await dnToVertex(ctx, vertex, [ refresh.subordinateUpdates[0].subordinate ]);
         if (!sub) {
-            throw new Error(); // FIXME:
+            throw new Error("c22bf8dd-f256-4245-a942-2bdc622807d1");
         }
         return applyIncrementalRefreshStep(
             ctx,
@@ -1132,7 +1132,6 @@ async function applyIncrementalRefreshStep (
     }
 
     const refinement = agreement.shadowSubject.area.replicationArea.specificationFilter;
-    const processed_subordinate_ids: Set<number> = new Set();
     await bPromise.map(refresh.subordinateUpdates ?? [], async (sub_update) => {
         // If the change is add, `vertex` will be the immediate superior.
         if (refresh.sDSEChanges && "add" in refresh.sDSEChanges) {
@@ -1173,7 +1172,6 @@ async function applyIncrementalRefreshStep (
                 ),
             );
         }
-        processed_subordinate_ids.add(sub.dse.id);
         return applyIncrementalRefreshStep(
             ctx,
             assn,
@@ -1482,7 +1480,7 @@ async function updateShadow (
             await applyIncrementalRefreshStep(
                 ctx,
                 assn,
-                cpVertex,
+                ctx.dit.root,
                 step,
                 agreement,
                 0,
@@ -1515,6 +1513,15 @@ async function updateShadow (
             signErrors,
         );
     }
+
+    await ctx.db.operationalBinding.update({
+        where: {
+            id: ob.id,
+        },
+        data: {
+            last_update: now,
+        },
+    });
 
     const possibly_related_sobs = await ctx.db.operationalBinding.findMany({
         where: {
