@@ -134,7 +134,22 @@ async function createTotalRefreshFromVertex (
         if (getExtendedKnowledge) {
             extended = true;
         } else {
-            return;
+            // We don't process this DSE's subordinates.
+            return [
+                new TotalRefresh(
+                    content
+                        ? new SDSEContent(
+                            content.sDSEType,
+                            FALSE,
+                            content.attComplete,
+                            content.attributes,
+                            content.attValIncomplete,
+                        )
+                        : undefined,
+                    undefined,
+                ),
+                false,
+            ];
         }
     }
 
@@ -142,7 +157,22 @@ async function createTotalRefreshFromVertex (
         if (getExtendedKnowledge) {
             extended = true;
         } else {
-            return; // We don't process this DSE's subordinates.
+            // We don't process this DSE's subordinates.
+            return [
+                new TotalRefresh(
+                    content
+                        ? new SDSEContent(
+                            content.sDSEType,
+                            FALSE,
+                            content.attComplete,
+                            content.attributes,
+                            content.attValIncomplete,
+                        )
+                        : undefined,
+                    undefined,
+                ),
+                false,
+            ];
         }
     }
 
