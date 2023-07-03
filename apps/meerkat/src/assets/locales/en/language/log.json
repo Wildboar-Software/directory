@@ -355,5 +355,6 @@
     "requesting_shadow_other_problem": "Shadow update request for operational binding {{obid}} encountered some other problem: {{data}}.",
     "sob_no_schedule": "No periodic schedule for shadowing operational binding {{obid}}. Nothing to schedule.",
     "sob_no_scheduling_needed": "Scheduling for shadowing operational binding {{obid}} is other DSA's responsibility.",
-    "shadow_incremental_steps_count": "Incremental shadow update for SOB {{obid}} contains {{steps}} steps."
+    "shadow_incremental_steps_count": "Incremental shadow update for SOB {{obid}} contains {{steps}} steps.",
+    "shadow_increment_zero_length_mods": "Incremental shadow update for SOB {{obid}} provided a zero-length modification for '{{dn}}', which might be a bug."
 }

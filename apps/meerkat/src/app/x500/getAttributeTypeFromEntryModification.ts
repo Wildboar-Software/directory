@@ -6,7 +6,7 @@ import type {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryModification.ta";
 
 export
-async function getAttributeTypeFromEntryModification (mod: EntryModification): Promise<AttributeType | undefined> {
+function getAttributeTypeFromEntryModification (mod: EntryModification): AttributeType | undefined {
     if ("addAttribute" in mod) {
         return mod.addAttribute.type_;
     }
