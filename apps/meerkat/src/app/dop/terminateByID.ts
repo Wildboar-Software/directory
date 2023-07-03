@@ -157,6 +157,18 @@ async function terminate (
             //
         }
     }
+
+    // We terminate all revisions of this OB, just to be sure it is dead.
+    await ctx.db.operationalBinding.updateMany({
+        where: {
+            binding_type: ob.binding_type,
+            binding_identifier: ob.binding_identifier,
+            terminated_time: null,
+        },
+        data: {
+            terminated_time: new Date(),
+        },
+    });
 }
 
 export default terminate;
