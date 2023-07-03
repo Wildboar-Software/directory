@@ -264,9 +264,9 @@ async function requestShadowUpdate (
         while (i++ < 1_000_000) {
             next_period_start = addSeconds(period_start, Number(schedule.periodic.updateInterval));
             if (next_period_start.valueOf() >= now.valueOf()) {
-                period_start = next_period_start;
                 break;
             }
+            period_start = next_period_start;
         }
         const end_of_period = addSeconds(period_start, Number(schedule.periodic.windowSize));
         const updateWindow = new UpdateWindow(
@@ -277,6 +277,9 @@ async function requestShadowUpdate (
             throw new ShadowError(
                 ctx.i18n.t("err:shadow_update_outside_of_window", {
                     obid: data.agreementID.identifier.toString(),
+                    start: period_start.toISOString(),
+                    end: end_of_period.toISOString(),
+                    now: now.toISOString(),
                 }),
                 new ShadowErrorData(
                     ShadowProblem_unsuitableTiming,
