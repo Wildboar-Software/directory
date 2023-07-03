@@ -53,10 +53,7 @@ async function saveIncrementalRefresh (
         );
         current = current.immediateSuperior;
     }
-    const toSave = new IncrementalStepRefresh(
-        undefined,
-        [ret],
-    );
+    const toSave = ret.changes;
     let change_type: ShadowIncrementType = ShadowIncrementType.OTHER;
     if (actual_change.changes.sDSEChanges) {
         if ("add" in actual_change.changes.sDSEChanges) {
