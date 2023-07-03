@@ -132,6 +132,12 @@ async function terminate (
         case (id_op_binding_shadow.toString()): {
             // We can delete these, supplier or not, since OBs are supposed to
             // be unique across (type, id).
+            const t1 = ctx.pendingShadowingUpdateCycles.get(ob.binding_identifier);
+            const t2 = ctx.shadowUpdateCycles.get(ob.binding_identifier);
+            t1?.clear();
+            if (t2) {
+                clearTimeout(t2);
+            }
             ctx.pendingShadowingUpdateCycles.delete(ob.binding_identifier);
             ctx.shadowUpdateCycles.delete(ob.binding_identifier);
             const iAmSupplier: boolean = (
