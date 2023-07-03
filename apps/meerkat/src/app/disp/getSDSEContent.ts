@@ -76,6 +76,9 @@ const mandatoryReplicatedAttributeTypesStr: IndexableOID[] = [
 ];
 
 export
+const mandatoryReplicatedAttributeTypesSet: Set<IndexableOID> = new Set(mandatoryReplicatedAttributeTypesStr);
+
+export
 const mandatoryReplicatedAttributeTypes: AttributeType[] = [
     x500at.createTimestamp["&id"],
     x500at.modifyTimestamp["&id"],

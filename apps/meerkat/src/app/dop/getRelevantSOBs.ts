@@ -30,7 +30,7 @@ import { ALL_ATTRIBUTE_TYPES } from "../constants";
 import getAttributeParentTypes from "../x500/getAttributeParentTypes";
 import { ContentChange, ContentChange_rename } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ContentChange.ta";
 import { EntryModification } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryModification.ta";
-import getSDSEContent from "../disp/getSDSEContent";
+import getSDSEContent, { mandatoryReplicatedAttributeTypesSet } from "../disp/getSDSEContent";
 
 
 /**
@@ -270,15 +270,21 @@ async function getShadowIncrementalSteps (
                         return false;
                     }
                     const KEY = type_.toString();
+                    if (exclusions.has(KEY)) {
+                        return false;
+                    }
                     return (
-                        !exclusions.has(KEY)
-                        && (
-                            inclusions.has(KEY)
-                            || (
-                                all_user_attributes
-                                && (ctx.attributeTypes.get(KEY)?.usage === AttributeUsage_userApplications)
-                            )
+                        inclusions.has(KEY)
+                        || (
+                            all_user_attributes
+                            && (ctx.attributeTypes.get(KEY)?.usage === AttributeUsage_userApplications)
                         )
+                        /* DEVIATION: The spec says that just "access control,
+                        timestamps, and knowledge" do not have to be explicitly
+                        included, but things like administrative roles and
+                        password administration attributes are still necessary
+                        too. */
+                        || mandatoryReplicatedAttributeTypesSet.has(KEY)
                     );
                 })
                 .map((mod) => {

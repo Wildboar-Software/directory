@@ -777,7 +777,7 @@ async function applyEntryModification (
             // if the potentially added values already exist, because we are just
             // going to wipe out all that exist and replace them.
             ...(await addValues(ctx, vertex, valuesFromAttribute(mod.replaceValues), undefined, false, signErrors)),
-        ])
+        ]);
     }
     else {
         return []; // Any other alternative not understood.
@@ -794,9 +794,9 @@ async function applyContentChange (
     obid: OperationalBindingID,
     signErrors: boolean,
 ): Promise<void> {
+    const cp = agreement.shadowSubject.area.contextPrefix;
+    const oldDN = [ ...cp, ...localName ];
     if (change.rename) {
-        const cp = agreement.shadowSubject.area.contextPrefix;
-        const oldDN = [ ...cp, ...localName ];
         const newDN = ("newRDN" in change.rename)
             ? [ ...cp, ...localName.slice(0, -1), change.rename.newRDN ]
             : change.rename.newDN;
@@ -903,6 +903,12 @@ async function applyContentChange (
                 .map((rep) => replaceAttribute(ctx, vertex, rep, signErrors)));
         } else {
             const modifications = change.attributeChanges.changes;
+            if (modifications.length === 0) {
+                ctx.log.warn(ctx.i18n.t("log:shadow_increment_zero_length_mods", {
+                    obid: obid.identifier.toString(),
+                    dn: stringifyDN(ctx, oldDN),
+                }));
+            }
             for (const mod of modifications) {
                 await applyEntryModification(
                     ctx,
