@@ -128,9 +128,9 @@ async function createTotalRefreshFromVertex (
         agreement.shadowSubject.knowledge?.knowledgeType,
     );
 
-    const max = agreement.shadowSubject.area.replicationArea.maximum;
+    const max = agreement.shadowSubject.area.replicationArea.maximum ?? MAX_DEPTH;
     const max_depth = Math.min(Number(max ?? MAX_DEPTH), MAX_DEPTH);
-    if ((depth >= max_depth) && !extKnowledgeOnly) {
+    if ((localName.length >= max_depth) && !extKnowledgeOnly) { // TODO: Is this supposed to be >=?
         if (getExtendedKnowledge) {
             extended = true;
         } else {
