@@ -54,7 +54,7 @@
     "@wildboar/scvp": "^1.0.4",
     "@wildboar/tal": "^1.0.6",
     "@wildboar/x400": "^1.0.4",
-    "@wildboar/x500": "^1.1.2",
+    "@wildboar/x500": "^1.1.3",
     "@wildboar/x700": "^1.0.4",
     "applicationinsights": "^2.4.0",
     "asn1-ts": "^7.1.1",
