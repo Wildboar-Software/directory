@@ -73,6 +73,7 @@ const mandatoryReplicatedAttributeTypesStr: IndexableOID[] = [
     superiorUUID["&id"].toString(),
     x500at.searchRules["&id"].toString(),
     x500at.subtreeSpecification["&id"].toString(),
+    x500at.objectClass["&id"].toString(),
 ];
 
 export
@@ -123,6 +124,7 @@ const mandatoryReplicatedAttributeTypes: AttributeType[] = [
     superiorUUID["&id"],
     x500at.searchRules["&id"],
     x500at.subtreeSpecification["&id"],
+    x500at.objectClass["&id"],
 ];
 
 const glue_sdse_type = new Uint8ClampedArray([
