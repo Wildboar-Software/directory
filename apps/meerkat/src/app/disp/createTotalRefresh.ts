@@ -6,16 +6,16 @@ import {
 import { Subtree } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/Subtree.ta";
 import { SDSEContent } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SDSEContent.ta";
 import { TotalRefresh } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/TotalRefresh.ta";
-import { BERElement, BOOLEAN, FALSE } from "asn1-ts";
+import { BERElement, BOOLEAN, FALSE, ObjectIdentifier } from "asn1-ts";
 import dnToVertex from "../dit/dnToVertex";
 import readSubordinates from "../dit/readSubordinates";
-import { convert_refinement_to_prisma_filter } from "./operations/updateShadow";
 import bPromise from "bluebird";
 import { LocalName } from "@wildboar/x500/src/lib/modules/InformationFramework/LocalName.ta";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import { compareDistinguishedName, getRDN } from "@wildboar/x500";
 import getEntryExistsFilter from "../database/entryExistsFilter";
 import getSDSEContent from "./getSDSEContent";
+import { objectClassesWithinRefinement } from "@wildboar/x500";
 
 // UnitOfReplication ::= SEQUENCE {
 //     area                 AreaSpecification,
@@ -128,12 +128,20 @@ async function createTotalRefreshFromVertex (
         agreement.shadowSubject.knowledge?.knowledgeType,
     );
 
+    const refinement = agreement.shadowSubject.area.replicationArea.specificationFilter;
+    const withinRefinement: boolean = refinement
+        ? objectClassesWithinRefinement(Array.from(vertex.dse.objectClass).map(ObjectIdentifier.fromString), refinement)
+        : true;
+
     const max = agreement.shadowSubject.area.replicationArea.maximum ?? MAX_DEPTH;
     const max_depth = Math.min(Number(max ?? MAX_DEPTH), MAX_DEPTH);
     if ((localName.length >= max_depth) && !extKnowledgeOnly) { // TODO: Is this supposed to be >=?
         if (getExtendedKnowledge) {
             extended = true;
         } else {
+            if (!withinRefinement) {
+                return undefined;
+            }
             // We don't process this DSE's subordinates.
             return [
                 new TotalRefresh(
@@ -157,6 +165,9 @@ async function createTotalRefreshFromVertex (
         if (getExtendedKnowledge) {
             extended = true;
         } else {
+            if (!withinRefinement) {
+                return undefined;
+            }
             // We don't process this DSE's subordinates.
             return [
                 new TotalRefresh(
@@ -176,23 +187,10 @@ async function createTotalRefreshFromVertex (
         }
     }
 
-    const refinement = agreement.shadowSubject.area.replicationArea.specificationFilter;
-
     let cursorId: number | undefined;
-    const getNextBatchOfUnmentionedSubordinates = () => {
-        return readSubordinates(ctx, vertex, 100, undefined, cursorId, { // TODO: Configurable page size.
-            ...(refinement
-                ? {
-                    OR: [
-                        { // Subentries are exempt from refinement, even though it is not said explicitly in X.525.
-                            subentry: true,
-                        },
-                        convert_refinement_to_prisma_filter(refinement),
-                    ]
-                }
-                : {})
-        });
-    }
+    // NOTE: You cannot apply a refinement here, because, even if a subordinate
+    // does not match the refinement, one of its subordinates may.
+    const getNextBatchOfUnmentionedSubordinates = () => readSubordinates(ctx, vertex, 100, undefined, cursorId);
     let subordinates: Vertex[] = await getNextBatchOfUnmentionedSubordinates();
     const subtrees: Subtree[] = [];
     while (subordinates.length > 0) {
@@ -247,6 +245,18 @@ async function createTotalRefreshFromVertex (
         && (allSubordinatesCount === 0)
         && (content.attributes.length === 0)
     );
+
+    // If this entry does not fall within the refinement, its subordinates still might.
+    if (!withinRefinement) {
+        return [
+            new TotalRefresh(
+                undefined,
+                subtrees,
+            ),
+            to_be_pruned,
+        ];
+    }
+
     return [
         new TotalRefresh(
             content
@@ -280,7 +290,7 @@ async function createTotalRefresh (
         },
     });
     if (!ob) {
-        throw new Error();
+        throw new Error("20d84d18-06c0-43a1-b0ed-047da92a5e98");
     }
     const agreementElement = new BERElement();
     agreementElement.fromBytes(ob.agreement_ber);
@@ -291,7 +301,7 @@ async function createTotalRefresh (
         : cp_dn;
     const base = await dnToVertex(ctx, ctx.dit.root, base_dn);
     if (!base) {
-        throw new Error();
+        throw new Error("944e77fe-06ae-4872-82b1-10f3e3ae8730");
     }
     const baseRefresh = (await createTotalRefreshFromVertex(
         ctx,
