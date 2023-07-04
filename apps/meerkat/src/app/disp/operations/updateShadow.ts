@@ -411,9 +411,24 @@ async function applyTotalRefresh (
         if (!refresh.subtree || (refresh.subtree.length !== 1)) {
             throw new Error("9af326e0-f1a3-448b-bdc2-e48b95464b36");
         }
-        const sub = await dnToVertex(ctx, vertex, [ refresh.subtree[0].rdn ]);
+        let sub = await dnToVertex(ctx, vertex, [ refresh.subtree[0].rdn ]);
         if (!sub) {
-            throw new Error("6be73719-242a-471a-a65a-e3ac05da8f74");
+            if (depth < cp_length) {
+                throw new Error("6be73719-242a-471a-a65a-e3ac05da8f74");
+            }
+            // If the vertex falls below the CP, we can just create glue DSEs.
+            sub = await createEntry(
+                ctx,
+                vertex,
+                refresh.subtree[0].rdn,
+                {
+                    glue: true,
+                    lastShadowUpdate: new Date(),
+                },
+                [],
+                undefined,
+                true,
+            );
         }
         return applyTotalRefresh(ctx, assn, obid, sub, refresh.subtree[0], agreement, depth + 1, signErrors, []);
     }
@@ -1017,9 +1032,24 @@ async function applyIncrementalRefreshStep (
         if (!refresh.subordinateUpdates || (refresh.subordinateUpdates.length !== 1)) {
             throw new Error("29a2ac56-10fe-4354-b61b-ceeca9c632e0");
         }
-        const sub = await dnToVertex(ctx, vertex, [ refresh.subordinateUpdates[0].subordinate ]);
+        let sub = await dnToVertex(ctx, vertex, [ refresh.subordinateUpdates[0].subordinate ]);
         if (!sub) {
-            throw new Error("c22bf8dd-f256-4245-a942-2bdc622807d1");
+            if (depth < cp_length) {
+                throw new Error("c22bf8dd-f256-4245-a942-2bdc622807d1");
+            }
+            // If the vertex falls below the CP, we can just create glue DSEs.
+            sub = await createEntry(
+                ctx,
+                vertex,
+                refresh.subordinateUpdates[0].subordinate,
+                {
+                    glue: true,
+                    lastShadowUpdate: new Date(),
+                },
+                [],
+                undefined,
+                true,
+            );
         }
         return applyIncrementalRefreshStep(
             ctx,
