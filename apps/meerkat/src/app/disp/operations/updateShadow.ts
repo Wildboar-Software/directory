@@ -523,8 +523,8 @@ async function applyTotalRefresh (
     //     ]);
     // }
     const max = agreement.shadowSubject.area.replicationArea.maximum;
-    const max_depth = Math.min(cp_length + Number(max ?? MAX_DEPTH), MAX_DEPTH);
-    if (depth >= max_depth) {
+    const max_depth = Math.min(Number(max ?? MAX_DEPTH), MAX_DEPTH);
+    if (localName.length >= max_depth) {
         if (replicating_subrs) {
             start_replicating_subordinates = true;
         } else {
@@ -1124,7 +1124,7 @@ async function applyIncrementalRefreshStep (
 
     const max = agreement.shadowSubject.area.replicationArea.maximum;
     const max_depth = Math.min(cp_length + Number(max ?? MAX_DEPTH), MAX_DEPTH);
-    if (depth >= max_depth) {
+    if (localName.length >= max_depth) {
         if (replicating_subrs) {
             start_replicating_subordinates = true;
         } else {
