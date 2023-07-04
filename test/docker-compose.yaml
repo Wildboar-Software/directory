@@ -45,6 +45,8 @@ services:
       MEERKAT_IDM_BUFFER_SIZE: "1000000000"
       MEERKAT_MAX_IDM_PDU_SIZE: "1000000000"
       MEERKAT_MAX_IDM_SEGMENTS: 100
+      # I already know my schema is valid. We just need an environment that can come up quickly.
+      # MEERKAT_BULK_INSERT_MODE: 1
       # MEERKAT_INIT_JS: /data/init.mjs
     hostname: 'dsa1'
     labels:
@@ -108,8 +110,6 @@ services:
       MEERKAT_IDM_BUFFER_SIZE: "1000000000"
       MEERKAT_MAX_IDM_PDU_SIZE: "1000000000"
       MEERKAT_MAX_IDM_SEGMENTS: 100
-      # I already know my schema is valid. We just need an environment that can come up quickly.
-      MEERKAT_BULK_INSERT_MODE: 1
       # MEERKAT_INIT_JS: /data/init.mjs
     hostname: 'dsa2'
     labels:
