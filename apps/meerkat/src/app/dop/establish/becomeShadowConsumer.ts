@@ -102,6 +102,20 @@ async function becomeShadowConsumer (
     });
     currentRoot.dse.glue = false;
 
+    // By updating the OB here, you avoid a race condition where the DISP request
+    // is sent before the OB is "complete."
+    await ctx.db.operationalBinding.update({
+        where: {
+            id: ob_db_id,
+        },
+        data: {
+            entry_id: currentRoot.dse.id,
+        },
+        select: {
+            id: true,
+        },
+    });
+
     // Specifically, how does supplier-is-master get populated?
     // DEVIATION: If agreement.master is set, we assume the supplier is not master.
     const supplier_is_master: boolean = !agreement.master;
