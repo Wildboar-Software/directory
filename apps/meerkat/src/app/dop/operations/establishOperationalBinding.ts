@@ -2609,7 +2609,7 @@ async function establishOperationalBinding (
                 ? new Date(Math.max(created.requested_time.valueOf(), created.responded_time.valueOf()))
                 : created.requested_time;
             try {
-                const cpVertex = await becomeShadowConsumer(
+                await becomeShadowConsumer(
                     ctx,
                     agreement,
                     data.accessPoint,
@@ -2617,17 +2617,6 @@ async function establishOperationalBinding (
                     created.id,
                     ob_time,
                 );
-                await ctx.db.operationalBinding.update({
-                    where: {
-                        uuid: created.uuid,
-                    },
-                    data: {
-                        entry_id: cpVertex.dse.id,
-                    },
-                    select: {
-                        id: true,
-                    },
-                });
                 ctx.log.info(ctx.i18n.t("log:establishOperationalBinding", {
                     context: "succeeded",
                     type: data.bindingType.toString(),
