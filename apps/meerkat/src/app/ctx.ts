@@ -1126,6 +1126,7 @@ const ctx: MeerkatContext = {
     systemProposedTightenings: new Map(),
     pendingShadowingUpdateCycles: new Map(),
     shadowUpdateCycles: new Map(),
+    updatingShadow: new Set(),
 };
 
 export default ctx;

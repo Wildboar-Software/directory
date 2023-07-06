@@ -35,16 +35,15 @@ import { shadowError } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstr
 import stringifyDN from "../x500/stringifyDN";
 import printCode from "../utils/printCode";
 
-export
-async function updateShadowConsumer (
+async function _updateShadowConsumer (
     ctx: MeerkatContext,
-    obid: number,
+    ob_db_id: number,
     // totalRefreshOverride?: ShadowingAgreementInfo,
     forceTotalRefresh: boolean = false,
 ): Promise<void> {
     const ob = await ctx.db.operationalBinding.findUnique({
         where: {
-            id: obid,
+            id: ob_db_id,
         },
         select: {
             binding_identifier: true,
@@ -72,6 +71,42 @@ async function updateShadowConsumer (
     const agreementElement = new BERElement();
     agreementElement.fromBytes(ob.agreement_ber);
     const agreement = _decode_ShadowingAgreementInfo(agreementElement);
+    const updateMode = agreement.updateMode ?? ShadowingAgreementInfo._default_value_for_updateMode;
+    const performTotalRefresh: boolean = (
+        forceTotalRefresh
+        || !ob.local_last_update // If this DSA never replicated to this consumer at all,
+        // ...or, the reported last update time is behind the local last update time.
+        || (ob.remote_last_update && (ob.remote_last_update < ob.local_last_update))
+        || (ob.requested_strategy === ShadowUpdateStrategy.TOTAL)
+    );
+
+    if (
+        !performTotalRefresh
+        && "supplierInitiated" in updateMode
+        && ("onChange" in updateMode.supplierInitiated)
+    ) {
+        // If there are no updates, and the update mode is "onChange," just do nothing.
+        const since: Date = ob.remote_last_update ?? ob.local_last_update!;
+        const first_step = !!(await ctx.db.pendingShadowIncrementalStepRefresh.findFirst({
+            where: {
+                binding_identifier: ob_db_id,
+                time: {
+                    gt: since,
+                },
+            },
+            select: {
+                id: true,
+            },
+        }));
+        if (!first_step) {
+            return;
+        }
+    }
+
+    const apElement = new BERElement();
+    apElement.fromBytes(ob.access_point.ber);
+    const accessPoint = _decode_AccessPoint(apElement);
+
     const cp_dn = agreement.shadowSubject.area.contextPrefix;
     const base_dn = agreement.shadowSubject.area.replicationArea.base
         ? [ ...cp_dn, ...agreement.shadowSubject.area.replicationArea.base ]
@@ -83,10 +118,6 @@ async function updateShadowConsumer (
         }));
         return;
     }
-
-    const apElement = new BERElement();
-    apElement.fromBytes(ob.access_point.ber);
-    const accessPoint = _decode_AccessPoint(apElement);
 
     const disp_client = await bindForDISP(
         ctx,
@@ -102,13 +133,6 @@ async function updateShadowConsumer (
         return;
     }
 
-    const performTotalRefresh: boolean = (
-        forceTotalRefresh
-        || !ob.local_last_update // If this DSA never replicated to this consumer at all,
-        // ...or, the reported last update time is behind the local last update time.
-        || (ob.remote_last_update && (ob.remote_last_update < ob.local_last_update))
-        || (ob.requested_strategy === ShadowUpdateStrategy.TOTAL)
-    );
     ctx.log.debug(ctx.i18n.t("log:coordinating_shadow_update", {
         context: performTotalRefresh ? "total" : "incremental",
         obid: ob.binding_identifier,
@@ -119,14 +143,7 @@ async function updateShadowConsumer (
         ob.binding_identifier,
         ob.binding_version,
     );
-    const updateMode = agreement.updateMode ?? ShadowingAgreementInfo._default_value_for_updateMode;
     const needsCoordinate: boolean = (!("consumerInitiated" in updateMode));
-    // const iAmSupplier: boolean = (
-    //     // The initiator was the supplier and this DSA was the initiator...
-    //     ((ob.initiator === OperationalBindingInitiator.ROLE_A) && (ob.outbound))
-    //     // ...or, the initiator was the consumer, and this DSA was NOT the initiator.
-    //     || ((ob.initiator === OperationalBindingInitiator.ROLE_B) && (!ob.outbound))
-    // );
     if (needsCoordinate) {
         const coordinateOutcome = await disp_client.coordinateShadowUpdate({
             agreementID: bindingID,
@@ -213,7 +230,7 @@ async function updateShadowConsumer (
     let updatedInfo: RefreshInformation;
     const now = new Date();
     if (performTotalRefresh) {
-        const total = await createTotalRefresh(ctx, obid);
+        const total = await createTotalRefresh(ctx, ob_db_id);
         if (!total) {
             // TODO: This isn't supposed to happen. Close the association, at least.
             return;
@@ -228,7 +245,7 @@ async function updateShadowConsumer (
         const since: Date = ob.remote_last_update ?? ob.local_last_update!;
         const steps = await ctx.db.pendingShadowIncrementalStepRefresh.findMany({
             where: {
-                binding_identifier: obid,
+                binding_identifier: ob_db_id,
                 time: {
                     gt: since,
                 },
@@ -295,7 +312,7 @@ async function updateShadowConsumer (
         });
         await ctx.db.operationalBinding.update({
             where: {
-                id: obid,
+                id: ob_db_id,
             },
             data: {
                 local_last_update: now,
@@ -324,7 +341,7 @@ async function updateShadowConsumer (
             }), logInfo);
             await ctx.db.operationalBinding.update({
                 where: {
-                    id: obid,
+                    id: ob_db_id,
                 },
                 data: {
                     last_shadow_problem: Number(errData.problem),
@@ -361,4 +378,24 @@ async function updateShadowConsumer (
         }));
     }
     disp_client?.unbind().then().catch(); // INTENTIONAL_NO_AWAIT
+}
+
+export
+async function updateShadowConsumer (
+    ctx: MeerkatContext,
+    ob_db_id: number,
+    // totalRefreshOverride?: ShadowingAgreementInfo,
+    forceTotalRefresh: boolean = false,
+): Promise<void> {
+    if (ctx.updatingShadow.has(ob_db_id)) {
+        return;
+    }
+    ctx.updatingShadow.add(ob_db_id);
+    try {
+        await _updateShadowConsumer(ctx, ob_db_id, forceTotalRefresh);
+    } catch (e) {
+        // TODO:
+    } finally {
+        ctx.updatingShadow.delete(ob_db_id);
+    }
 }

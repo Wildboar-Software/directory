@@ -3106,6 +3106,12 @@ interface Context {
      * @see {@link pendingShadowingUpdateCycles}
      */
     shadowUpdateCycles: Map<number, NodeJS.Timer>;
+
+    /**
+     * This field's purpose is to act like a mutex and prevent two overlapping
+     * shadow updates for the same operational binding.
+     */
+    updatingShadow: Set<number>;
 }
 
 /**
