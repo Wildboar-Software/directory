@@ -211,6 +211,12 @@ import {
 import {
     Guide,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/Guide.ta";
+import { Attribute_valuesWithContext_Item } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Attribute-valuesWithContext-Item.ta";
+import { Context as X500Context } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Context.ta";
+import { languageContext, temporalContext } from "@wildboar/x500/src/lib/collections/contexts";
+import { TimeSpecification } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/TimeSpecification.ta";
+import { TimeSpecification_time_absolute } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/TimeSpecification-time-absolute.ta";
+import { addDays } from "date-fns";
 
 const id_wildboar           = new ObjectIdentifier([ 1, 3, 6, 1, 4, 1, 56490 ]);
 const id_serviceTypes       = new ObjectIdentifier([ 59 ], id_wildboar);
@@ -760,7 +766,7 @@ async function seedUS (
     const peepantsGang: DistinguishedName[] = [];
     const newEntryArgs: [cn: string, arg: AddEntryArgument][] = [];
     // Create random people
-    for (let i = 1; i < 10; i++) {
+    for (let i = 1; i < 20; i++) {
         // TODO: pgpKeyInfo
         // TODO: simpleSecurityObject
         // TODO: uidObject
@@ -842,10 +848,58 @@ async function seedUS (
             attributes.push(new Attribute(
                 unstructuredName["&id"],
                 [unstructuredName.encoderFor["&Type"]!({ directoryString: { uTF8String: "Big Chungus" } }, DER)],
+                [
+                    new Attribute_valuesWithContext_Item(
+                        unstructuredName.encoderFor["&Type"]!({ directoryString: { uTF8String: "Der Grosse Chungus" } }, DER),
+                        [
+                            new X500Context(
+                                languageContext["&id"],
+                                [languageContext.encoderFor["&Type"]!("deu", DER)],
+                            ),
+                            new X500Context(
+                                temporalContext["&id"],
+                                [temporalContext.encoderFor["&Type"]!(new TimeSpecification(
+                                    {
+                                        absolute: new TimeSpecification_time_absolute(
+                                            new Date(),
+                                            addDays(new Date(), 21),
+                                        ),
+                                    },
+                                    undefined,
+                                    undefined,
+                                ), DER)],
+                            ),
+                        ],
+                    ),
+                ],
             ));
             attributes.push(new Attribute(
                 unstructuredAddress["&id"],
                 [unstructuredAddress.encoderFor["&Type"]!({ uTF8String: "123 Drury lane, Atlanta, GA 12345" }, DER)],
+                [
+                    new Attribute_valuesWithContext_Item(
+                        unstructuredAddress.encoderFor["&Type"]!({ uTF8String: "123 Meyerplatz O., Ulm" }, DER),
+                        [
+                            new X500Context(
+                                languageContext["&id"],
+                                [languageContext.encoderFor["&Type"]!("deu", DER)],
+                            ),
+                            new X500Context(
+                                temporalContext["&id"],
+                                [temporalContext.encoderFor["&Type"]!(new TimeSpecification(
+                                    {
+                                        absolute: new TimeSpecification_time_absolute(
+                                            new Date(),
+                                            addDays(new Date(), 21),
+                                        ),
+                                    },
+                                    undefined,
+                                    undefined,
+                                ), DER)],
+                            ),
+                        ],
+                    ),
+                ],
             ));
             attributes.push(new Attribute(
                 dateOfBirth["&id"],
