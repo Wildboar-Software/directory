@@ -34,6 +34,8 @@ import {
 import { shadowError } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/shadowError.oa";
 import stringifyDN from "../x500/stringifyDN";
 import printCode from "../utils/printCode";
+import { DISPClient } from "@wildboar/x500-client-ts";
+import isDebugging from "is-debugging";
 
 async function _updateShadowConsumer (
     ctx: MeerkatContext,
@@ -41,6 +43,8 @@ async function _updateShadowConsumer (
     // totalRefreshOverride?: ShadowingAgreementInfo,
     forceTotalRefresh: boolean = false,
 ): Promise<void> {
+    let disp_client: DISPClient | null | undefined;
+
     const ob = await ctx.db.operationalBinding.findUnique({
         where: {
             id: ob_db_id,
@@ -119,40 +123,176 @@ async function _updateShadowConsumer (
         return;
     }
 
-    const disp_client = await bindForDISP(
-        ctx,
-        undefined,
-        undefined,
-        accessPoint,
-        id_ac_shadowSupplierInitiatedAsynchronousAC,
-        undefined,
-        true,
-    );
-    if (!disp_client) {
-        ctx.log.warn(ctx.i18n.t("log:disp_association_failed", { obid: ob.binding_identifier }));
-        return;
-    }
+    try {
+        disp_client = await bindForDISP(
+            ctx,
+            undefined,
+            undefined,
+            accessPoint,
+            id_ac_shadowSupplierInitiatedAsynchronousAC,
+            undefined,
+            true,
+        );
+        if (!disp_client) {
+            ctx.log.warn(ctx.i18n.t("log:disp_association_failed", { obid: ob.binding_identifier }));
+            return;
+        }
 
-    ctx.log.debug(ctx.i18n.t("log:coordinating_shadow_update", {
-        context: performTotalRefresh ? "total" : "incremental",
-        obid: ob.binding_identifier,
-    }));
+        ctx.log.debug(ctx.i18n.t("log:coordinating_shadow_update", {
+            context: performTotalRefresh ? "total" : "incremental",
+            obid: ob.binding_identifier,
+        }));
 
-    let step_ids: number[] = [];
-    const bindingID = new OperationalBindingID(
-        ob.binding_identifier,
-        ob.binding_version,
-    );
-    const needsCoordinate: boolean = (!("consumerInitiated" in updateMode));
-    if (needsCoordinate) {
-        const coordinateOutcome = await disp_client.coordinateShadowUpdate({
+        let step_ids: number[] = [];
+        const bindingID = new OperationalBindingID(
+            ob.binding_identifier,
+            ob.binding_version,
+        );
+        const needsCoordinate: boolean = (!("consumerInitiated" in updateMode));
+        if (needsCoordinate) {
+            const coordinateOutcome = await disp_client.coordinateShadowUpdate({
+                agreementID: bindingID,
+                lastUpdate: ob.local_last_update ?? undefined,
+                updateStrategy: {
+                    standard: performTotalRefresh
+                        ? CoordinateShadowUpdateArgumentData_updateStrategy_standard_total
+                        : CoordinateShadowUpdateArgumentData_updateStrategy_standard_incremental,
+                },
+                securityParameters: createSecurityParameters(
+                    ctx,
+                    !!(ctx.config.signing.certPath && ctx.config.signing.key),
+                    accessPoint.ae_title.rdnSequence,
+                    id_opcode_coordinateShadowUpdate,
+                ),
+                cert_path: ctx.config.signing.certPath,
+                key: ctx.config.signing.key,
+                _unrecognizedExtensionsList: [],
+            });
+            if ("result" in coordinateOutcome) {
+                ctx.log.debug(ctx.i18n.t("log:coordinated_shadow_update", {
+                    context: performTotalRefresh ? "total" : "incremental",
+                    obid: ob.binding_identifier,
+                }));
+            }
+            else if ("error" in coordinateOutcome) {
+                if (compareCode(coordinateOutcome.error.code, id_errcode_shadowError)) {
+                    const error = shadowError.decoderFor["&ParameterType"]!(coordinateOutcome.error.parameter);
+                    const errData = getOptionallyProtectedValue(error);
+                    const logInfo = {
+                        performer: errData.performer && stringifyDN(ctx, errData.performer),
+                        aliasDereferenced: errData.aliasDereferenced,
+                        lastUpdate: errData.lastUpdate?.toISOString(),
+                        signed: ("signed" in error),
+                        problem: errData.problem,
+                        start_time: errData.updateWindow?.start?.toISOString(),
+                        stop_time: errData.updateWindow?.stop?.toISOString(),
+                    };
+                    const problem: string | undefined = errData.problem > 12
+                        ? undefined
+                        : errData.problem.toString();
+                    ctx.log.warn(ctx.i18n.t("log:shadow_error_coordinating_shadow", {
+                        context: problem,
+                        obid: ob.binding_identifier,
+                    }), logInfo);
+                } else {
+                    ctx.log.warn(ctx.i18n.t("log:error_coordinating_shadow", {
+                        obid: ob.binding_identifier,
+                        code: printCode(coordinateOutcome.error.code),
+                    }));
+                }
+                return;
+            }
+            else if ("reject" in coordinateOutcome) {
+                ctx.log.warn(ctx.i18n.t("log:coordinating_shadow_rejected", {
+                    obid: ob.binding_identifier,
+                    code: coordinateOutcome.reject.problem.toString(),
+                }));
+                return;
+            }
+            else if ("abort" in coordinateOutcome) {
+                ctx.log.warn(ctx.i18n.t("log:coordinating_shadow_aborted", {
+                    obid: ob.binding_identifier,
+                    code: coordinateOutcome.abort.toString(),
+                }));
+                return;
+            }
+            else if ("timeout" in coordinateOutcome) {
+                ctx.log.warn(ctx.i18n.t("log:coordinating_shadow_timeout", {
+                    obid: ob.binding_identifier,
+                }));
+                return;
+            }
+            else {
+                ctx.log.warn(ctx.i18n.t("log:coordinating_shadow_other_problem", {
+                    obid: ob.binding_identifier,
+                    data: coordinateOutcome.other,
+                }));
+                return;
+            }
+        } else {
+            // FIXME: Check if requestShadowUpdate request has been sent.
+        }
+        let updatedInfo: RefreshInformation;
+        const now = new Date();
+        if (performTotalRefresh) {
+            const total = await createTotalRefresh(ctx, ob_db_id);
+            if (!total) {
+                // TODO: This isn't supposed to happen. Close the association, at least.
+                return;
+            }
+            updatedInfo = { total };
+            await ctx.db.pendingShadowIncrementalStepRefresh.deleteMany({
+                where: {
+                    binding_identifier: ob.binding_identifier,
+                },
+            });
+        } else {
+            const since: Date = ob.remote_last_update ?? ob.local_last_update!;
+            const steps = await ctx.db.pendingShadowIncrementalStepRefresh.findMany({
+                where: {
+                    binding_identifier: ob_db_id,
+                    time: {
+                        gt: since,
+                    },
+                },
+                select: {
+                    id: true,
+                    ber: true,
+                },
+                orderBy: {
+                    time: "asc",
+                },
+            });
+            if (steps.length > 0) {
+                updatedInfo = {
+                    incremental: steps.map(({ ber }) => {
+                        const el = new BERElement();
+                        el.fromBytes(ber);
+                        return _decode_IncrementalStepRefresh(el);
+                    }),
+                };
+                step_ids = steps.map((s) => s.id);
+                await ctx.db.pendingShadowIncrementalStepRefresh.updateMany({
+                    where: {
+                        id: {
+                            in: step_ids,
+                        },
+                    },
+                    data: {
+                        submitted: true,
+                    },
+                });
+            } else {
+                updatedInfo = {
+                    noRefresh: null,
+                };
+            }
+        }
+        const updateOutcome = await disp_client.updateShadow({
             agreementID: bindingID,
-            lastUpdate: ob.local_last_update ?? undefined,
-            updateStrategy: {
-                standard: performTotalRefresh
-                    ? CoordinateShadowUpdateArgumentData_updateStrategy_standard_total
-                    : CoordinateShadowUpdateArgumentData_updateStrategy_standard_incremental,
-            },
+            updatedInfo,
+            updateTime: now,
+            updateWindow: undefined,
             securityParameters: createSecurityParameters(
                 ctx,
                 !!(ctx.config.signing.certPath && ctx.config.signing.key),
@@ -163,15 +303,30 @@ async function _updateShadowConsumer (
             key: ctx.config.signing.key,
             _unrecognizedExtensionsList: [],
         });
-        if ("result" in coordinateOutcome) {
-            ctx.log.debug(ctx.i18n.t("log:coordinated_shadow_update", {
+        if ("result" in updateOutcome) {
+            ctx.log.debug(ctx.i18n.t("log:updated_shadow_update", {
                 context: performTotalRefresh ? "total" : "incremental",
                 obid: ob.binding_identifier,
             }));
+            await ctx.db.pendingShadowIncrementalStepRefresh.deleteMany({
+                where: {
+                    id: {
+                        in: step_ids,
+                    },
+                },
+            });
+            await ctx.db.operationalBinding.update({
+                where: {
+                    id: ob_db_id,
+                },
+                data: {
+                    local_last_update: now,
+                },
+            });
         }
-        else if ("error" in coordinateOutcome) {
-            if (compareCode(coordinateOutcome.error.code, id_errcode_shadowError)) {
-                const error = shadowError.decoderFor["&ParameterType"]!(coordinateOutcome.error.parameter);
+        else if ("error" in updateOutcome) {
+            if (compareCode(updateOutcome.error.code, id_errcode_shadowError)) {
+                const error = shadowError.decoderFor["&ParameterType"]!(updateOutcome.error.parameter);
                 const errData = getOptionallyProtectedValue(error);
                 const logInfo = {
                     performer: errData.performer && stringifyDN(ctx, errData.performer),
@@ -185,199 +340,69 @@ async function _updateShadowConsumer (
                 const problem: string | undefined = errData.problem > 12
                     ? undefined
                     : errData.problem.toString();
-                ctx.log.warn(ctx.i18n.t("log:shadow_error_coordinating_shadow", {
+                ctx.log.warn(ctx.i18n.t("log:shadow_error_updating_shadow", {
                     context: problem,
                     obid: ob.binding_identifier,
                 }), logInfo);
+                await ctx.db.operationalBinding.update({
+                    where: {
+                        id: ob_db_id,
+                    },
+                    data: {
+                        last_shadow_problem: Number(errData.problem),
+                    },
+                })
             } else {
-                ctx.log.warn(ctx.i18n.t("log:error_coordinating_shadow", {
+                ctx.log.warn(ctx.i18n.t("log:error_updating_shadow", {
                     obid: ob.binding_identifier,
-                    code: printCode(coordinateOutcome.error.code),
+                    code: printCode(updateOutcome.error.code),
                 }));
             }
-            return;
         }
-        else if ("reject" in coordinateOutcome) {
-            ctx.log.warn(ctx.i18n.t("log:coordinating_shadow_rejected", {
+        else if ("reject" in updateOutcome) {
+            ctx.log.warn(ctx.i18n.t("log:updating_shadow_rejected", {
                 obid: ob.binding_identifier,
-                code: coordinateOutcome.reject.problem.toString(),
+                code: updateOutcome.reject.problem.toString(),
             }));
-            return;
         }
-        else if ("abort" in coordinateOutcome) {
-            ctx.log.warn(ctx.i18n.t("log:coordinating_shadow_aborted", {
+        else if ("abort" in updateOutcome) {
+            ctx.log.warn(ctx.i18n.t("log:updating_shadow_aborted", {
                 obid: ob.binding_identifier,
-                code: coordinateOutcome.abort.toString(),
+                code: updateOutcome.abort.toString(),
             }));
-            return;
         }
-        else if ("timeout" in coordinateOutcome) {
-            ctx.log.warn(ctx.i18n.t("log:coordinating_shadow_timeout", {
+        else if ("timeout" in updateOutcome) {
+            ctx.log.warn(ctx.i18n.t("log:updating_shadow_timeout", {
                 obid: ob.binding_identifier,
             }));
-            return;
         }
         else {
-            ctx.log.warn(ctx.i18n.t("log:coordinating_shadow_other_problem", {
+            ctx.log.warn(ctx.i18n.t("log:updating_shadow_other_problem", {
                 obid: ob.binding_identifier,
-                data: coordinateOutcome.other,
-            }));
-            return;
-        }
-    } else {
-        // FIXME: Check if requestShadowUpdate request has been sent.
-    }
-    let updatedInfo: RefreshInformation;
-    const now = new Date();
-    if (performTotalRefresh) {
-        const total = await createTotalRefresh(ctx, ob_db_id);
-        if (!total) {
-            // TODO: This isn't supposed to happen. Close the association, at least.
-            return;
-        }
-        updatedInfo = { total };
-        await ctx.db.pendingShadowIncrementalStepRefresh.deleteMany({
-            where: {
-                binding_identifier: ob.binding_identifier,
-            },
-        });
-    } else {
-        const since: Date = ob.remote_last_update ?? ob.local_last_update!;
-        const steps = await ctx.db.pendingShadowIncrementalStepRefresh.findMany({
-            where: {
-                binding_identifier: ob_db_id,
-                time: {
-                    gt: since,
-                },
-            },
-            select: {
-                id: true,
-                ber: true,
-            },
-            orderBy: {
-                time: "asc",
-            },
-        });
-        if (steps.length > 0) {
-            updatedInfo = {
-                incremental: steps.map(({ ber }) => {
-                    const el = new BERElement();
-                    el.fromBytes(ber);
-                    return _decode_IncrementalStepRefresh(el);
-                }),
-            };
-            step_ids = steps.map((s) => s.id);
-            await ctx.db.pendingShadowIncrementalStepRefresh.updateMany({
-                where: {
-                    id: {
-                        in: step_ids,
-                    },
-                },
-                data: {
-                    submitted: true,
-                },
-            });
-        } else {
-            updatedInfo = {
-                noRefresh: null,
-            };
-        }
-    }
-    const updateOutcome = await disp_client.updateShadow({
-        agreementID: bindingID,
-        updatedInfo,
-        updateTime: now,
-        updateWindow: undefined,
-        securityParameters: createSecurityParameters(
-            ctx,
-            !!(ctx.config.signing.certPath && ctx.config.signing.key),
-            accessPoint.ae_title.rdnSequence,
-            id_opcode_coordinateShadowUpdate,
-        ),
-        cert_path: ctx.config.signing.certPath,
-        key: ctx.config.signing.key,
-        _unrecognizedExtensionsList: [],
-    });
-    if ("result" in updateOutcome) {
-        ctx.log.debug(ctx.i18n.t("log:updated_shadow_update", {
-            context: performTotalRefresh ? "total" : "incremental",
-            obid: ob.binding_identifier,
-        }));
-        await ctx.db.pendingShadowIncrementalStepRefresh.deleteMany({
-            where: {
-                id: {
-                    in: step_ids,
-                },
-            },
-        });
-        await ctx.db.operationalBinding.update({
-            where: {
-                id: ob_db_id,
-            },
-            data: {
-                local_last_update: now,
-            },
-        });
-    }
-    else if ("error" in updateOutcome) {
-        if (compareCode(updateOutcome.error.code, id_errcode_shadowError)) {
-            const error = shadowError.decoderFor["&ParameterType"]!(updateOutcome.error.parameter);
-            const errData = getOptionallyProtectedValue(error);
-            const logInfo = {
-                performer: errData.performer && stringifyDN(ctx, errData.performer),
-                aliasDereferenced: errData.aliasDereferenced,
-                lastUpdate: errData.lastUpdate?.toISOString(),
-                signed: ("signed" in error),
-                problem: errData.problem,
-                start_time: errData.updateWindow?.start?.toISOString(),
-                stop_time: errData.updateWindow?.stop?.toISOString(),
-            };
-            const problem: string | undefined = errData.problem > 12
-                ? undefined
-                : errData.problem.toString();
-            ctx.log.warn(ctx.i18n.t("log:shadow_error_updating_shadow", {
-                context: problem,
-                obid: ob.binding_identifier,
-            }), logInfo);
-            await ctx.db.operationalBinding.update({
-                where: {
-                    id: ob_db_id,
-                },
-                data: {
-                    last_shadow_problem: Number(errData.problem),
-                },
-            })
-        } else {
-            ctx.log.warn(ctx.i18n.t("log:error_updating_shadow", {
-                obid: ob.binding_identifier,
-                code: printCode(updateOutcome.error.code),
+                data: updateOutcome.other,
             }));
         }
-    }
-    else if ("reject" in updateOutcome) {
-        ctx.log.warn(ctx.i18n.t("log:updating_shadow_rejected", {
-            obid: ob.binding_identifier,
-            code: updateOutcome.reject.problem.toString(),
+    } catch (e) {
+        ctx.log.error(ctx.i18n.t("err:scheduled_shadow_update_failure", {
+            e,
+            obid: ob.binding_identifier.toString(),
         }));
+        if (isDebugging) {
+            console.error(e);
+        }
+    } finally {
+        try {
+            disp_client?.unbind().then().catch(); // INTENTIONAL_NO_AWAIT
+        } catch (e) {
+            ctx.log.error(ctx.i18n.t("err:disp_unbind_error", {
+                e,
+                obid: ob.binding_identifier.toString(),
+            }));
+            if (isDebugging) {
+                console.error(e);
+            }
+        }
     }
-    else if ("abort" in updateOutcome) {
-        ctx.log.warn(ctx.i18n.t("log:updating_shadow_aborted", {
-            obid: ob.binding_identifier,
-            code: updateOutcome.abort.toString(),
-        }));
-    }
-    else if ("timeout" in updateOutcome) {
-        ctx.log.warn(ctx.i18n.t("log:updating_shadow_timeout", {
-            obid: ob.binding_identifier,
-        }));
-    }
-    else {
-        ctx.log.warn(ctx.i18n.t("log:updating_shadow_other_problem", {
-            obid: ob.binding_identifier,
-            data: updateOutcome.other,
-        }));
-    }
-    disp_client?.unbind().then().catch(); // INTENTIONAL_NO_AWAIT
 }
 
 export
@@ -394,7 +419,10 @@ async function updateShadowConsumer (
     try {
         await _updateShadowConsumer(ctx, ob_db_id, forceTotalRefresh);
     } catch (e) {
-        // TODO:
+        ctx.log.error(e);
+        if (isDebugging) {
+            console.error(e);
+        }
     } finally {
         ctx.updatingShadow.delete(ob_db_id);
     }
