@@ -24,7 +24,14 @@ function scheduleShadowUpdates (
             ? updateMode.consumerInitiated
             : undefined);
     if (!schedule?.periodic) {
-        ctx.log.debug(ctx.i18n.t("log:sob_no_schedule", { obid: ob_id }));
+        if (!iAmSupplier) {
+            ctx.log.debug(ctx.i18n.t("log:sob_no_schedule", { obid: ob_id }));
+            return;
+        }
+        /* TODO: Document the rationale for this: by running every five seconds
+        instead of immediately, you can batch a large number of incremental
+        changes together. */
+        setInterval(async () => updateShadowConsumer(ctx, ob_db_id, false), 5000);
         return;
     }
     const supplierInitiated: boolean = ("supplierInitiated" in updateMode);
