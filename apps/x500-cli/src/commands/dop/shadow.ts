@@ -202,41 +202,39 @@ async function do_shadow (
         for (const sc of argv["select-context"]) {
             const end_of_attr = sc.indexOf(":");
             if (end_of_attr <= 0) {
-                throw new Error("Invalid select-context syntax. It should be 'attr:context=value,context=value'.");
+                throw new Error("Invalid select-context syntax. It should be 'attr:context=value,context=value'. No end of attribute.");
             }
             const attr = sc.slice(0, end_of_attr);
-            const values = sc.slice(end_of_attr + 1);
+            const context_and_value = sc.slice(end_of_attr + 1);
             const attr_oid = ctx.attributes.get(attr)?.id ?? ObjectIdentifier.fromString(attr);
             const valuesByType: Map<IndexableOID, ASN1Element[]> = new Map();
-            for (const value of values.split(",")) {
-                const end_of_context_type = value.indexOf("=", end_of_attr + 1);
-                if (end_of_context_type <= 0) {
-                    throw new Error("Invalid select-context syntax. It should be 'attr:context=value,context=value'.");
+            const end_of_context_type = context_and_value.indexOf("=");
+            if (end_of_context_type <= 0) {
+                throw new Error("Invalid select-context syntax. It should be 'attr:context=value,context=value'. No end of context type.");
+            }
+            const context_type = context_and_value.slice(0, end_of_context_type);
+            const context_value = context_and_value.slice(end_of_context_type + 1);
+            const ctxt_oid = ctx.contextTypes.get(context_type)?.id ?? ObjectIdentifier.fromString(context_type);
+            switch (ctxt_oid.toString()) {
+                case (languageContext["&id"].toString()): {
+                    const context_values = valuesByType.get(ctxt_oid.toString()) ?? [];
+                    context_values.push(_encodePrintableString(context_value, DER));
+                    valuesByType.set(ctxt_oid.toString(), context_values);
+                    break;
                 }
-                const context_type = sc.slice(end_of_attr + 1, end_of_context_type);
-                const context_value = sc.slice(end_of_context_type + 1);
-                const ctxt_oid = ctx.contextTypes.get(context_type)?.id ?? ObjectIdentifier.fromString(context_type);
-                switch (ctxt_oid.toString()) {
-                    case (languageContext["&id"].toString()): {
-                        const context_values = valuesByType.get(ctxt_oid.toString()) ?? [];
-                        context_values.push(_encodePrintableString(context_value, DER));
-                        valuesByType.set(ctxt_oid.toString(), context_values);
-                        break;
+                case (localeContext["&id"].toString()): {
+                    const context_values = valuesByType.get(ctxt_oid.toString()) ?? [];
+                    try {
+                        const encoded_value = ObjectIdentifier.fromString(context_value);
+                        context_values.push(_encodeObjectIdentifier(encoded_value, DER));
+                    } catch {
+                        context_values.push(_encodeUTF8String(context_value, DER));
                     }
-                    case (localeContext["&id"].toString()): {
-                        const context_values = valuesByType.get(ctxt_oid.toString()) ?? [];
-                        try {
-                            const encoded_value = ObjectIdentifier.fromString(context_value);
-                            context_values.push(_encodeObjectIdentifier(encoded_value, DER));
-                        } catch {
-                            context_values.push(_encodeUTF8String(context_value, DER));
-                        }
-                        valuesByType.set(ctxt_oid.toString(), context_values);
-                        break;
-                    }
-                    default: {
-                        throw new Error("Invalid select-context syntax. Only languageContext and localeContext supported.");
-                    }
+                    valuesByType.set(ctxt_oid.toString(), context_values);
+                    break;
+                }
+                default: {
+                    throw new Error("Invalid select-context syntax. Only languageContext and localeContext supported.");
                 }
             }
             const context_assertions = Array.from(valuesByType.entries())
