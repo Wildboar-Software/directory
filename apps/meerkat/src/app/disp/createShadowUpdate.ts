@@ -36,6 +36,7 @@ import stringifyDN from "../x500/stringifyDN";
 import printCode from "../utils/printCode";
 import { DISPClient } from "@wildboar/x500-client-ts";
 import isDebugging from "is-debugging";
+import { differenceInMilliseconds } from "date-fns";
 
 async function _updateShadowConsumer (
     ctx: MeerkatContext,
@@ -288,6 +289,27 @@ async function _updateShadowConsumer (
                 };
             }
         }
+        const schedule = (("supplierInitiated" in updateMode) && ("scheduled" in updateMode.supplierInitiated))
+            ? updateMode.supplierInitiated.scheduled
+            : (("consumerInitiated" in updateMode)
+                ? updateMode.consumerInitiated
+                : undefined);
+        const time_after_preparing_update = new Date();
+        const time_to_produce_update = Math.abs(differenceInMilliseconds(now, time_after_preparing_update));
+        /**
+         * We give the consumer 10 times as much time to apply the shadow update
+         * as it took to produce the update, but we cap that at the update
+         * interval, if it is defined, because we do not want shadow operations
+         * to "pile up."
+         */
+        const time_given_to_apply_update =  Math.min(
+            time_to_produce_update * 10,
+            Number(schedule?.periodic?.updateInterval ?? 100_000_000) * 1000,
+        );
+        ctx.log.debug(ctx.i18n.t("log:time_to_produce_shadow_update", {
+            obid: ob.binding_identifier,
+            ms: time_to_produce_update,
+        }));
         const updateOutcome = await disp_client.updateShadow({
             agreementID: bindingID,
             updatedInfo,
@@ -302,6 +324,7 @@ async function _updateShadowConsumer (
             cert_path: ctx.config.signing.certPath,
             key: ctx.config.signing.key,
             _unrecognizedExtensionsList: [],
+            timeout: time_given_to_apply_update,
         });
         if ("result" in updateOutcome) {
             ctx.log.debug(ctx.i18n.t("log:updated_shadow_update", {
