@@ -127,7 +127,6 @@ import {
     generateSIGNED,
     ref_type_from,
     CommonArguments,
-    CertPathOption,
     DirectoryName,
     TargetsObject,
     SelectionOptions,
@@ -138,8 +137,8 @@ import {
     service_option_to,
     DirectoryVersioned,
     generateUnusedInvokeId,
+    DirectoryOperationOptions,
 } from "./utils";
-import type { KeyObject } from "node:crypto";
 import { UserPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
 import { strict as assert } from "node:assert";
 import { compareCode } from "@wildboar/x500";
@@ -306,10 +305,7 @@ interface AdministerPasswordOptions extends DAPOperationOptions, TargetsObject {
 }
 
 export
-interface DAPOperationOptions {
-    key?: KeyObject;
-    cert_path?: CertPathOption;
-}
+interface DAPOperationOptions extends DirectoryOperationOptions {}
 
 export
 interface DAPOptions extends DAPOperationOptions {
@@ -414,6 +410,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                     present: invoke_id,
                 },
                 parameter: read.encoderFor["&ArgumentType"]!(arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, read["&operationCode"]!));
@@ -472,6 +469,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                     present: invoke_id,
                 },
                 parameter: compare.encoderFor["&ArgumentType"]!(arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, compare["&operationCode"]!));
@@ -508,6 +506,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                     present: invoke_id,
                 },
                 parameter: abandon.encoderFor["&ArgumentType"]!(arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, abandon["&operationCode"]!));
@@ -567,6 +566,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                     present: invoke_id,
                 },
                 parameter: list.encoderFor["&ArgumentType"]!(arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, list["&operationCode"]!));
@@ -689,6 +689,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                     present: invoke_id,
                 },
                 parameter: search.encoderFor["&ArgumentType"]!(arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, search["&operationCode"]!));
@@ -748,6 +749,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                     present: invoke_id,
                 },
                 parameter: addEntry.encoderFor["&ArgumentType"]!(arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, addEntry["&operationCode"]!));
@@ -805,6 +807,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                     present: invoke_id,
                 },
                 parameter: removeEntry.encoderFor["&ArgumentType"]!(arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, removeEntry["&operationCode"]!));
@@ -864,6 +867,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                     present: invoke_id,
                 },
                 parameter: modifyEntry.encoderFor["&ArgumentType"]!(arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, modifyEntry["&operationCode"]!));
@@ -946,6 +950,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                     present: invoke_id,
                 },
                 parameter: modifyDN.encoderFor["&ArgumentType"]!(arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, modifyDN["&operationCode"]!));
@@ -998,6 +1003,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                     present: invoke_id,
                 },
                 parameter: changePassword.encoderFor["&ArgumentType"]!(arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, changePassword["&operationCode"]!));
@@ -1045,6 +1051,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
                     present: invoke_id,
                 },
                 parameter: administerPassword.encoderFor["&ArgumentType"]!(arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, administerPassword["&operationCode"]!));

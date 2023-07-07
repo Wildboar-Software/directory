@@ -10,12 +10,11 @@ import {
 import {
     dSABind, DSABindArgument, DSABindResult,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/dSABind.oa";
-import type { KeyObject } from "node:crypto";
 import {
-    CertPathOption,
     generateSIGNED,
     DirectoryVersioned,
     generateUnusedInvokeId,
+    DirectoryOperationOptions,
 } from "./utils";
 import {
     establishOperationalBinding, EstablishOperationalBindingArgument,
@@ -139,10 +138,7 @@ interface CommonTerminateOptions <InitType = ASN1Element> extends DOPOperationOp
 }
 
 export
-interface DOPOperationOptions {
-    key?: KeyObject;
-    cert_path?: CertPathOption;
-}
+interface DOPOperationOptions extends DirectoryOperationOptions {}
 
 export
 interface DOPOptions extends DOPOperationOptions {
@@ -204,6 +200,7 @@ function create_dop_client (rose: ROSETransport): DOPClient {
                 present: invoke_id,
             },
             parameter: establishOperationalBinding.encoderFor["&ArgumentType"]!(arg, DER),
+            timeout: params.timeout,
         });
         if ("result" in outcome) {
             assert(compareCode(outcome.result.code, establishOperationalBinding["&operationCode"]!));
@@ -245,6 +242,7 @@ function create_dop_client (rose: ROSETransport): DOPClient {
                 present: invoke_id,
             },
             parameter: modifyOperationalBinding.encoderFor["&ArgumentType"]!(arg, DER),
+            timeout: params.timeout,
         });
         if ("result" in outcome) {
             assert(compareCode(outcome.result.code, modifyOperationalBinding["&operationCode"]!));
@@ -283,6 +281,7 @@ function create_dop_client (rose: ROSETransport): DOPClient {
                 present: invoke_id,
             },
             parameter: terminateOperationalBinding.encoderFor["&ArgumentType"]!(arg, DER),
+            timeout: params.timeout,
         });
         if ("result" in outcome) {
             assert(compareCode(outcome.result.code, terminateOperationalBinding["&operationCode"]!));

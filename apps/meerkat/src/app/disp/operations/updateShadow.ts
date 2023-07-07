@@ -1560,6 +1560,13 @@ async function updateShadow (
         // This should never happen. We create the CP if it does not exist.
         throw new Error("730902b2-bc68-4fbd-8e71-3f301c1c0ccd");
     }
+    /* We remove the timeout on the socket altogether and set a keep-alive so
+    that the socket is not closed just because the updateShadow operation takes
+    a long time before returning a response. */
+    if (assn.rose.socket) {
+        assn.rose.socket.setTimeout(0);
+        assn.rose.socket.setKeepAlive(true, 5000);
+    }
     if ("noRefresh" in data.updatedInfo) {
         ctx.log.info(ctx.i18n.t("log:shadow_update_no_refresh", { obid: ob.binding_identifier.toString() }));
         return {
