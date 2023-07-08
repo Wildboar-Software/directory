@@ -889,30 +889,9 @@ async function applyContentChange (
         const subtree = agreement.shadowSubject.area.replicationArea;
         const namingMatcher = getNamingMatcherGetter(ctx);
         if (!dnWithinSubtreeSpecification(newDN, objectClasses, subtree, cp, namingMatcher)) {
-            ctx.log.error(ctx.i18n.t("log:sdse_rename_not_agreed_upon", {
-                old_dn: stringifyDN(ctx, oldDN),
-                new_dn: stringifyDN(ctx, newDN),
-                obid: obid.identifier.toString(),
-            }));
-            throw new ShadowError(
-                ctx.i18n.t("err:shadow_rename_leaves_shadow_subtree"),
-                new ShadowErrorData(
-                    ShadowProblem_invalidInformationReceived,
-                    undefined,
-                    undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        signErrors,
-                        assn.boundNameAndUID?.dn,
-                        undefined,
-                        id_errcode_shadowError,
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    FALSE,
-                    undefined,
-                ),
-            );
+            // If the entry falls out of the shadowed subtree, just delete it.
+            await deleteEntry(ctx, vertex);
+            return;
         }
         const new_superior = await dnToVertex(ctx, ctx.dit.root, newDN.slice(0, -1));
         if (!new_superior) {
