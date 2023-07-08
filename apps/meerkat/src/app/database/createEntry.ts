@@ -152,6 +152,11 @@ async function createEntry (
                     })),
                 },
             },
+            EntryAttributeValuesIncomplete: entryInit.EntryAttributeValuesIncomplete,
+            subordinate_completeness: entryInit.subordinate_completeness,
+            attribute_completeness: entryInit.attribute_completeness,
+            lastShadowUpdate: entryInit.lastShadowUpdate,
+            alias: entryInit.alias,
         },
         include: {
             RDN: {
@@ -215,9 +220,13 @@ async function createEntry (
             nssr: undefined, // Impossible, because this entry is just now being created.
             shadow: entryInit.shadow
                 ? {
-                    attributeCompleteness: false,
-                    attributeValuesIncomplete: new Set(),
-                    subordinateCompleteness: false,
+                    attributeCompleteness: entryInit.attribute_completeness ?? false,
+                    attributeValuesIncomplete: new Set(
+                        Array.isArray(entryInit.EntryAttributeValuesIncomplete?.createMany?.data)
+                            ? (entryInit.EntryAttributeValuesIncomplete?.createMany?.data.map((x) => x.attribute_type) ?? [])
+                            : [],
+                    ),
+                    subordinateCompleteness: entryInit.subordinate_completeness ?? false,
                 }
                 : undefined,
             subentry: isSubentry ? {} : undefined,
