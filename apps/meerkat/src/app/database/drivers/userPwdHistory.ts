@@ -9,6 +9,7 @@ import type {
     SpecialAttributeCounter,
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
+    PendingUpdates,
 } from "@wildboar/meerkat-types";
 import {
     DERElement,
@@ -18,7 +19,6 @@ import { DER, _encodeGeneralizedTime } from "asn1-ts/dist/node/functional";
 import {
     userPwdHistory,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdHistory.oa";
-import NOOP from "./NOOP";
 import { subSeconds } from "date-fns";
 import {
     UserPwd,
@@ -26,6 +26,7 @@ import {
     _decode_UserPwd,
     _encode_UserPwd,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
+import { PwdHistory } from "@wildboar/x500/src/lib/modules/InformationFramework/PwdHistory.ta";
 
 /**
  * NOTE: This implementation does NOT honor the `pwdMaxTimeInHistory` attribute.
@@ -78,13 +79,53 @@ const readValues: SpecialAttributeDatabaseReader = async (
 };
 
 export
-const addValue: SpecialAttributeDatabaseEditor = NOOP;
+const addValue: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    if (!vertex.dse.shadow) {
+        return;
+    }
+    const hist: PwdHistory = userPwdHistory.decoderFor["&Type"]!(value.value);
+    pendingUpdates.otherWrites.push(ctx.db.passwordHistory.create({
+        data: {
+            entry_id: vertex.dse.id,
+            password: Buffer.from(hist.password.toBytes()),
+            time: hist.time,
+        },
+    }));
+};
 
 export
-const removeValue: SpecialAttributeDatabaseEditor = NOOP;
+const removeValue: SpecialAttributeDatabaseEditor = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    value: Value,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    const hist: PwdHistory = userPwdHistory.decoderFor["&Type"]!(value.value);
+    pendingUpdates.otherWrites.push(ctx.db.passwordHistory.deleteMany({
+        where: {
+            entry_id: vertex.dse.id,
+            password: Buffer.from(hist.password.toBytes()),
+        },
+    }));
+};
 
 export
-const removeAttribute: SpecialAttributeDatabaseRemover = NOOP;
+const removeAttribute: SpecialAttributeDatabaseRemover = async (
+    ctx: Readonly<Context>,
+    vertex: Vertex,
+    pendingUpdates: PendingUpdates,
+): Promise<void> => {
+    pendingUpdates.otherWrites.push(ctx.db.passwordHistory.deleteMany({
+        where: {
+            entry_id: vertex.dse.id,
+        },
+    }));
+};
 
 export
 const countValues: SpecialAttributeCounter = async (
