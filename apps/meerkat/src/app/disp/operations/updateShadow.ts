@@ -123,6 +123,7 @@ import {
 import { addSeconds } from "date-fns";
 import { RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
 import { stripEntry } from "../../database/stripEntry";
+import getDistinguishedName from "../../x500/getDistinguishedName";
 
 /**
  * @summary Convert an SDSEType into its equivalent DSEType
@@ -1059,10 +1060,12 @@ async function applyIncrementalRefreshStep (
         if (!refresh.subordinateUpdates || (refresh.subordinateUpdates.length !== 1)) {
             throw new Error("29a2ac56-10fe-4354-b61b-ceeca9c632e0");
         }
-        let sub = await dnToVertex(ctx, vertex, [ refresh.subordinateUpdates[0].subordinate ]);
+        const rdn = refresh.subordinateUpdates[0].subordinate;
+        let sub = await dnToVertex(ctx, vertex, [ rdn ]);
         if (!sub) {
             if (depth < cp_length) {
-                throw new Error("c22bf8dd-f256-4245-a942-2bdc622807d1");
+                const dn = getDistinguishedName(vertex);
+                throw new Error("c22bf8dd-f256-4245-a942-2bdc622807d1: " + stringifyDN(ctx, [ ...dn, rdn ]));
             }
             // If the vertex falls below the CP, we can just create glue DSEs.
             sub = await createEntry(
