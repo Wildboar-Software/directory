@@ -302,10 +302,21 @@ async function _updateShadowConsumer (
          * as it took to produce the update, but we cap that at the update
          * interval, if it is defined, because we do not want shadow operations
          * to "pile up."
+         *
+         * In addition to this, we floor this number at 30 seconds, since a
+         * "no changes" update could be produced extremely quickly, which would
+         * result in an absurdly low timeout otherwise.
+         *
+         * In other words, this equation should always hold true:
+         *
+         * 30 seconds <= time given to respond <= update interval
          */
-        const time_given_to_apply_update =  Math.min(
-            time_to_produce_update * 10,
-            Number(schedule?.periodic?.updateInterval ?? 100_000_000) * 1000,
+        const time_given_to_apply_update = Math.max(
+            Math.min(
+                time_to_produce_update * 10,
+                Number(schedule?.periodic?.updateInterval ?? 100_000_000) * 1000,
+            ),
+            30_000,
         );
         ctx.log.debug(ctx.i18n.t("log:time_to_produce_shadow_update", {
             obid: ob.binding_identifier,
