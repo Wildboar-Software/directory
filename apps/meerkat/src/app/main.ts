@@ -42,7 +42,7 @@ import loadNameForms from "./init/loadNameForms";
 import { loadDSARelationships } from "./init/loadDSARelationships";
 import ctx, { MeerkatContext } from "./ctx";
 import terminate from "./dop/terminateByID";
-import { addSeconds, differenceInMilliseconds, differenceInMinutes } from "date-fns";
+import { differenceInMilliseconds, differenceInMinutes } from "date-fns";
 import * as dns from "dns/promises";
 import {
     updatesDomain,
@@ -76,10 +76,8 @@ import { disp_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/di
 import DISPAssociation from "./disp/DISPConnection";
 import { id_op_binding_shadow } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
 import { OperationalBindingInitiator } from "@prisma/client";
-import { updateShadowConsumer } from "./disp/createShadowUpdate";
 import {
     _decode_ShadowingAgreementInfo,
-    ShadowingAgreementInfo,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
 import scheduleShadowUpdates from "./disp/scheduleShadowUpdates";
 import { BERElement } from "asn1-ts";
@@ -1433,30 +1431,14 @@ async function main (): Promise<void> {
             validity_start: {
                 lte: now,
             },
-            AND: [
+            OR: [
                 {
-                    OR: [
-                        {
-                            validity_end: null,
-                        },
-                        {
-                            validity_end: {
-                                gte: now,
-                            },
-                        },
-                    ],
+                    validity_end: null,
                 },
                 {
-                    OR: [ // This DSA is the supplier if one of these conditions are true.
-                        { // This DSA initiated an OB in which it is the supplier.
-                            initiator: OperationalBindingInitiator.ROLE_A,
-                            outbound: true,
-                        },
-                        { // This DSA accepted an OB from a consumer.
-                            initiator: OperationalBindingInitiator.ROLE_B,
-                            outbound: false,
-                        },
-                    ],
+                    validity_end: {
+                        gte: now,
+                    },
                 },
             ],
         },
