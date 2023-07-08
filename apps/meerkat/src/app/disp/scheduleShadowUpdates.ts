@@ -88,18 +88,26 @@ function scheduleShadowUpdates (
             ctx.shadowUpdateCycles.set(ob_id, timer);
         }
     };
-    if (periods.beginTime) {
-        let nextUpdateTime: Date = periods.beginTime;
-        while (nextUpdateTime < now) {
-            // TODO: Use a better algorithm to identify the next update time.
-            nextUpdateTime = addSeconds(nextUpdateTime, Number(periods.updateInterval));
+
+    let period_start = schedule.periodic.beginTime ?? ob_time;
+    let next_period_start = period_start;
+    let i = 0;
+    while (i++ < 1_000_000) {
+        // TODO: Use a better algorithm to identify the next update time.
+        next_period_start = addSeconds(period_start, Number(schedule.periodic.updateInterval));
+        if (next_period_start.valueOf() > now.valueOf()) {
+            break;
         }
-        const time_until_first_update = Math.abs(differenceInMilliseconds(now, nextUpdateTime))
-            + 5000; // Plus five seconds just to avoid updating before the window due to imprecision.
+        period_start = next_period_start;
+    }
+    const end_of_period = addSeconds(period_start, Number(schedule.periodic.windowSize));
+    if (now.valueOf() < end_of_period.valueOf()) {
+        // If we are within the window, we can just schedule the shadowing cycle now.
+        scheduleShadowUpdates_();
+    } else { // Otherwise, we have to wait until the first update
+        const time_until_first_update = Math.abs(differenceInMilliseconds(now, next_period_start));
         const timeout = safeSetTimeout(scheduleShadowUpdates_, time_until_first_update);
         ctx.pendingShadowingUpdateCycles.set(ob_id, timeout);
-    } else {
-        scheduleShadowUpdates_();
     }
 }
 
