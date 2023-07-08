@@ -3,15 +3,16 @@ import {
     id_op_binding_shadow,
 } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
 import {
+    ShadowingAgreementInfo,
     _decode_ShadowingAgreementInfo,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
 import { BERElement, OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import getDistinguishedName from "../x500/getDistinguishedName";
-import { dnWithinSubtreeSpecification, evaluateContextAssertion, groupByOID } from "@wildboar/x500";
+import { compareDistinguishedName, dnWithinSubtreeSpecification, evaluateContextAssertion, groupByOID, objectClassesWithinRefinement } from "@wildboar/x500";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import { UnitOfReplication } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/UnitOfReplication.ta";
 import {
-    IncrementalStepRefresh,
+    IncrementalStepRefresh, SubordinateChanges,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/IncrementalStepRefresh.ta";
 import {
     ClassAttributeSelection,
@@ -26,11 +27,14 @@ import {
 import valuesFromAttribute from "../x500/valuesFromAttribute";
 import attributesFromValues from "../x500/attributesFromValues";
 import { Attribute } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Attribute.ta";
-import { ALL_ATTRIBUTE_TYPES } from "../constants";
+import { ALL_ATTRIBUTE_TYPES, MAX_TRAVERSAL } from "../constants";
 import getAttributeParentTypes from "../x500/getAttributeParentTypes";
 import { ContentChange, ContentChange_rename } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ContentChange.ta";
 import { EntryModification } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryModification.ta";
 import getSDSEContent, { mandatoryReplicatedAttributeTypesSet } from "../disp/getSDSEContent";
+import { DistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/DistinguishedName.ta";
+import readSubordinates from "../dit/readSubordinates";
+import { LocalName } from "@wildboar/x500/src/lib/modules/InformationFramework/LocalName.ta";
 
 
 /**
@@ -119,19 +123,115 @@ function filterByTypeAndContextAssertion (
     return attributesFromValues(ret)[0];
 }
 
+/**
+ *
+ * Because of where this function gets called, you do not need to worry about
+ * the context prefix, base, or minimum. Only maximum, chops, and refinement
+ * matter for this function.
+ *
+ * @param ctx
+ * @param vertex
+ * @param agreement
+ * @param localName
+ * @returns
+ */
+export
+async function getIncrementallyAddedSubtree (
+    ctx: Context,
+    vertex: Vertex,
+    agreement: ShadowingAgreementInfo,
+    localName: LocalName,
+): Promise<IncrementalStepRefresh> {
+    const spexs = agreement.shadowSubject.area.replicationArea.specificExclusions ?? [];
+    let chop_after: boolean = false;
+    const namingMatcher = getNamingMatcherGetter(ctx);
+    for (const chop of spexs) {
+        let chopBefore: boolean = true;
+        let chopName: LocalName = [];
+        if ("chopBefore" in chop) {
+            chopName = chop.chopBefore;
+            chopBefore = true;
+        } else if ("chopAfter" in chop) {
+            chopName = chop.chopAfter;
+        }
+        if (compareDistinguishedName(chopName, localName, namingMatcher)) {
+            if (chopBefore) {
+                // We return an incremental refresh that gets pruned.
+                return new IncrementalStepRefresh(undefined, undefined);
+            }
+            chop_after = true;
+            break;
+        }
+    }
+    const max = Number(agreement.shadowSubject.area.replicationArea.maximum ?? MAX_TRAVERSAL);
+    const depth = localName.length;
+    const subordinates = (chop_after || (depth >= max))
+        ? []
+        : await readSubordinates(ctx, vertex);
+    const subordinateChanges: SubordinateChanges[] = await Promise.all(
+        subordinates
+        .map(async (sub) => new SubordinateChanges(
+            sub.dse.rdn,
+            await getIncrementallyAddedSubtree(ctx, sub, agreement, [ ...localName, sub.dse.rdn ]),
+        )),
+    );
+    const prunedSubordinateChanges = subordinateChanges
+        .filter((sc) => (sc.changes.sDSEChanges || sc.changes.subordinateUpdates?.length));
+    const refinement = agreement.shadowSubject.area.replicationArea.specificationFilter;
+    const withinRefinement: boolean = refinement
+        ? objectClassesWithinRefinement(Array.from(vertex.dse.objectClass).map(ObjectIdentifier.fromString), refinement)
+        : true;
+    return new IncrementalStepRefresh(
+        withinRefinement
+            ? {
+                add: await getSDSEContent(ctx, vertex, agreement),
+            }
+            : undefined,
+        prunedSubordinateChanges.length > 0
+            ? prunedSubordinateChanges
+            : undefined,
+    );
+}
+
 export
 type Change = { add: Attribute[] }
     | { remove: null }
     | { modify: EntryModification[] }
-    | { rename: ContentChange_rename };
+    | {
+        rename: ContentChange_rename,
+        oldDN: DistinguishedName,
+        oldImmediateSuperior: Vertex,
+    };
 
+/**
+ * The fourth element returned in the tuple, if present, is the _effective_
+ * immediate superior. If a rename operation is used and an entry that is
+ * formerly outside of the shadow subtree is moved into it, the new immediate
+ * superior must be used to create the path of SubordinateChanges leading up to
+ * the actual incremental change; otherwise, the old immediate superior must be
+ * used.
+ *
+ * @param ctx
+ * @param vertex
+ * @param change
+ * @returns
+ */
 export
 async function getShadowIncrementalSteps (
     ctx: Context,
     vertex: Vertex,
     change: Change,
-): Promise<[ number, number, IncrementalStepRefresh ][]> {
+): Promise<[ number, number, IncrementalStepRefresh, Vertex? ][]> {
     const dse_ids: number[] = [];
+    /* If the entry was renamed, we need to consider the SOBs that were superior
+    to the old entry as well. */
+    if (("rename" in change)) {
+        let current: Vertex | undefined = change.oldImmediateSuperior;
+        while (current) {
+            dse_ids.push(current.dse.id);
+            current = current.immediateSuperior;
+        }
+    }
     let current: Vertex | undefined = vertex;
     while (current) {
         dse_ids.push(current.dse.id);
@@ -174,22 +274,46 @@ async function getShadowIncrementalSteps (
             agreement_ber: true,
         },
     });
-    const ret: [ number, number, IncrementalStepRefresh ][] = [];
+    const ret: [ number, number, IncrementalStepRefresh, Vertex? ][] = [];
     for (const sob of sobs) {
         const el = new BERElement();
         el.fromBytes(sob.agreement_ber);
         const agreement = _decode_ShadowingAgreementInfo(el);
         const cp_dn = agreement.shadowSubject.area.contextPrefix;
-        const dn = getDistinguishedName(vertex);
+        /**
+         * This is named "newDN" to emphasize that, if this vertex has been
+         * through a modifyDN operation, its name is already changed by this
+         * point.
+         */
+        const newDN = getDistinguishedName(vertex);
         const objectClasses = Array.from(vertex.dse.objectClass).map(ObjectIdentifier.fromString);
         const subtree = agreement.shadowSubject.area.replicationArea;
         const NAMING_MATCHER = getNamingMatcherGetter(ctx);
         const subordinates = agreement.shadowSubject.subordinates ?? UnitOfReplication._default_value_for_subordinates;
         let refresh!: IncrementalStepRefresh;
+        const oldDN = ("rename" in change)
+            ? change.oldDN
+            : newDN;
         if (
-            !dnWithinSubtreeSpecification(dn, objectClasses, subtree, cp_dn, NAMING_MATCHER)
+            !dnWithinSubtreeSpecification(oldDN, objectClasses, subtree, cp_dn, NAMING_MATCHER)
             && !(subordinates && (vertex.dse.subr || vertex.dse.nssr))
         ) {
+            /**
+             * If the old DN was not within the shadow subtree, but the new one
+             * is, we treat the entry as being "added," and we must recursively
+             * do so for its subordinates as well.
+             */
+            if (
+                ("rename" in change)
+                && dnWithinSubtreeSpecification(newDN, objectClasses, subtree, cp_dn, NAMING_MATCHER)
+            ) {
+                const base_dn = agreement.shadowSubject.area.replicationArea.base
+                    ? [ ...cp_dn, ...agreement.shadowSubject.area.replicationArea.base ]
+                    : cp_dn;
+                const localName = newDN.slice(base_dn.length);
+                const refresh = await getIncrementallyAddedSubtree(ctx, vertex, agreement, localName);
+                ret.push([ sob.id, sob.binding_identifier, refresh, vertex.immediateSuperior ]);
+            }
             continue;
         }
         // NOTE: operational attributes should be in `include`.
@@ -219,6 +343,7 @@ async function getShadowIncrementalSteps (
             );
         }
         else if ("rename" in change) {
+            // TODO: Make sure vertex has the old DN. Rename names the new DN.
             const sdse_content = await getSDSEContent(ctx, vertex, agreement);
             refresh = new IncrementalStepRefresh(
                 {
