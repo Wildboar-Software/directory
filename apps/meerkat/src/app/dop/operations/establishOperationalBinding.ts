@@ -430,29 +430,31 @@ async function relayedEstablishOperationalBinding (
         }
         const agr = _decode_ShadowingAgreementInfo(agreement);
         const agreementDN = agr.shadowSubject.area.contextPrefix;
-        cp = await dnToVertex(ctx, ctx.dit.root, agreementDN);
-        if (!cp) {
-            throw new errors.OperationalBindingError(
-                ctx.i18n.t("err:cannot_find_local_base_entry_to_replicate"),
-                new OpBindingErrorParam(
-                    OpBindingErrorParam_problem_invalidAgreement,
-                    bindingType,
-                    undefined,
-                    undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        signErrors,
-                        assn.boundNameAndUID?.dn,
+        if ("roleA_initiates" in initiator) {
+            cp = await dnToVertex(ctx, ctx.dit.root, agreementDN);
+            if (!cp) {
+                throw new errors.OperationalBindingError(
+                    ctx.i18n.t("err:cannot_find_local_base_entry_to_replicate"),
+                    new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_invalidAgreement,
+                        bindingType,
                         undefined,
-                        id_err_operationalBindingError,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            id_err_operationalBindingError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
                     ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
-                    undefined,
-                ),
-                signErrors,
-            );
+                    signErrors,
+                );
+            }
         }
         // There is no validation other than checking that the CP exists.
         relay_agreement = agreement;
@@ -833,7 +835,7 @@ async function relayedEstablishOperationalBinding (
                     uuid: new_ob.uuid,
                 },
                 data: {
-                    entry_id: cp!.dse.id,
+                    entry_id: cp?.dse.id,
                     shadowed_context_prefix: agr.shadowSubject.area.contextPrefix.map(rdnToJson),
                     knowledge_type: (agr.shadowSubject.knowledge === undefined)
                         ? undefined
