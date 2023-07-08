@@ -702,6 +702,8 @@ async function modifyDN (
     }
     const superior = newSuperior ?? target.immediateSuperior;
     assert(superior);
+    const movingToTopLevel: boolean = (data.newSuperior?.length === 0);
+    const topLevelException: boolean = (movingToTopLevel && ctx.config.openTopLevel);
 
     // Access control for the new location.
     if (data.newSuperior) {
@@ -755,7 +757,8 @@ async function modifyDN (
                 bacSettings,
                 true,
             );
-            if (!authorizedToEntry) {
+
+            if (!authorizedToEntry && !topLevelException) {
                 throw new errors.SecurityError(
                     ctx.i18n.t("err:not_authz_import"),
                     new SecurityErrorData(
