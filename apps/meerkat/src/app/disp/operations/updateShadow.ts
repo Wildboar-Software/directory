@@ -522,7 +522,6 @@ async function applyTotalRefresh (
                     EntryAttributeValuesIncomplete: {
                         createMany: {
                             data: refresh.sDSE.attValIncomplete?.map((oid) => ({
-                                entry_id: vertex.dse.id,
                                 attribute_type: oid.toString(),
                             })) ?? [],
                         },
