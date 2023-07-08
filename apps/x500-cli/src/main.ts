@@ -215,7 +215,7 @@ async function main () {
                             })
                             .demandCommand();
                     })
-                    .command("moddn <src> <dest>", "Move/Rename an entry", (modDNYargs) => {
+                    .command("move <src> <dest>", "Move an entry", (modDNYargs) => {
                         return modDNYargs
                             .positional("src", {
                                 describe: "The object to be moved (the source)",
@@ -226,7 +226,21 @@ async function main () {
                             ;
                     }, async (argv) => {
                         const connection = await bind(ctx, argv);
-                        await do_modifyDN(ctx, connection, argv);
+                        await do_modifyDN(ctx, connection, argv, true);
+                        await connection.close();
+                    })
+                    .command("rename <src> <dest>", "Rename an entry", (modDNYargs) => {
+                        return modDNYargs
+                            .positional("src", {
+                                describe: "The object to be moved (the source)",
+                            })
+                            .positional("dest", {
+                                describe: "The new relative distinguished name of the object",
+                            })
+                            ;
+                    }, async (argv) => {
+                        const connection = await bind(ctx, argv);
+                        await do_modifyDN(ctx, connection, argv, false);
                         await connection.close();
                     })
                     .command("read <object>", "Read an entry", (readYargs) => {
