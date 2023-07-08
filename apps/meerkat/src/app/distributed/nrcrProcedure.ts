@@ -123,8 +123,8 @@ async function nrcrProcedure (
         }
     };
     // TODO: Can you assert that every CR has OP not set to completed?
-    assert(state.chainingArguments.operationProgress?.nameResolutionPhase !== OperationProgress_nameResolutionPhase_completed);
-    assert(state.NRcontinuationList.length); // This procedure should not be called if there are no refs.
+    assert(state.chainingArguments.operationProgress?.nameResolutionPhase !== OperationProgress_nameResolutionPhase_completed, "7d3c9dbc-41e1-4cde-a634-ff6d2d82e8f0");
+    assert(state.NRcontinuationList.length, "b5df97a7-f855-4ce5-b40b-38bb78fa8247"); // This procedure should not be called if there are no refs.
     /**
      * This exists to mitigate a vulnerability. Without requiring authentication
      * of a user for chaining, a nefarious user could discover entries that have
