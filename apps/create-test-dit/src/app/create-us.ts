@@ -1317,7 +1317,7 @@ async function seedUS (
     ];
 
     // People within C=US,ST=FL,L=MAR,L=Ocala
-    for (let i = 1; i < 500; i++) {
+    for (let i = 1; i < 50; i++) {
         const otherObjectClasses: OBJECT_IDENTIFIER[] = [];
         const isNatural: boolean = !(i % 2);
         // const isPGPUser: boolean = !(i % 3);
@@ -1668,7 +1668,7 @@ async function seedUS (
     newEntryArgs.length = 0;
 
     // Organizations within C=US,ST=FL,L=MAR,L=Ocala
-    for (let i = 1; i < 500; i++) {
+    for (let i = 1; i < 5; i++) {
         const [ rdn, attributes, orgName ] = createMockOrganizationAttributes();
         const dn: DistinguishedName = [
             ...ocalaDN,
