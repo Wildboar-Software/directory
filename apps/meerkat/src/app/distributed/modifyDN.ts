@@ -700,6 +700,7 @@ async function modifyDN (
             signErrors,
         );
     }
+    const oldImmediateSuperior = target.immediateSuperior;
     const superior = newSuperior ?? target.immediateSuperior;
     assert(superior);
     const movingToTopLevel: boolean = (data.newSuperior?.length === 0);
@@ -2023,6 +2024,7 @@ async function modifyDN (
     }
 
     target.dse.rdn = data.newRDN; // Update the RDN.
+    target.immediateSuperior = superior;
     if (data.deleteOldRDN) {
         for (const oldATAV of oldRDN) {
             const valueInNewRDN = newRDN
@@ -2069,13 +2071,15 @@ async function modifyDN (
         rename: data.newSuperior
             ? { newDN: [ ...superiorDN, newRDN ] }
             : { newRDN },
+        oldDN: targetDN,
+        oldImmediateSuperior,
     });
-    for (const [ sob_id, sob_obid, sob_change ] of sobs) {
+    for (const [ sob_id, sob_obid, sob_change, step_superior ] of sobs) {
         const change = new SubordinateChanges(
             oldRDN,
             sob_change,
         );
-        saveIncrementalRefresh(ctx, sob_id, target.immediateSuperior, change)
+        saveIncrementalRefresh(ctx, sob_id, step_superior ?? oldImmediateSuperior, change)
             .then() // INTENTIONAL_NO_AWAIT
             .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_save_incremental_update_step", {
                 sob_id: sob_obid,
