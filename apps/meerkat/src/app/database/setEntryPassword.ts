@@ -66,6 +66,43 @@ async function setEntryPassword (
     vertex: Vertex,
     pwd: UserPwd,
 ): Promise<Prisma.PrismaPromise<any>[]> {
+    /* If the entry is a shadow, we just want to create the userPwd attribute
+    value only. Note that we still do not preserve the exact encoding of the
+    value from the master: we still hash it, if it was presented in cleartext
+    form. */
+    if (vertex.dse.shadow) {
+        const encAlg: AlgorithmIdentifier = ("clear" in pwd)
+            ? getScryptAlgorithmIdentifier()
+            : ("encrypted" in pwd)
+                ? pwd.encrypted.algorithmIdentifier
+                : getScryptAlgorithmIdentifier();
+        const encrypted = ("clear" in pwd)
+            ? encryptPassword(encAlg, Buffer.from(pwd.clear, "utf-8"))
+            : ("encrypted" in pwd)
+                ? pwd.encrypted.encryptedString
+                : Buffer.allocUnsafe(0);
+        return [ctx.db.password.upsert({
+            where: {
+                entry_id: vertex.dse.id,
+            },
+            create: {
+                entry_id: vertex.dse.id,
+                encrypted: Buffer.from(encrypted ?? Buffer.allocUnsafe(0)),
+                algorithm_oid: encAlg.algorithm.toString(),
+                algorithm_parameters_der: encAlg.parameters
+                    ? Buffer.from(encAlg.parameters.toBytes())
+                    : undefined,
+            },
+            update: {
+                encrypted: Buffer.from(encrypted ?? Buffer.allocUnsafe(0)),
+                algorithm_oid: encAlg.algorithm.toString(),
+                algorithm_parameters_der: encAlg.parameters
+                    ? Buffer.from(encAlg.parameters.toBytes())
+                    : undefined,
+            },
+            select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
+        })];
+    }
     const entriesWithPasswordsExist: boolean = await anyPasswordsExist(ctx);
     // Notice that we do not await this promise here, so it does not execute.
     // (`PrismaPromise`s only run the callback when awaited.)
