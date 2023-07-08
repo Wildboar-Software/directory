@@ -876,13 +876,20 @@ async function relayedEstablishOperationalBinding (
                     id: true,
                 },
             });
+            const ob_time: Date = new_ob.responded_time
+                ? new Date(Math.max(new_ob.requested_time.valueOf(), new_ob.responded_time.valueOf()))
+                : new_ob.requested_time;
             if ("roleA_initiates" in initiator) {
-                const ob_time: Date = new_ob.responded_time
-                    ? new Date(Math.max(new_ob.requested_time.valueOf(), new_ob.responded_time.valueOf()))
-                    : new_ob.requested_time;
                 await becomeShadowSupplier(ctx, bindingID, cp!, relayTo, agr, new_ob.id, ob_time);
             } else {
-                // TODO: Is there anything to do here if we are consumer?
+                await becomeShadowConsumer(
+                    ctx,
+                    agr,
+                    data.accessPoint,
+                    bindingID,
+                    new_ob.id,
+                    ob_time,
+                );
             }
         }
         else {
@@ -1334,7 +1341,7 @@ async function establishOperationalBinding (
                 return OperationalBindingInitiator.ROLE_A;
             }
             if ("roleB_initiates" in data.initiator) {
-                return OperationalBindingInitiator.ROLE_A;
+                return OperationalBindingInitiator.ROLE_B;
             }
             return OperationalBindingInitiator.SYMMETRIC;
         })(),
