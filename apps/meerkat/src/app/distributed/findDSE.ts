@@ -797,7 +797,7 @@ export
                     : undefined,
                 state.rdnsResolved,
             );
-            candidateRefs.push(cr);
+            state.NRcontinuationList.push(cr);
             return undefined;
         }
     };
