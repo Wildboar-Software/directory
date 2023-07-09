@@ -35,7 +35,7 @@ function printEntryInformation (
     if (unusualThings.length) {
         ret += ("-----" + EOL);
         ret += unusualThings.join(EOL);
-        ret += ("-----");
+        ret += (EOL + "-----" + EOL);
     }
     // TODO: Use for loop instead.
     entry.information?.forEach((info) => {
