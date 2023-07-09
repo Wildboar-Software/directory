@@ -44,6 +44,7 @@ import {
 import filterCanBeUsedInShadowedArea from "../x500/filterCanBeUsedInShadowedArea";
 import { getEntryExistsFilter } from "../database/entryExistsFilter";
 import {
+    EntryInformationSelection_infoTypes_attributeTypesOnly,
     EntryInformationSelection_infoTypes_attributeTypesAndValues as typesAndValues,
     EntryInformationSelection_infoTypes_attributeTypesOnly as typesOnly,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection-infoTypes.ta";
@@ -84,6 +85,9 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import isPrefix from "../x500/isPrefix";
 import { ALL_USER_ATTRIBUTES_KEY } from "../constants";
+import {
+    FamilyReturn_memberSelect_contributingEntriesOnly,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn.ta";
 
 const DEFAULT_CAD: ContextSelection = {
     allContexts: null,
@@ -206,7 +210,7 @@ async function is_selection_satisfied (
     vertex: Vertex,
     selection: EntryInformationSelection,
 ): Promise<boolean> {
-    if (!vertex.dse.shadow) {
+    if (!vertex.dse.shadow || vertex.dse.shadow.attributeCompleteness) {
         return true;
     }
     // TODO: Document that it is unclear whether the subordinates-incompleteness
@@ -229,8 +233,7 @@ async function is_selection_satisfied (
     // No matter the selection, if all attribute values are present and we do
     // not care about contexts, the entry is suitable.
     if (
-        vertex.dse.shadow.attributeCompleteness
-        && (
+        (
             types_only
             || (tav && (vertex.dse.shadow.attributeValuesIncomplete.size === 0))
         )
@@ -512,7 +515,48 @@ async function checkSuitabilityProcedure (
     } else if (compareCode(operationType, id_opcode_read)) {
         const readArg = _decode_ReadArgument(encodedArgument!);
         const readData = getOptionallyProtectedValue(readArg);
-        // TODO: This could be more efficient: just extract only the selection field.
+        const memberSelect = readData.selection?.familyReturn?.memberSelect
+            ?? EntryInformationSelection._default_value_for_familyReturn.memberSelect;
+        const infoTypes = readData.selection?.infoTypes ?? EntryInformationSelection._default_value_for_infoTypes;
+        const typesOnly: boolean = (infoTypes === EntryInformationSelection_infoTypes_attributeTypesOnly);
+        const returnContexts: boolean = readData.selection?.returnContexts
+            ?? EntryInformationSelection._default_value_for_returnContexts;
+        if ( // If we select members of the compound entry, and this DSE's subordinates are incomplete...
+            (memberSelect !== FamilyReturn_memberSelect_contributingEntriesOnly)
+            && vertex.dse.familyMember
+            && !vertex.dse.shadow.subordinateCompleteness
+        ) { // The entry is unsuitable.
+            return false;
+        }
+        // If all attributes types, values, and contexts are complete, the entry is suitable, no matter what.
+        if (vertex.dse.shadow.attributeCompleteness) {
+            return true;
+        }
+        if (typesOnly) {
+            /* In theory, the information could be incomplete with respect to
+            the query, but there does not seem to be any way to determine
+            whether all attribute types for an sDSE have been replicated. */
+            // TODO: Report this as a defect.
+            return true;
+        }
+        if (
+            (vertex.dse.shadow.attributeValuesIncomplete.size > 0)
+            && readData.selection?.attributes
+        ) {
+            if ("allUserAttributes" in readData.selection.attributes) {
+                /* The attribute-values-incomplete OIDs basically just refer to
+                user attribute types, since operational attribute types are not
+                supposed to have contexts. */
+                return false;
+            } else if ("select" in readData.selection.attributes) {
+                for (const sel_attr of readData.selection.attributes.select) {
+                    if (vertex.dse.shadow.attributeValuesIncomplete.has(sel_attr.toString())) {
+                        return false;
+                    }
+                }
+            }
+        }
+
         const targetDN = getDistinguishedName(vertex);
         const relevantSubentries: Vertex[] = (await Promise.all(
             state.admPoints.map((ap) => getRelevantSubentries(ctx, vertex, targetDN, ap, {
@@ -524,12 +568,6 @@ async function checkSuitabilityProcedure (
             })),
         )).flat();
         const cads: TypeAndContextAssertion[] = await getContextAssertionDefaults(ctx, vertex, relevantSubentries);
-        if (!readData.selection && (cads.length === 0)) {
-            return (
-                vertex.dse.shadow.attributeCompleteness
-                && (vertex.dse.shadow.attributeValuesIncomplete.size === 0)
-            );
-        }
         /**
          * EIS contexts > operationContexts > CAD subentries > locally-defined default > no context assertion.
          * Per ITU X.501 (2016), Section 8.9.2.2.
@@ -540,15 +578,27 @@ async function checkSuitabilityProcedure (
                 ? { selectedContexts: cads }
                 : undefined)
             ?? DEFAULT_CAD;
-        const sel = new EntryInformationSelection(
-            readData.selection?.attributes,
-            readData.selection?.infoTypes,
-            readData.selection?.extraAttributes,
-            contextSelection,
-            readData.selection?.returnContexts,
-            readData.selection?.familyReturn,
-        );
-        return is_selection_satisfied(ctx, vertex, sel);
+
+        // This is lazy, but if there is any returning contexts or selecting
+        // specific contexts, we just count the entry as unsuitable if not every
+        // context was replicated.
+        let shadowingAgreements: ShadowingAgreementInfo[] = [];
+        if (returnContexts || !("allContexts" in contextSelection)) {
+            shadowingAgreements = await getRelevantShadowingAgreement(ctx, vertex);
+            for (const sag of shadowingAgreements) {
+                if (
+                    (
+                        sag.shadowSubject.contextSelection
+                        && !("allContexts" in sag.shadowSubject.contextSelection)
+                    )
+                    || !sag.shadowSubject.supplyContexts
+                    || !("allContexts" in sag.shadowSubject.supplyContexts)
+                ) {
+                    return false;
+                }
+            }
+        }
+        return true;
     } else if (compareCode(operationType, id_opcode_search)) {
         if (!(searchArgument || encodedArgument)) {
             throw new Error(); // Meerkat DSA just hangs and exhausts CPU if you assert(false).
