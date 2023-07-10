@@ -27,6 +27,7 @@ import {
     _decode_ReadArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta";
 import {
+    CompareArgumentData,
     _decode_CompareArgument,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgument.ta";
 import isModificationOperation from "@wildboar/x500/src/lib/utils/isModificationOperation";
@@ -56,7 +57,7 @@ import {
     ShadowingAgreementInfo,
     _decode_ShadowingAgreementInfo,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
-import { BERElement, ObjectIdentifier } from "asn1-ts";
+import { BERElement, ObjectIdentifier, TRUE_BIT } from "asn1-ts";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import { dnWithinSubtreeSpecification } from "@wildboar/x500";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
@@ -88,6 +89,13 @@ import { ALL_USER_ATTRIBUTES_KEY } from "../constants";
 import {
     FamilyReturn_memberSelect_contributingEntriesOnly,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn.ta";
+import { FamilyGrouping_entryOnly } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyGrouping.ta";
+import {
+    ServiceControlOptions_dontMatchFriends,
+    ServiceControlOptions_noSubtypeMatch,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+import { addFriends } from "../database/entry/readValues";
+import { subschema } from "@wildboar/x500/src/lib/collections/objectClasses";
 
 const DEFAULT_CAD: ContextSelection = {
     allContexts: null,
@@ -872,39 +880,92 @@ async function checkSuitabilityProcedure (
             return !excludeShadows; // Unknown subset.
         }
     } else if (compareCode(operationType, id_opcode_compare)) {
-        // ~~Bail out if matching rules are not supported by DSA.~~ Actually, let's let the compare function handle this.
         // Step 7.
+        // If all attributes types, values, and contexts are complete, the entry is suitable, no matter what.
+        if (vertex.dse.shadow.attributeCompleteness) {
+            return true;
+        }
         // TODO: This could be more efficient: just extract only the purported field.
         const compareArg = _decode_CompareArgument(encodedArgument!);
         const compareData = getOptionallyProtectedValue(compareArg);
-        const targetDN = getDistinguishedName(vertex);
-        const relevantSubentries: Vertex[] = (await Promise.all(
-            state.admPoints.map((ap) => getRelevantSubentries(ctx, vertex, targetDN, ap, {
-                EntryObjectClass: {
-                    some: {
-                        object_class: contextAssertionDefaults["&id"].toString(),
-                    },
-                },
-            })),
-        )).flat();
-        const cads: TypeAndContextAssertion[] = await getContextAssertionDefaults(ctx, vertex, relevantSubentries);
+        const noSubtypeMatch = compareData.serviceControls?.options?.[ServiceControlOptions_noSubtypeMatch] === TRUE_BIT;
+        /* If subtypes are a possibility, and the attribute values are incomplete,
+        it is possible that there is an attribute subtype that this DSA does not
+        know of that remains unreplicated, which might match the compare
+        assertion. Is is therefore possible for a compare against the local
+        shadow DSE to not match when it _would_ match against the real entry. */
+        if (!noSubtypeMatch) {
+            return false;
+        }
+        const family_grouping = compareData.familyGrouping
+            ?? CompareArgumentData._default_value_for_familyGrouping;
 
-        /**
-         * EIS contexts > operationContexts > CAD subentries > locally-defined default > no context assertion.
-         * Per ITU X.501 (2016), Section 8.9.2.2.
-         */
-        const contextSelection: ContextSelection = compareData.operationContexts
-            ?? (cads.length
-                ? { selectedContexts: cads }
-                : undefined)
-            ?? DEFAULT_CAD;
-        const sel = new EntryInformationSelection(
-            { select: [ compareData.purported.type_ ] },
-            undefined,
-            { select: [ compareData.purported.type_ ] },
-            contextSelection,
-        );
-        return is_selection_satisfied(ctx, vertex, sel);
+        /* If the entry is a compound entry, and we are not treating the shadow
+        DSE as an individual non-family entry, we cannot guarantee that the whole
+        compound entry was replicated completely (but through much more
+        complicated code). */
+        if ((family_grouping !== FamilyGrouping_entryOnly) && vertex.dse.familyMember) {
+            return false;
+        }
+
+        const shadow_agreements = await getRelevantShadowingAgreement(ctx, vertex);
+        const replicated_attrs: Set<IndexableOID> = new Set();
+        for (const sag of shadow_agreements) {
+            for (const attrs of sag.shadowSubject.attributes) {
+                if (
+                    attrs.class_
+                    && !vertex.dse.objectClass.has(attrs.class_.toString())
+                ) {
+                    continue;
+                }
+                const attr_sel = attrs.classAttributes
+                    ?? ClassAttributeSelection._default_value_for_classAttributes;
+                if ("allAttributes" in attr_sel) {
+                    // If all attributes are replicated, we can return.
+                    // The entry is suitable.
+                    return true;
+                }
+                else if ("include" in attr_sel) {
+                    for (const i of attr_sel.include) {
+                        replicated_attrs.add(i.toString());
+                    }
+                }
+                else if ("exclude" in attr_sel) {
+                    for (const x of attr_sel.exclude) {
+                        replicated_attrs.delete(x.toString());
+                    }
+                }
+            }
+        }
+        const dontMatchFriends = compareData.serviceControls?.options?.[ServiceControlOptions_dontMatchFriends] === TRUE_BIT;
+        if (!dontMatchFriends) {
+            const targetDN = getDistinguishedName(vertex);
+            const relevantSubentries: Vertex[] = (await Promise.all(
+                state.admPoints.map((ap) => getRelevantSubentries(ctx, vertex, targetDN, ap, {
+                    EntryObjectClass: {
+                        some: {
+                            object_class: subschema["&id"].toString(),
+                        },
+                    },
+                })),
+            )).flat();
+            const needsReplication = new Set(compareData.purported.type_.toString());
+            addFriends(relevantSubentries, needsReplication, compareData.purported.type_);
+            for (const attr of needsReplication.values()) {
+                if (
+                    !replicated_attrs.has(attr)
+                    || vertex.dse.shadow.attributeValuesIncomplete.has(attr)
+                ) {
+                    return false;
+                }
+            }
+        } else if (
+            !replicated_attrs.has(compareData.purported.type_.toString())
+            || vertex.dse.shadow.attributeValuesIncomplete.has(compareData.purported.type_.toString())
+        ) {
+            return false;
+        }
+        return true;
     } else {
         return true;
     }
