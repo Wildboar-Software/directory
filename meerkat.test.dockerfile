@@ -13,4 +13,5 @@ COPY ./dist/apps/meerkat/main.js ./
 COPY ./dist/apps/meerkat/main.js.map ./
 COPY ./dist/apps/meerkat/package_json.js ./
 USER node
-CMD ["/usr/local/bin/node", "--inspect=0.0.0.0", "--enable-source-maps", "/srv/meerkat/main.js"]
+# CMD ["/usr/local/bin/node", "--inspect=0.0.0.0", "--enable-source-maps", "/srv/meerkat/main.js"]
+CMD ["/usr/local/bin/node", "/srv/meerkat/main.js"]
