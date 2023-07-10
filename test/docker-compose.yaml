@@ -5,7 +5,6 @@ version: '3.7'
 
 services:
   dsa1:
-    # image: ghcr.io/wildboar-software/meerkat-dsa:latest
     build:
       context: ..
       dockerfile: meerkat.test.dockerfile
@@ -13,7 +12,7 @@ services:
     #   - .env
     environment:
       # What appears in this section overrides anything in .env.
-      DATABASE_URL: mysql://us_user:asdf_us@db:3306/directory_us
+      DATABASE_URL: mysql://user1:asdf1@db:3306/directory1
       MEERKAT_IDM_PORT: 4632
       MEERKAT_OPEN_TOP_LEVEL: 1
       MEERKAT_OB_AUTO_ACCEPT: 1
@@ -35,10 +34,10 @@ services:
       MEERKAT_ENABLE_DSP: 1
       MEERKAT_TRUST_FOR_IBRA: 1
       MEERKAT_TLS_CA_FILE: /pki/god.crt
-      MEERKAT_TLS_CERT_FILE: /pki/dsa1.tls.chain.crt
+      MEERKAT_TLS_CERT_FILE: /pki/dsa1.chain.crt
       MEERKAT_TLS_KEY_FILE: /pki/dsa1.key.pem
       MEERKAT_SIGNING_CA_FILE: /pki/god.crt
-      MEERKAT_SIGNING_CERTS_CHAIN_FILE: /pki/dsa1.tls.chain.crt
+      MEERKAT_SIGNING_CERTS_CHAIN_FILE: /pki/dsa1.chain.crt
       MEERKAT_SIGNING_KEY_FILE: /pki/dsa1.key.pem
       MEERKAT_WEB_ADMIN_PORT: 18080
       # These need to be set really high so the large shadow updates can make it.
@@ -48,11 +47,6 @@ services:
       # I already know my schema is valid. We just need an environment that can come up quickly.
       # MEERKAT_BULK_INSERT_MODE: 1
       # MEERKAT_INIT_JS: /data/init.mjs
-    hostname: 'dsa1'
-    labels:
-      author: Wildboar Software
-      app: meerkat
-      version: "2.6.0"
     ports:
       - '1389:389/tcp' # LDAP TCP Port
       - '14632:4632/tcp' # IDM Socket
@@ -64,13 +58,12 @@ services:
         target: /pki
         read_only: true
     depends_on:
-      init-us:
+      init1:
         condition: service_completed_successfully
       db:
         condition: service_healthy
 
   dsa2:
-    # image: ghcr.io/wildboar-software/meerkat-dsa:latest
     build:
       context: ..
       dockerfile: meerkat.test.dockerfile
@@ -78,7 +71,7 @@ services:
     #   - .env
     environment:
       # What appears in this section overrides anything in .env.
-      DATABASE_URL: mysql://gb_user:asdf_gb@db:3306/directory_gb
+      DATABASE_URL: mysql://user2:asdf2@db:3306/directory2
       MEERKAT_IDM_PORT: 4632
       MEERKAT_OPEN_TOP_LEVEL: 1
       MEERKAT_OB_AUTO_ACCEPT: 1
@@ -100,10 +93,10 @@ services:
       MEERKAT_ENABLE_DSP: 1
       MEERKAT_TRUST_FOR_IBRA: 1
       MEERKAT_TLS_CA_FILE: /pki/god.crt
-      MEERKAT_TLS_CERT_FILE: /pki/dsa2.tls.chain.crt
+      MEERKAT_TLS_CERT_FILE: /pki/dsa2.chain.crt
       MEERKAT_TLS_KEY_FILE: /pki/dsa2.key.pem
       MEERKAT_SIGNING_CA_FILE: /pki/god.crt
-      MEERKAT_SIGNING_CERTS_CHAIN_FILE: /pki/dsa2.tls.chain.crt
+      MEERKAT_SIGNING_CERTS_CHAIN_FILE: /pki/dsa2.chain.crt
       MEERKAT_SIGNING_KEY_FILE: /pki/dsa2.key.pem
       MEERKAT_WEB_ADMIN_PORT: 18080
       # These need to be set really high so the large shadow updates can make it.
@@ -111,11 +104,6 @@ services:
       MEERKAT_MAX_IDM_PDU_SIZE: "1000000000"
       MEERKAT_MAX_IDM_SEGMENTS: 100
       # MEERKAT_INIT_JS: /data/init.mjs
-    hostname: 'dsa2'
-    labels:
-      author: Wildboar Software
-      app: meerkat
-      version: "2.6.0"
     ports:
       - '2389:389/tcp' # LDAP TCP Port
       - '24632:4632/tcp' # IDM Socket
@@ -127,12 +115,12 @@ services:
         target: /pki
         read_only: true
     depends_on:
-      init-gb:
+      init2:
         condition: service_completed_successfully
       db:
         condition: service_healthy
 
-  init-us:
+  dsa3:
     build:
       context: ..
       dockerfile: meerkat.test.dockerfile
@@ -140,36 +128,87 @@ services:
     #   - .env
     environment:
       # What appears in this section overrides anything in .env.
-      DATABASE_URL: mysql://us_user:asdf_us@db:3306/directory_us
-    # entrypoint: /bin/sh
+      DATABASE_URL: mysql://user3:asdf3@db:3306/directory3
+      MEERKAT_IDM_PORT: 4632
+      MEERKAT_OPEN_TOP_LEVEL: 1
+      MEERKAT_OB_AUTO_ACCEPT: 1
+      MEERKAT_MY_ACCESS_POINT_NSAPS: idm://dsa3:4632
+      MEERKAT_MIN_AUTH_LEVEL_FOR_CHAINING: 0
+      MEERKAT_MIN_AUTH_LEVEL_FOR_DISP: 0
+      MEERKAT_MIN_AUTH_LEVEL_FOR_OB: 0
+      MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_CHAINING: 0
+      MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_DISP: 0
+      MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_OB: 0
+      MEERKAT_SIGNING_REQUIRED_FOR_CHAINING: 0
+      MEERKAT_SIGNING_REQUIRED_FOR_DISP: 0
+      MEERKAT_SIGNING_REQUIRED_FOR_OB: 0
+      MEERKAT_BIND_MIN_SLEEP_MS: 0
+      MEERKAT_BIND_SLEEP_RANGE_MS: 0
+      MEERKAT_ENABLE_DAP: 1
+      MEERKAT_ENABLE_DISP: 1
+      MEERKAT_ENABLE_DOP: 1
+      MEERKAT_ENABLE_DSP: 1
+      MEERKAT_TRUST_FOR_IBRA: 1
+      MEERKAT_TLS_CA_FILE: /pki/god.crt
+      MEERKAT_TLS_CERT_FILE: /pki/dsa3.chain.crt
+      MEERKAT_TLS_KEY_FILE: /pki/dsa3.key.pem
+      MEERKAT_SIGNING_CA_FILE: /pki/god.crt
+      MEERKAT_SIGNING_CERTS_CHAIN_FILE: /pki/dsa3.chain.crt
+      MEERKAT_SIGNING_KEY_FILE: /pki/dsa3.key.pem
+      MEERKAT_WEB_ADMIN_PORT: 18080
+      # These need to be set really high so the large shadow updates can make it.
+      MEERKAT_IDM_BUFFER_SIZE: "1000000000"
+      MEERKAT_MAX_IDM_PDU_SIZE: "1000000000"
+      MEERKAT_MAX_IDM_SEGMENTS: 100
+      # MEERKAT_INIT_JS: /data/init.mjs
+    ports:
+      - '3389:389/tcp' # LDAP TCP Port
+      - '34632:4632/tcp' # IDM Socket
+      - '38080:18080/tcp' # Web administration console
+      - '39229:9229/tcp' # NodeJS Debugging
+    volumes:
+      - type: bind
+        source: ./pki
+        target: /pki
+        read_only: true
+    depends_on:
+      init3:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+
+  init1:
+    build:
+      context: ..
+      dockerfile: meerkat.test.dockerfile
+    environment:
+      DATABASE_URL: mysql://user1:asdf1@db:3306/directory1
     entrypoint: /usr/local/bin/npx
-    command:
-      # - /usr/local/bin/npx
-      - prisma
-      - migrate
-      - deploy
-      - --schema=/srv/meerkat/prisma/schema.prisma
+    command: ["prisma", "migrate", "deploy", "--schema=/srv/meerkat/prisma/schema.prisma"]
     depends_on:
       db:
         condition: service_healthy
 
-  init-gb:
+  init2:
     build:
       context: ..
       dockerfile: meerkat.test.dockerfile
-    # env_file:
-    #   - .env
     environment:
-      # What appears in this section overrides anything in .env.
-      DATABASE_URL: mysql://gb_user:asdf_gb@db:3306/directory_gb
-    # entrypoint: /bin/sh
+      DATABASE_URL: mysql://user2:asdf2@db:3306/directory2
     entrypoint: /usr/local/bin/npx
-    command:
-      # - /usr/local/bin/npx
-      - prisma
-      - migrate
-      - deploy
-      - --schema=/srv/meerkat/prisma/schema.prisma
+    command: ["prisma", "migrate", "deploy", "--schema=/srv/meerkat/prisma/schema.prisma"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  init3:
+    build:
+      context: ..
+      dockerfile: meerkat.test.dockerfile
+    environment:
+      DATABASE_URL: mysql://user3:asdf3@db:3306/directory3
+    entrypoint: /usr/local/bin/npx
+    command: ["prisma", "migrate", "deploy", "--schema=/srv/meerkat/prisma/schema.prisma"]
     depends_on:
       db:
         condition: service_healthy

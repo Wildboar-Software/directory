@@ -1,6 +1,9 @@
-CREATE DATABASE directory_us;
-CREATE DATABASE directory_gb;
-CREATE USER 'us_user' IDENTIFIED BY 'asdf_us';
-CREATE USER 'gb_user' IDENTIFIED BY 'asdf_gb';
-GRANT ALL PRIVILEGES ON directory_us.* TO 'us_user';
-GRANT ALL PRIVILEGES ON directory_gb.* TO 'gb_user';
+CREATE DATABASE directory1;
+CREATE DATABASE directory2;
+CREATE DATABASE directory3;
+CREATE USER 'user1' IDENTIFIED BY 'asdf1';
+CREATE USER 'user2' IDENTIFIED BY 'asdf2';
+CREATE USER 'user3' IDENTIFIED BY 'asdf3';
+GRANT ALL PRIVILEGES ON directory1.* TO 'user1';
+GRANT ALL PRIVILEGES ON directory2.* TO 'user2';
+GRANT ALL PRIVILEGES ON directory3.* TO 'user3';
