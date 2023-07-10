@@ -609,7 +609,8 @@ async function checkSuitabilityProcedure (
         return true;
     } else if (compareCode(operationType, id_opcode_search)) {
         if (!(searchArgument || encodedArgument)) {
-            throw new Error(); // Meerkat DSA just hangs and exhausts CPU if you assert(false).
+            // Meerkat DSA just hangs and exhausts CPU if you assert(false).
+            throw new Error("da5ea081-0930-4541-80a7-0a96f39c9c02");
         } // This should NEVER be called without passing this in if it is a search.
         const argument = searchArgument ?? _decode_SearchArgument(encodedArgument!);
         const searchArgData = getOptionallyProtectedValue(argument);
