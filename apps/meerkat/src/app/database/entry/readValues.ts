@@ -129,7 +129,7 @@ interface ReadValuesReturn {
  *
  * @function
  */
-function addFriends (
+export function addFriends (
     relevantSubentries: Vertex[],
     selectedUserAttributes: Set<IndexableOID>,
     type_: OBJECT_IDENTIFIER,
