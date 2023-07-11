@@ -224,7 +224,11 @@ function checkPermittedAttributeTypes (
             createTimestampPresent = true;
         }
     }
-    if (!modification && !createTimestampPresent) {
+    const isEntry = (dse_type?.[DSEType_entry] === TRUE_BIT);
+    const isSubentry = (dse_type?.[DSEType_subentry] === TRUE_BIT);
+    // See ITU Recommendation X.525 (2019), Section 9.2.2.
+    const mustHaveCreateTimestamp: boolean = ((isEntry || isSubentry) && !modification);
+    if (mustHaveCreateTimestamp && !createTimestampPresent) {
         throw new ShadowError(
             ctx.i18n.t("err:shadow_update_missing_create_timestamp"),
             new ShadowErrorData(
