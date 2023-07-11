@@ -1017,10 +1017,6 @@ async function addEntry (
         }
     }
 
-    // NOTE: This does not actually check if targetSystem is the current DSA.
-    // We also do not check if manageDSAIT is set. Even though that would seem
-    // to contradict the use of targetSystem, but there's not really any problem
-    // here using both.
     if (data.targetSystem && !compareDistinguishedName(
         data.targetSystem.ae_title.rdnSequence,
         ctx.dsa.accessPoint.ae_title.rdnSequence,
