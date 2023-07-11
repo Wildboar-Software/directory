@@ -6,16 +6,16 @@ import {
 import { Subtree } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/Subtree.ta";
 import { SDSEContent } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SDSEContent.ta";
 import { TotalRefresh } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/TotalRefresh.ta";
-import { BERElement, BOOLEAN, FALSE, ObjectIdentifier } from "asn1-ts";
+import { BERElement, BOOLEAN, FALSE, ObjectIdentifier, TRUE_BIT } from "asn1-ts";
 import dnToVertex from "../dit/dnToVertex";
 import readSubordinates from "../dit/readSubordinates";
 import bPromise from "bluebird";
 import { LocalName } from "@wildboar/x500/src/lib/modules/InformationFramework/LocalName.ta";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import { compareDistinguishedName, getRDN } from "@wildboar/x500";
-import getEntryExistsFilter from "../database/entryExistsFilter";
 import getSDSEContent from "./getSDSEContent";
 import { objectClassesWithinRefinement } from "@wildboar/x500";
+import { DSEType_glue } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/DSEType.ta";
 
 // UnitOfReplication ::= SEQUENCE {
 //     area                 AreaSpecification,
@@ -85,7 +85,7 @@ async function createTotalRefreshFromVertex (
     localName: LocalName,
     depth: number,
     extKnowledgeOnly: boolean = false,
-): Promise<[refresh: TotalRefresh, to_be_pruned: boolean] | undefined> {
+): Promise<TotalRefresh | undefined> {
 
     const namingMatcher = getNamingMatcherGetter(ctx);
     let is_chopped_before: boolean = false;
@@ -109,7 +109,7 @@ async function createTotalRefreshFromVertex (
 
     const getExtendedKnowledge: BOOLEAN = (agreement.shadowSubject.knowledge?.extendedKnowledge ?? FALSE);
     const getSubordinateInfo: BOOLEAN = (agreement.shadowSubject.subordinates ?? FALSE);
-    let extended: boolean = false;
+    let extended: boolean = extKnowledgeOnly;
 
     if (is_chopped && is_chopped_before && !extKnowledgeOnly) {
         if (getExtendedKnowledge) {
@@ -143,21 +143,18 @@ async function createTotalRefreshFromVertex (
                 return undefined;
             }
             // We don't process this DSE's subordinates.
-            return [
-                new TotalRefresh(
-                    content
-                        ? new SDSEContent(
-                            content.sDSEType,
-                            FALSE,
-                            content.attComplete,
-                            content.attributes,
-                            content.attValIncomplete,
-                        )
-                        : undefined,
-                    undefined,
-                ),
-                false,
-            ];
+            return new TotalRefresh(
+                content
+                    ? new SDSEContent(
+                        content.sDSEType,
+                        FALSE,
+                        content.attComplete,
+                        content.attributes,
+                        content.attValIncomplete,
+                    )
+                    : undefined,
+                undefined,
+            );
         }
     }
 
@@ -169,21 +166,18 @@ async function createTotalRefreshFromVertex (
                 return undefined;
             }
             // We don't process this DSE's subordinates.
-            return [
-                new TotalRefresh(
-                    content
-                        ? new SDSEContent(
-                            content.sDSEType,
-                            FALSE,
-                            content.attComplete,
-                            content.attributes,
-                            content.attValIncomplete,
-                        )
-                        : undefined,
-                    undefined,
-                ),
-                false,
-            ];
+            return new TotalRefresh(
+                content
+                    ? new SDSEContent(
+                        content.sDSEType,
+                        FALSE,
+                        content.attComplete,
+                        content.attributes,
+                        content.attValIncomplete,
+                    )
+                    : undefined,
+                undefined,
+            );
         }
     }
 
@@ -192,86 +186,75 @@ async function createTotalRefreshFromVertex (
     // does not match the refinement, one of its subordinates may.
     const getNextBatchOfSubordinates = () => readSubordinates(ctx, vertex, 100, undefined, cursorId);
     let subordinates: Vertex[] = await getNextBatchOfSubordinates();
+    let subordinatesCount: number = 0;
     const subtrees: Subtree[] = [];
     while (subordinates.length > 0) {
+        subordinatesCount += subordinates.length;
+        const relevantSubordinates = subordinates
+            .filter((sub) => (
+                (getExtendedKnowledge || getSubordinateInfo)
+                || (!sub.dse.subr && !sub.dse.nssr)
+            ));
         /* Why not just use `.deleteMany()`? Because the subordinates also have
         to be evaluated for whether they fall within or without the specific
         exclusions of the subtree. Theoretically, this could still be done using
         their RDNs alone, but simple recursion was by far the most elegant
         solution. */
-        const sub_refreshes = await bPromise.map(subordinates, (subordinate: Vertex) => createTotalRefreshFromVertex(
-            ctx,
-            subordinate,
-            agreement,
-            obid,
-            [ ...localName, subordinate.dse.rdn ],
-            depth + 1,
-            extended,
-        ), {
-            concurrency: 4, // FIXME:
-        });
+        const sub_refreshes = await bPromise
+            .map(relevantSubordinates, (subordinate: Vertex) => createTotalRefreshFromVertex(
+                ctx,
+                subordinate,
+                agreement,
+                obid,
+                [ ...localName, subordinate.dse.rdn ],
+                depth + 1,
+                extended,
+            ), {
+                concurrency: 4, // FIXME:
+            });
         const last_subordinate = subordinates[subordinates.length - 1];
         cursorId = last_subordinate?.dse.id;
         for (let i = 0; i < sub_refreshes.length; i++) {
             const sr = sub_refreshes[i];
-            if (!sr || sr[1]) { // If the subordinate is chopped or to be pruned...
+            if (!sr) {
+                continue;
+            }
+            if ( // If the subordinate has no information.
+                !sr.subtree?.length
+                && (
+                    !sr.sDSE
+                    || (sr.sDSE.sDSEType[DSEType_glue] === TRUE_BIT)
+                )
+            ) {
                 continue;
             }
             const rdn = subordinates[i].dse.rdn;
-            subtrees.push(new Subtree(rdn, sr[0].sDSE, sr[0].subtree));
+            subtrees.push(new Subtree(rdn, sr.sDSE, sr.subtree));
         }
         subordinates = await getNextBatchOfSubordinates();
     }
-    const allSubordinatesCount = (await ctx.db.entry.count({
-        where: {
-            ...getEntryExistsFilter(),
-            immediate_superior_id: vertex.dse.id,
-        },
-    }));
-    const subComplete: boolean = (allSubordinatesCount === subtrees.length);
-    /**
-     * This SDSE is to be pruned from the total refresh if we are (1) just
-     * fetching subordinate references per `extendedKnowledge` (see X.525) AND
-     * (2) this is a leaf DSE and (3) there are no subordinate references
-     * associated with it.
-     *
-     * Theoretically, if there are subordinate references that are beneath the
-     * replicated area, but not leaf nodes, they could get cut off, but that
-     * arrangement makes no sense anyway. As far as I know, a `subr` or `nssr`
-     * should always be a leaf node in a valid DSAIT.
-     */
-    const to_be_pruned: boolean = (
-        extKnowledgeOnly
-        && (allSubordinatesCount === 0)
-        && (content.attributes.length === 0)
-    );
+    const subComplete: boolean = (subordinatesCount === subtrees.length);
 
     // If this entry does not fall within the refinement, its subordinates still might.
     if (!withinRefinement) {
-        return [
-            new TotalRefresh(
-                undefined,
-                subtrees,
-            ),
-            to_be_pruned,
-        ];
+        return new TotalRefresh(
+            undefined,
+            (subtrees.length > 0) ? subtrees : undefined,
+        );
     }
 
-    return [
-        new TotalRefresh(
-            content
-                ? new SDSEContent(
-                    content.sDSEType,
-                    subComplete,
-                    content.attComplete,
-                    content.attributes,
-                    content.attValIncomplete,
-                )
-                : undefined,
-            subtrees,
-        ),
-        to_be_pruned,
-    ];
+    return new TotalRefresh(
+        content
+            ? new SDSEContent(
+                content.sDSEType,
+                subComplete,
+                content.attComplete,
+                content.attributes,
+                content.attValIncomplete,
+            )
+            : undefined,
+        (subtrees.length > 0) ? subtrees : undefined,
+    );
 }
 
 export
@@ -310,7 +293,7 @@ async function createTotalRefresh (
         obid,
         [],
         base_dn.length,
-    ))?.[0];
+    ));
     if (!baseRefresh) {
         return undefined;
     }
