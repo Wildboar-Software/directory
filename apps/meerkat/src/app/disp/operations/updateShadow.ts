@@ -491,6 +491,7 @@ async function applyTotalRefresh (
         const isAdmPoint: boolean   = (dse_type[DSEType_admPoint] === TRUE_BIT);
         const isSubentry: boolean   = (dse_type[DSEType_subentry] === TRUE_BIT);
         const isSa: boolean         = (dse_type[DSEType_sa] === TRUE_BIT);
+        const isGlue: boolean       = (dse_type[DSEType_glue] === TRUE_BIT);
         if (subordinates_only) {
             const isGlue: boolean = (dse_type[DSEType_glue] === TRUE_BIT);
             if (!isGlue && !isSubr && !isNssr) {
@@ -539,6 +540,7 @@ async function applyTotalRefresh (
                     admPoint: isAdmPoint,
                     subentry: isSubentry,
                     sa: isSa,
+                    glue: isGlue,
                     subordinate_completeness: refresh.sDSE.subComplete ?? FALSE,
                     attribute_completeness: refresh.sDSE.attComplete,
                     EntryAttributeValuesIncomplete: {
@@ -592,6 +594,7 @@ async function applyTotalRefresh (
         const isAdmPoint: boolean   = (dse_type[DSEType_admPoint] === TRUE_BIT);
         const isSubentry: boolean   = (dse_type[DSEType_subentry] === TRUE_BIT);
         const isSa: boolean         = (dse_type[DSEType_sa] === TRUE_BIT);
+        const isGlue: boolean       = (dse_type[DSEType_glue] === TRUE_BIT);
         // TODO: Can I put the promises from stripEntry() in the transaction below?
         await ctx.db.$transaction([
             ...promises,
@@ -613,6 +616,7 @@ async function applyTotalRefresh (
                     admPoint: isAdmPoint,
                     subentry: isSubentry,
                     sa: isSa,
+                    glue: isGlue,
                 },
             }),
             ctx.db.entryAttributeValuesIncomplete.createMany({
@@ -1194,9 +1198,9 @@ async function applyIncrementalRefreshStep (
                 const isAdmPoint: boolean   = (dse_type[DSEType_admPoint] === TRUE_BIT);
                 const isSubentry: boolean   = (dse_type[DSEType_subentry] === TRUE_BIT);
                 const isSa: boolean         = (dse_type[DSEType_sa] === TRUE_BIT);
+                const isGlue: boolean       = (dse_type[DSEType_glue] === TRUE_BIT);
                 if (subordinates_only) {
-                    const isGlue: boolean = (dse_type[DSEType_glue] === TRUE_BIT);
-                    if (!isGlue || !isSubr || !isNssr) {
+                    if (!isGlue && !isSubr && !isNssr) {
                         return;
                     }
                 }
@@ -1217,6 +1221,7 @@ async function applyIncrementalRefreshStep (
                     admPoint: isAdmPoint,
                     subentry: isSubentry,
                     sa: isSa,
+                    glue: isGlue,
                     subordinate_completeness: change.subComplete ?? FALSE,
                     attribute_completeness: change.attComplete,
                     EntryAttributeValuesIncomplete: {
