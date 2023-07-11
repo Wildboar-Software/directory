@@ -35,6 +35,8 @@ import getSDSEContent, { mandatoryReplicatedAttributeTypesSet } from "../disp/ge
 import { DistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/DistinguishedName.ta";
 import readSubordinates from "../dit/readSubordinates";
 import { LocalName } from "@wildboar/x500/src/lib/modules/InformationFramework/LocalName.ta";
+import isPrefix from "../x500/isPrefix";
+import { nonSpecificKnowledge, specificKnowledge } from "@wildboar/x500/src/lib/collections/attributes";
 
 
 /**
@@ -290,14 +292,13 @@ async function getShadowIncrementalSteps (
         const subtree = agreement.shadowSubject.area.replicationArea;
         const NAMING_MATCHER = getNamingMatcherGetter(ctx);
         const subordinates = agreement.shadowSubject.subordinates ?? UnitOfReplication._default_value_for_subordinates;
+        const extKnowledge = agreement.shadowSubject.knowledge?.extendedKnowledge;
         let refresh!: IncrementalStepRefresh;
         const oldDN = ("rename" in change)
             ? change.oldDN
             : newDN;
-        if (
-            !dnWithinSubtreeSpecification(oldDN, objectClasses, subtree, cp_dn, NAMING_MATCHER)
-            && !(subordinates && (vertex.dse.subr || vertex.dse.nssr))
-        ) {
+        let selectOnlyExtKnowledge: boolean = false;
+        if (!dnWithinSubtreeSpecification(oldDN, objectClasses, subtree, cp_dn, NAMING_MATCHER)) {
             /**
              * If the old DN was not within the shadow subtree, but the new one
              * is, we treat the entry as being "added," and we must recursively
@@ -314,7 +315,18 @@ async function getShadowIncrementalSteps (
                 const refresh = await getIncrementallyAddedSubtree(ctx, vertex, agreement, localName);
                 ret.push([ sob.id, sob.binding_identifier, refresh, vertex.immediateSuperior ]);
             }
-            continue;
+
+            if ( // If we are selecting subordinates or extended knowledge, and this DSE qualifies...
+                (!subordinates || !extKnowledge)
+                && (vertex.dse.subr || vertex.dse.nssr)
+                && isPrefix(ctx, cp_dn, oldDN)
+            ) {
+                if (extKnowledge) {
+                    selectOnlyExtKnowledge = true;
+                }
+            } else {
+                continue;
+            }
         }
         // NOTE: operational attributes should be in `include`.
         let all_user_attributes: boolean = false;
@@ -329,7 +341,14 @@ async function getShadowIncrementalSteps (
         if ("add" in change) {
             refresh = new IncrementalStepRefresh(
                 {
-                    add: await getSDSEContent(ctx, vertex, agreement),
+                    add: await getSDSEContent(
+                        ctx,
+                        vertex,
+                        agreement,
+                        extKnowledge,
+                        subordinates,
+                        agreement.shadowSubject.knowledge?.knowledgeType,
+                    ),
                 },
                 undefined,
             );
@@ -393,6 +412,12 @@ async function getShadowIncrementalSteps (
                     const type_ = getAttributeTypeFromEntryModification(a);
                     if (!type_) {
                         return false;
+                    }
+                    if (selectOnlyExtKnowledge) {
+                        return (
+                            !type_.isEqualTo(specificKnowledge["&id"])
+                            && !type_.isEqualTo(nonSpecificKnowledge["&id"])
+                        );
                     }
                     const KEY = type_.toString();
                     if (exclusions.has(KEY)) {
@@ -460,6 +485,9 @@ async function getShadowIncrementalSteps (
                     }
                     return mod;
                 });
+            if (attr_mods.length === 0) {
+                continue;
+            }
             const sdse_content = await getSDSEContent(ctx, vertex, agreement);
             refresh = new IncrementalStepRefresh(
                 {
