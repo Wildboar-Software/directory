@@ -190,8 +190,8 @@ async function createTotalRefreshFromVertex (
     let cursorId: number | undefined;
     // NOTE: You cannot apply a refinement here, because, even if a subordinate
     // does not match the refinement, one of its subordinates may.
-    const getNextBatchOfUnmentionedSubordinates = () => readSubordinates(ctx, vertex, 100, undefined, cursorId);
-    let subordinates: Vertex[] = await getNextBatchOfUnmentionedSubordinates();
+    const getNextBatchOfSubordinates = () => readSubordinates(ctx, vertex, 100, undefined, cursorId);
+    let subordinates: Vertex[] = await getNextBatchOfSubordinates();
     const subtrees: Subtree[] = [];
     while (subordinates.length > 0) {
         /* Why not just use `.deleteMany()`? Because the subordinates also have
@@ -220,7 +220,7 @@ async function createTotalRefreshFromVertex (
             const rdn = subordinates[i].dse.rdn;
             subtrees.push(new Subtree(rdn, sr[0].sDSE, sr[0].subtree));
         }
-        subordinates = await getNextBatchOfUnmentionedSubordinates();
+        subordinates = await getNextBatchOfSubordinates();
     }
     const allSubordinatesCount = (await ctx.db.entry.count({
         where: {
