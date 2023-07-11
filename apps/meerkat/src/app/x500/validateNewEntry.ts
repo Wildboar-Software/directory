@@ -505,6 +505,7 @@ async function validateEntry (
         optionalAttributes.add(id_aca_accessControlScheme.toString());
         optionalAttributes.add(id_aca_subentryACI.toString());
         optionalAttributes.add(hierarchyParent["&id"].toString());
+        optionalAttributes.add(gsrAttrType["&id"].toString());
     }
     if (isSubentry) {
         optionalAttributes.add(id_aca_prescriptiveACI.toString());
