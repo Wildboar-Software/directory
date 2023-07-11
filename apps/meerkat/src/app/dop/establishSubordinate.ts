@@ -45,7 +45,7 @@ import {
 import {
     serviceError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/serviceError.oa";
-import { getOptionallyProtectedValue } from "@wildboar/x500";
+import { checkNameForm, getOptionallyProtectedValue } from "@wildboar/x500";
 import { verifySIGNED } from "../pki/verifySIGNED";
 import {
     _encode_EstablishOperationalBindingResultData,
@@ -59,7 +59,12 @@ import { dSAProblem } from "@wildboar/x500/src/lib/modules/SelectedAttributeType
 import {
     id_pr_targetDsaUnavailable,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-targetDsaUnavailable.va";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER, _decodeObjectIdentifier, _encodeInteger } from "asn1-ts/dist/node/functional";
+import { governingStructureRule, objectClass } from "@wildboar/x500/src/lib/collections/attributes";
+import getSubschemaSubentry from "../dit/getSubschemaSubentry";
+import { OBJECT_IDENTIFIER } from "asn1-ts";
+import getStructuralObjectClass from "../x500/getStructuralObjectClass";
+import { getEntryAttributesToShareInOpBinding } from "../dit/getEntryAttributesToShareInOpBinding";
 
 // dSAOperationalBindingManagementBind OPERATION ::= dSABind
 
@@ -307,10 +312,78 @@ async function establishSubordinate (
         ));
         current = current.immediateSuperior;
     }
+
+    /**
+     * If there is no governingStructureRule among the new entry attributes, add
+     * one. Note that this code was copied from validateNewEntry().
+     */
+    if (
+        newEntryInfo
+        && !newEntryInfo.some((info) => info.type_.isEqualTo(governingStructureRule["&id"]))
+    ) {
+        const schemaSubentry = await getSubschemaSubentry(ctx, immediateSuperior);
+        if (schemaSubentry && (typeof immediateSuperior.dse.governingStructureRule === "number")) {
+            if (!schemaSubentry?.dse.subentry) {
+                throw new Error("e41612c3-6239-451f-a971-a9d59bfb5183");
+            }
+            const objectClasses: OBJECT_IDENTIFIER[] = newEntryInfo
+                .filter((attr) => attr.type_.isEqualTo(objectClass["&id"]))
+                .flatMap((attr) => attr.values)
+                .map(_decodeObjectIdentifier);
+            const structuralObjectClass = getStructuralObjectClass(ctx, objectClasses);
+            const structuralRule = (schemaSubentry.dse.subentry?.ditStructureRules ?? [])
+                .find((rule) => {
+                    if (rule.obsolete) {
+                        return false;
+                    }
+                    if (!rule.superiorStructureRules?.includes(immediateSuperior.dse.governingStructureRule!)) {
+                        return false;
+                    }
+                    const nf = ctx.nameForms.get(rule.nameForm.toString());
+                    if (!nf) {
+                        return false;
+                    }
+                    if (!nf.namedObjectClass.isEqualTo(structuralObjectClass)) {
+                        return false;
+                    }
+                    if (nf.obsolete) {
+                        return false;
+                    }
+                    return checkNameForm(newEntryRDN, nf.mandatoryAttributes, nf.optionalAttributes);
+                });
+            if (structuralRule) {
+                newEntryInfo.push(new Attribute(
+                    governingStructureRule["&id"],
+                    [_encodeInteger(structuralRule.ruleIdentifier, DER)],
+                ));
+            }
+        }
+    }
+
+    /**
+     * Immediate superior info is necessary for correct operation of the
+     * directory across HOB boundaries. For one, the governing structure rule of
+     * the immediate superior entry must be replicated so that the governing
+     * structure rule of the subordinate can be determined by the subordinate
+     * DSA. There are probably other reasons I have yet to think of.
+     *
+     * If the caller of this function supplies immediate superior info, we just
+     * use that. If not, we need to obtain it within this function to replicate
+     * it. If the immediate superior is an administrative point, we have
+     * already included all of the necessary information in the administrative
+     * point information in the context prefix information of the HOB initiation
+     * parameters, and therefore, we do not need to fill in the
+     * `immediateSuperiorInfo` field; if the immediate superior is NOT an
+     * administrative point, we DO need to fill this field in.
+     */
+    const superiorInfo = immediateSuperiorInfo
+        ?? (immediateSuperior.dse.admPoint
+            ? undefined
+            : await getEntryAttributesToShareInOpBinding(ctx, immediateSuperior));
     const sup2sub = new SuperiorToSubordinate(
         ditContext.reverse(),
         newEntryInfo,
-        immediateSuperiorInfo,
+        superiorInfo,
     );
     const agreement = new HierarchicalAgreement(
         newEntryRDN,

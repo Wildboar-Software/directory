@@ -240,7 +240,6 @@ import {
     subtreeSpecification,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/subtreeSpecification.oa";
 import {
-    SubtreeSpecification,
     _decode_SubtreeSpecification,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
 import {
@@ -278,6 +277,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SubordinateChanges.ta";
 import { getShadowIncrementalSteps } from "../dop/getRelevantSOBs";
 import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh";
+import { governingStructureRule } from "@wildboar/x500/src/lib/collections/attributes";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -2885,6 +2885,7 @@ async function modifyEntry (
         optionalAttributes.add(id_aca_accessControlScheme.toString());
         optionalAttributes.add(id_aca_subentryACI.toString());
         optionalAttributes.add(hierarchyParent["&id"].toString());
+        optionalAttributes.add(governingStructureRule["&id"].toString());
     }
     if (isSubentry) {
         optionalAttributes.add(id_aca_prescriptiveACI.toString());
