@@ -209,6 +209,7 @@ function checkPermittedAttributeTypes (
     obid: number,
     currentObjectClasses?: Set<IndexableOID>,
     modification: boolean = false,
+    dse_type?: DSEType,
 ): void {
     // createTimestamp seems to be the only always-required attribute type.
     let createTimestampPresent: boolean = false;
@@ -482,11 +483,17 @@ async function applyTotalRefresh (
     if (creatingRDN && refresh.sDSE) {
         const dse_type = sdse_type_to_dse_type(refresh.sDSE.sDSEType);
         checkPermittedAttributeTypes(ctx, assn, agreement, refresh.sDSE.attributes, signErrors, Number(obid.identifier));
+        const isSubr: boolean       = (dse_type[DSEType_subr] === TRUE_BIT);
+        const isNssr: boolean       = (dse_type[DSEType_nssr] === TRUE_BIT);
+        const isCp: boolean         = (dse_type[DSEType_cp] === TRUE_BIT);
+        const isEntry: boolean      = (dse_type[DSEType_entry] === TRUE_BIT);
+        const isAlias: boolean      = (dse_type[DSEType_alias] === TRUE_BIT);
+        const isAdmPoint: boolean   = (dse_type[DSEType_admPoint] === TRUE_BIT);
+        const isSubentry: boolean   = (dse_type[DSEType_subentry] === TRUE_BIT);
+        const isSa: boolean         = (dse_type[DSEType_sa] === TRUE_BIT);
         if (subordinates_only) {
             const isGlue: boolean = (dse_type[DSEType_glue] === TRUE_BIT);
-            const isSubr: boolean = (dse_type[DSEType_subr] === TRUE_BIT);
-            const isNssr: boolean = (dse_type[DSEType_nssr] === TRUE_BIT);
-            if (!isGlue || !isSubr || !isNssr) {
+            if (!isGlue && !isSubr && !isNssr) {
                 return;
             }
         }
@@ -513,6 +520,8 @@ async function applyTotalRefresh (
                 true,
             );
         } else {
+
+
             // TODO: Performance hack: if there are no subordinates, just
             // return after this.
             // TODO: Also define an alternative createEntry that only returns the DB ID.
@@ -522,6 +531,14 @@ async function applyTotalRefresh (
                 creatingRDN,
                 {
                     shadow: true,
+                    subr: isSubr,
+                    nssr: isNssr,
+                    cp: isCp,
+                    entry: isEntry,
+                    alias: isAlias,
+                    admPoint: isAdmPoint,
+                    subentry: isSubentry,
+                    sa: isSa,
                     subordinate_completeness: refresh.sDSE.subComplete ?? FALSE,
                     attribute_completeness: refresh.sDSE.attComplete,
                     EntryAttributeValuesIncomplete: {
@@ -566,6 +583,15 @@ async function applyTotalRefresh (
                 [dseType.encoderFor["&Type"]!(dse_type, DER)],
             ),
         ], undefined, false, signErrors);
+        // FIXME: Do this for incremental updates as well.
+        const isSubr: boolean       = (dse_type[DSEType_subr] === TRUE_BIT);
+        const isNssr: boolean       = (dse_type[DSEType_nssr] === TRUE_BIT);
+        const isCp: boolean         = (dse_type[DSEType_cp] === TRUE_BIT);
+        const isEntry: boolean      = (dse_type[DSEType_entry] === TRUE_BIT);
+        const isAlias: boolean      = (dse_type[DSEType_alias] === TRUE_BIT);
+        const isAdmPoint: boolean   = (dse_type[DSEType_admPoint] === TRUE_BIT);
+        const isSubentry: boolean   = (dse_type[DSEType_subentry] === TRUE_BIT);
+        const isSa: boolean         = (dse_type[DSEType_sa] === TRUE_BIT);
         // TODO: Can I put the promises from stripEntry() in the transaction below?
         await ctx.db.$transaction([
             ...promises,
@@ -579,8 +605,14 @@ async function applyTotalRefresh (
                     lastShadowUpdate: new Date(),
                     // DSE types need to be set, because the DSE type driver is a NOOP.
                     shadow: true,
-                    entry: !isFamily,
-                    cp: (depth === cp_length),
+                    entry: isEntry && !isFamily,
+                    subr: isSubr,
+                    nssr: isNssr,
+                    cp: (depth === cp_length) || isCp,
+                    alias: isAlias,
+                    admPoint: isAdmPoint,
+                    subentry: isSubentry,
+                    sa: isSa,
                 },
             }),
             ctx.db.entryAttributeValuesIncomplete.createMany({
@@ -1154,10 +1186,16 @@ async function applyIncrementalRefreshStep (
                 : true;
             if (withinRefinement) {
                 const dse_type = sdse_type_to_dse_type(change.sDSEType);
+                const isSubr: boolean       = (dse_type[DSEType_subr] === TRUE_BIT);
+                const isNssr: boolean       = (dse_type[DSEType_nssr] === TRUE_BIT);
+                const isCp: boolean         = (dse_type[DSEType_cp] === TRUE_BIT);
+                const isEntry: boolean      = (dse_type[DSEType_entry] === TRUE_BIT);
+                const isAlias: boolean      = (dse_type[DSEType_alias] === TRUE_BIT);
+                const isAdmPoint: boolean   = (dse_type[DSEType_admPoint] === TRUE_BIT);
+                const isSubentry: boolean   = (dse_type[DSEType_subentry] === TRUE_BIT);
+                const isSa: boolean         = (dse_type[DSEType_sa] === TRUE_BIT);
                 if (subordinates_only) {
                     const isGlue: boolean = (dse_type[DSEType_glue] === TRUE_BIT);
-                    const isSubr: boolean = (dse_type[DSEType_subr] === TRUE_BIT);
-                    const isNssr: boolean = (dse_type[DSEType_nssr] === TRUE_BIT);
                     if (!isGlue || !isSubr || !isNssr) {
                         return;
                     }
@@ -1171,6 +1209,14 @@ async function applyIncrementalRefreshStep (
                 ];
                 vertex = await createEntry(ctx, immediate_superior, rdn, {
                     shadow: true,
+                    subr: isSubr,
+                    nssr: isNssr,
+                    cp: isCp,
+                    entry: isEntry,
+                    alias: isAlias,
+                    admPoint: isAdmPoint,
+                    subentry: isSubentry,
+                    sa: isSa,
                     subordinate_completeness: change.subComplete ?? FALSE,
                     attribute_completeness: change.attComplete,
                     EntryAttributeValuesIncomplete: {
