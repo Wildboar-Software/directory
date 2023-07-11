@@ -85,6 +85,7 @@ async function createTotalRefreshFromVertex (
     localName: LocalName,
     depth: number,
     extKnowledgeOnly: boolean = false,
+    subordinatesOnly: boolean = false,
 ): Promise<TotalRefresh | undefined> {
 
     const namingMatcher = getNamingMatcherGetter(ctx);
@@ -109,10 +110,10 @@ async function createTotalRefreshFromVertex (
 
     const getExtendedKnowledge: BOOLEAN = (agreement.shadowSubject.knowledge?.extendedKnowledge ?? FALSE);
     const getSubordinateInfo: BOOLEAN = (agreement.shadowSubject.subordinates ?? FALSE);
-    let extended: boolean = extKnowledgeOnly;
+    let extended: boolean = extKnowledgeOnly || subordinatesOnly;
 
     if (is_chopped && is_chopped_before && !extKnowledgeOnly) {
-        if (getExtendedKnowledge) {
+        if (getExtendedKnowledge || getSubordinateInfo) {
             extended = true;
         } else {
             return; // We don't process this DSE.
@@ -123,8 +124,8 @@ async function createTotalRefreshFromVertex (
         ctx,
         vertex,
         agreement,
-        extended,
-        getSubordinateInfo,
+        extended && getExtendedKnowledge,
+        extended && getSubordinateInfo,
         agreement.shadowSubject.knowledge?.knowledgeType,
     );
 
@@ -136,7 +137,7 @@ async function createTotalRefreshFromVertex (
     const max = agreement.shadowSubject.area.replicationArea.maximum ?? MAX_DEPTH;
     const max_depth = Math.min(Number(max ?? MAX_DEPTH), MAX_DEPTH);
     if ((localName.length >= max_depth) && !extKnowledgeOnly) { // TODO: Is this supposed to be >=?
-        if (getExtendedKnowledge) {
+        if (getExtendedKnowledge || getSubordinateInfo) {
             extended = true;
         } else {
             if (!withinRefinement) {
@@ -159,7 +160,7 @@ async function createTotalRefreshFromVertex (
     }
 
     if (is_chopped && !is_chopped_before && !extKnowledgeOnly) {
-        if (getExtendedKnowledge) {
+        if (getExtendedKnowledge || getSubordinateInfo) {
             extended = true;
         } else {
             if (!withinRefinement) {
@@ -208,7 +209,8 @@ async function createTotalRefreshFromVertex (
                 obid,
                 [ ...localName, subordinate.dse.rdn ],
                 depth + 1,
-                extended,
+                extended && getExtendedKnowledge,
+                extended && getSubordinateInfo,
             ), {
                 concurrency: 4, // FIXME:
             });
