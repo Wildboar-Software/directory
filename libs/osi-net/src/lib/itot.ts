@@ -14,6 +14,8 @@ import {
     DR_REASON_NOT_SPECIFIED,
     dispatch_NDISind,
     DEFAULT_MAX_TSDU_SIZE_FOR_ITOT,
+    RETURN_OK,
+    handle_transport_protocol_error,
 } from './transport';
 import {
     SessionServiceConnectionState,
@@ -478,7 +480,12 @@ export function create_itot_stack(
         presentation,
         acse,
     };
-    stack.network.on('NSDU', (nsdu) => dispatch_NSDU(stack.transport, nsdu));
+    stack.network.on('NSDU', (nsdu) => {
+        const rc = dispatch_NSDU(stack.transport, nsdu);
+        if (rc !== RETURN_OK) {
+            handle_transport_protocol_error(stack.transport);
+        }
+    });
     stack.transport.outgoingEvents.on('TCONind', () => dispatch_TCONind(stack.session));
     stack.session.outgoingEvents.on('TCONreq', () => {
         const tpdu: CR_TPDU = {
