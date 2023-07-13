@@ -776,7 +776,7 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
                 [],
                 undefined,
             );
-            dispatch_AARE_reject(itot.acse, aare);
+            dispatch_A_ASCrsp_reject(itot.acse, aare);
             return;
         }
         if (apdu.user_information?.length !== 1) {
