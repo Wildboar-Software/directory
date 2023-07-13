@@ -1608,6 +1608,17 @@ async function updateShadow (
     }
     if ("noRefresh" in data.updatedInfo) {
         ctx.log.info(ctx.i18n.t("log:shadow_update_no_refresh", { obid: ob.binding_identifier.toString() }));
+        const update_complete_time = new Date();
+        await ctx.db.operationalBinding.update({
+            where: {
+                id: ob.id,
+            },
+            data: {
+                last_update: update_complete_time,
+                local_last_update: update_complete_time,
+                remote_last_update: data.updateTime,
+            },
+        });
         return {
             null_: null,
         };
@@ -1672,12 +1683,15 @@ async function updateShadow (
         );
     }
 
+    const update_complete_time = new Date();
     await ctx.db.operationalBinding.update({
         where: {
             id: ob.id,
         },
         data: {
-            last_update: now,
+            last_update: update_complete_time,
+            local_last_update: update_complete_time,
+            remote_last_update: data.updateTime,
         },
     });
 
