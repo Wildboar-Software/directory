@@ -410,7 +410,6 @@ export function handleInvalidPPDU(
     c: PresentationConnection,
     event_identifier?: number
 ): void {
-    console.error('INVALID PRESENTATION PPDU.');
     const ppdu: ARP_PPDU = {
         provider_reason: Abort_reason_invalid_ppdu_parameter_value,
         event_identifier,
