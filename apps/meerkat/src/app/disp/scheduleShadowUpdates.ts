@@ -49,14 +49,7 @@ function scheduleShadowUpdates (
         if (iAmSupplier && supplierInitiated) {
             const update = () => {
                 updateShadowConsumer(ctx, ob_db_id)
-                    .then(() => {
-                        ctx.log.info(ctx.i18n.t("log:updated_shadow_consumer", {
-                            context: "scheduled",
-                            obid: ob_id.toString(),
-                        }));
-                    })
                     .catch((e) => {
-
                         ctx.log.error(ctx.i18n.t("err:scheduled_shadow_update_failure", {
                             e,
                             obid: ob_id.toString(),
