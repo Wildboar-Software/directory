@@ -10,7 +10,6 @@ import {
     PresentationConnection,
     dispatch_A_ASCrsp_reject,
     dispatch_P_DTreq,
-    dispatch_AARE_reject,
     dispatch_A_RLSrsp_accept,
     dispatch_A_RLSrsp_reject,
 } from "@wildboar/osi-net";
@@ -197,9 +196,9 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dop-ip.oa";
 import { Provider_reason_reason_not_specified } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Provider-reason.ta";
 import { MeerkatContext } from "../ctx";
-// import {
-//     disp_ip,
-// } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/disp-ip.oa";
+import {
+    disp_ip,
+} from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/disp-ip.oa";
 import { getLogInfoFromITOTStack } from "../log/getLogInfoFromITOTStack";
 import { _encode_Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
 
@@ -215,19 +214,27 @@ const supported_contexts: OBJECT_IDENTIFIER[] = [
     id_ac_directoryAccessAC,
     id_ac_directorySystemAC,
     id_ac_directoryOperationalBindingManagementAC,
+    id_ac_shadowConsumerInitiatedAC,
+    id_ac_shadowSupplierInitiatedAC,
+    id_ac_shadowSupplierInitiatedAsynchronousAC,
+    id_ac_shadowConsumerInitiatedAsynchronousAC,
 ];
 
 const app_context_to_abstract_syntax_pci: Map<IndexableOID, number> = new Map([
     [ id_ac_directoryAccessAC.toString(), 3 ],
     [ id_ac_directorySystemAC.toString(), 5 ],
     [ id_ac_directoryOperationalBindingManagementAC.toString(), 7 ],
+    [ id_ac_shadowConsumerInitiatedAC.toString(), 9 ],
+    [ id_ac_shadowSupplierInitiatedAC.toString(), 9 ],
+    [ id_ac_shadowSupplierInitiatedAsynchronousAC.toString(), 9 ],
+    [ id_ac_shadowConsumerInitiatedAsynchronousAC.toString(), 9 ],
 ]);
 
 const protocol_id_to_app_context: Map<IndexableOID, OBJECT_IDENTIFIER> = new Map([
     [ dap_ip["&id"]!.toString(), id_ac_directoryAccessAC ],
     [ dsp_ip["&id"]!.toString(), id_ac_directorySystemAC ],
     [ dop_ip["&id"]!.toString(), id_ac_directoryOperationalBindingManagementAC ],
-    // [ disp_ip["&id"]!.toString(), ], // I don't know how to map this one...
+    [ disp_ip["&id"]!.toString(), id_ac_shadowSupplierInitiatedAsynchronousAC ], // I don't know how to map this one...
     [ id_ac_directoryAccessAC.toString(), id_ac_directoryAccessAC ],
     [ id_ac_directorySystemAC.toString(), id_ac_directorySystemAC ],
     [ id_ac_directoryOperationalBindingManagementAC.toString(), id_ac_directoryOperationalBindingManagementAC ],
@@ -645,6 +652,7 @@ function rose_transport_from_itot_stack (
                 new Context_list_Item(3, id_as_directoryAccessAS, [id_ber]),
                 new Context_list_Item(5, id_as_directorySystemAS, [id_ber]),
                 new Context_list_Item(7, id_as_directoryOperationalBindingManagementAS, [id_ber]),
+                new Context_list_Item(9, id_as_directoryShadowAS, [id_ber]),
             ],
             user_data: {
                 fully_encoded_data: [
@@ -678,6 +686,7 @@ function rose_transport_from_itot_stack (
                                 id_as_directoryAccessAS,
                                 id_as_directorySystemAS,
                                 id_as_directoryOperationalBindingManagementAS,
+                                id_as_directoryShadowAS,
                             ].some((abs) => abs.isEqualTo(c[0].abstract_syntax_name))
                         ) {
                             result = Result_user_rejection;
