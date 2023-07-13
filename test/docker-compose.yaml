@@ -13,10 +13,12 @@ services:
     environment:
       # What appears in this section overrides anything in .env.
       DATABASE_URL: mysql://user1:asdf1@db:3306/directory1
+      MEERKAT_LOG_LEVEL: debug
       MEERKAT_IDM_PORT: 4632
       MEERKAT_OPEN_TOP_LEVEL: 1
       MEERKAT_OB_AUTO_ACCEPT: 1
-      MEERKAT_MY_ACCESS_POINT_NSAPS: idm://dsa1:4632
+      # MEERKAT_MY_ACCESS_POINT_NSAPS: idm://dsa1:4632
+      MEERKAT_MY_ACCESS_POINT_NSAPS: itot://dsa1:1102
       MEERKAT_MIN_AUTH_LEVEL_FOR_CHAINING: 0
       MEERKAT_MIN_AUTH_LEVEL_FOR_DISP: 0
       MEERKAT_MIN_AUTH_LEVEL_FOR_OB: 0
@@ -47,6 +49,10 @@ services:
       # I already know my schema is valid. We just need an environment that can come up quickly.
       # MEERKAT_BULK_INSERT_MODE: 1
       # MEERKAT_INIT_JS: /data/init.mjs
+      MEERKAT_ITOT_PORT: 1102
+      MEERKAT_ITOT_MAX_TSDU_SIZE: "1000000000"
+      MEERKAT_ITOT_MAX_SSDU_SIZE: "1000000000"
+      MEERKAT_CHAINING_TLS_OPTIONAL: 1
     ports:
       - '1389:389/tcp' # LDAP TCP Port
       - '14632:4632/tcp' # IDM Socket
@@ -72,10 +78,12 @@ services:
     environment:
       # What appears in this section overrides anything in .env.
       DATABASE_URL: mysql://user2:asdf2@db:3306/directory2
+      MEERKAT_LOG_LEVEL: debug
       MEERKAT_IDM_PORT: 4632
       MEERKAT_OPEN_TOP_LEVEL: 1
       MEERKAT_OB_AUTO_ACCEPT: 1
-      MEERKAT_MY_ACCESS_POINT_NSAPS: idm://dsa2:4632
+      # MEERKAT_MY_ACCESS_POINT_NSAPS: idm://dsa2:4632
+      MEERKAT_MY_ACCESS_POINT_NSAPS: itot://dsa2:1102
       MEERKAT_MIN_AUTH_LEVEL_FOR_CHAINING: 0
       MEERKAT_MIN_AUTH_LEVEL_FOR_DISP: 0
       MEERKAT_MIN_AUTH_LEVEL_FOR_OB: 0
@@ -104,6 +112,10 @@ services:
       MEERKAT_MAX_IDM_PDU_SIZE: "1000000000"
       MEERKAT_MAX_IDM_SEGMENTS: 100
       # MEERKAT_INIT_JS: /data/init.mjs
+      MEERKAT_ITOT_PORT: 1102
+      MEERKAT_ITOT_MAX_TSDU_SIZE: "1000000000"
+      MEERKAT_ITOT_MAX_SSDU_SIZE: "1000000000"
+      MEERKAT_CHAINING_TLS_OPTIONAL: 1
     ports:
       - '2389:389/tcp' # LDAP TCP Port
       - '24632:4632/tcp' # IDM Socket
@@ -129,10 +141,12 @@ services:
     environment:
       # What appears in this section overrides anything in .env.
       DATABASE_URL: mysql://user3:asdf3@db:3306/directory3
+      MEERKAT_LOG_LEVEL: debug
       MEERKAT_IDM_PORT: 4632
       MEERKAT_OPEN_TOP_LEVEL: 1
       MEERKAT_OB_AUTO_ACCEPT: 1
-      MEERKAT_MY_ACCESS_POINT_NSAPS: idm://dsa3:4632
+      # MEERKAT_MY_ACCESS_POINT_NSAPS: idm://dsa3:4632
+      MEERKAT_MY_ACCESS_POINT_NSAPS: itot://dsa3:1102
       MEERKAT_MIN_AUTH_LEVEL_FOR_CHAINING: 0
       MEERKAT_MIN_AUTH_LEVEL_FOR_DISP: 0
       MEERKAT_MIN_AUTH_LEVEL_FOR_OB: 0
@@ -161,6 +175,10 @@ services:
       MEERKAT_MAX_IDM_PDU_SIZE: "1000000000"
       MEERKAT_MAX_IDM_SEGMENTS: 100
       # MEERKAT_INIT_JS: /data/init.mjs
+      MEERKAT_ITOT_PORT: 1102
+      MEERKAT_ITOT_MAX_TSDU_SIZE: "1000000000"
+      MEERKAT_ITOT_MAX_SSDU_SIZE: "1000000000"
+      MEERKAT_CHAINING_TLS_OPTIONAL: 1
     ports:
       - '3389:389/tcp' # LDAP TCP Port
       - '34632:4632/tcp' # IDM Socket
