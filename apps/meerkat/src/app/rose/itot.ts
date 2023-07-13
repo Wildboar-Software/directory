@@ -125,6 +125,7 @@ import {
 } from '@wildboar/acse/src/lib/modules/ACSE-1/Result.ta';
 import {
     OsiDirectoryOperation,
+    OsiErr,
     _decode_OsiDirectoryOperation,
     _encode_OsiDirectoryOperation,
 } from '@wildboar/x500/src/lib/modules/OSIProtocolSpecification/OsiDirectoryOperation.ta';
@@ -200,6 +201,7 @@ import { MeerkatContext } from "../ctx";
 //     disp_ip,
 // } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/disp-ip.oa";
 import { getLogInfoFromITOTStack } from "../log/getLogInfoFromITOTStack";
+import { _encode_Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
 
 const id_ber = new ObjectIdentifier([2, 1, 1]);
 const id_cer = new ObjectIdentifier([2, 1, 2, 0]);
@@ -1300,12 +1302,10 @@ function rose_transport_from_itot_stack (
                     {
                         single_ASN1_type: _encode_OsiDirectoryOperation(
                             {
-                                result: new OsiRes(
+                                error: new OsiErr(
                                     params.invoke_id,
-                                    new OsiRes_result(
-                                        params.code,
-                                        params.parameter,
-                                    ),
+                                    _encode_Code(params.code, BER),
+                                    params.parameter,
                                 ),
                             },
                             BER,
