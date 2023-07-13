@@ -131,6 +131,8 @@ import {
 import {
     _encode_CoordinateShadowUpdateResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/CoordinateShadowUpdateResult.ta";
+import { _encode_ShadowErrorData } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowErrorData.ta";
+import { shadowError } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/shadowError.oa";
 
 // id-opcode-requestShadowUpdate     Code ::= local:1
 // id-opcode-updateShadow            Code ::= local:2
@@ -397,25 +399,22 @@ async function handleRequestAndErrors (
         if (e instanceof Error) {
             stats.outcome.error.stack = e.stack;
         }
-        if (e instanceof errors.OperationalBindingError) {
-            const code = _encode_Code(SecurityError.errcode, DER);
+        if (e instanceof errors.ShadowError) {
+            const code = _encode_Code(errors.ShadowError.errcode, DER);
             // DISP associations are ALWAYS authorized to receive signed responses.
             const signError: boolean = e.shouldBeSigned;
-            const param: typeof operationalBindingError["&ParameterType"] = signError
-                ? signDirectoryError(ctx, e.data, _encode_OpBindingErrorParam)
+            const param: typeof shadowError["&ParameterType"] = signError
+                ? signDirectoryError(ctx, e.data, _encode_ShadowErrorData)
                 : {
                     unsigned: e.data,
                 };
-            const payload = operationalBindingError.encoderFor["&ParameterType"]!(param, DER);
+            const payload = shadowError.encoderFor["&ParameterType"]!(param, DER);
             assn.rose.write_error({
                 invoke_id: request.invoke_id,
                 code,
                 parameter: payload,
             });
-            stats.outcome.error.problem = e.data.problem;
-            stats.outcome.error.bindingType = e.data.bindingType?.toString();
-            stats.outcome.error.retryAt = e.data.retryAt?.toString();
-            stats.outcome.error.newAgreementProposed = Boolean(e.data.agreementProposal);
+            stats.outcome.error.problem = Number(e.data.problem);
         } else if (e instanceof SecurityError) {
             const code = _encode_Code(errors.SecurityError.errcode, DER);
             // DISP associations are ALWAYS authorized to receive signed responses.
