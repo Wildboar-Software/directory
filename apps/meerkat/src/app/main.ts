@@ -70,6 +70,18 @@ import {
 import {
     id_ac_directoryOperationalBindingManagementAC,
 } from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directoryOperationalBindingManagementAC.va";
+import {
+    id_ac_shadowConsumerInitiatedAC,
+} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowConsumerInitiatedAC.va";
+import {
+    id_ac_shadowConsumerInitiatedAsynchronousAC,
+} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowConsumerInitiatedAsynchronousAC.va";
+import {
+    id_ac_shadowSupplierInitiatedAC,
+} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowSupplierInitiatedAC.va";
+import {
+    id_ac_shadowSupplierInitiatedAsynchronousAC,
+} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowSupplierInitiatedAsynchronousAC.va";
 import { AbortReason } from "@wildboar/rose-transport";
 import { createWriteStream } from "node:fs";
 import { disp_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/disp-ip.oa";
@@ -819,6 +831,18 @@ function attachUnboundEventListenersToITOTConnection (
         }
         else if (bind.protocol_id.isEqualTo(id_ac_directoryOperationalBindingManagementAC)) {
             conn = new DOPAssociation(ctx, rose);
+        }
+        else if (bind.protocol_id.isEqualTo(id_ac_shadowConsumerInitiatedAC)) {
+            conn = new DISPAssociation(ctx, rose);
+        }
+        else if (bind.protocol_id.isEqualTo(id_ac_shadowConsumerInitiatedAsynchronousAC)) {
+            conn = new DISPAssociation(ctx, rose);
+        }
+        else if (bind.protocol_id.isEqualTo(id_ac_shadowSupplierInitiatedAC)) {
+            conn = new DISPAssociation(ctx, rose);
+        }
+        else if (bind.protocol_id.isEqualTo(id_ac_shadowSupplierInitiatedAsynchronousAC)) {
+            conn = new DISPAssociation(ctx, rose);
         }
         else {
             // This branch should not be taken entirely, because the ACSE layer
