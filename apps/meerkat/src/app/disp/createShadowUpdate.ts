@@ -364,6 +364,7 @@ async function _updateShadowConsumer (
                     id: ob_db_id,
                 },
                 data: {
+                    last_update: now,
                     local_last_update: now,
                 },
             });
