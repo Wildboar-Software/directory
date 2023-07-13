@@ -608,6 +608,8 @@ export
 function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETransport {
     const rose = new_rose_transport(itot.network.socket);
 
+    itot.transport.outgoingEvents.on('NDISreq', () => itot.network.socket.end());
+
     itot.acse.outgoingEvents.on('AARQ', (apdu) => {
         itot.acse.presentation.request_P_CONNECT({
             presentation_context_definition_list: [
