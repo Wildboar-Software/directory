@@ -815,7 +815,7 @@ const protocol_id_to_app_context: Map<IndexableOID, OBJECT_IDENTIFIER> = new Map
     [ dap_ip["&id"]!.toString(), id_ac_directoryAccessAC ],
     [ dsp_ip["&id"]!.toString(), id_ac_directorySystemAC ],
     [ dop_ip["&id"]!.toString(), id_ac_directoryOperationalBindingManagementAC ],
-    // [ disp_ip["&id"]!.toString(), ], // I don't know how to map this one...
+    [ disp_ip["&id"]!.toString(), id_ac_shadowSupplierInitiatedAsynchronousAC ], // I don't know how to map this one...
     [ id_ac_directoryAccessAC.toString(), id_ac_directoryAccessAC ],
     [ id_ac_directorySystemAC.toString(), id_ac_directorySystemAC ],
     [ id_ac_directoryOperationalBindingManagementAC.toString(), id_ac_directoryOperationalBindingManagementAC ],
