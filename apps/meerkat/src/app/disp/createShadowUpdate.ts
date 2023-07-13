@@ -44,8 +44,6 @@ async function _updateShadowConsumer (
     // totalRefreshOverride?: ShadowingAgreementInfo,
     forceTotalRefresh: boolean = false,
 ): Promise<void> {
-    let disp_client: DISPClient | null | undefined;
-
     const ob = await ctx.db.operationalBinding.findUnique({
         where: {
             id: ob_db_id,
@@ -125,21 +123,21 @@ async function _updateShadowConsumer (
         return;
     }
 
-    try {
-        disp_client = await bindForDISP(
-            ctx,
-            undefined,
-            undefined,
-            accessPoint,
-            id_ac_shadowSupplierInitiatedAsynchronousAC,
-            undefined,
-            true,
-        );
-        if (!disp_client) {
-            ctx.log.warn(ctx.i18n.t("log:disp_association_failed", { obid: ob.binding_identifier }));
-            return;
-        }
+    const disp_client = await bindForDISP(
+        ctx,
+        undefined,
+        undefined,
+        accessPoint,
+        id_ac_shadowSupplierInitiatedAsynchronousAC,
+        undefined,
+        true,
+    );
+    if (!disp_client) {
+        ctx.log.warn(ctx.i18n.t("log:disp_association_failed", { obid: ob.binding_identifier }));
+        return;
+    }
 
+    try {
         ctx.log.debug(ctx.i18n.t("log:coordinating_shadow_update", {
             context: performTotalRefresh ? "total" : "incremental",
             obid: ob.binding_identifier,
@@ -202,6 +200,7 @@ async function _updateShadowConsumer (
                         code: printCode(coordinateOutcome.error.code),
                     }));
                 }
+                await disp_client.unbind();
                 return;
             }
             else if ("reject" in coordinateOutcome) {
@@ -209,6 +208,7 @@ async function _updateShadowConsumer (
                     obid: ob.binding_identifier,
                     code: coordinateOutcome.reject.problem.toString(),
                 }));
+                await disp_client.unbind();
                 return;
             }
             else if ("abort" in coordinateOutcome) {
@@ -216,12 +216,14 @@ async function _updateShadowConsumer (
                     obid: ob.binding_identifier,
                     code: coordinateOutcome.abort.toString(),
                 }));
+                await disp_client.unbind();
                 return;
             }
             else if ("timeout" in coordinateOutcome) {
                 ctx.log.warn(ctx.i18n.t("log:coordinating_shadow_timeout", {
                     obid: ob.binding_identifier,
                 }));
+                await disp_client.unbind();
                 return;
             }
             else {
@@ -229,6 +231,7 @@ async function _updateShadowConsumer (
                     obid: ob.binding_identifier,
                     data: coordinateOutcome.other,
                 }));
+                await disp_client.unbind();
                 return;
             }
         } else {
@@ -239,7 +242,7 @@ async function _updateShadowConsumer (
         if (performTotalRefresh) {
             const total = await createTotalRefresh(ctx, ob_db_id);
             if (!total) {
-                // TODO: This isn't supposed to happen. Close the association, at least.
+                await disp_client.unbind();
                 return;
             }
             updatedInfo = { total };
@@ -427,7 +430,7 @@ async function _updateShadowConsumer (
         }
     } finally {
         try {
-            disp_client?.unbind().then().catch(); // INTENTIONAL_NO_AWAIT
+            await disp_client?.unbind(); // INTENTIONAL_NO_AWAIT
         } catch (e) {
             ctx.log.error(ctx.i18n.t("err:disp_unbind_error", {
                 e,
