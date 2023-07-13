@@ -555,7 +555,8 @@ const HILLSBOROUGH_ACCESS_POINT = new AccessPoint(
         undefined,
         undefined,
         undefined,
-        [uriToNSAP("idm://dsa2:4632", false)],
+        // [uriToNSAP("idm://dsa2:4632", false)],
+        [uriToNSAP("itot://dsa2:1102", true)],
     ),
     undefined,
 );
@@ -576,7 +577,8 @@ const TEMPLE_TERRACE_ACCESS_POINT = new AccessPoint(
         undefined,
         undefined,
         undefined,
-        [uriToNSAP("idm://dsa1:4632", false)],
+        // [uriToNSAP("idm://dsa1:4632", false)],
+        [uriToNSAP("itot://dsa1:1102", true)],
     ),
     undefined,
 );
