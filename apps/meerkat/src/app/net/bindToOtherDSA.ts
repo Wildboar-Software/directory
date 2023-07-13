@@ -355,13 +355,11 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
         }
 
         if (!tls_in_use && !ctx.config.chaining.tlsOptional) {
-            if (!ctx.config.chaining.tlsOptional) {
-                ctx.log.debug(ctx.i18n.t("log:starttls_error", {
-                    uri: uriString,
-                    context: "tls_required",
-                }), logInfo);
-                continue;
-            }
+            ctx.log.debug(ctx.i18n.t("log:starttls_error", {
+                uri: uriString,
+                context: "tls_required",
+            }), logInfo);
+            continue;
         }
 
         const c: ClientType = client_getter(rose);
