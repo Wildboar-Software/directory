@@ -75,6 +75,36 @@
             //     // "${workspaceFolder}/dist/apps/meerkat/**",
             //     "!**/node_modules/**"
             // ]
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "port": 39229,
+            "name": "Attach to DSA3",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/dist/apps/meerkat/**/*.js"
+            ],
+            // "sourceMapPathOverrides": {
+            //     "/srv/meerkat/*": "${workspaceRoot}/dist/apps/meerkat/*"
+            // },
+            "sourceMaps": true,
+            "localRoot": "${workspaceFolder}/dist/apps/meerkat",
+            // "localRoot": "${workspaceFolder}/dist/apps/meerkat",
+            "remoteRoot": "/srv/meerkat",
+            "resolveSourceMapLocations": [
+                "/srv/meerkat/*",
+                "${workspaceFolder}/dist/apps/meerkat/**",
+                "${workspaceFolder}/apps/meerkat/**",
+                "!**/node_modules/**",
+            ],
+            // "resolveSourceMapLocations": [
+            //     "/srv/meerkat/*",
+            //     // "${workspaceFolder}/dist/apps/meerkat/**",
+            //     "!**/node_modules/**"
+            // ]
         }
     ]
 }
