@@ -338,7 +338,7 @@ async function coordinateShadowUpdate (
         }
     }
 
-    return{
+    return {
         null_: null,
     };
 }
