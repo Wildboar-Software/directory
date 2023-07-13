@@ -34,7 +34,6 @@ import {
 import { shadowError } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/shadowError.oa";
 import stringifyDN from "../x500/stringifyDN";
 import printCode from "../utils/printCode";
-import { DISPClient } from "@wildboar/x500-client-ts";
 import isDebugging from "is-debugging";
 import { differenceInMilliseconds } from "date-fns";
 
@@ -84,24 +83,25 @@ async function _updateShadowConsumer (
         || (ob.requested_strategy === ShadowUpdateStrategy.TOTAL)
     );
 
+    const since: Date = ob.remote_last_update ?? ob.local_last_update ?? new Date();
+    const first_step = !!(await ctx.db.pendingShadowIncrementalStepRefresh.findFirst({
+        where: {
+            binding_identifier: ob_db_id,
+            time: {
+                gt: since,
+            },
+        },
+        select: {
+            id: true,
+        },
+    }));
+
     if (
         !performTotalRefresh
         && "supplierInitiated" in updateMode
         && ("onChange" in updateMode.supplierInitiated)
     ) {
         // If there are no updates, and the update mode is "onChange," just do nothing.
-        const since: Date = ob.remote_last_update ?? ob.local_last_update!;
-        const first_step = !!(await ctx.db.pendingShadowIncrementalStepRefresh.findFirst({
-            where: {
-                binding_identifier: ob_db_id,
-                time: {
-                    gt: since,
-                },
-            },
-            select: {
-                id: true,
-            },
-        }));
         if (!first_step) {
             return;
         }
@@ -139,7 +139,9 @@ async function _updateShadowConsumer (
 
     try {
         ctx.log.debug(ctx.i18n.t("log:coordinating_shadow_update", {
-            context: performTotalRefresh ? "total" : "incremental",
+            context: first_step
+                ? (performTotalRefresh ? "total" : "incremental")
+                : "nochange",
             obid: ob.binding_identifier,
         }));
 
@@ -170,7 +172,9 @@ async function _updateShadowConsumer (
             });
             if ("result" in coordinateOutcome) {
                 ctx.log.debug(ctx.i18n.t("log:coordinated_shadow_update", {
-                    context: performTotalRefresh ? "total" : "incremental",
+                    context: first_step
+                        ? (performTotalRefresh ? "total" : "incremental")
+                        : "nochange",
                     obid: ob.binding_identifier,
                 }));
             }
@@ -342,8 +346,10 @@ async function _updateShadowConsumer (
             timeout: time_given_to_apply_update,
         });
         if ("result" in updateOutcome) {
-            ctx.log.debug(ctx.i18n.t("log:updated_shadow_update", {
-                context: performTotalRefresh ? "total" : "incremental",
+            ctx.log.info(ctx.i18n.t("log:updated_shadow_update", {
+                context: ("noChanges" in updatedInfo)
+                    ? "nochange"
+                    : (performTotalRefresh ? "total" : "incremental"),
                 obid: ob.binding_identifier,
             }));
             await ctx.db.pendingShadowIncrementalStepRefresh.deleteMany({
