@@ -611,7 +611,7 @@ class DISPAssociation extends ClientAssociation {
                     : err;
                 const error = directoryBindError.encoderFor["&ParameterType"]!(payload, DER);
                 this.rose.write_bind_error({
-                    protocol_id: disp_ip["&id"]!, // FIXME:
+                    protocol_id: this.rose.protocol ?? disp_ip["&id"]!,
                     parameter: error,
                 });
                 if (e.unbind) {
@@ -711,7 +711,7 @@ class DISPAssociation extends ClientAssociation {
             versions,
         );
         this.rose.write_bind_result({
-            protocol_id: disp_ip["&id"]!,
+            protocol_id: this.rose.protocol ?? disp_ip["&id"]!,
             parameter: _encode_DSABindResult(bindResult, DER),
         });
         this.rose.events.removeAllListeners("request");
