@@ -235,6 +235,7 @@ async function apinfoProcedure (
                 code: req.opCode,
                 parameter: chainedRead.encoderFor["&ArgumentType"]!(payload, DER),
             });
+            dsp_client.unbind().then().catch();
 
             if ("error" in response) {
                 const errcode: Code = response.error.code ?? { local: -1 };
