@@ -325,7 +325,7 @@
     "updating_shadow_aborted": "Shadow update for operational binding {{obid}} was aborted using reason code {{code}}.",
     "updating_shadow_timeout": "Shadow update for operational binding {{obid}} timed out.",
     "updating_shadow_other_problem": "Shadow update for operational binding {{obid}} encountered some other problem: {{data}}.",
-    "base_dn_of_supplied_area_not_found": "Base DSE of shadow-supplied area not found. Shadow consumer for operational binding {{obid}} cannot be updated. The operational binding will be terminated.",
+    "base_dn_of_supplied_area_not_found": "Base DSE of shadow-supplied area not found. Shadow consumer for operational binding {{obid}} cannot be updated. The operational binding will be terminated. Base DN: {{dn}}",
     "no_access_point_for_shadow_ob": "No remote access point for shadow operational binding {{obid}}. This is likely a bug. This operational binding will not be updated.",
     "failed_to_save_incremental_update_step": "Failed to save incremental update step for shadow operational binding {{sob_id}}: {{e}}",
     "shadow_cp_created": "Shadowed context prefix '{{dn}}' was created as a result of an updateShadow operation.",
