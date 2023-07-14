@@ -139,7 +139,7 @@ async function _updateShadowConsumer (
 
     try {
         ctx.log.debug(ctx.i18n.t("log:coordinating_shadow_update", {
-            context: first_step
+            context: (first_step && !performTotalRefresh)
                 ? (performTotalRefresh ? "total" : "incremental")
                 : "nochange",
             obid: ob.binding_identifier,
@@ -347,7 +347,7 @@ async function _updateShadowConsumer (
         });
         if ("result" in updateOutcome) {
             ctx.log.info(ctx.i18n.t("log:updated_shadow_update", {
-                context: ("noChanges" in updatedInfo)
+                context: (("noChanges" in updatedInfo) && !performTotalRefresh)
                     ? "nochange"
                     : (performTotalRefresh ? "total" : "incremental"),
                 obid: ob.binding_identifier,
