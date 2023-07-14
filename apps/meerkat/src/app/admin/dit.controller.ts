@@ -21,6 +21,7 @@ import type {
     RelativeDistinguishedName
 } from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
 import getRDNFromEntryId from "../database/getRDNFromEntryId";
+import getDNFromEntryId from "../database/getDNFromEntryId";
 import { id_ar_autonomousArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
 import { id_ar_accessControlSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlSpecificArea.va";
 import { id_ar_accessControlInnerArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlInnerArea.va";
@@ -78,6 +79,7 @@ import {
     DSEType_supr,
     DSEType_xr,
 } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/DSEType.ta";
+import { getRDN } from "@wildboar/x500";
 
 const selectAllInfo = new EntryInformationSelection(
     {
@@ -376,7 +378,8 @@ export class DitController {
             })
             : undefined;
         const superiorUUID: string | undefined = superior?.dseUUID;
-        const rdn: RelativeDistinguishedName = await getRDNFromEntryId(this.ctx, entry.id);
+        const dn: DistinguishedName = await getDNFromEntryId(this.ctx, entry.id);
+        const rdn = getRDN(dn);
         const vertex = await vertexFromDatabaseEntry(this.ctx, undefined, entry);
         const {
             userValues: userAttributes,
@@ -454,31 +457,28 @@ export class DitController {
             ...entry,
             uuid: entry.dseUUID,
             superiorUUID,
-            rdn: (rdn.length === 0)
+            dn: dn.length === 0
+                ? "(Empty DN)"
+                : escape(stringifyDN(this.ctx, dn)),
+            rdn: (!rdn || rdn.length === 0)
                 ? "(Empty RDN)"
                 : escape(encodeRDN(this.ctx, rdn)),
             flags: printFlags(vertex),
-            objectClasses: (await this.ctx.db.entryObjectClass.findMany({
-                where: {
-                    entry_id: entry.id,
-                },
-                select: {
-                    object_class: true,
-                },
-            }))
-                .map(({ object_class: oc }) => ({
-                    oid: oc,
-                    name: this.ctx.objectClasses.get(oc)?.ldapNames?.[0],
-                })),
-            createTimestamp: entry.createTimestamp?.toISOString(),
-            modifyTimestamp: entry.modifyTimestamp?.toISOString(),
-            deleteTimestamp: entry.deleteTimestamp?.toISOString(),
-            creatorsName: (vertex.dse.creatorsName?.rdnSequence ?? [])
-                .map((rdn) => escape(encodeRDN(this.ctx, rdn))),
-            modifiersName: (vertex.dse.modifiersName?.rdnSequence ?? [])
-                .map((rdn) => escape(encodeRDN(this.ctx, rdn))),
             attributes,
             subordinates,
+            dbid: vertex.dse.id,
+            shadow: !!vertex.dse.shadow,
+            subcomplete: vertex.dse.shadow?.subordinateCompleteness,
+            attrcomplete: vertex.dse.shadow?.attributeCompleteness,
+            attrValuesIncomplete: Array.from(vertex.dse.shadow?.attributeValuesIncomplete ?? new Set())
+                .map((oid_str: string) => {
+                    const name = this.ctx.objectIdentifierToName.get(oid_str);
+                    if (name) {
+                        return `${oid_str} (${name})`;
+                    } else {
+                        return oid_str;
+                    }
+                }),
         };
     }
 
