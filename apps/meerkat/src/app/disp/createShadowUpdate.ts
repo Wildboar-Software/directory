@@ -119,6 +119,7 @@ async function _updateShadowConsumer (
     if (!baseDSE) {
         ctx.log.error(ctx.i18n.t("log:base_dn_of_supplied_area_not_found", {
             obid: ob.binding_identifier.toString(),
+            dn: stringifyDN(ctx, base_dn),
         }));
         return;
     }
