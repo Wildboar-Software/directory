@@ -521,8 +521,6 @@ async function applyTotalRefresh (
                 true,
             );
         } else {
-
-
             // TODO: Performance hack: if there are no subordinates, just
             // return after this.
             // TODO: Also define an alternative createEntry that only returns the DB ID.
