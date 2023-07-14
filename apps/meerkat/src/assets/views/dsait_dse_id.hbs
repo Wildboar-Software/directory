@@ -31,6 +31,8 @@
     <body>
         <h1>DSE Details</h1>
         <hr />
+        <h2>{{dn}}</h2>
+        <hr />
         <nav>
             <ul>
                 <li>
@@ -44,13 +46,13 @@
             </ul>
         </nav>
         <hr />
-        <h2>Actions</h2>
+        <h3>Actions</h3>
         <form action="/dsait/dse/{{uuid}}/delete" method="POST" >
             <input type="hidden" name="_csrf" value="{{csrfToken}}">
             <button type="submit">Delete</button>
         </form>
         <hr />
-        <h2>Details</h2>
+        <h3>Details</h3>
         <hr />
         <table>
             <thead>
@@ -62,37 +64,43 @@
             <tbody>
                 <tr>
                     <td>Relative Distinguished Name</td>
-                    <td>{{rdn}}</td>
+                    <td><code>{{rdn}}</code></td>
+                </tr>
+                <tr>
+                    <td>DSE UUID</td>
+                    <td><code>{{dseUUID}}</code></td>
+                </tr>
+                <tr>
+                    <td>Database Entry ID</td>
+                    <td><code>{{dbid}}</code></td>
                 </tr>
                 <tr>
                     <td>Flags</td>
                     <td>{{{flags}}}</td>
                 </tr>
+                {{#if shadow}}
                 <tr>
-                    <td>createTimestamp</td>
-                    <td>{{createTimestamp}}</td>
+                    <td>Subordinates Complete?</td>
+                    <td><code>{{subcomplete}}</code></td>
                 </tr>
                 <tr>
-                    <td>modifyTimestamp</td>
-                    <td>{{modifyTimestamp}}</td>
+                    <td>Attributes Complete?</td>
+                    <td><code>{{attrcomplete}}</code></td>
                 </tr>
                 <tr>
-                    <td>creatorsName</td>
-                    <td>{{creatorsName}}</td>
+                    <td>Attributes with Incomplete Values</td>
+                    <td>
+                        <ul>
+                            {{#each attrValuesIncomplete}}
+                            <li><code>{{this}}</code></li>
+                            {{/each}}
+                        </ul>
+                    </td>
                 </tr>
-                <tr>
-                    <td>modifiersName</td>
-                    <td>{{modifiersName}}</td>
-                </tr>
-                {{#if deleteTimestamp}}
-                    <tr>
-                        <td>deleteTimestamp</td>
-                        <td>{{deleteTimestamp}}</td>
-                    </tr>
                 {{/if}}
             </tbody>
         </table>
-        <h2>Attribute Values</h2>
+        <h3>Attribute Values</h3>
         <hr />
         <table>
             <thead>
@@ -112,7 +120,7 @@
                 {{/each}}
             </tbody>
         </table>
-        <h2>Subordinates</h2>
+        <h3>Subordinates</h3>
         <hr />
         <div>
             <p>
