@@ -1540,6 +1540,7 @@ async function modifyOperationalBinding (
                     : undefined,
             },
         });
+        const iAmSupplier: boolean = (created.initiator === OperationalBindingInitiator.ROLE_B);
         const iAmSupplier: boolean = (
             // The initiator was the supplier and this DSA was the initiator...
             ((created.initiator === OperationalBindingInitiator.ROLE_A) && (created.outbound))
