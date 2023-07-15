@@ -1541,12 +1541,14 @@ async function modifyOperationalBinding (
             },
         });
         const iAmSupplier: boolean = (created.initiator === OperationalBindingInitiator.ROLE_B);
-        const iAmSupplier: boolean = (
-            // The initiator was the supplier and this DSA was the initiator...
-            ((created.initiator === OperationalBindingInitiator.ROLE_A) && (created.outbound))
-            // ...or, the initiator was the consumer, and this DSA was NOT the initiator.
-            || ((created.initiator === OperationalBindingInitiator.ROLE_B) && (!created.outbound))
-        );
+        // We can delete these, supplier or not, since OBs are supposed to
+        // be unique across (type, id).
+        const t1 = ctx.pendingShadowingUpdateCycles.get(created.binding_identifier);
+        const t2 = ctx.shadowUpdateCycles.get(created.binding_identifier);
+        t1?.clear();
+        if (t2) {
+            clearTimeout(t2);
+        }
         ctx.pendingShadowingUpdateCycles.delete(created.binding_identifier);
         ctx.shadowUpdateCycles.delete(created.binding_identifier);
         const ob_time: Date = created.responded_time
