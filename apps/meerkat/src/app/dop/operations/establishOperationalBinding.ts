@@ -580,6 +580,7 @@ async function relayedEstablishOperationalBinding (
             }
             const access_point_id = await saveAccessPoint(ctx, relayTo, Knowledge.OB_REQUEST);
             const ob_db_data: Prisma.OperationalBindingCreateInput = {
+                accepted: true,
                 outbound: true,
                 binding_type: bindingType.toString(),
                 binding_identifier: Number(data.bindingID.identifier),
@@ -880,6 +881,7 @@ async function relayedEstablishOperationalBinding (
                 const ob_time: Date = new_ob.responded_time
                     ? new Date(Math.max(new_ob.requested_time.valueOf(), new_ob.responded_time.valueOf()))
                     : new_ob.requested_time;
+
                 if ("roleA_initiates" in initiator) {
                     await becomeShadowSupplier(ctx, bindingID, cp!, relayTo, agr, new_ob.id, ob_time);
                 } else {
@@ -915,14 +917,6 @@ async function relayedEstablishOperationalBinding (
                     ),
                 );
             }
-            await ctx.db.operationalBinding.update({
-                where: {
-                    id: new_ob.id,
-                },
-                data: {
-                    accepted: true,
-                },
-            });
             const now = new Date();
             const possibly_related_sobs = await ctx.db.operationalBinding.findMany({
                 where: {
