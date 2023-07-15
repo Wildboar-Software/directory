@@ -480,6 +480,9 @@ function create_dop_client (rose: ROSETransport): DOPClient {
                 Number(params.bindingID.version ?? 0) + 1,
             ),
             newAgreement,
+            initiator: {
+                roleA_initiates: _encodeNull(null, DER),
+            },
             _unrecognizedExtensionsList: [],
         });
     };
