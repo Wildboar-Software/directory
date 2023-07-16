@@ -573,57 +573,60 @@ async function applyTotalRefresh (
         created_dse_database_id = vertex.dse.id;
     }
     else if (refresh.sDSE) { // The subordinate exists already, and we have sDSE content defined, wipe it out and replace it.
-        const dse_type = sdse_type_to_dse_type(refresh.sDSE.sDSEType);
-        const isFamily: boolean = dse_type[DSEType_familyMember] === TRUE_BIT;
-        await stripEntry(ctx, vertex);
-        const promises = await addAttributes(ctx, vertex, [
-            ...refresh.sDSE.attributes,
-            new Attribute(
-                dseType["&id"],
-                [dseType.encoderFor["&Type"]!(dse_type, DER)],
-            ),
-        ], undefined, false, signErrors);
-        // FIXME: Do this for incremental updates as well.
-        const isSubr: boolean       = (dse_type[DSEType_subr] === TRUE_BIT);
-        const isNssr: boolean       = (dse_type[DSEType_nssr] === TRUE_BIT);
-        const isCp: boolean         = (dse_type[DSEType_cp] === TRUE_BIT);
-        const isEntry: boolean      = (dse_type[DSEType_entry] === TRUE_BIT);
-        const isAlias: boolean      = (dse_type[DSEType_alias] === TRUE_BIT);
-        const isAdmPoint: boolean   = (dse_type[DSEType_admPoint] === TRUE_BIT);
-        const isSubentry: boolean   = (dse_type[DSEType_subentry] === TRUE_BIT);
-        const isSa: boolean         = (dse_type[DSEType_sa] === TRUE_BIT);
-        const isGlue: boolean       = (dse_type[DSEType_glue] === TRUE_BIT);
-        // TODO: Can I put the promises from stripEntry() in the transaction below?
-        await ctx.db.$transaction([
-            ...promises,
-            ctx.db.entry.update({
-                where: {
-                    id: vertex.dse.id,
-                },
-                data: {
-                    subordinate_completeness: refresh.sDSE.subComplete ?? FALSE,
-                    attribute_completeness: refresh.sDSE.attComplete,
-                    lastShadowUpdate: new Date(),
-                    // DSE types need to be set, because the DSE type driver is a NOOP.
-                    shadow: true,
-                    entry: isEntry && !isFamily,
-                    subr: isSubr,
-                    nssr: isNssr,
-                    cp: (depth === cp_length) || isCp,
-                    alias: isAlias,
-                    admPoint: isAdmPoint,
-                    subentry: isSubentry,
-                    sa: isSa,
-                    glue: isGlue,
-                },
-            }),
-            ctx.db.entryAttributeValuesIncomplete.createMany({
-                data: refresh.sDSE.attValIncomplete?.map((oid) => ({
-                    entry_id: vertex.dse.id,
-                    attribute_type: oid.toString(),
-                })) ?? [],
-            }),
-        ]);
+        const objectClasses = Array.from(vertex.dse.objectClass).map(ObjectIdentifier.fromString);
+        if (!refinement || objectClassesWithinRefinement(objectClasses, refinement)) {
+            /* Only if the entry falls within the refinement do we modify it. */
+            const dse_type = sdse_type_to_dse_type(refresh.sDSE.sDSEType);
+            const isFamily: boolean = dse_type[DSEType_familyMember] === TRUE_BIT;
+            await stripEntry(ctx, vertex);
+            const promises = await addAttributes(ctx, vertex, [
+                ...refresh.sDSE.attributes,
+                new Attribute(
+                    dseType["&id"],
+                    [dseType.encoderFor["&Type"]!(dse_type, DER)],
+                ),
+            ], undefined, false, signErrors);
+            const isSubr: boolean       = (dse_type[DSEType_subr] === TRUE_BIT);
+            const isNssr: boolean       = (dse_type[DSEType_nssr] === TRUE_BIT);
+            const isCp: boolean         = (dse_type[DSEType_cp] === TRUE_BIT);
+            const isEntry: boolean      = (dse_type[DSEType_entry] === TRUE_BIT);
+            const isAlias: boolean      = (dse_type[DSEType_alias] === TRUE_BIT);
+            const isAdmPoint: boolean   = (dse_type[DSEType_admPoint] === TRUE_BIT);
+            const isSubentry: boolean   = (dse_type[DSEType_subentry] === TRUE_BIT);
+            const isSa: boolean         = (dse_type[DSEType_sa] === TRUE_BIT);
+            const isGlue: boolean       = (dse_type[DSEType_glue] === TRUE_BIT);
+            // TODO: Can I put the promises from stripEntry() in the transaction below?
+            await ctx.db.$transaction([
+                ...promises,
+                ctx.db.entry.update({
+                    where: {
+                        id: vertex.dse.id,
+                    },
+                    data: {
+                        subordinate_completeness: refresh.sDSE.subComplete ?? FALSE,
+                        attribute_completeness: refresh.sDSE.attComplete,
+                        lastShadowUpdate: new Date(),
+                        // DSE types need to be set, because the DSE type driver is a NOOP.
+                        shadow: true,
+                        entry: isEntry && !isFamily,
+                        subr: isSubr,
+                        nssr: isNssr,
+                        cp: (depth === cp_length) || isCp,
+                        alias: isAlias,
+                        admPoint: isAdmPoint,
+                        subentry: isSubentry,
+                        sa: isSa,
+                        glue: isGlue,
+                    },
+                }),
+                ctx.db.entryAttributeValuesIncomplete.createMany({
+                    data: refresh.sDSE.attValIncomplete?.map((oid) => ({
+                        entry_id: vertex.dse.id,
+                        attribute_type: oid.toString(),
+                    })) ?? [],
+                }),
+            ]);
+        }
     }
     const max = agreement.shadowSubject.area.replicationArea.maximum;
     const max_depth = Math.min(Number(max ?? MAX_DEPTH), MAX_DEPTH);
@@ -657,28 +660,6 @@ async function applyTotalRefresh (
     const possible_created_ids = await bPromise.map(refresh.subtree, async (subtree: Subtree) => {
         const sub = await dnToVertex(ctx, vertex, [ subtree.rdn ]);
         if (sub) {
-            const objectClasses = Array.from(sub.dse.objectClass).map(ObjectIdentifier.fromString);
-            if (refinement && !objectClassesWithinRefinement(objectClasses, refinement)) {
-                throw new ShadowError(
-                    ctx.i18n.t("err:shadow_update_with_unauthorized_object_classes"),
-                    new ShadowErrorData(
-                        ShadowProblem_invalidInformationReceived,
-                        undefined,
-                        undefined,
-                        [],
-                        createSecurityParameters(
-                            ctx,
-                            signErrors,
-                            assn.boundNameAndUID?.dn,
-                            undefined,
-                            id_errcode_shadowError,
-                        ),
-                        ctx.dsa.accessPoint.ae_title.rdnSequence,
-                        FALSE,
-                        undefined,
-                    ),
-                );
-            }
             processed_subordinate_ids.add(sub.dse.id);
         }
         return applyTotalRefresh(
