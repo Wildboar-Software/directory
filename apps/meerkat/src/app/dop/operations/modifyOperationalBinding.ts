@@ -306,10 +306,12 @@ async function modifyOperationalBinding (
             initiator_ber: true,
             agreement_ber: true,
             outbound: true,
+            entry_id: true,
             access_point: {
                 select: {
                     id: true,
                     ae_title: true,
+                    ber: true,
                 },
             },
         },
@@ -1523,31 +1525,6 @@ async function modifyOperationalBinding (
             }
         }
 
-        const oldCP = oldAgreement.shadowSubject.area.contextPrefix;
-        const newCP = newAgreement.shadowSubject.area.contextPrefix;
-        if (!compareDistinguishedName(oldCP, newCP, NAMING_MATCHER)) {
-            throw new errors.OperationalBindingError(
-                ctx.i18n.t("err:cannot_change_replicated_base_name"),
-                new OpBindingErrorParam(
-                    OpBindingErrorParam_problem_invalidAgreement,
-                    data.bindingType,
-                    undefined,
-                    undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        signErrors,
-                        assn.boundNameAndUID?.dn,
-                        undefined,
-                        id_err_operationalBindingError,
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    undefined,
-                    undefined,
-                ),
-                signErrors,
-            );
-        }
         await ctx.db.operationalBinding.update({
             where: {
                 id: created.id,
@@ -1571,7 +1548,6 @@ async function modifyOperationalBinding (
                     : undefined,
             },
         });
-        const iAmSupplier: boolean = (created.initiator === OperationalBindingInitiator.ROLE_B);
         // We can delete these, supplier or not, since OBs are supposed to
         // be unique across (type, id).
         const t1 = ctx.pendingShadowingUpdateCycles.get(created.binding_identifier);
@@ -1582,10 +1558,125 @@ async function modifyOperationalBinding (
         }
         ctx.pendingShadowingUpdateCycles.delete(created.binding_identifier);
         ctx.shadowUpdateCycles.delete(created.binding_identifier);
+
+        const oldCP = oldAgreement.shadowSubject.area.contextPrefix;
+        const newCP = newAgreement.shadowSubject.area.contextPrefix;
         const ob_time: Date = created.responded_time
             ? new Date(Math.max(created.requested_time.valueOf(), created.responded_time.valueOf()))
             : created.requested_time;
-        scheduleShadowUpdates(ctx, newAgreement, created.id, created.binding_identifier, ob_time, iAmSupplier);
+        if (!compareDistinguishedName(oldCP, newCP, NAMING_MATCHER)) {
+            const otherOpBindingsAssociatedWithOldCP: number = opBinding.entry_id
+                ? (await ctx.db.operationalBinding.count({
+                    where: {
+                        entry_id: opBinding.entry_id,
+                        /**
+                         * This is a hack for getting the latest version: we are selecting
+                         * operational bindings that have no next version.
+                         *
+                         * See: https://github.com/prisma/prisma/discussions/2772#discussioncomment-1712222
+                         */
+                        next_version: {
+                            none: {},
+                        },
+                        accepted: true,
+                        terminated_time: null,
+                        validity_start: {
+                            lte: now,
+                        },
+                        OR: [
+                            {
+                                validity_end: null,
+                            },
+                            {
+                                validity_end: {
+                                    gte: now,
+                                },
+                            },
+                        ],
+                    },
+                }))
+                : 1; // 1 because the current OB is obviously associated with the old CP.
+            if (opBinding.entry_id && (otherOpBindingsAssociatedWithOldCP <= 1)) {
+                // If there are no more OBs whose CP is this entry, set CP = false.
+                await ctx.db.entry.update({
+                    where: {
+                        id: opBinding.entry_id,
+                    },
+                    data: {
+                        cp: false,
+                    },
+                });
+            }
+            // throw new errors.OperationalBindingError(
+            //     ctx.i18n.t("err:cannot_change_replicated_base_name"),
+            //     new OpBindingErrorParam(
+            //         OpBindingErrorParam_problem_invalidAgreement,
+            //         data.bindingType,
+            //         undefined,
+            //         undefined,
+            //         [],
+            //         createSecurityParameters(
+            //             ctx,
+            //             signErrors,
+            //             assn.boundNameAndUID?.dn,
+            //             undefined,
+            //             id_err_operationalBindingError,
+            //         ),
+            //         ctx.dsa.accessPoint.ae_title.rdnSequence,
+            //         undefined,
+            //         undefined,
+            //     ),
+            //     signErrors,
+            // );
+        }
+        const accessPoint = data.accessPoint
+            ? data.accessPoint
+            : (opBinding.access_point?.ber
+                ? (() => {
+                    const el = new BERElement();
+                    el.fromBytes(opBinding.access_point.ber);
+                    return _decode_AccessPoint(el);
+                })()
+                : undefined);
+        if (!accessPoint) {
+            // This should never happen.
+            throw new Error("c941f609-b77f-4324-965c-056f74b045c9");
+        }
+        // Modifying the SOB is pretty much treated like creating a totally new SOB.
+        if (iAmSupplier) {
+            const cp = await dnToVertex(ctx, ctx.dit.root, newCP);
+            if (!cp) {
+                ctx.log.warn(ctx.i18n.t("log:proposed_cp_not_found", {
+                    obid: data.newBindingID.identifier.toString(),
+                }));
+                throw new errors.OperationalBindingError(
+                    ctx.i18n.t("err:ob_rejected", {
+                        uuid: created.uuid,
+                    }),
+                    new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_invalidAgreement,
+                        data.bindingType,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            id_err_operationalBindingError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
+                    signErrors,
+                );
+            }
+            await becomeShadowSupplier(ctx, data.newBindingID, cp, accessPoint, newAgreement, created.id, ob_time);
+        } else {
+            await becomeShadowConsumer(ctx, newAgreement, accessPoint, data.newBindingID, created.id, ob_time);
+        }
         ctx.log.info(ctx.i18n.t("log:modifyOperationalBinding", {
             context: "succeeded",
             type: data.bindingType.toString(),
