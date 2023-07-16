@@ -172,9 +172,9 @@ async function _updateShadowConsumer (
             });
             if ("result" in coordinateOutcome) {
                 ctx.log.debug(ctx.i18n.t("log:coordinated_shadow_update", {
-                    context: first_step
-                        ? (performTotalRefresh ? "total" : "incremental")
-                        : "nochange",
+                    context: performTotalRefresh
+                        ? "total"
+                        : (first_step ? "incremental" : "nochange"),
                     obid: ob.binding_identifier,
                 }));
             }
@@ -347,9 +347,9 @@ async function _updateShadowConsumer (
         });
         if ("result" in updateOutcome) {
             ctx.log.info(ctx.i18n.t("log:updated_shadow_update", {
-                context: (("noChanges" in updatedInfo) && !performTotalRefresh)
-                    ? "nochange"
-                    : (performTotalRefresh ? "total" : "incremental"),
+                context: performTotalRefresh
+                    ? "total"
+                    : (first_step ? "incremental" : "nochange"),
                 obid: ob.binding_identifier,
             }));
             await ctx.db.pendingShadowIncrementalStepRefresh.deleteMany({
