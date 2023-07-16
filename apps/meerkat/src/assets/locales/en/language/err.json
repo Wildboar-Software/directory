@@ -129,6 +129,7 @@
     "could_not_find_supr": "Could not find superior associated with operational binding {{uuid}}.",
     "invalid_reference_no_reason_to_search_here": "Invalid reference: there is no context prefix under the target object, and therefore no reason to continue the search or list in this DSA; alternatively, you may have set the manageDSAIT flag and the object simply does not exist in this DSA.",
     "cannot_reverse_roles_in_hob": "Cannot reverse roles in a hierarchical operational binding.",
+    "cannot_reverse_roles_in_sob": "Cannot reverse roles in a shadow operational binding.",
     "ob_duplicate_identifier": "Proposed operational binding ID {{id}} is already taken.",
     "ob_invalid_version": "Proposed operational binding ID version ({{proposed}}) is less than or equal to the most current version ({{current}}).",
     "failed_to_update_superior_dsa@no_hob": "There were no HOBs associated with the context prefix or one of its subentries.",

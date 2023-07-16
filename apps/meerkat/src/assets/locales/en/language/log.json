@@ -359,5 +359,6 @@
     "disp_unbind_error": "Error unbinding DISP assocation made to update SOB {{obid}}: {{e}}",
     "dop_unbind_error": "Error unbinding DOP assocation: {{e}}",
     "time_to_produce_shadow_update": "Took {{ms}} milliseconds to produce shadow update for SOB {{obid}}.",
-    "starttls_error@tls_required": "Could not establish TLS protection to {{uri}} via StartTLS, but it is a requirement."
+    "starttls_error@tls_required": "Could not establish TLS protection to {{uri}} via StartTLS, but it is a requirement.",
+    "proposed_cp_not_found": "New context prefix proposed for shadow operational binding {{obid}} does not exist."
 }
