@@ -145,17 +145,24 @@ import stringifyDN from "../../x500/stringifyDN";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import { top } from "@wildboar/x500/src/lib/collections/objectClasses";
+import { person, top } from "@wildboar/x500/src/lib/collections/objectClasses";
 import terminateByTypeAndBindingID from "../terminateByTypeAndBindingID";
 import {
     ShadowingAgreementInfo,
+    UnitOfReplication,
     _decode_ShadowingAgreementInfo,
+    _encode_ShadowingAgreementInfo,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
 import { becomeShadowConsumer } from "../establish/becomeShadowConsumer";
 import { becomeShadowSupplier } from "../establish/becomeShadowSupplier";
 import { updateShadowConsumer } from "../../disp/createShadowUpdate";
 import { AttributeUsage_dSAOperation } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
-import { subSeconds } from "date-fns";
+import { addYears, subSeconds } from "date-fns";
+import { ModificationParameter, _encode_ModificationParameter } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ModificationParameter.ta";
+import { AreaSpecification, SubtreeSpecification } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/AreaSpecification.ta";
+import { id_op_modifyOperationalBinding } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-op-modifyOperationalBinding.va";
+import scheduleShadowUpdates from "../../disp/scheduleShadowUpdates";
+import { PeriodicStrategy, SchedulingParameters } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SchedulingParameters.ta";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -166,6 +173,177 @@ function codeToString (code?: Code): string | undefined {
                 ? code.local.toString()
                 : undefined
         : undefined);
+}
+
+// This is just for testing purposes and should be deleted.
+async function modifySOB_delete_me (
+    ctx: MeerkatContext,
+    binding_identifier: number,
+    originalAgreement: ShadowingAgreementInfo,
+    relayTo: AccessPoint,
+): Promise<void> {
+    ctx.log.error("TESTING CODE LEFT IN THE APPLICATION. THIS IS A BUG IF YOU SEE THIS.");
+    const iAmSupplier: boolean = true;
+    const dop = await bindForOBM(ctx, undefined, undefined, relayTo, undefined, false);
+    if (!dop) {
+        throw new Error("d4904af9-95d7-4c2a-acc5-9616c35274ac");
+    }
+    const last = await ctx.db.operationalBinding.findFirst({
+        where: {
+            next_version: {
+                none: {},
+            },
+            binding_type: id_op_binding_shadow.toString(),
+            binding_identifier: binding_identifier,
+            binding_version: 0,
+            accepted: true,
+        },
+        select: {
+            id: true,
+            access_point_id: true,
+        },
+    });
+    if (!last) {
+        throw new Error("4f16ca13-de5e-4a89-bf84-ed7a8718c7a7");
+    }
+    const newAgreement = new ShadowingAgreementInfo(
+        new UnitOfReplication(
+            new AreaSpecification(
+                originalAgreement.shadowSubject.area.contextPrefix.slice(0, -1),
+                new SubtreeSpecification(
+                    originalAgreement.shadowSubject.area.replicationArea.base,
+                    originalAgreement.shadowSubject.area.replicationArea.specificExclusions,
+                    originalAgreement.shadowSubject.area.replicationArea.minimum,
+                    originalAgreement.shadowSubject.area.replicationArea.maximum,
+                    {
+                        item: person["&id"],
+                    },
+                ),
+            ),
+            originalAgreement.shadowSubject.attributes,
+            originalAgreement.shadowSubject.knowledge,
+            TRUE,
+            originalAgreement.shadowSubject.contextSelection,
+            originalAgreement.shadowSubject.supplyContexts,
+        ),
+        // originalAgreement.shadowSubject,
+        // originalAgreement.updateMode, // TODO: Test with changed update mode.
+        {
+            consumerInitiated: new SchedulingParameters(
+                new PeriodicStrategy(
+                    undefined,
+                    60,
+                    120,
+                ),
+                undefined,
+            ),
+        },
+        originalAgreement.master,
+        originalAgreement.secondaryShadows,
+    );
+    const sp = createSecurityParameters(
+        ctx,
+        true,
+        relayTo.ae_title.rdnSequence,
+        id_op_modifyOperationalBinding,
+    );
+    const outcome = iAmSupplier
+        ? await dop.modifySOBWithConsumer({
+            bindingID: new OperationalBindingID(
+                binding_identifier,
+                0,
+            ),
+            newAgreement,
+            initiator: undefined,
+            cert_path: ctx.config.signing.certPath,
+            key: ctx.config.signing.key,
+            securityParameters: sp,
+        })
+        : await dop.modifySOBWithSupplier({
+            bindingID: new OperationalBindingID(
+                binding_identifier,
+                0,
+            ),
+            newAgreement,
+            initiator: new ModificationParameter([]),
+            cert_path: ctx.config.signing.certPath,
+            key: ctx.config.signing.key,
+            securityParameters: sp,
+        });
+    dop.unbind();
+    if (!("result" in outcome)) {
+        console.error(outcome);
+        return;
+    }
+    console.log("MODIFIED SOB");
+    const agr_el = _encode_ShadowingAgreementInfo(newAgreement, DER).toBytes();
+
+    const { id } = await ctx.db.operationalBinding.create({
+        data: {
+            accepted: true,
+            outbound: true,
+            terminated_time: null,
+            binding_type: id_op_binding_shadow.toString(),
+            binding_identifier: binding_identifier,
+            binding_version: 1,
+            agreement_ber: Buffer.from(agr_el),
+            ...(last?.access_point_id
+                ? {
+                    access_point: {
+                        connect: {
+                            id: last.access_point_id,
+                        },
+                    },
+                }
+                : {}),
+            initiator: iAmSupplier
+                ? OperationalBindingInitiator.ROLE_A
+                : OperationalBindingInitiator.ROLE_B,
+            initiator_ber: iAmSupplier
+                ? Buffer.from(_encodeNull(null, DER).toBytes())
+                : Buffer.from(_encode_ModificationParameter(new ModificationParameter([]), DER).toBytes()),
+            validity_start: new Date(),
+            validity_end: addYears(new Date(), 5),
+            security_certification_path: sp?.certification_path
+                ? Buffer.from(_encode_CertificationPath(sp.certification_path, DER).toBytes().buffer)
+                : undefined,
+            security_name: sp?.name?.map((rdn) => rdnToJson(rdn)),
+            security_time: sp?.time
+                ? getDateFromTime(sp.time)
+                : undefined,
+            security_random: sp?.random
+                ? Buffer.from(packBits(sp.random).buffer)
+                : undefined,
+            security_target: (sp?.target !== undefined)
+                ? Number (sp.target)
+                : undefined,
+            security_operationCode: codeToString(sp?.operationCode),
+            security_errorProtection: (sp?.errorProtection !== undefined)
+                ? Number(sp.errorProtection)
+                : undefined,
+            security_errorCode: codeToString(sp?.errorCode),
+            requested_time: new Date(),
+            previous: {
+                connect: {
+                    id: last.id,
+                },
+            },
+        },
+        select: {
+            id: true,
+        },
+    });
+    // We can delete these, supplier or not, since OBs are supposed to
+    // be unique across (type, id).
+    const t1 = ctx.pendingShadowingUpdateCycles.get(binding_identifier);
+    const t2 = ctx.shadowUpdateCycles.get(binding_identifier);
+    t1?.clear();
+    if (t2) {
+        clearTimeout(t2);
+    }
+    ctx.pendingShadowingUpdateCycles.delete(binding_identifier);
+    ctx.shadowUpdateCycles.delete(binding_identifier);
+    scheduleShadowUpdates(ctx, newAgreement, id, binding_identifier, new Date(), iAmSupplier);
 }
 
 async function relayedEstablishOperationalBinding (
@@ -2615,6 +2793,10 @@ async function establishOperationalBinding (
             const ob_time: Date = created.responded_time
                 ? new Date(Math.max(created.requested_time.valueOf(), created.responded_time.valueOf()))
                 : created.requested_time;
+            if (data.bindingID !== undefined) {
+                ctx.shadowUpdateCycles.delete(Number(data.bindingID.identifier));
+                ctx.pendingShadowingUpdateCycles.delete(Number(data.bindingID.identifier));
+            }
             try {
                 await becomeShadowConsumer(
                     ctx,
