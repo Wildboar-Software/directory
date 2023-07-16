@@ -1459,7 +1459,7 @@ async function modifyOperationalBinding (
             if (
                 !Number.isSafeInteger(period.updateInterval)
                 || (period.updateInterval <= 0)
-                || Number.isSafeInteger(period.windowSize)
+                || !Number.isSafeInteger(period.windowSize)
                 || (period.windowSize <= 0)
             ) {
                 throw new errors.MistypedArgumentError(ctx.i18n.t("err:nonsense_shadow_update_schedule"));
