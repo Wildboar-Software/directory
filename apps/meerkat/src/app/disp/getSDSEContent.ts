@@ -137,8 +137,8 @@ async function getSDSEContent (
     ctx: Context,
     vertex: Vertex,
     agreement: ShadowingAgreementInfo,
-    extendedKnowledge: boolean = false,
-    replicateSubordinates: boolean = false,
+    selectingExtendedKnowledge: boolean = false,
+    selectingSubordinate: boolean = false,
     knowledgeTypes?: Knowledge_knowledgeType,
 ): Promise<SDSEContent> {
     // root , glue , cp , entry , alias , subr , nssr , admPoint , subEntry and sa.
@@ -166,7 +166,7 @@ async function getSDSEContent (
     ]);
 
     if (
-        (replicateSubordinates || extendedKnowledge) // If we are traversing the extended area,...
+        (selectingSubordinate || selectingExtendedKnowledge) // If we are traversing the extended area,...
         && !(vertex.dse.subr || vertex.dse.nssr) // ...and this DSE is not a subordinate reference.
     ) {
         // Return a glue DSE.
@@ -190,12 +190,12 @@ async function getSDSEContent (
     else if (knowledgeTypes === Knowledge_knowledgeType_shadow) {
         knowledgeSelection.push(x500at.consumerKnowledge["&id"]);
     }
-    if (extendedKnowledge) {
+    if (selectingExtendedKnowledge) {
         knowledgeSelection.push(x500at.specificKnowledge["&id"]);
         knowledgeSelection.push(x500at.nonSpecificKnowledge["&id"]);
     }
 
-    if (replicateSubordinates) {
+    if (selectingSubordinate) {
         const {
             userAttributes,
             operationalAttributes,
@@ -225,7 +225,7 @@ async function getSDSEContent (
             undefined,
         );
     }
-    else if (extendedKnowledge) {
+    else if (selectingExtendedKnowledge) {
         const {
             operationalAttributes: attributes,
         } = await readAttributes(ctx, vertex, {
