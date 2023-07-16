@@ -297,7 +297,8 @@ async function getShadowIncrementalSteps (
         const oldDN = ("rename" in change)
             ? change.oldDN
             : newDN;
-        let selectOnlyExtKnowledge: boolean = false;
+        let selectingSubordinateInfo: boolean = false;
+        let selectingOnlyExtKnowledge: boolean = false;
         if (!dnWithinSubtreeSpecification(oldDN, objectClasses, subtree, cp_dn, NAMING_MATCHER)) {
             /**
              * If the old DN was not within the shadow subtree, but the new one
@@ -316,13 +317,16 @@ async function getShadowIncrementalSteps (
                 ret.push([ sob.id, sob.binding_identifier, refresh, vertex.immediateSuperior ]);
             }
 
-            if ( // If we are selecting subordinates or extended knowledge, and this DSE qualifies...
-                (!subordinates || !extKnowledge)
+            // If we are selecting subordinates or extended knowledge, and this DSE qualifies...
+            if (
+                (subordinates || extKnowledge)
                 && (vertex.dse.subr || vertex.dse.nssr)
                 && isPrefix(ctx, cp_dn, oldDN)
             ) {
                 if (extKnowledge) {
-                    selectOnlyExtKnowledge = true;
+                    selectingOnlyExtKnowledge = true;
+                } else {
+                    selectingSubordinateInfo = true;
                 }
             } else {
                 continue;
@@ -345,8 +349,8 @@ async function getShadowIncrementalSteps (
                         ctx,
                         vertex,
                         agreement,
-                        extKnowledge,
-                        subordinates,
+                        selectingOnlyExtKnowledge,
+                        selectingSubordinateInfo,
                         agreement.shadowSubject.knowledge?.knowledgeType,
                     ),
                 },
@@ -413,7 +417,7 @@ async function getShadowIncrementalSteps (
                     if (!type_) {
                         return false;
                     }
-                    if (selectOnlyExtKnowledge) {
+                    if (selectingOnlyExtKnowledge) {
                         return (
                             !type_.isEqualTo(specificKnowledge["&id"])
                             && !type_.isEqualTo(nonSpecificKnowledge["&id"])
