@@ -253,5 +253,6 @@
     "sob_window_size_gte_update_interval": "The shadow operational binding's window size cannot be greater than or equal to the update interval.",
     "shadow_update_outside_of_window": "Shadow update for operational binding {{obid}} cannot happen now: it is currently outside of the agreed upon update window. START={{start}} END={{end}} NOW={{now}}",
     "sob_supplier_initiated_op_not_authz": "Shadow operational binding {{obid}} is not supplier-initiated. You are not permitted to use this operation.",
-    "sob_consumer_initiated_op_not_authz": "Shadow operational binding {{obid}} is not consumer-initiated. You are not permitted to use this operation."
+    "sob_consumer_initiated_op_not_authz": "Shadow operational binding {{obid}} is not consumer-initiated. You are not permitted to use this operation.",
+    "differing_sob_versions": "DISP operation from association {{aid}} referred to an different version of shadow operational binding {{obid}}."
 }
