@@ -27,6 +27,7 @@ import { updateShadowConsumer } from "../createShadowUpdate";
 import { ShadowingAgreementInfo, _decode_ShadowingAgreementInfo } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
 import { addSeconds } from "date-fns";
 import { UpdateWindow } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/UpdateWindow.ta";
+import { OperationalBindingInitiator } from "@prisma/client";
 
 
 // requestShadowUpdate OPERATION ::= {
@@ -88,6 +89,33 @@ async function requestShadowUpdate (
         );
     }
     const data = getOptionallyProtectedValue(arg);
+    const signErrors: boolean = true;
+    if (
+        (!("standard" in data.requestedStrategy))
+        || (data.requestedStrategy.standard < 0)
+        || (data.requestedStrategy.standard > 2)
+    ) {
+        throw new ShadowError(
+            ctx.i18n.t("err:unsupported_shadow_update_strategy"),
+            new ShadowErrorData(
+                ShadowProblem_unsupportedStrategy,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    id_errcode_shadowError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                FALSE,
+                undefined,
+            ),
+            signErrors,
+        );
+    }
     const now = new Date();
     const ob = await ctx.db.operationalBinding.findFirst({
         where: {
@@ -125,6 +153,8 @@ async function requestShadowUpdate (
             requested_time: true,
             responded_time: true,
             local_last_update: true,
+            outbound: true,
+            initiator: true,
             access_point: {
                 select: {
                     ber: true,
@@ -132,33 +162,6 @@ async function requestShadowUpdate (
             },
         },
     });
-    const signErrors: boolean = true;
-    if (
-        (!("standard" in data.requestedStrategy))
-        || (data.requestedStrategy.standard < 0)
-        || (data.requestedStrategy.standard > 2)
-    ) {
-        throw new ShadowError(
-            ctx.i18n.t("err:unsupported_shadow_update_strategy"),
-            new ShadowErrorData(
-                ShadowProblem_unsupportedStrategy,
-                undefined,
-                undefined,
-                [],
-                createSecurityParameters(
-                    ctx,
-                    signErrors,
-                    assn.boundNameAndUID?.dn,
-                    undefined,
-                    id_errcode_shadowError,
-                ),
-                ctx.dsa.accessPoint.ae_title.rdnSequence,
-                FALSE,
-                undefined,
-            ),
-            signErrors,
-        );
-    }
     if (!ob) {
         throw new ShadowError(
             ctx.i18n.t("err:sob_not_found", { obid: data.agreementID.identifier.toString() }),
@@ -185,6 +188,34 @@ async function requestShadowUpdate (
         throw new UnknownError(ctx.i18n.t("log:shadow_ob_with_no_access_point", {
             obid: ob.binding_identifier.toString(),
         }));
+    }
+    const iAmSupplier: boolean = (
+        // The initiator was the supplier and this DSA was the initiator...
+        ((ob.initiator === OperationalBindingInitiator.ROLE_A) && (ob.outbound))
+        // ...or, the initiator was the consumer, and this DSA was NOT the initiator.
+        || ((ob.initiator === OperationalBindingInitiator.ROLE_B) && (!ob.outbound))
+    );
+    if (!iAmSupplier) {
+        throw new ShadowError(
+            ctx.i18n.t("err:shadow_role_reversal"),
+            new ShadowErrorData(
+                ShadowProblem_unwillingToPerform,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    id_errcode_shadowError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                FALSE,
+                undefined,
+            ),
+            signErrors,
+        );
     }
     const apElement = new BERElement();
     apElement.fromBytes(ob.access_point.ber);
