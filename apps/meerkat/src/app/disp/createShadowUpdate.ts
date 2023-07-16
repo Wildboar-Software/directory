@@ -139,13 +139,6 @@ async function _updateShadowConsumer (
     }
 
     try {
-        ctx.log.debug(ctx.i18n.t("log:coordinating_shadow_update", {
-            context: (first_step && !performTotalRefresh)
-                ? (performTotalRefresh ? "total" : "incremental")
-                : "nochange",
-            obid: ob.binding_identifier,
-        }));
-
         let step_ids: number[] = [];
         const bindingID = new OperationalBindingID(
             ob.binding_identifier,
@@ -153,6 +146,12 @@ async function _updateShadowConsumer (
         );
         const needsCoordinate: boolean = (!("consumerInitiated" in updateMode));
         if (needsCoordinate) {
+            ctx.log.debug(ctx.i18n.t("log:coordinating_shadow_update", {
+                context: performTotalRefresh
+                    ? "total"
+                    : (first_step ? "incremental" : "nochange"),
+                obid: ob.binding_identifier,
+            }));
             const coordinateOutcome = await disp_client.coordinateShadowUpdate({
                 agreementID: bindingID,
                 lastUpdate: ob.local_last_update ?? undefined,
