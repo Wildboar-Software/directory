@@ -62,6 +62,7 @@ async function getRelevantSubentries (
         },
     });
     const relevant_sub_ids: Set<number> = new Set();
+    const admPointDN = getDistinguishedName(admPoint);
     for (const row of subtree_rows) {
         const el = attributeValueFromDB(row);
         const subtree = _decode_SubtreeSpecification(el);
@@ -69,7 +70,7 @@ async function getRelevantSubentries (
             entryDN,
             objectClasses,
             subtree,
-            getDistinguishedName(admPoint),
+            admPointDN,
             NAMING_MATCHER,
         )) {
             relevant_sub_ids.add(row.entry_id);
