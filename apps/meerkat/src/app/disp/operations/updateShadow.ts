@@ -1346,7 +1346,6 @@ async function updateShadow (
             },
             binding_type: id_op_binding_shadow.toString(),
             binding_identifier: Number(data.agreementID.identifier),
-            binding_version: Number(data.agreementID.version),
             accepted: true,
             terminated_time: null,
             validity_start: {
@@ -1385,6 +1384,31 @@ async function updateShadow (
     if (!ob) {
         throw new ShadowError(
             ctx.i18n.t("err:sob_not_found", { obid: data.agreementID.identifier.toString() }),
+            new ShadowErrorData(
+                ShadowProblem_invalidAgreementID,
+                undefined,
+                undefined,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn.boundNameAndUID?.dn,
+                    undefined,
+                    id_errcode_shadowError,
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                FALSE,
+                undefined,
+            ),
+            signErrors,
+        );
+    }
+    if (ob.binding_version !== Number(data.agreementID.version)) {
+        throw new ShadowError(
+            ctx.i18n.t("err:differing_sob_versions", {
+                aid: assn.id,
+                obid: data.agreementID.identifier.toString(),
+            }),
             new ShadowErrorData(
                 ShadowProblem_invalidAgreementID,
                 undefined,
