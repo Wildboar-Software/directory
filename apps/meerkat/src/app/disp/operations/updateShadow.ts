@@ -124,6 +124,7 @@ import { addSeconds } from "date-fns";
 import { RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
 import { stripEntry } from "../../database/stripEntry";
 import getDistinguishedName from "../../x500/getDistinguishedName";
+import { child } from "@wildboar/x500/src/lib/collections/objectClasses";
 
 /**
  * @summary Convert an SDSEType into its equivalent DSEType
@@ -1213,6 +1214,13 @@ async function applyIncrementalRefreshStep (
                             },
                         },
                     }, attributes, undefined, signErrors);
+                } else if (object_classes.some((oc) => oc.isEqualTo(child["&id"]))) {
+                    /*
+                    ITU Recommendation X.501 (2019), Section 12.3.5 states that:
+                    "If a family member is excluded from a subtree by this specification,
+                    all its subordinate family members are also excluded."
+                    */
+                    return;
                 } else {
                     /* NOTE: We create a glue entry if it falls outside of the
                     refinement, if any. */

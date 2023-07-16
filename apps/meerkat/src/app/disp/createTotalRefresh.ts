@@ -16,6 +16,7 @@ import { compareDistinguishedName, getRDN } from "@wildboar/x500";
 import getSDSEContent from "./getSDSEContent";
 import { objectClassesWithinRefinement } from "@wildboar/x500";
 import { DSEType_glue } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/DSEType.ta";
+import { child } from "@wildboar/x500/src/lib/collections/objectClasses";
 
 // UnitOfReplication ::= SEQUENCE {
 //     area                 AreaSpecification,
@@ -185,7 +186,20 @@ async function createTotalRefreshFromVertex (
     let cursorId: number | undefined;
     // NOTE: You cannot apply a refinement here, because, even if a subordinate
     // does not match the refinement, one of its subordinates may.
-    const getNextBatchOfSubordinates = () => readSubordinates(ctx, vertex, 100, undefined, cursorId);
+    const getNextBatchOfSubordinates = () => readSubordinates(ctx, vertex, 100, undefined, cursorId, {
+        /*
+            ITU Recommendation X.501 (2019), Section 12.3.5 states that:
+            "If a family member is excluded from a subtree by this specification,
+            all its subordinate family members are also excluded."
+        */
+        EntryObjectClass: withinRefinement
+            ? undefined
+            : {
+                none: {
+                    object_class: child["&id"].toString(),
+                },
+            },
+    });
     let subordinates: Vertex[] = await getNextBatchOfSubordinates();
     let subordinatesCount: number = 0;
     const subtrees: Subtree[] = [];

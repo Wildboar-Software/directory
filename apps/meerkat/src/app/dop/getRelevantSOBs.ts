@@ -37,6 +37,7 @@ import readSubordinates from "../dit/readSubordinates";
 import { LocalName } from "@wildboar/x500/src/lib/modules/InformationFramework/LocalName.ta";
 import isPrefix from "../x500/isPrefix";
 import { nonSpecificKnowledge, specificKnowledge } from "@wildboar/x500/src/lib/collections/attributes";
+import { child } from "@wildboar/x500/src/lib/collections/objectClasses";
 
 
 /**
@@ -332,6 +333,40 @@ async function getShadowIncrementalSteps (
                 continue;
             }
         }
+
+        if (vertex.dse.familyMember && vertex.dse.objectClass.has(child["&id"].toString())) {
+            /* ITU Recommendation X.501 (2019), Section 12.3.5 states that:
+            "If a family member is excluded from a subtree by this specification,
+            all its subordinate family members are also excluded."
+
+            In this case, this means that we have to recurse up the DIT,
+            checking that each superior also falls within the subtree. */
+            let current = vertex.immediateSuperior;
+            let currentDN = oldDN.slice(0, -1);
+            let ancestorExcluded: boolean = false;
+            let i: number = 0;
+            while (current && (i < 100_000)) {
+                i++;
+                const currentObjectClasses = Array.from(current.dse.objectClass).map(ObjectIdentifier.fromString);
+                if (!dnWithinSubtreeSpecification(currentDN, currentObjectClasses, subtree, cp_dn, NAMING_MATCHER)) {
+                    ancestorExcluded = true;
+                    break;
+                }
+                if (!current.dse.objectClass.has(child["&id"].toString())) {
+                    break;
+                }
+                current = current.immediateSuperior;
+                currentDN = currentDN.slice(0, -1);
+            }
+            if (i === 100_000) {
+                console.error("BUG: Would have looped infinitely while determining whether to include family member in shadow. Please report this to: https://github.com/Wildboar-Software/directory/issues");
+                continue;
+            }
+            if (ancestorExcluded) {
+                continue;
+            }
+        }
+
         // NOTE: operational attributes should be in `include`.
         let all_user_attributes: boolean = false;
         const inclusions: Set<IndexableOID> = new Set();
