@@ -1156,77 +1156,88 @@ async function applyIncrementalRefreshStep (
             if (!rdn) {
                 return;
             }
-            checkPermittedAttributeTypes(ctx, assn, agreement, change.attributes, signErrors, Number(obid.identifier));
-            const object_classes = refresh
-                .sDSEChanges
-                .add
-                .attributes
-                .filter((attr) => attr.type_.isEqualTo(objectClass["&id"]))
-                .flatMap((attr) => attr.values)
-                .map((v) => _decodeObjectIdentifier(v));
-            const withinRefinement: boolean = refinement
-                ? objectClassesWithinRefinement(object_classes, refinement)
-                : true;
-            if (withinRefinement) {
-                const dse_type = sdse_type_to_dse_type(change.sDSEType);
-                const isSubr: boolean       = (dse_type[DSEType_subr] === TRUE_BIT);
-                const isNssr: boolean       = (dse_type[DSEType_nssr] === TRUE_BIT);
-                const isCp: boolean         = (dse_type[DSEType_cp] === TRUE_BIT);
-                const isEntry: boolean      = (dse_type[DSEType_entry] === TRUE_BIT);
-                const isAlias: boolean      = (dse_type[DSEType_alias] === TRUE_BIT);
-                const isAdmPoint: boolean   = (dse_type[DSEType_admPoint] === TRUE_BIT);
-                const isSubentry: boolean   = (dse_type[DSEType_subentry] === TRUE_BIT);
-                const isSa: boolean         = (dse_type[DSEType_sa] === TRUE_BIT);
-                const isGlue: boolean       = (dse_type[DSEType_glue] === TRUE_BIT);
-                if (subordinates_only) {
-                    if (!isGlue && !isSubr && !isNssr) {
-                        return;
+            const existing = await dnToVertex(ctx, immediate_superior, [ rdn ]);
+            if (!existing) {
+                checkPermittedAttributeTypes(ctx, assn, agreement, change.attributes, signErrors, Number(obid.identifier));
+                const object_classes = refresh
+                    .sDSEChanges
+                    .add
+                    .attributes
+                    .filter((attr) => attr.type_.isEqualTo(objectClass["&id"]))
+                    .flatMap((attr) => attr.values)
+                    .map((v) => _decodeObjectIdentifier(v));
+                const withinRefinement: boolean = refinement
+                    ? objectClassesWithinRefinement(object_classes, refinement)
+                    : true;
+                if (withinRefinement) {
+                    const dse_type = sdse_type_to_dse_type(change.sDSEType);
+                    const isSubr: boolean       = (dse_type[DSEType_subr] === TRUE_BIT);
+                    const isNssr: boolean       = (dse_type[DSEType_nssr] === TRUE_BIT);
+                    const isCp: boolean         = (dse_type[DSEType_cp] === TRUE_BIT);
+                    const isEntry: boolean      = (dse_type[DSEType_entry] === TRUE_BIT);
+                    const isAlias: boolean      = (dse_type[DSEType_alias] === TRUE_BIT);
+                    const isAdmPoint: boolean   = (dse_type[DSEType_admPoint] === TRUE_BIT);
+                    const isSubentry: boolean   = (dse_type[DSEType_subentry] === TRUE_BIT);
+                    const isSa: boolean         = (dse_type[DSEType_sa] === TRUE_BIT);
+                    const isGlue: boolean       = (dse_type[DSEType_glue] === TRUE_BIT);
+                    if (subordinates_only) {
+                        if (!isGlue && !isSubr && !isNssr) {
+                            return;
+                        }
                     }
-                }
-                const attributes = [
-                    ...change.attributes,
-                    new Attribute(
-                        dseType["&id"],
-                        [dseType.encoderFor["&Type"]!(dse_type, DER)],
-                    ),
-                ];
-                vertex = await createEntry(ctx, immediate_superior, rdn, {
-                    shadow: true,
-                    subr: isSubr,
-                    nssr: isNssr,
-                    cp: isCp,
-                    entry: isEntry,
-                    alias: isAlias,
-                    admPoint: isAdmPoint,
-                    subentry: isSubentry,
-                    sa: isSa,
-                    glue: isGlue,
-                    subordinate_completeness: change.subComplete ?? FALSE,
-                    attribute_completeness: change.attComplete,
-                    EntryAttributeValuesIncomplete: {
-                        createMany: {
-                            data: change.attValIncomplete?.map((oid) => ({
-                                attribute_type: oid.toString(),
-                            })) ?? [],
+                    const attributes = [
+                        ...change.attributes,
+                        new Attribute(
+                            dseType["&id"],
+                            [dseType.encoderFor["&Type"]!(dse_type, DER)],
+                        ),
+                    ];
+                    vertex = await createEntry(ctx, immediate_superior, rdn, {
+                        shadow: true,
+                        subr: isSubr,
+                        nssr: isNssr,
+                        cp: isCp,
+                        entry: isEntry,
+                        alias: isAlias,
+                        admPoint: isAdmPoint,
+                        subentry: isSubentry,
+                        sa: isSa,
+                        glue: isGlue,
+                        subordinate_completeness: change.subComplete ?? FALSE,
+                        attribute_completeness: change.attComplete,
+                        EntryAttributeValuesIncomplete: {
+                            createMany: {
+                                data: change.attValIncomplete?.map((oid) => ({
+                                    attribute_type: oid.toString(),
+                                })) ?? [],
+                            },
                         },
-                    },
-                }, attributes, undefined, signErrors);
+                    }, attributes, undefined, signErrors);
+                } else {
+                    /* NOTE: We create a glue entry if it falls outside of the
+                    refinement, if any. */
+                    vertex = await createEntry(ctx, immediate_superior, rdn, {
+                        glue: true,
+                        lastShadowUpdate: new Date(),
+                    }, [], undefined, signErrors);
+                }
             } else {
-                /* NOTE: We create a glue entry if it falls outside of the
-                refinement, if any. */
-                vertex = await createEntry(ctx, immediate_superior, rdn, {
-                    glue: true,
-                    lastShadowUpdate: new Date(),
-                }, [], undefined, signErrors);
+                vertex = existing;
             }
         }
         else if ("remove" in refresh.sDSEChanges) {
-            await deleteEntry(ctx, vertex, true);
-            return; // If the SDSE is removed, there cannot be any subordinates!
+            const objectClasses = Array.from(vertex.dse.objectClass).map(ObjectIdentifier.fromString);
+            if (!refinement || !objectClassesWithinRefinement(objectClasses, refinement)) {
+                await deleteEntry(ctx, vertex, true);
+                return; // If the SDSE is removed, there cannot be any subordinates!
+            }
         }
         else if ("modify" in refresh.sDSEChanges) {
-            const change = refresh.sDSEChanges.modify;
-            await applyContentChange(ctx, assn, vertex, change, localName, agreement, obid, signErrors);
+            const objectClasses = Array.from(vertex.dse.objectClass).map(ObjectIdentifier.fromString);
+            if (!refinement || !objectClassesWithinRefinement(objectClasses, refinement)) {
+                const change = refresh.sDSEChanges.modify;
+                await applyContentChange(ctx, assn, vertex, change, localName, agreement, obid, signErrors);
+            }
         }
         else {
             const dn = [ ...agreement.shadowSubject.area.contextPrefix, ...localName ];
@@ -1272,28 +1283,6 @@ async function applyIncrementalRefreshStep (
         const sub = await dnToVertex(ctx, vertex, [ sub_update.subordinate ]);
         if (!sub) {
             return;
-        }
-        const objectClasses = Array.from(sub.dse.objectClass).map(ObjectIdentifier.fromString);
-        if (refinement && !objectClassesWithinRefinement(objectClasses, refinement)) {
-            throw new ShadowError(
-                ctx.i18n.t("err:shadow_update_with_unauthorized_object_classes"),
-                new ShadowErrorData(
-                    ShadowProblem_invalidInformationReceived,
-                    undefined,
-                    undefined,
-                    [],
-                    createSecurityParameters(
-                        ctx,
-                        signErrors,
-                        assn.boundNameAndUID?.dn,
-                        undefined,
-                        id_errcode_shadowError,
-                    ),
-                    ctx.dsa.accessPoint.ae_title.rdnSequence,
-                    FALSE,
-                    undefined,
-                ),
-            );
         }
         return applyIncrementalRefreshStep(
             ctx,
