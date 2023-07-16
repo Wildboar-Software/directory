@@ -126,11 +126,13 @@ import { randomInt } from "crypto";
 import { id_op_binding_shadow } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
 import {
     ShadowingAgreementInfo,
+    _decode_AccessPoint,
     _decode_ShadowingAgreementInfo,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
-import scheduleShadowUpdates from "../../disp/scheduleShadowUpdates";
 import { AttributeUsage_dSAOperation } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
-import { subSeconds } from "date-fns";
+import { becomeShadowConsumer } from "../establish/becomeShadowConsumer";
+import { becomeShadowSupplier } from "../establish/becomeShadowSupplier";
+import dnToVertex from "../../dit/dnToVertex";
 
 function getInitiator (init: Initiator): OperationalBindingInitiator {
     // NOTE: Initiator is not extensible, so this is an exhaustive list.
@@ -1320,6 +1322,35 @@ async function modifyOperationalBinding (
         }
     }
     else if (data.bindingType.isEqualTo(id_op_binding_shadow)) {
+        const iAmSupplier: boolean = (created.initiator === OperationalBindingInitiator.ROLE_B);
+        const iWasSupplier: boolean = (
+            (opBinding.initiator === OperationalBindingInitiator.ROLE_A && opBinding.outbound)
+            || (opBinding.initiator === OperationalBindingInitiator.ROLE_B && !opBinding.outbound)
+        );
+        // Role-reversal is not allowed in an SOB.
+        if (iAmSupplier && !iWasSupplier) {
+            throw new OperationalBindingError(
+                ctx.i18n.t("err:cannot_reverse_roles_in_sob"),
+                new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_roleAssignment,
+                    id_op_binding_hierarchical,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    false,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
         const approved = await getApproval(opBinding.uuid);
         if (!approved) {
             await ctx.db.operationalBinding.update({
