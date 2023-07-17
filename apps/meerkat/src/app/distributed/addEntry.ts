@@ -1112,6 +1112,11 @@ async function addEntry (
                 entry: data.entry,
                 chaining: state.chainingArguments,
             });
+            // TODO: Log
+            dsp_client.unbind().then().catch();
+            if (dsp_client.rose.socket?.writable) {
+                dsp_client.rose.socket?.end(); // Unbind does not necessarily close the socket.
+            }
             if ("result" in outcome) {
                 return {
                     result: outcome.result.parameter,
