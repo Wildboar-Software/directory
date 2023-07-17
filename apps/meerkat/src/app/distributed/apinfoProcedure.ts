@@ -236,6 +236,9 @@ async function apinfoProcedure (
                 parameter: chainedRead.encoderFor["&ArgumentType"]!(payload, DER),
             });
             dsp_client.unbind().then().catch();
+            if (dsp_client.rose.socket?.writable) {
+                dsp_client.rose.socket?.end(); // Unbind does not necessarily close the socket.
+            }
 
             if ("error" in response) {
                 const errcode: Code = response.error.code ?? { local: -1 };
@@ -298,7 +301,7 @@ async function apinfoProcedure (
                 return response;
             }
         } catch (e) {
-            if (connected) {
+            if (!connected) {
                 ctx.log.warn(ctx.i18n.t("log:could_not_establish_connection", {
                     context: "with_error",
                     ae: stringifyDN(ctx, ap.ae_title.rdnSequence),

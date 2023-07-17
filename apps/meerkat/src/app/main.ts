@@ -907,7 +907,11 @@ function attachUnboundEventListenersToITOTConnection (
         }
     });
     itot.network.socket.on("close", () => {
-        ctx.associations.set(originalSocket, null);
+        ctx.associations.delete(originalSocket);
+        ctx.associations.delete(itot.network.socket);
+        if (rose.socket) {
+            ctx.associations.delete(rose.socket);
+        }
         rose.events.removeAllListeners();
     });
 }
