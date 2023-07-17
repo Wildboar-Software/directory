@@ -4,12 +4,6 @@ We will not promise any particular schedule of delivery of features or bug fixes
 at this time. However, the very high-level roadmap for Meerkat DSA can be
 broken down to the following versions.
 
-## Version 2.7.0 - Shadowing
-
-This update will introduce support for the Directory Information Shadowing
-Protocol (DISP). This will allow directory information to be replicated to
-other DSAs to produce read-only copies.
-
 ## Version 2.8.0 - Cross References
 
 This update will introduce support for cross references, allowing DSAs to share
@@ -77,6 +71,19 @@ envisioned by the X.500 specification authors. These advanced features are:
 - Storage Administrative Areas
 - IPFS
 - Blockchain Integration
+- Lightweight Presentation Protocol (LPP)
+- Support for multiple backing databases, such as MariaDB, Postgres,
+  CockroachDB, and Microsoft SQL Server.
+- TP4-over-IP
+- Server-based Certificate Validation Protocol (SCVP)
+- DIXIE Protocol (described in IETF RFC 1249)
+- Common Management Information Protocol (CMIP)
+  - ISO Transport over TCP (ITOT) Transport
+  - CMIP-Over-TCP (CMOT) Transport
+  - Lightweight Presentation Protocol (LPP) Transport
+- Simple Network Management Protocol (SNMP) Monitoring and Management
+- Support for the "wrapped protocols" described in ITU Recommendation X.510
+- A good means of backing up and restoring data across directories.
 
 ## Enterprise Features
 

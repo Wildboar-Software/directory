@@ -574,6 +574,8 @@ async function applyTotalRefresh (
         created_dse_database_id = vertex.dse.id;
     }
     else if (refresh.sDSE) { // The subordinate exists already, and we have sDSE content defined, wipe it out and replace it.
+        // TODO: Check if there is no conflict. If not, just add values.
+        // This alone results in support for overlapping shadowed areas.
         const objectClasses = Array.from(vertex.dse.objectClass).map(ObjectIdentifier.fromString);
         if (!refinement || objectClassesWithinRefinement(objectClasses, refinement)) {
             /* Only if the entry falls within the refinement do we modify it. */
