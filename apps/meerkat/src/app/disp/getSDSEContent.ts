@@ -23,11 +23,15 @@ import {
     superiorUUID,
 } from "@wildboar/parity-schema/src/lib/modules/OpenLDAP/superiorUUID.oa";
 import { AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
-import {
-
-} from "@wildboar/x500/"
 import { Knowledge_knowledgeType, Knowledge_knowledgeType_both, Knowledge_knowledgeType_master, Knowledge_knowledgeType_shadow } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/Knowledge-knowledgeType.ta";
 
+/**
+ * Indexable attribute types that are required to be replicated in a shadowing
+ * agreement. Though not all of these were required explicitly, they are
+ * implicity required in
+ * [ITU Recommendation X.525 (2019)](https://www.itu.int/rec/T-REC-X.525/en),
+ * Section 9.2.2.
+ */
 export
 const mandatoryReplicatedAttributeTypesStr: IndexableOID[] = [
     x500at.createTimestamp["&id"].toString(),
@@ -76,9 +80,23 @@ const mandatoryReplicatedAttributeTypesStr: IndexableOID[] = [
     x500at.objectClass["&id"].toString(),
 ];
 
+/**
+ * The set of attribute types that are required to be replicated in a shadowing
+ * agreement. Though not all of these were required explicitly, they are
+ * implicity required in
+ * [ITU Recommendation X.525 (2019)](https://www.itu.int/rec/T-REC-X.525/en),
+ * Section 9.2.2.
+ */
 export
 const mandatoryReplicatedAttributeTypesSet: Set<IndexableOID> = new Set(mandatoryReplicatedAttributeTypesStr);
 
+/**
+ * The attribute types that are required to be replicated in a shadowing
+ * agreement. Though not all of these were required explicitly, they are
+ * implicity required in
+ * [ITU Recommendation X.525 (2019)](https://www.itu.int/rec/T-REC-X.525/en),
+ * Section 9.2.2.
+ */
 export
 const mandatoryReplicatedAttributeTypes: AttributeType[] = [
     x500at.createTimestamp["&id"],
@@ -132,6 +150,25 @@ const glue_sdse_type = new Uint8ClampedArray([
     TRUE_BIT, // glue
 ]);
 
+/**
+ * @summary Create an SDSEContent for use in an update to a shadow
+ * @description
+ *
+ * This function creates an `SDSEContent` for use in a shadow update to a
+ * consumer DSA as part of a shadowing operational binding as described in
+ * [ITU Recommendation X.525 (2019)](https://www.itu.int/rec/T-REC-X.525/en).
+ *
+ * @param ctx The context object
+ * @param vertex The vertex from whence to derive SDSEContent
+ * @param agreement The shadowing agreement
+ * @param selectingExtendedKnowledge Whether we are only selecting extended knowledge
+ * @param selectingSubordinate Whether we are only selecting subordinate information
+ * @param knowledgeTypes Knowledge types that are being selected
+ * @returns The SDSEContent
+ *
+ * @async
+ * @function
+ */
 export
 async function getSDSEContent (
     ctx: Context,

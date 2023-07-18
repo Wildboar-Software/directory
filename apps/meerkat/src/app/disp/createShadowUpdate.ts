@@ -37,10 +37,27 @@ import printCode from "../utils/printCode";
 import isDebugging from "is-debugging";
 import { differenceInMilliseconds } from "date-fns";
 
+/**
+ * @summary Update a shadow consumer
+ * @description
+ *
+ * This function updates a shadow consumer, including binding to the consumer
+ * DSA, submitting the updates, and closing down the connection.
+ *
+ * This is an "inner" function that is wrapped by another similarly-named
+ * "updateShadowConsumer" below. This wrapping is just to regulate nesting as
+ * the whole thing is placed within a try-finally block.
+ *
+ * @param ctx The context object
+ * @param ob_db_id The database ID of the shadow operational binding to update
+ * @param forceTotalRefresh Whether to force a total update
+ *
+ * @async
+ * @function
+ */
 async function _updateShadowConsumer (
     ctx: MeerkatContext,
     ob_db_id: number,
-    // totalRefreshOverride?: ShadowingAgreementInfo,
     forceTotalRefresh: boolean = false,
 ): Promise<void> {
     const ob = await ctx.db.operationalBinding.findUnique({
@@ -450,11 +467,24 @@ async function _updateShadowConsumer (
     }
 }
 
+/**
+ * @summary Update a shadow consumer
+ * @description
+ *
+ * This function updates a shadow consumer, including binding to the consumer
+ * DSA, submitting the updates, and closing down the connection.
+ *
+ * @param ctx The context object
+ * @param ob_db_id The database ID of the shadow operational binding to update
+ * @param forceTotalRefresh Whether to force a total update
+ *
+ * @async
+ * @function
+ */
 export
 async function updateShadowConsumer (
     ctx: MeerkatContext,
     ob_db_id: number,
-    // totalRefreshOverride?: ShadowingAgreementInfo,
     forceTotalRefresh: boolean = false,
 ): Promise<void> {
     if (ctx.updatingShadow.has(ob_db_id)) {

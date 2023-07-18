@@ -22,6 +22,21 @@ import {
     RequestShadowUpdateArgumentData_requestedStrategy_standard_total,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/RequestShadowUpdateArgumentData-requestedStrategy-standard.ta";
 
+/**
+ * @summary Request a shadow update from a shadow supplier
+ * @description
+ *
+ * This function causes this DSA to bind to the shadow supplier involved in a
+ * shadowing operational binding and request a shadow update. This function also
+ * handles unbinding.
+ *
+ * @param ctx The context object
+ * @param obid the database ID of the shadow operational binding for which a
+ *  an update is to be requested
+ *
+ * @async
+ * @function
+ */
 export
 async function request_a_shadow_update (
     ctx: MeerkatContext,

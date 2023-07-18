@@ -18,73 +18,35 @@ import { objectClassesWithinRefinement } from "@wildboar/x500";
 import { DSEType_glue } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/DSEType.ta";
 import { child } from "@wildboar/x500/src/lib/collections/objectClasses";
 
-// UnitOfReplication ::= SEQUENCE {
-//     area                 AreaSpecification,
-//     attributes           AttributeSelection,
-//     knowledge            Knowledge OPTIONAL,
-//     subordinates         BOOLEAN DEFAULT FALSE,
-//     contextSelection     ContextSelection OPTIONAL,
-//     supplyContexts  [0]  CHOICE {
-//       allContexts         NULL,
-//       selectedContexts    SET SIZE (1..MAX) OF CONTEXT.&id,
-//       ... } OPTIONAL }
-
-//   AreaSpecification ::= SEQUENCE {
-//     contextPrefix    DistinguishedName,
-//     replicationArea  SubtreeSpecification,
-//     ... }
-
-//   Knowledge ::= SEQUENCE {
-//     knowledgeType      ENUMERATED {
-//       master (0),
-//       shadow (1),
-//       both   (2)},
-//     extendedKnowledge  BOOLEAN DEFAULT FALSE,
-//     ... }
-
-//   AttributeSelection ::= SET OF ClassAttributeSelection
-
-//   ClassAttributeSelection ::= SEQUENCE {
-//     class            OBJECT IDENTIFIER OPTIONAL,
-//     classAttributes  ClassAttributes DEFAULT allAttributes:NULL }
-
-//   ClassAttributes ::= CHOICE {
-//     allAttributes  NULL,
-//     include        [0]  AttributeTypes,
-//     exclude        [1]  AttributeTypes,
-//     ... }
-
-//   AttributeTypes ::= SET OF AttributeType
-
-// TotalRefresh ::= SEQUENCE {
-//     sDSE     SDSEContent OPTIONAL,
-//     subtree  SET SIZE (1..MAX) OF Subtree OPTIONAL,
-//     ...}
-
-//   SDSEContent ::= SEQUENCE {
-//     sDSEType          SDSEType,
-//     subComplete       [0]  BOOLEAN DEFAULT FALSE,
-//     attComplete       [1]  BOOLEAN OPTIONAL,
-//     attributes        SET OF Attribute{{SupportedAttributes}},
-//     attValIncomplete  SET OF AttributeType DEFAULT {},
-//     ...}
-
-//   SDSEType ::= DSEType
-
-//   Subtree ::= SEQUENCE {
-//     rdn  RelativeDistinguishedName,
-//     COMPONENTS OF TotalRefresh,
-//     ...}
-
 const MAX_DEPTH: number = 10_000;
 
+/**
+ * @summary Create a total refresh from a vertex, per a shadowing agreement.
+ * @description
+ *
+ * This function recurses into a vertex and its subordinates, creating a
+ * `TotalRefresh` "tree" to be sent in an `updateShadow` operation, as described
+ * in [ITU Recommendation X.525 (2019)](https://www.itu.int/rec/T-REC-X.525/en),
+ * Section 11.3.1.1.
+ *
+ * @param ctx The context object
+ * @param vertex The vertex from whence the total refresh is to be constructed
+ * @param agreement The shadowing agreement
+ * @param obid The shadow operational binding identifier
+ * @param localName The local name, relative to the base (NOT cp) of the shadow subtree
+ * @param extKnowledgeOnly Whether only extended knowledge is to be replicated in this recursion
+ * @param subordinatesOnly Whether only subordinate info is to be replicated in this recursion
+ * @returns A total refresh, if one can or should be constructed.
+ *
+ * @async
+ * @function
+ */
 async function createTotalRefreshFromVertex (
     ctx: Context,
     vertex: Vertex,
     agreement: ShadowingAgreementInfo,
     obid: number,
     localName: LocalName,
-    depth: number,
     extKnowledgeOnly: boolean = false,
     subordinatesOnly: boolean = false,
 ): Promise<TotalRefresh | undefined> {
@@ -222,7 +184,6 @@ async function createTotalRefreshFromVertex (
                 agreement,
                 obid,
                 [ ...localName, subordinate.dse.rdn ],
-                depth + 1,
                 extended && getExtendedKnowledge,
                 extended && getSubordinateInfo,
             ), {
@@ -273,6 +234,21 @@ async function createTotalRefreshFromVertex (
     );
 }
 
+/**
+ * @summary Create a TotalRefresh to submit in a shadow update
+ * @description
+ *
+ * This function constructs a `TotalRefresh` to submit to a consumer DSA to
+ * update its shadows via an `updateShadow` operation, as described in
+ * [ITU Recommendation X.525 (2019)](https://www.itu.int/rec/T-REC-X.525/en),
+ * Section 11.3.1.1.
+ *
+ * @param ctx The context object
+ * @param obid The database ID for the shadow operational binding to update
+ * @param totalRefreshOverride A shadowing agreement to guide the selection of
+ *  information to replicate, overriding the shadowing agreement.
+ * @returns The total refresh, if one can be constructed
+ */
 export
 async function createTotalRefresh (
     ctx: Context,
@@ -308,7 +284,6 @@ async function createTotalRefresh (
         agreement,
         obid,
         [],
-        base_dn.length,
     ));
     if (!baseRefresh) {
         return undefined;
