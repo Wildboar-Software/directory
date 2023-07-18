@@ -170,7 +170,17 @@ function sdse_type_to_dse_type (t: SDSEType): DSEType {
 
 const MAX_DEPTH: number = 10_000;
 
-export
+/**
+ * @summary Converts a `Refinement` to a Prisma Entry filter.
+ * @description
+ *
+ * This function converts a `Refinement` to a Prisma Entry filter so that
+ * entries in the database can be filtered at the database, rather than queried,
+ * deserialized into memory, then evaluated within Meerkat DSA.
+ *
+ * @param ref The refinement
+ * @returns A Prisma Entry filter
+ */
 function convert_refinement_to_prisma_filter (ref: Refinement): Partial<Prisma.EntryWhereInput> {
     if ("item" in ref) {
         return {
@@ -201,6 +211,28 @@ function convert_refinement_to_prisma_filter (ref: Refinement): Partial<Prisma.E
     }
 }
 
+/**
+ * @summary Validate that replicated attributes adhere to the shadowing agreement.
+ * @description
+ *
+ * This function validates that replicated attributes adhere to the shadowing
+ * agreement by not including attributes of dSAOperation usage or ones not
+ * authorized by the shadowing agreement, and making sure that the
+ * `createTimestamp`, `modifyTimestamp`, and `objectClass` attributes are
+ * present when they are required.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param agreement The shadowing agreement
+ * @param attributes The attributes to be validated
+ * @param signErrors Whether to cryptographically sign errors
+ * @param obid The shadow operational binding identifier
+ * @param currentObjectClasses A Set of numeric-form strings of object identifiers of the object classes of the entry
+ * @param modification Whether the validate attributes are used in modification
+ * @param dse_type The DSE type of the entry
+ *
+ * @function
+ */
 function checkPermittedAttributeTypes (
     ctx: Context,
     assn: DISPAssociation,
@@ -393,6 +425,59 @@ function checkPermittedAttributeTypes (
 // TODO: Collect statistics to report in logging.
 // TODO: It may be possible to separate the validation from the update.
 // NOTE: minimum of subtree does not need to be checked. It is forbidden in shadowing subtrees.
+
+/**
+ * @summary Apply a TotalRefresh to a shadowed area as described in ITU Rec. X.525.
+ * @description
+ *
+ * This is a recursive function that applies a `TotalRefresh` to a shadowed area
+ * as described in
+ * [ITU Recommendation X.525 (2019)](https://www.itu.int/rec/T-REC-X.525/en),
+ * Section 11.3.1.1.
+ *
+ * In addition to being recursive, it can also parallelize; the extent to which
+ * it does is controlled by the `recursion_fanout` parameter.
+ *
+ * In general the `vertex` argument is the vertex that is being deleted or
+ * modified by the refresh provided by the `refresh` parameter. However, if the
+ * `refresh` adds an entry, this function will recurse once, with `vertex` set
+ * to the immediate superior of the to-be-added entry, and with `clientRDN` set
+ * to the RDN of the entry to be added. Once the entry is added, this function
+ * resumes recursion according to the prior statement.
+ *
+ * This function does not apply shadow updates outside of the shadow subtree.
+ * Any refreshes that fall outside of the agreed-upon shadow subtree are
+ * silently ignored. The exception is if the shadowing agreement includes the
+ * replication of subordinates or subordinate knowledge, in which case, the
+ * `subordinates_only` is used as a flag to instruct this function that only
+ * subordinates or subordinate knowledge are to be added, since we've passed
+ * the lower boundary of the shadow subtree.
+ *
+ * Note that the `minimum` of the shadow subtree does not need to be checked. It
+ * is forbidden for use in shadowing agreements by
+ * [ITU Recommendation X.525 (2019)](https://www.itu.int/rec/T-REC-X.525/en),
+ * Section 9.2.1.1.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param obid The shadow operational binding identifier
+ * @param vertex The vertex to which (or underneath which) this refresh is to be applied
+ * @param refresh The refresh being applied currently
+ * @param agreement The shadowing agreement
+ * @param depth The current depth of recursion into DIT, starting from the root.
+ * @param signErrors Whether to cryptographically sign errors
+ * @param localName The local name, relative to the base (NOT cp) of the shadowed subtree
+ * @param recursion_fanout The extent to which recursion should parallelize
+ * @param subordinates_page_size The number of subordinates to fetch in a single page
+ * @param subordinates_only Whether we've reached the lower boundary of the shadow subtree
+ *  and we're just applying subordinate knowledge or subordinate info.
+ * @param creatingRDN If a new entry is being created, this will be its RDN, and
+ *  the `vertex` argument will refer to its immediate superior.
+ * @returns The database ID of the entry created, if any.
+ *
+ * @async
+ * @function
+ */
 async function applyTotalRefresh (
     ctx: Context,
     assn: DISPAssociation,
@@ -739,6 +824,22 @@ async function applyTotalRefresh (
     return created_dse_database_id;
 }
 
+/**
+ * @summary Replace an attribute in the database
+ * @description
+ *
+ * This simple function just replaces an attribute entirely with a new one, and
+ * it does so using a database transaction.
+ *
+ * @param ctx The context object
+ * @param vertex The vertex to be modified
+ * @param attr The attribute that will be added
+ * @param signErrors Whether to sign errors
+ * @returns A prisma promise that will replace the attribute
+ *
+ * @async
+ * @function
+ */
 async function replaceAttribute (
     ctx: Context,
     vertex: Vertex,
@@ -751,7 +852,21 @@ async function replaceAttribute (
     ]);
 }
 
-// This is a modification of a similarly-named function in `modifyEntry`.
+/**
+ * @summary Get a function that adds a value to another, per the alterValues modification.
+ * @description
+ *
+ * This is a higher-order function that returns a function that alters a value
+ * by adding or subtracting another value specified in an `alterValues`
+ * modification from it.
+ *
+ * This is a modification of a similarly-named function in `modifyEntry`.
+ *
+ * @param toBeAddedElement The value that is to be added to the existing value.
+ * @returns The new Value
+ *
+ * @function
+ */
 function getValueAlterer (toBeAddedElement: ASN1Element): (value: Value) => Value {
     const toBeAdded = (toBeAddedElement.tagNumber === ASN1UniversalType.integer)
         ? Number(toBeAddedElement.integer)
@@ -778,6 +893,25 @@ function getValueAlterer (toBeAddedElement: ASN1Element): (value: Value) => Valu
     };
 }
 
+/**
+ * @summary Apply an entry modification to an entry within a shadow subtree
+ * @description
+ *
+ * This function applies a modification to an SDSE.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param agreement The shadowing agreement
+ * @param vertex The vertex to be modified
+ * @param mod The modification to apply
+ * @param signErrors Whether to cryptographically sign errors
+ * @param currentObjectClasses The object classes of the vertex being modified
+ * @param obid The shadow operational binding identifier
+ * @returns Data returned from the database by the Prisma ORM. Ignore it.
+ *
+ * @async
+ * @function
+ */
 async function applyEntryModification (
     ctx: Context,
     assn: DISPAssociation,
@@ -870,6 +1004,27 @@ async function applyEntryModification (
     }
 }
 
+/**
+ * @summary Apply a content change to an SDSE.
+ * @description
+ *
+ * Applies a content change to an SDSE as used by the incremental refresh
+ * described in
+ * [ITU Recommendation X.525 (2019)](https://www.itu.int/rec/T-REC-X.525/en),
+ * Section 11.3.1.2.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param vertex The vertex to be changed
+ * @param change The change itself
+ * @param localName The local name, relative to the base (NOT cp) of the shadow subtree
+ * @param agreement The shadowing agreement
+ * @param obid The shadow operational binding identifier
+ * @param signErrors Whether to cryptographically sign errors
+ *
+ * @async
+ * @function
+ */
 async function applyContentChange (
     ctx: Context,
     assn: DISPAssociation,
@@ -1042,22 +1197,68 @@ async function applyContentChange (
 }
 
 // TODO: Collect statistics to report in logging.
-/*
-
-There was some ambiguity in X.525 surrounding whether or not the incremental
-steps start from the Root DSE (as is the case with TotalRefresh), or from the
-context prefix. I found this in Chadwick's "Understanding X.500":
-
-> If incremental updates are transferred, then only those SDSEs that have been
-> updated since the last Update Shadow message was sent, plus their parents up
-> to the root.
-
-So that seems to answer that question, even though its not from a completely
-authoritative source.
-
-Also note: this function was partly copied from `applyTotalRefresh()`.
-
-*/
+// Also note: this function was partly copied from `applyTotalRefresh()`.
+/**
+ * @summary Apply an incremental refresh step to an SDSE
+ * @description
+ *
+ * This function applies an incremental step refresh to an SDSE within a shadow
+ * subtree, as described in
+ * [ITU Recommendation X.525 (2019)](https://www.itu.int/rec/T-REC-X.525/en),
+ * Section 11.3.1.2.
+ *
+ * In addition to being recursive, it can also parallelize; the extent to which
+ * it does is controlled by the `recursion_fanout` parameter.
+ *
+ * In general the `vertex` argument is the vertex that is being deleted or
+ * modified by the refresh provided by the `refresh` parameter. However, if the
+ * `refresh` adds an entry, this function will recurse once, with `vertex` set
+ * to the immediate superior of the to-be-added entry, and with `clientRDN` set
+ * to the RDN of the entry to be added. Once the entry is added, this function
+ * resumes recursion according to the prior statement.
+ *
+ * This function does not apply shadow updates outside of the shadow subtree.
+ * Any refreshes that fall outside of the agreed-upon shadow subtree are
+ * silently ignored. The exception is if the shadowing agreement includes the
+ * replication of subordinates or subordinate knowledge, in which case, the
+ * `subordinates_only` is used as a flag to instruct this function that only
+ * subordinates or subordinate knowledge are to be added, since we've passed
+ * the lower boundary of the shadow subtree.
+ *
+ * Note that the `minimum` of the shadow subtree does not need to be checked. It
+ * is forbidden for use in shadowing agreements by
+ * [ITU Recommendation X.525 (2019)](https://www.itu.int/rec/T-REC-X.525/en),
+ * Section 9.2.1.1.
+ *
+ * ### Ambiguity
+ *
+ * There was some ambiguity in X.525 surrounding whether or not the incremental
+ * steps start from the Root DSE (as is the case with TotalRefresh), or from the
+ * context prefix. I found this in Chadwick's "Understanding X.500":
+ *
+ * > If incremental updates are transferred, then only those SDSEs that have been
+ * > updated since the last Update Shadow message was sent, plus their parents up
+ * > to the root.
+ *
+ * So that seems to answer that question, even though its not from a completely
+ * authoritative source.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param vertex The vertex to which the incremental refresh step applies
+ * @param refresh The refresh itself
+ * @param agreement The shadowing agreement
+ * @param depth The current depth of recursion into DIT, starting from the root.
+ * @param signErrors Whether to cryptographically sign errors
+ * @param localName The local name, relative to the base (NOT cp) of the shadowed subtree
+ * @param obid The shadow operational binding identifier
+ * @param recursion_fanout The extent to which recursion should parallelize
+ * @param subordinates_only Whether we've reached the lower boundary of the shadow subtree
+ *  and we're just applying subordinate knowledge or subordinate info.
+ *
+ * @async
+ * @function
+ */
 async function applyIncrementalRefreshStep (
     ctx: Context,
     assn: DISPAssociation,
