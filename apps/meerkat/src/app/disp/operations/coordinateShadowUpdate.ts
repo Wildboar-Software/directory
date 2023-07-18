@@ -29,57 +29,19 @@ import { ShadowingAgreementInfo, _decode_ShadowingAgreementInfo } from "@wildboa
 import { UpdateWindow } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/UpdateWindow.ta";
 import { OperationalBindingInitiator } from "@prisma/client";
 
-// coordinateShadowUpdate OPERATION ::= {
-//     ARGUMENT  CoordinateShadowUpdateArgument
-//     RESULT    CoordinateShadowUpdateResult
-//     ERRORS    {shadowError}
-//     CODE      id-opcode-coordinateShadowUpdate
-//   }
-
-//   CoordinateShadowUpdateArgument ::=
-//     OPTIONALLY-PROTECTED { CoordinateShadowUpdateArgumentData }
-
-//   CoordinateShadowUpdateArgumentData ::= [0]  SEQUENCE {
-//     agreementID         AgreementID,
-//     lastUpdate          Time OPTIONAL,
-//     updateStrategy      CHOICE {
-//       standard            ENUMERATED {
-//         noChanges   (0),
-//         incremental (1),
-//         total       (2),
-//         ...},
-//       other               EXTERNAL,
-//       ...},
-//     securityParameters  SecurityParameters OPTIONAL,
-//     ...}
-
-//   CoordinateShadowUpdateResult ::= CHOICE {
-//     null         NULL,
-//     information  OPTIONALLY-PROTECTED{ CoordinateShadowUpdateResultData },
-//     ...}
-
-//   CoordinateShadowUpdateResultData ::= [0]  SEQUENCE {
-//     agreementID  AgreementID,
-//     lastUpdate   Time OPTIONAL,
-//     ...,
-//     ...,
-//     COMPONENTS OF CommonResultsSeq }
-
 /**
  * @summary The coordinateShadowUpdate operation defined in ITU Rec. X.525 (2019)
  * @description
  *
  * This is an implementation of the `coordinateShadowUpdate` operation defined
- * in [ITU Recommendation X.525 (2019)](https://www.itu.int/rec/T-REC-X.525/en).
- * It does absolutely nothing other than verify the argument. I don't get the
- * point of this operation entirely. Why would there be a need for supplier to
- * notify a consumer of another subsequent operation?
+ * in [ITU Recommendation X.525 (2019)](https://www.itu.int/rec/T-REC-X.525/en),
+ * Section 11.1.
  *
  * @param ctx The context object
  * @param assn The client association
- * @param arg The DISP argument
- * @param invokeId The invoke ID
- * @returns A coordinateShadowUpdate result
+ * @param arg The `CoordinateShadowUpdateArgument` argument
+ * @param invokeId The invocation ID
+ * @returns The `CoordinateShadowUpdateResult` result
  *
  * @async
  * @function

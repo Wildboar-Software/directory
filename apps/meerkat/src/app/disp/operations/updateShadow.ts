@@ -1312,6 +1312,23 @@ async function applyIncrementalRefreshStep (
     });
 }
 
+/**
+ * @summary The updateShadow operation defined in ITU Rec. X.525 (2019)
+ * @description
+ *
+ * This function is an implementation of the `updateShadow` operation described in
+ * [ITU Recommendation X.525 (2019)](https://www.itu.int/rec/T-REC-X.525/en),
+ * Section 11.3.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param arg The `UpdateShadowArgument` argument
+ * @param invokeId The invocation ID
+ * @returns The `UpdateShadowResult` result
+ *
+ * @function
+ * @async
+ */
 export
 async function updateShadow (
     ctx: MeerkatContext,

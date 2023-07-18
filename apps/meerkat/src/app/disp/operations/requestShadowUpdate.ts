@@ -29,42 +29,23 @@ import { addSeconds } from "date-fns";
 import { UpdateWindow } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/UpdateWindow.ta";
 import { OperationalBindingInitiator } from "@prisma/client";
 
-
-// requestShadowUpdate OPERATION ::= {
-//     ARGUMENT  RequestShadowUpdateArgument
-//     RESULT    RequestShadowUpdateResult
-//     ERRORS    {shadowError}
-//     CODE      id-opcode-requestShadowUpdate
-//   }
-
-//   RequestShadowUpdateArgument ::= OPTIONALLY-PROTECTED { RequestShadowUpdateArgumentData }
-
-//   RequestShadowUpdateArgumentData ::= [0]  SEQUENCE {
-//     agreementID         AgreementID,
-//     lastUpdate          Time OPTIONAL,
-//     requestedStrategy   CHOICE {
-//       standard  ENUMERATED {
-//         incremental (1),
-//         total       (2),
-//         ...},
-//       other     EXTERNAL,
-//       ...},
-//     securityParameters  SecurityParameters OPTIONAL,
-//     ...}
-
-//   RequestShadowUpdateResult ::= CHOICE {
-//     null         NULL,
-//     information OPTIONALLY-PROTECTED{ RequestShadowUpdateResultData },
-//     ...
-//     }
-
-//   RequestShadowUpdateResultData ::= [0]  SEQUENCE {
-//     agreementID  AgreementID,
-//     lastUpdate   Time OPTIONAL,
-//     ...,
-//     ...,
-//     COMPONENTS OF CommonResultsSeq }
-
+/**
+ * @summary The requestShadowUpdate operation defined in ITU Rec. X.525 (2019)
+ * @description
+ *
+ * This function is an implementation of the `requestShadowUpdate` operation described in
+ * [ITU Recommendation X.525 (2019)](https://www.itu.int/rec/T-REC-X.525/en),
+ * Section 11.2.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param arg The `RequestShadowUpdateArgument` argument
+ * @param invokeId The invocation ID
+ * @returns The `RequestShadowUpdateResult` result
+ *
+ * @function
+ * @async
+ */
 export
 async function requestShadowUpdate (
     ctx: MeerkatContext,
