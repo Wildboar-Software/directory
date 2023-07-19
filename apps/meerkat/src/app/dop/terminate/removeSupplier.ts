@@ -5,6 +5,19 @@ import {
     _decode_SupplierInformation,
 } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/SupplierInformation.ta";
 
+/**
+ * @summary Remove supplier knowledge for a given shadow operational binding
+ * @description
+ *
+ * This function removes supplier knowledge references associated with a given
+ * shadow operational binding.
+ *
+ * @param ctx The context object
+ * @param obid The database ID of the operational binding
+ *
+ * @async
+ * @function
+ */
 export
 async function removeSupplier (
     ctx: Context,

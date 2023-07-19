@@ -10,6 +10,28 @@ import {
 import isPrefix from "./isPrefix";
 import { Context } from "@wildboar/meerkat-types";
 
+/**
+ * @summary Get a subtree specification that is the intersection of two subtrees
+ * @description
+ *
+ * This function takes two subtree specifications and the distinguished names of
+ * their roots and returns a single subtree specification that consitutes the
+ * intersection of the aforementioned, as well as its root distinguished name.
+ * If there is no intersection, `null` is returned.
+ *
+ * This function accounts for minimum, maximum, chops, base, and refinement.
+ *
+ * @param ctx The context object
+ * @param a A subtree specification
+ * @param b A subtree specification
+ * @param a_root The context prefix of the first subtree specification
+ * @param b_root The context prefix of the second subtree specification
+ * @returns The subtree specification and the DN of the root of said subtree
+ *  specification that constitutes of the intersection of the supplied subtrees,
+ *  or `null` if there is no overlap.
+ *
+ * @function
+ */
 export
 function subtreeIntersection (
     ctx: Context,

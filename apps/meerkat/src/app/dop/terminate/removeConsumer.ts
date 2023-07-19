@@ -5,6 +5,19 @@ import {
 } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/ConsumerInformation.ta";
 import { BERElement } from "asn1-ts";
 
+/**
+ * @summary Remove consumer knowledge for a given shadow operational binding
+ * @description
+ *
+ * This function removes consumer knowledge references associated with a given
+ * shadow operational binding.
+ *
+ * @param ctx The context object
+ * @param obid The database ID of the operational binding
+ *
+ * @async
+ * @function
+ */
 export
 async function removeConsumer (
     ctx: Context,

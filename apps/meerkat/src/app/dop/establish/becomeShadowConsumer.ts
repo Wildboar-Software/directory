@@ -20,6 +20,26 @@ import type { Prisma } from "@prisma/client";
 import { ASN1Construction } from "asn1-ts";
 import getEqualityNormalizer from "../../x500/getEqualityNormalizer";
 
+/**
+ * @summary Become a shadow supplier by creating a local context prefix and scheduling updates
+ * @description
+ *
+ * This function is called to make the local DSA assume the role of a shadow
+ * consumer with respect to a given shadowing agreement. In particular, it
+ * creates the local context prefix, updates supplier knowledge references, and
+ * schedules the recurring shadow updates if there are any.
+ *
+ * @param ctx The context object
+ * @param agreement The shadowing agreement
+ * @param initiator The correspondent access point
+ * @param obid The shadowing operational binding identifier
+ * @param ob_db_id The database ID of the operational binding
+ * @param ob_time The start time of the operational binding
+ * @returns The context prefix vertex of the newly established naming context
+ *
+ * @async
+ * @function
+ */
 export
 async function becomeShadowConsumer (
     ctx: MeerkatContext,

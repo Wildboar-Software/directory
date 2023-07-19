@@ -19,6 +19,23 @@ import { ClassAttributeSelection } from "@wildboar/x500/src/lib/modules/Director
 import getAncestorObjectClasses from "./getAncestorObjectClasses";
 import { ALL_USER_ATTRIBUTES_KEY } from "../constants";
 
+/**
+ * @summary Determine whether an attribute type may be used in a shadowed area
+ * @description
+ *
+ * This function determines whether a given attribute may be created, modified,
+ * or deleted within a shadowed area, on accordance with the shadowing agreement
+ * that corresponds to that particular shadowed area.
+ *
+ * @param type_ The attribute type whose usage is in question
+ * @param agreement The shadowing agreement
+ * @param allInSome Whether any attribute selection in the shadowing agreement allowed all user attributes
+ * @param explicitlyIncluded Whether the attribute was explicitly included
+ * @param explicitlyExcluded Whether the attribute was explicitly excluded
+ * @returns A boolean indicating whether the type can be used in a shadowed area
+ *
+ * @function
+ */
 export
 function typeCanBeUsedInShadowedArea (
     type_: OBJECT_IDENTIFIER,
@@ -50,6 +67,23 @@ function typeCanBeUsedInShadowedArea (
     );
 }
 
+/**
+ * @summary Determine whether a filter item can be evaluated against shadowed information
+ * @description
+ *
+ * This function determines whether the shadowed information is sufficient to
+ * correctly and authoritatively answer the query presented by a filter item.
+ *
+ * @param ctx The context object
+ * @param item The filter object whose usage is in question
+ * @param agreement The shadowing agreement
+ * @param includedUserAttributes The set of included user attributes, mutated by reference
+ * @param excludedUserAttributes The set of excluded user attributes, mutated by reference
+ * @param applicableObjectClasses The set of applicable object classes
+ * @returns A boolean indicating whether the filter item can be satisfied by the shadowed information
+ *
+ * @function
+ */
 export
 function filterItemCanBeUsedInShadowedArea (
     ctx: Context,
@@ -99,7 +133,7 @@ function filterItemCanBeUsedInShadowedArea (
             }
         } else {
             includedUserAttributes.add(ALL_USER_ATTRIBUTES_KEY);
-            allInAll = true;
+            allInAll = true; // FIXME: Shouldn't all-in-all set all-in-some?
         }
     }
 
@@ -240,10 +274,23 @@ function filterItemCanBeUsedInShadowedArea (
     }
 }
 
-// This will remain undocumented for now, since it is very likely to change.
-// As this function is extremely complicated, it is almost impossible to get it
-// correct, and this is almost GUARANTEED to be incorrect.
-// For this reason, the response will err "false."
+/**
+ * @summary Determine whether a filter can be evaluated against shadowed information
+ * @description
+ *
+ * This function determines whether the shadowed information is sufficient to
+ * correctly and authoritatively answer the query presented by a filter.
+ *
+ * @param ctx The context object
+ * @param filter The filter whose usage is in question
+ * @param agreement The shadowing agreement
+ * @param includedUserAttributes The set of included user attributes, mutated by reference
+ * @param excludedUserAttributes The set of excluded user attributes, mutated by reference
+ * @param applicableObjectClasses The applicable object classes
+ * @returns A boolean, indicating whether the filter is suitable for use with the shadowed information
+ *
+ * @function
+ */
 export
 function filterCanBeUsedInShadowedArea (
     ctx: Context,
