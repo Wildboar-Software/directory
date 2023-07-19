@@ -8,6 +8,25 @@ import { setTimeout as safeSetTimeout } from "safe-timers";
 import request_a_shadow_update from "./requestAShadowUpdate";
 import isDebugging from "is-debugging";
 
+/**
+ * @summary Schedule periodic shadow updates
+ * @description
+ *
+ * This function schedules periodic shadow updates both on the supplier and
+ * consumer, according to the update mode indicated in the shadow agreement.
+ * To be clear, this means that the consumer DSA will send a
+ * `requestShadowUpdate` request to the supplier, and the supplier DSA will send
+ * `coordinateShadowUpdate` and `updateShadow` operations to the consumer DSA.
+ *
+ * @param ctx The context object
+ * @param agreement The shadow agreement
+ * @param ob_db_id The database ID of the shadow operational binding
+ * @param ob_id The shadow operational binding identifier
+ * @param ob_time The time that the operational binding was accepted
+ * @param iAmSupplier Whether this DSA is the shadow supplier for this SOB
+ *
+ * @function
+ */
 export
 function scheduleShadowUpdates (
     ctx: MeerkatContext,

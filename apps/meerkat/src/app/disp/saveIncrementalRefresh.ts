@@ -8,6 +8,22 @@ import {
 import { BER } from "asn1-ts/dist/node/functional";
 import { ShadowIncrementType } from "@prisma/client";
 
+/**
+ * @summary Enqueue an incremental refresh for replication to a shadow consumer
+ * @description
+ *
+ * This function saves an incremental refresh for later replication to a shadow
+ * consumer resulting from a creation, modification, or deletion of a single
+ * DSE.
+ *
+ * @param ctx The context object
+ * @param binding_id The shadow operational binding identifier
+ * @param immediate_superior The immediate superior of the affected entry
+ * @param actual_change The change itself; a `SubordinateChanges` for the affected entry
+ *
+ * @async
+ * @function
+ */
 export
 async function saveIncrementalRefresh (
     ctx: Context,

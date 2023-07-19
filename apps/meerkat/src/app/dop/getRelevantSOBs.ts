@@ -127,16 +127,24 @@ function filterByTypeAndContextAssertion (
 }
 
 /**
+ * @summary Create an incremental refresh for the entire subtree under a DSE
+ * @description
+ *
+ * This function creates an entire incremental refresh for the entire subtree
+ * under a DSE, while still remaining within the bounds of the shadowing
+ * agreement.
  *
  * Because of where this function gets called, you do not need to worry about
  * the context prefix, base, or minimum. Only maximum, chops, and refinement
  * matter for this function.
  *
- * @param ctx
- * @param vertex
- * @param agreement
- * @param localName
- * @returns
+ * @param ctx The context object
+ * @param vertex The vertex that forms the base of the subtree
+ * @param agreement The shadowing agreement
+ * @param localName The local name of the `vertex`, relative to the base of the subtree
+ *
+ * @async
+ * @function
  */
 export
 async function getIncrementallyAddedSubtree (
@@ -196,6 +204,10 @@ async function getIncrementallyAddedSubtree (
     );
 }
 
+/**
+ * A change applied to a DSE that is to be transformed into an incremental
+ * update.
+ */
 export
 type Change = { add: Attribute[] }
     | { remove: null }
@@ -207,6 +219,14 @@ type Change = { add: Attribute[] }
     };
 
 /**
+ * @summary Get incremental refresh steps from a change to a DSE
+ * @description
+ *
+ * This function produces incremental refresh steps for replication to each
+ * affected shadow consumer resulting from a creation, modification, or
+ * deletion of a DSE within a shadowed area. It returns a tuple that maps the
+ * operational binding to the incremental refresh step
+ *
  * The fourth element returned in the tuple, if present, is the _effective_
  * immediate superior. If a rename operation is used and an entry that is
  * formerly outside of the shadow subtree is moved into it, the new immediate
@@ -214,10 +234,12 @@ type Change = { add: Attribute[] }
  * the actual incremental change; otherwise, the old immediate superior must be
  * used.
  *
- * @param ctx
- * @param vertex
- * @param change
- * @returns
+ * @param ctx The context object
+ * @param vertex The vertex affected by the change
+ * @param change The change itself
+ *
+ * @async
+ * @function
  */
 export
 async function getShadowIncrementalSteps (
