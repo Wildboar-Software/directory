@@ -6,11 +6,10 @@ import {
     MistypedPDUError,
     DSABindError,
     BindReturn,
-    MistypedArgumentError,
 } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
-import { ASN1Element, ASN1TagClass, TRUE_BIT } from "asn1-ts";
+import { ASN1Element } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
     DSABindArgument,
@@ -27,39 +26,6 @@ import {
     SecurityErrorData,
     _encode_SecurityErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
-import {
-    operationalBindingError,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/operationalBindingError.oa";
-import {
-    _encode_OpBindingErrorParam,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam.ta";
-import {
-    _decode_SecurityParameters,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityParameters.ta";
-import {
-    _decode_AlgorithmIdentifier,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
-import {
-    SIGNED,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
-import {
-    _decode_EstablishOperationalBindingArgument,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingArgument.ta";
-import {
-    _encode_EstablishOperationalBindingResult,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/EstablishOperationalBindingResult.ta";
-import {
-    _decode_ModifyOperationalBindingArgument,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingArgument.ta";
-import {
-    _encode_ModifyOperationalBindingResult,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/ModifyOperationalBindingResult.ta";
-import {
-    _decode_TerminateOperationalBindingArgument,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingArgument.ta";
-import {
-    _encode_TerminateOperationalBindingResult,
-} from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/TerminateOperationalBindingResult.ta";
 import versions from "../versions";
 import { bind as doBind } from "../authn/dsaBind";
 import {
@@ -99,7 +65,6 @@ import {
 import stringifyDN from "../x500/stringifyDN";
 import { AuthenticationLevel_basicLevels } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
 import { isArgumentSigned } from "../x500/isArgumentSigned";
-import { verifySIGNED } from "../pki/verifySIGNED";
 import {
     Versions_v2,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Versions.ta";

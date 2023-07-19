@@ -3,7 +3,7 @@ import {
     ShadowingAgreementInfo,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
 import { SDSEContent } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/Subtree.ta";
-import { FALSE, FALSE_BIT, ObjectIdentifier, TRUE, TRUE_BIT, NULL } from "asn1-ts";
+import { FALSE, FALSE_BIT, ObjectIdentifier, TRUE, TRUE_BIT } from "asn1-ts";
 import readAttributes from "../database/entry/readAttributes";
 import {
     EntryInformationSelection,
