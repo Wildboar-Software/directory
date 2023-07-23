@@ -1855,7 +1855,7 @@ async function updateShadow (
     that the socket is not closed just because the updateShadow operation takes
     a long time before returning a response. */
     if (assn.rose.socket) {
-        assn.rose.socket.setTimeout(0);
+        assn.rose.socket.setTimeout(1_000_000_000);
         assn.rose.socket.setKeepAlive(true, 5000);
     }
     if ("noRefresh" in data.updatedInfo) {

@@ -357,6 +357,12 @@ async function coordinateShadowUpdate (
         }
     }
 
+    /* This is done because shadow updates can take a long time to prepare,
+    transmit and apply, since they can contain a lot of data. This is not
+    infinite so that the socket eventually gets cleaned up, but 1 million
+    seconds should be way more than enough time for the shadow updates to
+    apply. */
+    assn.socket.setTimeout(1_000_000_000);
     return {
         null_: null,
     };

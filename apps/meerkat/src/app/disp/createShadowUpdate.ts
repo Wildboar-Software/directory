@@ -258,6 +258,12 @@ async function _updateShadowConsumer (
         } else {
             // FIXME: Check if requestShadowUpdate request has been sent.
         }
+        /* This is done because shadow updates can take a long time to prepare,
+        transmit and apply, since they can contain a lot of data. This is not
+        infinite so that the socket eventually gets cleaned up, but 1 million
+        seconds should be way more than enough time for the shadow updates to
+        apply. fe7e2d89-aa02-4a62-b0f7-8c2fdf924a5f */
+        disp_client.rose.socket?.setTimeout(1_000_000_000);
         let updatedInfo: RefreshInformation;
         const now = new Date();
         if (performTotalRefresh) {
@@ -362,6 +368,8 @@ async function _updateShadowConsumer (
             _unrecognizedExtensionsList: [],
             timeout: time_given_to_apply_update,
         });
+        // We reset the socket's timeout, reversing this: fe7e2d89-aa02-4a62-b0f7-8c2fdf924a5f
+        disp_client.rose.socket?.setTimeout(30_000);
         if ("result" in updateOutcome) {
             ctx.log.info(ctx.i18n.t("log:updated_shadow_update", {
                 context: performTotalRefresh
