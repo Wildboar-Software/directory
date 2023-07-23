@@ -59,6 +59,7 @@ import {
 import { getEntryAttributesToShareInOpBinding } from "../../dit/getEntryAttributesToShareInOpBinding";
 import { id_op_binding_shadow } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
 import { updateShadowConsumer } from "../../disp/createShadowUpdate";
+import stringifyDN from "../../x500/stringifyDN";
 
 /**
  * @summary Create a new subr reference, thereby becoming a superior DSA
@@ -163,6 +164,8 @@ async function becomeSuperior (
     const itinerantDN = [ ...agreement.immediateSuperior, agreement.rdn ];
     const existing = await dnToVertex(ctx, ctx.dit.root, itinerantDN);
     if (existing) {
+        // FIXME: This function gets called from DAP and DOP. If DOP, this needs
+        // to be an `operationalBindingError`.
         throw new errors.UpdateError(
             ctx.i18n.t("err:entry_already_exists"),
             new UpdateErrorData(
