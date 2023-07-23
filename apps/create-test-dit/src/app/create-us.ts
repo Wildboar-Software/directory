@@ -960,7 +960,7 @@ async function seedUS (
     const peepantsGang: DistinguishedName[] = [];
     const newEntryArgs: [cn: string, arg: AddEntryArgument][] = [];
     // Create random people
-    for (let i = 1; i < 20; i++) {
+    for (let i = 1; i < 10000; i++) {
         // TODO: pgpKeyInfo
         // TODO: simpleSecurityObject
         // TODO: uidObject
@@ -1511,7 +1511,7 @@ async function seedUS (
     ];
 
     // People within C=US,ST=FL,L=MAR,L=Ocala
-    for (let i = 1; i < 50; i++) {
+    for (let i = 1; i < 10000; i++) {
         const otherObjectClasses: OBJECT_IDENTIFIER[] = [];
         const isNatural: boolean = !(i % 2);
         // const isPGPUser: boolean = !(i % 3);
