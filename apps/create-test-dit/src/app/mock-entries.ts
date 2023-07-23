@@ -1336,7 +1336,7 @@ function createMockPersonAttributes (
 ): [ RelativeDistinguishedName, Attribute[], string ] {
     const firstName = pickRandom(firstNames);
     const lastName = pickRandom(lastNames);
-    const randomId = randomInt(0, 10000);
+    const randomId = randomInt(0, 1000000);
     const cn = `${firstName} ${lastName} #${randomId}`;
     const cityName = pickRandom(cityNames);
     const stateName = pickRandom(stateNames);
