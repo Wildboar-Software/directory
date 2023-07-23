@@ -30,7 +30,7 @@ import { _encode_AttributeErrorData } from "@wildboar/x500/src/lib/modules/Direc
 import { _encode_NameErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameErrorData.ta";
 import { _encode_ReferralData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReferralData.ta";
 import { _encode_SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityErrorData.ta";
-import { _encode_ServiceErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
+import { ServiceErrorData, ServiceProblem_unavailable, _encode_ServiceErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import { _encode_UpdateErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateErrorData.ta";
 import OperationDispatcher from "../distributed/OperationDispatcher";
 import { bind as doBind } from "./bind";
@@ -352,6 +352,22 @@ async function handleRequestAndErrors (
                     parameter: e.error,
                 });
             }
+        } else if (e instanceof errors.ChainedReject) {
+            assn.rose.write_error({
+                invoke_id: request.invoke_id,
+                code: _encode_Code(serviceError["&errorCode"]!, BER),
+                parameter: serviceError.encoderFor["&ParameterType"]!({
+                    unsigned: new ServiceErrorData(ServiceProblem_unavailable),
+                }, BER),
+            });
+        } else if (e instanceof errors.ChainedAbort) {
+            assn.rose.write_error({
+                invoke_id: request.invoke_id,
+                code: _encode_Code(serviceError["&errorCode"]!, BER),
+                parameter: serviceError.encoderFor["&ParameterType"]!({
+                    unsigned: new ServiceErrorData(ServiceProblem_unavailable),
+                }, BER),
+            });
         } else if (e instanceof errors.AbandonError) {
             const code = _encode_Code(errors.AbandonError.errcode, BER);
             const signError: boolean = (e.shouldBeSigned && assn.authorizedForSignedErrors);
