@@ -77,6 +77,15 @@ const DEFAULT_DBMS_PORTS: Record<string, string> = {
     "mongodb": "27017",
 };
 
+/**
+ * For connection re-use.
+ *
+ * Keys are:
+ *
+ * <protocol_id>:<string DN of AE title>:URL
+ */
+const outstanding_connections: Map<string, [ROSETransport, AsyncROSEClient<DSABindArgument, DSABindResult>]> = new Map();
+
 async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSABindResult>> (
     ctx: MeerkatContext,
     assn: ClientAssociation | undefined,
@@ -138,6 +147,17 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
             logInfo["destination_aet"] = stringifyDN(ctx, accessPoint.ae_title.rdnSequence);
         } catch { /* NOOP */ }
         const url = new URL(uriString);
+
+        const key = `${protocol_id.toString()}:${uriString}:${stringifyDN(ctx, accessPoint.ae_title.rdnSequence)}`;
+        const existing_conn = outstanding_connections.get(key);
+        if (existing_conn) {
+            // TODO: If the socket works, but there is no application association, just rebind.
+            const [ rose, client ] = existing_conn;
+            if (rose.is_bound && rose.socket?.writable) {
+                return client as ClientType;
+            }
+        }
+
         /**
          * This section exists to prevent a security vulnerability where this
          * DSA could be tricked into chaining requests to the database. Such
@@ -208,6 +228,9 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
                 timeout: timeRemaining,
             });
 
+        // Not infinite, but a sensible default for still detecting memory leaks.
+        socket.setMaxListeners(1000);
+
         if (socket instanceof TLSSocket) {
             socket.once("secureConnect", () => {
                 if (!socket.authorized && ctx.config.tls.rejectUnauthorizedServers) {
@@ -269,6 +292,8 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
                 if ("response" in tls_response) {
                     if (tls_response.response === 0) {
                         rose.events.once("tls_socket", (tlsSocket) => {
+                            // Not infinite, but a sensible default for still detecting memory leaks.
+                            tlsSocket.setMaxListeners(1000);
                             if (ctx.config.tls.log_tls_secrets) {
                                 tlsSocket.on("keylog", (line) => {
                                     ctx.log.debug(ctx.i18n.t("log:keylog", {
@@ -435,6 +460,19 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
         ctx.log.info(ctx.i18n.t("log:bound_to_naddr", {
             uri: uriString,
         }), logInfo);
+        outstanding_connections.set(key, [ rose, c ]);
+        socket.once("error", () => {
+            outstanding_connections.delete(key);
+        });
+        socket.once("end", () => {
+            outstanding_connections.delete(key);
+        });
+        socket.once("timeout", () => {
+            outstanding_connections.delete(key);
+        });
+        socket.once("close", () => {
+            outstanding_connections.delete(key);
+        });
         return c;
     }
     return null;
@@ -448,6 +486,7 @@ async function bindForChaining (
     accessPoint: AccessPoint,
     aliasDereferenced?: BOOLEAN,
     signErrors: boolean = false,
+    timeLimit?: number,
 ): Promise<DSPClient | null> {
     return dsa_bind(
         ctx,
@@ -458,6 +497,7 @@ async function bindForChaining (
         accessPoint,
         aliasDereferenced,
         signErrors,
+        timeLimit,
     );
 }
 
@@ -469,6 +509,7 @@ async function bindForOBM (
     accessPoint: AccessPoint,
     aliasDereferenced?: BOOLEAN,
     signErrors: boolean = false,
+    timeLimit?: number,
 ): Promise<DOPClient | null> {
     return dsa_bind(
         ctx,
@@ -479,6 +520,7 @@ async function bindForOBM (
         accessPoint,
         aliasDereferenced,
         signErrors,
+        timeLimit,
     );
 }
 
@@ -491,6 +533,7 @@ async function bindForDISP (
     applicationContext: OBJECT_IDENTIFIER,
     aliasDereferenced?: BOOLEAN,
     signErrors: boolean = false,
+    timeLimit?: number,
 ): Promise<DISPClient | null> {
     return dsa_bind(
         ctx,
@@ -501,5 +544,6 @@ async function bindForDISP (
         accessPoint,
         aliasDereferenced,
         signErrors,
+        timeLimit,
     );
 }
