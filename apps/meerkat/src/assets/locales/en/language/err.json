@@ -1,6 +1,7 @@
 {
     "entry_already_exists": "Entry already exists.",
     "entry_already_exists_in_nssr": "Entry already exists among an NSSR.",
+    "entry_already_exists@with_dn": "Entry already exists: {{dn}}",
     "no_invoke_id_specified": "No invokeId specified.",
     "invocation_not_found": "Invocation {{id}} not found.",
     "too_late_to_abandon": "Too late to abandon operation {{id}}.",

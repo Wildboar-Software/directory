@@ -13,7 +13,7 @@
     "unsupported_protocol": "COULD_BAN={{host}}; Unsupported protocol from {{source}}: {{protocol}}.",
     "unhandled_exception": "COULD_BAN={{host}}; Unhandled exception from {{source}}: {{e}}",
     "socket_error": "COULD_BAN={{host}}; {{source}} socket error: {{e}}",
-    "socket_closed": "{{source}} socked closed.",
+    "socket_closed": "{{source}} socket closed.",
     "server_error": "{{protocol}} server error: {{e}}",
     "listening": "{{protocol}} server listening on port {{port}}.",
     "killed_by_sentinel": "Killed by sentinel. This likely means that there was a security vulnerability discovered in Meerkat DSA. Please check the Meerkat DSA website for information. To disable this killswitch (and start up Meerkat despite there possibly being a severe security vulnerability), please restart Meerkat DSA with the MEERKAT_SENTINEL_DOMAIN environment variable set to an empty string.",
@@ -60,7 +60,6 @@
     "continuing_name_resolution": "Continuing name resolution via DSP operation {{opid}} for DN: '{{dn}}'",
     "continuing_name_resolution@nssr": "Continuing name resolution of next RDN {{i}} under NSSR via DSP operation {{opid}} for DN: '{{dn}}'",
     "resolving_name": "Resolving name '{{dn}}' for DSP operation {{opid}}.",
-    "received_chained_operation": "Received chained operation with identifier {{opid}} from association {{cid}}.",
     "not_authz_to_add_top_level@hint": "To be able to add an entry to the top level in Meerkat DSA, the environment variable MEERKAT_OPEN_TOP_LEVEL must be set to '1', or there must be entries in this DSA with passwords, or you must be authenticated non-anonymously as an entry that has the boolean may_add_top_level_dse set. The first entry created in this DSA with a password will have this flag set automatically. This was the DN: {{dn}}",
     "operation_progress_not_understood": "OperationProgress value {{value}} not understood from association {{cid}}.",
     "timed_out_connecting_to_naddr": "Timed out binding to network address {{uri}}.",
@@ -360,5 +359,12 @@
     "dop_unbind_error": "Error unbinding DOP assocation: {{e}}",
     "time_to_produce_shadow_update": "Took {{ms}} milliseconds to produce shadow update for SOB {{obid}}.",
     "starttls_error@tls_required": "Could not establish TLS protection to {{uri}} via StartTLS, but it is a requirement.",
-    "proposed_cp_not_found": "New context prefix proposed for shadow operational binding {{obid}} does not exist."
+    "proposed_cp_not_found": "New context prefix proposed for shadow operational binding {{obid}} does not exist.",
+    "ap_info_procedure_error": "Error from AP Info Procedure: {{e}}",
+    "nrcr_result": "Result received from NRCR procedure for operation {{opid}}.",
+    "nrcr_error": "Error with code {{code}} received from NRCR procedure for operation {{opid}}. First few bytes were: {{bytes}}.",
+    "nrcr_reject": "Reject with reason {{reason}} received from NRCR procedure for operation {{opid}}.",
+    "nrcr_abort": "Abort with reason {{reason}} received from NRCR procedure for operation {{opid}}.",
+    "nrcr_timeout": "Timeout received from NRCR procedure for operation {{opid}}.",
+    "accepted_operation": "Accepted invocation {{iid}} as operation {{opid}}."
 }
