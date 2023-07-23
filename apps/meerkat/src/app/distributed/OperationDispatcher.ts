@@ -148,6 +148,7 @@ import { searchRuleCheckProcedure_i } from "./searchRuleCheckProcedure_i";
 import searchRuleCheckProcedure_ii from "./searchRuleCheckProcedure_ii";
 import { SearchArgumentData_subset_baseObject } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
 import { FamilyReturn, ResultAttribute, SearchRule } from "@wildboar/x500/src/lib/modules/ServiceAdministration/SearchRule.ta";
+import { AbortReason } from "@wildboar/rose-transport";
 
 function getPathFromVersion (vertex: Vertex): Vertex[] {
     const ret: Vertex[] = [];
@@ -1283,18 +1284,35 @@ class OperationDispatcher {
                 partialNameResolution,
                 signErrors,
             );
-            if ("invoke_id" in nrcrResult) {
+            if ("error" in nrcrResult) {
                 throw new errors.ChainedError(
                     ctx.i18n.t("err:chained_error"),
-                    nrcrResult.parameter,
-                    nrcrResult.code,
+                    nrcrResult.error.parameter,
+                    nrcrResult.error.code,
                 );
+            }
+            else if ("reject" in nrcrResult) {
+                throw new errors.ChainedReject(
+                    ("present" in nrcrResult.reject.invoke_id)
+                        ? nrcrResult.reject.invoke_id.present
+                        : -1, // This is a design flaw of mine.
+                    nrcrResult.reject.problem,
+                );
+            }
+            else if ("abort" in nrcrResult) {
+                throw new errors.ChainedAbort(nrcrResult.abort);
+            }
+            else if ("timeout" in nrcrResult) {
+                throw new errors.ChainedAbort(AbortReason.other);
+            }
+            if (!("result" in nrcrResult)) {
+                throw new Error("c44a6dce-2ce5-460f-ba97-b018ba98b936");
             }
             return {
                 invokeId: req.invokeId,
                 opCode: req.opCode,
                 foundDSE: state.foundDSE,
-                result: nrcrResult,
+                result: nrcrResult.result.parameter,
             };
         }
         if (
@@ -1655,22 +1673,38 @@ class OperationDispatcher {
                 partialNameResolution,
                 signErrors,
             );
-            if ("invoke_id" in nrcrResult) {
+            if ("error" in nrcrResult) {
                 throw new errors.ChainedError(
                     ctx.i18n.t("err:chained_error"),
-                    nrcrResult.parameter,
-                    nrcrResult.code,
+                    nrcrResult.error.parameter,
+                    nrcrResult.error.code,
                 );
-            } else {
-                const unprotectedResult = getOptionallyProtectedValue(nrcrResult);
-                const searchResult = _decode_SearchResult(unprotectedResult.result);
-                return {
-                    invokeId,
-                    opCode: search["&operationCode"]!,
-                    chaining: unprotectedResult.chainedResult,
-                    result: searchResult,
-                };
             }
+            else if ("reject" in nrcrResult) {
+                throw new errors.ChainedReject(
+                    ("present" in nrcrResult.reject.invoke_id)
+                        ? nrcrResult.reject.invoke_id.present
+                        : -1, // This is a design flaw of mine.
+                    nrcrResult.reject.problem,
+                );
+            }
+            else if ("abort" in nrcrResult) {
+                throw new errors.ChainedAbort(nrcrResult.abort);
+            }
+            else if ("timeout" in nrcrResult) {
+                throw new errors.ChainedAbort(AbortReason.other);
+            }
+            if (!("result" in nrcrResult)) {
+                throw new Error("c44a6dce-2ce5-460f-ba97-b018ba98b936");
+            }
+            const unprotectedResult = getOptionallyProtectedValue(nrcrResult.result.parameter);
+            const searchResult = _decode_SearchResult(unprotectedResult.result);
+            return {
+                invokeId,
+                opCode: search["&operationCode"]!,
+                chaining: unprotectedResult.chainedResult,
+                result: searchResult,
+            };
         }
         return OperationDispatcher.localSearchOperationEvaluation(
             ctx,
@@ -1783,24 +1817,39 @@ class OperationDispatcher {
                 partialNameResolution,
                 signErrors,
             );
-            if ("invoke_id" in nrcrResult) {
+            if ("error" in nrcrResult) {
                 throw new errors.ChainedError(
                     ctx.i18n.t("err:chained_error"),
-                    nrcrResult.parameter,
-                    nrcrResult.code,
+                    nrcrResult.error.parameter,
+                    nrcrResult.error.code,
                 );
-            } else {
-                return {
-                    result: nrcrResult,
-                    stats: {},
-                };
             }
+            else if ("reject" in nrcrResult) {
+                throw new errors.ChainedReject(
+                    ("present" in nrcrResult.reject.invoke_id)
+                        ? nrcrResult.reject.invoke_id.present
+                        : -1, // This is a design flaw of mine.
+                    nrcrResult.reject.problem,
+                );
+            }
+            else if ("abort" in nrcrResult) {
+                throw new errors.ChainedAbort(nrcrResult.abort);
+            }
+            else if ("timeout" in nrcrResult) {
+                throw new errors.ChainedAbort(AbortReason.other);
+            }
+            if (!("result" in nrcrResult)) {
+                throw new Error("c44a6dce-2ce5-460f-ba97-b018ba98b936");
+            }
+            return {
+                result: nrcrResult.result.parameter,
+                stats: {},
+            };
         }
         return doRead(ctx, undefined, state);
     }
 
-
-/**
+    /**
      * @summary Dispatch a local read operation
      * @description
      *
@@ -1899,18 +1948,34 @@ class OperationDispatcher {
                 partialNameResolution,
                 signErrors,
             );
-            if ("invoke_id" in nrcrResult) {
+            if ("error" in nrcrResult) {
                 throw new errors.ChainedError(
                     ctx.i18n.t("err:chained_error"),
-                    nrcrResult.parameter,
-                    nrcrResult.code,
+                    nrcrResult.error.parameter,
+                    nrcrResult.error.code,
                 );
-            } else {
-                return {
-                    result: nrcrResult,
-                    stats: {},
-                };
             }
+            else if ("reject" in nrcrResult) {
+                throw new errors.ChainedReject(
+                    ("present" in nrcrResult.reject.invoke_id)
+                        ? nrcrResult.reject.invoke_id.present
+                        : -1, // This is a design flaw of mine.
+                    nrcrResult.reject.problem,
+                );
+            }
+            else if ("abort" in nrcrResult) {
+                throw new errors.ChainedAbort(nrcrResult.abort);
+            }
+            else if ("timeout" in nrcrResult) {
+                throw new errors.ChainedAbort(AbortReason.other);
+            }
+            if (!("result" in nrcrResult)) {
+                throw new Error("c44a6dce-2ce5-460f-ba97-b018ba98b936");
+            }
+            return {
+                result: nrcrResult.result.parameter,
+                stats: {},
+            };
         }
         return doCompare(ctx, undefined, state);
     }

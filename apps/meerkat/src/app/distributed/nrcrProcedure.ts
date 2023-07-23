@@ -59,11 +59,37 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
 import { printInvokeId } from "../utils/printInvokeId";
 import { compareAuthenticationLevel } from "@wildboar/x500";
-import { OperationOutcome, ErrorParameters } from "@wildboar/rose-transport";
+import { OperationOutcome, RejectReason, AbortReason } from "@wildboar/rose-transport";
 import stringifyDN from "../x500/stringifyDN";
+import printCode from "../utils/printCode";
 
-// TODO: Really, this should have the same return type as the OperationDispatcher.
-// This also returns a value, but also mutates the OD state, which is sketchy.
+/**
+ * These are rejection reasons that may reflect some transient or circumstantial
+ * state of the correspondent DSA, rather than a problem with the request
+ * itself.
+ */
+const RECOVERABLE_REJECT_REASONS: RejectReason[] = [
+    // The other DSA just might not support this operation.
+    RejectReason.unsupported_operation_request,
+    // The other DSA just might be old and not recognize this operation.
+    RejectReason.unknown_operation_request,
+    // The other DSA just might be overwhelmed with other requests.
+    RejectReason.resource_limitation_request,
+];
+
+/**
+ * These are abort reasons that may reflect some transient or circumstantial
+ * state of the correspondent DSA, rather than a problem with the request
+ * itself.
+ */
+const RECOVERABLE_ABORT_REASONS: AbortReason[] = [
+    // The other DSA just might be overwhelmed.
+    AbortReason.resource_limitation,
+    // The other DSA might have had some internal problem. The operation probably did not even begin.
+    AbortReason.connection_failed,
+    // The other DSA did not recognize our protocol. Is it even a DSA at all?
+    AbortReason.invalid_protocol,
+];
 
 /**
  * @summary The Name Resolution Continuation Reference Procedure, defined in ITU Recommendation X.518.
@@ -93,7 +119,7 @@ async function nrcrProcedure (
     chainingProhibited: BOOLEAN,
     partialNameResolution: BOOLEAN,
     signErrors: boolean,
-): Promise<OPCR | ErrorParameters> {
+): Promise<OperationOutcome<OPCR>> {
     const op = ("present" in state.invokeId)
         ? assn?.invocations.get(Number(state.invokeId.present))
         : undefined;
@@ -220,13 +246,50 @@ async function nrcrProcedure (
                 signErrors,
                 chainingProhibited,
                 cref,
+                timeLimitEndTime,
             );
             if (!outcome) {
+                // This can happen if chaining is prohibited or if all access points fail.
                 continue;
-            } else if (("result" in outcome) && outcome.result) {
-                return chainedRead.decoderFor["&ResultType"]!(outcome.result.parameter);
-            } else if (("error" in outcome) && outcome.error) {
-                return outcome.error;
+            }
+            else if ("result" in outcome) {
+                ctx.log.debug(ctx.i18n.t("log:nrcr_result", {
+                    opid: req.chaining.operationIdentifier ?? "ABSENT",
+                }));
+                return {
+                    result: {
+                        ...outcome.result,
+                        parameter: chainedRead.decoderFor["&ResultType"]!(outcome.result.parameter),
+                    },
+                };
+            }
+            else if ("error" in outcome) {
+                ctx.log.debug(ctx.i18n.t("log:nrcr_error", {
+                    opid: req.chaining.operationIdentifier ?? "ABSENT",
+                    code: printCode(outcome.error.code),
+                    bytes: Buffer.from(outcome.error.parameter.toBytes()).subarray(0, 16).toString("hex"),
+                }));
+                return outcome;
+            }
+            else if ("reject" in outcome) {
+                ctx.log.debug(ctx.i18n.t("log:nrcr_reject", {
+                    opid: req.chaining.operationIdentifier ?? "ABSENT",
+                    reason: outcome.reject.problem,
+                }));
+                return outcome;
+            }
+            else if ("abort" in outcome) {
+                ctx.log.debug(ctx.i18n.t("log:nrcr_abort", {
+                    opid: req.chaining.operationIdentifier ?? "ABSENT",
+                    reason: outcome.abort,
+                }));
+                return outcome;
+            }
+            else if ("timeout" in outcome) {
+                ctx.log.debug(ctx.i18n.t("log:nrcr_timeout", {
+                    opid: req.chaining.operationIdentifier ?? "ABSENT",
+                }));
+                return outcome;
             }
         }
         ctx.log.debug(ctx.i18n.t("log:continuing_name_resolution", {
@@ -269,17 +332,24 @@ async function nrcrProcedure (
                     signErrors,
                     chainingProhibited,
                     cref,
+                    timeLimitEndTime,
                 );
-            } catch {
+            } catch (e) {
+                ctx.log.debug(ctx.i18n.t("log:ap_info_procedure_error", { e }));
                 continue;
             }
             if (!outcome) {
                 continue;
             }
-            if (("result" in outcome) && outcome.result) {
+            if ("result" in outcome) {
                 allUnableToProceed = false;
                 try {
-                    return chainedRead.decoderFor["&ResultType"]!(outcome.result.parameter);
+                    return {
+                        result: {
+                            ...outcome.result,
+                            parameter: chainedRead.decoderFor["&ResultType"]!(outcome.result.parameter),
+                        },
+                    };
                 } catch (e) {
                     ctx.log.error(e.message, {
                         remoteFamily: assn?.socket.remoteFamily,
@@ -290,7 +360,13 @@ async function nrcrProcedure (
                     });
                     continue;
                 }
-            } else if ("error" in outcome) {
+            }
+            else if ("error" in outcome) {
+                ctx.log.debug(ctx.i18n.t("log:nrcr_error", {
+                    opid: req.chaining.operationIdentifier ?? "ABSENT",
+                    code: printCode(outcome.error.code),
+                    bytes: Buffer.from(outcome.error.parameter.toBytes()).subarray(0, 16).toString("hex"),
+                }));
                 if (compareCode(outcome.error.code, serviceError["&errorCode"]!)) {
                     let errorParam: OPTIONALLY_PROTECTED<ServiceErrorData> | null = null;
                     try {
@@ -332,11 +408,11 @@ async function nrcrProcedure (
                             signErrors,
                         );
                     } else {
-                        return outcome.error;
+                        return outcome;
                     }
                 } else { // Step 7, bullet point 3
-                    // This will have the effect of returning the referral to
-                    // the operation dispatcher.
+                    /* This will return the referral to the operation
+                    dispatcher, if it is one, per bullet point 4. */
                     throw new errors.ChainedError(
                         ctx.i18n.t("err:chained_error"),
                         outcome.error.parameter,
@@ -344,7 +420,41 @@ async function nrcrProcedure (
                         signErrors,
                     );
                 }
-            } else {
+            }
+            else if ("reject" in outcome) {
+                ctx.log.debug(ctx.i18n.t("log:nrcr_reject", {
+                    opid: req.chaining.operationIdentifier ?? "ABSENT",
+                    reason: outcome.reject.problem,
+                }));
+                allUnableToProceed = false;
+                /* What to do here is unspecified, but for some reject outcomes,
+                we can just carry on. */
+                if (RECOVERABLE_REJECT_REASONS.includes(outcome.reject.problem)) {
+                    continue;
+                }
+                continue;
+            }
+            else if ("abort" in outcome) {
+                ctx.log.debug(ctx.i18n.t("log:nrcr_abort", {
+                    opid: req.chaining.operationIdentifier ?? "ABSENT",
+                    reason: outcome.abort,
+                }));
+                allUnableToProceed = false;
+                /* What to do here is unspecified, but for some abort outcomes,
+                we can just carry on. */
+                if (RECOVERABLE_ABORT_REASONS.includes(outcome.abort)) {
+                    continue;
+                }
+                continue;
+            }
+            else if ("timeout" in outcome) {
+                ctx.log.debug(ctx.i18n.t("log:nrcr_timeout", {
+                    opid: req.chaining.operationIdentifier ?? "ABSENT",
+                }));
+                allUnableToProceed = false;
+                continue;
+            }
+            else {
                 allUnableToProceed = false;
             }
         } // End of NSSR access point loop.
@@ -367,7 +477,13 @@ async function nrcrProcedure (
                     reqData,
                     false,
                 );
-                return localResult.result;
+                return {
+                    result: {
+                        code: req.opCode,
+                        invoke_id: req.invokeId,
+                        parameter: localResult.result,
+                    },
+                };
             } else {
                 throw new errors.NameError(
                     ctx.i18n.t("err:entry_not_found_in_nssr"),
