@@ -247,6 +247,9 @@ async function getShadowIncrementalSteps (
     vertex: Vertex,
     change: Change,
 ): Promise<[ number, number, IncrementalStepRefresh, Vertex? ][]> {
+    if (ctx.config.bulkInsertMode) {
+        return [];
+    }
     const dse_ids: number[] = [];
     /* If the entry was renamed, we need to consider the SOBs that were superior
     to the old entry as well. */
