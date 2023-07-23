@@ -419,7 +419,11 @@ const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
 const serviceControls = new ServiceControls(
     serviceControlOptions,
     undefined,
-    60,
+    /* I had to bump the timeout really high, because, when creating the local
+    test DIT, it seems that either Meerkat DSA or the database would get
+    overwhelmed and take over one minute to insert (with bulk insert mode
+    disabled). */
+    300,
     undefined,
     undefined,
     undefined,
