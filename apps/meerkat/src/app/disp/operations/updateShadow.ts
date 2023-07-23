@@ -96,7 +96,7 @@ import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import readSubordinates from "../../dit/readSubordinates";
 import { Refinement } from "@wildboar/x500/src/lib/modules/InformationFramework/Refinement.ta";
 import { OperationalBindingInitiator, Prisma } from "@prisma/client";
-import createEntry from "../../database/createEntry";
+import createEntry, { createDse } from "../../database/createEntry";
 import stringifyDN from "../../x500/stringifyDN";
 import { ContentChange } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ContentChange.ta";
 import rdnToID from "../../dit/rdnToID";
@@ -607,39 +607,71 @@ async function applyTotalRefresh (
                 true,
             );
         } else {
-            // TODO: Performance hack: if there are no subordinates, just
-            // return after this.
-            // TODO: Also define an alternative createEntry that only returns the DB ID.
-            vertex = await createEntry(
-                ctx,
-                vertex,
-                creatingRDN,
-                {
-                    shadow: true,
-                    subr: isSubr,
-                    nssr: isNssr,
-                    cp: isCp,
-                    entry: isEntry,
-                    alias: isAlias,
-                    admPoint: isAdmPoint,
-                    subentry: isSubentry,
-                    sa: isSa,
-                    glue: isGlue,
-                    subordinate_completeness: refresh.sDSE.subComplete ?? FALSE,
-                    attribute_completeness: refresh.sDSE.attComplete,
-                    EntryAttributeValuesIncomplete: {
-                        createMany: {
-                            data: refresh.sDSE.attValIncomplete?.map((oid) => ({
-                                attribute_type: oid.toString(),
-                            })) ?? [],
+            // This is an optimization to avoid querying the subordinates of an
+            // entry that was just created.
+            if (refresh.subtree?.length) {
+                vertex = await createEntry(
+                    ctx,
+                    vertex,
+                    creatingRDN,
+                    {
+                        shadow: true,
+                        subr: isSubr,
+                        nssr: isNssr,
+                        cp: isCp,
+                        entry: isEntry,
+                        alias: isAlias,
+                        admPoint: isAdmPoint,
+                        subentry: isSubentry,
+                        sa: isSa,
+                        glue: isGlue,
+                        subordinate_completeness: refresh.sDSE.subComplete ?? FALSE,
+                        attribute_completeness: refresh.sDSE.attComplete,
+                        EntryAttributeValuesIncomplete: {
+                            createMany: {
+                                data: refresh.sDSE.attValIncomplete?.map((oid) => ({
+                                    attribute_type: oid.toString(),
+                                })) ?? [],
+                            },
                         },
+                        lastShadowUpdate: new Date(),
                     },
-                    lastShadowUpdate: new Date(),
-                },
-                refresh.sDSE.attributes,
-                undefined,
-                true,
-            );
+                    refresh.sDSE.attributes,
+                    undefined,
+                    true,
+                );
+            } else {
+                return (await createDse(
+                    ctx,
+                    vertex,
+                    creatingRDN,
+                    {
+                        shadow: true,
+                        subr: isSubr,
+                        nssr: isNssr,
+                        cp: isCp,
+                        entry: isEntry,
+                        alias: isAlias,
+                        admPoint: isAdmPoint,
+                        subentry: isSubentry,
+                        sa: isSa,
+                        glue: isGlue,
+                        subordinate_completeness: refresh.sDSE.subComplete ?? FALSE,
+                        attribute_completeness: refresh.sDSE.attComplete,
+                        EntryAttributeValuesIncomplete: {
+                            createMany: {
+                                data: refresh.sDSE.attValIncomplete?.map((oid) => ({
+                                    attribute_type: oid.toString(),
+                                })) ?? [],
+                            },
+                        },
+                        lastShadowUpdate: new Date(),
+                    },
+                    refresh.sDSE.attributes,
+                    undefined,
+                    true,
+                )).dse.id;
+            }
         }
         created_dse_database_id = vertex.dse.id;
     }

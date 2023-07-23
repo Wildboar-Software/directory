@@ -57,7 +57,7 @@ import {
 import {
     ChainingResults,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
-import createEntry from "../database/createEntry";
+import { createDse } from "../database/createEntry";
 import {
     ServiceProblem_unavailable,
     ServiceProblem_unwillingToPerform,
@@ -763,7 +763,10 @@ async function addEntry (
                 || !accessControlSchemesThatUseACIItems.has(effectiveAccessControlScheme.toString())
             ) { // We can inform the user that it does not exist; no need to do any more work.
                 throw new errors.UpdateError(
-                    ctx.i18n.t("err:entry_already_exists"),
+                    ctx.i18n.t("err:entry_already_exists", {
+                        context: "with_dn",
+                        dn: stringifyDN(ctx, targetDN).slice(0, 512),
+                    }),
                     new UpdateErrorData(
                         UpdateProblem_entryAlreadyExists,
                         undefined,
@@ -822,7 +825,10 @@ async function addEntry (
             );
             if (authorizedToKnowAboutExistingEntry) {
                 throw new errors.UpdateError(
-                    ctx.i18n.t("err:entry_already_exists"),
+                    ctx.i18n.t("err:entry_already_exists", {
+                        context: "with_dn",
+                        dn: stringifyDN(ctx, targetDN).slice(0, 512),
+                    }),
                     new UpdateErrorData(
                         UpdateProblem_entryAlreadyExists,
                         undefined,
@@ -1113,10 +1119,10 @@ async function addEntry (
                 chaining: state.chainingArguments,
             });
             // TODO: Log
-            dsp_client.unbind().then().catch();
-            if (dsp_client.rose.socket?.writable) {
-                dsp_client.rose.socket?.end(); // Unbind does not necessarily close the socket.
-            }
+            // dsp_client.unbind().then().catch();
+            // if (dsp_client.rose.socket?.writable) {
+            //     dsp_client.rose.socket?.end(); // Unbind does not necessarily close the socket.
+            // }
             if ("result" in outcome) {
                 return {
                     result: outcome.result.parameter,
@@ -1598,21 +1604,22 @@ async function addEntry (
                 NAMING_MATCHER))
     );
     // TODO: Define a new createEntry() that does not return anything.
-    const newEntry = await createEntry(ctx, immediateSuperior, rdn, {
+    const newEntry = await createDse(ctx, immediateSuperior, rdn, {
         governingStructureRule: governingStructureRule
             ? Number(governingStructureRule)
             : undefined,
         structuralObjectClass: structuralObjectClass.toString(),
         cp,
     }, data.entry, user?.dn);
-    immediateSuperior.subordinates?.push(newEntry);
-    ctx.log.debug(ctx.i18n.t("log:add_entry", {
-        aid: assn.id,
-        dn: stringifyDN(ctx, targetDN),
-        id: newEntry.dse.id,
-        uuid: newEntry.dse.uuid,
-        euuid: newEntry.dse.entryUUID,
-    }));
+    if (!ctx.config.bulkInsertMode) {
+        ctx.log.debug(ctx.i18n.t("log:add_entry", {
+            aid: assn.id,
+            dn: stringifyDN(ctx, targetDN),
+            id: newEntry.dse.id,
+            uuid: newEntry.dse.uuid,
+            euuid: newEntry.dse.entryUUID,
+        }));
+    }
 
     /**
      * Because the structure rules, name forms, etc. may have been specified all
