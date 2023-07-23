@@ -128,6 +128,8 @@ async function apinfoProcedure (
             ctx.config.chaining.signChainedRequests,
             api.ae_title.rdnSequence,
             req.opCode,
+            undefined,
+            true,
         ),
     });
     const accessPoints: MasterOrShadowAccessPoint[] = [
