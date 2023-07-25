@@ -792,7 +792,7 @@ async function applyTotalRefresh (
             depth + 1,
             signErrors,
             [ ...localName, sub?.dse.rdn ?? subtree.rdn ],
-            recursion_fanout,
+            Math.max(1, Math.round(recursion_fanout / 2)),
             subordinates_page_size,
             start_replicating_subordinates,
             sub ? undefined : subtree.rdn, // If undefined, we are overwriting the existing entry.
@@ -846,6 +846,7 @@ async function applyTotalRefresh (
             depth + 1,
             signErrors,
             [ ...localName, subordinate.dse.rdn ],
+            Math.max(1, Math.round(recursion_fanout / 2)),
         ), {
             concurrency: recursion_fanout,
         });
@@ -1887,7 +1888,7 @@ async function updateShadow (
             0,
             signErrors,
             [],
-            1, // TODO: Make configurable.
+            64, // TODO: Make configurable.
             100, // TODO: Make configurable.
         );
     }
