@@ -805,6 +805,8 @@ export function create_itot_stack(
         dispatch_SRELrsp_reject(stack.session, spdu);
     });
     socket.on('error', () => socket.destroy());
+    // Still necessary to explicitly end in some cases.
+    // See: https://nodejs.org/dist/latest-v20.x/docs/api/net.html#event-end
     socket.on('end', () => socket.end());
     socket.on('close', () => dispatch_NDISind(stack.transport));
     socket.on('timeout', () => socket.end());
