@@ -22,6 +22,7 @@ const ctx: Context = {
     objectClasses: new Map(),
     ldapSyntaxes: new Map(),
     contextTypes: new Map(),
+    single: false,
 };
 
 export default ctx;

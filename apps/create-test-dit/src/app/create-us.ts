@@ -639,7 +639,7 @@ async function seedUS (
                 [_encodeUTF8String(name, DER)],
             ),
         ];
-        const arg = createAddEntryArgument(deepDN, attributes, HILLSBOROUGH_ACCESS_POINT);
+        const arg = createAddEntryArgument(deepDN, attributes, ctx.single ? undefined : HILLSBOROUGH_ACCESS_POINT);
         await idempotentAddEntry(ctx, conn, "C=US,ST=FL,L=HIL", arg);
     }
 
@@ -665,7 +665,7 @@ async function seedUS (
                 [_encodeUTF8String("The terrace where you will find the temple", DER)],
             ),
         ];
-        const arg = createAddEntryArgument([ ...deepDN, rdn ], attributes, TEMPLE_TERRACE_ACCESS_POINT);
+        const arg = createAddEntryArgument([ ...deepDN, rdn ], attributes, ctx.single ? undefined : TEMPLE_TERRACE_ACCESS_POINT);
         await idempotentAddEntry(ctx, conn, "C=US,ST=FL,L=HIL,L=Temple Terrace", arg);
 
         for (let i = 0; i < 10; i++) {
@@ -907,7 +907,7 @@ async function seedUS (
                 [_encodeUTF8String("Named after some dang guy", DER)],
             ),
         ];
-        const arg = createAddEntryArgument([ ...deepDN, rdn ], attributes, BRANDON_ACCESS_POINT);
+        const arg = createAddEntryArgument([ ...deepDN, rdn ], attributes, ctx.single ? undefined : BRANDON_ACCESS_POINT);
         await idempotentAddEntry(ctx, conn, "C=US,ST=FL,L=HIL,L=Tampa,L=Brandon", arg);
 
         for (let i = 0; i < 10; i++) {

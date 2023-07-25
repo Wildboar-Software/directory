@@ -133,6 +133,7 @@ interface Context {
     ldapSyntaxes: Map<IndexableOID, LDAPSyntaxInfo>;
     contextTypes: Map<IndexableOID, ContextTypeInfo>;
     config?: X500ClientConfig | null;
+    single: boolean;
 }
 
 export default Context;
