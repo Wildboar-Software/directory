@@ -149,6 +149,7 @@ async function createTotalRefreshFromVertex (
     // NOTE: You cannot apply a refinement here, because, even if a subordinate
     // does not match the refinement, one of its subordinates may.
     const getNextBatchOfSubordinates = () => readSubordinates(ctx, vertex, 100, undefined, cursorId, {
+        dsSubentry: false,
         /*
             ITU Recommendation X.501 (2019), Section 12.3.5 states that:
             "If a family member is excluded from a subtree by this specification,
