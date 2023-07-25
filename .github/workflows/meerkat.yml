@@ -3,6 +3,7 @@ name: Meerkat DSA Workflow
 on:
   push:
     tags:
+      - v2.*
       - v3.*
 
 env:
