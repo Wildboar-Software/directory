@@ -54,6 +54,11 @@ to replicate entries across multiple DSAs.
 
 ## Version 2.6.0
 
+- Create X.509 attribute certificates using an extension to the `read`
+  operation, documented [here](https://wildboar-software.github.io/directory/docs/attr-cert).
+
+## Version 2.5.0
+
 - Support Non-Specific Hierarchical Operational Bindings (NHOBs), which allow
   entries in multiple directories to share / compete for the same namespace.
 - Fixed bugs in operational binding management
