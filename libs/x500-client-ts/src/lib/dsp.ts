@@ -8,9 +8,6 @@ import {
     UnbindOutcome,
 } from "@wildboar/rose-transport";
 import {
-    directoryBind,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/directoryBind.oa";
-import {
     read,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/read.oa";
 import {
@@ -130,7 +127,6 @@ import { BER, DER } from "asn1-ts/dist/node/functional";
 import {
     generateSIGNED,
     CommonArguments,
-    CertPathOption,
     DirectoryName,
     TargetsObject,
     ref_type_from,
@@ -142,8 +138,8 @@ import {
     service_option_to,
     DirectoryVersioned,
     generateUnusedInvokeId,
+    DirectoryOperationOptions,
 } from "./utils";
-import type { KeyObject } from "node:crypto";
 import { UserPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
 import { strict as assert } from "node:assert";
 import { compareCode } from "@wildboar/x500";
@@ -339,9 +335,11 @@ extends CommonArguments, DSPOperationOptions, TargetsObject, WithChainingOptions
 }
 
 export
-interface DSPOperationOptions {
-    key?: KeyObject;
-    cert_path?: CertPathOption;
+interface DSPOperationOptions extends DirectoryOperationOptions {
+    /**
+     * Whether to sign the inner DAP argument. This should almost never be used,
+     * but it's here if you want it.
+     */
     sign_inner_dap?: boolean;
 }
 
@@ -490,6 +488,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                     present: invoke_id,
                 },
                 parameter: chainedRead.encoderFor["&ArgumentType"]!(chained_arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, chainedRead["&operationCode"]!));
@@ -558,6 +557,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                     present: invoke_id,
                 },
                 parameter: chainedCompare.encoderFor["&ArgumentType"]!(chained_arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, chainedCompare["&operationCode"]!));
@@ -594,6 +594,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                     present: invoke_id,
                 },
                 parameter: chainedAbandon.encoderFor["&ArgumentType"]!(arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, chainedAbandon["&operationCode"]!));
@@ -663,6 +664,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                     present: invoke_id,
                 },
                 parameter: chainedList.encoderFor["&ArgumentType"]!(chained_arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, chainedList["&operationCode"]!));
@@ -793,6 +795,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                     present: invoke_id,
                 },
                 parameter: chainedSearch.encoderFor["&ArgumentType"]!(chained_arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, chainedSearch["&operationCode"]!));
@@ -862,6 +865,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                     present: invoke_id,
                 },
                 parameter: chainedAddEntry.encoderFor["&ArgumentType"]!(chained_arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, chainedAddEntry["&operationCode"]!));
@@ -929,6 +933,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                     present: invoke_id,
                 },
                 parameter: chainedRemoveEntry.encoderFor["&ArgumentType"]!(chained_arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, chainedRemoveEntry["&operationCode"]!));
@@ -998,6 +1003,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                     present: invoke_id,
                 },
                 parameter: chainedModifyEntry.encoderFor["&ArgumentType"]!(chained_arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, chainedModifyEntry["&operationCode"]!));
@@ -1090,6 +1096,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                     present: invoke_id,
                 },
                 parameter: chainedModifyDN.encoderFor["&ArgumentType"]!(chained_arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, chainedModifyDN["&operationCode"]!));
@@ -1152,6 +1159,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                     present: invoke_id,
                 },
                 parameter: chainedChangePassword.encoderFor["&ArgumentType"]!(chained_arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, chainedChangePassword["&operationCode"]!));
@@ -1209,6 +1217,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                     present: invoke_id,
                 },
                 parameter: chainedAdministerPassword.encoderFor["&ArgumentType"]!(chained_arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, chainedAdministerPassword["&operationCode"]!));
@@ -1278,6 +1287,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                     present: invoke_id,
                 },
                 parameter: chainedLdapTransport.encoderFor["&ArgumentType"]!(chained_arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, chainedLdapTransport["&operationCode"]!));
@@ -1348,6 +1358,7 @@ function create_dsp_client (rose: ROSETransport): DSPClient {
                     present: invoke_id,
                 },
                 parameter: chainedLinkedLDAP.encoderFor["&ArgumentType"]!(chained_arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, chainedLinkedLDAP["&operationCode"]!));

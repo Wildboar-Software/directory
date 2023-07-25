@@ -183,6 +183,9 @@ import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
 import { getEntryExistsFilter } from "../database/entryExistsFilter";
 import { Prisma } from "@prisma/client";
 import getEqualityNormalizer from "../x500/getEqualityNormalizer";
+import { getShadowIncrementalSteps } from "../dop/getRelevantSOBs";
+import { SubordinateChanges } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SubordinateChanges.ta";
+import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh";
 
 /**
  * @summary Determine whether a DSE is local to this DSA
@@ -697,8 +700,11 @@ async function modifyDN (
             signErrors,
         );
     }
+    const oldImmediateSuperior = target.immediateSuperior;
     const superior = newSuperior ?? target.immediateSuperior;
     assert(superior);
+    const movingToTopLevel: boolean = (data.newSuperior?.length === 0);
+    const topLevelException: boolean = (movingToTopLevel && ctx.config.openTopLevel);
 
     // Access control for the new location.
     if (data.newSuperior) {
@@ -752,7 +758,8 @@ async function modifyDN (
                 bacSettings,
                 true,
             );
-            if (!authorizedToEntry) {
+
+            if (!authorizedToEntry && !topLevelException) {
                 throw new errors.SecurityError(
                     ctx.i18n.t("err:not_authz_import"),
                     new SecurityErrorData(
@@ -2017,6 +2024,7 @@ async function modifyDN (
     }
 
     target.dse.rdn = data.newRDN; // Update the RDN.
+    target.immediateSuperior = superior;
     if (data.deleteOldRDN) {
         for (const oldATAV of oldRDN) {
             const valueInNewRDN = newRDN
@@ -2059,7 +2067,26 @@ async function modifyDN (
         updateAffectedSubordinateDSAs(ctx, affectedPrefix, destinationDN); // INTENTIONAL_NO_AWAIT
     }
 
-    // TODO: Update shadows
+    const sobs = await getShadowIncrementalSteps(ctx, target, {
+        rename: data.newSuperior
+            ? { newDN: [ ...superiorDN, newRDN ] }
+            : { newRDN },
+        oldDN: targetDN,
+        oldImmediateSuperior,
+    });
+    for (const [ sob_id, sob_obid, sob_change, step_superior ] of sobs) {
+        const change = new SubordinateChanges(
+            oldRDN,
+            sob_change,
+        );
+        saveIncrementalRefresh(ctx, sob_id, step_superior ?? oldImmediateSuperior, change)
+            .then() // INTENTIONAL_NO_AWAIT
+            .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_save_incremental_update_step", {
+                sob_id: sob_obid,
+                e,
+            })));
+    }
+
     const signResults: boolean = (
         (data.securityParameters?.target === ProtectionRequest_signed)
         && assn.authorizedForSignedResults

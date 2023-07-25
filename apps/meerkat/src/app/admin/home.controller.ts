@@ -110,7 +110,7 @@ export class HomeController {
                         if (ob.validity_start.valueOf() > Date.now()) {
                             return "PENDING";
                         }
-                        if (ob.validity_end && (ob.validity_end.valueOf() > Date.now())) {
+                        if (ob.validity_end && (ob.validity_end.valueOf() < Date.now())) {
                             return "EXPIRED";
                         }
                         if (ob.accepted === null) {

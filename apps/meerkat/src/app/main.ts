@@ -70,8 +70,29 @@ import {
 import {
     id_ac_directoryOperationalBindingManagementAC,
 } from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directoryOperationalBindingManagementAC.va";
+import {
+    id_ac_shadowConsumerInitiatedAC,
+} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowConsumerInitiatedAC.va";
+import {
+    id_ac_shadowConsumerInitiatedAsynchronousAC,
+} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowConsumerInitiatedAsynchronousAC.va";
+import {
+    id_ac_shadowSupplierInitiatedAC,
+} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowSupplierInitiatedAC.va";
+import {
+    id_ac_shadowSupplierInitiatedAsynchronousAC,
+} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowSupplierInitiatedAsynchronousAC.va";
 import { AbortReason } from "@wildboar/rose-transport";
 import { createWriteStream } from "node:fs";
+import { disp_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/disp-ip.oa";
+import DISPAssociation from "./disp/DISPConnection";
+import { id_op_binding_shadow } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
+import { OperationalBindingInitiator } from "@prisma/client";
+import {
+    _decode_ShadowingAgreementInfo,
+} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
+import scheduleShadowUpdates from "./disp/scheduleShadowUpdates";
+import { BERElement } from "asn1-ts";
 
 /**
  * @summary Check for Meerkat DSA updates
@@ -333,6 +354,9 @@ function attachUnboundEventListenersToIDMConnection (
         } else if (idmBind.protocolID.isEqualTo(dop_ip["&id"]!) && ctx.config.dop.enabled) {
             const rose = rose_transport_from_idm_socket(ctx, idm);
             conn = new DOPAssociation(ctx, rose);
+        } else if (idmBind.protocolID.isEqualTo(disp_ip["&id"]!) && ctx.config.disp.enabled) {
+            const rose = rose_transport_from_idm_socket(ctx, idm);
+            conn = new DISPAssociation(ctx, rose);
         } else {
             idm.writeAbort(Abort_invalidProtocol);
             startTimes.delete(idm.s);
@@ -808,6 +832,18 @@ function attachUnboundEventListenersToITOTConnection (
         else if (bind.protocol_id.isEqualTo(id_ac_directoryOperationalBindingManagementAC)) {
             conn = new DOPAssociation(ctx, rose);
         }
+        else if (bind.protocol_id.isEqualTo(id_ac_shadowConsumerInitiatedAC)) {
+            conn = new DISPAssociation(ctx, rose);
+        }
+        else if (bind.protocol_id.isEqualTo(id_ac_shadowConsumerInitiatedAsynchronousAC)) {
+            conn = new DISPAssociation(ctx, rose);
+        }
+        else if (bind.protocol_id.isEqualTo(id_ac_shadowSupplierInitiatedAC)) {
+            conn = new DISPAssociation(ctx, rose);
+        }
+        else if (bind.protocol_id.isEqualTo(id_ac_shadowSupplierInitiatedAsynchronousAC)) {
+            conn = new DISPAssociation(ctx, rose);
+        }
         else {
             // This branch should not be taken entirely, because the ACSE layer
             // in `./rose/itot.ts` should reject unsupported protocols.
@@ -871,7 +907,11 @@ function attachUnboundEventListenersToITOTConnection (
         }
     });
     itot.network.socket.on("close", () => {
-        ctx.associations.set(originalSocket, null);
+        ctx.associations.delete(originalSocket);
+        ctx.associations.delete(itot.network.socket);
+        if (rose.socket) {
+            ctx.associations.delete(rose.socket);
+        }
         rose.events.removeAllListeners();
     });
 }
@@ -1400,4 +1440,62 @@ async function main (): Promise<void> {
             job = ctx.jobQueue.shift();
         }
     }, 5000);
+
+    const periodic_sobs_to_update = await ctx.db.operationalBinding.findMany({
+        where: {
+            /**
+             * This is a hack for getting the latest version: we are selecting
+             * operational bindings that have no next version.
+             */
+            next_version: {
+                none: {},
+            },
+            binding_type: id_op_binding_shadow.toString(),
+            periodic_updateInterval: {
+                gt: 0,
+            },
+            accepted: true,
+            terminated_time: null,
+            validity_start: {
+                lte: now,
+            },
+            OR: [
+                {
+                    validity_end: null,
+                },
+                {
+                    validity_end: {
+                        gte: now,
+                    },
+                },
+            ],
+        },
+        select: {
+            id: true,
+            binding_identifier: true,
+            agreement_ber: true,
+            periodic_updateInterval: true,
+            periodic_beginTime: true,
+            periodic_windowSize: true,
+            requested_time: true,
+            responded_time: true,
+            initiator: true,
+            outbound: true,
+        },
+    });
+    for (const sob of periodic_sobs_to_update) {
+        const el = new BERElement();
+        el.fromBytes(sob.agreement_ber);
+        const agreement = _decode_ShadowingAgreementInfo(el);
+        const ob_time: Date = sob.responded_time
+            ? new Date(Math.max(sob.requested_time.valueOf(), sob.responded_time.valueOf()))
+            : sob.requested_time;
+        const iAmSupplier: boolean = (
+            // The initiator was the supplier and this DSA was the initiator...
+            ((sob.initiator === OperationalBindingInitiator.ROLE_A) && (sob.outbound))
+            // ...or, the initiator was the consumer, and this DSA was NOT the initiator.
+            || ((sob.initiator === OperationalBindingInitiator.ROLE_B) && (!sob.outbound))
+        );
+        scheduleShadowUpdates(ctx, agreement, sob.id, sob.binding_identifier, ob_time, iAmSupplier);
+    }
 }

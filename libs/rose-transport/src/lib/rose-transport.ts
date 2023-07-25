@@ -148,6 +148,8 @@ interface ROSETransportEvents {
     "abort": (param: AbortReason) => unknown;
     "start_tls": (params: StartTLSParameters) => unknown;
     "start_tls_response": (params: TLSResponseParameters) => unknown; // Code is taken from IDM's `TLSResponse`.
+    "tls_socket": (socket: TLSSocket) => unknown;
+    "tls": () => unknown;
 }
 
 export
@@ -343,6 +345,15 @@ function new_rose_transport (socket?: Socket | TLSSocket): ROSETransport {
                     timeout_function,
                     timeout_in_ms,
                 );
+            }
+            if (
+                (timeout_in_ms !== undefined)
+                && Number.isSafeInteger(timeout_in_ms)
+                && rose.socket?.timeout
+                && (timeout_in_ms > rose.socket.timeout)
+            ) {
+                rose.socket.setTimeout(timeout_in_ms + 2000);
+                rose.socket.setKeepAlive(true, timeout_in_ms / 2);
             }
             rose.socket?.once("timeout", timeout_function);
             rose.socket?.once("end", end_function);

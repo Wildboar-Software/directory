@@ -15,11 +15,9 @@ import {
     MasterOrShadowAccessPoint_category_master,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint-category.ta";
 import dnToVertex from "../../dit/dnToVertex";
-import valuesFromAttribute from "../../x500/valuesFromAttribute";
 import { Knowledge } from "@prisma/client";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER, _decodeObjectIdentifier } from "asn1-ts/dist/node/functional";
 import createEntry from "../../database/createEntry";
-import addValues from "../../database/entry/addValues";
 import {
     superiorKnowledge,
 } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/superiorKnowledge.oa";
@@ -35,11 +33,18 @@ import isFirstLevelDSA from "../../dit/isFirstLevelDSA";
 import type {
     OBJECT_CLASS,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
-import { INTEGER } from "asn1-ts";
+import { INTEGER, OBJECT_IDENTIFIER } from "asn1-ts";
 import { SubentryInfo, Vertex as X500Vertex } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/Vertex.ta";
 import readSubordinates from "../../dit/readSubordinates";
 import readAttributes from "../../database/entry/readAttributes";
 import subentryEIS from "../subentryEIS";
+import { MeerkatContext } from "../../ctx";
+import getSubschemaSubentry from "../../dit/getSubschemaSubentry";
+import { objectClass } from "@wildboar/x500/src/lib/collections/attributes";
+import getStructuralObjectClass from "../../x500/getStructuralObjectClass";
+import { checkNameForm } from "@wildboar/x500";
+import { Attribute } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
+import { governingStructureRule } from "@wildboar/x500/src/lib/modules/SchemaAdministration/governingStructureRule.oa";
 
 export
 async function createContextPrefixEntry (
@@ -48,9 +53,54 @@ async function createContextPrefixEntry (
     currentRoot: Vertex,
     last: boolean,
     signErrors: boolean,
+    immediateSuperiorInfo?: Attribute[],
 ): Promise<Vertex> {
     const immSuprAccessPoints = vertex.accessPoints;
     const immSupr: boolean = Boolean(immSuprAccessPoints && last);
+    const attributes = last
+        ? (immediateSuperiorInfo ?? vertex.admPointInfo ?? [])
+        : (vertex.admPointInfo ?? []);
+
+    let gsr: number | undefined = undefined;
+    // If the governing structure rule was not present in the context prefix
+    // vertex, we have to calculate it.
+    if (last && !attributes.some((attr) => attr.type_.isEqualTo(governingStructureRule["&id"]))) {
+        const schemaSubentry = await getSubschemaSubentry(ctx, currentRoot);
+        // TODO: This next section was copy-pasted a lot. Refactor.
+        if (schemaSubentry && (typeof currentRoot.dse.governingStructureRule === "number")) {
+            if (!schemaSubentry?.dse.subentry) {
+                throw new Error("e41612c3-6239-451f-a971-a9d59bfb5183");
+            }
+            const objectClasses: OBJECT_IDENTIFIER[] = attributes
+                .filter((attr) => attr.type_.isEqualTo(objectClass["&id"]))
+                .flatMap((attr) => attr.values)
+                .map(_decodeObjectIdentifier);
+            const structuralObjectClass = getStructuralObjectClass(ctx, objectClasses);
+            const structuralRule = (schemaSubentry.dse.subentry?.ditStructureRules ?? [])
+                .find((rule) => {
+                    if (rule.obsolete) {
+                        return false;
+                    }
+                    if (!rule.superiorStructureRules?.includes(currentRoot.dse.governingStructureRule!)) {
+                        return false;
+                    }
+                    const nf = ctx.nameForms.get(rule.nameForm.toString());
+                    if (!nf) {
+                        return false;
+                    }
+                    if (!nf.namedObjectClass.isEqualTo(structuralObjectClass)) {
+                        return false;
+                    }
+                    if (nf.obsolete) {
+                        return false;
+                    }
+                    return checkNameForm(vertex.rdn, nf.mandatoryAttributes, nf.optionalAttributes);
+                });
+            gsr = structuralRule
+                ? Number(structuralRule.ruleIdentifier)
+                : undefined;
+        }
+    }
     const createdEntry = await createEntry(
         ctx,
         currentRoot,
@@ -73,11 +123,12 @@ async function createContextPrefixEntry (
              * any entry created in a context prefix.
              */
             entry: false,
-            glue: (!vertex.admPointInfo && !vertex.accessPoints),
-            rhob: Boolean(vertex.admPointInfo),
+            glue: (!immSupr && !vertex.admPointInfo && !vertex.accessPoints),
+            rhob: Boolean(vertex.admPointInfo || immSupr),
             immSupr,
+            governingStructureRule: gsr,
         },
-        vertex.admPointInfo ?? [],
+        attributes,
         undefined,
         signErrors,
     );
@@ -120,7 +171,7 @@ async function createContextPrefixEntry (
  * @param agreement The hierarchical agreement
  * @param sup2sub The `SuperiorToSubordinate` argument of the HOB
  * @param structuralObjectClass The structural object class of the context prefix
- * @param governingStructureRule The governing structure rule of the context prefix
+ * @param cp_gsr The governing structure rule of the context prefix
  * @param signErrors Whether to cryptographically sign errors
  * @returns A `SubordinateToSuperior` that can be returned to the superior DSA
  *  in a Directory Operational Binding Management Protocol (DOP) result
@@ -130,12 +181,12 @@ async function createContextPrefixEntry (
  */
 export
 async function becomeSubordinate (
-    ctx: Context,
+    ctx: MeerkatContext,
     superiorAccessPoint: AccessPoint,
     agreement: HierarchicalAgreement,
     sup2sub: SuperiorToSubordinate,
     structuralObjectClass: OBJECT_CLASS["&id"],
-    governingStructureRule: INTEGER | undefined,
+    cp_gsr: INTEGER | undefined,
     signErrors: boolean,
 ): Promise<SubordinateToSuperior> {
     let currentRoot = ctx.dit.root;
@@ -144,7 +195,7 @@ async function becomeSubordinate (
         const last: boolean = (sup2sub.contextPrefixInfo.length === (i + 1));
         const existingEntry = await dnToVertex(ctx, currentRoot, [ vertex.rdn ]);
         if (!existingEntry) {
-            const createdEntry = await createContextPrefixEntry(ctx, vertex, currentRoot, last, signErrors);
+            const createdEntry = await createContextPrefixEntry(ctx, vertex, currentRoot, last, signErrors, sup2sub.immediateSuperiorInfo);
             currentRoot = createdEntry;
         } else {
             /**
@@ -156,7 +207,7 @@ async function becomeSubordinate (
              * transaction, but unfortunately, this cannot be with Meerkat DSA!
              */
             if (existingEntry.dse.glue) {
-                const createdEntry = await createContextPrefixEntry(ctx, vertex, currentRoot, last, signErrors);
+                const createdEntry = await createContextPrefixEntry(ctx, vertex, currentRoot, last, signErrors, sup2sub.immediateSuperiorInfo);
                 await ctx.db.entry.updateMany({
                     where: {
                         immediate_superior_id: existingEntry.dse.id,
@@ -165,7 +216,35 @@ async function becomeSubordinate (
                         immediate_superior_id: createdEntry.dse.id,
                     },
                 });
-            } else if (last) { // The superior DSA may update access points on hte immSupr
+            } else if (last) { // The superior DSA may update access points on the immSupr
+                /* While we don't touch the existing DSE to avoid corrupting its
+                information, we do have to set the governing structure rule, if
+                it is unset, because the ability to add subordinates beneath
+                this entry is contingent upon there being a governing structure
+                rule. */
+                const supplied_gsr: INTEGER | undefined = [
+                    ...sup2sub.immediateSuperiorInfo ?? [],
+                    ...vertex.admPointInfo ?? [],
+                ].find((attr) => attr.type_.isEqualTo(governingStructureRule["&id"]))?.values?.[0]?.integer;
+                const gsr = supplied_gsr !== undefined
+                    ? Number(supplied_gsr)
+                    : undefined;
+                await ctx.db.entry.update({
+                    where: {
+                        id: existingEntry.dse.id,
+                    },
+                    data: {
+                        immSupr: true,
+                        rhob: sup2sub.immediateSuperiorInfo ? true : undefined,
+                        governingStructureRule: gsr,
+                    },
+                });
+                existingEntry.dse.immSupr = {
+                    specificKnowledge: vertex.accessPoints ?? [],
+                };
+                if (gsr !== undefined) {
+                    existingEntry.dse.governingStructureRule = gsr;
+                }
                 await Promise.all(
                     vertex.accessPoints
                         ?.map((ap) => saveAccessPoint(
@@ -181,7 +260,46 @@ async function becomeSubordinate (
     }
     const itinerantDN = [ ...agreement.immediateSuperior, agreement.rdn ];
     const existing = await dnToVertex(ctx, ctx.dit.root, itinerantDN);
+    const immediateSuperior = currentRoot;
 
+    // If the governing structure rule for the new CP was not supplied in the
+    // HOB attributes, we have to calculate it.
+    if (cp_gsr === undefined) {
+        const schemaSubentry = await getSubschemaSubentry(ctx, immediateSuperior);
+        if (schemaSubentry && (typeof immediateSuperior.dse.governingStructureRule === "number")) {
+            if (!schemaSubentry?.dse.subentry) {
+                throw new Error("e41612c3-6239-451f-a971-a9d59bfb5183");
+            }
+            const objectClasses: OBJECT_IDENTIFIER[] = (sup2sub.entryInfo ?? [])
+                .filter((attr) => attr.type_.isEqualTo(objectClass["&id"]))
+                .flatMap((attr) => attr.values)
+                .map(_decodeObjectIdentifier);
+            const structuralObjectClass = getStructuralObjectClass(ctx, objectClasses);
+            const structuralRule = (schemaSubentry.dse.subentry?.ditStructureRules ?? [])
+                .find((rule) => {
+                    if (rule.obsolete) {
+                        return false;
+                    }
+                    if (!rule.superiorStructureRules?.includes(immediateSuperior.dse.governingStructureRule!)) {
+                        return false;
+                    }
+                    const nf = ctx.nameForms.get(rule.nameForm.toString());
+                    if (!nf) {
+                        return false;
+                    }
+                    if (!nf.namedObjectClass.isEqualTo(structuralObjectClass)) {
+                        return false;
+                    }
+                    if (nf.obsolete) {
+                        return false;
+                    }
+                    return checkNameForm(agreement.rdn, nf.mandatoryAttributes, nf.optionalAttributes);
+                });
+            cp_gsr = structuralRule
+                ? Number(structuralRule.ruleIdentifier)
+                : undefined;
+        }
+    }
     const createdCP = await createEntry(
         ctx,
         currentRoot,
@@ -191,9 +309,9 @@ async function becomeSubordinate (
             cp: true,
             immSupr: false, // This is supposed to be on the superior of this entry.
             structuralObjectClass: structuralObjectClass.toString(),
-            governingStructureRule: governingStructureRule
-                ? Number(governingStructureRule)
-                : undefined,
+            governingStructureRule: cp_gsr !== undefined
+                ? Number(cp_gsr)
+                : cp_gsr,
         },
         sup2sub.entryInfo ?? [],
         undefined,
@@ -231,14 +349,6 @@ async function becomeSubordinate (
                 },
                 select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             }),
-            ...await addValues(
-                ctx,
-                createdCP.immediateSuperior!,
-                sup2sub.immediateSuperiorInfo?.flatMap(valuesFromAttribute) ?? [],
-                undefined,
-                false, // Do not check for existing values. This is essential for things like createTimestamp.
-                signErrors,
-            ),
         ]);
         // Take on the subordinates of the existing entry.
         createdCP.subordinates = existing.subordinates;
@@ -253,17 +363,6 @@ async function becomeSubordinate (
             // Add the new entry to the subordinates.
             existing.immediateSuperior.subordinates.push(createdCP);
         }
-    } else {
-        await ctx.db.$transaction(
-            await addValues(
-                ctx,
-                createdCP.immediateSuperior!,
-                sup2sub.immediateSuperiorInfo?.flatMap(valuesFromAttribute) ?? [],
-                undefined,
-                false, // Do not check for existing values. This is essential for things like createTimestamp.
-                signErrors,
-            ),
-        );
     }
 
     const firstLevel: boolean = await isFirstLevelDSA(ctx);

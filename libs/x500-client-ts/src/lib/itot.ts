@@ -10,7 +10,6 @@ import {
     PresentationConnection,
     dispatch_A_ASCrsp_reject,
     dispatch_P_DTreq,
-    dispatch_AARE_reject,
     dispatch_A_RLSrsp_accept,
     dispatch_A_RLSrsp_reject,
 } from "@wildboar/osi-net";
@@ -125,6 +124,7 @@ import {
 } from '@wildboar/acse/src/lib/modules/ACSE-1/Result.ta';
 import {
     OsiDirectoryOperation,
+    OsiErr,
     _decode_OsiDirectoryOperation,
     _encode_OsiDirectoryOperation,
 } from '@wildboar/x500/src/lib/modules/OSIProtocolSpecification/OsiDirectoryOperation.ta';
@@ -187,6 +187,7 @@ import {
 } from "@wildboar/acse/src/lib/modules/ACSE-1/Associate-source-diagnostic-acse-service-user.ta";
 import { Provider_reason_reason_not_specified } from "@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Provider-reason.ta";
 import { protocol_id_to_rose_protocol } from "./utils";
+import { _encode_Code } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
 
 const id_ber = new ObjectIdentifier([2, 1, 1]);
 const id_cer = new ObjectIdentifier([2, 1, 2, 0]);
@@ -200,12 +201,20 @@ const supported_contexts: OBJECT_IDENTIFIER[] = [
     id_ac_directoryAccessAC,
     id_ac_directorySystemAC,
     id_ac_directoryOperationalBindingManagementAC,
+    id_ac_shadowConsumerInitiatedAC,
+    id_ac_shadowSupplierInitiatedAC,
+    id_ac_shadowSupplierInitiatedAsynchronousAC,
+    id_ac_shadowConsumerInitiatedAsynchronousAC,
 ];
 
 const app_context_to_abstract_syntax_pci: Map<IndexableOID, number> = new Map([
     [ id_ac_directoryAccessAC.toString(), 3 ],
     [ id_ac_directorySystemAC.toString(), 5 ],
     [ id_ac_directoryOperationalBindingManagementAC.toString(), 7 ],
+    [ id_ac_shadowConsumerInitiatedAC.toString(), 9 ],
+    [ id_ac_shadowSupplierInitiatedAC.toString(), 9 ],
+    [ id_ac_shadowSupplierInitiatedAsynchronousAC.toString(), 9 ],
+    [ id_ac_shadowConsumerInitiatedAsynchronousAC.toString(), 9 ],
 ]);
 
 const oid_to_codec = new Map<string, (() => typeof BERElement | typeof CERElement | typeof DERElement)>([
@@ -606,6 +615,8 @@ export
 function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETransport {
     const rose = new_rose_transport(itot.network.socket);
 
+    itot.transport.outgoingEvents.on('NDISreq', () => itot.network.socket.end());
+
     itot.acse.outgoingEvents.on('AARQ', (apdu) => {
         itot.acse.presentation.request_P_CONNECT({
             presentation_context_definition_list: [
@@ -613,6 +624,7 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
                 new Context_list_Item(3, id_as_directoryAccessAS, [id_ber]),
                 new Context_list_Item(5, id_as_directorySystemAS, [id_ber]),
                 new Context_list_Item(7, id_as_directoryOperationalBindingManagementAS, [id_ber]),
+                new Context_list_Item(9, id_as_directoryShadowAS, [id_ber]),
             ],
             user_data: {
                 fully_encoded_data: [
@@ -646,6 +658,7 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
                                 id_as_directoryAccessAS,
                                 id_as_directorySystemAS,
                                 id_as_directoryOperationalBindingManagementAS,
+                                id_as_directoryShadowAS,
                             ].some((abs) => abs.isEqualTo(c[0].abstract_syntax_name))
                         ) {
                             result = Result_user_rejection;
@@ -774,7 +787,7 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
                 [],
                 undefined,
             );
-            dispatch_AARE_reject(itot.acse, aare);
+            dispatch_A_ASCrsp_reject(itot.acse, aare);
             return;
         }
         if (apdu.user_information?.length !== 1) {
@@ -958,6 +971,7 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
         // yet, so we have to get the PCI that we _will_ define.
         const pci = app_context_to_abstract_syntax_pci.get(rose.protocol?.toString() ?? "");
         if (!pci) {
+            // FIXME: Log something.
             return;
         }
         const [ called_apt, called_aeq ] = break_down_ae_title(params.called_ae_title);
@@ -1154,12 +1168,10 @@ function rose_transport_from_itot_stack (itot: ISOTransportOverTCPStack): ROSETr
                     {
                         single_ASN1_type: _encode_OsiDirectoryOperation(
                             {
-                                result: new OsiRes(
+                                error: new OsiErr(
                                     params.invoke_id,
-                                    new OsiRes_result(
-                                        params.code,
-                                        params.parameter,
-                                    ),
+                                    _encode_Code(params.code, BER),
+                                    params.parameter,
                                 ),
                             },
                             BER,

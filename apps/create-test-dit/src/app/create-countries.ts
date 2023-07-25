@@ -157,6 +157,8 @@ import {
     ipHost,
 } from "@wildboar/parity-schema/src/lib/modules/NIS/ipHost.oa";
 import { commonAuxiliaryObjectClasses } from "./objectClassSets";
+import { unstructuredName } from "@wildboar/pkcs/src/lib/modules/PKCS-9/unstructuredName.oa";
+import { unstructuredAddress } from "@wildboar/pkcs/src/lib/modules/PKCS-9/unstructuredAddress.oa";
 
 const deviceAuxiliaryObjectClasses: OBJECT_IDENTIFIER[] = [
     bootableDevice["&id"],
@@ -699,6 +701,8 @@ function addSubschemaSubentryArgument (
                     at.stateOrProvinceName["&id"],
                     at.title["&id"],
                     at.description["&id"],
+                    unstructuredName["&id"],
+                    unstructuredAddress["&id"],
                 ].map((ctoid) => _encode_DITContextUseDescription(new DITContextUseDescription(
                     ctoid,
                     undefined,
@@ -888,8 +892,8 @@ const RU_ACCESS_POINT = new AccessPoint(
 
 const countriesToCreate: [ string, AccessPoint | undefined ][] = [
     [ "US", undefined ], // US will be inside of the root DSA.
-    [ "GB", GB_ACCESS_POINT ],
-    [ "RU", RU_ACCESS_POINT ],
+    [ "GB", undefined ],
+    [ "RU", undefined ],
 ];
 
 export

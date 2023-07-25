@@ -32,7 +32,7 @@ const CAD_SUBENTRY: string = contextAssertionSubentry["&id"].toString();
 export
 async function getContextAssertionDefaults (
     ctx: Context,
-    entry: Vertex,
+    entry: Vertex, // TODO: Remove unused parameter
     relevantSubentries: Vertex[],
 ): Promise<TypeAndContextAssertion[]> {
     const cadSubentries = relevantSubentries
@@ -41,13 +41,16 @@ async function getContextAssertionDefaults (
     if (cadSubentries.length === 0) {
         return [];
     }
-    const firstAdmPointUUID = cadSubentries[0].dse.uuid;
+    const firstAdmPointUUID = cadSubentries[0].immediateSuperior?.dse.uuid;
+    if (!firstAdmPointUUID) {
+        return []; // This should never happen: a subentry with no superior.
+    }
     let i: number = 0;
     for (const subentry of cadSubentries) {
-        i++;
         if (subentry.immediateSuperior?.dse.uuid !== firstAdmPointUUID) {
             break;
         }
+        i++;
     }
     return (await ctx.db.attributeValue.findMany({
         where: {

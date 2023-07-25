@@ -107,6 +107,30 @@ export const TPDU_VALIDATION_CR_DST_REF_NOT_ZEROED: number = -3;
 export const TPDU_MALFORMED: number = -4;
 // #endregion TPDU validation return codes
 
+const tpdu_size_to_code: Record<string, number> = {
+    [8192]: 0b0000_1101,
+    [4096]: 0b0000_1100,
+    [2048]: 0b0000_1011,
+    [1024]: 0b0000_1010,
+    [512]: 0b0000_1001,
+    [256]: 0b0000_1000,
+    [128]: 0b0000_0111,
+};
+
+/**
+ * Finds the largest legitimate TPDU Size value that is beneath the open-ended
+ * maximum TPDU size value.
+ */
+function coerce_tpdu_size_to_legitimate_size (size: number): number {
+    const legit_sizes = [ 8192, 4096, 2048, 1024, 512, 256, 128 ];
+    for (const legit_size of legit_sizes) {
+        if (legit_size <= size) {
+            return legit_size;
+        }
+    }
+    return 128;
+}
+
 function encodeUnsignedBigEndianInteger(value: number): Buffer {
     const bytes: Buffer = Buffer.alloc(4);
     bytes.writeUInt32BE(value);
@@ -1136,15 +1160,7 @@ export function encode_CR(tpdu: CR_TPDU): Buffer {
         );
     }
     if (tpdu.tpdu_size) {
-        const size = {
-            [8192]: 0b0000_1101,
-            [4096]: 0b0000_1100,
-            [2048]: 0b0000_1011,
-            [1024]: 0b0000_1010,
-            [512]: 0b0000_1001,
-            [256]: 0b0000_1000,
-            [128]: 0b0000_0111,
-        }[tpdu.tpdu_size] ?? 128;
+        const size = tpdu_size_to_code[tpdu.tpdu_size] ?? tpdu_size_to_code[128];
         parameters.push(Buffer.from([0b1100_0000, 1, size]));
     }
     if (tpdu.preferred_max_tpdu_size) {
@@ -1273,6 +1289,12 @@ export function handle_too_large_tsdu (
     return implicitNormalRelease(c);
 }
 
+export function handle_transport_protocol_error (
+    c: TransportConnection,
+): void {
+    return implicitNormalRelease(c);
+}
+
 // #region Incoming Events
 
 export function dispatch_TCONreq(
@@ -1287,7 +1309,8 @@ export function dispatch_TCONreq(
     }
     if (!tpdu.preferred_max_tpdu_size) {
         tpdu.preferred_max_tpdu_size = c.max_tpdu_size;
-    } else {
+    }
+    else {
         c.max_tpdu_size = tpdu.preferred_max_tpdu_size;
     }
     if (tpdu.calling_transport_selector) {
@@ -1335,9 +1358,9 @@ export function dispatch_TCONresp(
                 c.max_tpdu_size = tpdu.preferred_max_tpdu_size;
             } else if (tpdu.tpdu_size) {
                 c.max_tpdu_size = tpdu.tpdu_size;
-            } else if (c.max_tpdu_size) {
-                tpdu.tpdu_size = c.max_tpdu_size;
-                // tpdu.preferred_max_tpdu_size = c.max_tpdu_size;
+            }
+            else if (c.max_tpdu_size) {
+                tpdu.tpdu_size = coerce_tpdu_size_to_legitimate_size(c.max_tpdu_size);
             }
             if (tpdu.called_or_responding_transport_selector) {
                 c.local_t_selector = tpdu.called_or_responding_transport_selector;

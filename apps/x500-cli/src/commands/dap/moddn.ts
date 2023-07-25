@@ -26,18 +26,24 @@ async function do_modifyDN (
     ctx: Context,
     conn: Connection,
     argv: any,
+    move: boolean, // If false, its just a rename.
 ): Promise<void> {
     const objectName: DistinguishedName = destringifyDN(ctx, argv.src);
     const newObjectName: DistinguishedName = destringifyDN(ctx, argv.dest);
-    if (newObjectName.length === 0) {
-        ctx.log.error("Root DSE (zero-length distinguished name) may not be a destination.");
+    if (!move && (newObjectName.length !== 1)) {
+        ctx.log.error("Malformed new RDN.");
+        process.exit(400);
     }
     const newRDN = newObjectName.pop();
+    if (!newRDN) {
+        ctx.log.error("Root DSE (zero-length distinguished name) may not be a destination.");
+        process.exit(403);
+    }
     const reqData: ModifyDNArgumentData = new ModifyDNArgumentData(
         objectName,
-        newRDN!,
+        newRDN,
         argv.deleteOldRDN,
-        newObjectName.length
+        move
             ? newObjectName
             : undefined,
         [],

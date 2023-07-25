@@ -3,7 +3,9 @@ import {
     DOPClient,
     create_dsp_client,
     create_dop_client,
+    create_disp_client,
     rose_from_presentation_address,
+    DISPClient,
 } from "@wildboar/x500-client-ts";
 import { MeerkatContext } from "../ctx";
 import {
@@ -12,6 +14,18 @@ import {
 import {
     id_ac_directoryOperationalBindingManagementAC,
 } from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directoryOperationalBindingManagementAC.va";
+// import {
+//     id_ac_shadowConsumerInitiatedAC,
+// } from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowConsumerInitiatedAC.va";
+// import {
+//     id_ac_shadowConsumerInitiatedAsynchronousAC,
+// } from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowConsumerInitiatedAsynchronousAC.va";
+// import {
+//     id_ac_shadowSupplierInitiatedAC,
+// } from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowSupplierInitiatedAC.va";
+// import {
+//     id_ac_shadowSupplierInitiatedAsynchronousAC,
+// } from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-shadowSupplierInitiatedAsynchronousAC.va";
 import {
     DSABindArgument,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindArgument.ta";
@@ -62,6 +76,15 @@ const DEFAULT_DBMS_PORTS: Record<string, string> = {
     "sqlserver": "1433",
     "mongodb": "27017",
 };
+
+/**
+ * For connection re-use.
+ *
+ * Keys are:
+ *
+ * <protocol_id>:<string DN of AE title>:URL
+ */
+const outstanding_connections: Map<string, [ROSETransport, AsyncROSEClient<DSABindArgument, DSABindResult>]> = new Map();
 
 async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSABindResult>> (
     ctx: MeerkatContext,
@@ -124,6 +147,17 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
             logInfo["destination_aet"] = stringifyDN(ctx, accessPoint.ae_title.rdnSequence);
         } catch { /* NOOP */ }
         const url = new URL(uriString);
+
+        const key = `${protocol_id.toString()}:${uriString}:${stringifyDN(ctx, accessPoint.ae_title.rdnSequence)}`;
+        const existing_conn = outstanding_connections.get(key);
+        if (existing_conn) {
+            // TODO: If the socket works, but there is no application association, just rebind.
+            const [ rose, client ] = existing_conn;
+            if (rose.is_bound && rose.socket?.writable) {
+                return client as ClientType;
+            }
+        }
+
         /**
          * This section exists to prevent a security vulnerability where this
          * DSA could be tricked into chaining requests to the database. Such
@@ -194,6 +228,9 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
                 timeout: timeRemaining,
             });
 
+        // Not infinite, but a sensible default for still detecting memory leaks.
+        socket.setMaxListeners(1000);
+
         if (socket instanceof TLSSocket) {
             socket.once("secureConnect", () => {
                 if (!socket.authorized && ctx.config.tls.rejectUnauthorizedServers) {
@@ -254,45 +291,48 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
             if (tls_response) {
                 if ("response" in tls_response) {
                     if (tls_response.response === 0) {
-                        const tlsSocket = new TLSSocket(rose.socket!, {
-                            ...ctx.config.tls,
-                            rejectUnauthorized: ctx.config.tls.rejectUnauthorizedServers,
-                            isServer: false,
-                        });
-                        if (ctx.config.tls.log_tls_secrets) {
-                            tlsSocket.on("keylog", (line) => {
-                                ctx.log.debug(ctx.i18n.t("log:keylog", {
-                                    peer: uriString,
-                                    key: line.toString("latin1"),
-                                }));
-                            });
-                        }
-                        if (ctx.config.tls.sslkeylog_file) {
-                            const keylogFile = createWriteStream(ctx.config.tls.sslkeylog_file, { flags: "a" });
-                            tlsSocket.on("keylog", (line) => keylogFile.write(line));
-                        }
-                        tlsSocket.once("secureConnect", () => {
-                            if (!tlsSocket.authorized && ctx.config.tls.rejectUnauthorizedServers) {
-                                tlsSocket.destroy(); // Destroy for immediate and complete denial.
-                                ctx.log.warn(ctx.i18n.t("err:tls_auth_failure", {
-                                    url: uriString,
-                                    e: tlsSocket.authorizationError,
-                                }));
-                                if (isDebugging && tlsSocket.authorizationError) {
-                                    console.error(tlsSocket.authorizationError);
+                        rose.events.once("tls_socket", (tlsSocket) => {
+                            // Not infinite, but a sensible default for still detecting memory leaks.
+                            tlsSocket.setMaxListeners(1000);
+                            if (ctx.config.tls.log_tls_secrets) {
+                                tlsSocket.on("keylog", (line) => {
+                                    ctx.log.debug(ctx.i18n.t("log:keylog", {
+                                        peer: uriString,
+                                        key: line.toString("latin1"),
+                                    }));
+                                });
+                            }
+                            if (ctx.config.tls.sslkeylog_file) {
+                                const keylogFile = createWriteStream(ctx.config.tls.sslkeylog_file, { flags: "a" });
+                                tlsSocket.on("keylog", (line) => keylogFile.write(line));
+                            }
+                            tlsSocket.once("secureConnect", () => {
+                                if (!tlsSocket.authorized && ctx.config.tls.rejectUnauthorizedServers) {
+                                    tlsSocket.destroy(); // Destroy for immediate and complete denial.
+                                    ctx.log.warn(ctx.i18n.t("err:tls_auth_failure", {
+                                        url: uriString,
+                                        e: tlsSocket.authorizationError,
+                                    }));
+                                    if (isDebugging && tlsSocket.authorizationError) {
+                                        console.error(tlsSocket.authorizationError);
+                                    }
                                 }
-                            }
-                        });
-                        tlsSocket.once("OCSPResponse", getOnOCSPResponseCallback(ctx, (valid, code) => {
-                            ctx.log.warn(ctx.i18n.t("log:ocsp_response_invalid", {
-                                code,
-                                aet: stringifyDN(ctx, accessPoint.ae_title.rdnSequence),
+                            });
+                            tlsSocket.once("OCSPResponse", getOnOCSPResponseCallback(ctx, (valid, code) => {
+                                ctx.log.warn(ctx.i18n.t("log:ocsp_response_invalid", {
+                                    code,
+                                    aet: stringifyDN(ctx, accessPoint.ae_title.rdnSequence),
+                                }));
+                                if (!valid) {
+                                    socket.end();
+                                }
                             }));
-                            if (!valid) {
-                                socket.end();
-                            }
-                        }));
-                        rose.socket = tlsSocket;
+                            rose.socket = tlsSocket;
+                        });
+                        await new Promise<void>((resolve, reject) => {
+                            rose.events.once("tls", resolve);
+                            rose.events.once("error_", reject);
+                        });
                         tls_in_use = true;
                         ctx.log.debug(ctx.i18n.t("log:start_tls_result_received", {
                             url: uriString,
@@ -326,7 +366,7 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
                     }), logInfo);
                 } else if ("timeout" in tls_response) {
                     ctx.log.debug(ctx.i18n.t("log:start_tls_timeout_received", {
-                        uri: uriString,
+                        url: uriString,
                     }), logInfo);
                     return null;
                 } else {
@@ -340,35 +380,11 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
         }
 
         if (!tls_in_use && !ctx.config.chaining.tlsOptional) {
-            if (!ctx.config.chaining.tlsOptional) {
-                ctx.log.debug(ctx.i18n.t("log:starttls_error", {
-                    uri: uriString,
-                    context: "tls_required",
-                }), logInfo);
-                continue;
-            }
-        } else if (!(rose.socket instanceof TLSSocket)) {
-            // We can use non-null assertion here, because Meerkat does
-            // not support any ROSE transport that does not involve a
-            // TCP or TLS socket.
-            const tls_socket = new TLSSocket(rose.socket!, {
-                ...ctx.config.tls,
-                rejectUnauthorized: ctx.config.tls.rejectUnauthorizedServers,
-                isServer: false,
-            });
-            if (ctx.config.tls.log_tls_secrets) {
-                tls_socket.on("keylog", (line) => {
-                    ctx.log.debug(ctx.i18n.t("log:keylog", {
-                        peer: uriString,
-                        key: line.toString("latin1"),
-                    }));
-                });
-            }
-            if (ctx.config.tls.sslkeylog_file) {
-                const keylogFile = createWriteStream(ctx.config.tls.sslkeylog_file, { flags: "a" });
-                tls_socket.on("keylog", (line) => keylogFile.write(line));
-            }
-            rose.socket = tls_socket;
+            ctx.log.debug(ctx.i18n.t("log:starttls_error", {
+                uri: uriString,
+                context: "tls_required",
+            }), logInfo);
+            continue;
         }
 
         const c: ClientType = client_getter(rose);
@@ -444,6 +460,19 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
         ctx.log.info(ctx.i18n.t("log:bound_to_naddr", {
             uri: uriString,
         }), logInfo);
+        outstanding_connections.set(key, [ rose, c ]);
+        socket.once("error", () => {
+            outstanding_connections.delete(key);
+        });
+        socket.once("end", () => {
+            outstanding_connections.delete(key);
+        });
+        socket.once("timeout", () => {
+            outstanding_connections.delete(key);
+        });
+        socket.once("close", () => {
+            outstanding_connections.delete(key);
+        });
         return c;
     }
     return null;
@@ -457,6 +486,7 @@ async function bindForChaining (
     accessPoint: AccessPoint,
     aliasDereferenced?: BOOLEAN,
     signErrors: boolean = false,
+    timeLimit?: number,
 ): Promise<DSPClient | null> {
     return dsa_bind(
         ctx,
@@ -467,6 +497,7 @@ async function bindForChaining (
         accessPoint,
         aliasDereferenced,
         signErrors,
+        timeLimit,
     );
 }
 
@@ -478,6 +509,7 @@ async function bindForOBM (
     accessPoint: AccessPoint,
     aliasDereferenced?: BOOLEAN,
     signErrors: boolean = false,
+    timeLimit?: number,
 ): Promise<DOPClient | null> {
     return dsa_bind(
         ctx,
@@ -488,5 +520,30 @@ async function bindForOBM (
         accessPoint,
         aliasDereferenced,
         signErrors,
+        timeLimit,
+    );
+}
+
+export
+async function bindForDISP (
+    ctx: MeerkatContext,
+    assn: ClientAssociation | undefined,
+    op: OperationInvocationInfo | undefined,
+    accessPoint: AccessPoint,
+    applicationContext: OBJECT_IDENTIFIER,
+    aliasDereferenced?: BOOLEAN,
+    signErrors: boolean = false,
+    timeLimit?: number,
+): Promise<DISPClient | null> {
+    return dsa_bind(
+        ctx,
+        assn,
+        applicationContext,
+        create_disp_client,
+        op,
+        accessPoint,
+        aliasDereferenced,
+        signErrors,
+        timeLimit,
     );
 }

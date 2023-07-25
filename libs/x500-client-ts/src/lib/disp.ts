@@ -10,12 +10,11 @@ import {
 import {
     dSABind,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/dSABind.oa";
-import type { KeyObject } from "node:crypto";
 import {
-    CertPathOption,
     generateSIGNED,
     DirectoryVersioned,
     generateUnusedInvokeId,
+    DirectoryOperationOptions,
 } from "./utils";
 import {
     requestShadowUpdate,
@@ -68,10 +67,7 @@ interface UpdateShadowOptions extends UpdateShadowArgumentData, DISPOperationOpt
 }
 
 export
-interface DISPOperationOptions {
-    key?: KeyObject;
-    cert_path?: CertPathOption;
-}
+interface DISPOperationOptions extends DirectoryOperationOptions {}
 
 export
 interface DISPOptions extends DISPOperationOptions {
@@ -147,6 +143,7 @@ function create_disp_client (rose: ROSETransport): DISPClient {
                     present: invoke_id,
                 },
                 parameter: requestShadowUpdate.encoderFor["&ArgumentType"]!(arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, requestShadowUpdate["&operationCode"]!));
@@ -185,6 +182,7 @@ function create_disp_client (rose: ROSETransport): DISPClient {
                     present: invoke_id,
                 },
                 parameter: updateShadow.encoderFor["&ArgumentType"]!(arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, updateShadow["&operationCode"]!));
@@ -222,6 +220,7 @@ function create_disp_client (rose: ROSETransport): DISPClient {
                     present: invoke_id,
                 },
                 parameter: coordinateShadowUpdate.encoderFor["&ArgumentType"]!(arg, DER),
+                timeout: params.timeout,
             });
             if ("result" in outcome) {
                 assert(compareCode(outcome.result.code, coordinateShadowUpdate["&operationCode"]!));

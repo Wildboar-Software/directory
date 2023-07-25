@@ -123,6 +123,16 @@ import {
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NonSpecificHierarchicalAgreement.ta";
 import dnToID from "../../dit/dnToID";
 import { randomInt } from "crypto";
+import { id_op_binding_shadow } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
+import {
+    ShadowingAgreementInfo,
+    _decode_AccessPoint,
+    _decode_ShadowingAgreementInfo,
+} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
+import { AttributeUsage_dSAOperation } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
+import { becomeShadowConsumer } from "../establish/becomeShadowConsumer";
+import { becomeShadowSupplier } from "../establish/becomeShadowSupplier";
+import dnToVertex from "../../dit/dnToVertex";
 
 function getInitiator (init: Initiator): OperationalBindingInitiator {
     // NOTE: Initiator is not extensible, so this is an exhaustive list.
@@ -295,10 +305,13 @@ async function modifyOperationalBinding (
             initiator: true,
             initiator_ber: true,
             agreement_ber: true,
+            outbound: true,
+            entry_id: true,
             access_point: {
                 select: {
                     id: true,
                     ae_title: true,
+                    ber: true,
                 },
             },
         },
@@ -559,6 +572,10 @@ async function modifyOperationalBinding (
             uuid: true,
             binding_type: true,
             binding_identifier: true,
+            responded_time: true,
+            requested_time: true,
+            initiator: true,
+            outbound: true,
         },
     });
 
@@ -1305,6 +1322,374 @@ async function modifyOperationalBinding (
         else {
             throw new errors.MistypedArgumentError(ctx.i18n.t("err:unrecognized_ob_initiator_syntax"));
         }
+    }
+    else if (data.bindingType.isEqualTo(id_op_binding_shadow)) {
+        const iAmSupplier: boolean = (created.initiator === OperationalBindingInitiator.ROLE_B);
+        const iWasSupplier: boolean = (
+            (opBinding.initiator === OperationalBindingInitiator.ROLE_A && opBinding.outbound)
+            || (opBinding.initiator === OperationalBindingInitiator.ROLE_B && !opBinding.outbound)
+        );
+        // Role-reversal is not allowed in an SOB.
+        if (iAmSupplier && !iWasSupplier) {
+            throw new OperationalBindingError(
+                ctx.i18n.t("err:cannot_reverse_roles_in_sob"),
+                new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_roleAssignment,
+                    id_op_binding_hierarchical,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    false,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
+        const approved = await getApproval(opBinding.uuid);
+        if (!approved) {
+            await ctx.db.operationalBinding.update({
+                where: {
+                    id: created.id,
+                },
+                data: {
+                    accepted: approved ?? null,
+                },
+            });
+        }
+        if (approved === undefined) {
+            throw new errors.OperationalBindingError(
+                ctx.i18n.t("err:ob_rejected", {
+                    context: "timeout",
+                    uuid: created.uuid,
+                }),
+                new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_currentlyNotDecidable,
+                    data.bindingType,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+                signErrors,
+            );
+        } else if (approved === false) {
+            throw new errors.OperationalBindingError(
+                ctx.i18n.t("err:ob_rejected", {
+                    uuid: created.uuid,
+                }),
+                new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_invalidAgreement,
+                    data.bindingType,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
+        const oldAgreement = _decode_ShadowingAgreementInfo(oldAgreementElement);
+        const newAgreement = data.newAgreement
+            ? _decode_ShadowingAgreementInfo(data.newAgreement)
+            : oldAgreement;
+
+        if (newAgreement.shadowSubject.area.replicationArea.minimum) {
+            throw new errors.OperationalBindingError(
+                ctx.i18n.t("err:min_not_allowed_in_shadow_agreement"),
+                new OpBindingErrorParam(
+                    OpBindingErrorParam_problem_invalidAgreement,
+                    data.bindingType,
+                    undefined,
+                    undefined,
+                    [],
+                    createSecurityParameters(
+                        ctx,
+                        signErrors,
+                        assn.boundNameAndUID?.dn,
+                        undefined,
+                        id_err_operationalBindingError,
+                    ),
+                    ctx.dsa.accessPoint.ae_title.rdnSequence,
+                    undefined,
+                    undefined,
+                ),
+                signErrors,
+            );
+        }
+        for (const class_attr of newAgreement.shadowSubject.attributes) {
+            if (!class_attr.classAttributes) {
+                continue;
+            }
+            if ("include" in class_attr.classAttributes) {
+                const include = class_attr.classAttributes.include;
+                for (const attr of include) {
+                    const ATTR_TYPE = attr.toString();
+                    const usage = ctx.attributeTypes.get(ATTR_TYPE)?.usage;
+                    if (usage === AttributeUsage_dSAOperation) {
+                        throw new errors.OperationalBindingError(
+                            ctx.i18n.t("err:not_authz_replicate_dsa_operation_attr_type", {
+                                oid: ATTR_TYPE,
+                            }),
+                            new OpBindingErrorParam(
+                                OpBindingErrorParam_problem_invalidAgreement,
+                                data.bindingType,
+                                undefined,
+                                undefined,
+                                [],
+                                createSecurityParameters(
+                                    ctx,
+                                    signErrors,
+                                    assn.boundNameAndUID?.dn,
+                                    undefined,
+                                    id_err_operationalBindingError,
+                                ),
+                                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                                undefined,
+                                undefined,
+                            ),
+                            signErrors,
+                        );
+                    }
+                }
+            }
+        }
+        const updateMode = newAgreement.updateMode ?? ShadowingAgreementInfo._default_value_for_updateMode;
+        const schedule = ("supplierInitiated" in updateMode)
+            ? ("scheduled" in updateMode.supplierInitiated)
+                ? updateMode.supplierInitiated.scheduled
+                : undefined
+            : ("consumerInitiated" in updateMode)
+                ? updateMode.consumerInitiated
+                : undefined;
+        if (schedule?.periodic) {
+            const period = schedule.periodic;
+            if (
+                !Number.isSafeInteger(period.updateInterval)
+                || (period.updateInterval <= 0)
+                || !Number.isSafeInteger(period.windowSize)
+                || (period.windowSize <= 0)
+            ) {
+                throw new errors.MistypedArgumentError(ctx.i18n.t("err:nonsense_shadow_update_schedule"));
+            }
+            const updateInterval = Number(period.updateInterval);
+            const windowSize = Number(period.windowSize);
+            // beginTime validation not performed so that the previous value could be used.
+            if (windowSize > updateInterval) {
+                throw new errors.OperationalBindingError(
+                    ctx.i18n.t("err:sob_window_size_gte_update_interval"),
+                    new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_invalidAgreement,
+                        data.bindingType,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            id_err_operationalBindingError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
+                    signErrors,
+                );
+            }
+        }
+
+        await ctx.db.operationalBinding.update({
+            where: {
+                id: created.id,
+            },
+            data: {
+                accepted: approved ?? null,
+                /**
+                 * Previous is not set until the update succeeds,
+                 * because `getRelevantOperationalBindings`
+                 * determines which is the latest of all versions of
+                 * a given operational binding based on which
+                 * operational binding has no "previous"es that
+                 * point to it.
+                 */
+                previous: approved
+                    ? {
+                        connect: {
+                            id: opBinding.id,
+                        },
+                    }
+                    : undefined,
+            },
+        });
+        // We can delete these, supplier or not, since OBs are supposed to
+        // be unique across (type, id).
+        const t1 = ctx.pendingShadowingUpdateCycles.get(created.binding_identifier);
+        const t2 = ctx.shadowUpdateCycles.get(created.binding_identifier);
+        t1?.clear();
+        if (t2) {
+            clearTimeout(t2);
+        }
+        ctx.pendingShadowingUpdateCycles.delete(created.binding_identifier);
+        ctx.shadowUpdateCycles.delete(created.binding_identifier);
+
+        const oldCP = oldAgreement.shadowSubject.area.contextPrefix;
+        const newCP = newAgreement.shadowSubject.area.contextPrefix;
+        const ob_time: Date = created.responded_time
+            ? new Date(Math.max(created.requested_time.valueOf(), created.responded_time.valueOf()))
+            : created.requested_time;
+        if (!compareDistinguishedName(oldCP, newCP, NAMING_MATCHER)) {
+            const otherOpBindingsAssociatedWithOldCP: number = opBinding.entry_id
+                ? (await ctx.db.operationalBinding.count({
+                    where: {
+                        entry_id: opBinding.entry_id,
+                        /**
+                         * This is a hack for getting the latest version: we are selecting
+                         * operational bindings that have no next version.
+                         *
+                         * See: https://github.com/prisma/prisma/discussions/2772#discussioncomment-1712222
+                         */
+                        next_version: {
+                            none: {},
+                        },
+                        accepted: true,
+                        terminated_time: null,
+                        validity_start: {
+                            lte: now,
+                        },
+                        OR: [
+                            {
+                                validity_end: null,
+                            },
+                            {
+                                validity_end: {
+                                    gte: now,
+                                },
+                            },
+                        ],
+                    },
+                }))
+                : 1; // 1 because the current OB is obviously associated with the old CP.
+            if (opBinding.entry_id && (otherOpBindingsAssociatedWithOldCP <= 1)) {
+                // If there are no more OBs whose CP is this entry, set CP = false.
+                await ctx.db.entry.update({
+                    where: {
+                        id: opBinding.entry_id,
+                    },
+                    data: {
+                        cp: false,
+                    },
+                });
+            }
+            // throw new errors.OperationalBindingError(
+            //     ctx.i18n.t("err:cannot_change_replicated_base_name"),
+            //     new OpBindingErrorParam(
+            //         OpBindingErrorParam_problem_invalidAgreement,
+            //         data.bindingType,
+            //         undefined,
+            //         undefined,
+            //         [],
+            //         createSecurityParameters(
+            //             ctx,
+            //             signErrors,
+            //             assn.boundNameAndUID?.dn,
+            //             undefined,
+            //             id_err_operationalBindingError,
+            //         ),
+            //         ctx.dsa.accessPoint.ae_title.rdnSequence,
+            //         undefined,
+            //         undefined,
+            //     ),
+            //     signErrors,
+            // );
+        }
+        const accessPoint = data.accessPoint
+            ? data.accessPoint
+            : (opBinding.access_point?.ber
+                ? (() => {
+                    const el = new BERElement();
+                    el.fromBytes(opBinding.access_point.ber);
+                    return _decode_AccessPoint(el);
+                })()
+                : undefined);
+        if (!accessPoint) {
+            // This should never happen.
+            throw new Error("c941f609-b77f-4324-965c-056f74b045c9");
+        }
+        // Modifying the SOB is pretty much treated like creating a totally new SOB.
+        if (iAmSupplier) {
+            const cp = await dnToVertex(ctx, ctx.dit.root, newCP);
+            if (!cp) {
+                ctx.log.warn(ctx.i18n.t("log:proposed_cp_not_found", {
+                    obid: data.newBindingID.identifier.toString(),
+                }));
+                throw new errors.OperationalBindingError(
+                    ctx.i18n.t("err:ob_rejected", {
+                        uuid: created.uuid,
+                    }),
+                    new OpBindingErrorParam(
+                        OpBindingErrorParam_problem_invalidAgreement,
+                        data.bindingType,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            signErrors,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            id_err_operationalBindingError,
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        undefined,
+                        undefined,
+                    ),
+                    signErrors,
+                );
+            }
+            await becomeShadowSupplier(ctx, data.newBindingID, cp, accessPoint, newAgreement, created.id, ob_time);
+        } else {
+            await becomeShadowConsumer(ctx, newAgreement, accessPoint, data.newBindingID, created.id, ob_time);
+        }
+        ctx.log.info(ctx.i18n.t("log:modifyOperationalBinding", {
+            context: "succeeded",
+            type: data.bindingType.toString(),
+            bid: data.bindingID?.identifier.toString(),
+            aid: assn.id,
+        }), {
+            remoteFamily: assn.socket.remoteFamily,
+            remoteAddress: assn.socket.remoteAddress,
+            remotePort: assn.socket.remotePort,
+            association_id: assn.id,
+            invokeID: printInvokeId(invokeId),
+        });
+        return getResult();
     }
     else {
         throw new errors.OperationalBindingError(

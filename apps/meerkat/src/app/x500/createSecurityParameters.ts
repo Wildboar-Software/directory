@@ -31,9 +31,15 @@ function createSecurityParameters (
     recipient?: DistinguishedName,
     operationCode?: Code,
     errorCode?: Code,
+    // This was added as a result of a deeply-entrenched design mistake. This
+    // basically forces signing, even if bulk insert mode is on. This is so a
+    // DSA can still chain with a signed argument.
+    demandSigning: boolean = false,
 ): SecurityParameters | undefined {
     const signingCertPath = ctx.config.signing.certPath;
-    const signable: boolean = !!(signingCertPath && signed && !ctx.config.bulkInsertMode);
+    const isDopOperation = operationCode && ("local" in operationCode) && (operationCode.local >= 100);
+    const signable: boolean = !!(demandSigning && signingCertPath)
+        || !!(signingCertPath && signed && (!ctx.config.bulkInsertMode || isDopOperation));
     // Errors are thrown by the server, not client.
     // This block is a short-circuit to prevent DoS.
     if (!signable && errorCode) {

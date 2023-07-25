@@ -101,6 +101,7 @@ import {
 import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
 import cloneChainingArgs from "../x500/cloneChainingArguments";
 import { isTrustedForIBRA } from "./isTrustedForIBRA";
+import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
 
 type Chain = OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>;
 
@@ -194,7 +195,7 @@ function createChainingArgumentsFromDUA (
     let exclusions: OPTIONAL<Exclusions>;
     let excludeShadows: OPTIONAL<BOOLEAN>;
     let nameResolveOnMaster: OPTIONAL<BOOLEAN>;
-    let operationIdentifier: OPTIONAL<INTEGER>;
+    const operationIdentifier: OPTIONAL<INTEGER> = generateUnusedInvokeID(ctx);
     let searchRuleId: OPTIONAL<SearchRuleId>;
     let chainedRelaxation: OPTIONAL<MRMapping>;
     let relatedEntry: OPTIONAL<INTEGER>;
@@ -994,18 +995,6 @@ async function requestValidationProcedure (
             signErrors,
         );
     }
-    if (chainedArgument.operationIdentifier) {
-        ctx.log.debug(ctx.i18n.t("log:received_chained_operation", {
-            opid: chainedArgument.operationIdentifier,
-            cid: assn.id,
-        }), {
-            remoteFamily: assn.socket.remoteFamily,
-            remoteAddress: assn.socket.remoteAddress,
-            remotePort: assn.socket.remotePort,
-            association_id: assn.id,
-            invokeID: printInvokeId(req.invokeId),
-        });
-    }
     if ((assn instanceof DAPAssociation) || (assn instanceof LDAPAssociation)) {
         if (
             chainedArgument.authenticationLevel
@@ -1098,7 +1087,22 @@ async function requestValidationProcedure (
         originator: effectiveOriginator,
         authenticationLevel: effectiveAuthLevel,
         uniqueIdentifier: effectiveUniqueIdentifier,
+        operationIdentifier: chainedArgument.operationIdentifier ?? generateUnusedInvokeID(ctx),
     });
+
+    ctx.log.debug(ctx.i18n.t("log:accepted_operation", {
+        iid: ("present" in req.invokeId)
+            ? req.invokeId.present.toString()
+            : "?",
+        opid: effectiveChainingArguments.operationIdentifier ?? "?"
+    }), {
+        remoteFamily: assn.socket.remoteFamily,
+        remoteAddress: assn.socket.remoteAddress,
+        remotePort: assn.socket.remotePort,
+        association_id: assn.id,
+        invokeID: printInvokeId(req.invokeId),
+    });
+
     return [
         {
             unsigned: new Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1(

@@ -78,7 +78,9 @@ async function verifySIGNED <T> (
     argOrResult: "arg" | "result" = "arg",
     ae_title_rdnSequence?: RDNSequence,
 ): Promise<void> {
-    if (ctx.config.signing.disableAllSignatureVerification) {
+    // I don't think ignoring this when in bulk-insert mode should be a problem,
+    // because verifyToken() is a separate function used for strong auth.
+    if (ctx.config.signing.disableAllSignatureVerification || ctx.config.bulkInsertMode) {
         return;
     }
     const remoteHostIdentifier = assn

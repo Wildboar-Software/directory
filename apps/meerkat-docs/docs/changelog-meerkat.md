@@ -1,6 +1,63 @@
 # Changelog for Meerkat DSA
 
+## Version 2.7.0
+
+The defining aspect of this version is support for shadowing, which allows you
+to replicate entries across multiple DSAs.
+
+## New Features / Improvements
+
+- Support shadowing
+  - Shadow operational binding management via DOP
+    - This includes [relayed DOP](https://wildboar-software.github.io/directory/docs/opbinding#relayed-operational-bindings)
+  - All DISP operations: consumer-initiated and supplier-initiated
+  - Total and incremental refreshes
+- Significant performance enhancements when inserting entries
+- Improvements to the [web admin console](https://wildboar-software.github.io/directory/docs/webadmin)
+- The `moddn` command in the X.500 CLI has been separated into two different
+  `move` and `rename` commands, making it clearer what the syntax of the
+  arguments should be.
+- DAP / DSP operations can now be chained with signing when using bulk insert mode.
+- Signatures on requests, results, and errors are ignored when using bulk insert mode.
+- Connections between DSAs retained and reused, greatly improving performance for
+  distributed operations.
+  - This means that the TCP connections and TLS do not need to be re-established
+    each time the DSA performs a distributed operation directed at a DSA that
+    it has had prior contact with.
+
+### Bug Fixes
+
+- Fix display of operational binding expiration times in the
+  [web admin console](https://wildboar-software.github.io/directory/docs/webadmin)
+- Fix non-use of shadow context prefix knowledge in Find DSE procedure
+- Do not enforce access controls when moving an entry to the top level if open
+  top level is configured.
+- Fix a bug with getting context assertion defaults
+- Fix logging unbinds at warning level
+- Fix StartTLS establishment
+- Fix OSI application association rejection when encountering an unsupported application context
+- Fix OSI transmission of errors
+- Fix handling of malformed TPDUs in the OSI transport layer
+- Fix negotiation of TPDU size in OSI transport layer
+- Use timeout supplied to X.500 client function to determine the TCP socket timeout
+- Do not include the `valuesWithContext` in an attribute if there are no contexts
+- Fix establishment of governing structure rule in a context prefix established
+  by a hierarchical operational binding
+- Chained operations will not be retried if they are modification operations and
+  the outcome was an abort or reject, except with certain reason / problem codes.
+  - This is because these outcomes could indicate an internal error, in which
+    case, the modification might have been half-completed. If the error was
+    caused by the user, we also do not want to propagate requests that were
+    already determined to be invalid.
+- Fix back-propagation of rejects, aborts, and timeouts received from chained
+  operations.
+
 ## Version 2.6.0
+
+- Create X.509 attribute certificates using an extension to the `read`
+  operation, documented [here](https://wildboar-software.github.io/directory/docs/attr-cert).
+
+## Version 2.5.0
 
 - Support Non-Specific Hierarchical Operational Bindings (NHOBs), which allow
   entries in multiple directories to share / compete for the same namespace.

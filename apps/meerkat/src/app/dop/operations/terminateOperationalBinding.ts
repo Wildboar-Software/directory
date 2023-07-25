@@ -72,8 +72,13 @@ import { MeerkatContext } from "../../ctx";
 import { AccessPoint, _decode_AccessPoint } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 import { terminateByTypeAndBindingID } from "../terminateByTypeAndBindingID";
 import { timingSafeEqual } from "crypto";
-import { id_op_binding_non_specific_hierarchical } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
+import {
+    id_op_binding_non_specific_hierarchical,
+} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
 import stringifyDN from "../../x500/stringifyDN";
+import {
+    id_op_binding_shadow,
+} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
 
 
 async function relayedTerminateOperationalBinding (
@@ -85,6 +90,7 @@ async function relayedTerminateOperationalBinding (
     relayTo: AccessPoint,
     signErrors: boolean,
 ): Promise<TerminateOperationalBindingResult> {
+    const now = new Date();
     const outcome = await terminateByTypeAndBindingID(
         ctx,
         assn,
@@ -94,6 +100,48 @@ async function relayedTerminateOperationalBinding (
         FALSE,
         signErrors,
     );
+    const ob = await ctx.db.operationalBinding.findFirst({
+        // We only want the most recent operational binding.
+        // This should be taken care of by the `where.next_version` below, but
+        // this is extra assurance that we get the right one.
+        orderBy: {
+            requested_time: "desc",
+        },
+        where: {
+            /**
+             * This is a hack for getting the latest version: we are selecting
+             * operational bindings that have no next version.
+             *
+             * See: https://github.com/prisma/prisma/discussions/2772#discussioncomment-1712222
+             */
+            next_version: {
+                none: {},
+            },
+            accepted: true,
+            binding_type: bindingType.toString(),
+            binding_identifier: Number(bindingID.identifier),
+            terminated_time: null,
+            validity_start: {
+                lte: now,
+            },
+            OR: [
+                {
+                    validity_end: null,
+                },
+                {
+                    validity_end: {
+                        gte: now,
+                    },
+                },
+            ],
+        },
+        select: {
+            id: true,
+        },
+    });
+    if (ob) {
+        await terminate(ctx, ob.id);
+    }
     let err_message: string = "";
     if ("result" in outcome) {
         return outcome.result.parameter;
@@ -375,6 +423,7 @@ async function terminateOperationalBinding (
     switch (data.bindingType.toString()) {
         case (id_op_binding_hierarchical.toString()):
         case (id_op_binding_non_specific_hierarchical.toString()):
+        case (id_op_binding_shadow.toString()):
         {
             for (const ob of obs) {
                 safeSetTimeout(

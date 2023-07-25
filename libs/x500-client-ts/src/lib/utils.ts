@@ -815,7 +815,7 @@ const protocol_id_to_app_context: Map<IndexableOID, OBJECT_IDENTIFIER> = new Map
     [ dap_ip["&id"]!.toString(), id_ac_directoryAccessAC ],
     [ dsp_ip["&id"]!.toString(), id_ac_directorySystemAC ],
     [ dop_ip["&id"]!.toString(), id_ac_directoryOperationalBindingManagementAC ],
-    // [ disp_ip["&id"]!.toString(), ], // I don't know how to map this one...
+    [ disp_ip["&id"]!.toString(), id_ac_shadowSupplierInitiatedAsynchronousAC ], // I don't know how to map this one...
     [ id_ac_directoryAccessAC.toString(), id_ac_directoryAccessAC ],
     [ id_ac_directorySystemAC.toString(), id_ac_directorySystemAC ],
     [ id_ac_directoryOperationalBindingManagementAC.toString(), id_ac_directoryOperationalBindingManagementAC ],
@@ -871,3 +871,17 @@ const app_context_to_protocol_id: Map<IndexableOID, OBJECT_IDENTIFIER> = new Map
 export
 const protocol_id_to_rose_protocol
     = (pid: OBJECT_IDENTIFIER): OBJECT_IDENTIFIER | undefined => protocol_id_to_app_context.get(pid.toString());
+
+export
+interface OperationOptions {
+    /** The number of milliseconds before the operation will time out. */
+    timeout?: number;
+}
+
+export
+interface DirectoryOperationOptions extends OperationOptions {
+    /** The private key used to sign requests. */
+    key?: KeyObject;
+    /** The certification path provided to verify signed requests from this client. */
+    cert_path?: CertPathOption;
+}

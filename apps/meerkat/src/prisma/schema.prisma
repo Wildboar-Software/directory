@@ -142,7 +142,6 @@ model Entry {
   ContextDescription             ContextDescription[]
 
   @@unique([dseUUID])
-  @@unique([entryUUID])
   @@index([immediate_superior_id, deleteTimestamp, expiresTimestamp, subentry])
   @@index([materialized_path])
   @@index([hierarchyTop_id])
@@ -285,9 +284,9 @@ model AccessPoint {
   // Whether this DSA may receive cross references, if requested.
   disclose_cross_refs Boolean @default(false)
 
-  active               Boolean                  @default(true)
-  created_at           DateTime                 @default(now())
-  credentials          AccessPointCredentials[]
+  active      Boolean                  @default(true)
+  created_at  DateTime                 @default(now())
+  credentials AccessPointCredentials[]
 
   @@index([entry_id])
 }
@@ -567,6 +566,12 @@ enum ShadowedKnowledgeType {
   BOTH
 }
 
+enum ShadowUpdateStrategy {
+  TOTAL
+  INCREMENTAL
+  EXTERNAL
+}
+
 model OperationalBinding {
   id                 Int                         @id @default(autoincrement())
   entry_id           Int? // This is valuable for pointing to the CP of a shadowed context or HOB.
@@ -628,13 +633,17 @@ model OperationalBinding {
   source_attr_cert_path   Bytes?
 
   // Status
-  requested_time      DateTime  @default(now())
-  responded_time      DateTime?
-  terminated_time     DateTime?
-  accepted            Boolean?
-  last_update         DateTime?
-  last_ob_problem     Int?      @db.SmallInt
-  last_shadow_problem Int?      @db.SmallInt
+  requested_time                  DateTime              @default(now())
+  responded_time                  DateTime?
+  terminated_time                 DateTime?
+  accepted                        Boolean?
+  last_update                     DateTime? // Should not be used. Use local_last_update and remote_last_update.
+  last_ob_problem                 Int?                  @db.SmallInt
+  last_shadow_problem             Int?                  @db.SmallInt
+  local_last_update               DateTime? // Time this DSA thinks the last shadow update was
+  remote_last_update              DateTime? // Time the remote DSA thinks the last shadow update was. If this DSA is the supplier, this is populated from the requestShadowUpdate.
+  requested_strategy              ShadowUpdateStrategy?
+  requested_strategy_external_ber Bytes?
 
   next_version OperationalBinding[] @relation("previous")
 
@@ -666,7 +675,8 @@ model DistinguishedValue {
   order_index    Int
 
   @@unique([entry_id, type_oid(length: 32)])
-  @@index([type_oid(length: 32), tag_class, tag_number, constructed, normalized_str])
+  // I'm not sure if the entry_id really belongs in the index, but
+  @@unique([type_oid(length: 32), normalized_str, entry_id])
 }
 
 model EntryObjectClass {
@@ -784,4 +794,26 @@ model PostalCodeBoundaryPoints {
   easting        Int // in meters
 
   @@index([postal_code_id])
+}
+
+enum ShadowIncrementType {
+  OTHER // A fallback for future-extensibility.
+  ADD
+  REMOVE
+  MODIFY
+  MULTI // If incremental steps are ever compressed, they may contain multiple different types of updates.
+}
+
+// Pending incremental updates to be replicated to shadow consumers
+model PendingShadowIncrementalStepRefresh {
+  id                 Int                 @id @default(autoincrement())
+  binding_identifier Int // The binding identifier of the applicable shadow operational binding
+  time               DateTime            @default(now()) // The time the original supplier-side change was made.
+  ber                Bytes // BER-encoded IncrementalStepRefresh.
+  submitted          Boolean             @default(false) // Whether the updateShadow was sent containing this step.
+  acknowledged       Boolean             @default(false) // Whether the updateShadow containing this step received a result.
+  rename             Boolean             @default(false) // Whether the step renamed a shadowed DSE.
+  type               ShadowIncrementType
+
+  @@index([binding_identifier, time])
 }

@@ -9,14 +9,16 @@ import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import { ContextProfile } from "@wildboar/x500/src/lib/modules/ServiceAdministration/ContextProfile.ta";
 import { ResultAttribute } from "@wildboar/x500/src/lib/modules/ServiceAdministration/ResultAttribute.ta";
-import { ASN1Element } from "asn1-ts";
+import { ASN1Element, ObjectIdentifier } from "asn1-ts";
 import { Attribute_valuesWithContext_Item } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Attribute-valuesWithContext-Item.ta";
+import { AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
 
 export
 interface ReadEntryAttributesReturn {
     userAttributes: Attribute[];
     operationalAttributes: Attribute[];
     collectiveAttributes: Attribute[];
+    attValIncomplete: AttributeType[];
 };
 
 export
@@ -122,17 +124,23 @@ async function readAttributes (
 ): Promise<ReadEntryAttributesReturn> {
     const values = await readValues(ctx, vertex, options, true);
     const sizeLimit = options?.attributeSizeLimit;
-    const sizeFilter = getAttributeSizeFilter(sizeLimit ?? Infinity);
     // Unfortunately, Prisma does not currently give us a way to limit values by length.
-    let userAttributes = sizeLimit
-        ? attributesFromValues(values.userValues).filter(sizeFilter)
-        : attributesFromValues(values.userValues);
-    let operationalAttributes = sizeLimit
-        ? attributesFromValues(values.operationalValues).filter(sizeFilter)
-        : attributesFromValues(values.operationalValues);
-    let collectiveAttributes = sizeLimit
-        ? attributesFromValues(values.collectiveValues).filter(sizeFilter)
-        : attributesFromValues(values.collectiveValues);
+    let userAttributes = attributesFromValues(values.userValues);
+    let operationalAttributes = attributesFromValues(values.operationalValues)
+    let collectiveAttributes = attributesFromValues(values.collectiveValues)
+    if (sizeLimit) {
+        const sizeFilter = getAttributeSizeFilter(sizeLimit ?? Infinity);
+        const filter = (attr: Attribute): boolean => {
+            const filtered: boolean = sizeFilter(attr);
+            if (filtered) {
+                values.attValIncomplete.add(attr.type_.toString());
+            }
+            return filtered;
+        };
+        userAttributes = userAttributes.filter(filter);
+        operationalAttributes = operationalAttributes.filter(filter);
+        collectiveAttributes = collectiveAttributes.filter(filter);
+    }
 
     const outputTypes = options?.outputAttributeTypes;
     if (outputTypes) {
@@ -151,6 +159,9 @@ async function readAttributes (
         userAttributes,
         operationalAttributes,
         collectiveAttributes,
+        attValIncomplete: Array
+            .from(values.attValIncomplete)
+            .map(ObjectIdentifier.fromString),
     };
 }
 

@@ -57,7 +57,7 @@ import {
 import {
     ChainingResults,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
-import createEntry from "../database/createEntry";
+import { createDse } from "../database/createEntry";
 import {
     ServiceProblem_unavailable,
     ServiceProblem_unwillingToPerform,
@@ -202,6 +202,11 @@ import {
     id_pr_targetDsaUnavailable,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-targetDsaUnavailable.va";
 import DSPAssociation from "../dsp/DSPConnection";
+import { getShadowIncrementalSteps } from "../dop/getRelevantSOBs";
+import {
+    SubordinateChanges,
+} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SubordinateChanges.ta";
+import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh";
 
 const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
 const ID_AC_SPECIFIC: string = id_ar_accessControlSpecificArea.toString();
@@ -758,7 +763,10 @@ async function addEntry (
                 || !accessControlSchemesThatUseACIItems.has(effectiveAccessControlScheme.toString())
             ) { // We can inform the user that it does not exist; no need to do any more work.
                 throw new errors.UpdateError(
-                    ctx.i18n.t("err:entry_already_exists"),
+                    ctx.i18n.t("err:entry_already_exists", {
+                        context: "with_dn",
+                        dn: stringifyDN(ctx, targetDN).slice(0, 512),
+                    }),
                     new UpdateErrorData(
                         UpdateProblem_entryAlreadyExists,
                         undefined,
@@ -817,7 +825,10 @@ async function addEntry (
             );
             if (authorizedToKnowAboutExistingEntry) {
                 throw new errors.UpdateError(
-                    ctx.i18n.t("err:entry_already_exists"),
+                    ctx.i18n.t("err:entry_already_exists", {
+                        context: "with_dn",
+                        dn: stringifyDN(ctx, targetDN).slice(0, 512),
+                    }),
                     new UpdateErrorData(
                         UpdateProblem_entryAlreadyExists,
                         undefined,
@@ -1012,10 +1023,6 @@ async function addEntry (
         }
     }
 
-    // NOTE: This does not actually check if targetSystem is the current DSA.
-    // We also do not check if manageDSAIT is set. Even though that would seem
-    // to contradict the use of targetSystem, but there's not really any problem
-    // here using both.
     if (data.targetSystem && !compareDistinguishedName(
         data.targetSystem.ae_title.rdnSequence,
         ctx.dsa.accessPoint.ae_title.rdnSequence,
@@ -1111,6 +1118,11 @@ async function addEntry (
                 entry: data.entry,
                 chaining: state.chainingArguments,
             });
+            // TODO: Log
+            // dsp_client.unbind().then().catch();
+            // if (dsp_client.rose.socket?.writable) {
+            //     dsp_client.rose.socket?.end(); // Unbind does not necessarily close the socket.
+            // }
             if ("result" in outcome) {
                 return {
                     result: outcome.result.parameter,
@@ -1591,21 +1603,22 @@ async function addEntry (
                 sk.ae_title.rdnSequence,
                 NAMING_MATCHER))
     );
-    const newEntry = await createEntry(ctx, immediateSuperior, rdn, {
+    const newEntry = await createDse(ctx, immediateSuperior, rdn, {
         governingStructureRule: governingStructureRule
             ? Number(governingStructureRule)
             : undefined,
         structuralObjectClass: structuralObjectClass.toString(),
         cp,
     }, data.entry, user?.dn);
-    immediateSuperior.subordinates?.push(newEntry);
-    ctx.log.debug(ctx.i18n.t("log:add_entry", {
-        aid: assn.id,
-        dn: stringifyDN(ctx, targetDN),
-        id: newEntry.dse.id,
-        uuid: newEntry.dse.uuid,
-        euuid: newEntry.dse.entryUUID,
-    }));
+    if (!ctx.config.bulkInsertMode) {
+        ctx.log.debug(ctx.i18n.t("log:add_entry", {
+            aid: assn.id,
+            dn: stringifyDN(ctx, targetDN),
+            id: newEntry.dse.id,
+            uuid: newEntry.dse.uuid,
+            euuid: newEntry.dse.entryUUID,
+        }));
+    }
 
     /**
      * Because the structure rules, name forms, etc. may have been specified all
@@ -1700,7 +1713,20 @@ async function addEntry (
         }
     }
 
-    // TODO: Update shadows
+    const sobs = await getShadowIncrementalSteps(ctx, newEntry, { add: data.entry });
+    for (const [ sob_id, sob_obid, sob_change ] of sobs) {
+        const change = new SubordinateChanges(
+            newEntry.dse.rdn,
+            sob_change,
+        );
+        saveIncrementalRefresh(ctx, sob_id, immediateSuperior, change)
+            .then() // INTENTIONAL_NO_AWAIT
+            .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_save_incremental_update_step", {
+                sob_id: sob_obid,
+                e,
+            })));
+    }
+
     const signResults: boolean = (
         (data.securityParameters?.target === ProtectionRequest_signed)
         && assn.authorizedForSignedResults

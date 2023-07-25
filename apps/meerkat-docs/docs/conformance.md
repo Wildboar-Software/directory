@@ -1,7 +1,7 @@
 # Conformance
 
-In the statements below, the term "Meerkat DSA" refers to version 2.6.0 of
-Meerkat DSA, hence these statements are only claimed for version 2.6.0 of
+In the statements below, the term "Meerkat DSA" refers to version 2.7.0 of
+Meerkat DSA, hence these statements are only claimed for version 2.7.0 of
 Meerkat DSA.
 
 ## X.519 Conformance Statement
@@ -14,14 +14,13 @@ Recommendation X.519 (2019), Section 13.
 
 #### A. Protocol Support
 
-Meerkat DSA does not support any application contexts.
-
 The following is an exhaustive list of all Internet-Directly-Mapped (IDM) protocols supported:
 
 | Protocol                                                | Object Identifier  |
 |---------------------------------------------------------|--------------------|
 | Directory Access Protocol (DAP)                         | 2.5.33.0           |
 | Directory System Protocol (DSP)                         | 2.5.33.1           |
+| Directory Information Shadowing Protocol (DISP)         | 2.5.33.2           |
 | Directory Operational Binding Management Protocol (DOP) | 2.5.33.3           |
 
 The following is an exhaustive list of all ISO Transport Over TCP (ITOT) application contexts supported:
@@ -31,6 +30,10 @@ The following is an exhaustive list of all ISO Transport Over TCP (ITOT) applica
 | Directory Access Protocol (DAP)                         | 2.5.3.1            |
 | Directory System Protocol (DSP)                         | 2.5.3.2            |
 | Directory Operational Binding Management Protocol (DOP) | 2.5.3.3            |
+| Consumer-Initiated Shadowing (DISP)                     | 2.5.3.4            |
+| Supplier-Initiated Shadowing (DISP)                     | 2.5.3.5            |
+| Asynchronous Supplier-Initiated Shadowing (DISP)        | 2.5.3.8            |
+| Asynchronous Consumer-Initiated Shadowing (DISP)        | 2.5.3.9            |
 
 #### B. Operational Binding Support
 
@@ -38,7 +41,7 @@ The following is an exhaustive list of all ISO Transport Over TCP (ITOT) applica
 |------------|----------------------------------------------------|--------------------|
 | Yes        | Hierarchical Operational Binding (HOB)             | 2.5.19.2           |
 | Yes        | Non-Specific Hierarchical Operation Binding (NHOB) | 2.5.19.3           |
-| No         | Shadowing Operational Binding (SOB)                | 2.5.19.1           |
+| Yes        | Shadowing Operational Binding (SOB)                | 2.5.19.1           |
 
 #### C. First-Level DSA Support
 
@@ -112,6 +115,37 @@ to accommodate any attribute type. Despite this, Meerkat DSA is hard-coded to
 support the Recommendation X.520 selected attribute types, so those will always
 be supported.
 
+Meerkat DSA also comes hard-coded with what is called "parity schema," which
+contains X.500 equivalents of almost all schema objects registered with IANA as
+well as other LDAP schema objects used by popular LDAP servers (using
+identical object identifiers). The schema hard-coded into Meerkat DSA can be
+used for:
+
+- Samba Servers / Active Directory Domain Controllers
+- PGP Key Servers
+- SSH Authentication
+- PAM Authentication
+- DNS Servers
+- Java
+- Sabayon Servers
+- Kerberos Servers
+- Email Servers
+- FTP Servers
+- RADIUS Servers
+- Remote Calendars
+- Printer Discovery
+- Sudo Configuration
+- LDAP Tables
+- Voicemail
+- X.400 Messaging
+- X.952 Open Distributed Processing
+- DHCP Server Configuration
+- DUA Configuration
+- Dynamic Groups
+- Federated Filesystem
+- H.323 Multimedia
+- Intelligent Networks
+
 #### H. Object Classes
 
 Meerkat DSA supports all of the object classes defined in the
@@ -121,6 +155,37 @@ In addition to this, Meerkat DSA is extensible, such that it can be configured
 to accommodate any object class. Despite this, Meerkat DSA is hard-coded to
 support the Recommendation X.521 selected object classes, so those will always
 be supported.
+
+Meerkat DSA also comes hard-coded with what is called "parity schema," which
+contains X.500 equivalents of almost all schema objects registered with IANA as
+well as other LDAP schema objects used by popular LDAP servers (using
+identical object identifiers). The schema hard-coded into Meerkat DSA can be
+used for:
+
+- Samba Servers / Active Directory Domain Controllers
+- PGP Key Servers
+- SSH Authentication
+- PAM Authentication
+- DNS Servers
+- Java
+- Sabayon Servers
+- Kerberos Servers
+- Email Servers
+- FTP Servers
+- RADIUS Servers
+- Remote Calendars
+- Printer Discovery
+- Sudo Configuration
+- LDAP Tables
+- Voicemail
+- X.400 Messaging
+- X.952 Open Distributed Processing
+- DHCP Server Configuration
+- DUA Configuration
+- Dynamic Groups
+- Federated Filesystem
+- H.323 Multimedia
+- Intelligent Networks
 
 #### I. Extensions Supported
 
@@ -213,6 +278,37 @@ In addition to this, Meerkat DSA is extensible, such that it can be configured
 to accommodate any name form. Despite this, Meerkat DSA is hard-coded to
 support the Recommendation X.521 name forms, so those will always be supported.
 
+Meerkat DSA also comes hard-coded with what is called "parity schema," which
+contains X.500 equivalents of almost all schema objects registered with IANA as
+well as other LDAP schema objects used by popular LDAP servers (using
+identical object identifiers). The schema hard-coded into Meerkat DSA can be
+used for:
+
+- Samba Servers / Active Directory Domain Controllers
+- PGP Key Servers
+- SSH Authentication
+- PAM Authentication
+- DNS Servers
+- Java
+- Sabayon Servers
+- Kerberos Servers
+- Email Servers
+- FTP Servers
+- RADIUS Servers
+- Remote Calendars
+- Printer Discovery
+- Sudo Configuration
+- LDAP Tables
+- Voicemail
+- X.400 Messaging
+- X.952 Open Distributed Processing
+- DHCP Server Configuration
+- DUA Configuration
+- Dynamic Groups
+- Federated Filesystem
+- H.323 Multimedia
+- Intelligent Networks
+
 #### T. Collective Attribute Administration
 
 Collective Attributes are completely supported by Meerkat DSA.
@@ -272,3 +368,144 @@ Meerkat DSA also supports the Online Certificate Status Protocol (OCSP) and uses
 it to check the validity of certification paths according to the procedures
 defined in [IETF RFC 6960](https://datatracker.ietf.org/doc/html/rfc6960), if
 configured to do so.
+
+### Section 13.2.2 Conformance
+
+Meerkat DSA conforms to the static requirements described in ITU Recommendation
+X.519 (2019), Section 13.2.2, with the following exceptions:
+
+- Meerkat DSA does not support the `multiStrand` family grouping described in X.511 7.3.2.
+- Meerkat DSA does not support Rule-Based Access Control
+
+In addition to this, Meerkat DSA conforms in the following respects:
+
+- It supports the inclusion of the RelaxationPolicy construct in a search request
+- It supports both mapping-based matching and matching rule substitution
+  - In particular, the following mapping-based matchings are supported:
+    - `postalZonalMatch` (`1.3.6.1.4.1.56490.58.1`), described [here](https://wildboar-software.github.io/directory/docs/zonal)
+- All hierarchical selection options are supported.
+- Meerkat DSA supports Service-specific administrative points different from
+  autonomous administrative points.
+- Meerkat DSA supports the context feature within search rules.
+- Meerkat DSA supports the compound-entry-related features of search rules.
+- Meerkat DSA supports the search relaxation feature within search rules.
+- Meerkat DSA supports hierarchical groups within search rules.
+
+### Section 13.2.3 Conformance
+
+Meerkat DSA conforms to the static requirements described in ITU Recommendation
+X.519 (2019), Section 13.2.3.
+
+### Section 13.3.1 Conformance
+
+Meerkat DSA is capable as acting as a shadow supplier.
+
+#### A. Application Contexts
+
+Meerkat DSA, as a shadow supplier, supports the following application contexts
+and IDM protocols:
+
+- `shadowSupplierInitiatedAC` (`2.5.3.5`)
+- `shadowConsumerInitiatedAC` (`2.5.3.4`)
+- `shadowSupplierInitiatedAsynchronousAC` (`2.5.3.8`)
+- `shadowConsumerInitiatedAsynchronousAC` (`2.5.3.9`)
+- `disp-ip` (`2.5.33.2`)
+
+When the `disp-ip` IDM protocol is used, Meerkat DSA is capable of receiving
+both `requestShadowUpdate` and `coordinateShadowUpdate` requests, and will
+return an error if such a request does not conform to the update mode of the
+shadow agreement.
+
+#### B. Conformance Security Level
+
+Meerkat DSA supports the use of DISP protocols over TLS for both IDM and ITOT
+transports or StartTLS only when IDM transport is used. In addition to this,
+the integrity of requests, results, and errors, can be (and by default, are, as
+long as a signing key and certificate path are configured) secured by
+cryptographic signatures. Meerkat DSA also supports the use of data
+integrity contexts, but does not verify them; nevertheless, these can be used
+by relying parties to further ensure data integrity. Meerkat DSA can be
+configured to require strong authentication (or merely simple authentication)
+for shadowing operations.
+
+Particular to shadowing, Meerkat DSA verifies that shadow updates only update
+regions within the agreed-upon shadow subtree. Meerkat DSA _does not_ verify
+that two shadowed areas do not overlap; as such, two shadow suppliers could
+overwrite each other's information; it is the responsibility of the
+administrator to ensure no overlap.
+
+To summarize the above: as Meerkat DSA provides point-to-point, end-to-end, and
+at rest-integrity, combined with point-to-point confidentiality using TLS,
+strong public-key-cryptography-based authentication, and actively verifies the
+contents of shadow updates, it can be stated that Meerkat DSA supports a
+"strong" security-level.
+
+#### C. Unit of Replication of Support
+
+Meerkat DSA supports all features of the `UnitOfReplication` used in defining
+ITU Recommendation X.525 shadowing agreements, including:
+
+- Entry filtering on `objectClass`
+- Selection / exclusion of attributes via `AttributeSelection`
+- Inclusion of subordinate knowledge
+- Inclusion of extended knowledge
+- Selection / exclusion of attribute values based on contexts
+
+### Section 13.3.2 Conformance
+
+Meerkat DSA conforms to the static requirements described in ITU Recommendation
+X.519 (2019), Section 13.3.2, including providing support for the
+`modifyTimestamp` and `createTimestamp` operational attributes.
+
+### Section 13.3.3 Conformance
+
+Meerkat DSA conforms to the dynamic requirements described in ITU Recommendation
+X.519 (2019), Section 13.3.3. The mapping of application contexts onto OSI
+services is conformant, and has been tested against Quipu and ISODE DUAs.
+
+### Section 13.4.1 Conformance
+
+Meerkat DSA is capable of acting as a shadow consumer.
+
+#### A. Application Contexts
+
+Meerkat DSA, as a shadow consumer, supports the following application contexts
+and IDM protocols:
+
+- `shadowSupplierInitiatedAC` (`2.5.3.5`)
+- `shadowConsumerInitiatedAC` (`2.5.3.4`)
+- `shadowSupplierInitiatedAsynchronousAC` (`2.5.3.8`)
+- `shadowConsumerInitiatedAsynchronousAC` (`2.5.3.9`)
+- `disp-ip` (`2.5.33.2`)
+
+When the `disp-ip` IDM protocol is used, Meerkat DSA is capable of receiving
+both `requestShadowUpdate` and `coordinateShadowUpdate` requests, and will
+return an error if such a request does not conform to the update mode of the
+shadow agreement.
+
+#### B. Conformance Security Level
+
+See "B. Conformance Security Level" above under "Section 13.3.1 Conformance."
+
+#### C. Secondary Shadows
+
+Meerkat DSA is capable of acting as a secondary shadow supplier. This
+functionality has been tested manually.
+
+#### D. Shadowing of Overlapping Units of Replication
+
+Meerkat DSA neither supports overlapping units of replication, nor verifies that
+all shadowing agreements do not overlap.
+
+### Section 13.4.2 Conformance
+
+Meerkat DSA conforms to the static requirements described in ITU Recommendation
+X.519 (2019), Section 13.4.2, including providing support for the
+`modifyTimestamp` and `createTimestamp` operational attributes and the
+`copyShallDo` service control.
+
+### Section 13.4.3 Conformance
+
+Meerkat DSA conforms to the dynamic requirements described in ITU Recommendation
+X.519 (2019), Section 13.4.3. The mapping of application contexts onto OSI
+services is conformant, and has been tested against Quipu and ISODE DUAs.

@@ -31,12 +31,16 @@ program
   .requiredOption("--accessPoint <ap>", "The access point URL")
   .requiredOption("--profile <prof>", "The profile of the seed to use.")
   .option("-t|--tolerateUnknownProfile", "Whether to return a failing return code if the profile is unknown")
+  .option("--single", "Whether to keep all data within a single DSA")
   ;
 
 program.parse(process.argv);
 const options = program.opts();
 
 async function main () {
+    if (options["single"]) {
+        ctx.single = true;
+    }
     switch (options["profile"]) {
         case ("root"): {
             const connection = await bind(ctx, options["accessPoint"], [], undefined);

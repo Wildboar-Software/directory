@@ -1,14 +1,8 @@
 import type { Context } from "@wildboar/meerkat-types";
-import { BERElement, ASN1Construction, OBJECT_IDENTIFIER } from "asn1-ts";
+import { ASN1Construction, OBJECT_IDENTIFIER } from "asn1-ts";
 import type {
     RelativeDistinguishedName as RDN,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
-import listSubordinates from "./listSubordinates";
-import {
-    AttributeTypeAndValue,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
-import compareRDN from "@wildboar/x500/src/lib/comparators/compareRelativeDistinguishedName";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import { getEntryExistsFilter } from "../database/entryExistsFilter";
 import getEqualityNormalizer from "../x500/getEqualityNormalizer";
 import { Prisma } from "@prisma/client";
@@ -88,62 +82,7 @@ async function rdnToID (
             id: "desc", // Theory: newer IDs are more likely to be queried.
         },
     });
-    if (exactMatch) {
-        return exactMatch.id;
-    }
-    let rdnMatched: boolean = false;
-    let cursorId: number | undefined;
-    const getNextBatchOfSubordinates = async () => {
-        if (rdnMatched) {
-            return [];
-        }
-        return listSubordinates(
-            ctx,
-            superior_id,
-            ctx.config.entriesPerSubordinatesPage,
-            undefined,
-            cursorId,
-            {
-                AND: rdn.map((atav) => ({
-                    RDN: {
-                        some: {
-                            type_oid: atav.type_.toBytes(),
-                        },
-                    },
-                })),
-            },
-        );
-    };
-    let subordinatesInBatch = await getNextBatchOfSubordinates();
-    while (subordinatesInBatch.length) {
-        for (const subordinate of subordinatesInBatch) {
-            cursorId = subordinate.id;
-            const subordinateRDN = subordinate.RDN.map((atav) => {
-                const type_el = new BERElement();
-                const value_el = new BERElement();
-                type_el.value = atav.type_oid;
-                value_el.tagClass = atav.tag_class;
-                value_el.construction = atav.constructed
-                    ? ASN1Construction.constructed
-                    : ASN1Construction.primitive;
-                value_el.tagNumber = atav.tag_number;
-                value_el.value = atav.content_octets;
-                return new AttributeTypeAndValue(
-                    type_el.objectIdentifier,
-                    value_el,
-                );
-            });
-            rdnMatched = compareRDN(
-                rdn,
-                subordinateRDN,
-                getNamingMatcherGetter(ctx),
-            );
-            if (rdnMatched) {
-                return subordinate.id;
-            }
-        }
-        subordinatesInBatch = await getNextBatchOfSubordinates();
-    }
+    return exactMatch?.id;
 }
 
 export default rdnToID;

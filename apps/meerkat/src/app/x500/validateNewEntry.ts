@@ -131,6 +131,8 @@ import type {
 import stringifyDN from "./stringifyDN";
 import groupByOID from "../utils/groupByOID";
 import { getEntryExistsFilter } from "../database/entryExistsFilter";
+import DOPAssociation from "../dop/DOPConnection";
+import { governingStructureRule as gsrAttrType } from "@wildboar/x500/src/lib/collections/attributes";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();
 
@@ -503,13 +505,14 @@ async function validateEntry (
         optionalAttributes.add(id_aca_accessControlScheme.toString());
         optionalAttributes.add(id_aca_subentryACI.toString());
         optionalAttributes.add(hierarchyParent["&id"].toString());
+        optionalAttributes.add(gsrAttrType["&id"].toString());
     }
     if (isSubentry) {
         optionalAttributes.add(id_aca_prescriptiveACI.toString());
     }
     const nonUserApplicationAttributes: AttributeType[] = [];
     const unrecognizedAttributes: AttributeType[] = [];
-    const noUserModAttributes: AttributeType[] = [];
+    let noUserModAttributes: AttributeType[] = [];
     const dummyAttributes: AttributeType[] = [];
     const collectiveAttributes: AttributeType[] = [];
     const obsoleteAttributes: AttributeType[] = [];
@@ -574,6 +577,10 @@ async function validateEntry (
                 signErrors,
             );
         }
+    }
+    // So that an HOB superior can manually set the governing structure rule.
+    if (assn instanceof DOPAssociation) {
+        noUserModAttributes = noUserModAttributes.filter((attr) => !attr.isEqualTo(gsrAttrType["&id"]));
     }
     if (
         ((unrecognizedAttributes.length > 0) && !tolerateUnknownSchema)

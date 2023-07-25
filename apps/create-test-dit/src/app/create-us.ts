@@ -211,6 +211,16 @@ import {
 import {
     Guide,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/Guide.ta";
+import { Attribute_valuesWithContext_Item } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Attribute-valuesWithContext-Item.ta";
+import { Context as X500Context } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Context.ta";
+import { languageContext, temporalContext } from "@wildboar/x500/src/lib/collections/contexts";
+import { TimeSpecification } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/TimeSpecification.ta";
+import { TimeSpecification_time_absolute } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/TimeSpecification-time-absolute.ta";
+import { addDays } from "date-fns";
+import { uriToNSAP } from "@wildboar/x500/src/lib/distributed/uri";
+import {
+    AccessPoint, PresentationAddress,
+} from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 
 const id_wildboar           = new ObjectIdentifier([ 1, 3, 6, 1, 4, 1, 56490 ]);
 const id_serviceTypes       = new ObjectIdentifier([ 59 ], id_wildboar);
@@ -409,7 +419,11 @@ const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
 const serviceControls = new ServiceControls(
     serviceControlOptions,
     undefined,
-    60,
+    /* I had to bump the timeout really high, because, when creating the local
+    test DIT, it seems that either Meerkat DSA or the database would get
+    overwhelmed and take over one minute to insert (with bulk insert mode
+    disabled). */
+    300,
     undefined,
     undefined,
     undefined,
@@ -434,6 +448,7 @@ function securityParameters (): SecurityParameters {
 function createAddEntryArgument (
     dn: DistinguishedName,
     attributes: Attribute[],
+    targetSystem?: AccessPoint,
 ): AddEntryArgument {
     return {
         unsigned: new AddEntryArgumentData(
@@ -441,7 +456,7 @@ function createAddEntryArgument (
                 rdnSequence: dn,
             },
             attributes,
-            undefined,
+            targetSystem,
             [],
             serviceControls,
             securityParameters(),
@@ -529,6 +544,51 @@ function get_child_ap (parent: DistinguishedName, name: string): AddEntryArgumen
     ]);
 }
 
+const HILLSBOROUGH_ACCESS_POINT = new AccessPoint(
+    {
+        rdnSequence: [
+            [
+                new AttributeTypeAndValue(
+                    selat.commonName["&id"],
+                    _encodeUTF8String("dsa2", DER),
+                ),
+            ],
+        ],
+    },
+    new PresentationAddress(
+        undefined,
+        undefined,
+        undefined,
+        // [uriToNSAP("idm://dsa2:4632", false)],
+        [uriToNSAP("itot://dsa2:1102", true)],
+    ),
+    undefined,
+);
+
+
+const TEMPLE_TERRACE_ACCESS_POINT = new AccessPoint(
+    {
+        rdnSequence: [
+            [
+                new AttributeTypeAndValue(
+                    selat.commonName["&id"],
+                    _encodeUTF8String("dsa1", DER),
+                ),
+            ],
+        ],
+    },
+    new PresentationAddress(
+        undefined,
+        undefined,
+        undefined,
+        // [uriToNSAP("idm://dsa1:4632", false)],
+        [uriToNSAP("itot://dsa1:1102", true)],
+    ),
+    undefined,
+);
+
+const BRANDON_ACCESS_POINT = TEMPLE_TERRACE_ACCESS_POINT;
+
 export
 async function seedUS (
     ctx: Context,
@@ -579,8 +639,100 @@ async function seedUS (
                 [_encodeUTF8String(name, DER)],
             ),
         ];
-        const arg = createAddEntryArgument(deepDN, attributes);
+        const arg = createAddEntryArgument(deepDN, attributes, ctx.single ? undefined : HILLSBOROUGH_ACCESS_POINT);
         await idempotentAddEntry(ctx, conn, "C=US,ST=FL,L=HIL", arg);
+    }
+
+    { // C=US,ST=FL,L=HIL,L=Temple Terrace
+        const name: string = "Temple Terrace";
+        const rdn: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                selat.localityName["&id"]!,
+                _encodeUTF8String(name, DER),
+            ),
+        ];
+        const attributes: Attribute[] = [
+            new Attribute(
+                selat.objectClass["&id"],
+                [_encodeObjectIdentifier(seloc.locality["&id"], DER)],
+            ),
+            new Attribute(
+                selat.localityName["&id"],
+                [_encodeUTF8String(name, DER)],
+            ),
+            new Attribute(
+                selat.description["&id"],
+                [_encodeUTF8String("The terrace where you will find the temple", DER)],
+            ),
+        ];
+        const arg = createAddEntryArgument([ ...deepDN, rdn ], attributes, ctx.single ? undefined : TEMPLE_TERRACE_ACCESS_POINT);
+        await idempotentAddEntry(ctx, conn, "C=US,ST=FL,L=HIL,L=Temple Terrace", arg);
+
+        for (let i = 0; i < 10; i++) {
+            const name: string = `Organization ${i}`;
+            const org_rdn: RelativeDistinguishedName = [
+                new AttributeTypeAndValue(
+                    selat.organizationName["&id"]!,
+                    _encodeUTF8String(name, DER),
+                ),
+            ];
+            const attributes: Attribute[] = [
+                new Attribute(
+                    selat.objectClass["&id"],
+                    [_encodeObjectIdentifier(seloc.organization["&id"], DER)],
+                ),
+                new Attribute(
+                    selat.organizationName["&id"],
+                    [_encodeUTF8String(name, DER)],
+                ),
+            ];
+            const arg = createAddEntryArgument([ ...deepDN, rdn, org_rdn ], attributes);
+            await idempotentAddEntry(ctx, conn, `C=US,ST=FL,L=HIL,L=Temple Terrace,O=Organization ${i}`, arg);
+        }
+    }
+
+    { // C=US,ST=FL,L=HIL,L=Plant City
+        const name: string = "Plant City";
+        const rdn: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                selat.localityName["&id"]!,
+                _encodeUTF8String(name, DER),
+            ),
+        ];
+        const attributes: Attribute[] = [
+            new Attribute(
+                selat.objectClass["&id"],
+                [_encodeObjectIdentifier(seloc.locality["&id"], DER)],
+            ),
+            new Attribute(
+                selat.localityName["&id"],
+                [_encodeUTF8String(name, DER)],
+            ),
+        ];
+        const arg = createAddEntryArgument([ ...deepDN, rdn ], attributes);
+        await idempotentAddEntry(ctx, conn, "C=US,ST=FL,L=HIL,L=Plant City", arg);
+
+        for (let i = 0; i < 10; i++) {
+            const name: string = `Organization ${i}`;
+            const org_rdn: RelativeDistinguishedName = [
+                new AttributeTypeAndValue(
+                    selat.organizationName["&id"]!,
+                    _encodeUTF8String(name, DER),
+                ),
+            ];
+            const attributes: Attribute[] = [
+                new Attribute(
+                    selat.objectClass["&id"],
+                    [_encodeObjectIdentifier(seloc.organization["&id"], DER)],
+                ),
+                new Attribute(
+                    selat.organizationName["&id"],
+                    [_encodeUTF8String(name, DER)],
+                ),
+            ];
+            const arg = createAddEntryArgument([ ...deepDN, rdn, org_rdn ], attributes);
+            await idempotentAddEntry(ctx, conn, `C=US,ST=FL,L=HIL,L=Plant City,O=Organization ${i}`, arg);
+        }
     }
 
     { // C=US,ST=FL,L=HIL,L=Tampa
@@ -733,6 +885,54 @@ async function seedUS (
         await idempotentAddEntry(ctx, conn, `C=US,ST=FL,L=MAR,L=Ocala,CN=${name}`, arg);
     }
 
+    { // C=US,ST=FL,L=HIL,L=Tampa,L=Brandon
+        const name: string = "Brandon";
+        const rdn: RelativeDistinguishedName = [
+            new AttributeTypeAndValue(
+                selat.localityName["&id"]!,
+                _encodeUTF8String(name, DER),
+            ),
+        ];
+        const attributes: Attribute[] = [
+            new Attribute(
+                selat.objectClass["&id"],
+                [_encodeObjectIdentifier(seloc.locality["&id"], DER)],
+            ),
+            new Attribute(
+                selat.localityName["&id"],
+                [_encodeUTF8String(name, DER)],
+            ),
+            new Attribute(
+                selat.description["&id"],
+                [_encodeUTF8String("Named after some dang guy", DER)],
+            ),
+        ];
+        const arg = createAddEntryArgument([ ...deepDN, rdn ], attributes, ctx.single ? undefined : BRANDON_ACCESS_POINT);
+        await idempotentAddEntry(ctx, conn, "C=US,ST=FL,L=HIL,L=Tampa,L=Brandon", arg);
+
+        for (let i = 0; i < 10; i++) {
+            const name: string = `Organization ${i}`;
+            const org_rdn: RelativeDistinguishedName = [
+                new AttributeTypeAndValue(
+                    selat.organizationName["&id"]!,
+                    _encodeUTF8String(name, DER),
+                ),
+            ];
+            const attributes: Attribute[] = [
+                new Attribute(
+                    selat.objectClass["&id"],
+                    [_encodeObjectIdentifier(seloc.organization["&id"], DER)],
+                ),
+                new Attribute(
+                    selat.organizationName["&id"],
+                    [_encodeUTF8String(name, DER)],
+                ),
+            ];
+            const arg = createAddEntryArgument([ ...deepDN, rdn, org_rdn ], attributes);
+            await idempotentAddEntry(ctx, conn, `C=US,ST=FL,L=HIL,L=Tampa,L=Brandon,O=Organization ${i}`, arg);
+        }
+    }
+
     { // C=US,ST=FL,L=HIL,L=Tampa,L=Westchase
         const name: string = "Westchase";
         const rdn: RelativeDistinguishedName = [
@@ -760,7 +960,7 @@ async function seedUS (
     const peepantsGang: DistinguishedName[] = [];
     const newEntryArgs: [cn: string, arg: AddEntryArgument][] = [];
     // Create random people
-    for (let i = 1; i < 1000; i++) {
+    for (let i = 1; i < 10000; i++) {
         // TODO: pgpKeyInfo
         // TODO: simpleSecurityObject
         // TODO: uidObject
@@ -842,10 +1042,58 @@ async function seedUS (
             attributes.push(new Attribute(
                 unstructuredName["&id"],
                 [unstructuredName.encoderFor["&Type"]!({ directoryString: { uTF8String: "Big Chungus" } }, DER)],
+                [
+                    new Attribute_valuesWithContext_Item(
+                        unstructuredName.encoderFor["&Type"]!({ directoryString: { uTF8String: "Der Grosse Chungus" } }, DER),
+                        [
+                            new X500Context(
+                                languageContext["&id"],
+                                [languageContext.encoderFor["&Type"]!("deu", DER)],
+                            ),
+                            new X500Context(
+                                temporalContext["&id"],
+                                [temporalContext.encoderFor["&Type"]!(new TimeSpecification(
+                                    {
+                                        absolute: new TimeSpecification_time_absolute(
+                                            new Date(),
+                                            addDays(new Date(), 21),
+                                        ),
+                                    },
+                                    undefined,
+                                    undefined,
+                                ), DER)],
+                            ),
+                        ],
+                    ),
+                ],
             ));
             attributes.push(new Attribute(
                 unstructuredAddress["&id"],
                 [unstructuredAddress.encoderFor["&Type"]!({ uTF8String: "123 Drury lane, Atlanta, GA 12345" }, DER)],
+                [
+                    new Attribute_valuesWithContext_Item(
+                        unstructuredAddress.encoderFor["&Type"]!({ uTF8String: "123 Meyerplatz O., Ulm" }, DER),
+                        [
+                            new X500Context(
+                                languageContext["&id"],
+                                [languageContext.encoderFor["&Type"]!("deu", DER)],
+                            ),
+                            new X500Context(
+                                temporalContext["&id"],
+                                [temporalContext.encoderFor["&Type"]!(new TimeSpecification(
+                                    {
+                                        absolute: new TimeSpecification_time_absolute(
+                                            new Date(),
+                                            addDays(new Date(), 21),
+                                        ),
+                                    },
+                                    undefined,
+                                    undefined,
+                                ), DER)],
+                            ),
+                        ],
+                    ),
+                ],
             ));
             attributes.push(new Attribute(
                 dateOfBirth["&id"],
@@ -1263,7 +1511,7 @@ async function seedUS (
     ];
 
     // People within C=US,ST=FL,L=MAR,L=Ocala
-    for (let i = 1; i < 500; i++) {
+    for (let i = 1; i < 10000; i++) {
         const otherObjectClasses: OBJECT_IDENTIFIER[] = [];
         const isNatural: boolean = !(i % 2);
         // const isPGPUser: boolean = !(i % 3);
@@ -1614,7 +1862,7 @@ async function seedUS (
     newEntryArgs.length = 0;
 
     // Organizations within C=US,ST=FL,L=MAR,L=Ocala
-    for (let i = 1; i < 500; i++) {
+    for (let i = 1; i < 5; i++) {
         const [ rdn, attributes, orgName ] = createMockOrganizationAttributes();
         const dn: DistinguishedName = [
             ...ocalaDN,

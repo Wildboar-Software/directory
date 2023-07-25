@@ -301,6 +301,10 @@ can be an NID or name.
 
 If set to `0`, this disables Directory Access Protocol (DAP).
 
+## MEERKAT_ENABLE_DISP
+
+If set to `1`, this enables Directory Information Shadowing Protocol (DISP).
+
 ## MEERKAT_ENABLE_DOP
 
 If set to `1`, this enables Directory Operational Binding Management Protocol
@@ -793,6 +797,23 @@ Possible values are:
   in plain text or with some form of hashing or encryption.
 - `2` for strong authentication, which corresponds to Strong or SPKM authentication.
 
+## MEERKAT_MIN_AUTH_LEVEL_FOR_DISP
+
+The integer representation of the minimum authentication level required for
+Meerkat DSA to accept DISP requests.
+
+This defaults to `1`, which corresponds to simple authentication, meaning that,
+to use DISP, a DSA must have authenticated using simple authentication
+or something stronger.
+
+Possible values are:
+
+- `0` for no authentication / anonymous.
+- `1` for simple authentication, which corresponds to any authentication
+  mechanism using a password, regardless of whether that password is presented
+  in plain text or with some form of hashing or encryption.
+- `2` for strong authentication, which corresponds to Strong or SPKM authentication.
+
 ## MEERKAT_MIN_AUTH_LEVEL_FOR_OB
 
 The integer representation of the minimum authentication level required for
@@ -821,6 +842,14 @@ does not matter.
 This is important, because chaining can have the effect of making a request
 "fan-out" to multiple DSAs. A nefarious request may multiply exponentially
 without this check in place.
+
+## MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_DISP
+
+The minimum `localQualifier` "points" required (on top of the minimum
+authentication level) for Meerkat DSA to accept DISP requests.
+If the minimum authentication level--as configured by the
+`MEERKAT_MIN_AUTH_LEVEL_FOR_DISP` environment variable--is exceeded, this
+does not matter.
 
 ## MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_FOR_OB
 
@@ -1721,6 +1750,19 @@ integer. If unspecified, this defaults to `5` (five seconds).
 
 If set to `1`, Meerkat DSA will NOT chain DAP operations that have not been
 signed.
+
+## MEERKAT_SIGNING_REQUIRED_FOR_DISP
+
+If set to `1`, Meerkat DSA will reject Directory Information Shadowing Protocol
+(DISP) requests that are not signed.
+
+:::info
+
+This exists because shadowing is an extremely security-sensitive aspect of
+directory management. Requiring signing is a great way to prevent hacking
+attempts via malicious DISP requests.
+
+:::
 
 ## MEERKAT_SIGNING_REQUIRED_FOR_OB
 

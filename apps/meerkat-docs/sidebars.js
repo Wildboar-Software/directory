@@ -32,6 +32,7 @@ const sidebars = {
                 'online-pki',
                 'signing',
                 'opbinding',
+                'shadowing',
                 'dynamic',
                 'administration',
                 'troubleshooting',

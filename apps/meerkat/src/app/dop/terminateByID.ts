@@ -15,6 +15,11 @@ import {
     _decode_NonSpecificHierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NonSpecificHierarchicalAgreement.ta";
 import dnToVertex from "../dit/dnToVertex";
+import {
+    id_op_binding_shadow,
+} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
+import { removeConsumer } from "./terminate/removeConsumer";
+import { removeSupplier } from "./terminate/removeSupplier";
 
 /**
  * @summary Terminates an operational binding by its database ID.
@@ -124,10 +129,46 @@ async function terminate (
             }
             break;
         }
+        case (id_op_binding_shadow.toString()): {
+            // We can delete these, supplier or not, since OBs are supposed to
+            // be unique across (type, id).
+            const t1 = ctx.pendingShadowingUpdateCycles.get(ob.binding_identifier);
+            const t2 = ctx.shadowUpdateCycles.get(ob.binding_identifier);
+            t1?.clear();
+            if (t2) {
+                clearTimeout(t2);
+            }
+            ctx.pendingShadowingUpdateCycles.delete(ob.binding_identifier);
+            ctx.shadowUpdateCycles.delete(ob.binding_identifier);
+            const iAmSupplier: boolean = (
+                // The initiator was the supplier and this DSA was the initiator...
+                ((ob.initiator === OperationalBindingInitiator.ROLE_A) && (ob.outbound))
+                // ...or, the initiator was the consumer, and this DSA was NOT the initiator.
+                || ((ob.initiator === OperationalBindingInitiator.ROLE_B) && (!ob.outbound))
+            );
+            if (iAmSupplier) {
+                await removeConsumer(ctx, ob.binding_identifier);
+            } else {
+                await removeSupplier(ctx, ob.binding_identifier);
+            }
+            break;
+        }
         default: {
             //
         }
     }
+
+    // We terminate all revisions of this OB, just to be sure it is dead.
+    await ctx.db.operationalBinding.updateMany({
+        where: {
+            binding_type: ob.binding_type,
+            binding_identifier: ob.binding_identifier,
+            terminated_time: null,
+        },
+        data: {
+            terminated_time: new Date(),
+        },
+    });
 }
 
 export default terminate;

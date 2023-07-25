@@ -47,7 +47,9 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
 import valuesFromAttribute from "../x500/valuesFromAttribute";
 import { AttributeErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData.ta";
-import { AttributeErrorData_problems_Item } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData-problems-Item.ta";
+import {
+    AttributeErrorData_problems_Item,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeErrorData-problems-Item.ta";
 import {
     AttributeProblem_contextViolation,
     AttributeProblem_undefinedAttributeType,
@@ -238,7 +240,6 @@ import {
     subtreeSpecification,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/subtreeSpecification.oa";
 import {
-    SubtreeSpecification,
     _decode_SubtreeSpecification,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
 import {
@@ -261,7 +262,9 @@ import {
     pwdModifyEntryAllowed,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdModifyEntryAllowed.oa";
 import { getAdministrativePoints } from "../dit/getAdministrativePoints";
-import { id_ar_pwdAdminSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-pwdAdminSpecificArea.va";
+import {
+    id_ar_pwdAdminSpecificArea,
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-pwdAdminSpecificArea.va";
 import { pwdAdminSubentry } from "@wildboar/x500/src/lib/collections/objectClasses";
 import { UserPwd } from "@wildboar/x500/src/lib/modules/PasswordPolicy/UserPwd.ta";
 import {
@@ -269,6 +272,12 @@ import {
     CHECK_PWD_QUALITY_OK,
 } from "../password/checkPasswordQuality";
 import { attributeValueFromDB } from "../database/attributeValueFromDB";
+import {
+    SubordinateChanges,
+} from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SubordinateChanges.ta";
+import { getShadowIncrementalSteps } from "../dop/getRelevantSOBs";
+import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh";
+import { governingStructureRule } from "@wildboar/x500/src/lib/collections/attributes";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -315,7 +324,7 @@ const notPermittedData =  (
  *
  * @function
  */
-function isAcceptableTypeForAlterValues (el: ASN1Element): boolean {
+export function isAcceptableTypeForAlterValues (el: ASN1Element): boolean {
     return (
         (el.tagClass === ASN1TagClass.universal)
         && (
@@ -2449,6 +2458,7 @@ async function executeEntryModification (
         return executeReplaceValues(attrWithDefaultContexts, ...commonArguments);
     }
     else {
+        // TODO: Log not-understood alternative.
         return []; // Any other alternative not understood.
     }
 }
@@ -2875,6 +2885,7 @@ async function modifyEntry (
         optionalAttributes.add(id_aca_accessControlScheme.toString());
         optionalAttributes.add(id_aca_subentryACI.toString());
         optionalAttributes.add(hierarchyParent["&id"].toString());
+        optionalAttributes.add(governingStructureRule["&id"].toString());
     }
     if (isSubentry) {
         optionalAttributes.add(id_aca_prescriptiveACI.toString());
@@ -3742,7 +3753,19 @@ async function modifyEntry (
         }
     }
 
-    // TODO: Update Shadows
+    const sobs = await getShadowIncrementalSteps(ctx, target, { modify: data.changes });
+    for (const [ sob_id, sob_obid, sob_change ] of sobs) {
+        const change = new SubordinateChanges(
+            target.dse.rdn,
+            sob_change,
+        );
+        saveIncrementalRefresh(ctx, sob_id, target.immediateSuperior!, change)
+            .then() // INTENTIONAL_NO_AWAIT
+            .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_save_incremental_update_step", {
+                sob_id: sob_obid,
+                e,
+            })));
+    }
 
     const signResults: boolean = (
         (data.securityParameters?.target === ProtectionRequest_signed)

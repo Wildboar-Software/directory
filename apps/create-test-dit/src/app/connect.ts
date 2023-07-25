@@ -64,26 +64,6 @@ async function connect (
                     : undefined,
             ),
         };
-        const pdu: IDM_PDU = {
-            bind: new IdmBind(
-                dap_ip["&id"]!,
-                {
-                    directoryName: {
-                        rdnSequence: [],
-                    },
-                },
-                {
-                    directoryName: {
-                        rdnSequence: [],
-                    },
-                },
-                _encode_DSABindArgument(new DSABindArgument(
-                    credentials,
-                    undefined, // v1
-                ), DER),
-            ),
-        };
-        const encoded = _encode_IDM_PDU(pdu, DER);
         await new Promise((resolve, reject) => {
             idm.events.once("bindError", (err) => {
                 reject(err);
@@ -91,7 +71,13 @@ async function connect (
             idm.events.once("bindResult", (result) => {
                 resolve(result);
             });
-            idm.write(encoded.toBytes());
+            idm.writeBind(
+                dap_ip["&id"]!,
+                _encode_DSABindArgument(new DSABindArgument(
+                    credentials,
+                    undefined, // v1
+                ), DER),
+            );
         });
     }
     const ret: Connection = {

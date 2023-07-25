@@ -9,7 +9,7 @@ import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import dnToVertex from "../../dit/dnToVertex";
-import { Knowledge } from "@prisma/client";
+import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
 import { DER } from "asn1-ts/dist/node/functional";
 import createEntry from "../../database/createEntry";
 import addAttributes from "../../database/entry/addAttributes";
@@ -37,6 +37,9 @@ import { strict as assert } from "assert";
 import { NHOBSuperiorToSubordinate } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NHOBSuperiorToSubordinate.ta";
 import deleteEntry from "../../database/deleteEntry";
 import { RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
+import { id_op_binding_shadow } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
+import { updateShadowConsumer } from "../../disp/createShadowUpdate";
+import { MeerkatContext } from "../../ctx";
 
 async function partiallyResolveDN (ctx: Context, dn: DistinguishedName): Promise<Vertex> {
     let current: Vertex = ctx.dit.root;
@@ -71,7 +74,7 @@ async function partiallyResolveDN (ctx: Context, dn: DistinguishedName): Promise
  */
 export
 async function updateContextPrefix (
-    ctx: Context,
+    ctx: MeerkatContext,
     uuid: string,
     oldAgreementImmediateSuperior: DistinguishedName,
     mod: SuperiorToSubordinateModification | NHOBSuperiorToSubordinate, // These two types are identical.
@@ -270,6 +273,69 @@ async function updateContextPrefix (
             }
             saveAccessPoint(ctx, ap, Knowledge.SUPERIOR, ctx.dit.root.dse.id); // INTENTIONAL_NO_AWAIT
         });
+
+    const now = new Date();
+    const possibly_related_sobs = await ctx.db.operationalBinding.findMany({
+        where: {
+            /**
+             * This is a hack for getting the latest version: we are selecting
+             * operational bindings that have no next version.
+             */
+            next_version: {
+                none: {},
+            },
+            binding_type: id_op_binding_shadow.toString(),
+            entry_id: {
+                in: (() => {
+                    const dse_ids: number[] = [];
+                    let current: Vertex | undefined = currentRoot;
+                    while (current) {
+                        dse_ids.push(current.dse.id);
+                        current = current.immediateSuperior;
+                    }
+                    return dse_ids;
+                })(),
+            },
+            accepted: true,
+            terminated_time: null,
+            validity_start: {
+                lte: now,
+            },
+            AND: [
+                {
+                    OR: [
+                        {
+                            validity_end: null,
+                        },
+                        {
+                            validity_end: {
+                                gte: now,
+                            },
+                        },
+                    ],
+                },
+                {
+                    OR: [ // This DSA is the supplier if one of these conditions are true.
+                        { // This DSA initiated an OB in which it is the supplier.
+                            initiator: OperationalBindingInitiator.ROLE_A,
+                            outbound: true,
+                        },
+                        { // This DSA accepted an OB from a consumer.
+                            initiator: OperationalBindingInitiator.ROLE_B,
+                            outbound: false,
+                        },
+                    ],
+                },
+            ],
+        },
+        select: {
+            id: true,
+            binding_identifier: true,
+            agreement_ber: true,
+        },
+    });
+    // TODO: Cascade the incremental updates to secondary shadows instead of performing a total refresh.
+    await Promise.all(possibly_related_sobs.map((sob) => updateShadowConsumer(ctx, sob.id, true)));
 }
 
 export default updateContextPrefix;

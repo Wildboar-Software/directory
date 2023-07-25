@@ -22,6 +22,7 @@ import {
     ServiceProblem_unwillingToPerform,
     ServiceProblem_invalidReference,
     ServiceProblem_loopDetected,
+    ServiceProblem_timeLimitExceeded,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
 import type { ChainedRequest } from "@wildboar/x500/src/lib/types/ChainedRequest";
@@ -73,6 +74,7 @@ import { bindForChaining } from "../net/bindToOtherDSA";
 import { OperationOutcome } from "@wildboar/rose-transport";
 import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
 import { ContinuationReference } from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
+import { addMilliseconds, differenceInMilliseconds } from "date-fns";
 
 /**
  * @summary The Access Point Information Procedure, as defined in ITU Recommendation X.518.
@@ -89,7 +91,7 @@ import { ContinuationReference } from "@wildboar/x500/src/lib/modules/Distribute
  * @param signErrors Whether to cryptographically sign errors
  * @param chainingProhibited Whether chaining was prohibited
  * @param cref The continuation reference
- * @returns A result or error
+ * @returns An operation outcome, or null if chaining is prohibited.
  *
  * @function
  * @async
@@ -104,6 +106,7 @@ async function apinfoProcedure (
     signErrors: boolean,
     chainingProhibited: boolean,
     cref: ContinuationReference,
+    deadline?: Date,
 ): Promise<OperationOutcome | null> {
     const op = ("present" in state.invokeId)
         ? assn?.invocations.get(Number(state.invokeId.present))
@@ -128,6 +131,8 @@ async function apinfoProcedure (
             ctx.config.chaining.signChainedRequests,
             api.ae_title.rdnSequence,
             req.opCode,
+            undefined,
+            true,
         ),
     });
     const accessPoints: MasterOrShadowAccessPoint[] = [
@@ -140,6 +145,32 @@ async function apinfoProcedure (
         ),
         ...api.additionalPoints ?? [],
     ];
+    const startTime = new Date();
+    const timeoutTime: Date = deadline ?? addMilliseconds(startTime, 60_000);
+    let timeRemaining: number = 0;
+    const checkTimeLimit = () => {
+        if (new Date() < timeoutTime) {
+            return;
+        }
+        throw new errors.ServiceError(
+            ctx.i18n.t("err:time_limit"),
+            new ServiceErrorData(
+                ServiceProblem_timeLimitExceeded,
+                [],
+                createSecurityParameters(
+                    ctx,
+                    signErrors,
+                    assn?.boundNameAndUID?.dn,
+                    undefined,
+                    serviceError["&errorCode"],
+                ),
+                ctx.dsa.accessPoint.ae_title.rdnSequence,
+                state.chainingArguments.aliasDereferenced,
+                undefined,
+            ),
+            signErrors,
+        );
+    };
     for (const ap of accessPoints) {
         if (op?.abandonTime) {
             op.events.emit("abandon");
@@ -162,6 +193,7 @@ async function apinfoProcedure (
                 signErrors,
             );
         }
+        checkTimeLimit();
         const tenativeTrace: TraceItem[] = [
             ...req.chaining.traceInformation,
             new TraceItem(
@@ -202,13 +234,15 @@ async function apinfoProcedure (
             && (
                 excludeShadows
                 || (nameResolutionIsProceeding && nameResolveOnMaster)
+                || isModificationOperation(req.opCode) // If mod operation, we can only use the master.
             )
         ) {
             continue;
         }
+        timeRemaining = Math.abs(differenceInMilliseconds(new Date(), timeoutTime));
         let connected: boolean = false;
         try {
-            const dsp_client = await bindForChaining(ctx, assn, op, ap, false, signErrors);
+            const dsp_client = await bindForChaining(ctx, assn, op, ap, false, signErrors, timeRemaining);
             if (!dsp_client) {
                 ctx.log.warn(ctx.i18n.t("log:could_not_establish_connection", {
                     ae: stringifyDN(ctx, ap.ae_title.rdnSequence),
@@ -228,15 +262,49 @@ async function apinfoProcedure (
             const payload: Chained = ctx.config.chaining.signChainedRequests
                 ? signChainedArgument(ctx, argument)
                 : argument;
+            timeRemaining = Math.abs(differenceInMilliseconds(new Date(), timeoutTime));
             const response = await dsp_client.rose.request({
                 invoke_id: {
                     present: generateUnusedInvokeID(ctx),
                 },
                 code: req.opCode,
                 parameter: chainedRead.encoderFor["&ArgumentType"]!(payload, DER),
+                timeout: timeRemaining,
             });
+            // We intentionally do not unbind so that this connection can be re-used.
+            // dsp_client.unbind().then().catch();
+            // if (dsp_client.rose.socket?.writable) {
+            //     dsp_client.rose.socket?.end(); // Unbind does not necessarily close the socket.
+            // }
 
-            if ("error" in response) {
+            if ("result" in response) {
+                assert(chainedAbandon["&operationCode"]);
+                assert("local" in chainedAbandon["&operationCode"]);
+                if (
+                    ctx.config.chaining.checkSignaturesOnResponses
+                    && ("local" in response.result.code)
+                    && (response.result.code.local !== chainedAbandon["&operationCode"]!.local)
+                ) {
+                    const decoded = chainedRead.decoderFor["&ResultType"]!(response.result.parameter);
+                    const resultData = getOptionallyProtectedValue(decoded);
+                    if ("signed" in decoded) {
+                        const certPath = resultData.chainedResult.securityParameters?.certification_path;
+                        await verifySIGNED(
+                            ctx,
+                            assn,
+                            certPath,
+                            state.invokeId,
+                            state.chainingArguments.aliasDereferenced,
+                            decoded.signed,
+                            _encode_Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1,
+                            signErrors,
+                            "result",
+                        );
+                    }
+                }
+                return response;
+            }
+            else if ("error" in response) {
                 const errcode: Code = response.error.code ?? { local: -1 };
                 if (compareCode(errcode, referral["&errorCode"]!)) {
                     /**
@@ -269,35 +337,33 @@ async function apinfoProcedure (
                 } else {
                     return response;
                 }
-            } else if ("result" in response) {
-                assert(chainedAbandon["&operationCode"]);
-                assert("local" in chainedAbandon["&operationCode"]);
-                if (
-                    ctx.config.chaining.checkSignaturesOnResponses
-                    && ("local" in response.result.code)
-                    && (response.result.code.local !== chainedAbandon["&operationCode"]!.local)
-                ) {
-                    const decoded = chainedRead.decoderFor["&ResultType"]!(response.result.parameter);
-                    const resultData = getOptionallyProtectedValue(decoded);
-                    if ("signed" in decoded) {
-                        const certPath = resultData.chainedResult.securityParameters?.certification_path;
-                        await verifySIGNED(
-                            ctx,
-                            assn,
-                            certPath,
-                            state.invokeId,
-                            state.chainingArguments.aliasDereferenced,
-                            decoded.signed,
-                            _encode_Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1,
-                            signErrors,
-                            "result",
-                        );
-                    }
+            }
+            else if ("reject" in response) {
+                // If it is a mod operation, we do not attempt again,
+                // because we do not want to duplicate operations.
+                if (isModificationOperation(req.opCode)) {
+                    return response;
                 }
-                return response;
+                continue; // Always try another.
+            }
+            else if ("abort" in response) {
+                // If it is a mod operation, we do not attempt again,
+                // because we do not want to duplicate operations.
+                if (isModificationOperation(req.opCode)) {
+                    return response;
+                }
+                continue; // Always try another.
+            }
+            else if ("timeout" in response) {
+                // If it is a mod operation, we do not attempt again,
+                // because we do not want to duplicate operations.
+                if (isModificationOperation(req.opCode)) {
+                    return response;
+                }
+                continue; // Always try another.
             }
         } catch (e) {
-            if (connected) {
+            if (!connected) {
                 ctx.log.warn(ctx.i18n.t("log:could_not_establish_connection", {
                     context: "with_error",
                     ae: stringifyDN(ctx, ap.ae_title.rdnSequence),
