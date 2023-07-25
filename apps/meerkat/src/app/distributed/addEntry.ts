@@ -1603,7 +1603,6 @@ async function addEntry (
                 sk.ae_title.rdnSequence,
                 NAMING_MATCHER))
     );
-    // TODO: Define a new createEntry() that does not return anything.
     const newEntry = await createDse(ctx, immediateSuperior, rdn, {
         governingStructureRule: governingStructureRule
             ? Number(governingStructureRule)
