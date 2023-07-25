@@ -1353,8 +1353,8 @@ function createMockPersonAttributes (
         randomPhoneNumber(),
         undefined,
     );
-    const password = randomBytes(6).toString("base64");
-    const desc = `This user's password is '${password}'.`;
+    // const password = randomBytes(6).toString("base64");
+    // const desc = `This user's password is '${password}'.`;
 
     const rdn: RelativeDistinguishedName = [
         new AttributeTypeAndValue(
@@ -1419,14 +1419,14 @@ function createMockPersonAttributes (
             telephoneNumber["&id"],
             [telephoneNumber.encoderFor["&Type"]!(phone, DER)],
         ),
-        new Attribute(
-            description["&id"],
-            [description.encoderFor["&Type"]!({ uTF8String: desc }, DER)],
-        ),
-        new Attribute(
-            userPassword["&id"],
-            [userPassword.encoderFor["&Type"]!(Buffer.from(password), DER)],
-        ),
+        // new Attribute(
+        //     description["&id"],
+        //     [description.encoderFor["&Type"]!({ uTF8String: desc }, DER)],
+        // ),
+        // new Attribute(
+        //     userPassword["&id"],
+        //     [userPassword.encoderFor["&Type"]!(Buffer.from(password), DER)],
+        // ),
         // new Attribute(
         //     seeAlso["&id"],
         //     [seeAlso.encoderFor["&Type"]!({ uTF8String: cn }, DER)],
