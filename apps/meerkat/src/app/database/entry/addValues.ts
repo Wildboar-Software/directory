@@ -48,6 +48,7 @@ import getEqualityNormalizer from "../../x500/getEqualityNormalizer";
  * @function
  * @async
  */
+export
 async function validateValues(
     ctx: Context,
     entry: Vertex,
@@ -265,6 +266,12 @@ async function validateValues(
  * independently or within a Prisma transaction. These promises together will
  * execute the database queries to add the values to the entry.
  *
+ * This is deprecated because it is a slow means to add values to an entry.
+ * `addAttributes()` should be used instead, chiefly because it can take
+ * advantage of the fact that the attributes are already grouped by type, their
+ * contexts are grouped by type, and their values are grouped by whether they
+ * have contexts or not.
+ *
  * @param ctx The context object
  * @param entry The vertex to which attributes are to be added
  * @param values The values to be added to the entry
@@ -279,6 +286,7 @@ async function validateValues(
  *
  * @function
  * @async
+ * @deprecated Use `addAttributes()` instead.
  */
 export
 async function addValues(

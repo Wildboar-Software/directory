@@ -9,7 +9,7 @@ import type {
     RelativeDistinguishedName as RDN,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
 import { top } from "@wildboar/x500/src/lib/modules/InformationFramework/alias.oa";
-import addValues from "./entry/addValues";
+import addAttributes from "./entry/addAttributes";
 import { strict as assert } from "assert";
 import { randomUUID } from "crypto";
 import getStructuralObjectClass from "../x500/getStructuralObjectClass";
@@ -21,7 +21,6 @@ import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
 import { groupByOID } from "@wildboar/x500";
-import valuesFromAttribute from "../x500/valuesFromAttribute";
 import {
     ID_OC,
     ID_AEN,
@@ -245,10 +244,10 @@ async function createDse (
         },
     };
     await ctx.db.$transaction([
-        ...await addValues(
+        ...await addAttributes(
             ctx,
             vertex,
-            attributes.flatMap(valuesFromAttribute),
+            attributes,
             modifier,
             false, // Don't check for existing values.
             signErrors,
@@ -490,10 +489,10 @@ async function createEntry (
         },
     };
     const txn = await ctx.db.$transaction([
-        ...await addValues(
+        ...await addAttributes(
             ctx,
             vertex,
-            attributes.flatMap(valuesFromAttribute),
+            attributes,
             modifier,
             false, // Don't check for existing values.
             signErrors,
