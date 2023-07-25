@@ -102,9 +102,7 @@ async function addAttributes (
                     value.value.byteLength,
                 ),
                 // TODO: Should you just get rid of this column? Or at least not fill it in?
-                // TODO: Test insertion performance without this.
-                // jer: value.toJSON() as Prisma.InputJsonValue,
-                // jer: undefined,
+                jer: value.toJSON() as Prisma.InputJsonValue,
                 normalized_str: normalizer?.(ctx, value),
             });
         }
@@ -122,7 +120,7 @@ async function addAttributes (
                         vwc.value.value.byteOffset,
                         vwc.value.value.byteLength,
                     ),
-                    // FIXME: jer: vwc.value.toJSON() as Prisma.InputJsonValue,
+                    jer: vwc.value.toJSON() as Prisma.InputJsonValue,
                     normalized_str: normalizer?.(ctx, vwc.value),
                     ContextValue: {
                         createMany: {
