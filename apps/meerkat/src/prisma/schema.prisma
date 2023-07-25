@@ -675,7 +675,8 @@ model DistinguishedValue {
   order_index    Int
 
   @@unique([entry_id, type_oid(length: 32)])
-  @@index([type_oid(length: 32), tag_class, tag_number, constructed, normalized_str])
+  // I'm not sure if the entry_id really belongs in the index, but
+  @@unique([type_oid(length: 32), normalized_str, entry_id])
 }
 
 model EntryObjectClass {
