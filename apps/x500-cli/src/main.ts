@@ -260,13 +260,6 @@ async function main () {
             })
             .command("dop", "Directory Operational Binding Management Protocol", (dopYargs) => {
                 add_protocol_args(dopYargs)
-                // .command(
-                //     "<supply|consume>",
-                //     "Supply or consume a replicated area (shadow)",
-                //     a => a
-                //         .command()
-                //         .demandCommand(),
-                // )
                 .command(dop_become_nssr(ctx))
                 .command(dop_join_nssr(ctx))
                 .command(dop_shadow(ctx, "consume"))

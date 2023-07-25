@@ -1310,7 +1310,6 @@ export function dispatch_TCONreq(
     if (!tpdu.preferred_max_tpdu_size) {
         tpdu.preferred_max_tpdu_size = c.max_tpdu_size;
     }
-    // FIXME: This next else-if is wrong. preferred_max_tpdu_size cannot become a legitimate max_tpdu_size value.
     else {
         c.max_tpdu_size = tpdu.preferred_max_tpdu_size;
     }

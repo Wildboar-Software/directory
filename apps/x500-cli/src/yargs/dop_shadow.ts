@@ -15,14 +15,6 @@ function create (ctx: Context, variant: "supply" | "consume"): CommandModule {
         describe: `${_.startCase(variant)} a replicated area (shadow)`,
         builder: (y) => {
             return y
-                // .positional("sorc", {
-                //     type: "string",
-                //     description: "Whether to become a supplier or consumer",
-                //     choices: [
-                //         "supply",
-                //         "consume",
-                //     ],
-                // })
                 .positional("cp", {
                     type: "string",
                     description: "The object to be subordinated to the superior DSA",
