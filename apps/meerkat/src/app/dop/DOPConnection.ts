@@ -361,7 +361,31 @@ async function handleRequestAndErrors (
                 || !sigValueElement
                 || !securityParameters.certification_path
             ) {
-                throw new MistypedArgumentError("0d5a1692-0c8a-4b7e-bd8d-9590e056b907");
+                throw new SecurityError(
+                    ctx.i18n.t("err:missing_sig_or_cert_path"),
+                    new SecurityErrorData(
+                        SecurityProblem_inappropriateAuthentication,
+                        undefined,
+                        undefined,
+                        [],
+                        createSecurityParameters(
+                            ctx,
+                            true,
+                            assn.boundNameAndUID?.dn,
+                            undefined,
+                            securityError["&errorCode"],
+                        ),
+                        ctx.dsa.accessPoint.ae_title.rdnSequence,
+                        false,
+                        undefined,
+                    ),
+                    /**
+                     * It is difficult to extract the errorProtection from DOP
+                     * arguments, because security parameters has a different tag
+                     * based on the arguments.
+                     */
+                    false,
+                );
             }
             const certPath = securityParameters.certification_path;
             const sigAlg = _decode_AlgorithmIdentifier(sigAlgElement);
