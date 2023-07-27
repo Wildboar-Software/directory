@@ -275,7 +275,14 @@ class IDMConnection {
                 }
                 this.buffer = this.buffer.slice(IDM_V1_FRAME_SIZE + length);
                 this.framesReceived++;
-                setImmediate(this.chompFrame.bind(this));
+                const fn = this.chompFrame.bind(this);
+                setImmediate(() => {
+                    try {
+                        fn();
+                    } catch (e) {
+                        this.events.emit("socketError", e);
+                    }
+                });
             }
         }
     }
