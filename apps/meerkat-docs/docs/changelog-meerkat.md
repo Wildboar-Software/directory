@@ -3,7 +3,8 @@
 ## Version 2.7.0
 
 The defining aspect of this version is support for shadowing, which allows you
-to replicate entries across multiple DSAs.
+to replicate entries across multiple DSAs. It also includes many very serious
+bug fixes.
 
 ## New Features / Improvements
 
@@ -51,6 +52,11 @@ to replicate entries across multiple DSAs.
     already determined to be invalid.
 - Fix back-propagation of rejects, aborts, and timeouts received from chained
   operations.
+- Fix crash when encountering a malformed Invoke ID
+
+### Upgrading
+
+You do not need to do anything for this to work other than apply migrations.
 
 ## Version 2.6.0
 
