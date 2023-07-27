@@ -7,6 +7,13 @@ operation with the `targetSystem` parameter set to the access point of the
 subordinate DSA to which the entry is to be added. This is a standard behavior
 defined in the X.500 specifications.
 
+The `governingStructureRule` is supposed to be replicated from a hierarchical
+superior to a hierarchical subordinate, but in case it is not, Meerkat DSA, when
+acting as a subordinate DSA in a HOB will attempt to calculate the governing
+structure rule from what information is replicated regarding the superior
+administrative points and subentries. This applies to the context prefix and the
+`immSupr` DSE that is created above it.
+
 ## Non-Specific Hierarchical Operational Bindings (NHOBs)
 
 Once a Non-Specific Hierarchical Operational Binding (NHOB) is established, a
