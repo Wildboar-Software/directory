@@ -9,6 +9,12 @@ IDM-over-TLS, and ITOT-over-TLS as transports (like the other directory
 protocols). Meerkat DSA is capable of acting as a shadow supplier and consumer
 at the first-level and otherwise.
 
+## Shadow Update Size Limits
+
+There are no size limits on shadow updates imposed by Meerkat DSA, but shadowing
+has only been tested with 20,000 entries. It is believed that Meerkat DSA should
+work fine up to 100,000 entries and beyond.
+
 ## Establishment
 
 Shadow operational bindings may be proposed like other operational bindings
@@ -86,6 +92,15 @@ Meerkat DSA has no defenses against this scenario. Administrators should only
 accept operational bindings from trustworthy parties. It falls upon
 administrators to ensure the sanity of shadowing agreements before agreeing to
 them.
+
+## Update Spill-over
+
+Long-running shadow updates will not be terminated. They will run to completion,
+and if they take so long that they spill over into another shadow update,
+Meerkat DSA will not detect this or abort the shadow update. It falls on
+administrators to ensure that shadow updates are not taking too long. In
+general, it is recommended to make shadow update intervals no shorter than one
+hour.
 
 ## Role Reversal
 
@@ -189,3 +204,74 @@ when the database _claims_ that it has saved the data. What constitutes
 the terms "Write-Through" or "Write-Back."
 
 :::
+
+## Usage of Shadowed Entries
+
+The X.500 specifications are somewhat vague as to how to validate whether the
+locally shadowed information can satisfy a request, and therefore, whether a
+shadow DSA should respond to the request, or chain it to the master DSA,
+particularly as it relates to the `search` operation.
+
+:::note
+
+Meerkat DSA's rules for determining whether a request can be satisfied locally
+can and will change throughout time, and in addition to this, the code
+embodying these rules is very complex and likely to be buggy. What follows
+should be considered to be _generally_ true.
+
+:::
+
+As heuristics for determining whether a Meerkat DSA shadow consumer will
+consider its shadowed data "suitable" for fulfilling the request, the following
+general principles apply:
+
+- All modification operations always get chained to the master DSA.
+- For shadowed information to be suitable, the target entry / entries must be
+  present.
+  - This is obvious for single-entry interrogation procedures, such as `read` and `compare`.
+  - For `list`, all immediate subordinates must be replicated, but they do not
+    have to have any specific attributes or values.
+  - For `search` requests, only the base entry must be present if `baseObject`
+    `search` is used.
+    - Theoretically, a search could return the subtree of family members from a
+      `baseObject` search. This implementation will assume that compound
+      entries are always replicated as a unit.
+  - All immediate subordinates under the base entry must be replicated if
+    `oneLevel` `search` is used.
+  - If `wholeSubtree` `search` is used, all shadowing agreements that apply to
+    the searched area must use empty shadow subtrees (a `SubtreeSpecification`
+    that specifies no `base`, `minimum`, `maximum`, `specificExclusions`, or
+    `specificationFilter` of any kind). This is the only way to ensure that the
+    shadowed area would contain all the same entries that the master DSA(s)
+    would.
+- In addition to this, the filtering and selection of attributes is considered:
+  - As stated in the specifications, operational attributes never factor into
+    deciding whether or not an entry is suitable, because they are always
+    considered incomplete within shadowed DSEs. If you want authoritative,
+    up-to-date operational attributes, query the master DSA.
+  - For single-entry interrogation operations (e.g. `read` and `compare`), the
+    entry will always be suitable if all attributes are replicated, as indicated
+    by the shadow DSE's `attributesComplete` flag.
+  - For `search`, the shadowing agreement is consulted to ensure that all
+    filtered and selected attributes are replicated and complete.
+  - Given the targeted nature of `compare`, the `compare` operation is extremely
+    picky with respect to considering an entry suitable. If `noSubtypeMatch` is
+    not provided as a service control and the entry is incomplete, the shadow
+    DSE will not be suitable, because it cannot be known whether some unknown
+    subtype of the asserted attribute type has been replicated.
+    - For similar reasons, the target entry will be unsuitable unless the
+      `dontMatchFriends` service control is used or all friend attributes are
+      replicated as well.
+- Determining entry suitability based on contexts is somewhat shaky. The code
+  for determining if there is sufficient overlap between replicated contexts and
+  asserted or requested contexts gets extremely complicated. As such, it is
+  strongly recommended to always replicate all contexts in Meerkat DSA.
+- In general, the more narrow the focus of an operation, the more picky Meerkat
+  DSA's implementation of the Check Suitability procedure will be for
+  determining whether the shadowed data is suitable. A `compare` operation will
+  be extremely strict, whereas a `search` operation will be much more inclined
+  to using shadowed data.
+
+You can check the `performer` field of the responses to see whether the shadow
+DSA or the master DSA responded. This will tell you whether or not the target
+entry was determined to be "suitable" with respect to the request.
