@@ -257,6 +257,11 @@ noted below are nuances in Meerkat DSA:
   prefixes beneath a Non-Specific Subordinate Reference (NSSR). Having entries
   of type `cp` beneath an NSSR are essential for list and search operations to
   work correctly across NHOBs.
+- There is no way for a shadow supplier to indicate to a shadow consumer that it
+  is the master for the replicated area. There is a `master` field in the
+  shadowing agreement, but this is used generally just to indicate where the
+  master DSA can be reached. As such, Meerkat DSA will assume that, if this
+  field is present, the correspondent DSA is _not_ the master.
 
 ## The "Never Contributing" Bug
 
