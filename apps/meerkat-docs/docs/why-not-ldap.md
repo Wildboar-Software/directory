@@ -19,6 +19,13 @@ many more features over LDAP, and it is not much harder to implement a DAP
 client over an LDAP client. That said, I believe Directory Access Protocol to
 be a superior alternative.
 
+LDAP once served an important role as a simpler protocol for directory
+operations, and to some extent it still does. But it should be understood to be
+_lightweight_ only; its value lies in supporting low-power devices and other
+simple clients. An LDAP server is essentially just a searchable string
+database, whereas an X.500 directory server is so feature rich as to be an
+application in and of itself.
+
 To elaborate upon the features that Directory Access Protocol (DAP) has that
 Lightweight Directory Access Protocol (LDAP) does not:
 
@@ -26,7 +33,13 @@ Lightweight Directory Access Protocol (LDAP) does not:
   - LDAP has something similar, but it is just a very constrained string, and
     the only defined use of it is to specify a language.
 - Compound entry-awareness, meaning that you can view a compound entry has
-  having nested entries, rather than viewing them all separately
+  having nested entries, rather than viewing them all separately, and you can
+  filter on complete compound entries (or subsets thereof), kind of like a
+  join in a relational database. For example, if you have objects of class
+  `device` as child entries to the ancestor of object class `person`, you can
+  search the directory for a `person` who has a `device` that has a particular
+  `serialNumber`. This is not possible with LDAP; there is no join-like concept
+  in LDAP.
 - True distributed operation: the X.500 protocols capably support fully
   distributed operation. LDAP has little to no concept of distributed operation
   and primarily uses referrals and expects clients to issue their own
@@ -40,6 +53,20 @@ Lightweight Directory Access Protocol (LDAP) does not:
 - Password management operations, `changePassword` and `administerPassword`
   - There are extensions for password modification in LDAP, but no guarantee
     that any LDAP server supports them, since it is just an extension.
+- Mapping-based matching, including Zonal Matching, where the directory can
+  intelligently modify a search filter that names a specific location (such as a
+  city) to be a "fuzzy search" over all nearby postal codes.
+- Signed requests, responses, and errors, providing end-to-end integrity,
+  despite the distributed nature of the directory.
+- More authentication options: authentication via a cryptographically-signed
+  token using X.509 PKI, or via the
+  [GSS-API's SPKM mechanism](https://www.rfc-editor.org/rfc/rfc2025).
+- Data integrity at rest using cryptographically-signed entries, attributes, and
+  attribute values.
+- A well-defined universal access control mechanism.
+  - This is one huge problem with LDAP. There is no way to define access
+    controls that will be understood by all LDAP servers. An X.500 directory
+    server has multiple standardized access control mechanisms.
 
 Note that a feature being in the list above does not mean that it is currently
 supported by Meerkat DSA. Most features are, though.
