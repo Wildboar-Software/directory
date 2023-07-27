@@ -59,3 +59,34 @@ about 10 entries per second when using bulk insertion mode.
 In the future, Meerkat DSA may support Postgres and SQLite for the free version
 and Microsoft SQL Server in the paid version. For now, only MySQL is supported.
 MariaDB might be compatible, but a single test early on was not successful.
+
+## Performance Tuning
+
+### Connection Pool Size
+
+Empirical testing has not demonstrated any significant performance improvements
+by editing the default connection pool, but it should be done anyway, to avoid
+this being a problem in the first place. In a typical use case, where Meerkat
+DSA is the only client to the backing database, its connection pool may be set
+higher. This can be done by adding a `?connection_limit=##` query parameter to
+the end of your `DATABASE_URL`, like so:
+
+`mysql://root:example@localhost:3306/directory?connection_limit=40`
+
+You'll want to set this number to more than `2*N + 1`, where `N` is the number
+of CPU cores on the system where Meerkat DSA is running; if you set it equal to
+or lower, you will likely hinder performance.
+
+### Unix Sockets
+
+The use of Unix Domain Sockets to connect to the database instead of TCP
+likewise has shown little effect on performance, but if available, Unix Domain
+Sockets should be preferred over TCP sockets. Unix Domain Sockets have much
+lower latency and higher throughput than TCP.
+
+They can be configured by adding the socket name to your `DATABASE_URL` like so:
+
+`mysql://user2:asdf2@localhost/directory2?socket=/var/run/mysqld/mysqld.sock`
+
+Obviously, you'll want to replace `/var/run/mysqld/mysqld.sock` with the real
+path to the Unix socket.
