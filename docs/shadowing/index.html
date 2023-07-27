@@ -11,8 +11,8 @@
 <link rel="icon" href="/directory/img/boar-head-rune-circle.svg">
 <link rel="manifest" href="/directory/manifest.json">
 <meta name="theme-color" content="rgb(37, 194, 160)"><link rel="stylesheet" href="/directory/assets/css/styles.98760b4a.css">
-<link rel="preload" href="/directory/assets/js/runtime~main.5dd9ce94.js" as="script">
-<link rel="preload" href="/directory/assets/js/main.c6e0d0ac.js" as="script">
+<link rel="preload" href="/directory/assets/js/runtime~main.93cedbe9.js" as="script">
+<link rel="preload" href="/directory/assets/js/main.175e71f7.js" as="script">
 </head>
 <body class="navigation-with-keyboard">
 <script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){var t=null;try{t=localStorage.getItem("theme")}catch(t){}return t}();t(null!==e?e:"dark")}()</script><div id="__docusaurus">
@@ -23,7 +23,9 @@ Directory Operational Binding Management Protocol (DOP). The Directory
 Information Shadowing Protocol (DISP) is fully supported, and can use IDM, ITOT,
 IDM-over-TLS, and ITOT-over-TLS as transports (like the other directory
 protocols). Meerkat DSA is capable of acting as a shadow supplier and consumer
-at the first-level and otherwise.</p><h2 class="anchor anchorWithStickyNavbar_LWe7" id="establishment">Establishment<a class="hash-link" href="#establishment" title="Direct link to heading">​</a></h2><p>Shadow operational bindings may be proposed like other operational bindings
+at the first-level and otherwise.</p><h2 class="anchor anchorWithStickyNavbar_LWe7" id="shadow-update-size-limits">Shadow Update Size Limits<a class="hash-link" href="#shadow-update-size-limits" title="Direct link to heading">​</a></h2><p>There are no size limits on shadow updates imposed by Meerkat DSA, but shadowing
+has only been tested with 20,000 entries. It is believed that Meerkat DSA should
+work fine up to 100,000 entries and beyond.</p><h2 class="anchor anchorWithStickyNavbar_LWe7" id="establishment">Establishment<a class="hash-link" href="#establishment" title="Direct link to heading">​</a></h2><p>Shadow operational bindings may be proposed like other operational bindings
 via the use of
 <a href="/directory/docs/opbinding#relayed-operational-bindings">Relayed Operational Bindings</a>.
 Shadow operational bindings proposed by third parties may be agreed to via the
@@ -61,7 +63,12 @@ update its shadow, and its shadow may have another shadow that it updates
 which would cause an infinite loop of updates.</p><p>Meerkat DSA has no defenses against this scenario. Administrators should only
 accept operational bindings from trustworthy parties. It falls upon
 administrators to ensure the sanity of shadowing agreements before agreeing to
-them.</p><h2 class="anchor anchorWithStickyNavbar_LWe7" id="role-reversal">Role Reversal<a class="hash-link" href="#role-reversal" title="Direct link to heading">​</a></h2><p>Meerkat DSA does not support a shadow consumer becoming a shadow supplier
+them.</p><h2 class="anchor anchorWithStickyNavbar_LWe7" id="update-spill-over">Update Spill-over<a class="hash-link" href="#update-spill-over" title="Direct link to heading">​</a></h2><p>Long-running shadow updates will not be terminated. They will run to completion,
+and if they take so long that they spill over into another shadow update,
+Meerkat DSA will not detect this or abort the shadow update. It falls on
+administrators to ensure that shadow updates are not taking too long. In
+general, it is recommended to make shadow update intervals no shorter than one
+hour.</p><h2 class="anchor anchorWithStickyNavbar_LWe7" id="role-reversal">Role Reversal<a class="hash-link" href="#role-reversal" title="Direct link to heading">​</a></h2><p>Meerkat DSA does not support a shadow consumer becoming a shadow supplier
 through a modification of a shadow operational binding. The shadowing roles may
 never be reversed. The use of the DISP operations are policed for their
 origination by the appropriate party in a shadow operational binding.</p><h2 class="anchor anchorWithStickyNavbar_LWe7" id="modification">Modification<a class="hash-link" href="#modification" title="Direct link to heading">​</a></h2><p>Under the hood, the modification of shadowing agreements has almost the same
@@ -112,8 +119,47 @@ Depending on the configuration of your operating system or database, writes may
 not really be persisted. Meerkat DSA responds to the <code>updateShadow</code> operation
 when the database <em>claims</em> that it has saved the data. What constitutes
 &quot;persistence&quot; is a much greater philosophical topic; to learn more, search for
-the terms &quot;Write-Through&quot; or &quot;Write-Back.&quot;</p></div></div></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="theme-doc-footer-edit-meta-row row"><div class="col"><a href="https://github.com/Wildboar-Software/directory/edit/main/website/docs/shadowing.md" target="_blank" rel="noreferrer noopener" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_Z9Sw" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_vwxv"></div></div></footer></article><nav class="pagination-nav docusaurus-mt-lg" aria-label="Docs pages navigation"><a class="pagination-nav__link pagination-nav__link--prev" href="/directory/docs/opbinding"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Operational Bindings</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/directory/docs/dynamic"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Dynamic Entries</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#establishment" class="table-of-contents__link toc-highlight">Establishment</a></li><li><a href="#update-behavior" class="table-of-contents__link toc-highlight">Update Behavior</a></li><li><a href="#secondary-shadows" class="table-of-contents__link toc-highlight">Secondary Shadows</a></li><li><a href="#timing-requirements-and-behavior" class="table-of-contents__link toc-highlight">Timing Requirements and Behavior</a></li><li><a href="#loops" class="table-of-contents__link toc-highlight">Loops</a></li><li><a href="#role-reversal" class="table-of-contents__link toc-highlight">Role Reversal</a></li><li><a href="#modification" class="table-of-contents__link toc-highlight">Modification</a></li><li><a href="#termination" class="table-of-contents__link toc-highlight">Termination</a></li><li><a href="#information-planes-and-alternative-relative-distinguished-names" class="table-of-contents__link toc-highlight">Information Planes and Alternative Relative Distinguished Names</a></li><li><a href="#overlapping-shadowed-areas" class="table-of-contents__link toc-highlight">Overlapping Shadowed Areas</a></li><li><a href="#performance" class="table-of-contents__link toc-highlight">Performance</a></li><li><a href="#network-disruption" class="table-of-contents__link toc-highlight">Network Disruption</a></li></ul></div></div></div></div></main></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2022 Wildboar Software. Built with Docusaurus.</div></div></div></footer></div>
-<script src="/directory/assets/js/runtime~main.5dd9ce94.js"></script>
-<script src="/directory/assets/js/main.c6e0d0ac.js"></script>
+the terms &quot;Write-Through&quot; or &quot;Write-Back.&quot;</p></div></div><h2 class="anchor anchorWithStickyNavbar_LWe7" id="usage-of-shadowed-entries">Usage of Shadowed Entries<a class="hash-link" href="#usage-of-shadowed-entries" title="Direct link to heading">​</a></h2><p>The X.500 specifications are somewhat vague as to how to validate whether the
+locally shadowed information can satisfy a request, and therefore, whether a
+shadow DSA should respond to the request, or chain it to the master DSA,
+particularly as it relates to the <code>search</code> operation.</p><div class="theme-admonition theme-admonition-note alert alert--secondary admonition_LlT9"><div class="admonitionHeading_tbUL"><span class="admonitionIcon_kALy"><svg viewBox="0 0 14 16"><path fill-rule="evenodd" d="M6.3 5.69a.942.942 0 0 1-.28-.7c0-.28.09-.52.28-.7.19-.18.42-.28.7-.28.28 0 .52.09.7.28.18.19.28.42.28.7 0 .28-.09.52-.28.7a1 1 0 0 1-.7.3c-.28 0-.52-.11-.7-.3zM8 7.99c-.02-.25-.11-.48-.31-.69-.2-.19-.42-.3-.69-.31H6c-.27.02-.48.13-.69.31-.2.2-.3.44-.31.69h1v3c.02.27.11.5.31.69.2.2.42.31.69.31h1c.27 0 .48-.11.69-.31.2-.19.3-.42.31-.69H8V7.98v.01zM7 2.3c-3.14 0-5.7 2.54-5.7 5.68 0 3.14 2.56 5.7 5.7 5.7s5.7-2.55 5.7-5.7c0-3.15-2.56-5.69-5.7-5.69v.01zM7 .98c3.86 0 7 3.14 7 7s-3.14 7-7 7-7-3.12-7-7 3.14-7 7-7z"></path></svg></span>note</div><div class="admonitionContent_S0QG"><p>Meerkat DSA&#x27;s rules for determining whether a request can be satisfied locally
+can and will change throughout time, and in addition to this, the code
+embodying these rules is very complex and likely to be buggy. What follows
+should be considered to be <em>generally</em> true.</p></div></div><p>As heuristics for determining whether a Meerkat DSA shadow consumer will
+consider its shadowed data &quot;suitable&quot; for fulfilling the request, the following
+general principles apply:</p><ul><li>All modification operations always get chained to the master DSA.</li><li>For shadowed information to be suitable, the target entry / entries must be
+present.<ul><li>This is obvious for single-entry interrogation procedures, such as <code>read</code> and <code>compare</code>.</li><li>For <code>list</code>, all immediate subordinates must be replicated, but they do not
+have to have any specific attributes or values.</li><li>For <code>search</code> requests, only the base entry must be present if <code>baseObject</code><code>search</code> is used.<ul><li>Theoretically, a search could return the subtree of family members from a
+<code>baseObject</code> search. This implementation will assume that compound
+entries are always replicated as a unit.</li></ul></li><li>All immediate subordinates under the base entry must be replicated if
+<code>oneLevel</code> <code>search</code> is used.</li><li>If <code>wholeSubtree</code> <code>search</code> is used, all shadowing agreements that apply to
+the searched area must use empty shadow subtrees (a <code>SubtreeSpecification</code>
+that specifies no <code>base</code>, <code>minimum</code>, <code>maximum</code>, <code>specificExclusions</code>, or
+<code>specificationFilter</code> of any kind). This is the only way to ensure that the
+shadowed area would contain all the same entries that the master DSA(s)
+would.</li></ul></li><li>In addition to this, the filtering and selection of attributes is considered:<ul><li>As stated in the specifications, operational attributes never factor into
+deciding whether or not an entry is suitable, because they are always
+considered incomplete within shadowed DSEs. If you want authoritative,
+up-to-date operational attributes, query the master DSA.</li><li>For single-entry interrogation operations (e.g. <code>read</code> and <code>compare</code>), the
+entry will always be suitable if all attributes are replicated, as indicated
+by the shadow DSE&#x27;s <code>attributesComplete</code> flag.</li><li>For <code>search</code>, the shadowing agreement is consulted to ensure that all
+filtered and selected attributes are replicated and complete.</li><li>Given the targeted nature of <code>compare</code>, the <code>compare</code> operation is extremely
+picky with respect to considering an entry suitable. If <code>noSubtypeMatch</code> is
+not provided as a service control and the entry is incomplete, the shadow
+DSE will not be suitable, because it cannot be known whether some unknown
+subtype of the asserted attribute type has been replicated.<ul><li>For similar reasons, the target entry will be unsuitable unless the
+<code>dontMatchFriends</code> service control is used or all friend attributes are
+replicated as well.</li></ul></li></ul></li><li>Determining entry suitability based on contexts is somewhat shaky. The code
+for determining if there is sufficient overlap between replicated contexts and
+asserted or requested contexts gets extremely complicated. As such, it is
+strongly recommended to always replicate all contexts in Meerkat DSA.</li><li>In general, the more narrow the focus of an operation, the more picky Meerkat
+DSA&#x27;s implementation of the Check Suitability procedure will be for
+determining whether the shadowed data is suitable. A <code>compare</code> operation will
+be extremely strict, whereas a <code>search</code> operation will be much more inclined
+to using shadowed data.</li></ul><p>You can check the <code>performer</code> field of the responses to see whether the shadow
+DSA or the master DSA responded. This will tell you whether or not the target
+entry was determined to be &quot;suitable&quot; with respect to the request.</p></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="theme-doc-footer-edit-meta-row row"><div class="col"><a href="https://github.com/Wildboar-Software/directory/edit/main/website/docs/shadowing.md" target="_blank" rel="noreferrer noopener" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_Z9Sw" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_vwxv"></div></div></footer></article><nav class="pagination-nav docusaurus-mt-lg" aria-label="Docs pages navigation"><a class="pagination-nav__link pagination-nav__link--prev" href="/directory/docs/opbinding"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Operational Bindings</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/directory/docs/dynamic"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Dynamic Entries</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#shadow-update-size-limits" class="table-of-contents__link toc-highlight">Shadow Update Size Limits</a></li><li><a href="#establishment" class="table-of-contents__link toc-highlight">Establishment</a></li><li><a href="#update-behavior" class="table-of-contents__link toc-highlight">Update Behavior</a></li><li><a href="#secondary-shadows" class="table-of-contents__link toc-highlight">Secondary Shadows</a></li><li><a href="#timing-requirements-and-behavior" class="table-of-contents__link toc-highlight">Timing Requirements and Behavior</a></li><li><a href="#loops" class="table-of-contents__link toc-highlight">Loops</a></li><li><a href="#update-spill-over" class="table-of-contents__link toc-highlight">Update Spill-over</a></li><li><a href="#role-reversal" class="table-of-contents__link toc-highlight">Role Reversal</a></li><li><a href="#modification" class="table-of-contents__link toc-highlight">Modification</a></li><li><a href="#termination" class="table-of-contents__link toc-highlight">Termination</a></li><li><a href="#information-planes-and-alternative-relative-distinguished-names" class="table-of-contents__link toc-highlight">Information Planes and Alternative Relative Distinguished Names</a></li><li><a href="#overlapping-shadowed-areas" class="table-of-contents__link toc-highlight">Overlapping Shadowed Areas</a></li><li><a href="#performance" class="table-of-contents__link toc-highlight">Performance</a></li><li><a href="#network-disruption" class="table-of-contents__link toc-highlight">Network Disruption</a></li><li><a href="#usage-of-shadowed-entries" class="table-of-contents__link toc-highlight">Usage of Shadowed Entries</a></li></ul></div></div></div></div></main></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2022 Wildboar Software. Built with Docusaurus.</div></div></div></footer></div>
+<script src="/directory/assets/js/runtime~main.93cedbe9.js"></script>
+<script src="/directory/assets/js/main.175e71f7.js"></script>
 </body>
 </html>
