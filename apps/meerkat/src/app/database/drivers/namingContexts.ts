@@ -11,82 +11,12 @@ import type {
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
 import NOOP from "./NOOP";
-import { BERElement } from "asn1-ts";
 import { DER } from "asn1-ts/dist/node/functional";
-import { OperationalBindingInitiator } from "@prisma/client";
-import {
-    id_op_binding_hierarchical,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
-import {
-    id_op_binding_non_specific_hierarchical,
-} from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
 import { namingContexts } from "@wildboar/x500/src/lib/modules/LdapSystemSchema/namingContexts.oa";
-import {
-    HierarchicalAgreement,
-    _decode_HierarchicalAgreement,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
-import {
-    NonSpecificHierarchicalAgreement,
-    _decode_NonSpecificHierarchicalAgreement,
-} from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NonSpecificHierarchicalAgreement.ta";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import isFirstLevelDSA from "../../dit/isFirstLevelDSA";
-import { Prisma } from "@prisma/client";
 
-const HOB: string = id_op_binding_hierarchical.toString();
-const NHOB: string = id_op_binding_non_specific_hierarchical.toString();
-
-function getWhere (): Prisma.OperationalBindingWhereInput {
-    const now = new Date();
-    // This where clause was pretty much ripped from `getRelevantOperationalBindings()`.
-    return {
-        /**
-         * This is a hack for getting the latest version: we are selecting
-         * operational bindings that have no next version.
-         */
-        next_version: {
-            none: {},
-        },
-        binding_type: {
-            in: [
-                HOB,
-                NHOB,
-            ],
-        },
-        accepted: true,
-        terminated_time: null,
-        validity_start: {
-            lte: now,
-        },
-        AND: [
-            {
-                OR: [
-                    { // Local DSA initiated role A (meaning local DSA is superior.)
-                        initiator: OperationalBindingInitiator.ROLE_A,
-                        outbound: false,
-                    },
-                    { // Remote DSA initiated role B (meaning local DSA is superior again.)
-                        initiator: OperationalBindingInitiator.ROLE_B,
-                        outbound: true,
-                    },
-                ],
-            },
-            {
-                OR: [
-                    {
-                        validity_end: null,
-                    },
-                    {
-                        validity_end: {
-                            gte: now,
-                        },
-                    },
-                ],
-            },
-        ],
-    };
-}
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -96,12 +26,6 @@ const readValues: SpecialAttributeDatabaseReader = async (
     if (vertex.immediateSuperior || !vertex.dse.root) {
         return [];
     }
-    const obs = await ctx.db.operationalBinding.findMany({
-        where: getWhere(),
-        select: {
-            agreement_ber: true,
-        },
-    });
 
     const firstLevel = await isFirstLevelDSA(ctx);
 
@@ -114,13 +38,10 @@ const readValues: SpecialAttributeDatabaseReader = async (
                     },
                 ]
                 : []),
-            ...obs.map((ob): Value => {
-                const argreementElement = new BERElement();
-                argreementElement.fromBytes(ob.agreement_ber);
-                const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(argreementElement);
+            ...ctx.dsa.namingContexts.map((dn): Value => {
                 return {
                     type: namingContexts["&id"],
-                    value: namingContexts.encoderFor["&Type"]!([ ...agreement.immediateSuperior, agreement.rdn ], DER),
+                    value: namingContexts.encoderFor["&Type"]!(dn, DER),
                 };
             }),
         ];
@@ -143,10 +64,9 @@ const countValues: SpecialAttributeCounter = async (
     if (vertex.immediateSuperior || !vertex.dse.root) {
         return 0;
     }
-    return ctx.db.operationalBinding.count({
-        where: getWhere(),
-    });
-};
+    const firstLevel = await isFirstLevelDSA(ctx);
+    return (ctx.dsa.namingContexts.length + (firstLevel ? 1 : 0));
+}
 
 export
 const isPresent: SpecialAttributeDetector = async (
@@ -156,12 +76,9 @@ const isPresent: SpecialAttributeDetector = async (
     if (vertex.immediateSuperior || !vertex.dse.root) {
         return false;
     }
-    return !!(await ctx.db.operationalBinding.findFirst({
-        where: getWhere(),
-        select: {
-            id: true,
-        },
-    }));
+    // Theoretically, a DSA could have no naming contexts by having no data at
+    // all, but we're just going to hack this a little.
+    return true;
 };
 
 export
@@ -173,29 +90,10 @@ const hasValue: SpecialAttributeValueDetector = async (
     if (vertex.immediateSuperior || !vertex.dse.root) {
         return false;
     }
-    const obs = await ctx.db.operationalBinding.findMany({
-        where: getWhere(),
-        select: {
-            binding_type: true,
-            agreement_ber: true,
-        },
-    });
+    const namingMatcher = getNamingMatcherGetter(ctx);
     const assertedDN = namingContexts.decoderFor["&Type"]!(value.value);
-    return obs.some((ob): boolean => {
-        const argreementElement = new BERElement();
-        argreementElement.fromBytes(ob.agreement_ber);
-        if (ob.binding_type === HOB) {
-            const agreement: HierarchicalAgreement = _decode_HierarchicalAgreement(argreementElement);
-            const existingDN = [ ...agreement.immediateSuperior, agreement.rdn ];
-            return compareDistinguishedName(existingDN, assertedDN, getNamingMatcherGetter(ctx));
-        } else if (ob.binding_type === NHOB) {
-            const agreement: NonSpecificHierarchicalAgreement = _decode_NonSpecificHierarchicalAgreement(argreementElement);
-            const existingDN = [ ...agreement.immediateSuperior ];
-            return compareDistinguishedName(existingDN, assertedDN, getNamingMatcherGetter(ctx));
-        } else {
-            return false;
-        }
-    });
+    return ctx.dsa.namingContexts
+        .some((dn) => compareDistinguishedName(assertedDN, dn, namingMatcher));
 };
 
 export

@@ -113,6 +113,7 @@ import {
     AbortReason,
     RequestParameters,
 } from "@wildboar/rose-transport";
+import { cacheNamingContexts } from "../dit/cacheNamingContexts";
 
 const securityParametersTagByOpCode: Map<number, number> = new Map([
     [100, 8], // establishOperationalBinding
@@ -179,6 +180,8 @@ async function handleRequest (
         throw new UnknownOperationError();
     }
     }
+    // We update the cached naming contexts, which might have changed.
+    cacheNamingContexts(ctx);
 }
 
 function authLevelToDiagnosticString (a: AuthenticationLevel_basicLevels): string {

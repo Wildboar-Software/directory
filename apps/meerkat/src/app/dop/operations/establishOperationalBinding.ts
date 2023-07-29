@@ -163,6 +163,7 @@ import { AreaSpecification, SubtreeSpecification } from "@wildboar/x500/src/lib/
 import { id_op_modifyOperationalBinding } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-op-modifyOperationalBinding.va";
 import scheduleShadowUpdates from "../../disp/scheduleShadowUpdates";
 import { PeriodicStrategy, SchedulingParameters } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SchedulingParameters.ta";
+import { cacheNamingContexts } from "../../dit/cacheNamingContexts";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -1204,6 +1205,8 @@ async function relayedEstablishOperationalBinding (
             signErrors,
         );
     } finally {
+        // We update the cached naming contexts, which might have changed.
+        cacheNamingContexts(ctx);
         dop.unbind().catch((e) => ctx.log.warn(ctx.i18n.t("log:dop_unbind_error", { e })));
     }
 }
