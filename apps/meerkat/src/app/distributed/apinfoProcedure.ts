@@ -421,7 +421,12 @@ async function apinfoProcedure (
                             (xr) => upsertCrossReferences(ctx, xr),
                             { concurrency: 5 },
                         ) // INTENTIONAL_NO_AWAIT
-                        .catch(() => {}); // FIXME:
+                        .catch((e) => {
+                            ctx.log.warn(ctx.i18n.t("log:failed_to_apply_xr", {
+                                opid: chainingArgs.operationIdentifier ?? "ABSENT",
+                                e,
+                            }));
+                        });
                     }
                     // Even if the received signature is invalid, we can apply
                     // our own cross references.
