@@ -554,12 +554,7 @@ const config: Configuration = {
     xr: {
         requestCrossReferences: (process.env.MEERKAT_REQUEST_CROSS_REFERENCES === "1"),
         returnCrossReferences: (process.env.MEERKAT_RETURN_CROSS_REFERENCES === "1"),
-        // FIXME: Change this option to just check signed.
-        minAuthRequiredToTrust: parseAuthLevel(
-            process.env.MEERKAT_MIN_AUTH_LEVEL_TO_TRUST_XR ?? "2", // Require strong auth.
-            process.env.MEERKAT_MIN_AUTH_LOCAL_QUALIFIER_TO_TRUST_XR,
-            process.env.MEERKAT_SIGNING_REQUIRED_TO_TRUST_XR ?? "1", // Require signatures.
-        ),
+        signingRequiredToTrust: (process.env.MEERKAT_SIGNING_REQUIRED_TO_TRUST_XR !== "0"),
     },
     principledServiceAdministration: (process.env.MEERKAT_PRINCIPLED_SERVICE_ADMIN === "1"),
     revealUserPwdEncryptedValues: (process.env.MEERKAT_REVEAL_USER_PWD === "1"),

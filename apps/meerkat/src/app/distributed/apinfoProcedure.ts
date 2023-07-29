@@ -411,7 +411,7 @@ async function apinfoProcedure (
                         && acceptableCrossReferences.length
                         && dsp_signature_valid
                         && (
-                            !ctx.config.xr.minAuthRequiredToTrust.signed
+                            !ctx.config.xr.signingRequiredToTrust
                             || ("signed" in decoded)
                         )
                     ) {

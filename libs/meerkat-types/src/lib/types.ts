@@ -1467,14 +1467,19 @@ interface AuthenticationConfiguration extends PrivilegeManagementInfrastructureC
 
 }
 
+/**
+ * Configuration options pertaining to the use and transfer of cross references.
+ *
+ * @interface
+ */
 export
 interface CrossReferencesOptions {
 
     /**
-     * The minimum authentication level that a correspondent DSA must achieve
-     * for cross references returned by it to be trusted by the local DSA.
+     * Whether the cross references must be signed for the local DSA to apply
+     * them to the local DSAIT.
      */
-    minAuthRequiredToTrust: AuthenticationLevel_basicLevels;
+    signingRequiredToTrust: boolean;
 
     /**
      * Whether this DSA should request cross references.
