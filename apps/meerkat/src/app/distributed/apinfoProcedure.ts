@@ -1,4 +1,4 @@
-import type { ClientAssociation } from "@wildboar/meerkat-types";
+import type { ClientAssociation, Vertex } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
 import { BOOLEAN } from "asn1-ts";
@@ -87,8 +87,7 @@ import { compareDistinguishedName, getDateFromTime } from "@wildboar/x500";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import { CrossReference } from "@wildboar/x500/src/lib/modules/DistributedOperations/CrossReference.ta";
 import { signChainedResult } from "../pki/signChainedResult";
-
-// function unavailable():
+import deleteEntry from "../database/deleteEntry";
 
 /**
  * @summary The Access Point Information Procedure, as defined in ITU Recommendation X.518.
@@ -269,9 +268,19 @@ async function apinfoProcedure (
         timeRemaining = Math.abs(differenceInMilliseconds(new Date(), timeoutTime));
         let connected: boolean = false;
         try {
-            // TODO: If there is a network failure, delete the cross reference.
             const dsp_client = await bindForChaining(ctx, assn, op, ap, false, signErrors, timeRemaining);
             if (!dsp_client) {
+                // If there is a network failure, delete the cross reference. That happens here.
+                if ((cref.referenceType === ReferenceType_cross) && state.crossReferenceVertex) {
+                    const to_delete: Vertex[] = [ state.crossReferenceVertex ];
+                    let current: Vertex | undefined = state.crossReferenceVertex.immediateSuperior;
+                    while (current && current.dse.glue) {
+                        to_delete.push(current);
+                        current = current.immediateSuperior;
+                    }
+                    Promise.all(to_delete.map((v) => deleteEntry(ctx, v))); // INTENTIONAL_NO_AWAIT
+                    // REGRET: I wish I had some extended continuation reference type that also adds the DSE ID.
+                }
                 ctx.log.warn(ctx.i18n.t("log:could_not_establish_connection", {
                     ae: stringifyDN(ctx, ap.ae_title.rdnSequence),
                     iid: "present" in req.invokeId

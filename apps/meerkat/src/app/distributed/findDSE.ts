@@ -402,7 +402,7 @@ export
                     OperationProgress_nameResolutionPhase_proceeding,
                     lastEntryFound + 1,
                 ),
-                undefined,
+                state.rdnsResolved,
                 ReferenceType_nonSpecificSubordinate,
                 dse_lastEntryFound?.dse.nssr.nonSpecificKnowledge
                     .map((nsk) => {
@@ -529,7 +529,7 @@ export
                         OperationProgress_nameResolutionPhase_notStarted,
                         undefined,
                     ),
-                    undefined,
+                    state.rdnsResolved,
                     ReferenceType_superior,
                     [
                         new AccessPointInformation(
@@ -612,7 +612,7 @@ export
                                 OperationProgress_nameResolutionPhase_proceeding,
                                 1,
                             ),
-                            undefined,
+                            state.rdnsResolved,
                             ReferenceType_nonSpecificSubordinate,
                             [
                                 new AccessPointInformation(
@@ -1487,6 +1487,9 @@ export
             || dse_i.dse.immSupr
             || dse_i.dse.ditBridge
         ) {
+            if (dse_i.dse.xr) {
+                state.crossReferenceVertex = dse_i;
+            }
             const knowledges = dse_i.dse.subr?.specificKnowledge
                 ?? dse_i.dse.xr?.specificKnowledge
                 ?? dse_i.dse.immSupr?.specificKnowledge
@@ -1526,7 +1529,7 @@ export
                     OperationProgress_nameResolutionPhase_proceeding,
                     i,
                 ),
-                i,
+                state.rdnsResolved,
                 referenceType,
                 [
                     new AccessPointInformation(

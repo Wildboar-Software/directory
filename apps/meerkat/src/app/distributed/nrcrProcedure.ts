@@ -207,6 +207,10 @@ async function nrcrProcedure (
         invokeId: state.invokeId,
         opCode: state.operationCode,
     };
+    // B - A gives you descending sort.
+    // We sort by rdnsResolved to get the "deepest" reference.
+    // This means that, if you have a chain of two cross reference DSEs, the deepest one will be used.
+    state.NRcontinuationList.sort((a, b) => Number(b.rdnsResolved ?? 0) - Number(a.rdnsResolved ?? 0));
     for (const cref of state.NRcontinuationList) {
         if (op?.abandonTime) {
             op.events.emit("abandon");

@@ -200,6 +200,9 @@ interface OperationDispatcherState {
     outputAttributeTypes?: Map<IndexableOID, ResultAttribute>;
     effectiveServiceControls?: ServiceControlOptions;
     effectiveFamilyReturn?: FamilyReturn;
+
+    // Defined by me.
+    crossReferenceVertex?: Vertex;
 }
 
 export
