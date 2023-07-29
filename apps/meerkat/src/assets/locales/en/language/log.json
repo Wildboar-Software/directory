@@ -372,5 +372,6 @@
     "dsp_result_name": "DSP result for operation {{opid}} included a name in the security parameters that differed by the name of this DSA. The result might have been replayed.",
     "dsp_result_op_code": "DSP result for operation {{opid}} included an operation code in the security parameters that differed from the actual operation code.",
     "dsp_result_invalid_sig": "DSP result for operation {{opid}} had an invalid signature. {{e}}",
-    "failed_to_apply_xr": "Failed to apply cross references received from operation {{opid}} to the local DSAIT. {{e}}"
+    "failed_to_apply_xr": "Failed to apply cross references received from operation {{opid}} to the local DSAIT. {{e}}",
+    "filtered_cross_refs": "Filtered out {{count}} cross references from DSP response for operation {{opid}}."
 }

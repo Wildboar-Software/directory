@@ -393,6 +393,7 @@ async function apinfoProcedure (
                             });
                         }
                     }
+                    const returned_cross_refs = resultData.chainedResult.crossReferences ?? [];
                     // TODO: Validate access points, but this is much lower priority.
                     /* We filter out any cross references that do not lie on the
                     target object's path. This is for security purposes: we do
@@ -406,14 +407,20 @@ async function apinfoProcedure (
                     if alias dereferencing results in a downstream DSA returning
                     cross references from a totally different targetObject. */
                     acceptableCrossReferences = dsp_signature_valid
-                        ? resultData
-                            .chainedResult
-                            .crossReferences?.filter((xr) => (
+                        ? returned_cross_refs.filter((xr) => (
                                 isPrefix(ctx, xr.contextPrefix, cref.targetObject.rdnSequence)
                                 && !ctx.dsa.namingContexts
                                     .some((nc) => (nc.length > 0) && isPrefix(ctx, xr.contextPrefix, nc))
-                            )) ?? []
+                            ))
                         : [];
+
+                    if (returned_cross_refs.length !== acceptableCrossReferences.length) {
+                        ctx.log.warn(ctx.i18n.t("log:filtered_cross_refs", {
+                            count: acceptableCrossReferences.length - returned_cross_refs.length,
+                            opid: chainingArgs.operationIdentifier ?? "ABSENT",
+                        }));
+                    }
+
                     if (
                         i_want_cross_refs
                         && acceptableCrossReferences.length
