@@ -7,6 +7,21 @@ import { createDse } from "../database/createEntry";
 import saveAccessPoint from "../database/saveAccessPoint";
 import { Knowledge } from "@prisma/client";
 
+/**
+ * @summary Upsert cross references into the local DSAIT
+ * @description
+ *
+ * This function upserts a cross reference into the local DSAIT, thereby making
+ * it available for use when resolving a name or continuing a distributed
+ * operation. This function will not modify a non-glue or non-cross-reference
+ * DSE.
+ *
+ * @param ctx The context object
+ * @param xr The cross reference to be upserted
+ *
+ * @async
+ * @function
+ */
 export
 async function upsertCrossReferences (
     ctx: Context,

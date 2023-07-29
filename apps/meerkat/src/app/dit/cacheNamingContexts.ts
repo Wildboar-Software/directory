@@ -2,6 +2,18 @@ import { Context } from "@wildboar/meerkat-types";
 import getEntryExistsFilter from "../database/entryExistsFilter";
 import getDNFromEntryId from "../database/getDNFromEntryId";
 
+/**
+ * @summary Cache the naming contexts in the context object
+ * @description
+ *
+ * This function updates the context object's cache of naming contexts held by
+ * this DSA.
+ *
+ * @param ctx The context object
+ *
+ * @async
+ * @function
+ */
 export
 async function cacheNamingContexts (ctx: Context): Promise<void> {
     try {
