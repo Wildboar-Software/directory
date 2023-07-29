@@ -239,6 +239,7 @@ enum Knowledge {
   OB_REQUEST
   OB_SHADOW_MASTER // Purely informational. From ShadowingAgreementInfo.master.
   NON_SUPPLYING_MASTER
+  CROSS_REFERENCE
 }
 
 // Type: MY, supr, supplier, consumer, secondary consumer, xr, immSupr, subr, nssr?
