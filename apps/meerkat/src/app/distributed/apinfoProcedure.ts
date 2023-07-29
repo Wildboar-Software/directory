@@ -32,6 +32,8 @@ import {
     Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import {
+    Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1,
+    ChainingResults,
     _encode_Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import { chainedRead } from "@wildboar/x500/src/lib/modules/DistributedOperations/chainedRead.oa";
@@ -47,6 +49,9 @@ import {
     OperationProgress_nameResolutionPhase_proceeding as proceeding,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/OperationProgress-nameResolutionPhase.ta";
 import {
+    ReferenceType_cross,
+    ReferenceType_immediateSuperior,
+    ReferenceType_superior,
     ReferenceType_nonSpecificSubordinate as nssr,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
 import cloneChainingArguments from "../x500/cloneChainingArguments";
@@ -74,7 +79,16 @@ import { bindForChaining } from "../net/bindToOtherDSA";
 import { OperationOutcome } from "@wildboar/rose-transport";
 import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
 import { ContinuationReference } from "@wildboar/x500/src/lib/modules/DistributedOperations/ContinuationReference.ta";
-import { addMilliseconds, differenceInMilliseconds } from "date-fns";
+import { addMilliseconds, differenceInMilliseconds, differenceInSeconds } from "date-fns";
+import { upsertCrossReferences } from "../dit/upsertCrossReferences";
+import { Promise as bPromise } from "bluebird";
+import isPrefix from "../x500/isPrefix";
+import { compareDistinguishedName, getDateFromTime } from "@wildboar/x500";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import { CrossReference } from "@wildboar/x500/src/lib/modules/DistributedOperations/CrossReference.ta";
+import { signChainedResult } from "../pki/signChainedResult";
+
+// function unavailable():
 
 /**
  * @summary The Access Point Information Procedure, as defined in ITU Recommendation X.518.
@@ -114,10 +128,22 @@ async function apinfoProcedure (
     if (chainingProhibited) {
         return null;
     }
+    const namingMatcher = getNamingMatcherGetter(ctx);
     const excludeShadows: BOOLEAN = req.chaining.excludeShadows ?? ChainingArguments._default_value_for_excludeShadows;
     const nameResolveOnMaster: BOOLEAN = req.chaining.nameResolveOnMaster
         ?? ChainingArguments._default_value_for_nameResolveOnMaster;
     const nameResolutionIsProceeding: boolean = (req.chaining.operationProgress?.nameResolutionPhase === proceeding);
+    const i_want_cross_refs: boolean = (
+        ctx.config.xr.requestCrossReferences
+        /* supr and immSupr are the only reference types for which it
+        makes sense, but cross is added to constantly refresh the access
+        point info of the cross reference. */
+        && (
+            (cref.referenceType === ReferenceType_superior)
+            || (cref.referenceType === ReferenceType_immediateSuperior)
+            || (cref.referenceType === ReferenceType_cross)
+        )
+    );
 
     const chainingArgs: ChainingArguments = cloneChainingArguments(req.chaining, {
         nameResolveOnMaster: (
@@ -134,6 +160,7 @@ async function apinfoProcedure (
             undefined,
             true,
         ),
+        returnCrossRefs: (req.chaining.returnCrossRefs || i_want_cross_refs)
     });
     const accessPoints: MasterOrShadowAccessPoint[] = [
         new MasterOrShadowAccessPoint(
@@ -242,6 +269,7 @@ async function apinfoProcedure (
         timeRemaining = Math.abs(differenceInMilliseconds(new Date(), timeoutTime));
         let connected: boolean = false;
         try {
+            // TODO: If there is a network failure, delete the cross reference.
             const dsp_client = await bindForChaining(ctx, assn, op, ap, false, signErrors, timeRemaining);
             if (!dsp_client) {
                 ctx.log.warn(ctx.i18n.t("log:could_not_establish_connection", {
@@ -280,29 +308,181 @@ async function apinfoProcedure (
             if ("result" in response) {
                 assert(chainedAbandon["&operationCode"]);
                 assert("local" in chainedAbandon["&operationCode"]);
+                const decoded = chainedRead.decoderFor["&ResultType"]!(response.result.parameter);
+                const resultData = getOptionallyProtectedValue(decoded);
+                /* The directory specifications do not seem to say what to do if
+                a DSP signature is invalid. If they are invalid, Meerkat DSA
+                will log the problem, */
+                let dsp_signature_valid: boolean = true;
+                let acceptableCrossReferences: CrossReference[] = [];
                 if (
                     ctx.config.chaining.checkSignaturesOnResponses
                     && ("local" in response.result.code)
                     && (response.result.code.local !== chainedAbandon["&operationCode"]!.local)
                 ) {
-                    const decoded = chainedRead.decoderFor["&ResultType"]!(response.result.parameter);
-                    const resultData = getOptionallyProtectedValue(decoded);
-                    if ("signed" in decoded) {
-                        const certPath = resultData.chainedResult.securityParameters?.certification_path;
-                        await verifySIGNED(
-                            ctx,
-                            assn,
-                            certPath,
-                            state.invokeId,
-                            state.chainingArguments.aliasDereferenced,
-                            decoded.signed,
-                            _encode_Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1,
-                            signErrors,
-                            "result",
-                        );
+                    if (resultData.chainedResult.securityParameters?.errorCode) {
+                        ctx.log.warn(ctx.i18n.t("log:dsp_result_error_code"), {
+                            opid: chainingArgs.operationIdentifier ?? "ABSENT",
+                        });
+                        dsp_signature_valid = false;
                     }
+                    if (dsp_signature_valid && resultData.chainedResult.securityParameters?.time) {
+                        const secureTime = getDateFromTime(resultData.chainedResult.securityParameters.time);
+                        const now = new Date();
+                        const replayWindow = 60; // TODO: Make configurable.
+                        if (Math.abs(differenceInSeconds(secureTime, now)) > replayWindow) {
+                            ctx.log.warn(ctx.i18n.t("log:dsp_result_time"), {
+                                opid: chainingArgs.operationIdentifier ?? "ABSENT",
+                            });
+                            dsp_signature_valid = false;
+                        }
+                    }
+                    if (
+                        dsp_signature_valid
+                        && resultData.chainedResult.securityParameters?.name
+                        && (ctx.dsa.accessPoint.ae_title.rdnSequence.length > 0)
+                        && !compareDistinguishedName(
+                            resultData.chainedResult.securityParameters.name,
+                            ctx.dsa.accessPoint.ae_title.rdnSequence,
+                            namingMatcher,
+                        )
+                    ) {
+                        ctx.log.warn(ctx.i18n.t("log:dsp_result_name"), {
+                            opid: chainingArgs.operationIdentifier ?? "ABSENT",
+                        });
+                        dsp_signature_valid = false;
+                    }
+                    if (
+                        dsp_signature_valid
+                        && resultData.chainedResult.securityParameters?.operationCode
+                        && !compareCode(resultData.chainedResult.securityParameters.operationCode, req.opCode)
+                    ) {
+                        ctx.log.warn(ctx.i18n.t("log:dsp_result_op_code"), {
+                            opid: chainingArgs.operationIdentifier ?? "ABSENT",
+                        });
+                        dsp_signature_valid = false;
+                    }
+                    if (dsp_signature_valid && ("signed" in decoded)) {
+                        const certPath = resultData.chainedResult.securityParameters?.certification_path;
+                        try {
+                            await verifySIGNED(
+                                ctx,
+                                assn,
+                                certPath,
+                                state.invokeId,
+                                state.chainingArguments.aliasDereferenced,
+                                decoded.signed,
+                                _encode_Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1,
+                                signErrors,
+                                "result",
+                            );
+                        } catch (e) {
+                            dsp_signature_valid = false;
+                            ctx.log.warn(ctx.i18n.t("log:dsp_result_invalid_sig"), {
+                                opid: chainingArgs.operationIdentifier ?? "ABSENT",
+                                e,
+                            });
+                        }
+                    }
+                    // TODO: Validate access points, but this is much lower priority.
+                    /* We filter out any cross references whose context prefix
+                    is superior or equal to any context prefix operated by this
+                    DSA, because it could be an attempt by the downstream DSA to
+                    hijack the superior naming contexts. This could also happen
+                    if alias dereferencing results in a downstream DSA returning
+                    cross references from a totally different targetObject. */
+                    acceptableCrossReferences = dsp_signature_valid
+                        ? resultData
+                            .chainedResult
+                            .crossReferences?.filter((xr) => !ctx.dsa.namingContexts
+                                .some((nc) => (nc.length > 0) && isPrefix(ctx, xr.contextPrefix, nc))) ?? []
+                        : [];
+                    if (
+                        i_want_cross_refs
+                        && acceptableCrossReferences.length
+                        && dsp_signature_valid
+                        && (
+                            !ctx.config.xr.minAuthRequiredToTrust.signed
+                            || ("signed" in decoded)
+                        )
+                    ) {
+                        // TODO: Index recently added cross references so we're not doing this for every result.
+                        bPromise.map(
+                            acceptableCrossReferences,
+                            (xr) => upsertCrossReferences(ctx, xr),
+                            { concurrency: 5 },
+                        ) // INTENTIONAL_NO_AWAIT
+                        .catch(() => {}); // FIXME:
+                    }
+                    // Even if the received signature is invalid, we can apply
+                    // our own cross references.
+                    acceptableCrossReferences.push(...state.chainingResults.crossReferences ?? []);
+
+                    /* Here is what my research gave me: the directory specs do
+                    not seem to say anything on this explicitly. Re-signing
+                    would allow trust to be transitive, possibly reducing the
+                    total number of keys needed, and it would also provide
+                    point-to-point integrity where TLS is not available. The
+                    inner response is already signed by the performing DSA, so
+                    there's no point in verifying a signature that will be
+                    verified later anyway.
+
+                    OTOH, I followed the directions of
+                    X.518, and the chaining arguments may still have important
+                    information. ~~When I think about it, it actually makes sense
+                    for the performing DSA to produce all cross refs. It might
+                    have the whole chain up to the root.~~ Nevermind, this is
+                    not the correct procedure; each DSA is supposed to contribute.
+
+                    /*
+                    Quote:
+                    A CrossReference may be added by a DSA when it matches part of the targetObject argument of
+                    an operation with one of its context prefixes. The administrative authority of a DSA may have a policy not
+                    to return such knowledge, and will, in this case, not add an item to the sequence.
+
+                    This makes it clear that it cannot just be the performing DSA providing cross refs.
+                    This also entails that intermediate DSAs need to redact falsehoods.
+                    I think I have established that it is okay for an intermediate DSA to resign the DSP result.
+                    However, security parameters has a 'name' field, which I think necessitates re-signing.
+                    It is more security-paranoid to sign and re-sign, so it might be for the better.
+                    If the signature is invalid, return unavailable error or something like that.
+                    */
                 }
-                return response;
+                const chaining_results_unchanged: boolean = !!(
+                    !state.chainingResults.crossReferences?.length // If we have cross-refs to add, we need to re-sign.
+                    && dsp_signature_valid // If the signature is invalid, we re-sign.
+                    && ("signed" in decoded) // If the DSP result was unsigned, we sign it.
+                    && !resultData.chainedResult.securityParameters?.name // If the name is present, we need to re-sign.
+                    && !resultData.chainedResult.securityParameters?.time // If the time is present, we need to re-sign.
+                );
+                if (chaining_results_unchanged) {
+                    // Under these circumstances, we can just return the chained result completely unchanged.
+                    return response;
+                }
+                const newResultData = {
+                    unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
+                        new ChainingResults(
+                            dsp_signature_valid ? resultData.chainedResult.info : undefined,
+                            acceptableCrossReferences.length ? acceptableCrossReferences : undefined,
+                            createSecurityParameters(
+                                ctx,
+                                true,
+                                assn?.boundNameAndUID?.dn,
+                                req.opCode,
+                            ),
+                            resultData.chainedResult.alreadySearched,
+                        ),
+                        req.argument!,
+                    ),
+                };
+                const newResult = signChainedResult(ctx, newResultData);
+                return {
+                    result: {
+                        code: req.opCode,
+                        invoke_id: req.invokeId,
+                        parameter: chainedRead.encoderFor["&ResultType"]!(newResult, DER),
+                    },
+                };
             }
             else if ("error" in response) {
                 const errcode: Code = response.error.code ?? { local: -1 };
