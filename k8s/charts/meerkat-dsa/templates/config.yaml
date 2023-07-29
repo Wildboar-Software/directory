@@ -107,6 +107,8 @@ data:
   {{- end }}
   prohibit_chaining: {{ .Values.prohibit_chaining | ternary 1 0 | quote }}
   remote_pwd_time_limit: {{ .Values.remote_pwd_time_limit | default 0 | quote }}
+  request_cross_references: {{ .Values.request_cross_references | ternary 1 0 | quote }}
+  return_cross_references: {{ .Values.return_cross_references | ternary 1 0 | quote }}
   reveal_user_pwd: {{ .Values.reveal_user_pwd | default false | ternary 1 0 | quote }}
   scr_parallelism: {{ .Values.scr_parallelism | default 0 | quote }}
   {{- if .Values.scvp_attr_cert_checks }}
@@ -219,6 +221,7 @@ data:
   signing_required_for_chaining: {{ .Values.signing_required_for_chaining | ternary 1 0 | quote }}
   signing_required_for_disp: {{ .Values.signing_required_for_disp | ternary 1 0 | quote }}
   signing_required_for_ob: {{ .Values.signing_required_for_ob | ternary 1 0 | quote }}
+  signing_required_to_trust_xr: {{ .Values.signing_required_to_trust_xr | ternary 1 0 | quote }}
   signing_tolerate_unavailable_remote_crl: {{ .Values.signing_tolerate_unavailable_remote_crl | ternary 1 0 | quote }}
   {{- if .Values.sslkeylog_file }}
   sslkeylog_file: {{ .Values.sslkeylog_file | quote }}

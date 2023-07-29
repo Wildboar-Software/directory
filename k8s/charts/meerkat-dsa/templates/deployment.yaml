@@ -563,6 +563,18 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: remote_pwd_time_limit
                   optional: true
+            - name: MEERKAT_REQUEST_CROSS_REFERENCES
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: request_cross_references
+                  optional: true
+            - name: MEERKAT_RETURN_CROSS_REFERENCES
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: return_cross_references
+                  optional: true
             - name: MEERKAT_REVEAL_USER_PWD
               valueFrom:
                 configMapKeyRef:
@@ -954,6 +966,12 @@ spec:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: signing_required_for_ob
+                  optional: true
+            - name: MEERKAT_SIGNING_REQUIRED_TO_TRUST_XR
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: signing_required_to_trust_xr
                   optional: true
             - name: MEERKAT_SIGNING_TOLERATE_UNAVAILABLE_REMOTE_CRL
               valueFrom:

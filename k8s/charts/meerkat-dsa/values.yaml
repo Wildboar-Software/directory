@@ -185,6 +185,8 @@ principled_service_admin: false
 # private_key_engine: pkcs11
 prohibit_chaining: false
 remote_pwd_time_limit: 0
+request_cross_references: false
+return_cross_references: false
 reveal_user_pwd: false
 scr_parallelism: 0
 # scvp_attr_cert_checks:
@@ -270,6 +272,7 @@ signing_remote_crl_timeout: 5
 signing_required_for_chaining: true
 signing_required_for_disp: true
 signing_required_for_ob: true
+signing_required_to_trust_xr: true
 signing_tolerate_unavailable_remote_crl: true
 # sslkeylog_file: /var/log/sslkeylog
 tcp_no_delay: false
