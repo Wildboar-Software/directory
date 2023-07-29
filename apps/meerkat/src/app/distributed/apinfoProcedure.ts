@@ -394,7 +394,12 @@ async function apinfoProcedure (
                         }
                     }
                     // TODO: Validate access points, but this is much lower priority.
-                    /* We filter out any cross references whose context prefix
+                    /* We filter out any cross references that do not lie on the
+                    target object's path. This is for security purposes: we do
+                    not want other DSAs to be able to construct an entirely
+                    fraudulent DIT in our local DSAIT.
+
+                    We also filter out any cross references whose context prefix
                     is superior or equal to any context prefix operated by this
                     DSA, because it could be an attempt by the downstream DSA to
                     hijack the superior naming contexts. This could also happen
@@ -403,8 +408,11 @@ async function apinfoProcedure (
                     acceptableCrossReferences = dsp_signature_valid
                         ? resultData
                             .chainedResult
-                            .crossReferences?.filter((xr) => !ctx.dsa.namingContexts
-                                .some((nc) => (nc.length > 0) && isPrefix(ctx, xr.contextPrefix, nc))) ?? []
+                            .crossReferences?.filter((xr) => (
+                                isPrefix(ctx, xr.contextPrefix, cref.targetObject.rdnSequence)
+                                && !ctx.dsa.namingContexts
+                                    .some((nc) => (nc.length > 0) && isPrefix(ctx, xr.contextPrefix, nc))
+                            )) ?? []
                         : [];
                     if (
                         i_want_cross_refs
