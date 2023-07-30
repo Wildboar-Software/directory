@@ -88,6 +88,7 @@ import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import { CrossReference } from "@wildboar/x500/src/lib/modules/DistributedOperations/CrossReference.ta";
 import { signChainedResult } from "../pki/signChainedResult";
 import deleteEntry from "../database/deleteEntry";
+import DAPAssociation from "../dap/DAPConnection";
 
 /**
  * @summary The Access Point Information Procedure, as defined in ITU Recommendation X.518.
@@ -504,6 +505,17 @@ async function apinfoProcedure (
                         req.argument!,
                     ),
                 };
+                if (assn && (assn instanceof DAPAssociation)) {
+                    // If there is no prior DSA, there is no point in signing
+                    // the DSP result, since it will be immediately discarded.
+                    return {
+                        result: {
+                            code: req.opCode,
+                            invoke_id: req.invokeId,
+                            parameter: chainedRead.encoderFor["&ResultType"]!(newResultData, DER),
+                        },
+                    };
+                }
                 const newResult = signChainedResult(ctx, newResultData);
                 return {
                     result: {
