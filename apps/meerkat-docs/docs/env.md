@@ -1100,7 +1100,9 @@ to be trustworthy and competent.
 
 If set to `1`, Meerkat DSA will return cross references to context prefixes it
 owns and that it encounters during the process of name resolution within the
-DSAIT.
+DSAIT. Note that this does not--nor does any other option--determine whether
+the local DSA returns cross references returned from other DSAs. The local DSA
+will back-propagate cross references it receives to previous DSAs.
 
 :::note
 

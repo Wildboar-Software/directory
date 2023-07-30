@@ -1399,7 +1399,7 @@ export
         // TODO: Report this to be added to the distributed procedures?
         /* NOTE: This is not part of the Find DSE procedure, but it is necessary
         to return cross references in the chaining arguments. */
-        if (dse_i.dse.cp) {
+        if (dse_i.dse.cp && ctx.config.xr.returnCrossReferences) {
             const cp_dn = getDistinguishedName(dse_i);
             const api = (dse_i.dse.shadow)
                 ? new AccessPointInformation(
