@@ -1,5 +1,23 @@
 # Changelog for Meerkat DSA
 
+## Version 2.8.0
+
+The defining aspect of this version is support for cross references. Cross
+references allow a DSA to "bookmark" the DSAs that were involved in servicing
+a previous request, so that, in chaining subsequent requests, the correct DSA
+can be used directly, rather than routing the request through a first-level DSA.
+
+### New Features / Improvements
+
+- Using cross references for routing purposes
+- Returning cross references
+- Requesting cross references from other DSAs
+- More performant and correct `namingContexts` attribute.
+
+### Bug Fixes
+
+- Log invalid DSP signatures received from chained results.
+
 ## Version 2.7.0
 
 The defining aspect of this version is support for shadowing, which allows you

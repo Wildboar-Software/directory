@@ -4,12 +4,6 @@ We will not promise any particular schedule of delivery of features or bug fixes
 at this time. However, the very high-level roadmap for Meerkat DSA can be
 broken down to the following versions.
 
-## Version 2.8.0 - Cross References
-
-This update will introduce support for cross references, allowing DSAs to share
-routing information pertaining to other known DSAs. This will allow the entire
-DIT to become more discoverable and performant.
-
 ## Version 2.9.0 - Schema Update ("Wildboar Schema")
 
 This update will introduce thousands of new schema objects defined by Wildboar
