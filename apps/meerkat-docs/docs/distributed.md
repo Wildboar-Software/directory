@@ -170,3 +170,92 @@ implemented within Meerkat DSA, because you cannot block Meerkat DSA's access
 to the DBMS at the network level.
 
 :::
+
+## Behavior of Signed DSP Results
+
+If Meerkat DSA receives a signed DSP result, it verifies this signature, unless
+configured otherwise (there are some checks that are not currently configurable).
+
+If the signature is found to be valid, it still may not be viable to return
+directly to the prior DSA. If the security parameters of the DSP result contain
+a `name` or `time` component, they cannot be re-used, so the valid DSP result
+must be re-signed by the local DSA. If the previous recipient is a DUA (as
+indicated by being bound using the Directory Access Protocol), the result will
+not be re-signed, since the DSP signature will be discarded.
+
+If the signature is found to be invalid, Meerkat DSA will not discard the
+result, but instead, it will simply log what is wrong with the DSP result,
+discard any sensitive information, such as cross references, received from the
+downstream DSA, and re-sign the DSP result.
+
+:::info
+
+This is the behavior of Meerkat DSA because, in most scenarios, this just means
+there is a bug, misconfiguration, certificate expiration, or some other
+infrastructure problem, rather than tampering. It would be nice to discard the
+result and report a service error having problem `unavailable`, but X.500
+directories have the option of providing completely unsigned results, and,
+particularly for modification operations, the operation might have truly
+succeeded in the remote DSA. Since signatures are optional anyway, it seems like
+it would only harm directory availability to discard DSP results with invalid
+signatures.
+
+:::
+
+## Cross References
+
+As of version 2.8.0, Meerkat DSA supports the use of cross references, which
+speed up name resolution and operation continuation by "bookmarking" the DSAs
+involved in an operation and making a direct connection to them, rather than
+chaining through the first-level DSAs.
+
+These cross references are relayed between DSAs via the `ChainingResults` that
+are appended to the DAP result and traverse backwards along the path taken by
+chaining. This means that, if the DSP result is signed (not just the DAP
+result), the cross references themselves will have integrity protection in
+transit, and if the DSP result is _not_ signed, they will _not_ have integrity
+protection.
+
+As any kind of routing information is extremely security-sensitive, Meerkat DSA
+will not apply cross references unless they appear in a signed DSP result. If
+this signed DSP result has an invalid signature, the cross references will not
+only not be applied to the local DSAIT, but the local DSA will also discard all
+of the cross references, supply its own, and re-sign the DSP result to restore
+its validity.
+
+:::info
+
+The cross references returned in a DSP result which has an invalid signature are
+discarded because they are optional and extremely security sensitive. Meerkat
+DSA will not be complicit in sharing potentially corrupted routing information
+with other DSAs.
+
+:::
+
+Meerkat DSA will request cross references if the prior DSA in a chained
+operation requested them, or if the
+[`MEERKAT_REQUEST_CROSS_REFERENCES`](./env.md#meerkat_request_cross_references)
+configuration option is set to `1` and the knowledge reference used to continue
+the operation is of type `superior`, `immediateSuperior`, or `cross`.
+
+:::info
+
+The above knowledge types are required to request cross references, because
+cross references should not be used for subordinate naming contexts, DIT
+bridges, etc. When using a cross reference, cross references are still
+requested, just to ensure that Meerkat DSA has up-to-date knowledge references,
+since these are not automatically kept up-to-date by an operational binding.
+
+:::
+
+In addition to the above, all cross references are validated upon receipt. Any
+cross references that describe a context prefix that does not lie within the
+path of the `targetObject` or that are subordinate to any naming context held
+by the local DSA.
+
+:::info
+
+Cross references in violation of the above validation techniques may be
+nefarious attempts to hijack namespaces that do not belong to the called DSA.
+
+:::
