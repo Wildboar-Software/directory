@@ -577,7 +577,7 @@ model OperationalBinding {
   id                 Int                         @id @default(autoincrement())
   entry_id           Int? // This is valuable for pointing to the CP of a shadowed context or HOB.
   entry              Entry?                      @relation(fields: [entry_id], references: [id], onDelete: Restrict)
-  previous_id        Int?                        @unique // For when an OB gets modified.
+  previous_id        Int?                        // For when an OB gets modified.
   previous           OperationalBinding?         @relation(name: "previous", fields: [previous_id], references: [id])
   outbound           Boolean
   uuid               String                      @default(uuid()) // @db.Uuid
@@ -649,9 +649,10 @@ model OperationalBinding {
   next_version OperationalBinding[] @relation("previous")
 
   @@unique([uuid])
-  @@unique([binding_type, binding_identifier, binding_version, terminated_time])
+  @@index([binding_type, binding_identifier, binding_version, terminated_time])
   @@index([validity_end, validity_start])
   @@index([entry_id])
+  @@index([previous_id])
 }
 
 model NamedObjectIdentifier {

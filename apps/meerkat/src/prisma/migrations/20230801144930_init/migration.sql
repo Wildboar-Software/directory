@@ -36,9 +36,12 @@ CREATE TABLE `Entry` (
     `may_add_top_level_dse` BOOLEAN NOT NULL DEFAULT false,
     `hierarchyParent_id` INTEGER NULL,
     `hierarchyParentDN` JSON NULL,
+    `hierarchyParentStr` VARCHAR(2048) NULL,
     `hierarchyTop_id` INTEGER NULL,
     `hierarchyTopDN` JSON NULL,
+    `hierarchyTopStr` VARCHAR(2048) NULL,
     `hierarchyPath` VARCHAR(191) NULL,
+    `hierarchyLevel` INTEGER NULL,
     `otherData` JSON NULL,
 
     INDEX `Entry_immediate_superior_id_deleteTimestamp_expiresTimestamp_idx`(`immediate_superior_id`, `deleteTimestamp`, `expiresTimestamp`, `subentry`),
@@ -47,7 +50,6 @@ CREATE TABLE `Entry` (
     INDEX `Entry_hierarchyParent_id_idx`(`hierarchyParent_id`),
     INDEX `Entry_hierarchyPath_idx`(`hierarchyPath`),
     UNIQUE INDEX `Entry_dseUUID_key`(`dseUUID`),
-    UNIQUE INDEX `Entry_entryUUID_key`(`entryUUID`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -123,7 +125,7 @@ CREATE TABLE `ContextValue` (
 CREATE TABLE `AccessPoint` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `ber` LONGBLOB NOT NULL,
-    `knowledge_type` ENUM('MY_ACCESS_POINT', 'SUPERIOR', 'SPECIFIC', 'NON_SPECIFIC', 'SUPPLIER', 'CONSUMER', 'SECONDARY_SUPPLIER', 'SECONDARY_CONSUMER', 'OTHER', 'OB_REQUEST', 'OB_SHADOW_MASTER', 'NON_SUPPLYING_MASTER') NOT NULL,
+    `knowledge_type` ENUM('MY_ACCESS_POINT', 'SUPERIOR', 'SPECIFIC', 'NON_SPECIFIC', 'SUPPLIER', 'CONSUMER', 'SECONDARY_SUPPLIER', 'SECONDARY_CONSUMER', 'OTHER', 'OB_REQUEST', 'OB_SHADOW_MASTER', 'NON_SUPPLYING_MASTER', 'CROSS_REFERENCE') NOT NULL,
     `ae_title` JSON NOT NULL,
     `category` INTEGER NULL,
     `chainingRequired` BOOLEAN NULL,
@@ -132,6 +134,7 @@ CREATE TABLE `AccessPoint` (
     `is_consumer_of_id` INTEGER NULL,
     `entry_id` INTEGER NULL,
     `nsk_group` BIGINT NULL,
+    `nssr_binding_identifier` INTEGER NULL,
     `trust_ibra` BOOLEAN NOT NULL DEFAULT false,
     `disclose_cross_refs` BOOLEAN NOT NULL DEFAULT false,
     `active` BOOLEAN NOT NULL DEFAULT true,
@@ -380,12 +383,16 @@ CREATE TABLE `OperationalBinding` (
     `last_update` DATETIME(3) NULL,
     `last_ob_problem` SMALLINT NULL,
     `last_shadow_problem` SMALLINT NULL,
+    `local_last_update` DATETIME(3) NULL,
+    `remote_last_update` DATETIME(3) NULL,
+    `requested_strategy` ENUM('TOTAL', 'INCREMENTAL', 'EXTERNAL') NULL,
+    `requested_strategy_external_ber` LONGBLOB NULL,
 
-    UNIQUE INDEX `OperationalBinding_previous_id_key`(`previous_id`),
+    INDEX `OperationalBinding_binding_type_binding_identifier_binding_v_idx`(`binding_type`, `binding_identifier`, `binding_version`, `terminated_time`),
     INDEX `OperationalBinding_validity_end_validity_start_idx`(`validity_end`, `validity_start`),
     INDEX `OperationalBinding_entry_id_idx`(`entry_id`),
+    INDEX `OperationalBinding_previous_id_idx`(`previous_id`),
     UNIQUE INDEX `OperationalBinding_uuid_key`(`uuid`),
-    UNIQUE INDEX `OperationalBinding_binding_type_binding_identifier_binding_v_key`(`binding_type`, `binding_identifier`, `binding_version`, `terminated_time`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -412,8 +419,8 @@ CREATE TABLE `DistinguishedValue` (
     `normalized_str` VARCHAR(191) NULL,
     `order_index` INTEGER NOT NULL,
 
-    INDEX `DistinguishedValue_type_oid_tag_class_tag_number_constructed_idx`(`type_oid`(32), `tag_class`, `tag_number`, `constructed`, `normalized_str`),
     UNIQUE INDEX `DistinguishedValue_entry_id_type_oid_key`(`entry_id`, `type_oid`(32)),
+    UNIQUE INDEX `DistinguishedValue_type_oid_normalized_str_entry_id_key`(`type_oid`(32), `normalized_str`, `entry_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -518,6 +525,44 @@ CREATE TABLE `AccessPointCredentials` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `PostalCodesGazetteEntry` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `c2c` CHAR(2) NOT NULL,
+    `st` VARCHAR(191) NOT NULL,
+    `locality` VARCHAR(191) NOT NULL,
+    `postal_code` VARCHAR(191) NOT NULL,
+
+    UNIQUE INDEX `PostalCodesGazetteEntry_c2c_st_locality_postal_code_key`(`c2c`, `st`, `locality`, `postal_code`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `PostalCodeBoundaryPoints` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `postal_code_id` INTEGER NOT NULL,
+    `northing` INTEGER NOT NULL,
+    `easting` INTEGER NOT NULL,
+
+    INDEX `PostalCodeBoundaryPoints_postal_code_id_idx`(`postal_code_id`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `PendingShadowIncrementalStepRefresh` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `binding_identifier` INTEGER NOT NULL,
+    `time` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `ber` LONGBLOB NOT NULL,
+    `submitted` BOOLEAN NOT NULL DEFAULT false,
+    `acknowledged` BOOLEAN NOT NULL DEFAULT false,
+    `rename` BOOLEAN NOT NULL DEFAULT false,
+    `type` ENUM('OTHER', 'ADD', 'REMOVE', 'MODIFY', 'MULTI') NOT NULL,
+
+    INDEX `PendingShadowIncrementalStepRefresh_binding_identifier_time_idx`(`binding_identifier`, `time`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
 ALTER TABLE `Entry` ADD CONSTRAINT `Entry_immediate_superior_id_fkey` FOREIGN KEY (`immediate_superior_id`) REFERENCES `Entry`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
@@ -613,3 +658,6 @@ ALTER TABLE `EnqueuedListResult` ADD CONSTRAINT `EnqueuedListResult_entry_id_fke
 
 -- AddForeignKey
 ALTER TABLE `AccessPointCredentials` ADD CONSTRAINT `AccessPointCredentials_access_point_id_fkey` FOREIGN KEY (`access_point_id`) REFERENCES `AccessPoint`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `PostalCodeBoundaryPoints` ADD CONSTRAINT `PostalCodeBoundaryPoints_postal_code_id_fkey` FOREIGN KEY (`postal_code_id`) REFERENCES `PostalCodesGazetteEntry`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
