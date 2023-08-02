@@ -363,7 +363,6 @@ async function updateSuperiorDSA (
                         },
                         select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
                     });
-                    assn.unbind().then().catch(); // INTENTIONAL_NO_AWAIT
                     return response.result;
                 } else if ("error" in response) {
                     if (compareCode(response.error.code, operationalBindingError["&errorCode"]!)) {
@@ -379,7 +378,6 @@ async function updateSuperiorDSA (
                                 context: "oberror",
                                 problem: obErrorData.problem,
                             }));
-                            assn.unbind().then().catch(); // INTENTIONAL_NO_AWAIT
                             break;
                         }
                     } else {
@@ -387,14 +385,12 @@ async function updateSuperiorDSA (
                             context: "errcode",
                             code: codeToString(response.error.code),
                         }));
-                        assn.unbind().then().catch(); // INTENTIONAL_NO_AWAIT
                         break;
                     }
                 } else {
                     ctx.log.error(ctx.i18n.t("log:update_superior_dsa", {
                         context: "nocode",
                     }));
-                    assn.unbind().then().catch(); // INTENTIONAL_NO_AWAIT
                     break;
                 }
             }
@@ -406,7 +402,6 @@ async function updateSuperiorDSA (
                     accepted: false,
                 },
             });
-            assn.unbind().then().catch(); // INTENTIONAL_NO_AWAIT
         } catch (e) {
             ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
                 obid: bindingID.identifier.toString(),
