@@ -193,13 +193,42 @@ import {
     inetOrgPersonNameForm,
 } from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/inetOrgPersonNameForm.oa";
 
+// const MOSCOW_ACCESS_POINT = new AccessPoint(
+//     {
+//         rdnSequence: [
+//             [
+//                 new AttributeTypeAndValue(
+//                     commonName["&id"],
+//                     _encodeUTF8String("dsa01.moscow.mkdemo.wildboar.software", DER),
+//                 ),
+//             ],
+//         ],
+//     },
+//     new PresentationAddress(
+//         undefined,
+//         undefined,
+//         undefined,
+//         [
+//             /**
+//              * Even if you plan on using LDAP to read this entry, you MUST
+//              * specify an X.500 URL, because DOP cannot be translated into LDAP.
+//              */
+//             uriToNSAP("idms://dsa01.moscow.mkdemo.wildboar.software:44632", false),
+//             uriToNSAP("idm://dsa01.moscow.mkdemo.wildboar.software:4632", false),
+//             uriToNSAP("ldaps://dsa01.moscow.mkdemo.wildboar.software:636", false),
+//             uriToNSAP("ldap://dsa01.moscow.mkdemo.wildboar.software:389", false),
+//         ],
+//     ),
+//     undefined,
+// );
+
 const MOSCOW_ACCESS_POINT = new AccessPoint(
     {
         rdnSequence: [
             [
                 new AttributeTypeAndValue(
                     commonName["&id"],
-                    _encodeUTF8String("dsa01.moscow.mkdemo.wildboar.software", DER),
+                    _encodeUTF8String("dsa2", DER),
                 ),
             ],
         ],
@@ -209,14 +238,7 @@ const MOSCOW_ACCESS_POINT = new AccessPoint(
         undefined,
         undefined,
         [
-            /**
-             * Even if you plan on using LDAP to read this entry, you MUST
-             * specify an X.500 URL, because DOP cannot be translated into LDAP.
-             */
-            uriToNSAP("idms://dsa01.moscow.mkdemo.wildboar.software:44632", false),
-            uriToNSAP("idm://dsa01.moscow.mkdemo.wildboar.software:4632", false),
-            uriToNSAP("ldaps://dsa01.moscow.mkdemo.wildboar.software:636", false),
-            uriToNSAP("ldap://dsa01.moscow.mkdemo.wildboar.software:389", false),
+            uriToNSAP("idm://dsa2:4632", false),
         ],
     ),
     undefined,

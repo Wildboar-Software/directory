@@ -838,7 +838,7 @@ async function seedMoscow (
         ctx.log.info(`Created ${subentryType} subentry for Moscow.`);
     }
 
-    { // residentialPerson C=RU,CN=Nikolai Petrosky
+    { // residentialPerson C=RU,L=Moscow,CN=Nikolai Petrosky
         const arg = createAddEntryArgument([
             ...baseObject,
             [
@@ -872,7 +872,7 @@ async function seedMoscow (
                 undefined,
             ),
         ]);
-        await idempotentAddEntry(ctx, conn, "C=RU,CN=Nikolai Petrosky", arg);
+        await idempotentAddEntry(ctx, conn, "C=RU,L=Moscow,CN=Nikolai Petrosky", arg);
     }
 }
 

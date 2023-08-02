@@ -871,7 +871,7 @@ const RU_ACCESS_POINT = new AccessPoint(
             [
                 new AttributeTypeAndValue(
                     commonName["&id"],
-                    _encodeUTF8String("dsa01.ru.mkdemo.wildboar.software", DER),
+                    _encodeUTF8String("dsa3", DER),
                 ),
             ],
         ],
@@ -881,10 +881,7 @@ const RU_ACCESS_POINT = new AccessPoint(
         undefined,
         undefined,
         [
-            uriToNSAP("idms://dsa01.ru.mkdemo.wildboar.software:44632", false),
-            uriToNSAP("idm://dsa01.ru.mkdemo.wildboar.software:4632", false),
-            uriToNSAP("ldaps://dsa01.ru.mkdemo.wildboar.software:636", false),
-            uriToNSAP("ldap://dsa01.ru.mkdemo.wildboar.software:389", false),
+            uriToNSAP("idm://dsa3:4632", false),
         ],
     ),
     undefined,
@@ -893,7 +890,7 @@ const RU_ACCESS_POINT = new AccessPoint(
 const countriesToCreate: [ string, AccessPoint | undefined ][] = [
     [ "US", undefined ], // US will be inside of the root DSA.
     [ "GB", undefined ],
-    [ "RU", undefined ],
+    [ "RU", RU_ACCESS_POINT ],
 ];
 
 export

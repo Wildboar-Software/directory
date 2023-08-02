@@ -45,7 +45,7 @@ import {
     _encodePrintableString,
     _encodeUTF8String,
 } from "asn1-ts/dist/node/functional";
-import { idempotentAddEntry } from "./utils";
+import sleep, { idempotentAddEntry } from "./utils";
 import {
     createMockCertificate,
     createMockCRL,
@@ -960,7 +960,7 @@ async function seedUS (
     const peepantsGang: DistinguishedName[] = [];
     const newEntryArgs: [cn: string, arg: AddEntryArgument][] = [];
     // Create random people
-    for (let i = 1; i < 10000; i++) {
+    for (let i = 1; i < 100; i++) {
         // TODO: pgpKeyInfo
         // TODO: simpleSecurityObject
         // TODO: uidObject
@@ -1462,6 +1462,8 @@ async function seedUS (
         await idempotentAddEntry(ctx, conn, "C=US,ST=FL,L=HIL,L=Tampa,O=Wildboar Software", arg);
     }
 
+    await sleep(3000);
+
     { // C=US,ST=FL,L=HIL,L=Tampa,O=Wildboar Software,CN=Code Peasants
         const name: string = "Code Peasants";
         const rdn: RelativeDistinguishedName = [
@@ -1511,7 +1513,7 @@ async function seedUS (
     ];
 
     // People within C=US,ST=FL,L=MAR,L=Ocala
-    for (let i = 1; i < 10000; i++) {
+    for (let i = 1; i < 100; i++) {
         const otherObjectClasses: OBJECT_IDENTIFIER[] = [];
         const isNatural: boolean = !(i % 2);
         // const isPGPUser: boolean = !(i % 3);
