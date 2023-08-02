@@ -322,8 +322,13 @@ function new_rose_transport (socket?: Socket | TLSSocket): ROSETransport {
             rose.write_bind(params);
         }),
         request: async (params) => new Promise((resolve) => {
+            if (!("present" in params.invoke_id)) {
+                resolve({ other: { "problem": "No invoke ID." } });
+                return;
+            }
+            const iid = params.invoke_id.present.toString();
             const done = (): void => {
-                rose.invocation_events.off(params.invoke_id.toString(), outcome_handler);
+                rose.invocation_events.off(iid, outcome_handler);
                 rose.events.off("abort", abort_handler);
                 rose.socket?.off("timeout", timeout_function);
                 rose.socket?.off("end", end_function);
@@ -335,7 +340,7 @@ function new_rose_transport (socket?: Socket | TLSSocket): ROSETransport {
             const outcome_handler = (outcome: OperationOutcome) => (done(), resolve(outcome));
             const abort_handler = (reason: AbortReason) => (done(), resolve({ abort: reason }));
             let timeout_handle: NodeJS.Timeout | undefined;
-            rose.invocation_events.once(params.invoke_id.toString(), outcome_handler);
+            rose.invocation_events.once(iid, outcome_handler);
             rose.events.once("abort", abort_handler);
             const timeout_in_ms: number | undefined = params.timeout ?? rose.options?.operation_timeout_ms;
             const timeout_function = () => (done(), resolve({ timeout: true }));
@@ -429,11 +434,23 @@ function new_rose_transport (socket?: Socket | TLSSocket): ROSETransport {
             rose.write_start_tls();
         }),
     };
-    rose.events.on("result", (result) => rose
-        .invocation_events.emit(result.invoke_id.toString(), { result }));
-    rose.events.on("error_", (error) => rose
-        .invocation_events.emit(error.invoke_id.toString(), { error }));
-    rose.events.on("reject", (reject) => rose
-        .invocation_events.emit(reject.invoke_id.toString(), { reject }));
+    rose.events.on("result", (result) => {
+        if (!("present" in result.invoke_id)) {
+            return;
+        }
+        rose.invocation_events.emit(result.invoke_id.present.toString(), { result });
+    });
+    rose.events.on("error_", (error) => {
+        if (!("present" in error.invoke_id)) {
+            return;
+        }
+        rose.invocation_events.emit(error.invoke_id.present.toString(), { error });
+    });
+    rose.events.on("reject", (reject) => {
+        if (!("present" in reject.invoke_id)) {
+            return;
+        }
+        rose.invocation_events.emit(reject.invoke_id.present.toString(), { reject });
+    });
     return rose;
 }
