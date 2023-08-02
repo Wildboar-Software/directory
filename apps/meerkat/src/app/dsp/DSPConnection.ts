@@ -392,6 +392,10 @@ async function handleRequestAndErrors (
                 parameter: payload,
             });
             stats.outcome.error.matchedNameLength = e.data.matched.rdnSequence.length;
+            ctx.log.debug(ctx.i18n.t("log:name_found", {
+                iid: request.invoke_id.present.toString(),
+                dn: stringifyDN(ctx, e.data.matched.rdnSequence),
+            }));
         } else if (e instanceof errors.ReferralError) {
             const code = _encode_Code(errors.ReferralError.errcode, BER);
             const signError: boolean = (e.shouldBeSigned && assn.authorizedForSignedErrors);
