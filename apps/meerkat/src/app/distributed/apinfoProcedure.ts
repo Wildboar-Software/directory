@@ -51,6 +51,8 @@ import {
 import {
     ReferenceType_cross,
     ReferenceType_immediateSuperior,
+    ReferenceType_nonSpecificSubordinate,
+    ReferenceType_subordinate,
     ReferenceType_superior,
     ReferenceType_nonSpecificSubordinate as nssr,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ReferenceType.ta";
@@ -135,13 +137,15 @@ async function apinfoProcedure (
     const nameResolutionIsProceeding: boolean = (req.chaining.operationProgress?.nameResolutionPhase === proceeding);
     const i_want_cross_refs: boolean = (
         ctx.config.xr.requestCrossReferences
-        /* supr and immSupr are the only reference types for which it
-        makes sense, but cross is added to constantly refresh the access
+        /* supr, immSupr, subr, and nssr are the only reference types for which
+        it makes sense, but cross is added to constantly refresh the access
         point info of the cross reference. */
         && (
             (cref.referenceType === ReferenceType_superior)
             || (cref.referenceType === ReferenceType_immediateSuperior)
             || (cref.referenceType === ReferenceType_cross)
+            || (cref.referenceType === ReferenceType_subordinate)
+            || (cref.referenceType === ReferenceType_nonSpecificSubordinate)
         )
     );
 
