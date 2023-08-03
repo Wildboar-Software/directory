@@ -105,7 +105,7 @@ function codeToString (code?: Code): string | undefined {
         : undefined);
 }
 
-const updateTimingBackoffInSeconds: number[] = [ 1, 2 ];
+const updateTimingBackoffInSeconds: number[] = [ 2, 4, 8 ];
 
 export
 interface UpdateSuperiorOptions {
@@ -166,15 +166,10 @@ async function updateSuperiorDSA (
         if (!compareDistinguishedName(agreementDN, affectedDN, getNamingMatcherGetter(ctx))) {
             continue;
         }
-        const bindingID = new OperationalBindingID(
-            hob.binding_identifier,
-            hob.binding_version,
-        );
         // Beyond this point, this operational binding is definitely relevant
         // to the `affectedDN`.
         noHOBS = false;
 
-        let bindingVersion: number = Number(bindingID.version) + 1;
         const newAgreement: HierarchicalAgreement = new HierarchicalAgreement(
             newCP.dse.rdn,
             agreement.immediateSuperior,
@@ -188,8 +183,8 @@ async function updateSuperiorDSA (
             const subr = await dnToVertex(ctx, ctx.dit.root, agreementDN);
             if (!subr) {
                 ctx.log.warn(ctx.i18n.t("log:subr_for_hob_not_found", {
-                    obid: bindingID.identifier.toString(),
-                    version: bindingID.version.toString(),
+                    obid: hob.binding_identifier.toString(),
+                    version: hob.binding_version.toString(),
                 }));
                 continue;
             }
@@ -277,8 +272,8 @@ async function updateSuperiorDSA (
                     accepted: undefined,
                     outbound: true,
                     binding_type: id_op_binding_hierarchical.toString(),
-                    binding_identifier: Number(bindingID.identifier),
-                    binding_version: Number(bindingID.version) + 1,
+                    binding_identifier: hob.binding_identifier,
+                    binding_version: hob.binding_version + 1,
                     agreement_ber: Buffer.from(encodedNewAgreement.toBytes().buffer),
                     access_point: {
                         connect: {
@@ -300,6 +295,7 @@ async function updateSuperiorDSA (
                 },
             });
             // A binary exponential backoff loop for retrying failed updates.
+            let bindingVersion = hob.binding_version;
             for (const backoff of updateTimingBackoffInSeconds) {
                 const sp = createSecurityParameters(
                     ctx,
@@ -307,6 +303,10 @@ async function updateSuperiorDSA (
                     accessPoint.ae_title.rdnSequence,
                     modifyOperationalBinding["&operationCode"]!,
                 );
+                const bindingID = new OperationalBindingID(
+                    hob.binding_identifier,
+                    bindingVersion,
+                ); // The newBindingID will be implemented under the hood.
                 const response = await assn.modifyHOBWithSuperior({
                     bindingID,
                     initiator: sub2sup,
@@ -329,7 +329,7 @@ async function updateSuperiorDSA (
                         },
                         data: {
                             accepted: true,
-                            binding_version: bindingVersion,
+                            binding_version: bindingVersion + 1,
                             /**
                              * Previous is not set until the update succeeds,
                              * because `getRelevantOperationalBindings`
@@ -370,7 +370,10 @@ async function updateSuperiorDSA (
                         const obErrorData = getOptionallyProtectedValue(obError);
                         if (obErrorData.problem === OpBindingErrorParam_problem_invalidNewID) {
                             ctx.log.warn(ctx.i18n.t("log:invalid_new_id"));
-                            bindingVersion++;
+                            // TODO: Review why I had to increment by two.
+                            // I almost think it was a race condition where multiple calls to this function
+                            // were interleaved.
+                            bindingVersion += 2;
                             await sleep(backoff * 1000);
                             continue;
                         } else {
@@ -387,6 +390,7 @@ async function updateSuperiorDSA (
                         }));
                         break;
                     }
+                // FIXME: Handle reject, abort, timeout, etc.
                 } else {
                     ctx.log.error(ctx.i18n.t("log:update_superior_dsa", {
                         context: "nocode",
@@ -404,8 +408,8 @@ async function updateSuperiorDSA (
             });
         } catch (e) {
             ctx.log.warn(ctx.i18n.t("log:failed_to_update_hob", {
-                obid: bindingID.identifier.toString(),
-                version: bindingID.version.toString(),
+                obid: hob.binding_identifier.toString(),
+                version: hob.binding_version.toString(),
                 e: e.message,
             }));
         }
