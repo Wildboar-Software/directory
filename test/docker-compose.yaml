@@ -39,9 +39,9 @@ services:
       MEERKAT_ENABLE_DOP: 1
       MEERKAT_ENABLE_DSP: 1
       MEERKAT_TRUST_FOR_IBRA: 1
-      MEERKAT_TLS_CA_FILE: /pki/god.crt
-      MEERKAT_TLS_CERT_FILE: /pki/dsa1.chain.crt
-      MEERKAT_TLS_KEY_FILE: /pki/dsa1.key.pem
+      # MEERKAT_TLS_CA_FILE: /pki/god.crt
+      # MEERKAT_TLS_CERT_FILE: /pki/dsa1.chain.crt
+      # MEERKAT_TLS_KEY_FILE: /pki/dsa1.key.pem
       MEERKAT_SIGNING_CA_FILE: /pki/god.crt
       MEERKAT_SIGNING_CERTS_CHAIN_FILE: /pki/dsa1.chain.crt
       MEERKAT_SIGNING_KEY_FILE: /pki/dsa1.key.pem
@@ -111,9 +111,9 @@ services:
       MEERKAT_ENABLE_DOP: 1
       MEERKAT_ENABLE_DSP: 1
       MEERKAT_TRUST_FOR_IBRA: 1
-      MEERKAT_TLS_CA_FILE: /pki/god.crt
-      MEERKAT_TLS_CERT_FILE: /pki/dsa2.chain.crt
-      MEERKAT_TLS_KEY_FILE: /pki/dsa2.key.pem
+      # MEERKAT_TLS_CA_FILE: /pki/god.crt
+      # MEERKAT_TLS_CERT_FILE: /pki/dsa2.chain.crt
+      # MEERKAT_TLS_KEY_FILE: /pki/dsa2.key.pem
       MEERKAT_SIGNING_CA_FILE: /pki/god.crt
       MEERKAT_SIGNING_CERTS_CHAIN_FILE: /pki/dsa2.chain.crt
       MEERKAT_SIGNING_KEY_FILE: /pki/dsa2.key.pem
@@ -181,9 +181,9 @@ services:
       MEERKAT_ENABLE_DOP: 1
       MEERKAT_ENABLE_DSP: 1
       MEERKAT_TRUST_FOR_IBRA: 1
-      MEERKAT_TLS_CA_FILE: /pki/god.crt
-      MEERKAT_TLS_CERT_FILE: /pki/dsa3.chain.crt
-      MEERKAT_TLS_KEY_FILE: /pki/dsa3.key.pem
+      # MEERKAT_TLS_CA_FILE: /pki/god.crt
+      # MEERKAT_TLS_CERT_FILE: /pki/dsa3.chain.crt
+      # MEERKAT_TLS_KEY_FILE: /pki/dsa3.key.pem
       MEERKAT_SIGNING_CA_FILE: /pki/god.crt
       MEERKAT_SIGNING_CERTS_CHAIN_FILE: /pki/dsa3.chain.crt
       MEERKAT_SIGNING_KEY_FILE: /pki/dsa3.key.pem
