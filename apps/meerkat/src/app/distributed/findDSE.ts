@@ -1518,6 +1518,10 @@ export
             });
             const mainAP = masters.pop() ?? shadows.pop();
             if (!mainAP) {
+                // FIXME: Do something here. I actually had a bug because of this before.
+                // I think the more appropriate thing would be to log an
+                // error, remove the invalid reference, and use whatever
+                // superior knowledge or entries have been found, if that's possible.
                 return;
             }
             const cr = new ContinuationReference(
