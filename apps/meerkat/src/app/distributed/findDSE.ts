@@ -1483,7 +1483,7 @@ export
         }
         if (
             dse_i.dse.subr
-            || dse_i.dse.xr
+            || dse_i.dse.xr // TODO: && useCrossReference (So they can get periodically corrected.)
             || dse_i.dse.immSupr
             || dse_i.dse.ditBridge
         ) {
