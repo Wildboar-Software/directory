@@ -235,8 +235,13 @@ with other DSAs.
 Meerkat DSA will request cross references if the prior DSA in a chained
 operation requested them, or if the
 [`MEERKAT_REQUEST_CROSS_REFERENCES`](./env.md#meerkat_request_cross_references)
-configuration option is set to `1` and the knowledge reference used to continue
+configuration option is set to `1`.
+
+<!-- and the knowledge reference used to continue
 the operation is of type `superior`, `immediateSuperior`, or `cross`.
+
+THIS IS NO LONGER TRUE. subr and nssr are also requested, because a first-level
+DSA still might have an interest in skipping past second-level DSAs.
 
 :::info
 
@@ -246,7 +251,7 @@ bridges, etc. When using a cross reference, cross references are still
 requested, just to ensure that Meerkat DSA has up-to-date knowledge references,
 since these are not automatically kept up-to-date by an operational binding.
 
-:::
+::: -->
 
 In addition to the above, all cross references are validated upon receipt. Any
 cross references that describe a context prefix that does not lie within the
@@ -259,3 +264,8 @@ Cross references in violation of the above validation techniques may be
 nefarious attempts to hijack namespaces that do not belong to the called DSA.
 
 :::
+
+If the access point named in a cross reference becomes unreachable, Meerkat DSA
+will remove the cross reference. A future version of Meerkat DSA will
+periodically ignore cross references to ensure that directory routing is still
+valid.
