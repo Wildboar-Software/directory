@@ -502,7 +502,7 @@ async function apinfoProcedure (
                             ),
                             resultData.chainedResult.alreadySearched,
                         ),
-                        req.argument!,
+                        resultData.result,
                     ),
                 };
                 if (assn && (assn instanceof DAPAssociation)) {
