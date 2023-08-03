@@ -2,7 +2,7 @@
 
 # docker compose -f ./test/docker-compose.yaml down -v
 docker compose -f ./test/docker-compose.yaml down
-nx run meerkat:build --skip-nx-cache
+nx run meerkat:build
 docker compose -f ./test/docker-compose.yaml up --build -d
 sleep 60
 node ./dist/apps/create-test-dit/main.js --profile=root --accessPoint=idm://localhost:14632
