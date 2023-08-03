@@ -48,10 +48,10 @@ async function upsertCrossReferences (
             glue: false,
             AccessPoint: {
                 deleteMany: {
-                    knowledge_type: Knowledge.CROSS_REFERENCE,
+                    knowledge_type: Knowledge.SPECIFIC,
                 },
             },
         },
     });
-    await saveAccessPoint(ctx, xr.accessPoint, Knowledge.CROSS_REFERENCE, current.dse.id);
+    await saveAccessPoint(ctx, xr.accessPoint, Knowledge.SPECIFIC, current.dse.id);
 }
