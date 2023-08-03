@@ -325,15 +325,15 @@ async function list_i (
         && assn.authorizedForSignedResults
     );
     const chainingResults = new ChainingResults(
-        undefined,
-        undefined,
+        state.chainingResults.info,
+        state.chainingResults.crossReferences,
         createSecurityParameters(
             ctx,
             signDSPResult,
             assn.boundNameAndUID?.dn,
             id_opcode_list,
         ),
-        undefined,
+        state.chainingResults.alreadySearched,
     );
     const ret: ListState = {
         chaining: chainingResults,
