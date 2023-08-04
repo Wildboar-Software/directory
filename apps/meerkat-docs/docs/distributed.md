@@ -204,7 +204,7 @@ signatures.
 
 ## Cross References
 
-As of version 2.8.0, Meerkat DSA supports the use of cross references, which
+As of version 3.0.0, Meerkat DSA supports the use of cross references, which
 speed up name resolution and operation continuation by "bookmarking" the DSAs
 involved in an operation and making a direct connection to them, rather than
 chaining through the first-level DSAs.
