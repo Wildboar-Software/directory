@@ -132,7 +132,7 @@
     "invalid_credentials": "COULD_BAN={{host}}; Client {{host}} attempted to bind with invalid credentials.",
     "invalid_credentials@strong": "COULD_BAN={{host}}; Client {{host}} attempted to bind with invalid credentials. verifyToken() return={{vtr}}.",
     "hob_invalid_entryInfo": "The potential superior DSA supplied entryInfo that describes an entry that is invalid for this reason: {{e}}.",
-    "cert_path_invalid@arg": "COULD_BAN={{host}}; Invalid certification path for association {{aid}} on invocation {{iid}}.",
+    "cert_path_invalid@arg": "COULD_BAN={{host}}; Invalid certification path for association {{aid}} on invocation {{iid}}. verifyCertPath() return code={{rc}}.",
     "cert_path_invalid@result": "Invalid certification path in result of invocation {{iid}} from access point {{ap}}.",
     "invalid_signature@arg": "COULD_BAN={{host}}; Invalid signature for invocation {{iid}} from association {{aid}}.",
     "invalid_signature@result": "Invalid signature on result for invocation {{iid}} from access point {{ap}}.",
@@ -366,5 +366,13 @@
     "nrcr_reject": "Reject with reason {{reason}} received from NRCR procedure for operation {{opid}}.",
     "nrcr_abort": "Abort with reason {{reason}} received from NRCR procedure for operation {{opid}}.",
     "nrcr_timeout": "Timeout received from NRCR procedure for operation {{opid}}.",
-    "accepted_operation": "Accepted invocation {{iid}} as operation {{opid}}."
+    "accepted_operation": "Accepted invocation {{iid}} as operation {{opid}}.",
+    "dsp_result_error_code": "DSP result for operation {{opid}} included an errorCode in the security parameters, which is invalid.",
+    "dsp_result_time": "DSP result for operation {{opid}} included a time in the security parameters that differed by too much from the receipt time. The result might have been replayed.",
+    "dsp_result_name": "DSP result for operation {{opid}} included a name in the security parameters that differed by the name of this DSA. The result might have been replayed.",
+    "dsp_result_op_code": "DSP result for operation {{opid}} included an operation code in the security parameters that differed from the actual operation code.",
+    "dsp_result_invalid_sig": "DSP result for operation {{opid}} had an invalid signature. {{e}}",
+    "failed_to_apply_xr": "Failed to apply cross references received from operation {{opid}} to the local DSAIT. {{e}}",
+    "filtered_cross_refs": "Filtered out {{count}} cross references from DSP response for operation {{opid}}.",
+    "name_found": "The name found for invocation {{iid}} was {{dn}}."
 }

@@ -1381,6 +1381,16 @@ interface DSAInfo {
      */
     sentinelTriggeredHibernation?: Date;
 
+    /**
+     * The context prefixes administered by this DSA.
+     *
+     * This is cached here because cross references need to be validated. In
+     * particular, you do not want a downstream DSA to provide cross references
+     * for naming contexts that this DSA administers, or any superior to them,
+     * since it could be an attempted exploit.
+     */
+    namingContexts: DistinguishedName[];
+
 }
 
 /**
@@ -1458,6 +1468,32 @@ interface AuthenticationConfiguration extends PrivilegeManagementInfrastructureC
 }
 
 /**
+ * Configuration options pertaining to the use and transfer of cross references.
+ *
+ * @interface
+ */
+export
+interface CrossReferencesOptions {
+
+    /**
+     * Whether the cross references must be signed for the local DSA to apply
+     * them to the local DSAIT.
+     */
+    signingRequiredToTrust: boolean;
+
+    /**
+     * Whether this DSA should request cross references.
+     */
+    requestCrossReferences: boolean;
+
+    /**
+     * Whether to return cross references, if requested.
+     */
+    returnCrossReferences: boolean;
+
+}
+
+/**
  * @summary Meerkat DSA configuration
  * @description
  *
@@ -1529,6 +1565,8 @@ interface Configuration {
      * version.
      */
     principledServiceAdministration: boolean;
+
+    xr: CrossReferencesOptions;
 
     authn: AuthenticationConfiguration;
 

@@ -1,5 +1,43 @@
 # Changelog for Meerkat DSA
 
+## Version 3.0.0
+
+The defining aspect of this version is support for cross references. Cross
+references allow a DSA to "bookmark" the DSAs that were involved in servicing
+a previous request, so that, in chaining subsequent requests, the correct DSA
+can be used directly, rather than routing the request through a first-level DSA.
+
+### New Features / Improvements
+
+- Using cross references for routing purposes
+- Returning cross references
+- Requesting cross references from other DSAs
+- More performant and correct `namingContexts` attribute
+- More resilient and performant updating of superior DSAs
+- Better logging surrounding name resolution
+- Signature verification is faster and more resilient
+- Chained results get verified
+- Chained results returned from other DSAs get re-signed if they need it
+
+### Bug Fixes
+
+- Log invalid DSP signatures received from chained results.
+- Wrong error code returned to DOP associations
+  - The `operationalBindingError` was being coded as a `securityError`.
+- Bug where results received from chaining could get cross-wired
+  - Meaning that a request might receive a result that belongs to another
+    different request.
+- Time-related signatures verification issues
+  - Signatures on certificates could be wrongfully rejected if verified at
+    certain times of the year (due to a bizarre, undocumented behavior in
+    ECMAScript).
+
+### Upgrading
+
+This is a breaking change, because the database schema had to be changed in a
+breaking manner. If you upgrade to this version, you will need to repopulate
+a new Meerkat DSA database.
+
 ## Version 2.7.0
 
 The defining aspect of this version is support for shadowing, which allows you

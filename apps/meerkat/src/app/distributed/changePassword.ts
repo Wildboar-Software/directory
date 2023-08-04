@@ -540,15 +540,15 @@ async function changePassword (
         result: {
             unsigned: new ChainedResult(
                 new ChainingResults(
-                    undefined,
-                    undefined,
+                    state.chainingResults.info,
+                    state.chainingResults.crossReferences,
                     createSecurityParameters(
                         ctx,
                         signDSPResult,
                         assn.boundNameAndUID?.dn,
                         id_opcode_changePassword,
                     ),
-                    undefined,
+                    state.chainingResults.alreadySearched,
                 ),
                 _encode_ChangePasswordResult(result, DER),
             ),

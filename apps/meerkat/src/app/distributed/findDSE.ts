@@ -127,7 +127,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CommonArguments.ta";
 import { getEntryExistsFilter } from "../database/entryExistsFilter";
 import {
-    ChainingResults,
+    ChainingResults, CrossReference,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/ChainingResults.ta";
 import {
     ProtectionRequest_signed,
@@ -297,7 +297,7 @@ export
             );
         }
     };
-    /**
+    /** // TODO: Does this need to be reported?
      * This procedural deviation is needed. Without it, the subordinates of the
      * root DSE will be searched for an entry with a zero-length RDN!
      */
@@ -402,7 +402,7 @@ export
                     OperationProgress_nameResolutionPhase_proceeding,
                     lastEntryFound + 1,
                 ),
-                undefined,
+                state.rdnsResolved,
                 ReferenceType_nonSpecificSubordinate,
                 dse_lastEntryFound?.dse.nssr.nonSpecificKnowledge
                     .map((nsk) => {
@@ -529,7 +529,7 @@ export
                         OperationProgress_nameResolutionPhase_notStarted,
                         undefined,
                     ),
-                    undefined,
+                    state.rdnsResolved,
                     ReferenceType_superior,
                     [
                         new AccessPointInformation(
@@ -612,7 +612,7 @@ export
                                 OperationProgress_nameResolutionPhase_proceeding,
                                 1,
                             ),
-                            undefined,
+                            state.rdnsResolved,
                             ReferenceType_nonSpecificSubordinate,
                             [
                                 new AccessPointInformation(
@@ -1395,6 +1395,66 @@ export
                 signErrors,
             );
         }
+
+        // TODO: Report this to be added to the distributed procedures?
+        /* NOTE: This is not part of the Find DSE procedure, but it is necessary
+        to return cross references in the chaining arguments. */
+        if (dse_i.dse.cp && ctx.config.xr.returnCrossReferences) {
+            const cp_dn = getDistinguishedName(dse_i);
+            const api = (dse_i.dse.shadow)
+                ? new AccessPointInformation(
+                    ctx.dsa.accessPoint.ae_title,
+                    ctx.dsa.accessPoint.address,
+                    ctx.dsa.accessPoint.protocolInformation,
+                    MasterOrShadowAccessPoint_category_shadow,
+                    undefined,
+                    dse_i.dse.cp.supplierKnowledge?.map((sk) => new MasterOrShadowAccessPoint(
+                        sk.ae_title,
+                        sk.address,
+                        sk.protocolInformation,
+                        sk.supplier_is_master
+                            ? MasterOrShadowAccessPoint_category_master
+                            : MasterOrShadowAccessPoint_category_shadow,
+                        undefined,
+                    )),
+                )
+                : new AccessPointInformation(
+                    ctx.dsa.accessPoint.ae_title,
+                    ctx.dsa.accessPoint.address,
+                    ctx.dsa.accessPoint.protocolInformation,
+                    MasterOrShadowAccessPoint_category_master,
+                    undefined,
+                    [
+                        ...dse_i.dse.cp.consumerKnowledge?.map((sk) => new MasterOrShadowAccessPoint(
+                            sk.ae_title,
+                            sk.address,
+                            sk.protocolInformation,
+                            MasterOrShadowAccessPoint_category_shadow,
+                            undefined,
+                        )) ?? [],
+                        ...dse_i.dse.cp.secondaryShadows?.map((sk) => new MasterOrShadowAccessPoint(
+                            sk.ae_title,
+                            sk.address,
+                            sk.protocolInformation,
+                            MasterOrShadowAccessPoint_category_shadow,
+                            undefined,
+                        )) ?? [],
+                    ],
+                );
+            const cross_ref = new CrossReference(cp_dn, api);
+            if (state.chainingResults.crossReferences) {
+                state.chainingResults.crossReferences.push(cross_ref);
+            } else {
+                state.chainingResults = new ChainingResults(
+                    state.chainingResults.info,
+                    [ cross_ref ],
+                    state.chainingResults.securityParameters,
+                    state.chainingResults.alreadySearched,
+                    state.chainingResults._unrecognizedExtensionsList,
+                );
+            }
+        }
+
         /**
          * It is CRITICAL that the following `if` blocks appear in the order
          * described in step 7 of ITU Recommendation X.518 (2016), Section
@@ -1423,10 +1483,13 @@ export
         }
         if (
             dse_i.dse.subr
-            || dse_i.dse.xr
+            || dse_i.dse.xr // TODO: && useCrossReference (So they can get periodically corrected.)
             || dse_i.dse.immSupr
             || dse_i.dse.ditBridge
         ) {
+            if (dse_i.dse.xr) {
+                state.crossReferenceVertex = dse_i;
+            }
             const knowledges = dse_i.dse.subr?.specificKnowledge
                 ?? dse_i.dse.xr?.specificKnowledge
                 ?? dse_i.dse.immSupr?.specificKnowledge
@@ -1455,6 +1518,10 @@ export
             });
             const mainAP = masters.pop() ?? shadows.pop();
             if (!mainAP) {
+                // FIXME: Do something here. I actually had a bug because of this before.
+                // I think the more appropriate thing would be to log an
+                // error, remove the invalid reference, and use whatever
+                // superior knowledge or entries have been found, if that's possible.
                 return;
             }
             const cr = new ContinuationReference(
@@ -1466,7 +1533,7 @@ export
                     OperationProgress_nameResolutionPhase_proceeding,
                     i,
                 ),
-                i,
+                state.rdnsResolved,
                 referenceType,
                 [
                     new AccessPointInformation(
@@ -1649,6 +1716,7 @@ export
                     ...dse_i.dse.alias.aliasedEntryName,
                     ...needleDN.slice(i), // RDNs N(i + 1) to N(m)
                 ];
+                // TODO: I don't think these chaining arguments are correct.
                 const newChaining: ChainingArguments = new ChainingArguments(
                     requestor,
                     newN,

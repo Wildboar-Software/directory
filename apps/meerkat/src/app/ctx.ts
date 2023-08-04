@@ -551,6 +551,11 @@ const config: Configuration = {
     vendorVersion: process.env.MEERKAT_VENDOR_VERSION?.length
         ? process.env.MEERKAT_VENDOR_VERSION
         : undefined,
+    xr: {
+        requestCrossReferences: (process.env.MEERKAT_REQUEST_CROSS_REFERENCES === "1"),
+        returnCrossReferences: (process.env.MEERKAT_RETURN_CROSS_REFERENCES === "1"),
+        signingRequiredToTrust: (process.env.MEERKAT_SIGNING_REQUIRED_TO_TRUST_XR !== "0"),
+    },
     principledServiceAdministration: (process.env.MEERKAT_PRINCIPLED_SERVICE_ADMIN === "1"),
     revealUserPwdEncryptedValues: (process.env.MEERKAT_REVEAL_USER_PWD === "1"),
     maxRelaxationsOrTightenings: process.env.MEERKAT_MAX_RELAXATIONS
@@ -1024,6 +1029,7 @@ const ctx: MeerkatContext = {
             undefined,
         ),
         hibernatingSince: undefined,
+        namingContexts: [],
     },
     otherDSAs: {
         byStringDN: new Map(),

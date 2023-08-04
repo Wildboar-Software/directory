@@ -79,6 +79,7 @@ import stringifyDN from "../../x500/stringifyDN";
 import {
     id_op_binding_shadow,
 } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
+import { cacheNamingContexts } from "../../dit/cacheNamingContexts";
 
 
 async function relayedTerminateOperationalBinding (
@@ -100,6 +101,8 @@ async function relayedTerminateOperationalBinding (
         FALSE,
         signErrors,
     );
+    // We update the cached naming contexts, which might have changed.
+    cacheNamingContexts(ctx);
     const ob = await ctx.db.operationalBinding.findFirst({
         // We only want the most recent operational binding.
         // This should be taken care of by the `where.next_version` below, but

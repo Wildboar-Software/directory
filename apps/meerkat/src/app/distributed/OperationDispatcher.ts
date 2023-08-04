@@ -200,6 +200,9 @@ interface OperationDispatcherState {
     outputAttributeTypes?: Map<IndexableOID, ResultAttribute>;
     effectiveServiceControls?: ServiceControlOptions;
     effectiveFamilyReturn?: FamilyReturn;
+
+    // Defined by me.
+    crossReferenceVertex?: Vertex;
 }
 
 export
@@ -247,15 +250,15 @@ async function search_procedures (
     searchState: SearchState,
 ): Promise<SearchState> {
     const chainingResults = new ChainingResults(
-        undefined,
-        undefined,
+        state.chainingResults.info,
+        state.chainingResults.crossReferences,
         createSecurityParameters(
             ctx,
             signDSPResult,
             assn.boundNameAndUID?.dn,
             search["&operationCode"],
         ),
-        undefined,
+        state.chainingResults.alreadySearched,
     );
     const searchResponse: SearchState = searchState ?? {
         results: [],
@@ -611,15 +614,15 @@ class OperationDispatcher {
                 const opcr: OPCR = {
                     unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
                         new ChainingResults(
-                            undefined,
-                            undefined,
+                            state.chainingResults.info,
+                            state.chainingResults.crossReferences,
                             createSecurityParameters(
                                 ctx,
                                 signDSPResult,
                                 assn.boundNameAndUID?.dn,
                                 list["&operationCode"],
                             ),
-                            undefined,
+                            state.chainingResults.alreadySearched,
                         ),
                         result.encodedListResult,
                     ),
@@ -787,15 +790,15 @@ class OperationDispatcher {
             }), undefined);
 
             const chainingResults = new ChainingResults(
-                undefined,
-                undefined,
+                state.chainingResults.info,
+                state.chainingResults.crossReferences,
                 createSecurityParameters(
                     ctx,
                     signDSPResult,
                     assn.boundNameAndUID?.dn,
                     search["&operationCode"],
                 ),
-                undefined,
+                state.chainingResults.alreadySearched,
             );
             const initialSearchState: SearchState = {
                 results: [],
@@ -1094,15 +1097,15 @@ class OperationDispatcher {
             const opcr: OPCR = {
                 unsigned: new Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1(
                     new ChainingResults(
-                        undefined,
-                        undefined,
+                        state.chainingResults.info,
+                        state.chainingResults.crossReferences,
                         createSecurityParameters(
                             ctx,
                             signDSPResult,
                             assn.boundNameAndUID?.dn,
                             search["&operationCode"],
                         ),
-                        undefined,
+                        state.chainingResults.alreadySearched,
                     ),
                     result.encodedSearchResult,
                 ),

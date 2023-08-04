@@ -93,6 +93,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
 import scheduleShadowUpdates from "./disp/scheduleShadowUpdates";
 import { BERElement } from "asn1-ts";
+import { cacheNamingContexts } from "./dit/cacheNamingContexts";
 
 /**
  * @summary Check for Meerkat DSA updates
@@ -1391,6 +1392,8 @@ async function main (): Promise<void> {
     if (ctx.config.bulkInsertMode) {
         ctx.log.warn(ctx.i18n.t("log:bulk_insert_mode"));
     }
+
+    cacheNamingContexts(ctx); // INTENTIONAL_NO_AWAIT
 
     setInterval(() => {
         const dbReportPromise = createDatabaseReport(ctx);

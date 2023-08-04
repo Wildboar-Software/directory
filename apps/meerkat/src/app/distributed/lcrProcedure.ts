@@ -212,6 +212,7 @@ async function lcrProcedure (
                 try {
                     // NOTE: You do not need to check signatures. That was
                     // already handled by apInfoProcedure().
+                    // TODO: Return the decoded parameter.
                     const chainedResult = chainedList.decoderFor["&ResultType"]!(response.result.parameter);
                     const chainedResultData = getOptionallyProtectedValue(chainedResult);
                     const listResult = _decode_ListResult(chainedResultData.result);

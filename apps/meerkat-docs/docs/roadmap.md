@@ -4,13 +4,7 @@ We will not promise any particular schedule of delivery of features or bug fixes
 at this time. However, the very high-level roadmap for Meerkat DSA can be
 broken down to the following versions.
 
-## Version 2.8.0 - Cross References
-
-This update will introduce support for cross references, allowing DSAs to share
-routing information pertaining to other known DSAs. This will allow the entire
-DIT to become more discoverable and performant.
-
-## Version 2.9.0 - Schema Update ("Wildboar Schema")
+## Version 3.1.0 - Schema Update ("Wildboar Schema")
 
 This update will introduce thousands of new schema objects defined by Wildboar
 Software into the default schema. This is desirable so that X.500 directories
@@ -22,14 +16,20 @@ using a `married` auxiliary object class that permits the presence of a
 administrators everywhere to define their own equivalent object classes, thereby
 duplicating work and reducing inter-domain compatibility.
 
-## Version 2.10.0 and Beyond
+## Version 3.2.0 - Rule Based Access Control
 
-Not much can be said about anything this far in the future. However, these
-features need to be introduced at some point:
+This update will introduce Rule-Based Access Control (RBAC) (not to be mistaken
+for the more common "Role-Based Access Control") as described in
+[ITU Recommendation X.501 (2019)](https://www.itu.int/rec/T-REC-X.501/en).
+This is an access control scheme that determines authorization on the basis of
+clearance levels, such as "confidential" or "top secret."
 
-- SASL Authentication, allowing alternative authentication mechanisms
-- Rule-Based Access Control, allowing an alternative access control mechanism
-  - This might _not_ be supported, because its semantics are extremely vague.
+## Version 3.3.0 - SPKM Authentication
+
+This version will introduce SPKM Authentication as described in
+[ITU Recommendation X.511 (2019)](https://www.itu.int/rec/T-REC-X.511/en).
+This is another authentication mechanism that is as strong as the `strong`
+authentication mechanism, but it is a more standardized GSS-API mechanism.
 
 ## Integration, Scalability, and Security
 

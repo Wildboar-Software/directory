@@ -1075,6 +1075,47 @@ resource strain, you may want to leave this feature disabled.
 
 :::
 
+## MEERKAT_REQUEST_CROSS_REFERENCES
+
+If set to `1`, Meerkat DSA will request cross references from other DSAs, and,
+pending validation, will apply them to the local DSAIT, which may make the
+routing of requests faster.
+
+:::warning
+
+This is off by default because there are some security risks of accepting
+cross references. Downstream DSAs may attempt to lie in an attempt to claim
+ownership of contexts that they do not own, or point to DSAs that serve an
+entirely separate DIT.
+
+See [ITU Recommendation X.501 (2019)](https://www.itu.int/rec/T-REC-X.501/en),
+Annex S, section S.2.
+
+You should NOT turn this on unless you can trust all DSAs involved in your DSAIT
+to be trustworthy and competent.
+
+:::
+
+## MEERKAT_RETURN_CROSS_REFERENCES
+
+If set to `1`, Meerkat DSA will return cross references to context prefixes it
+owns and that it encounters during the process of name resolution within the
+DSAIT. Note that this does not--nor does any other option--determine whether
+the local DSA returns cross references returned from other DSAs. The local DSA
+will back-propagate cross references it receives to previous DSAs.
+
+:::note
+
+This is off by default because the use of cross references can disclose
+important secret information, such as the location or network addresses of other
+DSAs that are supposed to remain undisclosed.
+
+You should NOT turn this on unless you can trust all DSAs involved in your DSAIT
+to be correctly implemented and you know that all knowledge references in your
+DSAIT are not secret.
+
+:::
+
 ## MEERKAT_REVEAL_USER_PWD
 
 If set to `1`, Meerkat DSA will return non-zero-length `OCTET STRING`s in the
@@ -1774,6 +1815,19 @@ Protocol (DOP) requests that are not signed.
 This exists because operational binding management is an extremely
 security-sensitive aspect of directory management. Requiring signing is a great
 way to prevent hacking attempts via malicious DOP requests.
+
+:::
+
+## MEERKAT_SIGNING_REQUIRED_TO_TRUST_XR
+
+Unless set to `0`, Meerkat DSA will require cross references that it applies to
+its own local DSAIT to be cryptographically signed.
+
+:::note
+
+This is on by default because cross references, as with any references, are
+highly security-sensitive and need to be protected against tampering. Only
+disable this if you trust all DSAs in your DIT.
 
 :::
 
