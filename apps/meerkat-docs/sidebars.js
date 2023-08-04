@@ -28,6 +28,7 @@ const sidebars = {
                 'logging-monitoring',
                 'schema',
                 'networking',
+                'distributed',
                 'tls',
                 'online-pki',
                 'signing',

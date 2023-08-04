@@ -1,4 +1,4 @@
-# Distributed / Chained Operations
+# Distributed Operations
 
 ## Authentication of Distributed Operations
 

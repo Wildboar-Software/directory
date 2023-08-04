@@ -114,5 +114,6 @@ alternative. I do not know what it uses for DNS under the hood.
 In the future, Meerkat DSA may support:
 
 - TOR / Onion Routing / SOCKS Transport
-- ZMQ Transport
-- LPP Transport
+- Lightweight Presentation Protocol (LPP) Transport
+- X.25-over-TCP (XOT) Transport
+- DIXIE Protocol
