@@ -833,6 +833,7 @@ async function modifyDN (
     const superiorDN = getDistinguishedName(superior);
     const permittedToFindResult = await permittedToFindDSE(
         ctx,
+        assn,
         ctx.dit.root,
         [ ...superiorDN, newRDN ],
         user,

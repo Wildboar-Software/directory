@@ -29,7 +29,7 @@ import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compare
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import { DER } from "asn1-ts/dist/node/functional";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
-import { createVerify, createPublicKey } from "crypto";
+import { createVerify, createPublicKey, KeyObject } from "crypto";
 import {
     AlgorithmIdentifier, _encode_AlgorithmIdentifier,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta"
@@ -786,7 +786,7 @@ async function checkRemoteCRLs (
             if (ctx.config.signing.disableAllSignatureVerification) {
                 return VCP_RETURN_CRL_REVOKED;
             }
-            const bytes = crl.originalDER
+            const bytes = crl.originalDER // FIXME: This is incorrect.
                 ?? _encode_CertificateList(crl, DER).toBytes();
             const sigValue = packBits(crl.signature);
             const signatureIsValid: boolean | undefined = verifySignature(
@@ -826,23 +826,29 @@ function verifySignature (
     bytes: Uint8Array,
     alg: AlgorithmIdentifier,
     sigValue: Uint8Array,
-    issuerSPKI: SubjectPublicKeyInfo | SubjectAltPublicKeyInfo,
+    keyOrSPKI: SubjectPublicKeyInfo | SubjectAltPublicKeyInfo | KeyObject,
 ): boolean | undefined {
-    const spkiBytes: Uint8Array = ((issuerSPKI instanceof SubjectPublicKeyInfo)
-        ? _encode_SubjectPublicKeyInfo(issuerSPKI, DER)
-        : _encode_SubjectAltPublicKeyInfo(issuerSPKI, DER)).toBytes();
-    const issuerPublicKey = createPublicKey({
-        key: Buffer.from(spkiBytes.buffer),
-        format: "der",
-        type: "spki",
-    });
+    const pubKey: KeyObject = keyOrSPKI instanceof KeyObject
+        ? keyOrSPKI
+        : (() => {
+            const spkiBytes: Uint8Array = ((keyOrSPKI instanceof SubjectPublicKeyInfo)
+                ? _encode_SubjectPublicKeyInfo(keyOrSPKI, DER)
+                : _encode_SubjectAltPublicKeyInfo(keyOrSPKI, DER)).toBytes();
+            const issuerPublicKey = createPublicKey({
+                key: Buffer.from(spkiBytes.buffer),
+                format: "der",
+                type: "spki",
+            });
+            return issuerPublicKey;
+        })();
+
     const nodejsDigestName = sigAlgOidToNodeJSDigest.get(alg.algorithm.toString());
     if (!nodejsDigestName) {
         return undefined; // Unknown algorithm.
     }
     const verifier = createVerify(nodejsDigestName);
     verifier.update(bytes);
-    const signatureIsValid = verifier.verify(issuerPublicKey, sigValue);
+    const signatureIsValid = verifier.verify(pubKey, sigValue);
     return signatureIsValid;
 }
 

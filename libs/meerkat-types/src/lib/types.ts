@@ -103,6 +103,10 @@ import type {
     PwdResponseValue,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue.ta";
 import { Timeout } from "safe-timers";
+import { Clearance } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/Clearance.ta";
+import {
+    SignedSecurityLabel,
+} from "@wildboar/x500/src/lib/modules/EnhancedSecurity/SignedSecurityLabel.ta";
 
 
 type EventReceiver<T> = (params: T) => void;
@@ -2928,6 +2932,30 @@ interface DSARelationships {
     byStringDN: Map<IndexableDN, DSARelationship>;
 }
 
+/**
+ * An Access Control Decision Function (ACDF) to determine authorization to a
+ * given attribute value, according to a specific Rule-Based Access Control
+ * (RBAC) policy.
+ */
+export type RBAC_ACDF = (
+    ctx: Context,
+    assn: ClientAssociation, // This has a clearance field.
+    target: Vertex,
+    label: SignedSecurityLabel,
+    value: ASN1Element,
+    contexts: X500Context[],
+    permissions: number[],
+) => boolean;
+
+/**
+ * Information about a labelling authority for the purposes of
+ * Rule-Based Access Control (RBAC).
+ */
+export interface LabellingAuthorityInfo {
+    authorized: boolean; // This exists so you can have negative caching.
+    issuerNames: Name[];
+    publicKey: KeyObject;
+}
 
 /**
  * @summary Type definition for the context object
@@ -3150,6 +3178,19 @@ interface Context {
      * shadow updates for the same operational binding.
      */
     updatingShadow: Set<number>;
+
+    /**
+     * A mapping of Rule-Based Access Control (RBAC) policy identifiers to their
+     * corresponding Access Control Decision Functions (ACDFs).
+     */
+    rbacPolicies: Map<IndexableOID, RBAC_ACDF>;
+
+    /**
+     * A mapping of the base64-encoded key identifier to labelling authority
+     * information. A returned `null` means that labelling authority could not
+     * be found.
+     */
+    labellingAuthorities: Map<string, LabellingAuthorityInfo | null>;
 }
 
 /**
@@ -3317,6 +3358,8 @@ abstract class ClientAssociation implements WithIntegerProtocolVersion {
 
     public authorizedForSignedResults: boolean = false;
     public authorizedForSignedErrors: boolean = false;
+
+    public clearances: Clearance[] = [];
 
     /**
      * An index of the outstanding paged results requests by base64-encoded

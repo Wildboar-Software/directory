@@ -108,6 +108,7 @@ import type {
 } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/PkiPath.ta";
 import { rootCertificates } from "tls";
 import { strict as assert } from "assert";
+import { id_basicSecurityPolicy, simple_rbac_acdf } from "./authz/rbacACDF";
 
 export
 interface MeerkatTelemetryClient {
@@ -1133,6 +1134,8 @@ const ctx: MeerkatContext = {
     pendingShadowingUpdateCycles: new Map(),
     shadowUpdateCycles: new Map(),
     updatingShadow: new Set(),
+    labellingAuthorities: new Map(),
+    rbacPolicies: new Map([ [id_basicSecurityPolicy.toString(), simple_rbac_acdf] ]),
 };
 
 export default ctx;

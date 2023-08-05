@@ -70,7 +70,7 @@ import {
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
-import bacACDF, {
+import {
     PERMISSION_CATEGORY_BROWSE,
     PERMISSION_CATEGORY_RETURN_DN,
     PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
@@ -141,6 +141,7 @@ import getEqualityNormalizer from "../x500/getEqualityNormalizer";
 import { isModificationOperation } from "@wildboar/x500";
 import { EXT_BIT_USE_ALIAS_ON_UPDATE } from "@wildboar/x500/src/lib/dap/extensions";
 import stringifyDN from "../x500/stringifyDN";
+import { acdf } from "../authz/acdf";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -986,11 +987,7 @@ export
                 if (matchedVertex.dse.admPoint?.accessControlScheme) {
                     accessControlScheme = matchedVertex.dse.admPoint.accessControlScheme;
                 }
-                if (
-                    !ctx.config.bulkInsertMode
-                    && accessControlScheme
-                    && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-                ) {
+                if (!ctx.config.bulkInsertMode && accessControlScheme) {
                     const childDN = getDistinguishedName(matchedVertex);
                     // Without this, all first-level DSEs are discoverable.
                     const relevantAdmPoints: Vertex[] = matchedVertex.dse.admPoint
@@ -1023,23 +1020,32 @@ export
                     const objectClasses = Array
                         .from(matchedVertex.dse.objectClass)
                         .map(ObjectIdentifier.fromString);
-                    const { authorized: authorizedToDiscover } = bacACDF(
-                        relevantTuples,
-                        user,
-                        { entry: objectClasses },
+
+                    const authorizedToDiscover: boolean = acdf(
+                        ctx,
+                        accessControlScheme,
+                        assn,
+                        matchedVertex,
                         [
                             PERMISSION_CATEGORY_BROWSE,
                             PERMISSION_CATEGORY_RETURN_DN,
                         ],
+                        relevantTuples,
+                        user,
+                        { entry: objectClasses },
                         bacSettings,
                         true,
                     );
                     if (!authorizedToDiscover) {
-                        const { authorized: authorizedToDiscoverOnError } = bacACDF(
+                        const authorizedToDiscoverOnError: boolean = acdf(
+                            ctx,
+                            accessControlScheme,
+                            assn,
+                            matchedVertex,
+                            [PERMISSION_CATEGORY_DISCLOSE_ON_ERROR],
                             relevantTuples,
                             user,
                             { entry: objectClasses },
-                            [PERMISSION_CATEGORY_DISCLOSE_ON_ERROR],
                             bacSettings,
                             true,
                         );
@@ -1198,14 +1204,18 @@ export
                          * procedure, but it is important for preventing information
                          * disclosure vulnerabilities.
                          */
-                        const { authorized: authorizedToDiscover } = bacACDF(
-                            relevantTuples,
-                            user,
-                            { entry: objectClasses },
+                        const authorizedToDiscover: boolean = acdf(
+                            ctx,
+                            accessControlScheme,
+                            assn,
+                            child,
                             [
                                 PERMISSION_CATEGORY_BROWSE,
                                 PERMISSION_CATEGORY_RETURN_DN,
                             ],
+                            relevantTuples,
+                            user,
+                            { entry: objectClasses },
                             bacSettings,
                             true,
                         );
@@ -1215,11 +1225,15 @@ export
                                 aid: assn?.id ?? "INTERNAL",
                                 dn: stringifyDN(ctx, needleDN).slice(0, 1024),
                             }));
-                            const { authorized: authorizedToDiscoverOnError } = bacACDF(
+                            const authorizedToDiscoverOnError: boolean = acdf(
+                                ctx,
+                                accessControlScheme,
+                                assn,
+                                child,
+                                [PERMISSION_CATEGORY_DISCLOSE_ON_ERROR],
                                 relevantTuples,
                                 user,
                                 { entry: objectClasses },
-                                [PERMISSION_CATEGORY_DISCLOSE_ON_ERROR],
                                 bacSettings,
                                 true,
                             );
@@ -1346,17 +1360,18 @@ export
                 isMemberOfGroup,
                 NAMING_MATCHER,
             );
-            const { authorized: authorizedToDiscloseOnError } = bacACDF(
+            const objectClasses = Array
+                .from(dse_i.dse.objectClass)
+                .map(ObjectIdentifier.fromString);
+            const authorizedToDiscloseOnError: boolean = acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                dse_i,
+                [PERMISSION_CATEGORY_DISCLOSE_ON_ERROR],
                 relevantTuples,
                 user,
-                {
-                    entry: Array
-                        .from(dse_i.dse.objectClass)
-                        .map(ObjectIdentifier.fromString),
-                },
-                [
-                    PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
-                ],
+                { entry: objectClasses },
                 bacSettings,
                 true,
             );
