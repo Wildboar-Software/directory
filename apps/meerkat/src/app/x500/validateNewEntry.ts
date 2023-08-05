@@ -838,36 +838,31 @@ async function validateEntry (
             );
         }
 
-        const attrsFromDN: Value[] = rdn
-            .map((atav): Value => ({
-                type: atav.type_,
-                value: atav.value,
-            }));
         const rdnAttributes: Set<IndexableOID> = new Set();
         const duplicatedAFDNs: AttributeType[] = [];
         const unrecognizedAFDNs: AttributeType[] = [];
         const cannotBeUsedInNameAFDNs: AttributeType[] = [];
         const unmatchedAFDNs: AttributeType[] = [];
-        for (const afdn of attrsFromDN) {
-            const oid: string = afdn.type.toString();
+        for (const atav of rdn) {
+            const oid: string = atav.type_.toString();
             if (rdnAttributes.has(oid)) {
-                duplicatedAFDNs.push(afdn.type);
+                duplicatedAFDNs.push(atav.type_);
                 continue;
             } else {
                 rdnAttributes.add(oid);
             }
-            const spec = ctx.attributeTypes.get(afdn.type.toString());
+            const spec = ctx.attributeTypes.get(atav.type_.toString());
             if (!spec) {
-                unrecognizedAFDNs.push(afdn.type);
+                unrecognizedAFDNs.push(atav.type_);
                 continue;
             }
             if (spec.validator) {
                 try {
-                    spec.validator(afdn.value);
+                    spec.validator(atav.value);
                 } catch {
                     throw new errors.NameError(
                         ctx.i18n.t("err:invalid_attribute_syntax", {
-                            type: afdn.type.toString(),
+                            type: atav.type_.toString(),
                         }),
                         new NameErrorData(
                             NameProblem_invalidAttributeSyntax,
@@ -890,9 +885,9 @@ async function validateEntry (
                     );
                 }
             }
-            const matcher = getNamingMatcherGetter(ctx)(afdn.type);
+            const matcher = getNamingMatcherGetter(ctx)(atav.type_);
             if (!matcher) {
-                cannotBeUsedInNameAFDNs.push(afdn.type);
+                cannotBeUsedInNameAFDNs.push(atav.type_);
                 continue;
             }
             const someAttributeMatched = values.some((attr) => (
@@ -906,11 +901,11 @@ async function validateEntry (
                  * can see that distinguished values MAY have contexts.
                  */
                 // (!attr.contexts || (attr.contexts.length === 0))
-                attr.type.isEqualTo(afdn.type)
-                && matcher(attr.value, afdn.value)
+                attr.type.isEqualTo(atav.type_)
+                && matcher(attr.value, atav.value)
             ));
             if (!someAttributeMatched) {
-                unmatchedAFDNs.push(afdn.type);
+                unmatchedAFDNs.push(atav.type_);
                 continue;
             }
         }
