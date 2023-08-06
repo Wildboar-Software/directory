@@ -2493,6 +2493,7 @@ async function search_i_ex (
                         .map(async (member): Promise<[ number, [ Vertex, BOOLEAN, EntryInformation_information_Item[], boolean ] ]> => {
                             const permittedEntryReturn = await readPermittedEntryInformation(
                                 ctx,
+                                assn,
                                 member,
                                 user,
                                 relevantTuples,
@@ -2818,6 +2819,7 @@ async function search_i_ex (
                         .map(async (member) => {
                             const permittedEntryReturn = await readPermittedEntryInformation(
                                 ctx,
+                                assn,
                                 member,
                                 user,
                                 relevantTuples,

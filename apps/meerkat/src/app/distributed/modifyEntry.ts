@@ -3797,6 +3797,7 @@ async function modifyEntry (
     ) {
         const permittedEntryInfo = await readPermittedEntryInformation(
             ctx,
+            assn,
             target,
             user,
             relevantTuples,
@@ -3828,6 +3829,7 @@ async function modifyEntry (
                     .slice(1) // Skip the first member, which is the read entry.
                     .map((member) => readPermittedEntryInformation(
                         ctx,
+                        assn,
                         member,
                         user,
                         relevantTuples,
