@@ -129,7 +129,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
 import getACIItems from "../authz/getACIItems";
 import { differenceInMilliseconds } from "date-fns";
-import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs";
 import updateSuperiorDSA from "../dop/updateSuperiorDSA";
 import bacSettings from "../authz/bacSettings";
@@ -186,6 +185,7 @@ import getEqualityNormalizer from "../x500/getEqualityNormalizer";
 import { getShadowIncrementalSteps } from "../dop/getRelevantSOBs";
 import { SubordinateChanges } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SubordinateChanges.ta";
 import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh";
+import { acdf } from "../authz/acdf";
 
 /**
  * @summary Determine whether a DSE is local to this DSA
@@ -499,15 +499,13 @@ async function modifyDN (
         isMemberOfGroup,
         NAMING_MATCHER,
     );
-    if (
-        accessControlScheme
-        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-    ) {
+    if (accessControlScheme) {
         if (data.newRDN) {
-            const { authorized: authorizedToEntry } = bacACDF(
-                relevantTuples,
-                user,
-                { entry: objectClasses },
+            const authorizedToEntry = acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                target,
                 [
                     /**
                      * Read permission is not required by the specification, but
@@ -526,6 +524,9 @@ async function modifyDN (
                     PERMISSION_CATEGORY_READ,
                     PERMISSION_CATEGORY_RENAME,
                 ],
+                relevantTuples,
+                user,
+                { entry: objectClasses },
                 bacSettings,
                 true,
             );
@@ -566,18 +567,27 @@ async function modifyDN (
              * the entry itself: 4E7AC6BB-CD58-47C8-B4DC-1B101A608C0E
              */
             for (const atav of data.newRDN) {
-                const { authorized: authorizedToReadAttributeType } = bacACDF(
+                const authorizedToReadAttributeType = acdf(
+                    ctx,
+                    accessControlScheme,
+                    assn,
+                    target,
+                    [ PERMISSION_CATEGORY_READ ],
                     relevantTuples,
                     user,
                     {
                         attributeType: atav.type_,
                         operational: isOperationalAttributeType(ctx, atav.type_),
                     },
-                    [ PERMISSION_CATEGORY_READ ],
                     bacSettings,
                     true,
                 );
-                const { authorized: authorizedToReadValue } = bacACDF(
+                const authorizedToReadValue = acdf(
+                    ctx,
+                    accessControlScheme,
+                    assn,
+                    target,
+                    [ PERMISSION_CATEGORY_READ ],
                     relevantTuples,
                     user,
                     {
@@ -587,7 +597,6 @@ async function modifyDN (
                         ),
                         operational: isOperationalAttributeType(ctx, atav.type_),
                     },
-                    [ PERMISSION_CATEGORY_READ ],
                     bacSettings,
                     true,
                 );
@@ -616,11 +625,15 @@ async function modifyDN (
             }
         }
         if (data.newSuperior) {
-            const { authorized: authorizedToEntry } = bacACDF(
+            const authorizedToEntry = acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                target,
+                [ PERMISSION_CATEGORY_EXPORT ],
                 relevantTuples,
                 user,
                 { entry: objectClasses },
-                [ PERMISSION_CATEGORY_EXPORT ],
                 bacSettings,
                 true,
             );
@@ -715,10 +728,7 @@ async function modifyDN (
         const newAccessControlScheme = [ ...newAdmPoints ] // Array.reverse() works in-place, so we create a new array.
             .reverse()
             .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-        if (
-            newAccessControlScheme
-            && accessControlSchemesThatUseACIItems.has(newAccessControlScheme.toString())
-        ) {
+        if (newAccessControlScheme) {
             const relevantACIItems = await getACIItems(
                 ctx,
                 accessControlScheme,
@@ -738,9 +748,12 @@ async function modifyDN (
                 isMemberOfGroup,
                 NAMING_MATCHER,
             );
-            const {
-                authorized: authorizedToEntry,
-            } = bacACDF(
+            const authorizedToEntry = acdf(
+                ctx,
+                newAccessControlScheme,
+                assn,
+                target,
+                [ PERMISSION_CATEGORY_IMPORT ],
                 relevantTuples,
                 user,
                 {
@@ -752,13 +765,9 @@ async function modifyDN (
                         },
                     }),
                 },
-                [
-                    PERMISSION_CATEGORY_IMPORT,
-                ],
                 bacSettings,
                 true,
             );
-
             if (!authorizedToEntry && !topLevelException) {
                 throw new errors.SecurityError(
                     ctx.i18n.t("err:not_authz_import"),
@@ -901,11 +910,7 @@ async function modifyDN (
         || superior.dse.sa
         || superior.dse.dsSubentry
     ) {
-        if (
-            !ctx.config.bulkInsertMode
-            && accessControlScheme
-            && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-        ) {
+        if (!ctx.config.bulkInsertMode && accessControlScheme) {
             const relevantACIItemsForSuperior = await getACIItems(
                 ctx,
                 accessControlScheme,
@@ -929,11 +934,16 @@ async function modifyDN (
             const superiorObjectClasses = Array
                 .from(superior.dse.objectClass)
                 .map(ObjectIdentifier.fromString);
-            const { authorized: authorizedToReadSuperior } = bacACDF(
+
+            const authorizedToReadSuperior = acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                superior,
+                [ PERMISSION_CATEGORY_READ ],
                 relevantTuplesForSuperior,
                 user,
                 { entry: superiorObjectClasses },
-                [ PERMISSION_CATEGORY_READ ],
                 bacSettings,
                 true,
             );
@@ -964,33 +974,45 @@ async function modifyDN (
                     signErrors,
                 );
             }
-
-            const { authorized: authorizedToReadSuperiorDSEType } = bacACDF(
+            const authorizedToReadSuperiorDSEType = acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                superior,
+                [ PERMISSION_CATEGORY_READ ],
                 relevantTuplesForSuperior,
                 user,
                 {
                     attributeType: dseType["&id"],
                     operational: true,
                 },
-                [ PERMISSION_CATEGORY_READ ],
                 bacSettings,
                 true,
             );
             // TODO: We do not check that the user has permission to the DSEType value!
             // const superiorDSEType = await readValuesOfType(ctx, immediateSuperior, dseType["&id"])[0];
-            const { authorized: authorizedToReadSuperiorObjectClasses } = bacACDF(
+            const authorizedToReadSuperiorObjectClasses = acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                superior,
+                [ PERMISSION_CATEGORY_READ ],
                 relevantTuplesForSuperior,
                 user,
                 {
                     attributeType: objectClass["&id"],
                     operational: false,
                 },
-                [ PERMISSION_CATEGORY_READ ],
                 bacSettings,
                 true,
             );
             const superiorObjectClassesAuthorized = superiorObjectClasses
-                .filter((oc) => bacACDF(
+                .filter((oc) => acdf(
+                    ctx,
+                    accessControlScheme,
+                    assn,
+                    superior,
+                    [ PERMISSION_CATEGORY_READ ],
                     relevantTuplesForSuperior,
                     user,
                     {
@@ -1000,10 +1022,9 @@ async function modifyDN (
                         ),
                         operational: false,
                     },
-                    [ PERMISSION_CATEGORY_READ ],
                     bacSettings,
                     true,
-                ).authorized);
+                ));
 
             if (
                 (superior.dse.alias || superior.dse.sa) // superior is some kind of alias, and...
@@ -1788,19 +1809,19 @@ async function modifyDN (
     // Make sure that mandatory attributes are not deleted and that user has permission to delete.
     if (data.deleteOldRDN) {
         for (const atav of oldRDN) {
-            if (
-                !ctx.config.bulkInsertMode
-                && accessControlScheme
-                && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-            ) {
-                const { authorized: authorizedToRemoveOldRDNValue } = bacACDF(
+            if (!ctx.config.bulkInsertMode && accessControlScheme) {
+                const authorizedToRemoveOldRDNValue = acdf(
+                    ctx,
+                    accessControlScheme,
+                    assn,
+                    target,
+                    [ PERMISSION_CATEGORY_REMOVE ],
                     relevantTuples,
                     user,
                     {
                         value: atav,
                         operational: isOperationalAttributeType(ctx, atav.type_),
                     },
-                    [ PERMISSION_CATEGORY_REMOVE ],
                     bacSettings,
                     true,
                 );

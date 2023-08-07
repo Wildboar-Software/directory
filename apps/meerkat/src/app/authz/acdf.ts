@@ -29,7 +29,8 @@ function acdf (
     requester: NameAndOptionalUID | undefined | null,
     request: ProtectedItem,
     settings: EvaluateFilterSettings,
-    tuplesAlreadySplit?: boolean
+    tuplesAlreadySplit?: boolean,
+    addingEntry: boolean = false,
 ): boolean {
     const acs = accessControlScheme.toString();
     if (accessControlSchemesThatUseACIItems.has(acs)) {
@@ -49,6 +50,7 @@ function acdf (
         accessControlSchemesThatUseRBAC.has(acs)
         && ("value" in request)
         && assn
+        && !addingEntry // RBAC basically has no effect on adding entries unless the superior is hidden.
         // TODO: Find DSE basically runs this same code twice. I want to find some optimization to avoid that.
         // && (permissions.length !== 1 || permissions[0] !== PERMISSION_CATEGORY_DISCLOSE_ON_ERROR)
     ) {

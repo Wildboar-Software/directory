@@ -50,7 +50,7 @@ import {
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
-import bacACDF, {
+import {
     PERMISSION_CATEGORY_BROWSE,
     PERMISSION_CATEGORY_RETURN_DN,
     PERMISSION_CATEGORY_READ,
@@ -95,7 +95,6 @@ import {
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import getACIItems from "../authz/getACIItems";
-import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 import {
     child,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/child.oa";
@@ -150,6 +149,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 import DSPAssociation from "../dsp/DSPConnection";
 import { entryACI, prescriptiveACI, subentryACI } from "@wildboar/x500/src/lib/collections/attributes";
+import { acdf } from "../authz/acdf";
 
 const BYTES_IN_A_UUID: number = 16;
 const PARENT: string = parent["&id"].toString();
@@ -572,10 +572,7 @@ async function list_i (
             let authorizedToKnowSubordinateIsAlias: boolean = true;
             const effectiveAccessControlScheme = subordinate.dse.admPoint?.accessControlScheme
                 ?? targetAccessControlScheme;
-            if (
-                effectiveAccessControlScheme
-                && accessControlSchemesThatUseACIItems.has(effectiveAccessControlScheme.toString())
-            ) {
+            if (effectiveAccessControlScheme) {
                 const subordinateDN = [ ...targetDN, subordinate.dse.rdn ];
                 const effectiveRelevantSubentries = subordinate.dse.admPoint?.administrativeRole.has(ID_AUTONOMOUS)
                     ? []
@@ -606,14 +603,18 @@ async function list_i (
                     NAMING_MATCHER,
                 );
                 const objectClasses = Array.from(subordinate.dse.objectClass).map(ObjectIdentifier.fromString);
-                const { authorized: authorizedToList } = bacACDF(
-                    relevantSubordinateTuples,
-                    user,
-                    { entry: objectClasses },
+                const authorizedToList = acdf(
+                    ctx,
+                    effectiveAccessControlScheme,
+                    assn,
+                    subordinate,
                     [
                         PERMISSION_CATEGORY_BROWSE,
                         PERMISSION_CATEGORY_RETURN_DN,
                     ],
+                    relevantSubordinateTuples,
+                    user,
+                    { entry: objectClasses },
                     bacSettings,
                     true,
                 );
@@ -621,18 +622,27 @@ async function list_i (
                     continue;
                 }
                 if (subordinate.dse.alias) {
-                    const { authorized: authorizedToReadObjectClasses } = bacACDF(
+                    const authorizedToReadObjectClasses = acdf(
+                        ctx,
+                        effectiveAccessControlScheme,
+                        assn,
+                        target,
+                        [PERMISSION_CATEGORY_READ],
                         relevantSubordinateTuples,
                         user,
                         {
                             attributeType: objectClass["&id"],
                             operational: false,
                         },
-                        [ PERMISSION_CATEGORY_READ ],
                         bacSettings,
                         true,
                     );
-                    const { authorized: authorizedToReadAliasObjectClasses } = bacACDF(
+                    const authorizedToReadAliasObjectClasses = acdf(
+                        ctx,
+                        effectiveAccessControlScheme,
+                        assn,
+                        subordinate,
+                        [PERMISSION_CATEGORY_READ],
                         relevantSubordinateTuples,
                         user,
                         {
@@ -642,18 +652,21 @@ async function list_i (
                             ),
                             operational: false,
                         },
-                        [ PERMISSION_CATEGORY_READ ],
                         bacSettings,
                         true,
                     );
-                    const { authorized: authorizedToReadAliasedEntryName } = bacACDF(
+                    const authorizedToReadAliasedEntryName = acdf(
+                        ctx,
+                        effectiveAccessControlScheme,
+                        assn,
+                        subordinate,
+                        [PERMISSION_CATEGORY_READ],
                         relevantSubordinateTuples,
                         user,
                         {
                             attributeType: aliasedEntryName["&id"],
                             operational: false,
                         },
-                        [ PERMISSION_CATEGORY_READ ],
                         bacSettings,
                         true,
                     );

@@ -1,6 +1,6 @@
 import { Context, Vertex, ServiceError, ClientAssociation, AttributeError } from "@wildboar/meerkat-types";
 import type { OperationDispatcherState } from "./OperationDispatcher";
-import { ACDFTupleExtended, ACDFTuple, getACDFTuplesFromACIItem, bacACDF } from "@wildboar/x500";
+import { ACDFTupleExtended, ACDFTuple, getACDFTuplesFromACIItem } from "@wildboar/x500";
 import {
     serviceAdminSubentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/serviceAdminSubentry.oa";
@@ -162,12 +162,12 @@ import { PERMISSION_CATEGORY_INVOKE } from "@wildboar/x500/src/lib/bac/bacACDF";
 import { bacSettings } from "../authz/bacSettings";
 import { AttributeTypeAndValue } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttributeTypeAndValue.ta";
 import { getServiceAdminPoint } from "../dit/getServiceAdminPoint";
-import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 import { is_empty_search_rule } from "../service/is_empty_search_rule";
 import { general_check_of_search_filter } from "../service/general_check_of_search_filter";
 import { check_of_request_attribute_profiles } from "../service/check_of_request_attribute_profiles";
 import { check_of_controls_and_hierarchy_selections } from "../service/check_of_controls_and_hierarchy_selections";
 import { check_of_matching_use } from "../service/check_of_matching_use";
+import { acdf } from "../authz/acdf";
 
 const SEARCH_RULE_BYTES: Buffer = searchRules["&id"].toBytes();
 
@@ -672,7 +672,7 @@ async function searchRuleCheckProcedure_i (
     }
 
     const DeniedSR: SearchRule[] = [];
-    if (accessControlScheme && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())) {
+    if (accessControlScheme) {
         for (const subentry of target_subentries) {
             const subentryDN = getDistinguishedName(subentry);
             const relevantSubentries: Vertex[] = (await Promise.all(
@@ -703,13 +703,17 @@ async function searchRuleCheckProcedure_i (
             if (!search_rules?.length) {
                 continue;
             }
-            const { authorized: authorizedToInvokeSearchRules } = bacACDF(
+            const authorizedToInvokeSearchRules = acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                target,
+                [PERMISSION_CATEGORY_INVOKE],
                 relevantTuples,
                 user,
                 {
                     attributeType: searchRules["&id"],
                 },
-                [PERMISSION_CATEGORY_INVOKE],
                 bacSettings,
                 true,
             );
@@ -717,7 +721,12 @@ async function searchRuleCheckProcedure_i (
                 continue;
             }
             for (const [ undecoded, sr ] of search_rules) {
-                const { authorized: authorizedToInvokeThisSearchRule } = bacACDF(
+                const authorizedToInvokeThisSearchRule = acdf(
+                    ctx,
+                    accessControlScheme,
+                    assn,
+                    target,
+                    [PERMISSION_CATEGORY_INVOKE],
                     relevantTuples,
                     user,
                     {
@@ -727,7 +736,6 @@ async function searchRuleCheckProcedure_i (
                         ),
                         operational: true,
                     },
-                    [PERMISSION_CATEGORY_INVOKE],
                     bacSettings,
                     true,
                 );

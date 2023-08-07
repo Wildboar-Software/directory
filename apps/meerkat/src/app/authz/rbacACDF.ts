@@ -50,9 +50,9 @@ const simple_rbac_acdf: RBAC_ACDF = (
     assn: ClientAssociation, // This has a clearance field.
     target: Vertex,
     signedLabel: SignedSecurityLabel,
-    // _value: ASN1Element,
-    // _contexts: X500Context[],
-    // _permissions: number[],
+    _value: ASN1Element,
+    _contexts: X500Context[],
+    _permissions: number[],
 ): boolean => {
     const label = signedLabel.toBeSigned.securityLabel;
     const classification = Number(label.security_classification ?? SecurityClassification_unmarked);

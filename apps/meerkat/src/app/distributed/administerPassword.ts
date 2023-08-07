@@ -31,7 +31,7 @@ import getRelevantSubentries from "../dit/getRelevantSubentries";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
-import bacACDF, {
+import {
     PERMISSION_CATEGORY_ADD,
     PERMISSION_CATEGORY_REMOVE,
     PERMISSION_CATEGORY_MODIFY,
@@ -53,7 +53,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
 import type { OperationDispatcherState } from "./OperationDispatcher";
 import getACIItems from "../authz/getACIItems";
-import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import bacSettings from "../authz/bacSettings";
 import {
@@ -90,6 +89,7 @@ import { pwdReset } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPo
 import { pwdHistorySlots } from "@wildboar/x500/src/lib/collections/attributes";
 import { id_scrypt } from "@wildboar/scrypt-0";
 import { validateAlgorithmParameters } from "../authn/validateAlgorithmParameters";
+import { acdf } from "../authz/acdf";
 
 const USER_PASSWORD_OID: string = userPassword["&id"].toString();
 const USER_PWD_OID: string = userPwd["&id"].toString();
@@ -222,10 +222,7 @@ async function administerPassword (
     const accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
         .reverse()
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-    if (
-        accessControlScheme
-        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-    ) {
+    if (accessControlScheme) {
         const relevantACIItems = await getACIItems(
             ctx,
             accessControlScheme,
@@ -247,61 +244,75 @@ async function administerPassword (
             isMemberOfGroup,
             NAMING_MATCHER,
         );
-        const { authorized: authorizedToModifyEntry } = bacACDF(
+        const authorizedToModifyEntry = acdf(
+            ctx,
+            accessControlScheme,
+            assn,
+            target,
+            [PERMISSION_CATEGORY_MODIFY],
             relevantTuples,
             user,
             {
                 entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
             },
-            [
-                PERMISSION_CATEGORY_MODIFY,
-            ],
             bacSettings,
             true,
         );
-        const { authorized: authorizedToModifyUserPassword } = bacACDF(
+        const authorizedToModifyUserPassword = acdf(
+            ctx,
+            accessControlScheme,
+            assn,
+            target,
+            [
+                PERMISSION_CATEGORY_ADD,
+                PERMISSION_CATEGORY_REMOVE,
+                PERMISSION_CATEGORY_MODIFY,
+            ],
             relevantTuples,
             user,
             {
                 attributeType: userPassword["&id"],
                 operational: false,
             },
+            bacSettings,
+            true,
+        );
+        const authorizedToModifyUserPwd = acdf(
+            ctx,
+            accessControlScheme,
+            assn,
+            target,
             [
                 PERMISSION_CATEGORY_ADD,
                 PERMISSION_CATEGORY_REMOVE,
                 PERMISSION_CATEGORY_MODIFY,
             ],
-            bacSettings,
-            true,
-        );
-        const { authorized: authorizedToModifyUserPwd } = bacACDF(
             relevantTuples,
             user,
             {
                 attributeType: userPwd["&id"],
                 operational: false,
             },
+            bacSettings,
+            true,
+        );
+        // Permission to modify the user password history is required for administerPassword (in Meerkat DSA).
+        const authorizedToModifyPwdHistory = acdf(
+            ctx,
+            accessControlScheme,
+            assn,
+            target,
             [
                 PERMISSION_CATEGORY_ADD,
                 PERMISSION_CATEGORY_REMOVE,
                 PERMISSION_CATEGORY_MODIFY,
             ],
-            bacSettings,
-            true,
-        );
-        // Permission to modify the user password history is required for administerPassword (in Meerkat DSA).
-        const { authorized: authorizedToModifyPwdHistory } = bacACDF(
             relevantTuples,
             user,
             {
                 attributeType: userPwdHistory["&id"],
                 operational: true,
             },
-            [
-                PERMISSION_CATEGORY_ADD,
-                PERMISSION_CATEGORY_REMOVE,
-                PERMISSION_CATEGORY_MODIFY,
-            ],
             bacSettings,
             true,
         );

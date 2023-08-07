@@ -96,7 +96,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry";
 import getACIItems from "../authz/getACIItems";
-import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 import cloneChainingArgs from "../x500/cloneChainingArguments";
 import bacSettings from "../authz/bacSettings";
 import {
@@ -1163,11 +1162,7 @@ export
                     if (child.dse.admPoint?.accessControlScheme) {
                         accessControlScheme = child.dse.admPoint.accessControlScheme;
                     }
-                    if ( // Check if the user can actually access it.
-                        !ctx.config.bulkInsertMode
-                        && accessControlScheme
-                        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-                    ) {
+                    if (!ctx.config.bulkInsertMode && accessControlScheme) {
                         const childDN = getDistinguishedName(child);
                         // Without this, all first-level DSEs are discoverable.
                         const relevantAdmPoints: Vertex[] = child.dse.admPoint
@@ -1330,11 +1325,7 @@ export
         }
 
         let discloseOnError: boolean = true;
-        if (
-            !ctx.config.bulkInsertMode
-            && accessControlScheme
-            && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-        ) {
+        if (!ctx.config.bulkInsertMode && accessControlScheme) {
             const currentDN = getDistinguishedName(dse_i);
             const relevantSubentries: Vertex[] = (await Promise.all(
                 state.admPoints.map((ap) => getRelevantSubentries(ctx, dse_i, currentDN, ap)),
