@@ -50,7 +50,7 @@ import type {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/StrongCredentials.ta";
 import type { Socket } from "node:net";
 import type { TLSSocket } from "node:tls";
-import { read_unique_id } from "../database/utils";
+import { read_unique_id, read_clearance } from "../database/utils";
 
 const ID_OC_PKI_CERT_PATH: string = id_oc_pkiCertPath.toString();
 
@@ -199,6 +199,9 @@ async function attemptStrongAuth (
             case (VT_RETURN_CODE_OK): {
                 const foundEntry = await dnToVertex(ctx, ctx.dit.root, effectiveName);
                 const unique_id = foundEntry && await read_unique_id(ctx, foundEntry);
+                const clearances = foundEntry
+                    ? await read_clearance(ctx, foundEntry)
+                    : [];
                 return {
                     boundVertex: foundEntry,
                     boundNameAndUID: new NameAndOptionalUID(
@@ -212,6 +215,7 @@ async function attemptStrongAuth (
                             undefined,
                         ),
                     },
+                    clearances,
                 };
             }
             case (VT_RETURN_CODE_MALFORMED): {
@@ -275,6 +279,9 @@ async function attemptStrongAuth (
             const tokenResult = await verifyToken(ctx, certPath, bind_token);
             if (tokenResult === VT_RETURN_CODE_OK) {
                 const unique_id = attemptedVertex && await read_unique_id(ctx, attemptedVertex);
+                const clearances = attemptedVertex
+                    ? await read_clearance(ctx, attemptedVertex)
+                    : [];
                 return {
                     boundVertex: attemptedVertex,
                     boundNameAndUID: new NameAndOptionalUID(
@@ -288,6 +295,7 @@ async function attemptStrongAuth (
                             undefined,
                         ),
                     },
+                    clearances,
                 };
             }
         }

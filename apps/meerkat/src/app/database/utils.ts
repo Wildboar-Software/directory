@@ -1,5 +1,5 @@
 import { Context, Vertex } from "@wildboar/meerkat-types";
-import { uniqueIdentifier } from "@wildboar/x500/src/lib/collections/attributes";
+import { clearance, uniqueIdentifier } from "@wildboar/x500/src/lib/collections/attributes";
 import { attributeValueFromDB } from "./attributeValueFromDB";
 
 export
@@ -21,4 +21,27 @@ async function read_unique_id (ctx: Context, vertex: Vertex): Promise<typeof uni
     }
     const el = attributeValueFromDB(unique_id_ber);
     return uniqueIdentifier.decoderFor["&Type"]!(el);
+}
+
+export
+async function read_clearance (ctx: Context, vertex: Vertex): Promise<typeof clearance["&Type"][]> {
+    if (!ctx.config.rbac.getClearancesFromDSAIT) {
+        return [];
+    }
+    const clearance_bers = await ctx.db.attributeValue.findMany({
+        where: {
+            entry_id: vertex.dse.id,
+            type_oid: clearance["&id"].toBytes(),
+        },
+        select: {
+            tag_class: true,
+            constructed: true,
+            tag_number: true,
+            content_octets: true,
+        },
+    });
+    return clearance_bers
+        .map(attributeValueFromDB)
+        .map(clearance.decoderFor["&Type"]!)
+        ;
 }

@@ -1498,6 +1498,61 @@ interface CrossReferencesOptions {
 }
 
 /**
+ * Configuration options pertaining to Rule-Based Access Control (RBAC).
+ *
+ * @interface
+ */
+export
+interface RBACOptions {
+
+    /**
+     * If TRUE, Meerkat DSA will associate clearances with a bound user based
+     * on the values of the `clearance` attribute it has for the bound entry
+     * in its local DSAIT.
+     */
+    getClearancesFromDSAIT: boolean;
+
+    /**
+     * If true, Meerkat DSA will associate clearances with a bound user based
+     * on the values of the `clearance` attribute that are present in the
+     * presented attribute certificates of the strong authentication argument,
+     * provided, of course, that the attribute certificates are valid.
+     *
+     * The attribute authorities to trust are listed in `clearanceAuthorities`.
+     *
+     * @see {@link clearanceAuthorities}
+     */
+    getClearancesFromAttributeCertificates: boolean;
+
+    /**
+     * The list of trust anchors whose signed attribute certificates will be
+     * seen as valid by Meerkat DSA, and whose clearances will be associated
+     * with bound users that supply such attribute certificates in their
+     * strong authentication parameters.
+     */
+    clearanceAuthorities: TrustAnchorList;
+
+    /**
+     * The list of trust anchors that are trusted for providing security labels
+     * via the `attributeValueSecurityLabelContext` context. When evaluating
+     * RBAC access control decisions, the signatures applied to the security
+     * labels will be verified to have originated from one of these trust
+     * anchors.
+     *
+     * Only the public key, issuer name, and subject key identifier are taken
+     * from these trust anchors. Expiration is never checked, nor are any other
+     * extensions, such as key-usage-related extensions.
+     *
+     * If a given security label has a `keyIdentifier`, it will be matched with
+     * the Subject Key Identifier in a trust anchor within this list; if that
+     * security label has an `issuerName` field, it will be matched with the
+     * `subject` field of a trust anchor within this list.
+     */
+    labelingAuthorities: TrustAnchorList;
+
+}
+
+/**
  * @summary Meerkat DSA configuration
  * @description
  *
@@ -1573,6 +1628,8 @@ interface Configuration {
     xr: CrossReferencesOptions;
 
     authn: AuthenticationConfiguration;
+
+    rbac: RBACOptions;
 
     log: {
         /**
@@ -3480,6 +3537,12 @@ interface BindReturn {
      * error.
      */
     pwdResponse?: PwdResponseValue;
+
+
+    /**
+     * The clearances associated with this user.
+     */
+    clearances: Clearance[];
 
 }
 

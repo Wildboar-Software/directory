@@ -34,7 +34,7 @@ import { attemptStrongAuth } from "../authn/attemptStrongAuth";
 import {
     PwdResponseValue_error_passwordExpired,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue-error.ta";
-import { read_unique_id } from "../database/utils";
+import { read_unique_id, read_clearance } from "../database/utils";
 import { OperationDispatcher } from "../distributed/OperationDispatcher";
 import type {
     CompareArgument,
@@ -147,6 +147,7 @@ async function bind (
                     undefined,
                 ),
             },
+            clearances: [],
         };
     }
     if ("simple" in arg.credentials) {
@@ -161,6 +162,9 @@ async function bind (
                 );
             }
             const unique_id = foundEntry && await read_unique_id(ctx, foundEntry);
+            const clearances = foundEntry
+                ? await read_clearance(ctx, foundEntry)
+                : [];
             return {
                 boundVertex: foundEntry,
                 boundNameAndUID: new NameAndOptionalUID(
@@ -174,6 +178,7 @@ async function bind (
                         undefined,
                     ),
                 },
+                clearances,
             };
         }
         if (arg.credentials.simple.validity) {
@@ -312,6 +317,9 @@ async function bind (
                 );
             }
             const unique_id = foundEntry && await read_unique_id(ctx, foundEntry);
+            const clearances = foundEntry
+                ? await read_clearance(ctx, foundEntry)
+                : [];
             return {
                 boundVertex: foundEntry,
                 boundNameAndUID: new NameAndOptionalUID(
@@ -331,6 +339,7 @@ async function bind (
                         pwd_resp.error,
                     )
                     : undefined,
+                clearances,
             };
         }
         const {
@@ -359,6 +368,9 @@ async function bind (
             );
         }
         const unique_id = foundEntry && await read_unique_id(ctx, foundEntry);
+        const clearances = foundEntry
+            ? await read_clearance(ctx, foundEntry)
+            : [];
         return {
             boundVertex: foundEntry,
             boundNameAndUID: new NameAndOptionalUID(
@@ -373,6 +385,7 @@ async function bind (
                 ),
             },
             pwdResponse,
+            clearances,
         };
     } else if ("strong" in arg.credentials) {
         return attemptStrongAuth(

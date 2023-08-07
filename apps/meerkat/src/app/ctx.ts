@@ -106,9 +106,14 @@ import { decodePkiPathFromPEM } from "./utils/decodePkiPathFromPEM";
 import type {
     PkiPath,
 } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/PkiPath.ta";
-import { rootCertificates } from "tls";
-import { strict as assert } from "assert";
+import { rootCertificates } from "node:tls";
+import { strict as assert } from "node:assert";
+import { createPublicKey } from "node:crypto";
 import { id_basicSecurityPolicy, simple_rbac_acdf } from "./authz/rbacACDF";
+import { subjectKeyIdentifier } from "@wildboar/x500/src/lib/modules/CertificateExtensions/subjectKeyIdentifier.oa";
+import { subjectAltName } from "@wildboar/x500/src/lib/modules/CertificateExtensions/subjectAltName.oa";
+import { Name } from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
+import { _encode_SubjectPublicKeyInfo } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/SubjectPublicKeyInfo.ta";
 
 export
 interface MeerkatTelemetryClient {
@@ -410,10 +415,6 @@ const signingKeyFileContents: Buffer | undefined = process.env.MEERKAT_SIGNING_K
     ? fs.readFileSync(process.env.MEERKAT_SIGNING_KEY_FILE)
     : undefined;
 
-const talFileContents: Buffer | undefined = process.env.MEERKAT_TRUST_ANCHORS_FILE
-    ? fs.readFileSync(process.env.MEERKAT_TRUST_ANCHORS_FILE)
-    : undefined;
-
 const attrCertPathFileContents: string | undefined = process.env.MEERKAT_ATTR_CERT_CHAIN_FILE
     ? fs.readFileSync(process.env.MEERKAT_ATTR_CERT_CHAIN_FILE, { encoding: "utf-8" })
     : undefined;
@@ -434,9 +435,32 @@ const signingKey: KeyObject | null = signingKeyFileContents
     ? parseKey(signingKeyFileContents)
     : null;
 
+const talFileContents: Buffer | undefined = process.env.MEERKAT_TRUST_ANCHORS_FILE
+    ? fs.readFileSync(process.env.MEERKAT_TRUST_ANCHORS_FILE)
+    : undefined;
 const trustAnchorList: TrustAnchorList = talFileContents
     ? [
         ...parseTrustAnchorListFile(talFileContents),
+        ...signingCACerts.map((certificate) => ({ certificate })),
+    ]
+    : signingCACerts.map((certificate) => ({ certificate }));
+
+const clearanceAuthoritiesFileContents: Buffer | undefined = process.env.MEERKAT_CLEARANCE_AUTHORITIES
+    ? fs.readFileSync(process.env.MEERKAT_CLEARANCE_AUTHORITIES)
+    : undefined;
+const clearanceAuthorities: TrustAnchorList = clearanceAuthoritiesFileContents
+    ? [
+        ...parseTrustAnchorListFile(clearanceAuthoritiesFileContents),
+        ...signingCACerts.map((certificate) => ({ certificate })),
+    ]
+    : signingCACerts.map((certificate) => ({ certificate }));
+
+const labelingAuthoritiesFileContents: Buffer | undefined = process.env.MEERKAT_LABELING_AUTHORITIES
+    ? fs.readFileSync(process.env.MEERKAT_LABELING_AUTHORITIES)
+    : undefined;
+const labelingAuthorities: TrustAnchorList = labelingAuthoritiesFileContents
+    ? [
+        ...parseTrustAnchorListFile(labelingAuthoritiesFileContents),
         ...signingCACerts.map((certificate) => ({ certificate })),
     ]
     : signingCACerts.map((certificate) => ({ certificate }));
@@ -572,6 +596,12 @@ const config: Configuration = {
             ? Number.parseInt(process.env.MEERKAT_REMOTE_PWD_TIME_LIMIT, 10)
             : 0, // 0 disables this procedure.
         automaticallyTrustForIBRA: process.env.MEERKAT_TRUST_FOR_IBRA?.toUpperCase(),
+    },
+    rbac: {
+        getClearancesFromDSAIT: (process.env.MEERKAT_GET_CLEARANCES_FROM_DSAIT !== "0"),
+        getClearancesFromAttributeCertificates: (process.env.MEERKAT_GET_CLEARANCES_FROM_ATTR_CERTS !== "0"),
+        clearanceAuthorities,
+        labelingAuthorities,
     },
     log: {
         boundDN: (process.env.MEERKAT_LOG_BOUND_DN === "1"),
@@ -1137,5 +1167,82 @@ const ctx: MeerkatContext = {
     labellingAuthorities: new Map(),
     rbacPolicies: new Map([ [id_basicSecurityPolicy.toString(), simple_rbac_acdf] ]),
 };
+
+for (const la of labelingAuthorities) {
+    if (("certificate" in la) || ("tbsCert" in la)) {
+        const tbs = ("certificate" in la)
+            ? la.certificate.toBeSigned
+            : la.tbsCert;
+        const ski_ext = tbs.extensions
+            ?.find((ext) => ext.extnId.isEqualTo(subjectKeyIdentifier["&id"]!));
+        if (!ski_ext) {
+            continue;
+        }
+        const ski_el = new DERElement();
+        ski_el.fromBytes(ski_ext.extnValue);
+        const ski = subjectKeyIdentifier.decoderFor["&ExtnType"]!(ski_el);
+
+        const issuerNames: Name[] = [ tbs.issuer ];
+        const san_ext = tbs.extensions
+            ?.find((ext) => ext.extnId.isEqualTo(subjectAltName["&id"]!));
+        if (san_ext) {
+            const san_el = new DERElement();
+            san_el.fromBytes(san_ext.extnValue);
+            const sans = subjectAltName.decoderFor["&ExtnType"]!(san_el);
+            for (const san of sans) {
+                if ("directoryName" in san) {
+                    issuerNames.push(san.directoryName);
+                }
+            }
+        }
+
+        const spkiBytes = _encode_SubjectPublicKeyInfo(tbs.subjectPublicKeyInfo, DER).toBytes();
+        const publicKey = createPublicKey({
+            key: Buffer.from(spkiBytes),
+            format: "der",
+            type: "spki",
+        });
+
+        ctx.labellingAuthorities.set(Buffer.from(ski).toString("base64"), {
+            authorized: true,
+            issuerNames,
+            publicKey,
+        });
+    }
+    else {
+        const anchor = la.taInfo;
+        const issuerNames: Name[] = [];
+        if (anchor.certPath?.certificate) {
+            issuerNames.push(anchor.certPath.certificate.toBeSigned.issuer);
+        }
+        const exts = [
+            ...anchor.exts ?? [],
+            ...anchor.certPath?.certificate?.toBeSigned.extensions ?? [],
+        ];
+        const san_ext = exts
+            ?.find((ext) => ext.extnId.isEqualTo(subjectAltName["&id"]!));
+        if (san_ext) {
+            const san_el = new DERElement();
+            san_el.fromBytes(san_ext.extnValue);
+            const sans = subjectAltName.decoderFor["&ExtnType"]!(san_el);
+            for (const san of sans) {
+                if ("directoryName" in san) {
+                    issuerNames.push(san.directoryName);
+                }
+            }
+        }
+        const spkiBytes = _encode_SubjectPublicKeyInfo(anchor.pubKey, DER).toBytes();
+        const publicKey = createPublicKey({
+            key: Buffer.from(spkiBytes),
+            format: "der",
+            type: "spki",
+        });
+        ctx.labellingAuthorities.set(Buffer.from(anchor.keyId).toString("base64"), {
+            authorized: true,
+            issuerNames,
+            publicKey,
+        });
+    }
+}
 
 export default ctx;
