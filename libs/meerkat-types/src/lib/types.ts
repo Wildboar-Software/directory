@@ -1553,7 +1553,7 @@ interface RBACOptions {
      * anchors.
      *
      * Only the public key, issuer name, and subject key identifier are taken
-     * from these trust anchors. Expiration is never checked, nor are any other
+     * from these trust anchors. Expiration is never checked, nor sare any other
      * extensions, such as key-usage-related extensions.
      *
      * If a given security label has a `keyIdentifier`, it will be matched with
@@ -1561,7 +1561,7 @@ interface RBACOptions {
      * security label has an `issuerName` field, it will be matched with the
      * `subject` field of a trust anchor within this list.
      */
-    labelingAuthorities: TrustAnchorList;
+    labellingAuthorities: TrustAnchorList;
 
 }
 

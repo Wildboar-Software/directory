@@ -455,12 +455,12 @@ const clearanceAuthorities: TrustAnchorList = clearanceAuthoritiesFileContents
     ]
     : signingCACerts.map((certificate) => ({ certificate }));
 
-const labelingAuthoritiesFileContents: Buffer | undefined = process.env.MEERKAT_LABELING_AUTHORITIES
-    ? fs.readFileSync(process.env.MEERKAT_LABELING_AUTHORITIES)
+const labellingAuthoritiesFileContents: Buffer | undefined = process.env.MEERKAT_LABELLING_AUTHORITIES
+    ? fs.readFileSync(process.env.MEERKAT_LABELLING_AUTHORITIES)
     : undefined;
-const labelingAuthorities: TrustAnchorList = labelingAuthoritiesFileContents
+const labellingAuthorities: TrustAnchorList = labellingAuthoritiesFileContents
     ? [
-        ...parseTrustAnchorListFile(labelingAuthoritiesFileContents),
+        ...parseTrustAnchorListFile(labellingAuthoritiesFileContents),
         ...signingCACerts.map((certificate) => ({ certificate })),
     ]
     : signingCACerts.map((certificate) => ({ certificate }));
@@ -602,7 +602,7 @@ const config: Configuration = {
         getClearancesFromAttributeCertificates: (process.env.MEERKAT_GET_CLEARANCES_FROM_ATTR_CERTS !== "0"),
         getClearancesFromPublicKeyCert: (process.env.MEERKAT_GET_CLEARANCES_FROM_PKC !== "0"),
         clearanceAuthorities,
-        labelingAuthorities,
+        labellingAuthorities,
     },
     log: {
         boundDN: (process.env.MEERKAT_LOG_BOUND_DN === "1"),
@@ -1170,7 +1170,7 @@ const ctx: MeerkatContext = {
     alreadyAssertedAttributeCertificates: new Set(),
 };
 
-for (const la of labelingAuthorities) {
+for (const la of labellingAuthorities) {
     if (("certificate" in la) || ("tbsCert" in la)) {
         const tbs = ("certificate" in la)
             ? la.certificate.toBeSigned
