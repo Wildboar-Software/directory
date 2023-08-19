@@ -38,8 +38,6 @@ export type NodeOCSPRequestCallback = (
     callback: (err: Error | null, resp?: Buffer | null) => unknown,
 ) => unknown;
 
-let cachedServerCert: Certificate | undefined;
-
 /**
  * @summary Get a callback for use by NodeJS's `TLSSocket`'s `OCSPRequest` event.
  * @description
@@ -68,14 +66,11 @@ function getOnOCSPRequestCallback (
         issuer: Buffer,
         callback: (err: Error | null, resp?: Buffer | null) => unknown,
     ): Promise<void> => {
-        const serverCert: Certificate = cachedServerCert
-            ?? (() => {
-                const el = new BERElement();
-                el.fromBytes(certificate);
-                const cert = _decode_Certificate(el);
-                cachedServerCert = cert;
-                return cert;
-            })();
+        const serverCert: Certificate = (() => {
+            const el = new BERElement();
+            el.fromBytes(certificate);
+            return _decode_Certificate(el);
+        })();
         const aiaExt = serverCert.toBeSigned.extensions
             ?.find((ext) => ext.extnId.isEqualTo(authorityInfoAccess["&id"]!));
         const aia = aiaExt
@@ -118,9 +113,16 @@ function getOnOCSPRequestCallback (
             }
             requestBudget--;
             try {
+                const issuerCertEl = new BERElement();
+                issuerCertEl.fromBytes(issuer);
+                const issuerCert = _decode_Certificate(issuerCertEl);
                 const ocspResponse = await getOCSPResponse(
                     url,
-                    serverCert,
+                    [
+                        issuerCert.toBeSigned.subject.rdnSequence,
+                        issuerCert.toBeSigned.subjectPublicKeyInfo,
+                        serverCert.toBeSigned.serialNumber,
+                    ],
                     undefined,
                     (options.ocspTimeout * 1000),
                     signFunction,

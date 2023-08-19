@@ -3248,6 +3248,13 @@ interface Context {
      * be found.
      */
     labellingAuthorities: Map<string, LabellingAuthorityInfo | null>;
+
+    /**
+     * An index of the base64-encoded SHA256 hashes of
+     * `AttributeCertificate`s that were already asserted successfully for
+     * attribute certificates containing the `singleUse` extension.
+     */
+    alreadyAssertedAttributeCertificates: Set<string>;
 }
 
 /**

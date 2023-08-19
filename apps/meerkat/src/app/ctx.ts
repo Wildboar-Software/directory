@@ -1166,6 +1166,7 @@ const ctx: MeerkatContext = {
     updatingShadow: new Set(),
     labellingAuthorities: new Map(),
     rbacPolicies: new Map([ [id_basicSecurityPolicy.toString(), simple_rbac_acdf] ]),
+    alreadyAssertedAttributeCertificates: new Set(),
 };
 
 for (const la of labelingAuthorities) {

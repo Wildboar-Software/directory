@@ -214,6 +214,7 @@ import {
     VOR_RETURN_UNKNOWN_INTOLERABLE,
 } from "./verifyOCSPResponse";
 import _ from "lodash";
+import { Name } from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
 
 // So that arguments can be modified by reference.
 type Box<T> = {
@@ -683,7 +684,8 @@ export
 async function checkOCSP (
     ctx: MeerkatContext,
     ext: Extension,
-    cert: Certificate,
+    issuer: [ Name, SubjectPublicKeyInfo ],
+    subjectCert: Certificate,
     options: OCSPOptions,
 ): Promise<number> {
     assert(ext.extnId.isEqualTo(authorityInfoAccess["&id"]!));
@@ -723,7 +725,11 @@ async function checkOCSP (
         requestBudget--;
         const ocspResponse = await getOCSPResponse(
             url,
-            cert,
+            [
+                issuer[0].rdnSequence,
+                issuer[1],
+                subjectCert.toBeSigned.serialNumber,
+            ],
             undefined,
             (options.ocspTimeout * 1000),
             signFunction,
@@ -755,8 +761,8 @@ export
 async function checkRemoteCRLs (
     ctx: MeerkatContext,
     ext: Extension,
-    subjectCert: Certificate,
-    issuerCert: Certificate,
+    serialNumber: Uint8Array,
+    issuer: [ Name, SubjectPublicKeyInfo ],
     readDispatcher: ReadDispatcherFunction,
     options: RemoteCRLOptions,
 ): Promise<number> {
@@ -770,14 +776,13 @@ async function checkRemoteCRLs (
             .map((dp) => crlCurl(
                 ctx,
                 dp,
-                issuerCert.toBeSigned.subject,
+                issuer[0],
                 readDispatcher,
                 options,
             ))
     ))
         .filter((result): result is CertificateList[] => !!result)
         .flat();
-    const serialNumber = subjectCert.toBeSigned.serialNumber;
     for (const crl of crls) {
         for (const rc of crl.toBeSigned.revokedCertificates ?? []) {
             if (Buffer.compare(rc.serialNumber, serialNumber)) {
@@ -794,7 +799,7 @@ async function checkRemoteCRLs (
                 crl.algorithmIdentifier,
                 sigValue,
                 // Remember: the CRL needs to be validated against the ISSUER's public key.
-                issuerCert.toBeSigned.subjectPublicKeyInfo,
+                issuer[1],
             );
             if (!signatureIsValid) {
                 // If sig invalid, skip to next CRL entirely.
@@ -1322,7 +1327,16 @@ async function verifyBasicPublicKeyCertificateChecks (
     if (aiaExt && !state.validityTime) { // We can't
         const ocspCheckiness = options.ocspCheckiness;
         if (ocspCheckiness >= 0) {
-            const ocspResult = await checkOCSP(ctx, aiaExt, subjectCert, ctx.config.tls);
+            const ocspResult = await checkOCSP(
+                ctx,
+                aiaExt,
+                [
+                    issuerCert.toBeSigned.subject,
+                    issuerCert.toBeSigned.subjectPublicKeyInfo,
+                ],
+                subjectCert,
+                ctx.config.tls,
+            );
             if (ocspResult) {
                 return ocspResult;
             }
@@ -1335,8 +1349,8 @@ async function verifyBasicPublicKeyCertificateChecks (
         const crlResult = await checkRemoteCRLs(
             ctx,
             crldpExt,
-            subjectCert,
-            issuerCert,
+            subjectCert.toBeSigned.serialNumber,
+            [issuerCert.toBeSigned.subject, issuerCert.toBeSigned.subjectPublicKeyInfo],
             readDispatcher,
             options,
         );
@@ -1849,7 +1863,17 @@ async function verifyCACertificate (
 
     const aiaExt = extsGroupedByOID[authorityInfoAccess["&id"]!.toString()]?.[0];
     if (aiaExt) {
-        const ocspResult = await checkOCSP(ctx, aiaExt, cert, ctx.config.signing);
+        // It would be weird for a Root CA to revoke itself, but we'll check anyway.
+        const ocspResult = await checkOCSP(
+            ctx,
+            aiaExt,
+            [
+                cert.toBeSigned.subject,
+                cert.toBeSigned.subjectPublicKeyInfo,
+            ],
+            cert,
+            ctx.config.signing,
+        );
         if (ocspResult) {
             return ocspResult;
         }
@@ -1861,8 +1885,8 @@ async function verifyCACertificate (
         const crlResult = await checkRemoteCRLs(
             ctx,
             crldpExt,
-            cert,
-            cert,
+            cert.toBeSigned.serialNumber,
+            [cert.toBeSigned.subject, cert.toBeSigned.subjectPublicKeyInfo],
             readDispatcher,
             options,
         );

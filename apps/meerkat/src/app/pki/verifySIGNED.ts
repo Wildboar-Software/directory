@@ -116,6 +116,7 @@ async function verifySIGNED <T> (
         ctx,
         certPath,
         ctx.config.signing.acceptableCertificatePolicies,
+        ctx.config.signing,
     );
     if (vacpResult.returnCode !== VCP_RETURN_OK) {
         ctx.log.warn(ctx.i18n.t("log:cert_path_invalid", {
