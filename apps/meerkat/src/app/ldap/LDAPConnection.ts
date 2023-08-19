@@ -797,6 +797,7 @@ class LDAPAssociation extends ClientAssociation {
                             this.authLevel = outcome.authLevel;
                             this.status = Status.BOUND;
                             this.pwdReset = (outcome.pwdResponse?.error === PwdResponseValue_error_changeAfterReset);
+                            this.clearances = outcome.clearances;
                             const remoteHostIdentifier = `${this.socket.remoteFamily}://${this.socket.remoteAddress}/${this.socket.remotePort}`;
                             if (
                                 ("basicLevels" in outcome.authLevel)
