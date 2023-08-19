@@ -1,11 +1,16 @@
 # Authorization
 
-Meerkat currently only supports the Basic Access Control and Simplified Access
-Control schemes defined in
-[ITU Recommendation X.501](https://www.itu.int/rec/T-REC-X.501/en). Future
-versions may implement:
+Meerkat supports all access control schemes defined in the X.500 specifications,
+meaning:
 
+- Basic Access Control
+- Simplified Access Control
 - Rule-Based Access Control
+- Rule-and-Basic Access Control
+- Rule-and-Simple Access Control.
+
+Future versions of Meerkat DSA may introduce new access control schemes, like:
+
 - A "points-based" access control scheme
 - An "OpenLDAP-like" access control scheme
 
@@ -42,20 +47,17 @@ given Access Control Specific Area (ACSA), the following must be in place:
       is turned on, administrators will be locked out of the entire ACSA,
       because there are no ACI items defined that grant them permission to it! -->
 3.  The access control administrative point must have an `accessControlScheme`
-    attribute value of `basicAccessControlScheme` (2.5.28.1) or
-    `simplifiedAccessControlScheme` (2.5.28.2), depending on what you want.
-    - Note that, if you use the `rule-and-basic-access-control` or
-      `rule-and-simple-access-control` access control schemes instead, they will
-      follow the semantics of the Basic Access Control and Simplified Access
-      Control schemes; the "rule-based" aspects of these access control schemes
-      will be ignored, however, because Meerkat DSA does not understand
-      rule-based access control, and some access control is usually preferrable
-      to none.
+    attribute value set to the object identifier of the access control scheme
+    you want to use in that administrative area.
+
+:::caution
 
 Note that the ACI items should be created before enabling access control. If
 there are no ACI items defined at all, then _nobody_ is permitted to do
 _anything_. It is possible for administrators to accidentally configure
 rules that prevent even themselves from accessing their own DSA!
+
+:::
 
 ## Getting Locked Out
 
@@ -163,6 +165,7 @@ should be defined that:
   against the directory (e.g. trying to exploit a bug in access control by
   using aliases or attempting to enumerate entries with timing attacks via the
   `hierarchyParent` attribute validation.)
+- Explicitly prohibit users from modifying the `clearance` attribute.
 
 ## Access Control in a Distributed Environment
 
@@ -195,3 +198,176 @@ The environment variables that are used to configure the `localQualifier` are:
 - [`MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_1`](./env.md#meerkatlocalqualifierpointsforusingtls11)
 - [`MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_2`](./env.md#meerkatlocalqualifierpointsforusingtls12)
 - [`MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_3`](./env.md#meerkatlocalqualifierpointsforusingtls13)
+
+## Rule-Based Access Control
+
+Rule-Based Access Control is intentionally vague as to how a clearance value is
+compared to a security label: it is open-ended by being left to the security
+policy to determine how this comparison is performed. This means that Meerkat
+DSA must use a means for mapping a security policy identifier (which is an
+object identifier) to a function that is used to compare the user's clearance
+with the security label.
+
+### Where Clearances Come From
+
+Clearances may be associated with a user in three ways:
+
+1. By being present as attribute values of the `clearance` attribute in the
+   entry within the bound DSA, so long as the
+   [`MEERKAT_GET_CLEARANCES_FROM_DSAIT`](./env.md#meerkat_get_clearances_from_dsait)
+   environment variable is not set to `0`.
+2. By being present as attribute values of the `clearance` attribute in the
+   X.509 public key certificate asserted by the user upon successful strong
+   authentication, so long as the
+   [`MEERKAT_GET_CLEARANCES_FROM_PKC`](./env.md#meerkat_get_clearances_from_pkc)
+   environment variable is not set to `0`.
+3. By being present as attribute values of the `clearance` attribute in the
+   attribute certificate asserted by the user upon successful strong
+   authentication, so long as the
+   [`MEERKAT_GET_CLEARANCES_FROM_ATTR_CERTS`](./env.md#meerkat_get_clearances_from_attr_certs)
+   environment variable is not set to `0`.
+
+### Labelling Authorities and Clearance Authorities
+
+Security labels are signed data structures. Their signatures are generally
+produced by the public keys of "labelling authorities." Clearances do not have
+to be signed, since they can be taken from the DSAIT, but generally, they should
+be signed by being presented in an X.509 public key certificate or attribute
+certificate asserted by a user during strong authentication. Thus, for both
+verifying security labels and clearance values, there is a need for Meerkat DSA
+to have a configurable set of trust anchors explicitly for the purposes of
+labelling and clearance issuance.
+
+This can be done by pointing to Trust Anchor List files by using the
+[`MEERKAT_CLEARANCE_AUTHORITIES`](./env.md#meerkat_clearance_authorities) and
+[`MEERKAT_LABELLING_AUTHORITIES`](./env.md#meerkat_labelling_authorities)
+environment variables.
+
+If either of these are unset, they default to the trust anchors used for
+signing.
+
+### The Simple Security Policy
+
+For the sake of easy use of the Rule-Based Access Control (RBAC), Meerkat DSA
+comes with a security policy built-in, called the "simple security policy."
+It's object identifier is `1.3.6.1.4.1.56490.403.1. This security policy does
+nothing with security categories, and permits access to the labeled attribute
+value if the clearance level is greater than or equal to the clearance level
+required by the labeled attribute value. Unless you plan to make use of security
+categories, this should be a sensible default for most use cases.
+
+The Simple Security Policy treats the "unmarked" classification as being of
+higher sensitivity than "unclassified," but of lesser sensitivity than
+"restricted." The rationale for this is that "unclassified" explicitly names
+something as having the most relaxed classification, whereas "unmarked" is an
+absence of information, but it may also indicate that the labeled thing is not
+important enough to have labeled properly in the first place, hence, it lies
+between total declassification and the "restricted" classification.
+
+:::note
+
+If no security policy is listed in the security label or clearance, it defaults
+to the Simple Security Policy described above.
+
+:::
+
+### Custom Security Policies
+
+If you want to define your own security policies, you may do so in the
+[init script](./env.md#meerkat_init_js) like demonstrated below.
+
+```javascript
+
+// This is the object identifier of your security policy.
+const your_security_policy_id = "1.3.6.1.4.1.99999.1";
+
+// The is the Access Control Decision Function (ACDF) for your security policy.
+// This determines how a clearance value compares to a security label.
+
+const your_custom_acdf = (
+    ctx, // Context
+    assn, // ClientAssociation // This has a clearance field.
+    target, // Vertex
+    signedLabel, // SignedSecurityLabel
+    value, // ASN1Element
+    contexts, // X500Context[]
+    permissions, // number[]
+): boolean => {
+    const label = signedLabel.toBeSigned.securityLabel;
+    const classification = Number(label.security_classification ?? SecurityClassification_unmarked);
+    if (classification === SecurityClassification_unclassified) {
+        return true; // If unclassified, the user may always see it.
+    }
+    let highestClearanceLevel: number = 0;
+    // Note that a client may be associated with multiple clearance values.
+    // How you handle this is up to you.
+    for (const clearance of assn.clearances) {
+        if (!clearance.policyId.toString() !== your_security_policy_id) {
+            // We ignore clearances that do not pertain to this security policy.
+            continue;
+        }
+        const clearanceLevel: SecurityClassification = (() => {
+            if (!clearance.classList) {
+                return SecurityClassification_unclassified;
+            }
+            else if (clearance.classList[ClassList_topSecret] === TRUE_BIT) {
+                return SecurityClassification_top_secret;
+            }
+            else if (clearance.classList[ClassList_secret] === TRUE_BIT) {
+                return SecurityClassification_secret;
+            }
+            else if (clearance.classList[ClassList_confidential] === TRUE_BIT) {
+                return SecurityClassification_confidential;
+            }
+            else if (clearance.classList[ClassList_restricted] === TRUE_BIT) {
+                return SecurityClassification_restricted;
+            }
+            else if (clearance.classList[ClassList_unmarked] === TRUE_BIT) {
+                return SecurityClassification_unmarked;
+            }
+            else {
+                return SecurityClassification_unclassified;
+            }
+        })();
+        if (clearanceLevel > highestClearanceLevel) {
+            highestClearanceLevel = Number(clearanceLevel);
+        }
+    }
+    // Just to make sure that classification cannot be given a large,
+    // illegitimate value to make a protected value universally inaccessible.
+    if (highestClearanceLevel == SecurityClassification_top_secret) {
+        return true;
+    }
+    return (highestClearanceLevel >= classification);
+}
+
+async function init(ctx) {
+  // Here, we associate the policy ID with the ACDF
+  ctx.rbacPolicies.set(your_security_policy_id, your_custom_acdf);
+
+  // This is just logging, just to show you that you can do this. :)
+  ctx.log.info("Added my own custom security policy");
+}
+
+export default init;
+```
+
+The Access Control Decision Function (ACDF) associated with the security policy
+takes several arguments associated with the user, attribute value, contexts, the
+DSA itself, and returns a `boolean`: if this `boolean` is `true`, it means that
+the user's access request was granted; if `false`, the requested access is
+denied.
+
+### Chaining Rule-Based Access Control
+
+The clearances associated with a user are not preserved across the DSA boundary:
+they are not chained. With Basic Access Control and Simplified Access Control,
+the user's authentication level can be relayed to other DSAs, but there is no
+defined mechanism for a users clearances to survive across chaining. As such,
+Rule-Based Access Control is only viable for regulating access within a single
+DSA.
+
+For security reasons, only DAP and LDAP associations will have any clearances
+associated: this is so that downstream DSAs do not make access control decisions
+on the basis of the upstream DSA's clearances rather than the originating DAP
+requester when chaining is used.

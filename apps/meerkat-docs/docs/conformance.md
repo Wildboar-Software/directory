@@ -334,7 +334,7 @@ Meerkat DSA supports management of the DSA Information Tree.
 
 #### X. Rule-Based Access Control
 
-Meerkat DSA **does not** support Rule-Based Access Control.
+Meerkat DSA fully supports Rule-Based Access Control (RBAC).
 
 #### Y. Integrity of Directory Operations
 
@@ -375,7 +375,6 @@ Meerkat DSA conforms to the static requirements described in ITU Recommendation
 X.519 (2019), Section 13.2.2, with the following exceptions:
 
 - Meerkat DSA does not support the `multiStrand` family grouping described in X.511 7.3.2.
-- Meerkat DSA does not support Rule-Based Access Control
 
 In addition to this, Meerkat DSA conforms in the following respects:
 
