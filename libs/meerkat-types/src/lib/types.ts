@@ -1525,6 +1525,19 @@ interface RBACOptions {
     getClearancesFromAttributeCertificates: boolean;
 
     /**
+     * If true, Meerkat DSA will associate clearances with a bound user based
+     * on the values of the `clearance` attribute that are present in the
+     * presented subjectDirectoryAttributes extension of the public key
+     * certificate of the strong authentication argument, provided, of course,
+     * that the public key certification path is valid.
+     *
+     * The attribute authorities to trust are listed in `clearanceAuthorities`.
+     *
+     * @see {@link clearanceAuthorities}
+     */
+    getClearancesFromPublicKeyCert: boolean;
+
+    /**
      * The list of trust anchors whose signed attribute certificates will be
      * seen as valid by Meerkat DSA, and whose clearances will be associated
      * with bound users that supply such attribute certificates in their

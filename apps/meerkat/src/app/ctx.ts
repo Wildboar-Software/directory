@@ -600,6 +600,7 @@ const config: Configuration = {
     rbac: {
         getClearancesFromDSAIT: (process.env.MEERKAT_GET_CLEARANCES_FROM_DSAIT !== "0"),
         getClearancesFromAttributeCertificates: (process.env.MEERKAT_GET_CLEARANCES_FROM_ATTR_CERTS !== "0"),
+        getClearancesFromPublicKeyCert: (process.env.MEERKAT_GET_CLEARANCES_FROM_PKC !== "0"),
         clearanceAuthorities,
         labelingAuthorities,
     },

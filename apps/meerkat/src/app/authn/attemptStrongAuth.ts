@@ -96,6 +96,9 @@ async function clearancesFromAttrCertPath (
     source: string,
     socket: Socket | TLSSocket,
 ): Promise<Clearance[]> {
+    if (!ctx.config.rbac.getClearancesFromAttributeCertificates) {
+        return [];
+    }
     const logInfo = {
         host: source,
         remoteFamily: socket.remoteFamily,
@@ -317,20 +320,22 @@ async function attemptStrongAuth (
                 const clearances = foundEntry
                     ? await read_clearance(ctx, foundEntry)
                     : [];
-                const sdaExt = certification_path
-                    .userCertificate
-                    .toBeSigned
-                    .extensions
-                    ?.find((ext) => ext.extnId.isEqualTo(subjectDirectoryAttributes["&id"]!));
-                if (sdaExt) {
-                    const sdaEl = new DERElement();
-                    sdaEl.fromBytes(sdaExt.extnValue);
-                    const sda = subjectDirectoryAttributes.decoderFor["&ExtnType"]!(sdaEl);
-                    const sdaClearances = sda
-                        .filter((attr) => attr.type_.isEqualTo(clearance["&id"]))
-                        .flatMap((attr) => attr.values)
-                        .map((value) => clearance.decoderFor["&Type"]!(value));
-                    clearances.push(...sdaClearances);
+                if (ctx.config.rbac.getClearancesFromPublicKeyCert) {
+                    const sdaExt = certification_path
+                        .userCertificate
+                        .toBeSigned
+                        .extensions
+                        ?.find((ext) => ext.extnId.isEqualTo(subjectDirectoryAttributes["&id"]!));
+                    if (sdaExt) {
+                        const sdaEl = new DERElement();
+                        sdaEl.fromBytes(sdaExt.extnValue);
+                        const sda = subjectDirectoryAttributes.decoderFor["&ExtnType"]!(sdaEl);
+                        const sdaClearances = sda
+                            .filter((attr) => attr.type_.isEqualTo(clearance["&id"]))
+                            .flatMap((attr) => attr.values)
+                            .map((value) => clearance.decoderFor["&Type"]!(value));
+                        clearances.push(...sdaClearances);
+                    }
                 }
                 if (attributeCertificationPath) {
                     const attrCertClearances = await clearancesFromAttrCertPath(
@@ -422,21 +427,24 @@ async function attemptStrongAuth (
                 const clearances = attemptedVertex
                     ? await read_clearance(ctx, attemptedVertex)
                     : [];
-                const sdaExt = certPath
-                    .userCertificate
-                    .toBeSigned
-                    .extensions
-                    ?.find((ext) => ext.extnId.isEqualTo(subjectDirectoryAttributes["&id"]!));
-                if (sdaExt) {
-                    const sdaEl = new DERElement();
-                    sdaEl.fromBytes(sdaExt.extnValue);
-                    const sda = subjectDirectoryAttributes.decoderFor["&ExtnType"]!(sdaEl);
-                    const sdaClearances = sda
-                        .filter((attr) => attr.type_.isEqualTo(clearance["&id"]))
-                        .flatMap((attr) => attr.values)
-                        .map((value) => clearance.decoderFor["&Type"]!(value));
-                    clearances.push(...sdaClearances);
+                if (ctx.config.rbac.getClearancesFromPublicKeyCert) {
+                    const sdaExt = certPath
+                        .userCertificate
+                        .toBeSigned
+                        .extensions
+                        ?.find((ext) => ext.extnId.isEqualTo(subjectDirectoryAttributes["&id"]!));
+                    if (sdaExt) {
+                        const sdaEl = new DERElement();
+                        sdaEl.fromBytes(sdaExt.extnValue);
+                        const sda = subjectDirectoryAttributes.decoderFor["&ExtnType"]!(sdaEl);
+                        const sdaClearances = sda
+                            .filter((attr) => attr.type_.isEqualTo(clearance["&id"]))
+                            .flatMap((attr) => attr.values)
+                            .map((value) => clearance.decoderFor["&Type"]!(value));
+                        clearances.push(...sdaClearances);
+                    }
                 }
+
                 if (attributeCertificationPath) {
                     const attrCertClearances = await clearancesFromAttrCertPath(
                         ctx,
