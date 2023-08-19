@@ -46,13 +46,127 @@ import {
 } from "../pki/verifyToken";
 import { strict as assert } from "assert";
 import type {
+    AttributeCertificationPath,
     StrongCredentials,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/StrongCredentials.ta";
 import type { Socket } from "node:net";
 import type { TLSSocket } from "node:tls";
 import { read_unique_id, read_clearance } from "../database/utils";
+import { clearance } from "@wildboar/x500/src/lib/collections/attributes";
+import {
+    verifyAttrCert,
+    VAC_OK,
+    VAC_NOT_BEFORE,
+    VAC_NOT_AFTER,
+    VAC_MISSING_BASE_CERT,
+    VAC_HOLDER_MISMATCH,
+    VAC_UNSUPPORTED_HOLDER_DIGEST,
+    VAC_UNSUPPORTED_HOLDER_DIGESTED_OBJECT,
+    VAC_NO_ASSERTION,
+    VAC_NO_SOA_CERT,
+    VAC_UNTRUSTED_SOA,
+    VAC_INTERNAL_ERROR,
+    VAC_UNUSABLE_AC_PATH,
+    VAC_INVALID_DELEGATION,
+    VAC_UNSUPPORTED_SIG_ALG,
+    VAC_INVALID_SIGNATURE,
+    VAC_SINGLE_USE,
+    VAC_ACERT_REVOKED,
+    VAC_INVALID_TARGET,
+    VAC_INVALID_TIME_SPEC,
+    VAC_AMBIGUOUS_GROUP,
+    VAC_NOT_GROUP_MEMBER,
+    VAC_DUPLICATE_EXT,
+    VAC_UNKNOWN_CRIT_EXT,
+    VAC_INVALID_EXT_CRIT,
+    VAC_CRL_REVOKED,
+    VAC_OCSP_OTHER,
+    VAC_OCSP_REVOKED,
+} from "../pki/verifyAttrCertPath";
+import { Clearance } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/Clearance.ta";
+import { subjectDirectoryAttributes } from "@wildboar/x500/src/lib/modules/CertificateExtensions/subjectDirectoryAttributes.oa";
+import { DERElement } from "asn1-ts";
 
 const ID_OC_PKI_CERT_PATH: string = id_oc_pkiCertPath.toString();
+
+async function clearancesFromAttrCertPath (
+    ctx: MeerkatContext,
+    path: AttributeCertificationPath,
+    certification_path: CertificationPath,
+    source: string,
+    socket: Socket | TLSSocket,
+): Promise<Clearance[]> {
+    const logInfo = {
+        host: source,
+        remoteFamily: socket.remoteFamily,
+        remoteAddress: socket.remoteAddress,
+        remotePort: socket.remotePort,
+    };
+    if (path.acPath) {
+        ctx.log.debug(ctx.i18n.t("log:attr_cert_path_unsupported", logInfo), logInfo);
+        return [];
+    }
+    const acert = path.attributeCertificate;
+    const has_attributes_of_interest: boolean = acert
+        .toBeSigned
+        .attributes
+        .some((attr) => attr.type_.isEqualTo(clearance["&id"]));
+    if (!has_attributes_of_interest) {
+        ctx.log.debug(ctx.i18n.t("log:attr_cert_path_not_verified", logInfo), logInfo);
+        return [];
+    }
+
+    const pkiPath = [
+        ...certification_path.theCACertificates
+            ?.flatMap((arc) => arc.issuedToThisCA ?? []) ?? [],
+        certification_path.userCertificate,
+    ];
+    const attr_cert_verif_code = await verifyAttrCert(
+        ctx,
+        acert,
+        pkiPath,
+        ctx.config.rbac.clearanceAuthorities,
+    );
+    if (attr_cert_verif_code === VAC_OK) {
+        return acert.toBeSigned.attributes
+            .filter((attr) => attr.type_.isEqualTo(clearance["&id"]))
+            .flatMap((attr) => attr.values)
+            .map((value) => clearance.decoderFor["&Type"]!(value));
+    }
+    const logMessageContext = ({
+        [VAC_NOT_BEFORE]: "not_before",
+        [VAC_NOT_AFTER]: "not_after",
+        [VAC_MISSING_BASE_CERT]: "missing_base_cert",
+        [VAC_HOLDER_MISMATCH]: "holder_mismatch",
+        [VAC_UNSUPPORTED_HOLDER_DIGEST]: "unsupported_holder_digest",
+        [VAC_UNSUPPORTED_HOLDER_DIGESTED_OBJECT]: "unsupported_holder_digested_object",
+        [VAC_NO_ASSERTION]: "no_assertion",
+        [VAC_NO_SOA_CERT]: "no_soa_cert",
+        [VAC_UNTRUSTED_SOA]: "untrusted_soa",
+        [VAC_INTERNAL_ERROR]: "internal_error",
+        [VAC_UNUSABLE_AC_PATH]: "unusable_ac_path",
+        [VAC_INVALID_DELEGATION]: "invalid_delegation",
+        [VAC_UNSUPPORTED_SIG_ALG]: "unsupported_sig_alg",
+        [VAC_INVALID_SIGNATURE]: "invalid_signature",
+        [VAC_SINGLE_USE]: "single_use",
+        [VAC_ACERT_REVOKED]: "acert_revoked",
+        [VAC_INVALID_TARGET]: "invalid_target",
+        [VAC_INVALID_TIME_SPEC]: "invalid_time_spec",
+        [VAC_AMBIGUOUS_GROUP]: "ambiguous_group",
+        [VAC_NOT_GROUP_MEMBER]: "not_group_member",
+        [VAC_DUPLICATE_EXT]: "duplicate_ext",
+        [VAC_UNKNOWN_CRIT_EXT]: "unknown_crit_ext",
+        [VAC_INVALID_EXT_CRIT]: "invalid_ext_crit",
+        [VAC_CRL_REVOKED]: "crl_revoked",
+        [VAC_OCSP_OTHER]: "ocsp_other",
+        [VAC_OCSP_REVOKED]: "ocsp_revoked",
+    })[attr_cert_verif_code];
+    ctx.log.debug(ctx.i18n.t("log:verify_attr_cert", {
+        ...logInfo,
+        context: logMessageContext,
+    }), logInfo);
+    return [];
+}
 
 /**
  * @summary Attempts strong authentication
@@ -89,6 +203,7 @@ async function attemptStrongAuth (
         name,
         bind_token,
         certification_path,
+        attributeCertificationPath,
     } = credentials;
     const logInfo = {
         host: source,
@@ -202,6 +317,31 @@ async function attemptStrongAuth (
                 const clearances = foundEntry
                     ? await read_clearance(ctx, foundEntry)
                     : [];
+                const sdaExt = certification_path
+                    .userCertificate
+                    .toBeSigned
+                    .extensions
+                    ?.find((ext) => ext.extnId.isEqualTo(subjectDirectoryAttributes["&id"]!));
+                if (sdaExt) {
+                    const sdaEl = new DERElement();
+                    sdaEl.fromBytes(sdaExt.extnValue);
+                    const sda = subjectDirectoryAttributes.decoderFor["&ExtnType"]!(sdaEl);
+                    const sdaClearances = sda
+                        .filter((attr) => attr.type_.isEqualTo(clearance["&id"]))
+                        .flatMap((attr) => attr.values)
+                        .map((value) => clearance.decoderFor["&Type"]!(value));
+                    clearances.push(...sdaClearances);
+                }
+                if (attributeCertificationPath) {
+                    const attrCertClearances = await clearancesFromAttrCertPath(
+                        ctx,
+                        attributeCertificationPath,
+                        certification_path,
+                        source,
+                        socket,
+                    );
+                    clearances.push(...attrCertClearances);
+                }
                 return {
                     boundVertex: foundEntry,
                     boundNameAndUID: new NameAndOptionalUID(
@@ -282,6 +422,31 @@ async function attemptStrongAuth (
                 const clearances = attemptedVertex
                     ? await read_clearance(ctx, attemptedVertex)
                     : [];
+                const sdaExt = certPath
+                    .userCertificate
+                    .toBeSigned
+                    .extensions
+                    ?.find((ext) => ext.extnId.isEqualTo(subjectDirectoryAttributes["&id"]!));
+                if (sdaExt) {
+                    const sdaEl = new DERElement();
+                    sdaEl.fromBytes(sdaExt.extnValue);
+                    const sda = subjectDirectoryAttributes.decoderFor["&ExtnType"]!(sdaEl);
+                    const sdaClearances = sda
+                        .filter((attr) => attr.type_.isEqualTo(clearance["&id"]))
+                        .flatMap((attr) => attr.values)
+                        .map((value) => clearance.decoderFor["&Type"]!(value));
+                    clearances.push(...sdaClearances);
+                }
+                if (attributeCertificationPath) {
+                    const attrCertClearances = await clearancesFromAttrCertPath(
+                        ctx,
+                        attributeCertificationPath,
+                        certPath,
+                        source,
+                        socket,
+                    );
+                    clearances.push(...attrCertClearances);
+                }
                 return {
                     boundVertex: attemptedVertex,
                     boundNameAndUID: new NameAndOptionalUID(

@@ -117,13 +117,12 @@ export const VAC_INVALID_TARGET: number = -18;
 export const VAC_INVALID_TIME_SPEC: number = -19;
 export const VAC_AMBIGUOUS_GROUP: number = -20;
 export const VAC_NOT_GROUP_MEMBER: number = -21;
-export const VAC_BAD_GROUP_SYNTAX: number = -22;
 export const VAC_DUPLICATE_EXT: number = -23;
 export const VAC_UNKNOWN_CRIT_EXT: number = -24;
 export const VAC_INVALID_EXT_CRIT: number = -25;
 export const VAC_CRL_REVOKED: number = -26;
 export const VAC_OCSP_OTHER: number = -27;
-export const VAC_OCSP_REVOKED: number = -27;
+export const VAC_OCSP_REVOKED: number = -28;
 
 export
 const supportedExtensions: Set<IndexableOID> = new Set([
@@ -1241,7 +1240,7 @@ async function verifyAttrCert (
                     }
                     else if ("targetGroup" in target) {
                         if (!("directoryName" in target.targetGroup)) {
-                            return VAC_BAD_GROUP_SYNTAX;
+                            continue;
                         }
                         const memberName = new NameAndOptionalUID(
                             signing_cert.toBeSigned.subject.rdnSequence,
