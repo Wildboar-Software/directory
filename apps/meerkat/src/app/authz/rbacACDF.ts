@@ -59,7 +59,7 @@ const simple_rbac_acdf: RBAC_ACDF = (
     if (classification === SecurityClassification_unclassified) {
         return true; // If unclassified, the user may always see it.
     }
-    const policyId = label.security_policy_identifier ?? id_basicSecurityPolicy; // TODO: Needs documentation.
+    const policyId = label.security_policy_identifier ?? id_basicSecurityPolicy;
     let highestClearanceLevel: number = 0;
     for (const clearance of assn.clearances) {
         if (!clearance.policyId.isEqualTo(policyId)) {
@@ -81,7 +81,6 @@ const simple_rbac_acdf: RBAC_ACDF = (
             else if (clearance.classList[ClassList_restricted] === TRUE_BIT) {
                 return SecurityClassification_restricted;
             }
-            // TODO: Document treating unmarked as higher than unclassified.
             else if (clearance.classList[ClassList_unmarked] === TRUE_BIT) {
                 return SecurityClassification_unmarked;
             }
@@ -118,7 +117,7 @@ export function rbacACDF (
     }
     // const applicable_clearances = assn.clearances.filter((c) => c.policyId.isEqualTo(label.))
     const policyId = label.toBeSigned.securityLabel.security_policy_identifier
-        ?? id_basicSecurityPolicy; // TODO: Needs documentation.
+        ?? id_basicSecurityPolicy;
     const acdf = ctx.rbacPolicies.get(policyId.toString());
     if (!acdf) {
         return false; // If the policy ID is not understood, deny access.
