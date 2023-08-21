@@ -1046,7 +1046,13 @@ async function verifyAttrCert (
     }
 
     const acert_bytes = acert.originalDER
-        ?? _encode_AttributeCertificate(acert, DER).toBytes();
+        ? (() => {
+            const el = new DERElement();
+            el.fromBytes(acert.originalDER);
+            const tbs = el.sequence[0];
+            return tbs.toBytes();
+        })()
+        : _encode_TBSAttributeCertificate(acert.toBeSigned, DER).toBytes();
 
     const acert_hasher = createHash("sha256");
     acert_hasher.update(acert_bytes);
