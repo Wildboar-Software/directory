@@ -105,7 +105,7 @@ async function clearancesFromAttrCertPath (
         remoteAddress: socket.remoteAddress,
         remotePort: socket.remotePort,
     };
-    if (path.acPath) {
+    if (path.acPath?.length) {
         ctx.log.debug(ctx.i18n.t("log:attr_cert_path_unsupported", logInfo), logInfo);
         return [];
     }
