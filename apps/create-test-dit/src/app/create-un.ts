@@ -131,7 +131,7 @@ import {
     updateError,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/updateError.oa";
 import {
-    UpdateProblem_entryAlreadyExists,
+    UpdateProblem_entryAlreadyExists, UpdateProblem_namingViolation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import {
@@ -886,6 +886,13 @@ async function seedUN (
                     const param = updateError.decoderFor["&ParameterType"]!(outcome.error);
                     const data = getOptionallyProtectedValue(param);
                     if (data.problem === UpdateProblem_entryAlreadyExists) {
+                        ctx.log.warn(`O=UN already has a ${subentryType} subentry.`);
+                        continue;
+                    }
+                    else if ( // This error happens because there can only be one subschema per admin area.
+                        (subentryType === "subschema")
+                        && (data.problem === UpdateProblem_namingViolation)
+                    ) {
                         ctx.log.warn(`O=UN already has a ${subentryType} subentry.`);
                         continue;
                     }
