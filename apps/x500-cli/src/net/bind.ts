@@ -82,7 +82,7 @@ function parseAttrCertPath (data: string): AttributeCertificationPath {
     })();
     const path: ACPathData[] = [];
     let pkc: Certificate | undefined;
-    for (const pem of pems) {
+    for (const pem of pems.slice(1)) {
         const el = new BERElement();
         el.fromBytes(pem.data); // TODO: Check for extra bytes, just to make sure everything is valid.
         if (pem.label === "ATTRIBUTE CERTIFICATE") {
@@ -103,7 +103,7 @@ function parseAttrCertPath (data: string): AttributeCertificationPath {
     }
     return new AttributeCertificationPath(
         userCert,
-        path,
+        path.length ? path : undefined,
     );
 }
 
@@ -197,6 +197,7 @@ async function createConnection (
                 certPath,
                 key,
                 called_ae_title,
+                attrCertPath,
             );
             if (!connection) {
                 ctx.log.warn(`Could not create connection to this access point: ${accessPoint.url}.`);

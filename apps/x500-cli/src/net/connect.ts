@@ -20,6 +20,7 @@ import {
     SimpleCredentials,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
 import {
+    AttributeCertificationPath,
     StrongCredentials,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/StrongCredentials.ta";
 import {
@@ -64,6 +65,7 @@ async function connect (
     certPath?: CertificationPath,
     signingKey?: KeyObject | null,
     aeTitle?: DistinguishedName,
+    attrCertPath?: AttributeCertificationPath,
     // TODO: Config file
 ): Promise<Connection | undefined> {
     const bindDN_ = destringifyDN(ctx, bindDN ?? "");
@@ -142,6 +144,7 @@ async function connect (
                     certPath,
                     token,
                     eeCert?.toBeSigned.subject.rdnSequence,
+                    attrCertPath,
                 ),
             }
             : {
