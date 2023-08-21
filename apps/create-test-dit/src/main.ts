@@ -24,6 +24,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localityName.oa";
 import { sleep } from "./app/utils";
 import seedUN from "./app/create-un";
+import seedCA from "./app/create-ca";
 
 program.version("1.0.0");
 
@@ -58,6 +59,21 @@ async function main () {
             await seedUN(ctx, adminConnection);
             await seedUS(ctx, adminConnection);
             await adminConnection.close();
+            break;
+        }
+        case ("ca"): {
+            const bindDN: DistinguishedName = [
+                [
+                    new AttributeTypeAndValue(
+                        countryName["&id"],
+                        _encodePrintableString("CA", DER),
+                    ),
+                ],
+            ];
+            const password: string = "password4CA";
+            const connection = await bind(ctx, options["accessPoint"], bindDN, password);
+            await seedCA(ctx, connection);
+            await connection.close();
             break;
         }
         case ("gb"): {
