@@ -1193,18 +1193,7 @@ async function verifyAttrCert (
         return VAC_INVALID_SIGNATURE;
     }
     if (valid_signature === undefined) {
-        if (!acert.altAlgorithmIdentifier || !acert.altSignature) {
-            return VAC_INVALID_SIGNATURE;
-        }
-        const valid_alt_signature = verifySignature(
-            acert_bytes,
-            acert.altAlgorithmIdentifier,
-            packBits(acert.altSignature),
-            spki,
-        );
-        if (!valid_alt_signature) {
-            return VAC_INVALID_SIGNATURE;
-        }
+        return VAC_INVALID_SIGNATURE;
     }
 
     const signing_cert_path = ctx.config.signing.certPath;
