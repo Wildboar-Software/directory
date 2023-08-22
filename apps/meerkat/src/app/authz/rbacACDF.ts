@@ -222,20 +222,7 @@ export function rbacACDF (
         publicKey,
     );
     if (!sig_valid) {
-        if (label.altAlgorithmIdentifier && label.altSignature) {
-            const alt_sig_value = packBits(label.signature);
-            const alt_sig_valid = verifySignature(
-                tbs_bytes,
-                label.altAlgorithmIdentifier,
-                alt_sig_value,
-                publicKey,
-            );
-            if (!alt_sig_valid) {
-                return false;
-            }
-        } else {
-            return false;
-        }
+        return false;
     }
     // At this point, we know that the label is correctly bound to the value,
     // so we can use the policy-specific RBAC ACDF.
