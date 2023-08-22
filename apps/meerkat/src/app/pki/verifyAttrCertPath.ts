@@ -150,6 +150,20 @@ const extensionMandatoryCriticality: Map<IndexableOID, BOOLEAN> = new Map([
 ]);
 
 // TODO: Move this to @wildboar/x500
+/**
+ * @summary Compare two `IssuerSerial`s
+ * @description
+ *
+ * This function compares two `IssuerSerial`s for equality, returning `true` if
+ * they match.
+ *
+ * @param ctx The context object
+ * @param a An IssuerSerial
+ * @param b The other `IssuerSerial`
+ * @returns A `boolean` indicating whether the two `IssuerSerial`s match.
+ *
+ * @function
+ */
 function compare_issuer_serial (ctx: Context, a: IssuerSerial, b: IssuerSerial): boolean {
     if (!Buffer.compare(a.serial, b.serial)) {
         return false;
@@ -176,6 +190,15 @@ function compare_issuer_serial (ctx: Context, a: IssuerSerial, b: IssuerSerial):
     return true;
 }
 
+/**
+ * @summary Create an `IssuerSerial` from a public key certificate
+ * @description
+ *
+ * This function creates an `IssuerSerial` from a public key certificate.
+ *
+ * @param cert A public key certificate whose `IssuerSerial` is to be determined.
+ * @returns An `IssuerSerial` for the certificate
+ */
 function get_issuer_serial_from_cert (cert: Certificate): IssuerSerial {
     return new IssuerSerial(
         [
@@ -188,6 +211,22 @@ function get_issuer_serial_from_cert (cert: Certificate): IssuerSerial {
     );
 }
 
+/**
+ * @summary Determine whether a general name matches a public key certificate
+ * @description
+ *
+ * This function returns `true` if an asserted `GeneralName` matches a public
+ * key certificate. In addition to the `subject` field, this function also
+ * checks the subject alternative names, if there are any.
+ *
+ * @param ctx The context object
+ * @param cert The public key certificate
+ * @param gn The general name to check against the public key certificate
+ * @param alt_names Any alternative names (to avoid recalculating this between iterations)
+ * @returns A `boolean` indicating whether the general name matches the certificate
+ *
+ * @function
+ */
 function general_name_matches_cert (
     ctx: Context,
     cert: Certificate,
@@ -219,6 +258,20 @@ function general_name_matches_cert (
 }
 
 // TODO: Replace some code below with this.
+/**
+ * @summary Check whether an object digest matches a certificate
+ * @description
+ *
+ * This function checks whether an `ObjectDigestInfo` refers to the asserted
+ * certificate.
+ *
+ * @param cert The public key certificate whose object digest is to be checked.
+ * @param odinfo The object digest info
+ * @returns A `boolean` indicating whether the certificate is identified by the
+ *  object digest info
+ *
+ * @function
+ */
 function object_digest_matches_cert (cert: Certificate, odinfo: ObjectDigestInfo): boolean {
     const hash_str = digestOIDToNodeHash.get(odinfo.digestAlgorithm.algorithm.toString());
     if (!hash_str) {
@@ -323,6 +376,21 @@ function verifyAltSignature (subjectCert: AttributeCertificate, issuerExts?: Ext
     return verifySignature(verificand, sigAlg, sigValue, pubkey);
 }
 
+/**
+ * @summary Check if a certificate is revoked in locally-configured CRLs.
+ * @description
+ *
+ * This function checks if an attribute certificate has been revoked (by having
+ * its serial number present) in one of the locally-configured CRLs.
+ *
+ * @param ctx The context object
+ * @param cert The attribute certificate
+ * @param asOf The point-in-time to check revocation
+ * @param options Options pertaining to CRL checking
+ * @returns A `boolean` indicating whether the certificate is revoked in any CRL.
+ *
+ * @function
+ */
 function isRevokedFromConfiguredCRLs (
     ctx: Context,
     cert: AttributeCertificate,
@@ -397,6 +465,19 @@ async function hydrate_attr_cert_path (
     return path;
 }
 
+/**
+ * @summary Check if a public key certificate is the holder of an attribute certificate
+ * @description
+ *
+ * This function checks if the `holder` field of an attribute certificate refers
+ * to the asserted public key certificate.
+ *
+ * @param ctx The context object
+ * @param eeCert The end-entity certificate
+ * @param holder The `holder` field of an attribute certificate
+ * @param issuerCert The issuer certificate of the end-entity
+ * @returns A return code
+ */
 function is_cert_holder (
     ctx: Context,
     eeCert: Certificate,
@@ -564,6 +645,21 @@ function is_cert_holder (
     return VAC_OK;
 }
 
+/**
+ * @summary Determine whether an attribute certificate issuer is trusted.
+ * @description
+ *
+ * This function determines whether an attribute certificate issuer is trusted,
+ * including checking whether it is an SOA, if it needs to be.
+ *
+ * @param ctx The context object
+ * @param issuer The `AttCertIssuer`
+ * @param trust_anchor A single trust anchor
+ * @param soa Whether the trust anchor must be a Source of Authority (SOA)
+ * @returns A boolean indicating whether the attribute certificate issuer is trusted
+ *
+ * @function
+ */
 function isAttrCertIssuerTrusted (
     ctx: Context,
     issuer: AttCertIssuer,
@@ -747,6 +843,16 @@ function isAttrCertIssuerTrusted (
 //   - You pretty much treat the attributes of an attribute certificate as though they were simply added to the subjectDirectoryAttributes
 
 // Assume the PKI Path is valid.
+/**
+ * ## Do not use this function. It is not done.
+ *
+ * @deprecated This is not fully implemented yet.
+ * @param ctx
+ * @param acPath
+ * @param userPkiPath
+ * @param soas
+ * @returns
+ */
 export
 async function verifyAttrCertPath (
     ctx: Context,
