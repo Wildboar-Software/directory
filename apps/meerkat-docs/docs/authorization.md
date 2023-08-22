@@ -208,6 +208,17 @@ DSA must use a means for mapping a security policy identifier (which is an
 object identifier) to a function that is used to compare the user's clearance
 with the security label.
 
+### Controlling Access to Entries
+
+The X.500 specifications state that access to a given entry is denied under
+Rule-Based Access Control when access to all attribute values is denied.
+However, enforcing this would be devastating from a performance perspective.
+When performing a `list` operation, Meerkat DSA would have to check what might
+be thousands of attributes per entry. Instead, Meerkat DSA denies access to
+an entry if access to any of its distinguished values are denied. This is much
+faster, since usually only one single value is evaluated, and it is technically
+more strict from a security perspective.
+
 ### Where Clearances Come From
 
 Clearances may be associated with a user in three ways:
@@ -250,7 +261,7 @@ signing.
 
 For the sake of easy use of the Rule-Based Access Control (RBAC), Meerkat DSA
 comes with a security policy built-in, called the "simple security policy."
-It's object identifier is `1.3.6.1.4.1.56490.403.1. This security policy does
+It's object identifier is `1.3.6.1.4.1.56490.403.1`. This security policy does
 nothing with security categories, and permits access to the labeled attribute
 value if the clearance level is greater than or equal to the clearance level
 required by the labeled attribute value. Unless you plan to make use of security
@@ -263,6 +274,13 @@ something as having the most relaxed classification, whereas "unmarked" is an
 absence of information, but it may also indicate that the labeled thing is not
 important enough to have labeled properly in the first place, hence, it lies
 between total declassification and the "restricted" classification.
+
+:::caution
+
+The Simple Security Policy does not treat reads and writes differently: if
+access is granted to read an entry, access is also granted to modify an entry.
+
+:::
 
 :::note
 

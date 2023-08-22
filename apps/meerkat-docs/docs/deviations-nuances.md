@@ -262,6 +262,14 @@ noted below are nuances in Meerkat DSA:
   shadowing agreement, but this is used generally just to indicate where the
   master DSA can be reached. As such, Meerkat DSA will assume that, if this
   field is present, the correspondent DSA is _not_ the master.
+- The X.500 specifications state that access to a given entry is denied under
+  Rule-Based Access Control when access to all attribute values is denied.
+  However, enforcing this would be devastating from a performance perspective.
+  When performing a `list` operation, Meerkat DSA would have to check what might
+  be thousands of attributes per entry. Instead, Meerkat DSA denies access to an
+  entry if access to any of its distinguished values are denied. This is much
+  faster, since usually only one single value is evaluated, and it is
+  technically more strict from a security perspective.
 
 ## The "Never Contributing" Bug
 
