@@ -818,8 +818,14 @@ async function checkRemoteCRLs (
             if (ctx.config.signing.disableAllSignatureVerification) {
                 return VCP_RETURN_CRL_REVOKED;
             }
-            const bytes = crl.originalDER // FIXME: This is incorrect.
-                ?? _encode_CertificateList(crl, DER).toBytes();
+            const bytes = crl.originalDER
+                ? (() => {
+                    const el = new DERElement();
+                    el.fromBytes(crl.originalDER);
+                    const tbs = el.sequence[0];
+                    return tbs.toBytes();
+                })()
+                : _encode_CertificateListContent(crl.toBeSigned, DER).toBytes();
             const sigValue = packBits(crl.signature);
             const signatureIsValid: boolean | undefined = verifySignature(
                 bytes,
