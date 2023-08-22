@@ -150,6 +150,8 @@ import {
 import DSPAssociation from "../dsp/DSPConnection";
 import { entryACI, prescriptiveACI, subentryACI } from "@wildboar/x500/src/lib/collections/attributes";
 import { acdf } from "../authz/acdf";
+import accessControlSchemesThatUseRBAC from "../authz/accessControlSchemesThatUseRBAC";
+import { get_security_labels_for_rdn } from "../authz/get_security_labels_for_rdn";
 
 const BYTES_IN_A_UUID: number = 16;
 const PARENT: string = parent["&id"].toString();
@@ -603,6 +605,9 @@ async function list_i (
                     NAMING_MATCHER,
                 );
                 const objectClasses = Array.from(subordinate.dse.objectClass).map(ObjectIdentifier.fromString);
+                const rdn_sec_labels = accessControlSchemesThatUseRBAC.has(effectiveAccessControlScheme.toString())
+                    ? await get_security_labels_for_rdn(ctx, subordinate.dse.rdn)
+                    : undefined;
                 const authorizedToList = acdf(
                     ctx,
                     effectiveAccessControlScheme,
@@ -617,6 +622,8 @@ async function list_i (
                     { entry: objectClasses },
                     bacSettings,
                     true,
+                    false,
+                    rdn_sec_labels,
                 );
                 if (!authorizedToList) {
                     continue;

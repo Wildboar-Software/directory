@@ -357,6 +357,8 @@ import { id_ar_serviceSpecificArea } from "@wildboar/x500/src/lib/modules/Inform
 import { ID_AR_SERVICE, ID_AUTONOMOUS } from "../../oidstr";
 import { isMatchAllFilter } from "../x500/isMatchAllFilter";
 import { acdf } from "../authz/acdf";
+import accessControlSchemesThatUseRBAC from "../authz/accessControlSchemesThatUseRBAC";
+import { get_security_labels_for_rdn } from "../authz/get_security_labels_for_rdn";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 
@@ -1932,6 +1934,9 @@ async function search_i_ex (
     }
     // TODO: REVIEW: How would this handle alias dereferencing, joins, hierarchy selection, etc?
     const onBaseObjectIteration: boolean = (targetDN.length === data.baseObject.rdnSequence.length);
+    const rdn_sec_labels = (accessControlScheme && accessControlSchemesThatUseRBAC.has(accessControlScheme.toString()))
+        ? await get_security_labels_for_rdn(ctx, target.dse.rdn)
+        : undefined;
     const authorized = (permissions: number[]) => !accessControlScheme || acdf(
         ctx,
         accessControlScheme,
@@ -1945,6 +1950,8 @@ async function search_i_ex (
         },
         bacSettings,
         true,
+        false,
+        rdn_sec_labels,
     );
     if (accessControlScheme) {
         const authorizedToSearch = authorized([
@@ -3286,11 +3293,17 @@ async function search_i_ex (
                         isMemberOfGroup,
                         NAMING_MATCHER,
                     );
+                    const rdn_sec_labels = (
+                        accessControlScheme
+                        && accessControlSchemesThatUseRBAC.has(accessControlScheme.toString())
+                    )
+                        ? await get_security_labels_for_rdn(ctx, subordinate.dse.rdn)
+                        : undefined;
                     const authorizedToDiscoverSubordinate = !accessControlScheme || acdf(
                         ctx,
                         accessControlScheme,
                         assn,
-                        target,
+                        subordinate,
                         [
                             PERMISSION_CATEGORY_BROWSE,
                             PERMISSION_CATEGORY_RETURN_DN,
@@ -3302,6 +3315,8 @@ async function search_i_ex (
                         },
                         bacSettings,
                         true,
+                        false,
+                        rdn_sec_labels,
                     );
                     if (!authorizedToDiscoverSubordinate) {
                         continue;

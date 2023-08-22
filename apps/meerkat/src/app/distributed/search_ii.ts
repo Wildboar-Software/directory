@@ -78,6 +78,8 @@ import getEntryExistsFilter from "../database/entryExistsFilter";
 import { searchRules } from "@wildboar/x500/src/lib/collections/attributes";
 import { attributeValueFromDB } from "../database/attributeValueFromDB";
 import { MAX_RESULTS } from "../constants";
+import accessControlSchemesThatUseRBAC from "../authz/accessControlSchemesThatUseRBAC";
+import { get_security_labels_for_rdn } from "../authz/get_security_labels_for_rdn";
 
 const BYTES_IN_A_UUID: number = 16;
 

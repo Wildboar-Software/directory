@@ -152,6 +152,8 @@ import DSPAssociation from "../dsp/DSPConnection";
 import { generateSignature } from "../pki/generateSignature";
 import { SIGNED } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SIGNED.ta";
 import { acdf } from "../authz/acdf";
+import accessControlSchemesThatUseRBAC from "../authz/accessControlSchemesThatUseRBAC";
+import { get_security_labels_for_rdn } from "../authz/get_security_labels_for_rdn";
 
 const BYTES_IN_A_UUID: number = 16;
 const PARENT: string = parent["&id"].toString();
@@ -575,6 +577,9 @@ async function list_ii (
                     NAMING_MATCHER,
                 );
                 const objectClasses = Array.from(subordinate.dse.objectClass).map(ObjectIdentifier.fromString);
+                const rdn_sec_labels = accessControlSchemesThatUseRBAC.has(effectiveAccessControlScheme.toString())
+                    ? await get_security_labels_for_rdn(ctx, subordinate.dse.rdn)
+                    : undefined;
                 const authorizedToList = acdf(
                     ctx,
                     effectiveAccessControlScheme,
@@ -589,6 +594,8 @@ async function list_ii (
                     { entry: objectClasses },
                     bacSettings,
                     true,
+                    false,
+                    rdn_sec_labels,
                 );
                 if (!authorizedToList) {
                     continue;

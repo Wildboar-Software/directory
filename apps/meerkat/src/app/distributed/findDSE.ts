@@ -141,6 +141,8 @@ import { isModificationOperation } from "@wildboar/x500";
 import { EXT_BIT_USE_ALIAS_ON_UPDATE } from "@wildboar/x500/src/lib/dap/extensions";
 import stringifyDN from "../x500/stringifyDN";
 import { acdf } from "../authz/acdf";
+import accessControlSchemesThatUseRBAC from "../authz/accessControlSchemesThatUseRBAC";
+import { get_security_labels_for_rdn } from "../authz/get_security_labels_for_rdn";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -1019,7 +1021,9 @@ export
                     const objectClasses = Array
                         .from(matchedVertex.dse.objectClass)
                         .map(ObjectIdentifier.fromString);
-
+                    const rdn_sec_labels = accessControlSchemesThatUseRBAC.has(accessControlScheme.toString())
+                        ? await get_security_labels_for_rdn(ctx, matchedVertex.dse.rdn)
+                        : undefined;
                     const authorizedToDiscover: boolean = acdf(
                         ctx,
                         accessControlScheme,
@@ -1034,6 +1038,8 @@ export
                         { entry: objectClasses },
                         bacSettings,
                         true,
+                        false,
+                        rdn_sec_labels,
                     );
                     if (!authorizedToDiscover) {
                         const authorizedToDiscoverOnError: boolean = acdf(
@@ -1047,6 +1053,8 @@ export
                             { entry: objectClasses },
                             bacSettings,
                             true,
+                            false,
+                            rdn_sec_labels,
                         );
                         if (authorizedToDiscoverOnError) {
                             throw new errors.SecurityError(
@@ -1193,6 +1201,9 @@ export
                             NAMING_MATCHER,
                         );
                         const objectClasses = Array.from(child.dse.objectClass).map(ObjectIdentifier.fromString);
+                        const rdn_sec_labels = accessControlSchemesThatUseRBAC.has(accessControlScheme.toString())
+                            ? await get_security_labels_for_rdn(ctx, child.dse.rdn)
+                            : undefined;
                         /**
                          * We ignore entries for which browse and returnDN permissions
                          * are not granted. This is not specified in the Find DSE
@@ -1213,6 +1224,8 @@ export
                             { entry: objectClasses },
                             bacSettings,
                             true,
+                            false,
+                            rdn_sec_labels,
                         );
 
                         if (!authorizedToDiscover) {
@@ -1231,6 +1244,8 @@ export
                                 { entry: objectClasses },
                                 bacSettings,
                                 true,
+                                false,
+                                rdn_sec_labels,
                             );
                             if (authorizedToDiscoverOnError) {
                                 throw new errors.SecurityError(
@@ -1326,6 +1341,9 @@ export
 
         let discloseOnError: boolean = true;
         if (!ctx.config.bulkInsertMode && accessControlScheme) {
+            const rdn_sec_labels = accessControlSchemesThatUseRBAC.has(accessControlScheme.toString())
+                ? await get_security_labels_for_rdn(ctx, dse_i.dse.rdn)
+                : undefined;
             const currentDN = getDistinguishedName(dse_i);
             const relevantSubentries: Vertex[] = (await Promise.all(
                 state.admPoints.map((ap) => getRelevantSubentries(ctx, dse_i, currentDN, ap)),
@@ -1365,6 +1383,8 @@ export
                 { entry: objectClasses },
                 bacSettings,
                 true,
+                false,
+                rdn_sec_labels,
             );
             discloseOnError = authorizedToDiscloseOnError;
         }
