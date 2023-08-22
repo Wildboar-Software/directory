@@ -224,10 +224,10 @@ type Box<T> = {
 export type VCPReturnCode = number;
 export const VCP_RETURN_OK: VCPReturnCode = 0;
 export const VCP_RETURN_INVALID_SIG: VCPReturnCode = -1;
-export const VCP_RETURN_OCSP_REVOKED: VCPReturnCode = -2;
-export const VCP_RETURN_OCSP_OTHER: VCPReturnCode = -3; // Unreachable, Unauthorized, etc.
-export const VCP_RETURN_CRL_REVOKED: VCPReturnCode = -4;
-export const VCP_RETURN_CRL_UNREACHABLE: VCPReturnCode = -5;
+// export const VCP_RETURN_OCSP_REVOKED: VCPReturnCode = -2;
+// export const VCP_RETURN_OCSP_OTHER: VCPReturnCode = -3; // Unreachable, Unauthorized, etc.
+// export const VCP_RETURN_CRL_REVOKED: VCPReturnCode = -4;
+// export const VCP_RETURN_CRL_UNREACHABLE: VCPReturnCode = -5;
 export const VCP_RETURN_MALFORMED: VCPReturnCode = -6;
 export const VCP_RETURN_BAD_KEY_USAGE: VCPReturnCode = -7;
 export const VCP_RETURN_BAD_EXT_KEY_USAGE: VCPReturnCode = -8;
@@ -247,6 +247,12 @@ export const VCP_RETURN_PROHIBITED_SIG_ALG: VCPReturnCode = -21;
 export const VCP_RETURN_POLICY_NOT_ACCEPTABLE: VCPReturnCode = -22;
 export const VCP_RETURN_NO_AUTHORIZED_POLICIES: VCPReturnCode = -23;
 export const VCP_RETURN_NO_BASIC_CONSTRAINTS_CA: VCPReturnCode = -24;
+
+// The -100s are shared between verifyCertPath and verifyAttrCert.
+export const VCP_RETURN_OCSP_REVOKED: VCPReturnCode = -102;
+export const VCP_RETURN_OCSP_OTHER: VCPReturnCode = -103; // Unreachable, Unauthorized, etc.
+export const VCP_RETURN_CRL_REVOKED: VCPReturnCode = -104;
+export const VCP_RETURN_CRL_UNREACHABLE: VCPReturnCode = -105;
 
 export
 const supportedExtensions: Set<IndexableOID> = new Set([
@@ -680,15 +686,36 @@ const sigAlgOidToNodeJSDigest: Map<string, string | null> = new Map([
     [ id_Ed25519.toString(), null ],
 ]);
 
+/**
+ * @summary Check the OCSP status of a certificate
+ * @description
+ *
+ * This function sends requests to OCSP responders in the authorityInfoAccess
+ * extension to determine if a certificate is still valid. It's signature may
+ * seem weird, but it is purposefully designed to be general enough to be used
+ * for checking OCSP for public key certificates and attribute certificates.
+ *
+ * @param ctx The context object
+ * @param ext The authorityInfoAccess extension in the subject certificate
+ * @param issuer The issuer's Name and SubjectPublicKeyInfo
+ * @param serialNumber The subject's serial number
+ * @param options OCSP-related options
+ * @returns A promise resolving to an return code.
+ *
+ * @async
+ * @function
+ */
 export
 async function checkOCSP (
     ctx: MeerkatContext,
     ext: Extension,
     issuer: [ Name, SubjectPublicKeyInfo ],
-    subjectCert: Certificate,
+    serialNumber: Uint8Array,
     options: OCSPOptions,
 ): Promise<number> {
-    assert(ext.extnId.isEqualTo(authorityInfoAccess["&id"]!));
+    if (!ext.extnId.isEqualTo(authorityInfoAccess["&id"]!)) {
+        return VCP_RETURN_OCSP_OTHER;
+    }
     const aiaEl = new DERElement();
     aiaEl.fromBytes(ext.extnValue);
     const aiaValue = authorityInfoAccess.decoderFor["&ExtnType"]!(aiaEl);
@@ -728,7 +755,7 @@ async function checkOCSP (
             [
                 issuer[0].rdnSequence,
                 issuer[1],
-                subjectCert.toBeSigned.serialNumber,
+                serialNumber,
             ],
             undefined,
             (options.ocspTimeout * 1000),

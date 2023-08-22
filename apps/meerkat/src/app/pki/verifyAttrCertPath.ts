@@ -90,11 +90,13 @@ import {
 import { Extension } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Extension.ta";
 import { _encode_AlgorithmIdentifier } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
 import { TBSAttributeCertificate, _encode_TBSAttributeCertificate } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/TBSAttributeCertificate.ta";
-import assert from "assert";
-import { id_ad_ocsp } from "@wildboar/x500/src/lib/modules/PkiPmiExternalDataTypes/id-ad-ocsp.va";
-import { SignFunction, getOCSPResponse } from "@wildboar/ocsp-client";
-import { generateSignature } from "./generateSignature";
-import { VOR_RETURN_OK, VOR_RETURN_REVOKED, VOR_RETURN_UNKNOWN_INTOLERABLE, verifyOCSPResponse } from "./verifyOCSPResponse";
+import {
+    checkOCSP,
+    VCP_RETURN_OCSP_REVOKED,
+    VCP_RETURN_OCSP_OTHER,
+    VCP_RETURN_CRL_REVOKED,
+    VCP_RETURN_CRL_UNREACHABLE,
+} from "./verifyCertPath";
 
 export const VAC_OK: number = 0;
 export const VAC_NOT_BEFORE: number = -1;
@@ -123,6 +125,10 @@ export const VAC_INVALID_EXT_CRIT: number = -25;
 export const VAC_CRL_REVOKED: number = -26;
 export const VAC_OCSP_OTHER: number = -27;
 export const VAC_OCSP_REVOKED: number = -28;
+export const VAC_RETURN_OCSP_REVOKED: number = VCP_RETURN_OCSP_REVOKED;
+export const VAC_RETURN_OCSP_OTHER: number = VCP_RETURN_OCSP_OTHER;
+export const VAC_RETURN_CRL_REVOKED: number = VCP_RETURN_CRL_REVOKED;
+export const VAC_RETURN_CRL_UNREACHABLE: number = VCP_RETURN_CRL_UNREACHABLE;
 
 export
 const supportedExtensions: Set<IndexableOID> = new Set([
@@ -345,84 +351,6 @@ function isRevokedFromConfiguredCRLs (
                 ))
         ));
 }
-
-export
-async function checkOCSP (
-    ctx: MeerkatContext,
-    ext: Extension,
-    issuer: [ Name, SubjectPublicKeyInfo ],
-    cert: AttributeCertificate,
-    options: OCSPOptions,
-): Promise<number> {
-    assert(ext.extnId.isEqualTo(authorityInfoAccess["&id"]!));
-    const aiaEl = new DERElement();
-    aiaEl.fromBytes(ext.extnValue);
-    const aiaValue = authorityInfoAccess.decoderFor["&ExtnType"]!(aiaEl);
-    const ocspEndpoints: GeneralName[] = aiaValue
-        .filter((ad) => ad.accessMethod.isEqualTo(id_ad_ocsp))
-        .map((ad) => ad.accessLocation);
-    const signFunction: SignFunction | undefined = options.ocspSignRequests
-        ? (data: Uint8Array) => {
-            const key = ctx.config.signing.key;
-            const certPath = ctx.config.signing.certPath;
-            if (!key || !certPath?.length) {
-                return null;
-            }
-            const sig = generateSignature(key, data);
-            if (!sig) {
-                return null;
-            }
-            const [ algid, sigValue ] = sig;
-            return [ certPath, algid, sigValue ];
-        }
-        : undefined;
-    let requestBudget: number = options.maxOCSPRequestsPerCertificate;
-    for (const gn of ocspEndpoints) {
-        if (!("uniformResourceIdentifier" in gn)) {
-            continue;
-        }
-        const url = new URL(gn.uniformResourceIdentifier);
-        if (!url.protocol.toLowerCase().startsWith("http")) {
-            continue;
-        }
-        if (requestBudget === 0) {
-            break;
-        }
-        requestBudget--;
-        const ocspResponse = await getOCSPResponse(
-            url,
-            [
-                issuer[0].rdnSequence,
-                issuer[1],
-                cert.toBeSigned.serialNumber,
-            ],
-            undefined,
-            (options.ocspTimeout * 1000),
-            signFunction,
-            options.ocspResponseSizeLimit,
-        );
-        if (!ocspResponse) {
-            return VAC_OCSP_OTHER;
-        }
-        const { res } = ocspResponse;
-        const verifyResult = await verifyOCSPResponse(ctx, res);
-        if (verifyResult === VOR_RETURN_OK) {
-            return VAC_OK;
-        } else if (verifyResult === VOR_RETURN_REVOKED) {
-            return VAC_OCSP_REVOKED;
-        } else if (verifyResult === VOR_RETURN_UNKNOWN_INTOLERABLE) {
-            return VAC_OCSP_OTHER;
-        } else {
-            continue; // Just to be explicit.
-        }
-    }
-    /**
-     * Even if we exhaust all endpoints, we return an "OK" so that outages of
-     * OCSP endpoints do not make TLS impossible.
-     */
-    return VAC_OK;
-}
-
 
 async function hydrate_attr_cert_path_arc (arc: ACPathData): Promise<ACPathData> {
     // TODO: ~~If no certificate, fetch the certificate from the~~
@@ -1316,7 +1244,7 @@ async function verifyAttrCert (
                     ctx,
                     aiaExt,
                     [ issuerName, spki ],
-                    acert,
+                    acert.toBeSigned.serialNumber,
                     ctx.config.tls,
                 );
                 if (ocspResult) {
