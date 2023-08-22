@@ -15,9 +15,32 @@ import accessControlSchemesThatUseRBAC from "./accessControlSchemesThatUseRBAC";
 import { rbacACDF } from "./rbacACDF";
 import { attributeValueSecurityLabelContext } from "@wildboar/x500/src/lib/collections/contexts";
 
-// attributeValueSecurityLabelContext
 const avslc = attributeValueSecurityLabelContext["&id"];
 
+/**
+ * @summary Access Control Decision Function - determine allow-or-deny
+ * @description
+ *
+ * This function evaluates whether a user is authorized under a given access
+ * control scheme to perform some operation on an object by virtue of having
+ * the necessary permissions.
+ *
+ * @param ctx The context object
+ * @param accessControlScheme The effective access control scheme
+ * @param assn The client association, if any
+ * @param target The target object for which authorization is being evaluated
+ * @param permissions The permissions on the protected item being requested
+ * @param tuples The basic access control tuples
+ * @param requester The name of the entry making the request for authorization
+ * @param request The protected item to which authorization is sought
+ * @param settings The settings for evaluating a filter
+ * @param tuplesAlreadySplit Whether the tuples were already split to allow and deny
+ * @param addingEntry Whether this request is for adding an entry
+ * @param rdnSecurityLabels The security labels (if any) associated with RDN values
+ * @returns A boolean indicating whether access is granted
+ *
+ * @function
+ */
 export
 function acdf (
     ctx: Context,

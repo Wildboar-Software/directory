@@ -14,6 +14,22 @@ import { BERElement, ObjectIdentifier } from "asn1-ts";
 
 const AVSLC: string = attributeValueSecurityLabelContext["&id"].toString();
 
+/**
+ * @summary Get the security labels associated with the RDN values
+ * @description
+ *
+ * This function gets the security labels associated with the distinguished
+ * attribute values of the relative distinguished name. This is for Meerkat DSA
+ * to evaluate the ability to discover an entry under Rule-Based Access Control
+ * (RBAC).
+ *
+ * @param ctx The context object
+ * @param rdn The RDN whose security labels are to be returned
+ * @returns The attribute types and values along with security labels, if any
+ *
+ * @async
+ * @function
+ */
 export
 async function get_security_labels_for_rdn (
     ctx: Context,

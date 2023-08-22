@@ -1029,6 +1029,24 @@ async function verifyAttrCertPath (
 // Ensure indirectIssuer and issuedOnBehalfOf extensions.
 
 // This just verifies a single attribute certificate.
+
+/**
+ * @summary Verify a single attribute certificate
+ * @description
+ *
+ * This function verifies a single attribute certificate. It does not support
+ * indirect issuance: it does not check the delegation path where an SOA issues
+ * an AA beneath it to serve as an indirect issuer.
+ *
+ * @param ctx The context object
+ * @param acert The attribute certificate being verified
+ * @param userPkiPath The user PKI path
+ * @param soas The trust anchors that can serve as SOAs
+ * @returns A promise resolving to a return code
+ *
+ * @async
+ * @function
+ */
 export
 async function verifyAttrCert (
     ctx: MeerkatContext,

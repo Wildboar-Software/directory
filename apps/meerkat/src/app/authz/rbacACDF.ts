@@ -44,6 +44,22 @@ import {
 // TODO: Add this to the registry.
 export const id_basicSecurityPolicy = new ObjectIdentifier([ 403, 1 ], id_wildboar);
 
+/**
+ * @summary A simple Rule-Based Access Control ACDF
+ * @description
+ *
+ * This RBAC ACDF is built-in to Meerkat DSA to provide a sensible default and
+ * sample ACDF.
+ *
+ * @param ctx The context object
+ * @param assn The client association
+ * @param target The target object
+ * @param signedLabel The security label, after being verified
+ * @param _value The value to which authorization is sought
+ * @param _contexts The contexts associated with the value
+ * @param _permissions The permissions sought on the attribute value
+ * @returns A `boolean` indicating whether access is granted to the value
+ */
 export
 const simple_rbac_acdf: RBAC_ACDF = (
     ctx: Context,
@@ -101,6 +117,26 @@ const simple_rbac_acdf: RBAC_ACDF = (
 };
 
 // TODO: Log invalid hashes and such so admins can know if they are locked out of values.
+
+/**
+ * @summary Rule-Based Access Control Decision Function
+ * @description
+ *
+ * This function evaluates access to an attribute value according to
+ * Rule-Based Access Control (RBAC).
+ *
+ * @param ctx The context object
+ * @param assn The association
+ * @param target The target object
+ * @param label The security label
+ * @param attributeType the attribute type to which authorization is requested
+ * @param value The attribute value to which authorization is requested
+ * @param contexts The contexts associated with the attribute value
+ * @param permissions The permissions requested on the attribute value
+ * @returns A `boolean` indicating whether access is granted to the value
+ *
+ * @function
+ */
 export function rbacACDF (
     ctx: Context,
     assn: ClientAssociation, // This has a clearance field.

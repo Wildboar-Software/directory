@@ -6,6 +6,21 @@ import {
 } from "@wildboar/tal/src/lib/modules/TrustAnchorInfoModule/TrustAnchorChoice.ta";
 import { DER } from "asn1-ts/dist/node/functional";
 
+/**
+ * @summary Determine whether a certificate matches a trust anchor
+ * @description
+ *
+ * This function determines whether a public key certificate matches a trust
+ * anchor.
+ *
+ * @param cert The certificate that may or may not be a trust anchor
+ * @param trust_anchor A single trust anchor
+ * @param certBytes The raw bytes of the certificate
+ * @returns A `boolean` indicating whether the asserted certificate matches the
+ *  trust anchor.
+ *
+ * @function
+ */
 export
 function isCertInTrustAnchor (
     cert: Certificate,
