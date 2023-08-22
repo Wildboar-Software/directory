@@ -133,8 +133,7 @@ async function readPermittedEntryInformation (
     }
     let incompleteEntry: boolean = true;
     let discloseIncompleteEntry: boolean = false;
-    const permittedEinfo: EntryInformation_information_Item[] = [];
-    const permittedEinfoViaRbac: EntryInformation_information_Item[] = [];
+    let permittedEinfo: EntryInformation_information_Item[] = [];
     if (accessControlSchemesThatUseACIItems.has(acs)) {
         for (const info of einfo) {
             if ("attribute" in info) {
@@ -242,6 +241,8 @@ async function readPermittedEntryInformation (
                 continue;
             }
         }
+    } else {
+        permittedEinfo = einfo;
     }
 
     if (!accessControlSchemesThatUseRBAC.has(acs) || !assn) {
@@ -253,6 +254,7 @@ async function readPermittedEntryInformation (
     }
 
     const typesOnly: boolean = (options?.selection?.infoTypes === attributeTypesOnly);
+    const permittedEinfoViaRbac: EntryInformation_information_Item[] = [];
     for (const info of permittedEinfo) {
         if (!("attribute" in info)) {
             // This should actually never happen.
