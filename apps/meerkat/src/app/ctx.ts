@@ -109,7 +109,7 @@ import type {
 import { rootCertificates } from "node:tls";
 import { strict as assert } from "node:assert";
 import { createPublicKey } from "node:crypto";
-import { id_basicSecurityPolicy, simple_rbac_acdf } from "./authz/rbacACDF";
+import { id_simpleSecurityPolicy, simple_rbac_acdf } from "./authz/rbacACDF";
 import { subjectKeyIdentifier } from "@wildboar/x500/src/lib/modules/CertificateExtensions/subjectKeyIdentifier.oa";
 import { subjectAltName } from "@wildboar/x500/src/lib/modules/CertificateExtensions/subjectAltName.oa";
 import { Name } from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
@@ -1166,7 +1166,7 @@ const ctx: MeerkatContext = {
     shadowUpdateCycles: new Map(),
     updatingShadow: new Set(),
     labellingAuthorities: new Map(),
-    rbacPolicies: new Map([ [id_basicSecurityPolicy.toString(), simple_rbac_acdf] ]),
+    rbacPolicies: new Map([ [id_simpleSecurityPolicy.toString(), simple_rbac_acdf] ]),
     alreadyAssertedAttributeCertificates: new Set(),
 };
 

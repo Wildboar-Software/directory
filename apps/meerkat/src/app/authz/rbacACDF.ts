@@ -42,7 +42,8 @@ import {
 } from "@wildboar/parity-schema/src/lib/modules/Wildboar/id-wildboar.va";
 
 // TODO: Add this to the registry.
-export const id_basicSecurityPolicy = new ObjectIdentifier([ 403, 1 ], id_wildboar);
+export const id_simpleSecurityPolicy = new ObjectIdentifier([ 403, 1 ], id_wildboar);
+
 
 /**
  * @summary A simple Rule-Based Access Control ACDF
@@ -75,7 +76,15 @@ const simple_rbac_acdf: RBAC_ACDF = (
     if (classification === SecurityClassification_unclassified) {
         return true; // If unclassified, the user may always see it.
     }
-    const policyId = label.security_policy_identifier ?? id_basicSecurityPolicy;
+    /* "unmarked" is treated as more sensitive than "unclassified," but it is
+    numerically lower than "unclassified" among the named integers of the
+    `SecurityClassification` type. We perform the swap here. */
+    if (classification === SecurityClassification_unclassified) {
+        classification = 0;
+    } else if (classification === SecurityClassification_unmarked) {
+        classification = 1;
+    }
+    const policyId = label.security_policy_identifier ?? id_simpleSecurityPolicy;
     let highestClearanceLevel: number = 0;
     for (const clearance of assn.clearances) {
         if (!clearance.policyId.isEqualTo(policyId)) {
