@@ -3,7 +3,6 @@ import {
     Context,
     IndexableOID,
     OfflinePKIConfig,
-    OCSPOptions,
 } from "@wildboar/meerkat-types";
 import {
     PkiPath,
@@ -12,7 +11,6 @@ import {
     ACPathData,
     AttributeCertificate,
     AttributeCertificationPath,
-    _encode_AttributeCertificate,
 } from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/AttributeCertificationPath.ta";
 import {
     compareGeneralName,
@@ -92,10 +90,6 @@ import { _encode_AlgorithmIdentifier } from "@wildboar/pki-stub/src/lib/modules/
 import { TBSAttributeCertificate, _encode_TBSAttributeCertificate } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/TBSAttributeCertificate.ta";
 import {
     checkOCSP,
-    VCP_RETURN_OCSP_REVOKED,
-    VCP_RETURN_OCSP_OTHER,
-    VCP_RETURN_CRL_REVOKED,
-    VCP_RETURN_CRL_UNREACHABLE,
 } from "./verifyCertPath";
 
 export const VAC_OK: number = 0;
@@ -125,10 +119,10 @@ export const VAC_INVALID_EXT_CRIT: number = -25;
 export const VAC_CRL_REVOKED: number = -26;
 export const VAC_OCSP_OTHER: number = -27;
 export const VAC_OCSP_REVOKED: number = -28;
-export const VAC_RETURN_OCSP_REVOKED: number = VCP_RETURN_OCSP_REVOKED;
-export const VAC_RETURN_OCSP_OTHER: number = VCP_RETURN_OCSP_OTHER;
-export const VAC_RETURN_CRL_REVOKED: number = VCP_RETURN_CRL_REVOKED;
-export const VAC_RETURN_CRL_UNREACHABLE: number = VCP_RETURN_CRL_UNREACHABLE;
+export const VAC_RETURN_OCSP_REVOKED: number = -102;
+export const VAC_RETURN_OCSP_OTHER: number = -103;
+export const VAC_RETURN_CRL_REVOKED: number = -104;
+export const VAC_RETURN_CRL_UNREACHABLE: number = -105;
 
 export
 const supportedExtensions: Set<IndexableOID> = new Set([
