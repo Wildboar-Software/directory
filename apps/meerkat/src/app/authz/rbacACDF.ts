@@ -40,10 +40,21 @@ import {
 import {
     id_wildboar,
 } from "@wildboar/parity-schema/src/lib/modules/Wildboar/id-wildboar.va";
+import { attributeValueSecurityLabelContext } from "@wildboar/x500/src/lib/collections/contexts";
+import {
+    PERMISSION_CATEGORY_ADD,
+    PERMISSION_CATEGORY_MODIFY,
+    PERMISSION_CATEGORY_REMOVE,
+} from "@wildboar/x500/src/lib/bac/bacACDF";
 
 // TODO: Add this to the registry.
 export const id_simpleSecurityPolicy = new ObjectIdentifier([ 403, 1 ], id_wildboar);
 
+const modification_permissions: number[] = [
+    PERMISSION_CATEGORY_ADD,
+    PERMISSION_CATEGORY_MODIFY,
+    PERMISSION_CATEGORY_REMOVE,
+];
 
 /**
  * @summary A simple Rule-Based Access Control ACDF
@@ -68,11 +79,11 @@ const simple_rbac_acdf: RBAC_ACDF = (
     target: Vertex,
     signedLabel: SignedSecurityLabel,
     _value: ASN1Element,
-    _contexts: X500Context[],
-    _permissions: number[],
+    contexts: X500Context[],
+    permissions: number[],
 ): boolean => {
     const label = signedLabel.toBeSigned.securityLabel;
-    const classification = Number(label.security_classification ?? SecurityClassification_unmarked);
+    let classification = Number(label.security_classification ?? SecurityClassification_unmarked);
     if (classification === SecurityClassification_unclassified) {
         return true; // If unclassified, the user may always see it.
     }
@@ -92,7 +103,7 @@ const simple_rbac_acdf: RBAC_ACDF = (
         }
         const clearanceLevel: SecurityClassification = (() => {
             if (!clearance.classList) {
-                return SecurityClassification_unclassified;
+                return 0;
             }
             else if (clearance.classList[ClassList_topSecret] === TRUE_BIT) {
                 return SecurityClassification_top_secret;
@@ -107,22 +118,36 @@ const simple_rbac_acdf: RBAC_ACDF = (
                 return SecurityClassification_restricted;
             }
             else if (clearance.classList[ClassList_unmarked] === TRUE_BIT) {
-                return SecurityClassification_unmarked;
+                /* Under the Simple Security Policy, unmarked is treated as
+                being a level higher than unclassified. */
+                return 1;
             }
-            else {
-                return SecurityClassification_unclassified;
-            }
+            return 0;
         })();
+        // Just to make sure that classification cannot be given a large,
+        // illegitimate value to make a protected value universally inaccessible.
+        // This also short circuits this function.
+        if (clearanceLevel == SecurityClassification_top_secret) {
+            return true;
+        }
         if (clearanceLevel > highestClearanceLevel) {
             highestClearanceLevel = Number(clearanceLevel);
         }
     }
-    // Just to make sure that classification cannot be given a large,
-    // illegitimate value to make a protected value universally inaccessible.
-    if (highestClearanceLevel == SecurityClassification_top_secret) {
-        return true;
+
+    if (highestClearanceLevel < classification) {
+        return false;
     }
-    return (highestClearanceLevel >= classification);
+    /* If the user does not have top-secret clearance, but does have generally
+    sufficient clearance, the only remaining reason we have to block them is if
+    they are modifying the security labels themselves, in which case, access is
+    denied, because, under the Simple Security Policy, you need top-secret
+    clearance to modify the security labels. */
+    const is_modification: boolean = permissions.some((p) => modification_permissions.includes(p));
+    return (
+        !is_modification
+        || !contexts.some((c) => c.contextType.isEqualTo(attributeValueSecurityLabelContext["&id"]))
+    );
 };
 
 // TODO: Log invalid hashes and such so admins can know if they are locked out of values.
@@ -157,20 +182,28 @@ export function rbacACDF (
     permissions: number[],
 ): boolean {
     if (!assn.clearances.length) {
-        // If the user has no clearance, only allow access for things unmarked.
+        // If the user has no clearance, only allow access for things unclassified.
         return (label.toBeSigned.securityLabel.security_classification == SecurityClassification_unclassified);
     }
-    // const applicable_clearances = assn.clearances.filter((c) => c.policyId.isEqualTo(label.))
     const policyId = label.toBeSigned.securityLabel.security_policy_identifier
-        ?? id_basicSecurityPolicy;
+        ?? id_simpleSecurityPolicy;
     const acdf = ctx.rbacPolicies.get(policyId.toString());
+    const relevantClearances = assn.clearances.filter((c) => c.policyId.isEqualTo(policyId));
+    const userHasTopSecretClearance: boolean = relevantClearances
+        .some((c) => (c.classList?.[ClassList_topSecret] === TRUE_BIT));
     if (!acdf) {
-        return false; // If the policy ID is not understood, deny access.
+        /* If the policy is not understood, allow the request if unclassified or
+        if the user has top-secret clearance for that policy. Otherwise, deny
+        access. */
+        return (
+            (label.toBeSigned.securityLabel.security_classification === SecurityClassification_unclassified)
+            || userHasTopSecretClearance
+        );
     }
 
     const atav_hash_alg = digestOIDToNodeHash.get(label.toBeSigned.attHash.algorithmIdentifier.algorithm.toString());
     if (!atav_hash_alg) {
-        return false; // Hash algorithm not understood.
+        return userHasTopSecretClearance; // Hash algorithm not understood.
     }
     const atav = new AttributeTypeAndValue(attributeType, value);
     const atav_bytes = _encode_AttributeTypeAndValue(atav, DER).toBytes();
@@ -185,7 +218,7 @@ export function rbacACDF (
     );
 
     if (Buffer.compare(calculated_digest, provided_digest)) {
-        return false; // The hashes don't match up.
+        return userHasTopSecretClearance; // The hashes don't match up.
     }
 
     const namingMatcher = getNamingMatcherGetter(ctx);
@@ -206,7 +239,7 @@ export function rbacACDF (
         const key_id = Buffer.from(label.toBeSigned.keyIdentifier).toString("base64");
         const authority = ctx.labellingAuthorities.get(key_id);
         if (authority === null) {
-            return false;
+            return userHasTopSecretClearance;
         }
         const issuer = label.toBeSigned.issuer;
         const authority_is_valid: boolean = !!(
@@ -222,7 +255,7 @@ export function rbacACDF (
             )
         );
         if (!authority_is_valid) {
-            return false;
+            return userHasTopSecretClearance;
         }
         publicKey = authority?.publicKey;
     } else if (label.toBeSigned.issuer) {
@@ -246,10 +279,12 @@ export function rbacACDF (
             publicKey = authority.publicKey;
         }
     } else { // This should actually be unreachable.
-        return false;
+        // We grant access for only top-secret clearance, just to ensure that
+        // problems can be rectified.
+        return userHasTopSecretClearance;
     }
     if (!publicKey) {
-        return false;
+        return userHasTopSecretClearance;
     }
     const tbs_bytes = label.originalDER
         ? (() => {
@@ -267,7 +302,7 @@ export function rbacACDF (
         publicKey,
     );
     if (!sig_valid) {
-        return false;
+        return userHasTopSecretClearance;
     }
     // At this point, we know that the label is correctly bound to the value,
     // so we can use the policy-specific RBAC ACDF.
