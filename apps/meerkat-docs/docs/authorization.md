@@ -257,6 +257,10 @@ environment variables.
 If either of these are unset, they default to the trust anchors used for
 signing.
 
+To be used as a labelling authority, the configured trust anchors **MUST** have
+a `subjectKeyIdentifier` extension (or the equivalent `keyId` field of the
+`taInfo` alternative); those that do not match this requirement will be ignored.
+
 ### The Simple Security Policy
 
 For the sake of easy use of the Rule-Based Access Control (RBAC), Meerkat DSA
