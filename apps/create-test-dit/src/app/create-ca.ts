@@ -9,7 +9,7 @@ import {
     ASN1Element,
     INTEGER,
 } from "asn1-ts";
-import { KeyObject, createHash, createPrivateKey, createSign, randomBytes, randomInt } from "crypto";
+import { KeyObject, createHash, createPrivateKey, createSign, randomBytes } from "crypto";
 import {
     addEntry,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
@@ -123,72 +123,17 @@ import {
     UpdateProblem_entryAlreadyExists, UpdateProblem_namingViolation,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
-import { AccessPoint, Name } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
-import {
-    id_ar_collectiveAttributeSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-collectiveAttributeSpecificArea.va";
+import { Name } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 import {
     id_ar_accessControlSpecificArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlSpecificArea.va";
-import {
-    id_ar_autonomousArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
-import {
-    id_ar_pwdAdminSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-pwdAdminSpecificArea.va";
-import {
-    id_ar_subschemaAdminSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-subschemaAdminSpecificArea.va";
-import { uriToNSAP } from "@wildboar/x500/src/lib/distributed/uri";
-import {
-    PresentationAddress,
-    _encode_PresentationAddress,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/PresentationAddress.ta";
 import { idempotentAddEntry } from "./utils";
-import { Guide, _encode_Guide } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/Guide.ta";
-import {
-    directoryAccessAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/directoryAccessAC.oa";
-import {
-    directorySystemAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/directorySystemAC.oa";
-import {
-    directoryOperationalBindingManagementAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/directoryOperationalBindingManagementAC.oa";
-import {
-    shadowSupplierInitiatedAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/shadowSupplierInitiatedAC.oa";
-import {
-    shadowConsumerInitiatedAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/shadowConsumerInitiatedAC.oa";
-import {
-    shadowSupplierInitiatedAsynchronousAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/shadowSupplierInitiatedAsynchronousAC.oa";
-import {
-    shadowConsumerInitiatedAsynchronousAC,
-} from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/shadowConsumerInitiatedAsynchronousAC.oa";
 import {
     Attribute_valuesWithContext_Item,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute-valuesWithContext-Item.ta";
 import {
     Context as X500Context,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
-import {
-    languageContext,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/languageContext.oa";
-import {
-    localeContext,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localeContext.oa";
-import {
-    temporalContext,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/temporalContext.oa";
-import {
-    TimeSpecification,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/TimeSpecification.ta";
-import {
-    TimeSpecification_time_absolute,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/TimeSpecification-time-absolute.ta";
-import { addDays } from "date-fns";
 import {
     commonName,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
@@ -200,66 +145,14 @@ import {
     rule_based_access_control,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/rule-based-access-control.va";
 import { HASH, SecurityLabel, SignedSecurityLabelContent, _encode_SignedSecurityLabelContent } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/SignedSecurityLabelContent.ta";
-import { SIGNED, SignedSecurityLabel, _encode_SignedSecurityLabel } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/SignedSecurityLabel.ta";
+import { SIGNED, SignedSecurityLabel } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/SignedSecurityLabel.ta";
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import { sha256WithRSAEncryption } from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/sha256WithRSAEncryption.va";
 import { AlgorithmIdentifier } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
 import { SecurityClassification_confidential, SecurityClassification_restricted, SecurityClassification_secret, SecurityClassification_top_secret, SecurityClassification_unmarked } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/SecurityClassification.ta";
 import { id_sha256 } from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha256.va";
-import { AttributeType, _encode_AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
-import { AttCertIssuer } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttCertIssuer.ta";
-
-// const MOSCOW_ACCESS_POINT = new AccessPoint(
-//     {
-//         rdnSequence: [
-//             [
-//                 new AttributeTypeAndValue(
-//                     commonName["&id"],
-//                     _encodeUTF8String("dsa01.moscow.mkdemo.wildboar.software", DER),
-//                 ),
-//             ],
-//         ],
-//     },
-//     new PresentationAddress(
-//         undefined,
-//         undefined,
-//         undefined,
-//         [
-//             /**
-//              * Even if you plan on using LDAP to read this entry, you MUST
-//              * specify an X.500 URL, because DOP cannot be translated into LDAP.
-//              */
-//             uriToNSAP("idms://dsa01.moscow.mkdemo.wildboar.software:44632", false),
-//             uriToNSAP("idm://dsa01.moscow.mkdemo.wildboar.software:4632", false),
-//             uriToNSAP("ldaps://dsa01.moscow.mkdemo.wildboar.software:636", false),
-//             uriToNSAP("ldap://dsa01.moscow.mkdemo.wildboar.software:389", false),
-//         ],
-//     ),
-//     undefined,
-// );
-
-const MOSCOW_ACCESS_POINT = new AccessPoint(
-    {
-        rdnSequence: [
-            [
-                new AttributeTypeAndValue(
-                    commonName["&id"],
-                    _encodeUTF8String("dsa2", DER),
-                ),
-            ],
-        ],
-    },
-    new PresentationAddress(
-        undefined,
-        undefined,
-        undefined,
-        [
-            uriToNSAP("idm://dsa2:4632", false),
-        ],
-    ),
-    undefined,
-);
+import { AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
 
 const allNonSecurityContextTypes: OBJECT_IDENTIFIER[] = [
     ct.languageContext["&id"],
@@ -297,80 +190,6 @@ function securityParameters (): SecurityParameters {
         ErrorProtectionRequest_none,
         undefined,
     );
-}
-
-function addLocalityArgument (
-    baseObject: DistinguishedName,
-    lname: string,
-    targetSystem?: AccessPoint,
-): AddEntryArgument {
-    const ln = _encodeUTF8String(lname, DER);
-    const dn: DistinguishedName = [
-        ...baseObject,
-        [
-            new AttributeTypeAndValue(
-                selat.localityName["&id"]!,
-                ln,
-            ),
-        ],
-    ];
-    const attributes: Attribute[] = [
-        new Attribute(
-            selat.administrativeRole["&id"]!,
-            [
-                _encodeObjectIdentifier(id_ar_autonomousArea, DER),
-                _encodeObjectIdentifier(id_ar_collectiveAttributeSpecificArea, DER),
-                _encodeObjectIdentifier(id_ar_accessControlSpecificArea, DER),
-                _encodeObjectIdentifier(id_ar_pwdAdminSpecificArea, DER),
-                _encodeObjectIdentifier(id_ar_subschemaAdminSpecificArea, DER),
-            ],
-            undefined,
-        ),
-        new Attribute(
-            selat.objectClass["&id"],
-            [
-                _encodeObjectIdentifier(seloc.locality["&id"]!, DER),
-                _encodeObjectIdentifier(seloc.userPwdClass["&id"]!, DER),
-            ],
-            undefined,
-        ),
-        new Attribute(
-            selat.localityName["&id"]!,
-            [ln],
-            undefined,
-        ),
-        new Attribute(
-            selat.userPwd["&id"],
-            [
-                selat.userPwd.encoderFor["&Type"]!({
-                    clear: `password4${lname}`,
-                }, DER),
-            ],
-            undefined,
-        ),
-    ];
-    return {
-        unsigned: new AddEntryArgumentData(
-            {
-                rdnSequence: dn,
-            },
-            attributes,
-            targetSystem,
-            [],
-            serviceControls,
-            securityParameters(),
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-        ),
-    };
 }
 
 function createAddEntryArgument (
