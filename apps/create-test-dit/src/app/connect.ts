@@ -114,7 +114,7 @@ async function connect (
     idm.events.on("error_", (e) => {
         console.error(`Invocation ${e.invokeID} returned an error with code ${printCode(e.errcode)}`);
         console.error(`Error parameter: ${Buffer.from(e.error.toBytes()).toString("hex")}`);
-        process.exit(34);
+        // process.exit(34);
     });
     idm.events.on("reject", (r) => {
         console.error(`Invocation ${r.invokeID} rejected with reason: ${r.reason}`);

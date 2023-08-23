@@ -32,7 +32,7 @@ import {
     PwdResponseValue_error_passwordExpired,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue-error.ta";
 import { SimpleCredentials } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
-import { read_unique_id } from "../database/utils";
+import { read_unique_id, read_clearance } from "../database/utils";
 
 export
 interface LDAPBindReturn extends BindReturn {
@@ -101,6 +101,7 @@ async function bind (
     if (version !== 3) {
         return {
             authLevel: notAuthed(),
+            clearances: [],
             result: new BindResponse(
                 LDAPResult_resultCode_protocolError,
                 req.name,
@@ -118,6 +119,7 @@ async function bind (
     if (!entry) {
         return {
             authLevel: notAuthed(),
+            clearances: [],
             result: invalidCredentialsError(invalidCredentialsMessage, req.name),
         };
     }
@@ -136,16 +138,19 @@ async function bind (
         + ((tlsProtocol === "TLSv1.3") ? ctx.config.localQualifierPointsFor.usingTLSv1_3 : 0)
     );
     const unique_id = entry && await read_unique_id(ctx, entry);
+    const clearances = entry && await read_clearance(ctx, entry);
     const ret = {
         boundNameAndUID: new NameAndOptionalUID(
             decodeLDAPDN(ctx, req.name),
             unique_id, // We just use the first one, whatever that is.
         ),
         boundVertex: entry,
+        clearances,
     };
     const invalidCredentials: LDAPBindReturn = {
         ...ret,
         authLevel: notAuthed(localQualifierPoints),
+        clearances: [],
         result: invalidCredentialsError(invalidCredentialsMessage, req.name),
     };
     const logInfo = {
@@ -169,6 +174,7 @@ async function bind (
                             undefined,
                         ),
                     },
+                    clearances: [],
                     result: new BindResponse(
                         LDAPResult_resultCode_authMethodNotSupported,
                         req.name,
@@ -187,6 +193,7 @@ async function bind (
                         undefined,
                     ),
                 },
+                clearances: [],
                 result: simpleSuccess(successMessage, encodedDN),
             };
         }

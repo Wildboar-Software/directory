@@ -9,6 +9,8 @@ import { pen_wildboar } from '../Wildboar/pen-wildboar.va';
  * @summary id_wildboar
  * @description
  *
+ * The full, expanded value of this OID is `1.3.6.1.4.1.56490`.
+ *
  * ### ASN.1 Definition:
  *
  * ```asn1

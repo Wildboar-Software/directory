@@ -103,6 +103,10 @@ import type {
     PwdResponseValue,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue.ta";
 import { Timeout } from "safe-timers";
+import { Clearance } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/Clearance.ta";
+import {
+    SignedSecurityLabel,
+} from "@wildboar/x500/src/lib/modules/EnhancedSecurity/SignedSecurityLabel.ta";
 
 
 type EventReceiver<T> = (params: T) => void;
@@ -1494,6 +1498,74 @@ interface CrossReferencesOptions {
 }
 
 /**
+ * Configuration options pertaining to Rule-Based Access Control (RBAC).
+ *
+ * @interface
+ */
+export
+interface RBACOptions {
+
+    /**
+     * If TRUE, Meerkat DSA will associate clearances with a bound user based
+     * on the values of the `clearance` attribute it has for the bound entry
+     * in its local DSAIT.
+     */
+    getClearancesFromDSAIT: boolean;
+
+    /**
+     * If true, Meerkat DSA will associate clearances with a bound user based
+     * on the values of the `clearance` attribute that are present in the
+     * presented attribute certificates of the strong authentication argument,
+     * provided, of course, that the attribute certificates are valid.
+     *
+     * The attribute authorities to trust are listed in `clearanceAuthorities`.
+     *
+     * @see {@link clearanceAuthorities}
+     */
+    getClearancesFromAttributeCertificates: boolean;
+
+    /**
+     * If true, Meerkat DSA will associate clearances with a bound user based
+     * on the values of the `clearance` attribute that are present in the
+     * presented subjectDirectoryAttributes extension of the public key
+     * certificate of the strong authentication argument, provided, of course,
+     * that the public key certification path is valid.
+     *
+     * The attribute authorities to trust are listed in `clearanceAuthorities`.
+     *
+     * @see {@link clearanceAuthorities}
+     */
+    getClearancesFromPublicKeyCert: boolean;
+
+    /**
+     * The list of trust anchors whose signed attribute certificates will be
+     * seen as valid by Meerkat DSA, and whose clearances will be associated
+     * with bound users that supply such attribute certificates in their
+     * strong authentication parameters.
+     */
+    clearanceAuthorities: TrustAnchorList;
+
+    /**
+     * The list of trust anchors that are trusted for providing security labels
+     * via the `attributeValueSecurityLabelContext` context. When evaluating
+     * RBAC access control decisions, the signatures applied to the security
+     * labels will be verified to have originated from one of these trust
+     * anchors.
+     *
+     * Only the public key, issuer name, and subject key identifier are taken
+     * from these trust anchors. Expiration is never checked, nor sare any other
+     * extensions, such as key-usage-related extensions.
+     *
+     * If a given security label has a `keyIdentifier`, it will be matched with
+     * the Subject Key Identifier in a trust anchor within this list; if that
+     * security label has an `issuerName` field, it will be matched with the
+     * `subject` field of a trust anchor within this list.
+     */
+    labellingAuthorities: TrustAnchorList;
+
+}
+
+/**
  * @summary Meerkat DSA configuration
  * @description
  *
@@ -1569,6 +1641,8 @@ interface Configuration {
     xr: CrossReferencesOptions;
 
     authn: AuthenticationConfiguration;
+
+    rbac: RBACOptions;
 
     log: {
         /**
@@ -2928,6 +3002,30 @@ interface DSARelationships {
     byStringDN: Map<IndexableDN, DSARelationship>;
 }
 
+/**
+ * An Access Control Decision Function (ACDF) to determine authorization to a
+ * given attribute value, according to a specific Rule-Based Access Control
+ * (RBAC) policy.
+ */
+export type RBAC_ACDF = (
+    ctx: Context,
+    assn: ClientAssociation, // This has a clearance field.
+    target: Vertex,
+    label: SignedSecurityLabel,
+    value: ASN1Element,
+    contexts: X500Context[],
+    permissions: number[],
+) => boolean;
+
+/**
+ * Information about a labelling authority for the purposes of
+ * Rule-Based Access Control (RBAC).
+ */
+export interface LabellingAuthorityInfo {
+    authorized: boolean; // This exists so you can have negative caching.
+    issuerNames: Name[];
+    publicKey: KeyObject;
+}
 
 /**
  * @summary Type definition for the context object
@@ -3150,6 +3248,26 @@ interface Context {
      * shadow updates for the same operational binding.
      */
     updatingShadow: Set<number>;
+
+    /**
+     * A mapping of Rule-Based Access Control (RBAC) policy identifiers to their
+     * corresponding Access Control Decision Functions (ACDFs).
+     */
+    rbacPolicies: Map<IndexableOID, RBAC_ACDF>;
+
+    /**
+     * A mapping of the base64-encoded key identifier to labelling authority
+     * information. A returned `null` means that labelling authority could not
+     * be found.
+     */
+    labellingAuthorities: Map<string, LabellingAuthorityInfo | null>;
+
+    /**
+     * An index of the base64-encoded SHA256 hashes of
+     * `AttributeCertificate`s that were already asserted successfully for
+     * attribute certificates containing the `singleUse` extension.
+     */
+    alreadyAssertedAttributeCertificates: Set<string>;
 }
 
 /**
@@ -3318,6 +3436,8 @@ abstract class ClientAssociation implements WithIntegerProtocolVersion {
     public authorizedForSignedResults: boolean = false;
     public authorizedForSignedErrors: boolean = false;
 
+    public clearances: Clearance[] = [];
+
     /**
      * An index of the outstanding paged results requests by base64-encoded
      * `queryReference`.
@@ -3437,6 +3557,12 @@ interface BindReturn {
      * error.
      */
     pwdResponse?: PwdResponseValue;
+
+
+    /**
+     * The clearances associated with this user.
+     */
+    clearances: Clearance[];
 
 }
 

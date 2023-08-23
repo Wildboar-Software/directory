@@ -808,7 +808,7 @@ jobs:
             --set enable_dsp=true \
             --set administrator_email=jonathan@wilbur.space \
             --set administrator_email_public=true \
-            --set vendor_version='3.0.0' \
+            --set vendor_version='3.1.0' \
             --set signing_required_for_chaining=false \
             --set tcp_timeout_in_seconds=300 \
             --set min_transfer_speed_bytes_per_minute=10 \

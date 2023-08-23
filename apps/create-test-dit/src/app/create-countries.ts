@@ -701,6 +701,7 @@ function addSubschemaSubentryArgument (
                     at.stateOrProvinceName["&id"],
                     at.title["&id"],
                     at.description["&id"],
+                    at.serialNumber["&id"],
                     unstructuredName["&id"],
                     unstructuredAddress["&id"],
                 ].map((ctoid) => _encode_DITContextUseDescription(new DITContextUseDescription(
@@ -710,7 +711,11 @@ function addSubschemaSubentryArgument (
                     undefined,
                     new DITContextUseInformation(
                         undefined,
-                        allNonSecurityContextTypes,
+                        [
+                            ...allNonSecurityContextTypes,
+                            ct.attributeValueSecurityLabelContext["&id"],
+                            ct.attributeValueIntegrityInfoContext["&id"],
+                        ],
                     ),
                 ), DER))),
             ],
@@ -891,6 +896,7 @@ const countriesToCreate: [ string, AccessPoint | undefined ][] = [
     [ "US", undefined ], // US will be inside of the root DSA.
     [ "GB", undefined ],
     [ "RU", RU_ACCESS_POINT ],
+    [ "CA", undefined ],
 ];
 
 export

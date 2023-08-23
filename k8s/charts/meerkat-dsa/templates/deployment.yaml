@@ -173,6 +173,14 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: chaining_tls_optional
                   optional: true
+            {{- if .Values.clearance_authorities }}
+            - name: MEERKAT_CLEARANCE_AUTHORITIES
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: clearance_authorities
+                  optional: true
+            {{- end }}
             - name: MEERKAT_DEFAULT_ENTRY_TTL
               valueFrom:
                 configMapKeyRef:
@@ -220,6 +228,24 @@ spec:
                 configMapKeyRef:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: forbid_anonymous_bind
+                  optional: true
+            - name: MEERKAT_GET_CLEARANCES_FROM_ATTR_CERTS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: get_clearances_from_attr_certs
+                  optional: true
+            - name: MEERKAT_GET_CLEARANCES_FROM_DSAIT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: get_clearances_from_dsait
+                  optional: true
+            - name: MEERKAT_GET_CLEARANCES_FROM_PKC
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: get_clearances_from_pkc
                   optional: true
             - name: MEERKAT_HONOR_CIPHER_ORDER
               valueFrom:
@@ -293,6 +319,14 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: disable_itot_chaining
                   optional: true
+            {{- if .Values.labelling_authorities }}
+            - name: MEERKAT_LABELLING_AUTHORITIES
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: labelling_authorities
+                  optional: true
+            {{- end }}
             - name: MEERKAT_LCR_PARALLELISM
               valueFrom:
                 configMapKeyRef:

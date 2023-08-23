@@ -116,7 +116,6 @@ import {
     abandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 import getACIItems from "../authz/getACIItems";
-import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs";
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import updateSuperiorDSA from "../dop/updateSuperiorDSA";
@@ -207,6 +206,7 @@ import {
     SubordinateChanges,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SubordinateChanges.ta";
 import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh";
+import { acdf } from "../authz/acdf";
 
 const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
 const ID_AC_SPECIFIC: string = id_ar_accessControlSpecificArea.toString();
@@ -421,12 +421,13 @@ async function addEntry (
             isMemberOfGroup,
             NAMING_MATCHER,
         );
-    if (
-        !ctx.config.bulkInsertMode
-        && accessControlScheme
-        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-    ) {
-        const { authorized } = bacACDF(
+    if (!ctx.config.bulkInsertMode && accessControlScheme) {
+        const authorized = acdf(
+            ctx,
+            accessControlScheme,
+            assn,
+            immediateSuperior, // This basically doesn't matter, because addingEntry is true.
+            [PERMISSION_CATEGORY_ADD],
             relevantTuples,
             user,
             {
@@ -440,10 +441,8 @@ async function addEntry (
                     })
                     : undefined,
             },
-            [
-                PERMISSION_CATEGORY_ADD,
-            ],
             bacSettings,
+            true,
             true,
         );
         if (!authorized) {
@@ -487,11 +486,7 @@ async function addEntry (
         || immediateSuperior.dse.sa
         || immediateSuperior.dse.dsSubentry
     ) {
-        if (
-            !ctx.config.bulkInsertMode
-            && accessControlScheme
-            && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-        ) {
+        if (!ctx.config.bulkInsertMode && accessControlScheme) {
             const relevantACIItemsForSuperior = await getACIItems(
                 ctx,
                 accessControlScheme,
@@ -515,11 +510,15 @@ async function addEntry (
             const superiorObjectClasses = Array
                 .from(immediateSuperior.dse.objectClass)
                 .map(ObjectIdentifier.fromString);
-            const { authorized: authorizedToReadSuperior } = bacACDF(
+            const authorizedToReadSuperior = acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                immediateSuperior,
+                [ PERMISSION_CATEGORY_READ ],
                 relevantTuplesForSuperior,
                 user,
                 { entry: superiorObjectClasses },
-                [ PERMISSION_CATEGORY_READ ],
                 bacSettings,
                 true,
             );
@@ -551,32 +550,46 @@ async function addEntry (
                 );
             }
 
-            const { authorized: authorizedToReadSuperiorDSEType } = bacACDF(
+            const authorizedToReadSuperiorDSEType = acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                immediateSuperior,
+                [ PERMISSION_CATEGORY_READ ],
                 relevantTuplesForSuperior,
                 user,
                 {
                     attributeType: dseType["&id"],
                     operational: true,
                 },
-                [ PERMISSION_CATEGORY_READ ],
                 bacSettings,
                 true,
             );
+
             // TODO: We do not check that the user has permission to the DSEType value!
             // const superiorDSEType = await readValuesOfType(ctx, immediateSuperior, dseType["&id"])[0];
-            const { authorized: authorizedToReadSuperiorObjectClasses } = bacACDF(
+            const authorizedToReadSuperiorObjectClasses = acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                immediateSuperior,
+                [ PERMISSION_CATEGORY_READ ],
                 relevantTuplesForSuperior,
                 user,
                 {
                     attributeType: objectClass["&id"],
                     operational: false,
                 },
-                [ PERMISSION_CATEGORY_READ ],
                 bacSettings,
                 true,
             );
             const superiorObjectClassesAuthorized = superiorObjectClasses
-                .filter((oc) => bacACDF(
+                .filter((oc) => acdf(
+                    ctx,
+                    accessControlScheme,
+                    assn,
+                    immediateSuperior,
+                    [ PERMISSION_CATEGORY_READ ],
                     relevantTuplesForSuperior,
                     user,
                     {
@@ -586,10 +599,9 @@ async function addEntry (
                         ),
                         operational: false,
                     },
-                    [ PERMISSION_CATEGORY_READ ],
                     bacSettings,
                     true,
-                ).authorized);
+                ));
 
             if (
                 (immediateSuperior.dse.alias || immediateSuperior.dse.sa) // superior is some kind of alias, and...
@@ -760,7 +772,6 @@ async function addEntry (
                 ?? accessControlScheme;
             if ( // If access control does not apply to the existing entry,...
                 !effectiveAccessControlScheme
-                || !accessControlSchemesThatUseACIItems.has(effectiveAccessControlScheme.toString())
             ) { // We can inform the user that it does not exist; no need to do any more work.
                 throw new errors.UpdateError(
                     ctx.i18n.t("err:entry_already_exists", {
@@ -813,13 +824,17 @@ async function addEntry (
                 isMemberOfGroup,
                 NAMING_MATCHER,
             );
-            const { authorized: authorizedToKnowAboutExistingEntry } = bacACDF(
+            const authorizedToKnowAboutExistingEntry: boolean = acdf(
+                ctx,
+                effectiveAccessControlScheme,
+                assn,
+                existing,
+                [ PERMISSION_CATEGORY_DISCLOSE_ON_ERROR ],
                 relevantSubordinateTuples,
                 user,
                 {
                     entry: Array.from(existing.dse.objectClass).map(ObjectIdentifier.fromString),
                 },
-                [ PERMISSION_CATEGORY_DISCLOSE_ON_ERROR ],
                 bacSettings,
                 true,
             );
@@ -917,11 +932,7 @@ async function addEntry (
         );
     }
 
-    if (
-        !ctx.config.bulkInsertMode
-        && accessControlScheme
-        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-    ) {
+    if (!ctx.config.bulkInsertMode && accessControlScheme) {
         const maxValueCountInUse: boolean = relevantTuples
             .some((tuple) => (tuple[2].maxValueCount !== undefined));
         const valueCountByAttribute: Map<IndexableOID, number> = maxValueCountInUse
@@ -939,7 +950,12 @@ async function addEntry (
             )
             : new Map();
         for (const attr of data.entry) {
-            const { authorized: authorizedToAddAttributeType } = bacACDF(
+            const authorizedToAddAttributeType = acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                immediateSuperior,
+                [ PERMISSION_CATEGORY_ADD ],
                 relevantTuples,
                 user,
                 {
@@ -947,8 +963,8 @@ async function addEntry (
                     valuesCount: valueCountByAttribute.get(attr.type_.toString()),
                     operational: isOperationalAttributeType(ctx, attr.type_),
                 },
-                [ PERMISSION_CATEGORY_ADD ],
                 bacSettings,
+                true,
                 true,
             );
             if (!authorizedToAddAttributeType) {
@@ -977,7 +993,12 @@ async function addEntry (
             }
         }
         for (const value of values) {
-            const { authorized: authorizedToAddAttributeValue } = bacACDF(
+            const authorizedToAddAttributeValue = acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                immediateSuperior,
+                [ PERMISSION_CATEGORY_ADD ],
                 relevantTuples,
                 user,
                 {
@@ -992,8 +1013,8 @@ async function addEntry (
                     )),
                     operational: isOperationalAttributeType(ctx, value.type),
                 },
-                [PERMISSION_CATEGORY_ADD],
                 bacSettings,
+                true,
                 true,
             );
             if (!authorizedToAddAttributeValue) {

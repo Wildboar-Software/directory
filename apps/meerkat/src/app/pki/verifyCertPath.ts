@@ -29,7 +29,7 @@ import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compare
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import { DER } from "asn1-ts/dist/node/functional";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
-import { createVerify, createPublicKey } from "crypto";
+import { createVerify, createPublicKey, KeyObject } from "crypto";
 import {
     AlgorithmIdentifier, _encode_AlgorithmIdentifier,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta"
@@ -135,7 +135,7 @@ import { OperationDispatcher } from "../distributed/OperationDispatcher";
 import type { MeerkatContext } from "../ctx";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import {
-    CertificateList, _encode_CertificateList,
+    CertificateList, _encode_CertificateList, _encode_CertificateListContent,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificateList.ta";
 import {
     KeyUsage,
@@ -214,6 +214,7 @@ import {
     VOR_RETURN_UNKNOWN_INTOLERABLE,
 } from "./verifyOCSPResponse";
 import _ from "lodash";
+import { Name } from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
 
 // So that arguments can be modified by reference.
 type Box<T> = {
@@ -223,10 +224,10 @@ type Box<T> = {
 export type VCPReturnCode = number;
 export const VCP_RETURN_OK: VCPReturnCode = 0;
 export const VCP_RETURN_INVALID_SIG: VCPReturnCode = -1;
-export const VCP_RETURN_OCSP_REVOKED: VCPReturnCode = -2;
-export const VCP_RETURN_OCSP_OTHER: VCPReturnCode = -3; // Unreachable, Unauthorized, etc.
-export const VCP_RETURN_CRL_REVOKED: VCPReturnCode = -4;
-export const VCP_RETURN_CRL_UNREACHABLE: VCPReturnCode = -5;
+// export const VCP_RETURN_OCSP_REVOKED: VCPReturnCode = -2;
+// export const VCP_RETURN_OCSP_OTHER: VCPReturnCode = -3; // Unreachable, Unauthorized, etc.
+// export const VCP_RETURN_CRL_REVOKED: VCPReturnCode = -4;
+// export const VCP_RETURN_CRL_UNREACHABLE: VCPReturnCode = -5;
 export const VCP_RETURN_MALFORMED: VCPReturnCode = -6;
 export const VCP_RETURN_BAD_KEY_USAGE: VCPReturnCode = -7;
 export const VCP_RETURN_BAD_EXT_KEY_USAGE: VCPReturnCode = -8;
@@ -247,6 +248,18 @@ export const VCP_RETURN_POLICY_NOT_ACCEPTABLE: VCPReturnCode = -22;
 export const VCP_RETURN_NO_AUTHORIZED_POLICIES: VCPReturnCode = -23;
 export const VCP_RETURN_NO_BASIC_CONSTRAINTS_CA: VCPReturnCode = -24;
 
+// The -100s are shared between verifyCertPath and verifyAttrCert.
+export const VCP_RETURN_OCSP_REVOKED: VCPReturnCode = -102;
+export const VCP_RETURN_OCSP_OTHER: VCPReturnCode = -103; // Unreachable, Unauthorized, etc.
+export const VCP_RETURN_CRL_REVOKED: VCPReturnCode = -104;
+export const VCP_RETURN_CRL_UNREACHABLE: VCPReturnCode = -105;
+
+/**
+ * This set contains the extensions that Meerkat DSA observes when processing
+ * the certification path. Essentially, if an extension is encountered with its
+ * `critical` field set to `TRUE` and it is not in this set, Meerkat DSA does
+ * not know how to handle that critical extension and MUST fail the validation.
+ */
 export
 const supportedExtensions: Set<IndexableOID> = new Set([
     subjectDirectoryAttributes["&id"]!.toString(), // TODO: If critical, at least one attr must be understood.
@@ -273,6 +286,10 @@ const supportedExtensions: Set<IndexableOID> = new Set([
     subjectInfoAccess["&id"]!.toString(), // Always non-critical
 ]);
 
+/**
+ * Where extensions are defined to have a specification-mandated criticality,
+ * this map indicates what the criticality value should be for each extension.
+ */
 export
 const extensionMandatoryCriticality: Map<IndexableOID, BOOLEAN> = new Map([
     [ subjectKeyIdentifier["&id"]!.toString(), false ], // Always non-critical.
@@ -285,6 +302,13 @@ const extensionMandatoryCriticality: Map<IndexableOID, BOOLEAN> = new Map([
 
 const ietfUserNoticeOID: OBJECT_IDENTIFIER = new ObjectIdentifier([ 1, 3, 6, 1, 5, 5, 7, 2, 2 ]);
 
+/**
+ * @summary Convert `DisplayText` to a `string`
+ * @param dt Converts `DisplayText` to a `string`.
+ * @returns The string representation of the `DisplayText`
+ *
+ * @function
+ */
 function displayTextToString (dt: ASN1Element): string | null {
     if (dt.tagClass !== ASN1TagClass.universal) {
         return null;
@@ -306,6 +330,13 @@ function displayTextToString (dt: ASN1Element): string | null {
     }
 }
 
+/**
+ * Meant to mirror the policy tree-related types from OpenSSL's
+ * `crypto/x509/pcy_local.h` and using the algorithm described in IETF RFC 5280,
+ * since the description of the algorithm for evaluating certification policy
+ * compliance in ITU-T Recommendation X.509 (2019), section 12, is absolutely
+ * obtuse.
+ */
 interface ValidPolicyData {
     // flags
     valid_policy: OBJECT_IDENTIFIER;
@@ -313,12 +344,30 @@ interface ValidPolicyData {
     expected_policy_set: Set<IndexableOID>;
 }
 
+/**
+ * Meant to mirror the policy tree-related types from OpenSSL's
+ * `crypto/x509/pcy_local.h` and using the algorithm described in IETF RFC 5280,
+ * since the description of the algorithm for evaluating certification policy
+ * compliance in ITU-T Recommendation X.509 (2019), section 12, is absolutely
+ * obtuse.
+ */
 interface ValidPolicyNode extends ValidPolicyData {
     // data handled by the above "extends"
     parent?: ValidPolicyNode;
+
+    /**
+     * The number of direct child nodes.
+     */
     nchild: number;
 }
 
+/**
+ * Meant to mirror the policy tree-related types from OpenSSL's
+ * `crypto/x509/pcy_local.h` and using the algorithm described in IETF RFC 5280,
+ * since the description of the algorithm for evaluating certification policy
+ * compliance in ITU-T Recommendation X.509 (2019), section 12, is absolutely
+ * obtuse.
+ */
 interface ValidPolicyLevel {
     cert: Certificate;
     nodes: ValidPolicyNode[];
@@ -326,7 +375,13 @@ interface ValidPolicyLevel {
     // flags?
 }
 
-// Meant to mirror the policy tree-related types from OpenSSL's crypto/x509/pcy_local.h.
+/**
+ * Meant to mirror the policy tree-related types from OpenSSL's
+ * `crypto/x509/pcy_local.h` and using the algorithm described in IETF RFC 5280,
+ * since the description of the algorithm for evaluating certification policy
+ * compliance in ITU-T Recommendation X.509 (2019), section 12, is absolutely
+ * obtuse.
+ */
 interface ValidPolicyTree {
     levels: ValidPolicyLevel[];
     anyPolicy: boolean;
@@ -465,6 +520,19 @@ interface VerifyCertPathArgs {
     readonly initial_required_name_forms: NAME_FORM["&id"][];
 }
 
+/**
+ * @summary Get a function that performs a `read` operation
+ * @description
+ *
+ * This is a higher-order function that returns an async function that takes
+ * a `ReadArgument`, performs the X.500 `read` operation using it, and returns
+ * the `ReadResult`.
+ *
+ * @param ctx The context object
+ * @returns An async function that performs a `read` operation
+ *
+ * @function
+ */
 export
 function getReadDispatcher (ctx: MeerkatContext): ReadDispatcherFunction {
     return async (
@@ -476,6 +544,19 @@ function getReadDispatcher (ctx: MeerkatContext): ReadDispatcherFunction {
     };
 }
 
+/**
+ * @summary Create a `VerifyCertPathResult` failure result
+ * @description
+ *
+ * This function creates a `VerifyCertPathResult` failure result from just a
+ * return code. It exists just to fill in all the other fields of the result
+ * with null-ish values.
+ *
+ * @param returnCode The return code to instantiate the `returnCode` field
+ * @returns A `VerifyCertPathResult`
+ *
+ * @function
+ */
 export
 function verifyCertPathFail (returnCode: number): VerifyCertPathResult {
     return {
@@ -562,6 +643,12 @@ interface VerifyCertPathResult {
     readonly userNotices: string[];
 }
 
+/**
+ * Values of the variable defined in ITU-T Recommendation X.509 (2019), Section
+ * 12.3.i.
+ *
+ * @interface
+ */
 export
 interface PendingConstraint {
     pending: boolean;
@@ -627,20 +714,55 @@ interface VerifyCertPathState {
      */
     valid_policy_tree: ValidPolicyTree | null;
 
+    /**
+     * The permitted subtrees granted by name constraints in the
+     * `nameConstraints` extension.
+     */
     permitted_subtrees: GeneralSubtrees;
 
+    /**
+     * The excluded subtress forbidden by name constraints in the
+     * `nameConstraints` extension.
+     */
     excluded_subtrees: GeneralSubtrees;
 
+    /**
+     * The required name forms.
+     */
     required_name_forms: NAME_FORM["&id"][];
 
+    /**
+     * Indicates whether an acceptable policy needs to be explicitly identified
+     * in every public-key certificate in the path.
+     */
     explicit_policy_indicator: boolean;
 
+    /**
+     * An integer equal to one more than the number of public-key certificates
+     * in the certification path for which processing has been completed.
+     */
     path_depth: number;
 
+    /**
+     * Indicates whether policy mapping is inhibited.
+     */
     policy_mapping_inhibit_indicator: boolean;
 
+    /**
+     * Indicates whether the special value anyPolicy is considered a match for
+     * any specific certificate policy.
+     */
     inhibit_any_policy_indicator: boolean;
 
+    /**
+     * Details of explicit-policy inhibit-policy-mapping and/or
+     * inhibit-any-policy constraints which have been stipulated but have yet to
+     * take effect. There are three one-bit indicators called
+     * explicit-policy-pending, policy-mapping-inhibit-pending and
+     * inhibit-any-policy-pending together with, for each, an integer called
+     * skip-certificates which gives the number of public-key certificates yet
+     * to skip before the constraint takes effect.
+     */
     pending_constraints: {
 
         explicit_policy: PendingConstraint;
@@ -651,16 +773,36 @@ interface VerifyCertPathState {
 
     };
 
+    /**
+     * What key usages are granted to the end-entity, given by the
+     * `keyUsage` extension.
+     */
     endEntityKeyUsage?: KeyUsage;
 
+    /**
+     * What extended key usages are granted to the end-entity, given by the
+     * `extKeyUsage` extension.
+     */
     endEntityExtKeyUsage?: KeyPurposeId[];
 
+    /**
+     * The notBefore time of the end entity's private key, given by the
+     * `privateKeyUsagePeriod` extension.
+     */
     endEntityPrivateKeyNotBefore?: GeneralizedTime;
 
+    /**
+     * The notAfter time of the end entity's private key, given by the
+     * `privateKeyUsagePeriod` extension.
+     */
     endEntityPrivateKeyNotAfter?: GeneralizedTime;
 
 }
 
+/**
+ * A mapping of the signature algorithm object identifiers to their NodeJS
+ * digest algorithm string identifiers.
+ */
 const sigAlgOidToNodeJSDigest: Map<string, string | null> = new Map([
     [ sha1WithRSAEncryption.toString(), "sha1" ],
     [ sha224WithRSAEncryption.toString(), "sha224" ],
@@ -679,14 +821,36 @@ const sigAlgOidToNodeJSDigest: Map<string, string | null> = new Map([
     [ id_Ed25519.toString(), null ],
 ]);
 
+/**
+ * @summary Check the OCSP status of a certificate
+ * @description
+ *
+ * This function sends requests to OCSP responders in the authorityInfoAccess
+ * extension to determine if a certificate is still valid. It's signature may
+ * seem weird, but it is purposefully designed to be general enough to be used
+ * for checking OCSP for public key certificates and attribute certificates.
+ *
+ * @param ctx The context object
+ * @param ext The authorityInfoAccess extension in the subject certificate
+ * @param issuer The issuer's Name and SubjectPublicKeyInfo
+ * @param serialNumber The subject's serial number
+ * @param options OCSP-related options
+ * @returns A promise resolving to an return code.
+ *
+ * @async
+ * @function
+ */
 export
 async function checkOCSP (
     ctx: MeerkatContext,
     ext: Extension,
-    cert: Certificate,
+    issuer: [ Name, SubjectPublicKeyInfo ],
+    serialNumber: Uint8Array,
     options: OCSPOptions,
 ): Promise<number> {
-    assert(ext.extnId.isEqualTo(authorityInfoAccess["&id"]!));
+    if (!ext.extnId.isEqualTo(authorityInfoAccess["&id"]!)) {
+        return VCP_RETURN_OCSP_OTHER;
+    }
     const aiaEl = new DERElement();
     aiaEl.fromBytes(ext.extnValue);
     const aiaValue = authorityInfoAccess.decoderFor["&ExtnType"]!(aiaEl);
@@ -723,7 +887,11 @@ async function checkOCSP (
         requestBudget--;
         const ocspResponse = await getOCSPResponse(
             url,
-            cert,
+            [
+                issuer[0].rdnSequence,
+                issuer[1],
+                serialNumber,
+            ],
             undefined,
             (options.ocspTimeout * 1000),
             signFunction,
@@ -751,12 +919,30 @@ async function checkOCSP (
     return VCP_RETURN_OK;
 }
 
+/**
+ * @summary Check a certificate's revocation status among remote CRLs.
+ * @description
+ *
+ * This function issues HTTP, FTP, LDAP, and DAP requests, etc. to obtain remote
+ * CRLs to check if a certificate is revoked in said CRLs.
+ *
+ * @param ctx The context object
+ * @param ext The cRLDistributionPoints extension
+ * @param serialNumber The serial number of the certificate to be checked
+ * @param issuer The issuer's Name and SubjectPublicKeyInfo
+ * @param readDispatcher A function that dispatches a local `read` request
+ * @param options CRL options
+ * @returns A promise that resolves to a return code.
+ *
+ * @async
+ * @function
+ */
 export
 async function checkRemoteCRLs (
     ctx: MeerkatContext,
     ext: Extension,
-    subjectCert: Certificate,
-    issuerCert: Certificate,
+    serialNumber: Uint8Array,
+    issuer: [ Name, SubjectPublicKeyInfo ],
     readDispatcher: ReadDispatcherFunction,
     options: RemoteCRLOptions,
 ): Promise<number> {
@@ -770,14 +956,13 @@ async function checkRemoteCRLs (
             .map((dp) => crlCurl(
                 ctx,
                 dp,
-                issuerCert.toBeSigned.subject,
+                issuer[0],
                 readDispatcher,
                 options,
             ))
     ))
         .filter((result): result is CertificateList[] => !!result)
         .flat();
-    const serialNumber = subjectCert.toBeSigned.serialNumber;
     for (const crl of crls) {
         for (const rc of crl.toBeSigned.revokedCertificates ?? []) {
             if (Buffer.compare(rc.serialNumber, serialNumber)) {
@@ -787,14 +972,20 @@ async function checkRemoteCRLs (
                 return VCP_RETURN_CRL_REVOKED;
             }
             const bytes = crl.originalDER
-                ?? _encode_CertificateList(crl, DER).toBytes();
+                ? (() => {
+                    const el = new DERElement();
+                    el.fromBytes(crl.originalDER);
+                    const tbs = el.sequence[0];
+                    return tbs.toBytes();
+                })()
+                : _encode_CertificateListContent(crl.toBeSigned, DER).toBytes();
             const sigValue = packBits(crl.signature);
             const signatureIsValid: boolean | undefined = verifySignature(
                 bytes,
                 crl.algorithmIdentifier,
                 sigValue,
                 // Remember: the CRL needs to be validated against the ISSUER's public key.
-                issuerCert.toBeSigned.subjectPublicKeyInfo,
+                issuer[1],
             );
             if (!signatureIsValid) {
                 // If sig invalid, skip to next CRL entirely.
@@ -808,6 +999,20 @@ async function checkRemoteCRLs (
 
 // We check validity time first just because we do not want to verify the
 // digital signature (it is computationally expensive) if we do not have to.
+/**
+ * @summary Check whether a point in time falls between a certificate's validity times.
+ * @description
+ *
+ * This function checks whether an asserted point in time--the `asOf` time--falls
+ * between a certificate's validity `notBefore` and `notAfter` times.
+ *
+ * @param cert The certificate whose validity time is to be checked.
+ * @param asOf The point in time against which the validity time is to be checked.
+ * @returns A `boolean` indicating whether the `asOf` time falls within the
+ *  certificate's validity times.
+ *
+ * @function
+ */
 export
 function certIsValidTime (cert: Certificate, asOf: Date): boolean {
     const notBefore = getDateFromTime(cert.toBeSigned.validity.notBefore);
@@ -821,28 +1026,49 @@ function certIsValidTime (cert: Certificate, asOf: Date): boolean {
     return true;
 }
 
+/**
+ * @summary Verify a generic digital signature over raw bytes
+ * @description
+ *
+ * This function verifies a digital signature over raw bytes of data.
+ *
+ * @param bytes The raw bytes that are to be verified
+ * @param alg The algorithm identifier of the signature
+ * @param sigValue The signature value
+ * @param keyOrSPKI The key object or SubjectPublicKeyInfo
+ * @returns A `boolean` indicating whether the signature is valid or not, or
+ *  `undefined` if it cannot be determined (e.g. unrecognized algorithm).
+ *
+ * @function
+ */
 export
 function verifySignature (
     bytes: Uint8Array,
     alg: AlgorithmIdentifier,
     sigValue: Uint8Array,
-    issuerSPKI: SubjectPublicKeyInfo | SubjectAltPublicKeyInfo,
+    keyOrSPKI: SubjectPublicKeyInfo | SubjectAltPublicKeyInfo | KeyObject,
 ): boolean | undefined {
-    const spkiBytes: Uint8Array = ((issuerSPKI instanceof SubjectPublicKeyInfo)
-        ? _encode_SubjectPublicKeyInfo(issuerSPKI, DER)
-        : _encode_SubjectAltPublicKeyInfo(issuerSPKI, DER)).toBytes();
-    const issuerPublicKey = createPublicKey({
-        key: Buffer.from(spkiBytes.buffer),
-        format: "der",
-        type: "spki",
-    });
+    const pubKey: KeyObject = keyOrSPKI instanceof KeyObject
+        ? keyOrSPKI
+        : (() => {
+            const spkiBytes: Uint8Array = ((keyOrSPKI instanceof SubjectPublicKeyInfo)
+                ? _encode_SubjectPublicKeyInfo(keyOrSPKI, DER)
+                : _encode_SubjectAltPublicKeyInfo(keyOrSPKI, DER)).toBytes();
+            const issuerPublicKey = createPublicKey({
+                key: Buffer.from(spkiBytes.buffer),
+                format: "der",
+                type: "spki",
+            });
+            return issuerPublicKey;
+        })();
+
     const nodejsDigestName = sigAlgOidToNodeJSDigest.get(alg.algorithm.toString());
     if (!nodejsDigestName) {
         return undefined; // Unknown algorithm.
     }
     const verifier = createVerify(nodejsDigestName);
     verifier.update(bytes);
-    const signatureIsValid = verifier.verify(issuerPublicKey, sigValue);
+    const signatureIsValid = verifier.verify(pubKey, sigValue);
     return signatureIsValid;
 }
 
@@ -924,9 +1150,16 @@ function verifyAltSignature (subjectCert: Certificate, issuerCert: Certificate):
 }
 
 /**
+ * @summary Verify the signature on a subject's certificate, given an issuer certificate
+ * @description
  *
- * @param subjectCert
- * @param issuerCert
+ * This signature verifies that the asserted subject's certificate was signed
+ * by the issuer identified in the issuer certificate.
+ *
+ * @param subjectCert The subject certificate
+ * @param issuerCert The issuer certificate
+ *
+ * @function
  */
 export
 function verifyNativeSignature (subjectCert: Certificate, issuerCert: Certificate): boolean | undefined {
@@ -961,6 +1194,21 @@ function verifyNativeSignature (subjectCert: Certificate, issuerCert: Certificat
     );
 }
 
+/**
+ * @summary Check if a certificate is revoked in locally-configured CRLs.
+ * @description
+ *
+ * This function checks if a certificate has been revoked (by having its
+ * serial number present) in one of the locally-configured CRLs.
+ *
+ * @param ctx The context object
+ * @param cert The certificate
+ * @param asOf The point-in-time to check revocation
+ * @param options Options pertaining to CRL checking
+ * @returns A `boolean` indicating whether the certificate is revoked in any CRL.
+ *
+ * @function
+ */
 export
 function isRevokedFromConfiguredCRLs (
     ctx: Context,
@@ -991,7 +1239,22 @@ function isRevokedFromConfiguredCRLs (
         ));
 }
 
-// Section 12.5.1
+/**
+ * @summary Verify a public key certificate per ITU-T Rec. X.509, Section 12.5.1
+ * @description
+ *
+ * This function is an implementation of the public key certificate verification
+ * procedures described in ITU-T Recommendation X.509 (2019), Section 12.5.1.
+ *
+ * @param ctx The context object
+ * @param state The certification path processing state
+ * @param subjectCert The subject certificate
+ * @param issuerCert The issuer certificate
+ * @param subjectIndex ?
+ * @param readDispatcher An async function that dispatches a local `read` request
+ * @param options Options pertaining to signing
+ * @returns A promise that resolves to a return code
+ */
 export
 async function verifyBasicPublicKeyCertificateChecks (
     ctx: MeerkatContext,
@@ -1316,7 +1579,16 @@ async function verifyBasicPublicKeyCertificateChecks (
     if (aiaExt && !state.validityTime) { // We can't
         const ocspCheckiness = options.ocspCheckiness;
         if (ocspCheckiness >= 0) {
-            const ocspResult = await checkOCSP(ctx, aiaExt, subjectCert, ctx.config.tls);
+            const ocspResult = await checkOCSP(
+                ctx,
+                aiaExt,
+                [
+                    issuerCert.toBeSigned.subject,
+                    issuerCert.toBeSigned.subjectPublicKeyInfo,
+                ],
+                subjectCert.toBeSigned.serialNumber,
+                ctx.config.tls,
+            );
             if (ocspResult) {
                 return ocspResult;
             }
@@ -1329,8 +1601,8 @@ async function verifyBasicPublicKeyCertificateChecks (
         const crlResult = await checkRemoteCRLs(
             ctx,
             crldpExt,
-            subjectCert,
-            issuerCert,
+            subjectCert.toBeSigned.serialNumber,
+            [issuerCert.toBeSigned.subject, issuerCert.toBeSigned.subjectPublicKeyInfo],
             readDispatcher,
             options,
         );
@@ -1400,7 +1672,20 @@ async function verifyBasicPublicKeyCertificateChecks (
     return VCP_RETURN_OK;
 }
 
-// Section 12.5.2
+/**
+ * @summary Verify a public key certificate per ITU-T Rec. X.509, Section 12.5.2
+ * @description
+ *
+ * This function is an implementation of the public key certificate verification
+ * procedures described in ITU-T Recommendation X.509 (2019), Section 12.5.2.
+ *
+ * @param ctx The context object
+ * @param state The certification path processing state
+ * @param subjectCert The subject certificate
+ * @returns A new certification path processing state
+ *
+ * @function
+ */
 export
 function processIntermediateCertificates (
     ctx: Context,
@@ -1601,7 +1886,21 @@ function processIntermediateCertificates (
     };
 }
 
-// Section 12.5.3
+/**
+ * @summary Verify a public key certificate per ITU-T Rec. X.509, Section 12.5.3
+ * @description
+ *
+ * This function is an implementation of the public key certificate verification
+ * procedures described in ITU-T Recommendation X.509 (2019), Section 12.5.3.
+ *
+ * @param ctx The context object
+ * @param state The certification path processing state
+ * @param subjectCert The subject certificate
+ * @param subjectIndex ?
+ * @returns A new certification path processing state
+ *
+ * @function
+ */
 export
 function processExplicitPolicyIndicator (
     ctx: Context,
@@ -1666,6 +1965,24 @@ function processExplicitPolicyIndicator (
     return state;
 }
 
+/**
+ * @summary Verify an end-entity certificate
+ * @description
+ *
+ * This function verifies an end-entity public key certificate in a
+ * certification path.
+ *
+ * @param ctx The context object
+ * @param state The certification path processing state
+ * @param subjectCert The subject certificate
+ * @param issuerCert The issuer certificate
+ * @param readDispatcher An async function that dispatches a local `read` request
+ * @param options Options pertaining to signing
+ * @returns A promise resolving to a new certification path processing state
+ *
+ * @async
+ * @function
+ */
 export
 async function verifyEndEntityCertificate (
     ctx: MeerkatContext,
@@ -1693,6 +2010,25 @@ async function verifyEndEntityCertificate (
     return state;
 }
 
+/**
+ * @summary Verify an intermediate certificate
+ * @description
+ *
+ * This function verifies an intermediate public key certificate in a
+ * certification path.
+ *
+ * @param ctx The context object
+ * @param state The certification path processing state
+ * @param subjectCert The subject certificate
+ * @param issuerCert The issuer certificate
+ * @param subjectIndex ?
+ * @param readDispatcher An async function that dispatches a local `read` request
+ * @param options Options pertaining to signing
+ * @returns A promise resolving to a new certification path processing state
+ *
+ * @async
+ * @function
+ */
 export
 async function verifyIntermediateCertificate (
     ctx: MeerkatContext,
@@ -1728,9 +2064,12 @@ async function verifyIntermediateCertificate (
  * Interestingly, X.509 does not say to do any validation of trust anchors...
  * We are still going to do a little anyway.
  *
- * @param ctx
- * @param cert
- * @returns
+ * @param ctx The context object
+ * @param cert The certificate that may or may not be a trust anchor
+ * @returns A promise resolving to a return code
+ *
+ * @async
+ * @function
  */
 export
 async function verifyCACertificate (
@@ -1843,7 +2182,17 @@ async function verifyCACertificate (
 
     const aiaExt = extsGroupedByOID[authorityInfoAccess["&id"]!.toString()]?.[0];
     if (aiaExt) {
-        const ocspResult = await checkOCSP(ctx, aiaExt, cert, ctx.config.signing);
+        // It would be weird for a Root CA to revoke itself, but we'll check anyway.
+        const ocspResult = await checkOCSP(
+            ctx,
+            aiaExt,
+            [
+                cert.toBeSigned.subject,
+                cert.toBeSigned.subjectPublicKeyInfo,
+            ],
+            cert.toBeSigned.serialNumber,
+            ctx.config.signing,
+        );
         if (ocspResult) {
             return ocspResult;
         }
@@ -1855,8 +2204,8 @@ async function verifyCACertificate (
         const crlResult = await checkRemoteCRLs(
             ctx,
             crldpExt,
-            cert,
-            cert,
+            cert.toBeSigned.serialNumber,
+            [cert.toBeSigned.subject, cert.toBeSigned.subjectPublicKeyInfo],
             readDispatcher,
             options,
         );
@@ -1870,6 +2219,23 @@ async function verifyCACertificate (
 }
 
 // From OpenSSL in `crypto/x509/pcy_tree.c`.
+/**
+ * @summary Calculate the set of valid user certificate policies.
+ * @description
+ *
+ * I basically just paraphrased this function from OpenSSL's
+ * `crypto/x509/pcy_tree.c`, which is an implementation of the algorithm in
+ * IETF RFC 5280, since the description of the algorithm for evaluating
+ * certification policy compliance in ITU-T Recommendation X.509 (2019), section
+ * 12, is absolutely obtuse.
+ *
+ * @param tree The valid policy tree
+ * @param policy_oids The initial-policy-set
+ * @param auth_nodes The valid policy nodes
+ * @returns A set of new valid policy nodes
+ *
+ * @function
+ */
 export
 function tree_calculate_user_set (
     tree: ValidPolicyTree,
@@ -1942,7 +2308,21 @@ function tree_calculate_user_set (
     return userPolicies;
 }
 
-// From OpenSSL in `crypto/x509/pcy_tree.c`.
+/**
+ * @summary Calculate the authority set of certificate policies
+ * @description
+ *
+ * I basically just paraphrased this function from OpenSSL's
+ * `crypto/x509/pcy_tree.c`, which is an implementation of the algorithm in
+ * IETF RFC 5280, since the description of the algorithm for evaluating
+ * certification policy compliance in ITU-T Recommendation X.509 (2019), section
+ * 12, is absolutely obtuse.
+ *
+ * @param tree The valid policy tree
+ * @param pnodes The valid policy nodes
+ *
+ * @function
+ */
 export
 function tree_calculate_authority_set (
     tree: ValidPolicyTree,
@@ -2073,7 +2453,9 @@ function tree_calculate_authority_set (
     pnodes.ref = tree.auth_policies;
 }
 
-// From OpenSSL in `crypto/x509/pcy_lib.c`.
+/**
+ * From OpenSSL in `crypto/x509/pcy_lib.c`.
+ */
 export
 function X509_policy_tree_get0_user_policies (
     tree: ValidPolicyTree | null | undefined,
@@ -2089,7 +2471,19 @@ function X509_policy_tree_get0_user_policies (
     }
 }
 
-// ITU Recommendation X.509, Section 12.5.4.
+/**
+ * @summary Verify a public key certificate per ITU-T Rec. X.509, Section 12.5.4
+ * @description
+ *
+ * This function is an implementation of the public key certificate verification
+ * procedures described in ITU-T Recommendation X.509 (2019), Section 12.5.4.
+ *
+ * @param args The original arguments object to `verifyCertPath`
+ * @param state The certification path processing state
+ * @returns A `verifyCertPath` result.
+ *
+ * @function
+ */
 export
 function finalProcessing (
     args: VerifyCertPathArgs,

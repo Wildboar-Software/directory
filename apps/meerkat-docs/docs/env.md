@@ -256,6 +256,29 @@ re-enable bulk insert mode.
 This is an open-ended string that specifies the client certificate engine that
 OpenSSL can use to obtain a client certificate.
 
+## MEERKAT_CLEARANCE_AUTHORITIES
+
+The filepath of a Trust Anchor List file. See
+[IETF RFC 5914](https://datatracker.ietf.org/doc/html/rfc5914). This file
+contains the trust anchors whose signed attribute certificates will be seen as
+valid by Meerkat DSA, and whose clearances (values of the `clearance` attribute)
+will be associated with bound users that supply such attribute certificates in
+their strong authentication parameters.
+
+The trust anchor list shall be encapsulated in a Cryptographic Message Syntax
+(CMS) message. It does not need to be the top-level object, however. It can be
+nested within authenticated data, signed data, or digested data objects, as
+defined in [IETF RFC 5652](https://datatracker.ietf.org/doc/html/rfc5652).
+
+This file may also be PEM-encoded. The PEM label must be `TRUST ANCHOR LIST`,
+such that the file looks like this when opened in a text editor:
+
+```
+-----BEGIN TRUST ANCHOR LIST-----
+<Some base64-encoded data>
+-----END TRUST ANCHOR LIST-----
+```
+
 ## MEERKAT_CHAINING_CHECK_SIG
 
 If not set to `0`, Meerkat DSA will verify the digital signatures on received
@@ -327,6 +350,51 @@ this can generally be set to a fairly low number for optimal results.
 ## MEERKAT_FORBID_ANONYMOUS_BIND
 
 If set to `1`, anonymous binds are declined entirely.
+
+## MEERKAT_GET_CLEARANCES_FROM_ATTR_CERTS
+
+If not set to `0`, Meerkat DSA will associate clearances with a bound user based
+on the values of the `clearance` attribute that are present in the presented
+attribute certificates of the strong authentication argument, provided, of
+course, that the attribute certificates are valid.
+
+:::note
+
+Meerkat DSA only supports directly-issued attribute certificates: it cannot
+currently validate indirectly issued attribute certificates / delegation paths.
+If a user supplies an attribute certification path that has an `acPath`
+parameter, Meerkat DSA will not attempt to validate the attribute certification
+path. Authentication may still succeed, but any clearances granted to the user
+via that path will not be applied.
+
+This feature will be supported in some future release.
+
+:::
+
+## MEERKAT_GET_CLEARANCES_FROM_DSAIT
+
+If not set to `0`, Meerkat DSA will associate clearances with a bound user based
+on the values of the `clearance` attribute it has for the bound entry
+in its local DSAIT.
+
+:::danger
+
+Unfortunately, `clearance` is technically defined as a user attribute, even
+though the directory uses it for making access control decisions. This means
+that, if you define an access control rule that, for instance, allows a user
+to edit `allUserAttributes`, they will be able to modify the `clearance`
+attribute. As such, it is important to have access control rules that explicitly
+forbid editing `clearance` attribute values.
+
+:::
+
+## MEERKAT_GET_CLEARANCES_FROM_PKC
+
+If not set to `0`, Meerkat DSA will associate clearances with a bound user based
+on the values of the `clearance` attribute that are present in the presented
+`subjectDirectoryAttributes` extension of the public key certificate of the
+strong authentication argument, provided, of course, that the public key
+certification path is valid.
 
 ## MEERKAT_HONOR_CIPHER_ORDER
 
@@ -514,6 +582,32 @@ this disabled unless you have a specific known need to support ITOT clients. IDM
 transport should always be preferred, and IDMS even moreso.
 
 :::
+
+## MEERKAT_LABELLING_AUTHORITIES
+
+The filepath of the Trust Anchor List file. See
+[IETF RFC 5914](https://datatracker.ietf.org/doc/html/rfc5914). This file
+contains information on the trust anchors to be used for verifying the security
+labels on attribute values that are applied using the
+`attributeValueSecurityLabelContext` context. This is used for implementing
+Rule-Based Access Control (RBAC). In other words, when the signatures on
+security labels on attribute values are checked, these trust anchors provide the
+public keys against which these security labels are verified and the names of
+the issuers.
+
+The trust anchor list shall be encapsulated in a Cryptographic Message Syntax
+(CMS) message. It does not need to be the top-level object, however. It can be
+nested within authenticated data, signed data, or digested data objects, as
+defined in [IETF RFC 5652](https://datatracker.ietf.org/doc/html/rfc5652).
+
+This file may also be PEM-encoded. The PEM label must be `TRUST ANCHOR LIST`,
+such that the file looks like this when opened in a text editor:
+
+```
+-----BEGIN TRUST ANCHOR LIST-----
+<Some base64-encoded data>
+-----END TRUST ANCHOR LIST-----
+```
 
 ## MEERKAT_LCR_PARALLELISM
 

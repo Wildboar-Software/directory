@@ -25,3 +25,9 @@ openssl x509 -in ./dsa3.crt > dsa3.chain.crt
 cat god.crt >> dsa1.chain.crt
 cat god.crt >> dsa2.chain.crt
 cat god.crt >> dsa3.chain.crt
+
+# This is for testing Rule-Based Access Control with a set of attribute certificates I created separately.
+openssl req -new -newkey rsa:1024 -nodes -keyout jt.key.pem -out reqjt.pem -subj "/C=CA/CN=Justin Trudeau"
+openssl ca -batch -config openssl.cnf -md sha256 -out jt.crt -infiles reqjt.pem
+openssl x509 -in ./jt.crt > jt.chain.crt
+cat god.crt >> jt.chain.crt

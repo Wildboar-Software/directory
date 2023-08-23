@@ -47,7 +47,7 @@ import getRelevantSubentries from "../dit/getRelevantSubentries";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
 import type ProtectedItem from "@wildboar/x500/src/lib/types/ProtectedItem";
-import bacACDF, {
+import {
     PERMISSION_CATEGORY_ADD,
     PERMISSION_CATEGORY_REMOVE,
     PERMISSION_CATEGORY_READ,
@@ -108,7 +108,6 @@ import {
     AttributeProblem_noSuchAttributeOrValue,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AttributeProblem.ta";
 import getACIItems from "../authz/getACIItems";
-import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 import { MINIMUM_MAX_ATTR_SIZE, UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
 import {
     ServiceControlOptions_noSubtypeSelection,
@@ -151,6 +150,7 @@ import { Extension } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/Extension
 import { singleUse } from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/singleUse.oa";
 import { noAssertion } from "@wildboar/x500/src/lib/modules/AttributeCertificateDefinitions/noAssertion.oa";
 import { _encode_AlgorithmIdentifier } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AlgorithmIdentifier.ta";
+import { acdf } from "../authz/acdf";
 
 function createAttributeCertificate (
     ctx: MeerkatContext,
@@ -383,15 +383,22 @@ async function read (
     );
     const objectClasses: OBJECT_IDENTIFIER[] = Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString);
     const getPermittedToDoXToY = (y: ProtectedItem): (permissions: number[]) => boolean =>
-        (permissions: number[]) =>
-            bacACDF(relevantTuples, user, y, permissions, bacSettings, true).authorized;
+        (permissions: number[]) => !accessControlScheme || acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                target,
+                permissions,
+                relevantTuples,
+                user,
+                y,
+                bacSettings,
+                true,
+            );
     const permittedToDoXToThisEntry = getPermittedToDoXToY({
         entry: objectClasses,
     });
-    if (
-        accessControlScheme
-        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-    ) {
+    if (accessControlScheme) {
         if (!permittedToDoXToThisEntry([ PERMISSION_CATEGORY_READ ])) {
             throw new errors.SecurityError(
                 ctx.i18n.t("err:not_authz_read"),
@@ -495,6 +502,7 @@ async function read (
 
     const permittedEntryInfo = await readPermittedEntryInformation(
         ctx,
+        assn,
         target,
         user,
         relevantTuples,
@@ -527,6 +535,7 @@ async function read (
                 .slice(1) // Skip the first member, which is the read entry.
                 .map((member) => readPermittedEntryInformation(
                     ctx,
+                    assn,
                     member,
                     user,
                     relevantTuples,
@@ -569,20 +578,21 @@ async function read (
     ];
     if (permittedEntryInfo.information.length === 0) {
         const discloseOnErrorOnAnyOfTheSelectedAttributes: boolean = selectedAttributes
-            .some((attr) => {
-                const { authorized: authorizedToKnowAboutExcludedAttribute } = bacACDF(
-                    relevantTuples,
-                    user,
-                    {
-                        attributeType: attr,
-                        operational: isOperationalAttributeType(ctx, attr),
-                    },
-                    [ PERMISSION_CATEGORY_DISCLOSE_ON_ERROR ],
-                    bacSettings,
-                    true,
-                );
-                return authorizedToKnowAboutExcludedAttribute;
-            });
+            .some((attr) => !accessControlScheme || acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                target,
+                [ PERMISSION_CATEGORY_DISCLOSE_ON_ERROR ],
+                relevantTuples,
+                user,
+                {
+                    attributeType: attr,
+                    operational: isOperationalAttributeType(ctx, attr),
+                },
+                bacSettings,
+                true,
+            ));
         // See ITU Recommendation X.511 (2016), Section 10.1.5.1.b for this part:
         if (
             permittedEntryInfo.incompleteEntry // An attribute value was not permitted to be read...
@@ -654,7 +664,6 @@ async function read (
         // TODO: Make this behavior configurable.
         && (("basicLevels" in assn.authLevel) && (assn.authLevel.basicLevels.level > 0))
         && accessControlScheme
-        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
     ) {
         const authorizedToAddEntry: boolean = permittedToDoXToThisEntry([ PERMISSION_CATEGORY_ADD ]);
         const authorizedToRemoveEntry: boolean = permittedToDoXToThisEntry([ PERMISSION_CATEGORY_REMOVE ]);
@@ -744,11 +753,7 @@ async function read (
             state.partialName,
             false,
         ),
-        (
-            data.modifyRightsRequest
-            && accessControlScheme
-            && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-        )
+        (data.modifyRightsRequest && accessControlScheme)
             ? modifyRights
             : undefined,
         extensions,

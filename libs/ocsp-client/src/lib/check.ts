@@ -13,9 +13,6 @@ import {
     CertID,
 } from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/CertID.ta";
 import {
-    Certificate,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
-import {
     OCSPResponse,
     _decode_OCSPResponse,
 } from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/OCSPResponse.ta";
@@ -38,9 +35,11 @@ import {
     AlgorithmIdentifier,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
 import {
+    SubjectPublicKeyInfo,
     _encode_SubjectPublicKeyInfo,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SubjectPublicKeyInfo.ta";
 import {
+    DistinguishedName,
     _encode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import { createHash } from "crypto";
@@ -56,6 +55,7 @@ import type {
 import {
     Signature,
 } from "@wildboar/ocsp/src/lib/modules/OCSP-2013-08/Signature.ta";
+import { CertificateSerialNumber } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/CertificateSerialNumber.ta";
 
 // Yes, I realize I could have done this with .reduce(), but for loops are more performant.
 function getReceivedDataSize (chunks: Buffer[]) {
@@ -93,20 +93,21 @@ const ACCEPTABLE_RESPONSE_MIME_TYPES: string[] = [
  * Generates an OCSP request from a certificate that requests the status on that
  * certificate.
  *
- * @param cert The certificate whose status is to be checked
+ * @param issuerCert The certificate whose status is to be checked
  * @param sign A function that can be used to digitally sign OCSP requests
  * @returns An OCSP request
  *
  * @function
  */
 export
-function convertCertToOCSPRequest (
-    cert: Certificate,
+function convertCertAndSerialToOCSPRequest (
+    issuerDN: DistinguishedName,
+    issuerSPKI: SubjectPublicKeyInfo,
+    subjectSerial: Uint8Array,
     sign?: SignFunction,
 ): OCSPRequest {
-    const certTBS = cert.toBeSigned;
-    const dnBytes = _encode_DistinguishedName(certTBS.issuer.rdnSequence, DER).toBytes();
-    const spkiElement = _encode_SubjectPublicKeyInfo(certTBS.subjectPublicKeyInfo, DER);
+    const dnBytes = _encode_DistinguishedName(issuerDN, DER).toBytes();
+    const spkiElement = _encode_SubjectPublicKeyInfo(issuerSPKI, DER);
     const dnHasher = createHash("sha256");
     const spkiHasher = createHash("sha256");
     dnHasher.update(dnBytes);
@@ -123,7 +124,7 @@ function convertCertToOCSPRequest (
                     ),
                     dnHasher.digest(),
                     spkiHasher.digest(),
-                    certTBS.serialNumber,
+                    subjectSerial,
                 ),
                 undefined,
             ),
@@ -275,7 +276,8 @@ interface CheckResponse {
  * to an OCSP responder to obtain an OCSP result.
  *
  * @param url The URL of the OCSP responder to query
- * @param req The OCSP request to send, or a certificate that will be used to generate it
+ * @param req The OCSP request to send, or the issuer's DN, the issuer's public
+ *  key, and the serial number of the certificate to be checked
  * @param tlsOptions Options relating to TLS, if it is used
  * @param timeoutInMilliseconds The timeout in milliseconds before this operation is abandoned
  * @param sign A function that can be used to digitally sign outbound OCSP requests
@@ -288,7 +290,7 @@ interface CheckResponse {
 export
 async function getOCSPResponse (
     url: URL,
-    req: OCSPRequest | Certificate,
+    req: OCSPRequest | [ DistinguishedName, SubjectPublicKeyInfo, CertificateSerialNumber ],
     tlsOptions?: TlsOptions,
     timeoutInMilliseconds: number = 5000,
     sign?: SignFunction,
@@ -299,7 +301,7 @@ async function getOCSPResponse (
     }
     const ocspReq = (req instanceof OCSPRequest)
         ? req
-        : convertCertToOCSPRequest(req, sign);
+        : convertCertAndSerialToOCSPRequest(req[0], req[1], req[2], sign);
     const result = await postHTTPS(
         url,
         ocspReq,

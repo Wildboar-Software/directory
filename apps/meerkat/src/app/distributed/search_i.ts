@@ -119,7 +119,7 @@ import {
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
-import bacACDF, {
+import {
     PERMISSION_CATEGORY_BROWSE,
     PERMISSION_CATEGORY_RETURN_DN,
     PERMISSION_CATEGORY_COMPARE,
@@ -237,7 +237,6 @@ import {
     id_oc_child,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
 import getACIItems from "../authz/getACIItems";
-import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 import type {
     SearchResult,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
@@ -357,6 +356,9 @@ import { getEffectiveControlsFromSearchRule } from "../service/getEffectiveContr
 import { id_ar_serviceSpecificArea } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-serviceSpecificArea.va";
 import { ID_AR_SERVICE, ID_AUTONOMOUS } from "../../oidstr";
 import { isMatchAllFilter } from "../x500/isMatchAllFilter";
+import { acdf } from "../authz/acdf";
+import accessControlSchemesThatUseRBAC from "../authz/accessControlSchemesThatUseRBAC";
+import { get_security_labels_for_rdn } from "../authz/get_security_labels_for_rdn";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 
@@ -1932,32 +1934,35 @@ async function search_i_ex (
     }
     // TODO: REVIEW: How would this handle alias dereferencing, joins, hierarchy selection, etc?
     const onBaseObjectIteration: boolean = (targetDN.length === data.baseObject.rdnSequence.length);
-    const authorized = (permissions: number[]) => {
-        const { authorized } = bacACDF(
-            relevantTuples,
-            user,
-            {
-                entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
-            },
-            permissions,
-            bacSettings,
-            true,
-        );
-        return authorized;
-    };
-    if (
-        accessControlScheme
-        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-    ) {
+    const rdn_sec_labels = (accessControlScheme && accessControlSchemesThatUseRBAC.has(accessControlScheme.toString()))
+        ? await get_security_labels_for_rdn(ctx, target.dse.rdn)
+        : undefined;
+    const authorized = (permissions: number[]) => !accessControlScheme || acdf(
+        ctx,
+        accessControlScheme,
+        assn,
+        target,
+        permissions,
+        relevantTuples,
+        user,
+        {
+            entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
+        },
+        bacSettings,
+        true,
+        false,
+        rdn_sec_labels,
+    );
+    if (accessControlScheme) {
         const authorizedToSearch = authorized([
             PERMISSION_CATEGORY_RETURN_DN,
             PERMISSION_CATEGORY_BROWSE,
         ]);
         if (onBaseObjectIteration) {
-            const authorizedForDisclosure = authorized([
-                PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
-            ]);
             if (!authorizedToSearch) {
+                const authorizedForDisclosure = authorized([
+                    PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
+                ]);
                 if (authorizedForDisclosure) {
                     throw new errors.SecurityError(
                         ctx.i18n.t("err:not_authz_search_base_object"),
@@ -2151,15 +2156,19 @@ async function search_i_ex (
             return friendship ? [ ...friendship.friends ] : [];
         },
         permittedToMatch: (attributeType: OBJECT_IDENTIFIER, value?: ASN1Element): boolean => {
-            if (
-                !accessControlScheme
-                || !accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-            ) {
+            if (!accessControlScheme) {
                 return true;
             }
-            const {
-                authorized: authorizedToMatch,
-            } = bacACDF(
+            return acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                target,
+                [
+                    PERMISSION_CATEGORY_FILTER_MATCH,
+                    PERMISSION_CATEGORY_COMPARE, // Not required by specification.
+                    PERMISSION_CATEGORY_READ, // Not required by specification.
+                ],
                 relevantTuples,
                 user,
                 value
@@ -2173,15 +2182,9 @@ async function search_i_ex (
                     : {
                         attributeType,
                     },
-                [
-                    PERMISSION_CATEGORY_FILTER_MATCH,
-                    PERMISSION_CATEGORY_COMPARE, // Not required by specification.
-                    PERMISSION_CATEGORY_READ, // Not required by specification.
-                ],
                 bacSettings,
                 true,
             );
-            return authorizedToMatch;
         },
         performExactly,
         matchedValuesOnly: matchedValuesOnly || searchRuleReturnsMatchedValuesOnly,
@@ -2261,25 +2264,31 @@ async function search_i_ex (
     }
 
     if (target.dse.alias && searchAliases) {
-        if (
-            accessControlScheme
-            && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-        ) {
+        if (accessControlScheme) {
             const authorizedToReadEntry: boolean = authorized([
                 PERMISSION_CATEGORY_READ,
             ]);
-            const { authorized: authorizedToReadAliasedEntryName } = bacACDF(
+            const authorizedToReadAliasedEntryName = acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                target,
+                [ PERMISSION_CATEGORY_READ ],
                 relevantTuples,
                 user,
                 {
                     attributeType: id_at_aliasedEntryName,
                     operational: false,
                 },
-                [ PERMISSION_CATEGORY_READ ],
                 bacSettings,
                 true,
             );
-            const { authorized: authorizedToReadAliasedEntryNameValue } = bacACDF(
+            const authorizedToReadAliasedEntryNameValue = acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                target,
+                [ PERMISSION_CATEGORY_READ ],
                 relevantTuples,
                 user,
                 {
@@ -2289,7 +2298,6 @@ async function search_i_ex (
                     ),
                     operational: false,
                 },
-                [ PERMISSION_CATEGORY_READ ],
                 bacSettings,
                 true,
             );
@@ -2493,6 +2501,7 @@ async function search_i_ex (
                         .map(async (member): Promise<[ number, [ Vertex, BOOLEAN, EntryInformation_information_Item[], boolean ] ]> => {
                             const permittedEntryReturn = await readPermittedEntryInformation(
                                 ctx,
+                                assn,
                                 member,
                                 user,
                                 relevantTuples,
@@ -2818,6 +2827,7 @@ async function search_i_ex (
                         .map(async (member) => {
                             const permittedEntryReturn = await readPermittedEntryInformation(
                                 ctx,
+                                assn,
                                 member,
                                 user,
                                 relevantTuples,
@@ -3283,18 +3293,30 @@ async function search_i_ex (
                         isMemberOfGroup,
                         NAMING_MATCHER,
                     );
-                    const { authorized: authorizedToDiscoverSubordinate } = bacACDF(
+                    const rdn_sec_labels = (
+                        accessControlScheme
+                        && accessControlSchemesThatUseRBAC.has(accessControlScheme.toString())
+                    )
+                        ? await get_security_labels_for_rdn(ctx, subordinate.dse.rdn)
+                        : undefined;
+                    const authorizedToDiscoverSubordinate = !accessControlScheme || acdf(
+                        ctx,
+                        accessControlScheme,
+                        assn,
+                        subordinate,
+                        [
+                            PERMISSION_CATEGORY_BROWSE,
+                            PERMISSION_CATEGORY_RETURN_DN,
+                        ],
                         relevantTuples,
                         user,
                         {
                             entry: Array.from(subordinate.dse.objectClass).map(ObjectIdentifier.fromString),
                         },
-                        [
-                            PERMISSION_CATEGORY_BROWSE,
-                            PERMISSION_CATEGORY_RETURN_DN,
-                        ],
                         bacSettings,
                         true,
+                        false,
+                        rdn_sec_labels,
                     );
                     if (!authorizedToDiscoverSubordinate) {
                         continue;

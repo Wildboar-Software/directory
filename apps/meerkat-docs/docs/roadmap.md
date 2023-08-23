@@ -4,7 +4,7 @@ We will not promise any particular schedule of delivery of features or bug fixes
 at this time. However, the very high-level roadmap for Meerkat DSA can be
 broken down to the following versions.
 
-## Version 3.1.0 - Schema Update ("Wildboar Schema")
+## Version 3.2.0 - Schema Update ("Wildboar Schema")
 
 This update will introduce thousands of new schema objects defined by Wildboar
 Software into the default schema. This is desirable so that X.500 directories
@@ -15,14 +15,6 @@ using a `married` auxiliary object class that permits the presence of a
 `spouseDN` attribute in an entry. It would be unfortunate for directory
 administrators everywhere to define their own equivalent object classes, thereby
 duplicating work and reducing inter-domain compatibility.
-
-## Version 3.2.0 - Rule Based Access Control
-
-This update will introduce Rule-Based Access Control (RBAC) (not to be mistaken
-for the more common "Role-Based Access Control") as described in
-[ITU Recommendation X.501 (2019)](https://www.itu.int/rec/T-REC-X.501/en).
-This is an access control scheme that determines authorization on the basis of
-clearance levels, such as "confidential" or "top secret."
 
 ## Version 3.3.0 - SPKM Authentication
 

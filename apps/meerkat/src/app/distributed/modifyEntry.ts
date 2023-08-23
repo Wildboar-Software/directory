@@ -102,7 +102,7 @@ import { SecurityErrorData } from "@wildboar/x500/src/lib/modules/DirectoryAbstr
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
-import bacACDF, {
+import {
     PERMISSION_CATEGORY_ADD,
     PERMISSION_CATEGORY_REMOVE,
     PERMISSION_CATEGORY_MODIFY,
@@ -206,7 +206,6 @@ import {
     id_oc_child,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-oc-child.va";
 import getACIItems from "../authz/getACIItems";
-import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs";
 import { MINIMUM_MAX_ATTR_SIZE } from "../constants";
 import updateSuperiorDSA from "../dop/updateSuperiorDSA";
@@ -278,6 +277,7 @@ import {
 import { getShadowIncrementalSteps } from "../dop/getRelevantSOBs";
 import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh";
 import { governingStructureRule } from "@wildboar/x500/src/lib/collections/attributes";
+import { acdf } from "../authz/acdf";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;
@@ -552,6 +552,7 @@ async function checkAttributePresence (
  * @function
  */
 function checkPermissionToAddValues (
+    target: Vertex,
     modificationType: "addAttribute" | "addValues",
     attribute: Attribute,
     ctx: Context,
@@ -562,21 +563,22 @@ function checkPermissionToAddValues (
     aliasDereferenced?: boolean,
     signErrors: boolean = false,
 ): void {
-    if (
-        !accessControlScheme
-        || !accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-    ) {
+    if (!accessControlScheme) {
         return;
     }
     const values = valuesFromAttribute(attribute);
-    const { authorized: authorizedForAttributeType } = bacACDF(
+    const authorizedForAttributeType = acdf(
+        ctx,
+        accessControlScheme,
+        assn,
+        target,
+        [ PERMISSION_CATEGORY_ADD ],
         relevantACDFTuples,
         user,
         {
             attributeType: attribute.type_,
             operational: isOperationalAttributeType(ctx, attribute.type_),
         },
-        [ PERMISSION_CATEGORY_ADD ],
         bacSettings,
         true,
     );
@@ -591,7 +593,12 @@ function checkPermissionToAddValues (
         );
     }
     for (const value of values) {
-        const { authorized: authorizedForValue } = bacACDF(
+        const authorizedForValue = acdf(
+            ctx,
+            accessControlScheme,
+            assn,
+            target,
+            [ PERMISSION_CATEGORY_ADD ],
             relevantACDFTuples,
             user,
             {
@@ -606,7 +613,6 @@ function checkPermissionToAddValues (
                 )),
                 operational: isOperationalAttributeType(ctx, value.type),
             },
-            [ PERMISSION_CATEGORY_ADD ],
             bacSettings,
             true,
         );
@@ -977,6 +983,7 @@ function removeValuesFromPatch (
  * @async
  */
 async function executeAddAttribute (
+    target: Vertex,
     mod: Attribute,
     ctx: Context,
     assn: ClientAssociation,
@@ -995,6 +1002,7 @@ async function executeAddAttribute (
      * already known, so this is not a problem beyond this point.
      */
     checkPermissionToAddValues(
+        target,
         "addAttribute",
         mod,
         ctx,
@@ -1075,6 +1083,7 @@ async function executeAddAttribute (
  * @async
  */
 async function executeRemoveAttribute (
+    target: Vertex,
     mod: AttributeType,
     ctx: Context,
     assn: ClientAssociation,
@@ -1115,18 +1124,19 @@ async function executeRemoveAttribute (
      * This is intentionally checked before even checking if the attribute is
      * present so that we avoid revealing whether it exists already or not.
      */
-    if (
-        accessControlScheme
-        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-    ) {
-        const { authorized: authorizedForAttributeType } = bacACDF(
+    if (accessControlScheme) {
+        const authorizedForAttributeType = acdf(
+            ctx,
+            accessControlScheme,
+            assn,
+            target,
+            [ PERMISSION_CATEGORY_REMOVE ],
             relevantACDFTuples,
             user,
             {
                 attributeType: mod,
                 operational: isOperationalAttributeType(ctx, mod),
             },
-            [ PERMISSION_CATEGORY_REMOVE ],
             bacSettings,
             true,
         );
@@ -1213,6 +1223,7 @@ async function executeRemoveAttribute (
  * @async
  */
 async function executeAddValues (
+    target: Vertex,
     mod: Attribute,
     ctx: Context,
     assn: ClientAssociation,
@@ -1258,6 +1269,7 @@ async function executeAddValues (
     }
     checkAttributeArity(ctx, assn, entry, mod, aliasDereferenced, signErrors);
     checkPermissionToAddValues(
+        target,
         "addValues",
         mod,
         ctx,
@@ -1306,6 +1318,7 @@ async function executeAddValues (
  * @async
  */
 async function executeRemoveValues (
+    target: Vertex,
     mod: Attribute,
     ctx: Context,
     assn: ClientAssociation,
@@ -1385,20 +1398,19 @@ async function executeRemoveValues (
             signErrors,
         )
     }
-    if (
-        accessControlScheme
-        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-    ) {
-        const {
-            authorized: authorizedForAttributeType,
-        } = bacACDF(
+    if (accessControlScheme) {
+        const authorizedForAttributeType = acdf(
+            ctx,
+            accessControlScheme,
+            assn,
+            target,
+            [ PERMISSION_CATEGORY_REMOVE ],
             relevantACDFTuples,
             user,
             {
                 attributeType: mod.type_,
                 operational: isOperationalAttributeType(ctx, mod.type_),
             },
-            [ PERMISSION_CATEGORY_REMOVE ],
             bacSettings,
             true,
         );
@@ -1413,9 +1425,12 @@ async function executeRemoveValues (
             );
         }
         for (const value of values) {
-            const {
-                authorized: authorizedForValue,
-            } = bacACDF(
+            const authorizedForValue = acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                target,
+                [ PERMISSION_CATEGORY_REMOVE ],
                 relevantACDFTuples,
                 user,
                 {
@@ -1425,7 +1440,6 @@ async function executeRemoveValues (
                     ),
                     operational: isOperationalAttributeType(ctx, value.type),
                 },
-                [ PERMISSION_CATEGORY_REMOVE ],
                 bacSettings,
                 true,
             );
@@ -1481,6 +1495,7 @@ async function executeRemoveValues (
  * @async
  */
 async function executeAlterValues (
+    target: Vertex,
     mod: AttributeTypeAndValue,
     ctx: Context,
     assn: ClientAssociation,
@@ -1521,21 +1536,22 @@ async function executeAlterValues (
             signErrors,
         );
     }
-    if (
-        accessControlScheme
-        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-    ) {
-        const { authorized: authorizedForAttributeType } = bacACDF(
+    if (accessControlScheme) {
+        const authorizedForAttributeType = acdf(
+            ctx,
+            accessControlScheme,
+            assn,
+            target,
+            [
+                PERMISSION_CATEGORY_MODIFY, // DEVIATION: More strict than spec.
+                PERMISSION_CATEGORY_REMOVE,
+            ],
             relevantACDFTuples,
             user,
             {
                 attributeType: mod.type_,
                 operational: isOperationalAttributeType(ctx, mod.type_),
             },
-            [
-                PERMISSION_CATEGORY_MODIFY, // DEVIATION: More strict than spec.
-                PERMISSION_CATEGORY_REMOVE,
-            ],
             bacSettings,
             true,
         );
@@ -1559,12 +1575,17 @@ async function executeAlterValues (
         signErrors,
     );
     const values = await readValuesOfType(ctx, entry, mod.type_);
-    if (
-        accessControlScheme
-        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-    ) {
+    if (accessControlScheme) {
         for (const value of values) {
-            const { authorized: authorizedForValue } = bacACDF(
+            const authorizedForValue = acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                target,
+                [
+                    PERMISSION_CATEGORY_MODIFY, // DEVIATION: More strict than spec.
+                    PERMISSION_CATEGORY_REMOVE,
+                ],
                 relevantACDFTuples,
                 user,
                 {
@@ -1574,14 +1595,6 @@ async function executeAlterValues (
                     ),
                     operational: isOperationalAttributeType(ctx, value.type),
                 },
-                // DEVIATON: X.511 requires Add permissions, but I think this is
-                // a mistake. Why would you need permission to add values that
-                // you are changing? Instead, Meerkat DSA checks for modify and
-                // remove permissions.
-                [
-                    PERMISSION_CATEGORY_MODIFY,
-                    PERMISSION_CATEGORY_REMOVE,
-                ],
                 bacSettings,
                 true,
             );
@@ -1599,12 +1612,16 @@ async function executeAlterValues (
     }
     const TYPE_OID: IndexableOID = mod.type_.toString();
     const newValues = values.map(alterer);
-    if (
-        accessControlScheme
-        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-    ) {
+    if (accessControlScheme) {
         for (const value of newValues) {
-            const { authorized: authorizedForValue } = bacACDF(
+            const authorizedForValue = acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                target,
+                // DEVIATON: X.511 does not explicitly require add permissions
+                // for the newly-produced values, but I think this is an error.
+                [ PERMISSION_CATEGORY_ADD ],
                 relevantACDFTuples,
                 user,
                 {
@@ -1619,9 +1636,6 @@ async function executeAlterValues (
                     )),
                     operational: isOperationalAttributeType(ctx, value.type),
                 },
-                // DEVIATON: X.511 does not explicitly require add permissions
-                // for the newly-produced values, but I think this is an error.
-                [ PERMISSION_CATEGORY_ADD ],
                 bacSettings,
                 true,
             );
@@ -1680,6 +1694,7 @@ async function executeAlterValues (
  * @async
  */
 async function executeResetValue (
+    target: Vertex,
     mod: AttributeType,
     ctx: Context,
     assn: ClientAssociation,
@@ -1700,10 +1715,7 @@ async function executeResetValue (
             },
         },
     };
-    if (
-        accessControlScheme
-        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-    ) {
+    if (accessControlScheme) {
         // This is not incorrect. Contexts are only maintained for userApplications
         // attribute types, so this mod can just read right from this table.
         const rows = await ctx.db.attributeValue.findMany({
@@ -1717,9 +1729,14 @@ async function executeResetValue (
         });
         for (const row of rows) {
             const el = attributeValueFromDB(row);
-            const {
-                authorized: authorizedForAttributeType,
-            } = bacACDF(
+            const authorizedForAttributeType = acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                target,
+                // DEVIATON: X.511 does not explicitly require add permissions
+                // for the newly-produced values, but I think this is an error.
+                [ PERMISSION_CATEGORY_REMOVE ],
                 relevantACDFTuples,
                 user,
                 {
@@ -1729,9 +1746,6 @@ async function executeResetValue (
                     ),
                     operational: isOperationalAttributeType(ctx, mod),
                 },
-                [
-                    PERMISSION_CATEGORY_REMOVE,
-                ],
                 bacSettings,
                 true,
             );
@@ -1802,6 +1816,7 @@ async function executeResetValue (
  * @async
  */
 async function executeReplaceValues (
+    target: Vertex,
     mod: Attribute,
     ctx: Context,
     assn: ClientAssociation,
@@ -1816,18 +1831,21 @@ async function executeReplaceValues (
     checkAttributeArity(ctx, assn, entry, mod, aliasDereferenced, signErrors);
     const TYPE_OID: string = mod.type_.toString();
     const values = valuesFromAttribute(mod);
-    if (
-        accessControlScheme
-        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-    ) {
-        const { authorized: authorizedForAttributeType } = bacACDF(
+    if (accessControlScheme) {
+        const authorizedForAttributeType = acdf(
+            ctx,
+            accessControlScheme,
+            assn,
+            target,
+            // DEVIATON: X.511 does not explicitly require add permissions
+            // for the newly-produced values, but I think this is an error.
+            [ PERMISSION_CATEGORY_ADD ],
             relevantACDFTuples,
             user,
             {
                 attributeType: mod.type_,
                 operational: isOperationalAttributeType(ctx, mod.type_),
             },
-            [ PERMISSION_CATEGORY_ADD ],
             bacSettings,
             true,
         );
@@ -1843,7 +1861,12 @@ async function executeReplaceValues (
         }
         const existingValues = await readValuesOfType(ctx, entry, mod.type_);
         for (const xv of existingValues) {
-            const { authorized: authorizedForValue } = bacACDF(
+            const authorizedForValue = acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                target,
+                [ PERMISSION_CATEGORY_REMOVE ],
                 relevantACDFTuples,
                 user,
                 {
@@ -1853,7 +1876,6 @@ async function executeReplaceValues (
                     ),
                     operational: isOperationalAttributeType(ctx, mod.type_),
                 },
-                [ PERMISSION_CATEGORY_REMOVE ],
                 bacSettings,
                 true,
             );
@@ -2210,6 +2232,7 @@ async function executeEntryModification (
     aliasDereferenced?: boolean,
     signErrors: boolean = false,
 ): Promise<Prisma.PrismaPromise<any>[]> {
+    const target = state.foundDSE;
 
     const commonArguments = [
         ctx,
@@ -2393,26 +2416,26 @@ async function executeEntryModification (
         await checkPassword(mod.addAttribute);
         checkPreclusion(mod.addAttribute.type_);
         const attrWithDefaultContexts = checkContextRule(mod.addAttribute);
-        return executeAddAttribute(attrWithDefaultContexts, ...commonArguments);
+        return executeAddAttribute(target, attrWithDefaultContexts, ...commonArguments);
     }
     else if ("removeAttribute" in mod) {
         check(mod.removeAttribute, true);
-        return executeRemoveAttribute(mod.removeAttribute, ...commonArguments);
+        return executeRemoveAttribute(target, mod.removeAttribute, ...commonArguments);
     }
     else if ("addValues" in mod) {
         check(mod.addValues.type_, false);
         await checkPassword(mod.addValues);
         checkPreclusion(mod.addValues.type_);
         const attrWithDefaultContexts = checkContextRule(mod.addValues);
-        return executeAddValues(attrWithDefaultContexts, ...commonArguments);
+        return executeAddValues(target, attrWithDefaultContexts, ...commonArguments);
     }
     else if ("removeValues" in mod) {
         check(mod.removeValues.type_, true);
-        return executeRemoveValues(mod.removeValues, ...commonArguments);
+        return executeRemoveValues(target, mod.removeValues, ...commonArguments);
     }
     else if ("alterValues" in mod) {
         check(mod.alterValues.type_, false);
-        return executeAlterValues(mod.alterValues, ...commonArguments);
+        return executeAlterValues(target, mod.alterValues, ...commonArguments);
     }
     else if ("resetValue" in mod) {
         check(mod.resetValue, true);
@@ -2448,14 +2471,14 @@ async function executeEntryModification (
                 signErrors,
             );
         }
-        return executeResetValue(mod.resetValue, ...commonArguments);
+        return executeResetValue(target, mod.resetValue, ...commonArguments);
     }
     else if ("replaceValues" in mod) {
         check(mod.replaceValues.type_, false);
         await checkPassword(mod.replaceValues);
         checkPreclusion(mod.replaceValues.type_);
         const attrWithDefaultContexts = checkContextRule(mod.replaceValues);
-        return executeReplaceValues(attrWithDefaultContexts, ...commonArguments);
+        return executeReplaceValues(target, attrWithDefaultContexts, ...commonArguments);
     }
     else {
         // TODO: Log not-understood alternative.
@@ -2651,27 +2674,22 @@ async function modifyEntry (
             NAMING_MATCHER,
         );
 
-    const authorizedToEntry = (permissions: number[]): boolean => {
-        const {
-            authorized,
-        } = bacACDF(
-            relevantTuples,
-            user,
-            {
-                entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
-            },
-            permissions,
-            bacSettings,
-            true,
-        );
-        return authorized;
-    };
+    const authorizedToEntry = (permissions: number[]): boolean => !accessControlScheme || acdf(
+        ctx,
+        accessControlScheme,
+        assn,
+        target,
+        permissions,
+        relevantTuples,
+        user,
+        {
+            entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
+        },
+        bacSettings,
+        true,
+    );
 
-    if (
-        !ctx.config.bulkInsertMode
-        && accessControlScheme
-        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-    ) {
+    if (!ctx.config.bulkInsertMode && accessControlScheme) {
         const authorizedToModifyEntry: boolean = authorizedToEntry([ PERMISSION_CATEGORY_MODIFY ]);
         if (!authorizedToModifyEntry) {
             throw new errors.SecurityError(
@@ -2809,14 +2827,15 @@ async function modifyEntry (
                 signErrors,
             );
         }
-        if (
-            !ctx.config.bulkInsertMode
-            && accessControlScheme
-            && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-        ) {
+        if (!ctx.config.bulkInsertMode && accessControlScheme) {
             const deletedValues = patch.removedValues.get(type_)?.length ?? 0;
             const typeOid = ObjectIdentifier.fromString(type_);
-            const { authorized: authorizedForAttributeType } = bacACDF(
+            const authorizedForAttributeType = acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                target,
+                [ PERMISSION_CATEGORY_ADD ],
                 relevantTuples,
                 user,
                 {
@@ -2824,7 +2843,6 @@ async function modifyEntry (
                     valuesCount: (values.length - deletedValues),
                     operational: isOperationalAttributeType(ctx, typeOid),
                 },
-                [ PERMISSION_CATEGORY_ADD ],
                 bacSettings,
                 true,
             );
@@ -3789,14 +3807,12 @@ async function modifyEntry (
         data.selection
         && (
             !accessControlScheme
-            || (
-                accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-                && !authorizedToEntry([ PERMISSION_CATEGORY_READ ])
-            )
+            || authorizedToEntry([ PERMISSION_CATEGORY_READ ])
         )
     ) {
         const permittedEntryInfo = await readPermittedEntryInformation(
             ctx,
+            assn,
             target,
             user,
             relevantTuples,
@@ -3828,6 +3844,7 @@ async function modifyEntry (
                     .slice(1) // Skip the first member, which is the read entry.
                     .map((member) => readPermittedEntryInformation(
                         ctx,
+                        assn,
                         member,
                         user,
                         relevantTuples,

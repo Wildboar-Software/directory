@@ -70,7 +70,7 @@ import {
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
-import bacACDF, {
+import {
     PERMISSION_CATEGORY_BROWSE,
     PERMISSION_CATEGORY_RETURN_DN,
     PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
@@ -96,7 +96,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry";
 import getACIItems from "../authz/getACIItems";
-import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 import cloneChainingArgs from "../x500/cloneChainingArguments";
 import bacSettings from "../authz/bacSettings";
 import {
@@ -141,6 +140,9 @@ import getEqualityNormalizer from "../x500/getEqualityNormalizer";
 import { isModificationOperation } from "@wildboar/x500";
 import { EXT_BIT_USE_ALIAS_ON_UPDATE } from "@wildboar/x500/src/lib/dap/extensions";
 import stringifyDN from "../x500/stringifyDN";
+import { acdf } from "../authz/acdf";
+import accessControlSchemesThatUseRBAC from "../authz/accessControlSchemesThatUseRBAC";
+import { get_security_labels_for_rdn } from "../authz/get_security_labels_for_rdn";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 
@@ -986,11 +988,7 @@ export
                 if (matchedVertex.dse.admPoint?.accessControlScheme) {
                     accessControlScheme = matchedVertex.dse.admPoint.accessControlScheme;
                 }
-                if (
-                    !ctx.config.bulkInsertMode
-                    && accessControlScheme
-                    && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-                ) {
+                if (!ctx.config.bulkInsertMode && accessControlScheme) {
                     const childDN = getDistinguishedName(matchedVertex);
                     // Without this, all first-level DSEs are discoverable.
                     const relevantAdmPoints: Vertex[] = matchedVertex.dse.admPoint
@@ -1023,25 +1021,40 @@ export
                     const objectClasses = Array
                         .from(matchedVertex.dse.objectClass)
                         .map(ObjectIdentifier.fromString);
-                    const { authorized: authorizedToDiscover } = bacACDF(
-                        relevantTuples,
-                        user,
-                        { entry: objectClasses },
+                    const rdn_sec_labels = accessControlSchemesThatUseRBAC.has(accessControlScheme.toString())
+                        ? await get_security_labels_for_rdn(ctx, matchedVertex.dse.rdn)
+                        : undefined;
+                    const authorizedToDiscover: boolean = acdf(
+                        ctx,
+                        accessControlScheme,
+                        assn,
+                        matchedVertex,
                         [
                             PERMISSION_CATEGORY_BROWSE,
                             PERMISSION_CATEGORY_RETURN_DN,
                         ],
+                        relevantTuples,
+                        user,
+                        { entry: objectClasses },
                         bacSettings,
                         true,
+                        false,
+                        rdn_sec_labels,
                     );
                     if (!authorizedToDiscover) {
-                        const { authorized: authorizedToDiscoverOnError } = bacACDF(
+                        const authorizedToDiscoverOnError: boolean = acdf(
+                            ctx,
+                            accessControlScheme,
+                            assn,
+                            matchedVertex,
+                            [PERMISSION_CATEGORY_DISCLOSE_ON_ERROR],
                             relevantTuples,
                             user,
                             { entry: objectClasses },
-                            [PERMISSION_CATEGORY_DISCLOSE_ON_ERROR],
                             bacSettings,
                             true,
+                            false,
+                            rdn_sec_labels,
                         );
                         if (authorizedToDiscoverOnError) {
                             throw new errors.SecurityError(
@@ -1157,11 +1170,7 @@ export
                     if (child.dse.admPoint?.accessControlScheme) {
                         accessControlScheme = child.dse.admPoint.accessControlScheme;
                     }
-                    if ( // Check if the user can actually access it.
-                        !ctx.config.bulkInsertMode
-                        && accessControlScheme
-                        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-                    ) {
+                    if (!ctx.config.bulkInsertMode && accessControlScheme) {
                         const childDN = getDistinguishedName(child);
                         // Without this, all first-level DSEs are discoverable.
                         const relevantAdmPoints: Vertex[] = child.dse.admPoint
@@ -1192,22 +1201,31 @@ export
                             NAMING_MATCHER,
                         );
                         const objectClasses = Array.from(child.dse.objectClass).map(ObjectIdentifier.fromString);
+                        const rdn_sec_labels = accessControlSchemesThatUseRBAC.has(accessControlScheme.toString())
+                            ? await get_security_labels_for_rdn(ctx, child.dse.rdn)
+                            : undefined;
                         /**
                          * We ignore entries for which browse and returnDN permissions
                          * are not granted. This is not specified in the Find DSE
                          * procedure, but it is important for preventing information
                          * disclosure vulnerabilities.
                          */
-                        const { authorized: authorizedToDiscover } = bacACDF(
-                            relevantTuples,
-                            user,
-                            { entry: objectClasses },
+                        const authorizedToDiscover: boolean = acdf(
+                            ctx,
+                            accessControlScheme,
+                            assn,
+                            child,
                             [
                                 PERMISSION_CATEGORY_BROWSE,
                                 PERMISSION_CATEGORY_RETURN_DN,
                             ],
+                            relevantTuples,
+                            user,
+                            { entry: objectClasses },
                             bacSettings,
                             true,
+                            false,
+                            rdn_sec_labels,
                         );
 
                         if (!authorizedToDiscover) {
@@ -1215,13 +1233,19 @@ export
                                 aid: assn?.id ?? "INTERNAL",
                                 dn: stringifyDN(ctx, needleDN).slice(0, 1024),
                             }));
-                            const { authorized: authorizedToDiscoverOnError } = bacACDF(
+                            const authorizedToDiscoverOnError: boolean = acdf(
+                                ctx,
+                                accessControlScheme,
+                                assn,
+                                child,
+                                [PERMISSION_CATEGORY_DISCLOSE_ON_ERROR],
                                 relevantTuples,
                                 user,
                                 { entry: objectClasses },
-                                [PERMISSION_CATEGORY_DISCLOSE_ON_ERROR],
                                 bacSettings,
                                 true,
+                                false,
+                                rdn_sec_labels,
                             );
                             if (authorizedToDiscoverOnError) {
                                 throw new errors.SecurityError(
@@ -1316,11 +1340,10 @@ export
         }
 
         let discloseOnError: boolean = true;
-        if (
-            !ctx.config.bulkInsertMode
-            && accessControlScheme
-            && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-        ) {
+        if (!ctx.config.bulkInsertMode && accessControlScheme) {
+            const rdn_sec_labels = accessControlSchemesThatUseRBAC.has(accessControlScheme.toString())
+                ? await get_security_labels_for_rdn(ctx, dse_i.dse.rdn)
+                : undefined;
             const currentDN = getDistinguishedName(dse_i);
             const relevantSubentries: Vertex[] = (await Promise.all(
                 state.admPoints.map((ap) => getRelevantSubentries(ctx, dse_i, currentDN, ap)),
@@ -1346,19 +1369,22 @@ export
                 isMemberOfGroup,
                 NAMING_MATCHER,
             );
-            const { authorized: authorizedToDiscloseOnError } = bacACDF(
+            const objectClasses = Array
+                .from(dse_i.dse.objectClass)
+                .map(ObjectIdentifier.fromString);
+            const authorizedToDiscloseOnError: boolean = acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                dse_i,
+                [PERMISSION_CATEGORY_DISCLOSE_ON_ERROR],
                 relevantTuples,
                 user,
-                {
-                    entry: Array
-                        .from(dse_i.dse.objectClass)
-                        .map(ObjectIdentifier.fromString),
-                },
-                [
-                    PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
-                ],
+                { entry: objectClasses },
                 bacSettings,
                 true,
+                false,
+                rdn_sec_labels,
             );
             discloseOnError = authorizedToDiscloseOnError;
         }

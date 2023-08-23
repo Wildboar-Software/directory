@@ -1,5 +1,26 @@
 # Changelog for Meerkat DSA
 
+## Version 3.1.0
+
+This version introduces support for Rule-Based Access Control (RBAC), thereby
+enabling Meerkat DSA to enforce the `rule-based-access-control`,
+`rule-and-basic-access-control` and `rule-and-simple-access-control` access
+control schemes defined in
+[ITU Recommendation X.501 (2019)](https://www.itu.int/rec/T-REC-X.501/en).
+
+### New Features / Improvements
+
+- Support for Rule-Based Access Control
+- Slight performance improvement when creating a new entry
+
+### Bug Fixes
+
+- Fix invalid OCSP requests
+  - OCSP requests were made using the subject's `subjectPublicKeyInfo` rather than the issuer's.
+- Fix invalid OCSP verification
+  - Verification would occur using the same issuer certificate over and over again
+- Fix invalid invalid remote CRL signature validation
+
 ## Version 3.0.0
 
 The defining aspect of this version is support for cross references. Cross

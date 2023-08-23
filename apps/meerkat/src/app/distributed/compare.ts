@@ -51,7 +51,7 @@ import {
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
-import bacACDF, {
+import {
     PERMISSION_CATEGORY_READ,
     PERMISSION_CATEGORY_COMPARE,
     PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
@@ -85,7 +85,6 @@ import {
     abandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
 import getACIItems from "../authz/getACIItems";
-import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 import getAttributeSubtypes from "../x500/getAttributeSubtypes";
 import {
     ServiceControlOptions_noSubtypeMatch,
@@ -147,6 +146,7 @@ import {
 import {
     SimpleCredentials,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
+import { acdf } from "../authz/acdf";
 
 /**
  * @summary The compare operation, as specified in ITU Recommendation X.511.
@@ -287,19 +287,18 @@ async function compare (
         isMemberOfGroup,
         NAMING_MATCHER,
     );
-    if (
-        accessControlScheme
-        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-    ) {
-        const { authorized: authorizedToEntry } = bacACDF(
+    if (accessControlScheme) {
+        const authorizedToEntry = acdf(
+            ctx,
+            accessControlScheme,
+            assn,
+            target,
+            [PERMISSION_CATEGORY_READ],
             relevantTuples,
             user,
             {
                 entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
             },
-            [
-                PERMISSION_CATEGORY_READ,
-            ],
             bacSettings,
             true,
         );
@@ -347,29 +346,37 @@ async function compare (
                     signErrors,
                 );
             }
-            const { authorized: authorizedToCompareAttributeType } = bacACDF(
+            const authorizedToCompareAttributeType = acdf(
+                ctx,
+                accessControlScheme,
+                assn,
+                target,
+                [
+                    PERMISSION_CATEGORY_COMPARE,
+                    PERMISSION_CATEGORY_READ, // Not mandated by the spec, but required by Meerkat.
+                ],
                 relevantTuples,
                 user,
                 {
                     attributeType: type_,
                     operational: isOperationalAttributeType(ctx, type_),
                 },
-                [
-                    PERMISSION_CATEGORY_COMPARE,
-                    PERMISSION_CATEGORY_READ, // Not mandated by the spec, but required by Meerkat.
-                ],
                 bacSettings,
                 true,
             );
             if (!authorizedToCompareAttributeType) {
-                const { authorized: authorizedToDiscloseAttribute } = bacACDF(
+                const authorizedToDiscloseAttribute = acdf(
+                    ctx,
+                    accessControlScheme,
+                    assn,
+                    target,
+                    [PERMISSION_CATEGORY_DISCLOSE_ON_ERROR],
                     relevantTuples,
                     user,
                     {
                         attributeType: type_,
                         operational: isOperationalAttributeType(ctx, type_),
                     },
-                    [ PERMISSION_CATEGORY_DISCLOSE_ON_ERROR ],
                     bacSettings,
                     true,
                 );
@@ -624,13 +631,16 @@ async function compare (
                 continue;
             }
 
-            if (
-                accessControlScheme
-                && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-            ) {
-                const {
-                    authorized,
-                } = bacACDF(
+            if (accessControlScheme) {
+                const authorized = acdf(
+                    ctx,
+                    accessControlScheme,
+                    assn,
+                    target,
+                    [
+                        PERMISSION_CATEGORY_COMPARE,
+                        PERMISSION_CATEGORY_READ, // Not mandated by the spec, but required by Meerkat.
+                    ],
                     relevantTuples,
                     user,
                     {
@@ -640,10 +650,6 @@ async function compare (
                         ),
                         operational: isOperationalAttributeType(ctx, value.type),
                     },
-                    [
-                        PERMISSION_CATEGORY_COMPARE,
-                        PERMISSION_CATEGORY_READ, // Not mandated by the spec, but required by Meerkat.
-                    ],
                     bacSettings,
                     true,
                 );

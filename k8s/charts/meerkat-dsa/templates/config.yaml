@@ -19,6 +19,9 @@ data:
   chaining_check_sig: {{ .Values.chaining_check_sig | default true | ternary 1 0 | quote }}
   chaining_sign_requests: {{ .Values.chaining_sign_requests | default true | ternary 1 0 | quote }}
   chaining_tls_optional: {{ .Values.chaining_tls_optional | ternary 1 0 | quote }}
+  {{- if .Values.clearance_authorities }}
+  clearance_authorities: {{ .Values.clearance_authorities | quote }}
+  {{- end }}
   default_entry_ttl: {{ .Values.default_entry_ttl | default "60" | quote }}
   enable_disp: {{ .Values.enable_disp | ternary 1 0 | quote }}
   enable_dop: {{ .Values.enable_dop | ternary 1 0 | quote }}
@@ -29,6 +32,9 @@ data:
   enable_dap: {{ .Values.enable_dap | ternary 1 0 | quote }}
   entries_per_subordinates_page: {{ .Values.entries_per_subordinates_page | default 100 | quote }}
   forbid_anonymous_bind: {{ .Values.forbid_anonymous_bind | ternary 1 0 | quote }}
+  get_clearances_from_attr_certs: {{ .Values.get_clearances_from_attr_certs | default true | ternary 1 0 | quote }}
+  get_clearances_from_dsait: {{ .Values.get_clearances_from_dsait | default true | ternary 1 0 | quote }}
+  get_clearances_from_pkc: {{ .Values.get_clearances_from_pkc | default true | ternary 1 0 | quote }}
   honor_cipher_order: {{ .Values.honor_cipher_order | ternary 1 0 | quote }}
   idm_buffer_size: {{ .Values.idm_buffer_size | default "1000000" | quote }}
   idm_port: {{ .Values.idm_port | default 4632 | quote }}
@@ -50,6 +56,9 @@ data:
   itot_acse_password: {{ .Values.itot_acse_password | quote }}
   {{- end }}
   disable_itot_chaining: {{ .Values.disable_itot_chaining | ternary 1 0 | quote }}
+  {{- if .Values.labelling_authorities }}
+  labelling_authorities: {{ .Values.labelling_authorities | quote }}
+  {{- end }}
   lcr_parallelism: {{ .Values.lcr_parallelism | default 0 | quote }}
   ldap_buffer_size: {{ .Values.ldap_buffer_size | default "1000000" | quote }}
   ldap_port: {{ .Values.ldap_port | default 389 | quote }}

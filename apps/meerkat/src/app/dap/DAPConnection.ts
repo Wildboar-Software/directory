@@ -716,6 +716,7 @@ class DAPAssociation extends ClientAssociation {
         this.boundNameAndUID = outcome.boundNameAndUID;
         this.authLevel = outcome.authLevel;
         this.protocolVersion = arg_.versions?.[Versions_v2] ? 2 : 1;
+        this.clearances = outcome.clearances;
         if (
             ("basicLevels" in outcome.authLevel)
             && (outcome.authLevel.basicLevels.level === AuthenticationLevel_basicLevels_level_none)

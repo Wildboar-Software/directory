@@ -1,4 +1,4 @@
-import type { Context, Vertex } from "@wildboar/meerkat-types";
+import type { ClientAssociation, Context, Vertex } from "@wildboar/meerkat-types";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "asn1-ts";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
@@ -25,8 +25,9 @@ import type {
     AuthenticationLevel,
 } from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta";
 import preprocessTuples from "./preprocessTuples";
-import rdnToID from "../dit/rdnToID";
-import getVertexById from "../database/getVertexById";
+import accessControlSchemesThatUseRBAC from "./accessControlSchemesThatUseRBAC";
+import dnToVertex from "../dit/dnToVertex";
+import permittedToFindDseViaRbac from "./permittedToFindDseViaRbac";
 
 export
 interface PermittedToFindDSEReturn {
@@ -45,13 +46,18 @@ const ENTRY_NOT_FOUND: PermittedToFindDSEReturn = {
  * @summary Whether a user is permitted to find a given DSE.
  * @description
  *
- * Resolves a `boolean` indicating whether the user can discover a given DSE.
+ * Determines whether the user can discover a given DSE.
  * This function checks that every vertex from the top-level DSE down to the
  * target DSE can be discovered by the user.
  *
  * @param ctx The context object
  * @param assn The client association
- * @returns A `boolean` indicating whether the bound client may add a top-level DSE.
+ * @param root The root of the DIT to begin evaluating access
+ * @param needleDN The distinguished name whose discoverability is to be determined.
+ * @param user The name and UID of the user requesting access
+ * @param authLevel The authentication level of the user.
+ * @returns Information about the discoverability of the entry, including
+ *  whether it really exists or not.
  *
  * @function
  * @async
@@ -59,6 +65,7 @@ const ENTRY_NOT_FOUND: PermittedToFindDSEReturn = {
 export
 async function permittedToFindDSE (
     ctx: Context,
+    assn: ClientAssociation,
     root: Vertex,
     needleDN: DistinguishedName,
     user: NameAndOptionalUID | undefined | null,
@@ -72,8 +79,9 @@ async function permittedToFindDSE (
     let authorizedToDiscloseOnError: boolean = false;
 
     for (let i = 0; i < needleDN.length; i++) {
-        const id = await rdnToID(ctx, dse_i.dse.id, needleDN[i]);
-        if (!id) {
+        const rdn = needleDN[i];
+        const vertex = await dnToVertex(ctx, dse_i, [ rdn ]);
+        if (!vertex) {
             return ENTRY_NOT_FOUND;
         }
         accessControlScheme = (dse_i.dse.admPoint
@@ -81,18 +89,15 @@ async function permittedToFindDSE (
             : [ ...admPoints ])
                 .reverse()
                 .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-        const vertex = await getVertexById(ctx, dse_i, id);
-        if (!vertex) {
-            return ENTRY_NOT_FOUND;
-        }
         dse_i = vertex;
         if (dse_i.dse.admPoint?.accessControlScheme) {
             accessControlScheme = dse_i.dse.admPoint.accessControlScheme;
         }
-        if ( // Check if the user can actually access it.
-            accessControlScheme
-            && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-        ) {
+        if (!accessControlScheme) {
+            continue;
+        }
+        const acs = accessControlScheme.toString();
+        if (accessControlSchemesThatUseACIItems.has(acs)) {
             const childDN = getDistinguishedName(dse_i);
             const objectClasses = Array.from(dse_i.dse.objectClass).map(ObjectIdentifier.fromString);
             // Without this, all first-level DSEs are discoverable.
@@ -149,6 +154,17 @@ async function permittedToFindDSE (
                     exists: (i === (needleDN.length - 1)) || undefined,
                     permittedToFind: false,
                     discloseOnError: authorizedToDiscloseOnError,
+                };
+            }
+        }
+        if (accessControlSchemesThatUseRBAC.has(acs)) {
+            const authorized: boolean = await permittedToFindDseViaRbac(ctx, assn, dse_i);
+            if (!authorized) {
+                return {
+                    // We can't say with certainty that it does NOT exist unless we're on the last iteration.
+                    exists: (i === (needleDN.length - 1)) || undefined,
+                    permittedToFind: false,
+                    discloseOnError: false,
                 };
             }
         }

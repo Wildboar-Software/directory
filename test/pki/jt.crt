@@ -1,0 +1,54 @@
+Certificate:
+    Data:
+        Version: 1 (0x0)
+        Serial Number: 4672 (0x1240)
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: CN=god
+        Validity
+            Not Before: Aug 20 21:32:16 2023 GMT
+            Not After : Aug 17 21:32:16 2033 GMT
+        Subject: C=CA, CN=Justin Trudeau
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                RSA Public-Key: (1024 bit)
+                Modulus:
+                    00:a5:55:24:11:6e:ef:13:e6:4c:63:c7:9e:39:fd:
+                    da:59:9e:84:38:b3:f7:2e:f0:22:4d:96:8d:1f:af:
+                    c2:67:97:56:a2:4a:83:fe:ba:80:8f:42:25:c0:c4:
+                    dd:a4:e7:8f:53:34:b3:6d:b7:5b:21:82:c0:fa:3a:
+                    82:42:d6:05:b4:96:ec:2c:6e:31:cc:d7:1c:8a:8b:
+                    7c:5c:a5:3f:6e:d8:a8:94:ab:21:b8:7a:2a:3e:ba:
+                    8f:64:51:78:24:80:dc:a7:81:92:8f:9e:c2:7b:d0:
+                    30:91:4a:02:34:50:34:ec:67:72:3f:98:1a:7b:60:
+                    41:76:70:e2:74:cb:11:c6:27
+                Exponent: 65537 (0x10001)
+    Signature Algorithm: sha256WithRSAEncryption
+         01:fe:a9:5b:f5:fa:86:60:fc:f3:cf:c0:75:86:41:13:50:5e:
+         d0:1f:b1:07:51:fa:18:0f:a7:68:2f:e8:c3:1d:e4:a8:7f:15:
+         59:9b:19:77:ab:ee:fa:4e:76:99:73:d0:f6:01:09:99:13:8d:
+         3b:ce:cd:9f:e8:b2:90:55:e4:88:07:0d:f0:e4:25:98:af:0e:
+         a0:8f:f2:a0:06:41:c6:09:db:5b:03:67:c9:1e:9f:48:c8:25:
+         c5:1a:ce:23:63:59:fd:c6:01:e1:e6:18:fb:2d:86:f4:2c:5b:
+         54:53:52:41:c8:7a:38:40:b4:63:42:f8:03:13:ab:dd:25:95:
+         c1:e4:28:47:7c:f4:39:be:22:31:f2:45:1c:cb:cd:4c:f4:77:
+         96:c4:81:60:81:b9:d9:9c:33:e1:9e:28:44:16:8e:72:bf:16:
+         fb:9c:b9:37:ed:2c:e4:bc:bb:f0:55:8e:a1:21:15:2d:86:74:
+         3d:d5:c5:b1:68:9a:24:06:4c:cb:80:f6:6e:86:d9:b6:6b:75:
+         48:17:5d:da:86:7b:ff:35:05:a6:41:1a:eb:0e:5c:26:11:d8:
+         a2:02:15:73:b9:3b:2c:ca:dc:33:06:da:af:af:23:07:0b:12:
+         32:b9:3f:8d:32:06:ee:10:be:9d:9c:ca:51:79:47:38:e7:da:
+         5d:b9:0d:dc
+-----BEGIN CERTIFICATE-----
+MIICJTCCAQ0CAhJAMA0GCSqGSIb3DQEBCwUAMA4xDDAKBgNVBAMMA2dvZDAeFw0y
+MzA4MjAyMTMyMTZaFw0zMzA4MTcyMTMyMTZaMCYxCzAJBgNVBAYTAkNBMRcwFQYD
+VQQDDA5KdXN0aW4gVHJ1ZGVhdTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA
+pVUkEW7vE+ZMY8eeOf3aWZ6EOLP3LvAiTZaNH6/CZ5dWokqD/rqAj0IlwMTdpOeP
+UzSzbbdbIYLA+jqCQtYFtJbsLG4xzNcciot8XKU/btiolKshuHoqPrqPZFF4JIDc
+p4GSj57Ce9AwkUoCNFA07GdyP5gae2BBdnDidMsRxicCAwEAATANBgkqhkiG9w0B
+AQsFAAOCAQEAAf6pW/X6hmD888/AdYZBE1Be0B+xB1H6GA+naC/owx3kqH8VWZsZ
+d6vu+k52mXPQ9gEJmRONO87Nn+iykFXkiAcN8OQlmK8OoI/yoAZBxgnbWwNnyR6f
+SMglxRrOI2NZ/cYB4eYY+y2G9CxbVFNSQch6OEC0Y0L4AxOr3SWVweQoR3z0Ob4i
+MfJFHMvNTPR3lsSBYIG52Zwz4Z4oRBaOcr8W+5y5N+0s5Ly78FWOoSEVLYZ0PdXF
+sWiaJAZMy4D2bobZtmt1SBdd2oZ7/zUFpkEa6w5cJhHYogIVc7k7LMrcMwbar68j
+BwsSMrk/jTIG7hC+nZzKUXlHOOfaXbkN3A==
+-----END CERTIFICATE-----

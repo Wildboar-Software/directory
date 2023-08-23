@@ -1,7 +1,7 @@
 # Conformance
 
-In the statements below, the term "Meerkat DSA" refers to version 3.0.0 of
-Meerkat DSA, hence these statements are only claimed for version 3.0.0 of
+In the statements below, the term "Meerkat DSA" refers to version 3.1.0 of
+Meerkat DSA, hence these statements are only claimed for version 3.1.0 of
 Meerkat DSA.
 
 ## X.519 Conformance Statement
@@ -334,7 +334,7 @@ Meerkat DSA supports management of the DSA Information Tree.
 
 #### X. Rule-Based Access Control
 
-Meerkat DSA **does not** support Rule-Based Access Control.
+Meerkat DSA fully supports Rule-Based Access Control (RBAC).
 
 #### Y. Integrity of Directory Operations
 
@@ -375,7 +375,6 @@ Meerkat DSA conforms to the static requirements described in ITU Recommendation
 X.519 (2019), Section 13.2.2, with the following exceptions:
 
 - Meerkat DSA does not support the `multiStrand` family grouping described in X.511 7.3.2.
-- Meerkat DSA does not support Rule-Based Access Control
 
 In addition to this, Meerkat DSA conforms in the following respects:
 
@@ -509,3 +508,4 @@ X.519 (2019), Section 13.4.2, including providing support for the
 Meerkat DSA conforms to the dynamic requirements described in ITU Recommendation
 X.519 (2019), Section 13.4.3. The mapping of application contexts onto OSI
 services is conformant, and has been tested against Quipu and ISODE DUAs.
+s

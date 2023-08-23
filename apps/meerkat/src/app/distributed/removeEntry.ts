@@ -51,7 +51,7 @@ import {
 import getRelevantSubentries from "../dit/getRelevantSubentries";
 import type ACDFTuple from "@wildboar/x500/src/lib/types/ACDFTuple";
 import type ACDFTupleExtended from "@wildboar/x500/src/lib/types/ACDFTupleExtended";
-import bacACDF, {
+import {
     PERMISSION_CATEGORY_REMOVE,
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 import getACDFTuplesFromACIItem from "@wildboar/x500/src/lib/bac/getACDFTuplesFromACIItem";
@@ -105,7 +105,6 @@ import {
     UpdateProblem_notAllowedOnNonLeaf,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/UpdateProblem.ta";
 import getACIItems from "../authz/getACIItems";
-import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
 import getRelevantOperationalBindings from "../dop/getRelevantOperationalBindings";
 import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs";
 import updateSuperiorDSA from "../dop/updateSuperiorDSA";
@@ -135,6 +134,7 @@ import {
     SubordinateChanges,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SubordinateChanges.ta";
 import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh";
+import { acdf } from "../authz/acdf";
 
 const PARENT: string = id_oc_parent.toString();
 const CHILD: string = id_oc_child.toString();
@@ -272,10 +272,7 @@ async function removeEntry (
     const accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
         .reverse()
         .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-    if (
-        accessControlScheme
-        && accessControlSchemesThatUseACIItems.has(accessControlScheme.toString())
-    ) {
+    if (accessControlScheme) {
         const relevantACIItems = await getACIItems(
             ctx,
             accessControlScheme,
@@ -297,13 +294,17 @@ async function removeEntry (
             isMemberOfGroup,
             NAMING_MATCHER,
         );
-        const { authorized: authorizedToRemoveEntry } = bacACDF(
+        const authorizedToRemoveEntry = acdf(
+            ctx,
+            accessControlScheme,
+            assn,
+            target,
+            [ PERMISSION_CATEGORY_REMOVE ],
             relevantTuples,
             user,
             {
                 entry: Array.from(target.dse.objectClass).map(ObjectIdentifier.fromString),
             },
-            [ PERMISSION_CATEGORY_REMOVE ],
             bacSettings,
             true,
         );
