@@ -1,6 +1,6 @@
 image:
   repository: ghcr.io/wildboar-software/meerkat-dsa
-  pullPolicy: Always # TODO: Change this to IfNotPresent after Beta is over.
+  pullPolicy: IfNotPresent
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
@@ -114,6 +114,7 @@ bulk_insert_mode: false
 chaining_check_sig: true
 chaining_sign_requests: true
 chaining_tls_optional: false
+# clearance_authorities: /path/to/trust-anchor-list.pem
 default_entry_ttl: 60
 # ecdh_curves: P-521:P-384:P-256
 enable_dap: true
@@ -122,6 +123,9 @@ enable_dop: true
 enable_dsp: true
 entries_per_subordinates_page: 100
 forbid_anonymous_bind: false
+get_clearances_from_attr_certs: true
+get_clearances_from_dsait: true
+get_clearances_from_pkc: true
 honor_cipher_order: true
 idm_buffer_size: "1000000"
 idm_port: 4632
@@ -137,6 +141,7 @@ itot_abort_timeout_in_seconds: 3
 itot_max_presentation_contexts: 10
 # itot_acse_password: banana
 disable_itot_chaining: false
+# labelling_authorities: /path/to/trust-anchor-list.pem
 lcr_parallelism: 0
 ldap_buffer_size: "1000000"
 ldap_port: 389
