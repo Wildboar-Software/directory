@@ -275,12 +275,10 @@ absence of information, but it may also indicate that the labeled thing is not
 important enough to have labeled properly in the first place, hence, it lies
 between total declassification and the "restricted" classification.
 
-:::caution
-
 The Simple Security Policy does not treat reads and writes differently: if
 access is granted to read an entry, access is also granted to modify an entry.
-
-:::
+There is an exception, however: any modification operation that affects a value
+with security labels MUST be performed with top-secret clearance.
 
 :::note
 
@@ -389,3 +387,70 @@ For security reasons, only DAP and LDAP associations will have any clearances
 associated: this is so that downstream DSAs do not make access control decisions
 on the basis of the upstream DSA's clearances rather than the originating DAP
 requester when chaining is used.
+
+### Users with No Clearance
+
+Users with no clearances at all will automatically be given access only to
+attribute values having a security label with a class of `unclassified`.
+
+### Invalid Hashes, Untrusted Labels, and Untrusted Labelling Authorities
+
+In Meerkat DSA, an invalid hash, invalid signature, or untrusted labelling
+authority having issued a security label will make the security label
+inaccessible to all users not having top-secret clearance for the identified
+security policy.
+
+:::info
+
+When establishing the above behavior, I had--broadly speaking--two choices:
+
+1. Generally allow access (with possible caveats) when a security label is
+   invalid for some reason.
+2. Generally deny access (with possible caveats) when a security label is
+   invalid for some reason.
+
+If I chose option 1, there would be a risk of disclosing classified information
+as a result of accidentally malformed labels or bugs in the DER encoding,
+hashing, or signing. If I chose option 2, there would be a risk of nefarious
+users either creating illegitimate labels or copying otherwise legitimate
+labels from correct values to cripple directory access to legitimate users.
+
+I chose option 2 for these reasons:
+
+1. Not all malformed labels are malicious; some are produced by accident, and
+   the risk of accidentally disclosing classified information could be much
+   greater than temporarily having lost access to part of the directory.
+2. Since labelled values are generally going to be created by people that
+   already have clearance for that information, there would be no immediate
+   feedback to indicate that something was wrong if access were granted for
+   invalid labels; the value would still appear to that user as expected. By
+   restricting access for invalid labels, there may be a visible consequence
+   that users can seek to rectify.
+3. There is no real way to know if a label is valid until you submit it to
+   Meerkat DSA. This means that users would have to add the classified
+   information to Meerkat DSA, then determine if the labels are valid after the
+   fact being checking if the classified information is disclosed to
+   unauthorized users.
+4. At least with the Simple Security Policy, modifying security labels in the
+   first place is only granted to users with top-secret clearance.
+
+:::
+
+Note that, as a result of the above, changing the configured
+[labelling authorities](./env.md#meerkat_labelling_authorities) could invalidate
+existing security labels, making values "disappear" to users that would
+otherwise have access to them.
+
+### Unrecognized Policies
+
+When Meerkat DSA encounters an unrecognized policy on a security label, it
+only grants access to the protected value if the label indicates that the
+item is `unclassified` or if the user has top-secret clearance.
+
+### Multiple Security Labels
+
+[ITU Recommendation X.501 (2019)](https://www.itu.int/rec/T-REC-X.501/en)
+mandates a limit of one security label context per value. Meerkat DSA does not
+enforce this. The behavior of Meerkat DSA in the presence of multiple security
+labels for a given value will remain undefined, but it usually results in the
+first one being used exclusively, and the remainder ignored.
