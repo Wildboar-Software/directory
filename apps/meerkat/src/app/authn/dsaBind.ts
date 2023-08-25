@@ -65,6 +65,7 @@ import {
     _encode_Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import { strict as assert } from "assert";
+import attemptSPKMAuth from "./attemptSPKMAuth";
 
 /**
  * @summary X.500 Directory System Protocol (DSP) bind operation
@@ -396,6 +397,15 @@ async function bind (
             localQualifierPoints,
             source,
             socket,
+        );
+    } else if ("spkm" in arg.credentials) {
+        return attemptSPKMAuth(
+            ctx,
+            DSABindError,
+            arg.credentials.spkm,
+            localQualifierPoints,
+            signErrors,
+            source,
         );
     } else {
         throw new DSABindError(
