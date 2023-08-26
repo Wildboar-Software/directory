@@ -243,7 +243,7 @@ function createReverseAuth (ctx: Context, requester: DistinguishedName): StrongC
     return new StrongCredentials(
         certPath,
         token,
-        requester,
+        certPath.userCertificate.toBeSigned.subject.rdnSequence,
         ctx.config.authn.attributeCertificationPath,
     );
 }
