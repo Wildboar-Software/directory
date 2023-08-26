@@ -116,6 +116,7 @@ async function success (
     certPath: CertificationPath,
     vertex: Vertex | undefined,
     req: REQ_TOKEN,
+    no_reply: boolean = false,
 ): Promise<BindReturn> {
     const unique_id = vertex && await read_unique_id(ctx, vertex);
     const clearances = vertex
@@ -141,14 +142,16 @@ async function success (
     const dn = vertex
         ? getDistinguishedName(vertex)
         : certPath.userCertificate.toBeSigned.subject.rdnSequence;
-    const spkmReply = generateSpkmReply(
-        ctx,
-        req.req_contents.context_id,
-        req.req_contents.src_name,
-        req.req_contents.randSrc,
-        req.req_contents.req_data,
-        req.req_contents.validity,
-    );
+    const spkmReply = !no_reply
+        ? generateSpkmReply(
+            ctx,
+            req.req_contents.context_id,
+            req.req_contents.src_name,
+            req.req_contents.randSrc,
+            req.req_contents.req_data,
+            req.req_contents.validity,
+        )
+        : undefined;
     return {
         boundVertex: vertex,
         boundNameAndUID: new NameAndOptionalUID(
@@ -219,7 +222,7 @@ async function attemptSPKMAuth (
     localQualifierPoints: number,
     signErrors: boolean,
     source: string,
-    // socket: Socket | TLSSocket,
+    no_reply: boolean = false,
 ): Promise<BindReturn> {
     if (!("req" in creds)) {
         throw new MistypedArgumentError(ctx.i18n.t("err:client_sent_spkm_rep"));
@@ -377,7 +380,7 @@ async function attemptSPKMAuth (
                 signErrors,
             );
         }
-        return success(ctx, localQualifierPoints, certPath, attemptedVertex, req.requestToken);
+        return success(ctx, localQualifierPoints, certPath, attemptedVertex, req.requestToken, no_reply);
     } else if (ctx.config.authn.lookupPkiPathForUncertifiedStrongAuth && attemptedVertex) {
         const values = await readValuesOfType(ctx, attemptedVertex, pkiPath["&id"]);
         for (const value of values) {
@@ -407,7 +410,7 @@ async function attemptSPKMAuth (
                     signErrors,
                 );
                 if (verifyResult.returnCode === VCP_RETURN_OK) {
-                    return success(ctx, localQualifierPoints, certPath, attemptedVertex, req.requestToken);
+                    return success(ctx, localQualifierPoints, certPath, attemptedVertex, req.requestToken, no_reply);
                 }
             } catch {
                 continue;

@@ -403,5 +403,11 @@
     "verify_attr_cert@ocsp_other": "Attribute certification path asserted by {{host}} could not be verified due to an error in checking OCSP.",
     "verify_attr_cert@ocsp_revoked": "Attribute certification path asserted by {{host}} was revoked according to OCSP.",
     "attr_cert_path_not_verified": "Attribute certification path asserted by {{host}} was not verified, because it contained no clearance attributes.",
-    "attr_cert_path_unsupported": "Attribute certification path asserted by {{host}} could not be verified because it uses a delegation path. Meerkat DSA only supports verifying a single, directly-issued attribute certificate."
+    "attr_cert_path_unsupported": "Attribute certification path asserted by {{host}} could not be verified because it uses a delegation path. Meerkat DSA only supports verifying a single, directly-issued attribute certificate.",
+    "ae_title_mismatch": "Responding AE title does not match the called AE title.",
+    "reverse_dsa_bind_auth_unacceptable": "Reverse DSA bind credentials were unacceptable: simple authentication may not be used.",
+    "reverse_dsa_bind_established_no_bound_dn": "Reverse DSA bind credentials did not establish a bound DN.",
+    "reverse_dsa_bind_bound_name_mismatch": "Remote DSA's bound name does not match the requested AE title.",
+    "reverse_dsa_bind_auth_fail": "Reverse DSA bind credentials are invalid.",
+    "reverse_dsa_bind_other_err": "Reverse DSA bind failed: {{e}}"
 }

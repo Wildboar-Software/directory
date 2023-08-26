@@ -277,6 +277,7 @@ async function attemptStrongAuth (
     localQualifierPoints: number,
     source: string,
     socket: Socket | TLSSocket,
+    no_reply: boolean = false,
 ): Promise<BindReturn> {
     // NOTE: This was copied from `apps/meerkat/src/app/dap/bind.ts`
     const {
@@ -424,7 +425,7 @@ async function attemptStrongAuth (
                     );
                     clearances.push(...attrCertClearances);
                 }
-                const reverseCreds = createReverseAuth(ctx, name ?? effectiveName);
+                const reverseCreds = !no_reply && createReverseAuth(ctx, name ?? effectiveName);
                 return {
                     boundVertex: foundEntry,
                     boundNameAndUID: new NameAndOptionalUID(
@@ -537,7 +538,7 @@ async function attemptStrongAuth (
                     );
                     clearances.push(...attrCertClearances);
                 }
-                const reverseCreds = createReverseAuth(ctx, name);
+                const reverseCreds = !no_reply && createReverseAuth(ctx, name);
                 return {
                     boundVertex: attemptedVertex,
                     boundNameAndUID: new NameAndOptionalUID(

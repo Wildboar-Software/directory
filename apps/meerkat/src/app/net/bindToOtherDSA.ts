@@ -30,7 +30,7 @@ import {
     DSABindArgument,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindArgument.ta";
 import { versions } from "../versions";
-import { naddrToURI } from "@wildboar/x500";
+import { compareDistinguishedName, compareGeneralName, compareName, naddrToURI } from "@wildboar/x500";
 import { BOOLEAN, OBJECT_IDENTIFIER } from "asn1-ts";
 import {
     AccessPoint,
@@ -39,6 +39,8 @@ import {
     ClientAssociation,
     AbandonError,
     OperationInvocationInfo,
+    DSABindError,
+    BindReturn,
 } from "@wildboar/meerkat-types";
 import createSecurityParameters from "../x500/createSecurityParameters";
 import {
@@ -50,7 +52,7 @@ import {
 import {
     abandoned,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/abandoned.oa";
-import { ROSETransport, AsyncROSEClient } from "@wildboar/rose-transport";
+import { ROSETransport, AsyncROSEClient, AbortReason } from "@wildboar/rose-transport";
 import { createStrongCredentials } from "../authn/createStrongCredentials";
 import getCredentialsForNSAP from "./getCredentialsForNSAP";
 import { DSACredentials } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSACredentials.ta";
@@ -61,8 +63,11 @@ import { Socket, createConnection } from "node:net";
 import { connect as tlsConnect, TLSSocket } from "node:tls";
 import isDebugging from "is-debugging";
 import stringifyDN from "../x500/stringifyDN";
-import { DSABindResult } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindResult.ta";
+import { DSABindResult, _decode_DSABindResult } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindResult.ta";
 import { createWriteStream } from "node:fs";
+import attemptSPKMAuth from "../authn/attemptSPKMAuth";
+import { attemptStrongAuth } from "../authn/attemptStrongAuth";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 
 const DEFAULT_CONNECTION_TIMEOUT_IN_MS: number = 15 * 1000;
 
@@ -97,6 +102,7 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
     signErrors: boolean = false,
     timeLimit: number | Date = 30_000,
 ): Promise<ClientType | null> {
+    const called_ae_title = stringifyDN(ctx, accessPoint.ae_title.rdnSequence);
     const logInfo = {
         protocol_id: protocol_id.toString(),
         association_id: assn?.id,
@@ -387,6 +393,20 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
             continue;
         }
 
+        const source: string = `${socket.remoteFamily}:${socket.remoteAddress}:${socket.remotePort}`;
+        const tlsProtocol: string | null = rose.socket && ("getProtocol" in rose.socket)
+            ? rose.socket.getProtocol()
+            : null;
+        const localQualifierPoints: number = (
+            0
+            + ((socket instanceof TLSSocket) ? ctx.config.localQualifierPointsFor.usingTLS : 0)
+            + ((tlsProtocol === "SSLv3") ? ctx.config.localQualifierPointsFor.usingSSLv3 : 0)
+            + ((tlsProtocol === "TLSv1") ? ctx.config.localQualifierPointsFor.usingTLSv1_0 : 0)
+            + ((tlsProtocol === "TLSv1.1") ? ctx.config.localQualifierPointsFor.usingTLSv1_1 : 0)
+            + ((tlsProtocol === "TLSv1.2") ? ctx.config.localQualifierPointsFor.usingTLSv1_2 : 0)
+            + ((tlsProtocol === "TLSv1.3") ? ctx.config.localQualifierPointsFor.usingTLSv1_3 : 0)
+        );
+
         const c: ClientType = client_getter(rose);
         const strongCredData = createStrongCredentials(ctx, accessPoint.ae_title.rdnSequence);
         if (!strongCredData) {
@@ -430,6 +450,86 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
                 ctx.log.debug(ctx.i18n.t("log:bind_result_received", {
                     url: uriString,
                 }), logInfo);
+                const namingMatcher = getNamingMatcherGetter(ctx);
+                try {
+                    // Because of the way the ROSE client works, I don't think
+                    // you can verify that protocol_id matches what was sent.
+                    // if (bind_response.result.protocol_id) {}
+
+                    // TODO: Should this be enforced at all?
+                    if (
+                        bind_response.result.responding_ae_title
+                        && !compareGeneralName(
+                            bind_response.result.responding_ae_title,
+                            { directoryName: accessPoint.ae_title },
+                            namingMatcher
+                        )
+                    ) {
+                        ctx.log.warn(ctx.i18n.t("log:ae_title_mismatch"), logInfo);
+                        rose.write_abort(AbortReason.authentication_failure);
+                        return null;
+                    }
+                    const result = bind_response.result.parameter;
+                    if (result.credentials) {
+                        let reverse_bind_outcome!: BindReturn | undefined;
+                        if ("strong" in result.credentials) {
+                            reverse_bind_outcome = await attemptStrongAuth(
+                                ctx,
+                                DSABindError,
+                                result.credentials.strong,
+                                signErrors,
+                                localQualifierPoints,
+                                source,
+                                rose.socket ?? socket,
+                            );
+                        }
+                        else if ("spkm" in result.credentials) {
+                            reverse_bind_outcome = await attemptSPKMAuth(
+                                ctx,
+                                DSABindError,
+                                result.credentials.spkm,
+                                localQualifierPoints,
+                                signErrors,
+                                source,
+                                true,
+                            );
+                        // TODO: Support external authentication
+                        } else { // as in simple or externalProcedure
+                            // Not an acceptable auth method.
+                            ctx.log.warn(ctx.i18n.t("log:reverse_dsa_bind_auth_unacceptable"), logInfo);
+                            rose.write_abort(AbortReason.authentication_mechanism_name_not_recognized);
+                            return null;
+                        }
+                        if (!reverse_bind_outcome.boundNameAndUID?.dn) {
+                            ctx.log.warn(ctx.i18n.t("log:reverse_dsa_bind_established_no_bound_dn"), logInfo);
+                            rose.write_abort(AbortReason.authentication_failure);
+                            return null;
+                        }
+                        const bound_name_matches_ae_title: boolean = compareDistinguishedName(
+                            reverse_bind_outcome.boundNameAndUID.dn,
+                            accessPoint.ae_title.rdnSequence,
+                            namingMatcher,
+                        );
+                        if (!bound_name_matches_ae_title) {
+                            ctx.log.warn(ctx.i18n.t("log:reverse_dsa_bind_bound_name_mismatch"), logInfo);
+                            rose.write_abort(AbortReason.authentication_failure);
+                            return null;
+                        }
+                    } // TODO: else if !ctx.config.requireMutualAuth, throw / continue, etc.
+                } catch (e) {
+                    if ((e instanceof TypeError) || (e instanceof RangeError)) {
+                        ctx.log.warn(ctx.i18n.t("log:reverse_dsa_bind_other_err", {e}), logInfo);
+                        rose.write_abort(AbortReason.mistyped_pdu);
+                    } else if (e instanceof DSABindError) {
+                        ctx.log.warn(ctx.i18n.t("log:reverse_dsa_bind_auth_fail"), logInfo);
+                        rose.write_abort(AbortReason.authentication_failure);
+                    } else {
+                        ctx.log.warn(ctx.i18n.t("log:reverse_dsa_bind_other_err", {e}), logInfo);
+                        rose.write_abort(AbortReason.other);
+                    }
+                    return null;
+                }
+                // TODO: Verify that `versions` is acceptable.
                 break;
             } else if ("error" in bind_response) {
                 ctx.log.debug(ctx.i18n.t("log:bind_error_received", {
