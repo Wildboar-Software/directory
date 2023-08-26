@@ -1639,6 +1639,13 @@ interface Configuration {
      */
     principledServiceAdministration: boolean;
 
+    /**
+     * Whether Meerkat DSA should require mutual authentication when binding
+     * to other DSAs; if the other DSA does not return valid credentials in the
+     * `DSABindResult`, the association is immediately aborted.
+     */
+    requireMutualAuth: boolean;
+
     xr: CrossReferencesOptions;
 
     authn: AuthenticationConfiguration;

@@ -409,5 +409,6 @@
     "reverse_dsa_bind_established_no_bound_dn": "Reverse DSA bind credentials did not establish a bound DN.",
     "reverse_dsa_bind_bound_name_mismatch": "Remote DSA's bound name does not match the requested AE title.",
     "reverse_dsa_bind_auth_fail": "Reverse DSA bind credentials are invalid.",
-    "reverse_dsa_bind_other_err": "Reverse DSA bind failed: {{e}}"
+    "reverse_dsa_bind_other_err": "Reverse DSA bind failed: {{e}}",
+    "reverse_dsa_bind_auth_required": "The DSA bind result did not include credentials, but the local DSA requires mutual authentication."
 }

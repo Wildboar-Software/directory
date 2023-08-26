@@ -515,7 +515,11 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
                             rose.write_abort(AbortReason.authentication_failure);
                             return null;
                         }
-                    } // TODO: else if !ctx.config.requireMutualAuth, throw / continue, etc.
+                    } else if (ctx.config.requireMutualAuth) {
+                        ctx.log.warn(ctx.i18n.t("log:reverse_dsa_bind_auth_required"), logInfo);
+                        rose.write_abort(AbortReason.authentication_required);
+                        return null;
+                    }
                 } catch (e) {
                     if ((e instanceof TypeError) || (e instanceof RangeError)) {
                         ctx.log.warn(ctx.i18n.t("log:reverse_dsa_bind_other_err", {e}), logInfo);
