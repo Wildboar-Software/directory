@@ -24,6 +24,13 @@ import {
     StrongCredentials,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/StrongCredentials.ta";
 import {
+    CertificationData,
+    SPKM_REQ,
+} from "@wildboar/x500/src/lib/modules/SpkmGssTokens/SPKM-REQ.ta";
+import {
+    REQ_TOKEN, Req_contents, _encode_Req_contents,
+} from "@wildboar/x500/src/lib/modules/SpkmGssTokens/REQ-TOKEN.ta";
+import {
     Token,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Token.ta";
 import {
@@ -43,7 +50,7 @@ import generateSimpleCredsValidity from "../utils/generateSimpleCredsValidity";
 import { dap_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
 import { strict as assert } from "assert";
 import { DER } from "asn1-ts/dist/node/functional";
-import { OBJECT_IDENTIFIER, unpackBits } from "asn1-ts";
+import { OBJECT_IDENTIFIER, TRUE_BIT, unpackBits } from "asn1-ts";
 import {
     CertificationPath,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
@@ -53,7 +60,92 @@ import {
 import { KeyObject, sign, createSign } from "node:crypto";
 import { getAlgorithmInfoFromKey } from "../crypto/getAlgorithmInfoFromKey";
 import { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import { addSeconds } from "date-fns";
+import { addSeconds, addYears } from "date-fns";
+import { Name } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/Name.ta";
+import { Context_Data } from "@wildboar/x500/src/lib/modules/SpkmGssTokens/Context-Data.ta";
+import { Validity } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/Validity.ta";
+import {
+    CertificationPath as SpkmCertificationPath,
+} from "@wildboar/x500/src/lib/modules/SpkmGssTokens/CertificationPath.ta";
+
+// I created this function for testing SPKM auth. Tested and works.
+// I am keeping this around in case I want to integrate it later.
+function createSpkmCreds (
+    certPath: CertificationPath,
+    signingKey: KeyObject,
+    targ_name: Name,
+): SPKM_REQ | null {
+    const subjectName = certPath.userCertificate.toBeSigned.subject;
+    const alg_info = getAlgorithmInfoFromKey(signingKey);
+    if (!alg_info) {
+        return null;
+    }
+    const req_contents = new Req_contents(
+        256,
+        unpackBits(crypto.randomBytes(4)),
+        new Uint8ClampedArray([ TRUE_BIT ]),
+        new Date(),
+        unpackBits(crypto.randomBytes(4)),
+        targ_name,
+        subjectName,
+        new Context_Data(
+            undefined,
+            undefined,
+            new Uint8ClampedArray([
+
+            ]),
+            {
+                null_: null,
+            },
+            [],
+            [],
+        ),
+        new Validity(
+            { generalizedTime: new Date() },
+            { generalizedTime: addYears(new Date(), 1) },
+        ),
+        [],
+        undefined,
+        undefined,
+    );
+
+    const [ sig_alg_id, hash_str ] = alg_info;
+    const tbs_bytes = _encode_Req_contents(req_contents, DER).toBytes();
+    let token: REQ_TOKEN | undefined;
+    if (hash_str) {
+        const signer = createSign(hash_str);
+        signer.update(tbs_bytes);
+        const signature = signer.sign(signingKey);
+        token = new REQ_TOKEN(
+            req_contents,
+            sig_alg_id,
+            unpackBits(signature),
+        );
+    } else {
+        const signature = sign(null, tbs_bytes, signingKey);
+        token = new REQ_TOKEN(
+            req_contents,
+            sig_alg_id,
+            unpackBits(signature),
+        );
+    }
+    if (!token) {
+        return null;
+    }
+    return new SPKM_REQ(
+        token,
+        new CertificationData(
+            new SpkmCertificationPath(
+                undefined,
+                certPath.userCertificate,
+                undefined,
+                undefined,
+                certPath.theCACertificates,
+            ),
+        ),
+        undefined,
+    );
+}
 
 export
 async function connect (
@@ -138,6 +230,10 @@ async function connect (
     const eeCert = certPath?.userCertificate;
     const idm = new IDMConnection(socket);
     { // Bind
+        // const spkmCreds = certPath
+        //     && signingKey
+        //     && aeTitle
+        //     && createSpkmCreds(certPath, signingKey, { rdnSequence: aeTitle });
         const credentials: Credentials = token
             ? {
                 strong: new StrongCredentials(
@@ -146,6 +242,9 @@ async function connect (
                     eeCert?.toBeSigned.subject.rdnSequence,
                     attrCertPath,
                 ),
+                // spkm: {
+                //     req: spkmCreds,
+                // }
             }
             : {
                 simple: new SimpleCredentials(
