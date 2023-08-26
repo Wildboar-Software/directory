@@ -68,10 +68,6 @@ bind operation for a given protocol.
 
 :::
 
-## Required
-
-
-
 ## DATABASE_URL
 
 **Required**. A database URL indicating the database to which Meerkat DSA must
@@ -1011,6 +1007,15 @@ To disable this behavior entirely, set this to `0`. Otherwise, this defaults to
 
 The MRU vertex is cached whenever a `removeEntry` or `modifyDN` operation is
 performed, since these can invalidate the cache.
+
+## MEERKAT_MUTUAL_AUTH_OPTIONAL
+
+If set to `1`, mutual authentication becomes optional when Meerkat DSA binds to
+other DSAs. If the remote DSA responds with a bind result containing no
+credentials, the DSA will be trusted by fiat. If the remote DSA responds with
+a bind result containing credentials, these credentials will be checked for
+validity, but if they are invalid, the association will not be aborted as it
+otherwise would.
 
 ## MEERKAT_MY_ACCESS_POINT_NSAPS
 

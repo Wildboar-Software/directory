@@ -1,7 +1,7 @@
 # Conformance
 
-In the statements below, the term "Meerkat DSA" refers to version 3.1.0 of
-Meerkat DSA, hence these statements are only claimed for version 3.1.0 of
+In the statements below, the term "Meerkat DSA" refers to version 3.2.0 of
+Meerkat DSA, hence these statements are only claimed for version 3.2.0 of
 Meerkat DSA.
 
 ## X.519 Conformance Statement
@@ -62,7 +62,7 @@ Directory Access Protocol (DAP).
 | Yes        | Simple          |
 | Yes        | Strong          |
 | No         | External        |
-| No         | SPKM            |
+| Yes        | SPKM            |
 | No         | SASL            |
 
 Meerkat DSA supports simple authentication:
@@ -88,7 +88,7 @@ Directory System Protocol (DSP).
 | Yes        | Simple          |
 | Yes        | Strong          |
 | No         | External        |
-| No         | SPKM            |
+| Yes        | SPKM            |
 
 Meerkat DSA supports simple authentication:
 
@@ -508,4 +508,3 @@ X.519 (2019), Section 13.4.2, including providing support for the
 Meerkat DSA conforms to the dynamic requirements described in ITU Recommendation
 X.519 (2019), Section 13.4.3. The mapping of application contexts onto OSI
 services is conformant, and has been tested against Quipu and ISODE DUAs.
-s
