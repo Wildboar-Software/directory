@@ -760,7 +760,7 @@ class DAPAssociation extends ClientAssociation {
         }
         this.pwdReset = (outcome.pwdResponse?.error === PwdResponseValue_error_changeAfterReset);
         const bindResult = new DirectoryBindResult(
-            undefined, // TODO: Supply return credentials. NOTE that the specification says that this must be the same CHOICE that the user supplied.
+            outcome.reverseCredentials,
             versions,
             outcome.pwdResponse,
         );

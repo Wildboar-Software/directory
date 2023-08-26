@@ -1,13 +1,13 @@
 import { MeerkatContext } from "../ctx";
 import { Context, BindReturn, MistypedArgumentError, Vertex, DirectoryBindError, DSABindError } from "@wildboar/meerkat-types";
-import { REQ_TOKEN } from "@wildboar/x500/src/lib/modules/SpkmGssTokens/SPKM-REQ.ta";
+import { CertificationData, REQ_TOKEN } from "@wildboar/x500/src/lib/modules/SpkmGssTokens/SPKM-REQ.ta";
 import { verifyAnyCertPath } from "../pki/verifyAnyCertPath";
 import { VCP_RETURN_OK, VerifyCertPathResult } from "../pki/verifyCertPath";
-import { SpkmCredentials } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SpkmCredentials.ta";
+import { SPKM_REP_TI, SpkmCredentials } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SpkmCredentials.ta";
 import { differenceInSeconds } from "date-fns";
 import { compareName, getDateFromTime } from "@wildboar/x500";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
-import { DERElement, TRUE_BIT, packBits } from "asn1-ts";
+import { BIT_STRING, DERElement, TRUE_BIT, packBits, unpackBits } from "asn1-ts";
 import {
     Options_delegation_state,
     Options_sequence_state,
@@ -18,6 +18,8 @@ import {
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
 import { verifySignature } from "../pki/verifyCertPath";
 import {
+    Context_Data,
+    Validity,
     _encode_Req_contents,
 } from "@wildboar/x500/src/lib/modules/SpkmGssTokens/Req-contents.ta";
 import { DER } from "asn1-ts/dist/node/functional";
@@ -39,15 +41,81 @@ import {
     DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as DirectoryBindErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
 import { SecurityProblem_invalidCredentials, SecurityProblem_unsupportedAuthenticationMethod } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
-import { Socket } from "node:net";
-import { TLSSocket } from "node:tls";
 import { ServiceProblem_unwillingToPerform } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
+import { REP_TI_TOKEN, Rep_ti_contents, _encode_Rep_ti_contents } from "@wildboar/x500/src/lib/modules/SpkmGssTokens/REP-TI-TOKEN.ta";
+import { randomBytes } from "node:crypto";
+import { generateSignature } from "../pki/generateSignature";
+
+function generateSpkmReply (
+    ctx: Context,
+    req_context_id: BIT_STRING,
+    src_name: Name | undefined,
+    randSrc: BIT_STRING,
+    src_context_data: Context_Data,
+    validity: Validity | undefined,
+): SPKM_REP_TI | null {
+    const certPath = ctx.config.signing.certPath;
+    if (!certPath?.length) {
+        return null;
+    }
+    if (!ctx.config.signing.key) {
+        return null;
+    }
+    const eeCert = certPath[certPath.length - 1];
+    const new_context_id = unpackBits(Buffer.concat([
+        packBits(req_context_id),
+        randomBytes(4),
+    ]));
+
+    const contents = new Rep_ti_contents(
+        512,
+        new_context_id,
+        new Uint8ClampedArray([ TRUE_BIT ]),
+        new Date(),
+        unpackBits(randomBytes(8)),
+        src_name,
+        ctx.dsa.accessPoint.ae_title,
+        randSrc,
+        src_context_data,
+        validity,
+        undefined,
+        undefined,
+    );
+    const bytes = _encode_Rep_ti_contents(contents, DER).toBytes();
+    const sigOrNot = generateSignature(ctx.config.signing.key, bytes);
+    if (!sigOrNot) {
+        return null;
+    }
+    const [ alg, sig ] = sigOrNot;
+
+    const token = new REP_TI_TOKEN(
+        contents,
+        alg,
+        unpackBits(sig),
+    );
+    return new SPKM_REP_TI(
+        token,
+        new CertificationData(
+            new CertificationPath(
+                eeCert,
+                [ ...certPath ]
+                    .slice(0, -1)
+                    .reverse()
+                    .map((cert) => new CertificatePair(
+                        cert,
+                        undefined,
+                    )),
+            ),
+        ),
+    );
+}
 
 async function success (
     ctx: Context,
     localQualifierPoints: number,
     certPath: CertificationPath,
-    vertex?: Vertex
+    vertex: Vertex | undefined,
+    req: REQ_TOKEN,
 ): Promise<BindReturn> {
     const unique_id = vertex && await read_unique_id(ctx, vertex);
     const clearances = vertex
@@ -73,6 +141,14 @@ async function success (
     const dn = vertex
         ? getDistinguishedName(vertex)
         : certPath.userCertificate.toBeSigned.subject.rdnSequence;
+    const spkmReply = generateSpkmReply(
+        ctx,
+        req.req_contents.context_id,
+        req.req_contents.src_name,
+        req.req_contents.randSrc,
+        req.req_contents.req_data,
+        req.req_contents.validity,
+    );
     return {
         boundVertex: vertex,
         boundNameAndUID: new NameAndOptionalUID(
@@ -87,6 +163,13 @@ async function success (
             ),
         },
         clearances,
+        reverseCredentials: spkmReply
+            ? {
+                spkm: {
+                    rep: spkmReply,
+                },
+            }
+            : undefined,
     };
 }
 
@@ -294,7 +377,7 @@ async function attemptSPKMAuth (
                 signErrors,
             );
         }
-        return success(ctx, localQualifierPoints, certPath, attemptedVertex);
+        return success(ctx, localQualifierPoints, certPath, attemptedVertex, req.requestToken);
     } else if (ctx.config.authn.lookupPkiPathForUncertifiedStrongAuth && attemptedVertex) {
         const values = await readValuesOfType(ctx, attemptedVertex, pkiPath["&id"]);
         for (const value of values) {
@@ -324,7 +407,7 @@ async function attemptSPKMAuth (
                     signErrors,
                 );
                 if (verifyResult.returnCode === VCP_RETURN_OK) {
-                    return success(ctx, localQualifierPoints, certPath, attemptedVertex);
+                    return success(ctx, localQualifierPoints, certPath, attemptedVertex, req.requestToken);
                 }
             } catch {
                 continue;

@@ -672,7 +672,7 @@ class DISPAssociation extends ClientAssociation {
             this.authorizedForSignedErrors = true;
         }
         const bindResult = new DSABindArgument(
-            undefined, // TODO: Supply return credentials. NOTE that the specification says that this must be the same CHOICE that the user supplied.
+            outcome.reverseCredentials,
             versions,
         );
         this.rose.write_bind_result({
