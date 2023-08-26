@@ -178,7 +178,7 @@
     "cert_path_issuedToThisCA@token": "Strong credentials certification-path CA certifications must use the issuedToThisCA field for CA certs.",
     "ob_type_unrecognized": "Operational binding type {{obtype}} not understood.",
     "ob_binding_id_identifier_changed": "Operation binding identifier cannot be changed for operational binding {{uuid}}.",
-    "strong_creds_must_have_name_or_cp": "Strong credentials must contain either a name or a certification-path.",
+    "strong_creds_must_have_name_or_cp": "Strong / SPKM credentials must contain either a name or a certification-path.",
     "strong_creds_must_have_cp": "Strong credentials must contain a certification-path.",
     "strong_creds_expired": "Strong credentials token expired at {{time}}.",
     "strong_creds_algorithm_mismatch": "Strong credentials signing algorithm mismatch. Bind token's algorithm identifier must match token content's algorithm. {{a}} =/= {{b}}",
@@ -256,5 +256,17 @@
     "sob_supplier_initiated_op_not_authz": "Shadow operational binding {{obid}} is not supplier-initiated. You are not permitted to use this operation.",
     "sob_consumer_initiated_op_not_authz": "Shadow operational binding {{obid}} is not consumer-initiated. You are not permitted to use this operation.",
     "differing_sob_versions": "DISP operation from association {{aid}} referred to an different version of shadow operational binding {{obid}}.",
-    "missing_sig_or_cert_path": "Missing required signature or certification path."
+    "missing_sig_or_cert_path": "Missing required signature or certification path.",
+    "client_sent_spkm_rep": "You may not send SPKM reply.",
+    "invalid_spkm_req_token_id": "tok_id field of SPKM-REQ MUST be 256.",
+    "unsupported_spkm_version": "Unsupported SPKM version.",
+    "spkm_token_replay": "SPKM token's timestamp deviated too far from the current time.",
+    "spkm_targ_name_mismatch": "SPKM token's target name did not match this DSA's AE title (name).",
+    "spkm_outside_validity": "SPKM token was outside of its validity window upon submission.",
+    "spkm_channel_binding": "SPKM channel binding is not supported. The transport is implicitly bound.",
+    "spkm_seq_number": "Sequence numbering requested in SPKM authentication, but it is unsupported by this DSA.",
+    "spkm_delegation_state": "Delegation requested in SPKM authentication, but it is unsupported by this DSA.",
+    "spkm_src_name_mismatch": "SPKM token's src_name does not match subject (or subjectAltNames) in the asserted certification path.",
+    "spkm_invalid_signature": "SPKM token had an invalid signature.",
+    "spkm_untrusted_cert_path": "SPKM token had an untrusted certification path."
 }

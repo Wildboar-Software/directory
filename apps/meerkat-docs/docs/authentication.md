@@ -92,6 +92,7 @@ is a sequence of randomly-generated bits of any length (preferrably at least 64
 bits), and `password` is the `UserPwd` construction of the user's password,
 which _must_ use the `encrypted` alternative, and
 
+<!-- FIXME: Terminated sentence here. -->
 
 :::tip
 
@@ -218,6 +219,14 @@ the NodeJS runtime are used by default.
 If [`MEERKAT_SIGNING_DISABLE_VERIFICATION`](./env.md#meerkatsigningdisableverification)
 is enabled (meaning that all signature verification is disabled in Meerkat DSA),
 strong authentication will always fail.
+
+## SPKM Authentication
+
+Meerkat DSA supports SPKM Authentication, but does not use it when binding to
+other DSAs. It is almost identical in functionality and security to strong
+authentication, except that it is based on existing standards exterior to the
+X.500 specifications. If you need high-security authentication, prefer the
+`strong` mechanism over `spkm`.
 
 ## Architectural Details
 

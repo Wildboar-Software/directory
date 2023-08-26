@@ -1,4 +1,5 @@
 import {
+    Context,
     DirectoryBindError,
     DSABindError,
     BindReturn,
@@ -45,9 +46,10 @@ import {
     VT_RETURN_CODE_UNTRUSTED, // FIXME: Why is this not used?
 } from "../pki/verifyToken";
 import { strict as assert } from "assert";
-import type {
+import {
     AttributeCertificationPath,
     StrongCredentials,
+    Token,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/StrongCredentials.ta";
 import type { Socket } from "node:net";
 import type { TLSSocket } from "node:tls";
@@ -85,7 +87,15 @@ import {
 } from "../pki/verifyAttrCertPath";
 import { Clearance } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/Clearance.ta";
 import { subjectDirectoryAttributes } from "@wildboar/x500/src/lib/modules/CertificateExtensions/subjectDirectoryAttributes.oa";
-import { DERElement } from "asn1-ts";
+import { DERElement, unpackBits } from "asn1-ts";
+import { TokenContent, _encode_TokenContent } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/TokenContent.ta";
+import { getAlgorithmInfoFromKey } from "../pki/getAlgorithmInfoFromKey";
+import { addSeconds } from "date-fns";
+import { randomBytes } from "crypto";
+import { DER } from "asn1-ts/dist/node/functional";
+import { SIGNED } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/SIGNED.ta";
+import { sign, createSign } from "node:crypto";
+import { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 
 const ID_OC_PKI_CERT_PATH: string = id_oc_pkiCertPath.toString();
 
@@ -171,6 +181,73 @@ async function clearancesFromAttrCertPath (
     return [];
 }
 
+function createReverseAuth (ctx: Context, requester: DistinguishedName): StrongCredentials | null {
+    const pkiPath = ctx.config.signing.certPath;
+    const key = ctx.config.signing.key;
+    if (!pkiPath?.length) {
+        return null;
+    }
+    if (!key) {
+        return null;
+    }
+    const alg_info = getAlgorithmInfoFromKey(key);
+    if (!alg_info) {
+        return null;
+    }
+    const [ sig_alg_id, hash_str ] = alg_info;
+    const token_content = new TokenContent(
+        sig_alg_id,
+        requester,
+        {
+            generalizedTime: addSeconds(new Date(), 60),
+        },
+        unpackBits(randomBytes(4)),
+    );
+    const tbs_bytes = _encode_TokenContent(token_content, DER).toBytes();
+    let token: Token | undefined;
+    if (hash_str) {
+        const signer = createSign(hash_str);
+        signer.update(tbs_bytes);
+        const signature = signer.sign(key);
+        token = new SIGNED(
+            token_content,
+            sig_alg_id,
+            unpackBits(signature),
+            undefined,
+            undefined,
+        );
+    } else {
+        const signature = sign(null, tbs_bytes, key);
+        token = new SIGNED(
+            token_content,
+            sig_alg_id,
+            unpackBits(signature),
+            undefined,
+            undefined,
+        );
+    }
+    if (!token) {
+        return null;
+    }
+    const eeCert = pkiPath[pkiPath.length - 1];
+    const certPath = new CertificationPath(
+        eeCert,
+        [ ...pkiPath ]
+            .slice(0, -1)
+            .reverse()
+            .map((cert) => new CertificatePair(
+                cert,
+                undefined,
+            )),
+    );
+    return new StrongCredentials(
+        certPath,
+        token,
+        certPath.userCertificate.toBeSigned.subject.rdnSequence,
+        ctx.config.authn.attributeCertificationPath,
+    );
+}
+
 /**
  * @summary Attempts strong authentication
  * @description
@@ -200,6 +277,7 @@ async function attemptStrongAuth (
     localQualifierPoints: number,
     source: string,
     socket: Socket | TLSSocket,
+    no_reply: boolean = false,
 ): Promise<BindReturn> {
     // NOTE: This was copied from `apps/meerkat/src/app/dap/bind.ts`
     const {
@@ -347,6 +425,7 @@ async function attemptStrongAuth (
                     );
                     clearances.push(...attrCertClearances);
                 }
+                const reverseCreds = !no_reply && createReverseAuth(ctx, name ?? effectiveName);
                 return {
                     boundVertex: foundEntry,
                     boundNameAndUID: new NameAndOptionalUID(
@@ -361,6 +440,9 @@ async function attemptStrongAuth (
                         ),
                     },
                     clearances,
+                    reverseCredentials: reverseCreds
+                        ? { strong: reverseCreds }
+                        : undefined,
                 };
             }
             case (VT_RETURN_CODE_MALFORMED): {
@@ -415,6 +497,7 @@ async function attemptStrongAuth (
             const certPath: CertificationPath = new CertificationPath(
                 eeCert,
                 [ ...path ]
+                    .slice(0, -1)
                     .reverse()
                     .map((cert) => new CertificatePair(
                         cert,
@@ -455,6 +538,7 @@ async function attemptStrongAuth (
                     );
                     clearances.push(...attrCertClearances);
                 }
+                const reverseCreds = !no_reply && createReverseAuth(ctx, name);
                 return {
                     boundVertex: attemptedVertex,
                     boundNameAndUID: new NameAndOptionalUID(
@@ -469,6 +553,9 @@ async function attemptStrongAuth (
                         ),
                     },
                     clearances,
+                    reverseCredentials: reverseCreds
+                        ? { strong: reverseCreds }
+                        : undefined,
                 };
             }
         }

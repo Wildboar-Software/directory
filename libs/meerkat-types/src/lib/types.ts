@@ -107,6 +107,7 @@ import { Clearance } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/Clear
 import {
     SignedSecurityLabel,
 } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/SignedSecurityLabel.ta";
+import { DSACredentials } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSACredentials.ta";
 
 
 type EventReceiver<T> = (params: T) => void;
@@ -1637,6 +1638,13 @@ interface Configuration {
      * version.
      */
     principledServiceAdministration: boolean;
+
+    /**
+     * Whether Meerkat DSA should require mutual authentication when binding
+     * to other DSAs; if the other DSA does not return valid credentials in the
+     * `DSABindResult`, the association is immediately aborted.
+     */
+    requireMutualAuth: boolean;
 
     xr: CrossReferencesOptions;
 
@@ -3558,11 +3566,16 @@ interface BindReturn {
      */
     pwdResponse?: PwdResponseValue;
 
-
     /**
      * The clearances associated with this user.
      */
     clearances: Clearance[];
+
+    /**
+     * The credentials for the DSA to return to the client to provide mutual
+     * authentication.
+     */
+    reverseCredentials?: DSACredentials;
 
 }
 

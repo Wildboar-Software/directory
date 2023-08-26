@@ -576,6 +576,7 @@ const config: Configuration = {
     vendorVersion: process.env.MEERKAT_VENDOR_VERSION?.length
         ? process.env.MEERKAT_VENDOR_VERSION
         : undefined,
+    requireMutualAuth: (process.env.MEERKAT_MUTUAL_AUTH_OPTIONAL !== "1"),
     xr: {
         requestCrossReferences: (process.env.MEERKAT_REQUEST_CROSS_REFERENCES === "1"),
         returnCrossReferences: (process.env.MEERKAT_RETURN_CROSS_REFERENCES === "1"),
