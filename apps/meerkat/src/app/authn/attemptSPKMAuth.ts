@@ -252,8 +252,8 @@ async function attemptSPKMAuth (
     }
 
     if (
-        (req.requestToken.req_contents.pvno.length !== 0)
-        || !(req.requestToken.req_contents.pvno[0] !== TRUE_BIT)
+        (req.requestToken.req_contents.pvno.length > 1)
+        || (req.requestToken.req_contents.pvno[0] !== TRUE_BIT)
     ) {
         throw new BindErrorClass(
             ctx.i18n.t("err:unsupported_spkm_version"),
