@@ -415,6 +415,7 @@ async function attemptStrongAuth (
             const certPath: CertificationPath = new CertificationPath(
                 eeCert,
                 [ ...path ]
+                    .slice(0, -1)
                     .reverse()
                     .map((cert) => new CertificatePair(
                         cert,
