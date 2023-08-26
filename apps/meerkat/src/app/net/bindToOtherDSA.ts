@@ -480,6 +480,7 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
                                 localQualifierPoints,
                                 source,
                                 rose.socket ?? socket,
+                                true,
                             );
                         }
                         else if ("spkm" in result.credentials) {
