@@ -30,7 +30,7 @@ import {
     DSABindArgument,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindArgument.ta";
 import { versions } from "../versions";
-import { compareDistinguishedName, compareGeneralName, compareName, naddrToURI } from "@wildboar/x500";
+import { compareDistinguishedName, compareGeneralName, naddrToURI } from "@wildboar/x500";
 import { BOOLEAN, OBJECT_IDENTIFIER } from "asn1-ts";
 import {
     AccessPoint,
@@ -63,7 +63,7 @@ import { Socket, createConnection } from "node:net";
 import { connect as tlsConnect, TLSSocket } from "node:tls";
 import isDebugging from "is-debugging";
 import stringifyDN from "../x500/stringifyDN";
-import { DSABindResult, _decode_DSABindResult } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindResult.ta";
+import { DSABindResult } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSABindResult.ta";
 import { createWriteStream } from "node:fs";
 import attemptSPKMAuth from "../authn/attemptSPKMAuth";
 import { attemptStrongAuth } from "../authn/attemptStrongAuth";
@@ -102,7 +102,6 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
     signErrors: boolean = false,
     timeLimit: number | Date = 30_000,
 ): Promise<ClientType | null> {
-    const called_ae_title = stringifyDN(ctx, accessPoint.ae_title.rdnSequence);
     const logInfo = {
         protocol_id: protocol_id.toString(),
         association_id: assn?.id,
@@ -524,14 +523,20 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
                     if ((e instanceof TypeError) || (e instanceof RangeError)) {
                         ctx.log.warn(ctx.i18n.t("log:reverse_dsa_bind_other_err", {e}), logInfo);
                         rose.write_abort(AbortReason.mistyped_pdu);
+                        return null;
                     } else if (e instanceof DSABindError) {
                         ctx.log.warn(ctx.i18n.t("log:reverse_dsa_bind_auth_fail"), logInfo);
-                        rose.write_abort(AbortReason.authentication_failure);
+                        if (ctx.config.requireMutualAuth) {
+                            rose.write_abort(AbortReason.authentication_failure);
+                            return null;
+                        } else {
+                            ctx.log.warn(ctx.i18n.t("log:reverse_dsa_bind_auth_optional"), logInfo);
+                        }
                     } else {
                         ctx.log.warn(ctx.i18n.t("log:reverse_dsa_bind_other_err", {e}), logInfo);
                         rose.write_abort(AbortReason.other);
+                        return null;
                     }
-                    return null;
                 }
                 // TODO: Verify that `versions` is acceptable.
                 break;
