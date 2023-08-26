@@ -526,7 +526,7 @@ async function dsa_bind <ClientType extends AsyncROSEClient<DSABindArgument, DSA
                         rose.write_abort(AbortReason.mistyped_pdu);
                         return null;
                     } else if (e instanceof DSABindError) {
-                        ctx.log.warn(ctx.i18n.t("log:reverse_dsa_bind_auth_fail"), logInfo);
+                        ctx.log.warn(ctx.i18n.t("log:reverse_dsa_bind_auth_fail", {e}), logInfo);
                         if (ctx.config.requireMutualAuth) {
                             rose.write_abort(AbortReason.authentication_failure);
                             return null;
