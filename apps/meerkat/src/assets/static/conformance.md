@@ -61,7 +61,7 @@ Directory Access Protocol (DAP).
 |------------|-----------------|
 | Yes        | Simple          |
 | Yes        | Strong          |
-| No         | External        |
+| Yes        | External        |
 | Yes        | SPKM            |
 | No         | SASL            |
 
@@ -87,7 +87,7 @@ Directory System Protocol (DSP).
 |------------|-----------------|
 | Yes        | Simple          |
 | Yes        | Strong          |
-| No         | External        |
+| Yes        | External        |
 | Yes        | SPKM            |
 
 Meerkat DSA supports simple authentication:
