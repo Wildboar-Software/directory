@@ -228,6 +228,174 @@ authentication, except that it is based on existing standards exterior to the
 X.500 specifications. If you need high-security authentication, prefer the
 `strong` mechanism over `spkm`.
 
+## External Authentication
+
+Meerkat DSA supports the `externalProcedure` authentication mechanism described
+in [ITU Recommendation X.511 (2019)](https://www.itu.int/rec/T-REC-X.511/en).
+This mechanism is an intentionally open-ended and extensible mechanism for
+authentication. The parameter for an `externalProcedure` authentication is an
+ASN.1 `EXTERNAL`.
+
+Meerkat DSA only uses an `EXTERNAL` value that uses the `syntax` alternative of
+the `identification` field. When encoded according to the encoding rules
+detailed in ITU Recommendation X.690, such as the Basic Encoding Rules, this
+field is referred to as the `direct-reference` field. If the
+`indirect-reference` field is supplied, or the `direct-reference` field is not
+supplied in the encoded `EXTERNAL` value, Meerkat DSA will respond with an
+"authentication mechanism unsupported" error.
+
+The `syntax` field of the `EXTERNAL` (or `direct-reference` according to the
+X.690 parlance) is used to transmit an object identifier that identifies the
+external authentication mechanism. Meerkat DSA looks up the external
+authentication procedure associated with that object identifier and calls a
+function to execute that authentication mechanism. If the mechanism is
+unrecognized or unsupported, Meerkat DSA will return an "authentication
+mechanism unsupported" error.
+
+:::info
+
+There are two reasons that the `presentation-context-id` is not recognized by
+Meerkat DSA for the external authentication procedure parameter:
+
+1. It would be really complicated from a code standpoint to "look up" the
+   presentation contexts from the underlying protocol stack, especially when
+   that has been intentionally abstracted away from the Remote Operation
+   Service Element (ROSE).
+2. Presentation contexts presented by the presentation layers are likely not
+   going to be used for the external authentication procedure because their
+   abstract syntaxes usually describe an application-layer protocol, not an
+   external procedure.
+
+If you don't understand what this means, don't worry about it.
+
+:::
+
+### TLS Client Certificate Authentication
+
+Meerkat DSA comes with one `externalProcedure` authentication mechanism
+built-in: TLS client certificate authentication. It's parameter can be described
+using the following ASN.1 syntax:
+
+```asn1
+id-tlsClientCertAuth OBJECT IDENTIFIER ::= { 1 3 6 1 4 1 56490 5 401 1 }
+tlsClientCertAuth ABSTRACT-SYNTAX ::= { NULL IDENTIFIED BY id-tlsClientCertAuth }
+```
+
+In other words, if you send a bind request using an `externalProcedure`
+credential having the `syntax` of `1.3.6.1.4.1.56490.5.401.1` and a `data-value`
+of `NULL` (although this part is not validated or checked at all), Meerkat DSA
+will use TLS Client Certificate Authentication.
+
+This means that Meerkat DSA will determine the user's distinguished name from
+the `subject` field of the client certificate asserted via TLS, and consider the
+user strongly-authenticated, assuming that the asserted certificate chain is
+valid.
+
+Note that, for this to be enabled, the client MUST connect over TLS, and Meerkat
+DSA MUST be configured to request a client certificate by either:
+
+1. Setting [`MEERKAT_TLS_REQUEST_CERT`](./env.md#meerkat_tls_request_cert) to `1`, or
+2. Setting [`MEERKAT_TLS_REJECT_UNAUTHORIZED_CLIENTS`](./env.md#meerkat_tls_reject_unauthorized_clients) to `1`
+
+(Of course, the client, must also actually _send_ the client certificate. That
+is implied.)
+
+### Custom External Authentication Procedures
+
+You can add your own external authentication procedures in the
+[init script](./env.md#meerkat_init_js). An external authentication procedure
+function has a signature like so:
+
+```typescript
+type ExternalAuthFunction = (
+    ctx: Context, // The context object
+    socket: Socket | TLSSocket, // The TCP or TLS socket underlying the association with the client.
+    ext: EXTERNAL, // The EXTERNAL that is the parameter of the `externalProcedure` credential.
+    // Set to DirectoryBindError for DAP, and DSABindError otherwise.
+    BindErrorClass: (typeof DirectoryBindError) | (typeof DSABindError),
+) => Promise<BindReturn>;
+
+// This is what is returned from such a function.
+interface BindReturn {
+    /**
+     * The bound vertex, which will only be set if this DSA has the bound DSE
+     * locally.
+     *
+     * Defined in @wildboar/meerkat-types.
+     */
+    boundVertex?: Vertex;
+
+    /**
+     * The bound distinguished name and optional unique identifier. The
+     * distinguished name will be set even if the user provided no credentials
+     * to prove that they were that entry. The unique identifier will be set if
+     * a local DSE having the bound distinguished name can be found and it has
+     * at least one `uniqueIdentifier` attribute value. The first
+     * `uniqueIdentifier` attribute value will be used to populate this field,
+     * even though there may potentially be multiple such values.
+     *
+     * Defined in @wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta
+     */
+    boundNameAndUID?: NameAndOptionalUID;
+
+    /**
+     * The level of credibility with which the user claimed to be the bound
+     * entry. Whether the user bound anonymously, with a password, or with a
+     * asymmetric cryptography will be represented here.
+     *
+     * Defined in @wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel.ta
+     */
+    authLevel: AuthenticationLevel;
+
+    /**
+     * Information about a user password to return in the bind response or
+     * error.
+     *
+     * Defined in @wildboar/x500/src/lib/modules/DirectoryAbstractService/PwdResponseValue.ta
+     */
+    pwdResponse?: PwdResponseValue;
+
+    /**
+     * The clearances associated with this user.
+     *
+     * Defined in @wildboar/x500/src/lib/modules/EnhancedSecurity/Clearance.ta
+     */
+    clearances: Clearance[];
+
+    /**
+     * The credentials for the DSA to return to the client to provide mutual
+     * authentication.
+     *
+     * Defined in @wildboar/x500/src/lib/modules/DistributedOperations/DSACredentials.ta
+     */
+    reverseCredentials?: DSACredentials;
+
+}
+```
+
+If you would like an example implementation, see
+[this function](https://github.com/Wildboar-Software/directory/blob/master/apps/meerkat/src/app/authn/external/tls_client_auth.ts),
+which is the implementation of the TLS Client Certificate Authentication
+mechanism described above.
+
+Once you have your function defined, add it to Meerkat DSA's internal index of
+`externalProcedure` mechanisms in the init script like so:
+
+```javascript
+
+const YOUR_MECHANISM_OID_REPLACE_ME = "1.2.3.4.5";
+
+async function init(ctx) {
+  // Here, we associate the mechanism ID with the function that does the verification.
+  ctx.externalProcedureAuthFunctions.set(YOUR_MECHANISM_OID_REPLACE_ME, your_function);
+
+  // This is just logging, just to show you that you can do this. :)
+  ctx.log.info("Added my own custom external authentication mechanism");
+}
+
+export default init;
+```
+
 ## Architectural Details
 
 You might notice that it can take a few seconds to authenticate to Meerkat DSA.
