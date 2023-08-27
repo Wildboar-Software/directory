@@ -152,6 +152,22 @@ export
                         },
                         minItems: 1,
                     },
+                    tlsCertChain: {
+                        type: "string",
+                        minLength: 1,
+                    },
+                    tlsKey: {
+                        type: "string",
+                        minLength: 1,
+                    },
+                    ca: {
+                        type: "string",
+                        minLength: 1,
+                    },
+                    crl: {
+                        type: "string",
+                        minLength: 1,
+                    },
                 },
                 additionalProperties: true,
             },
@@ -405,6 +421,10 @@ export interface ConfigDSA {
    * @minItems 1
    */
   accessPoints: [ConfigAccessPoint, ...ConfigAccessPoint[]];
+  tlsCertChain?: string;
+  tlsKey?: string;
+  ca?: string;
+  crl?: string;
   [k: string]: unknown;
 }
 /**
