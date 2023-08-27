@@ -24,7 +24,7 @@ async function attemptExternalAuth (
     signErrors: boolean,
 ): Promise<BindReturn> {
     const key = ext.directReference?.toString();
-    if (!key) {
+    if (!key || (ext.indirectReference !== undefined)) {
         throw new BindErrorClass(
             ctx.i18n.t("err:unrecognized_external_auth_proc"),
             new DirectoryBindErrorData(
