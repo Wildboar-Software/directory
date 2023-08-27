@@ -26,7 +26,7 @@ import type {
 import type {
     ContextMatcher,
 } from "@wildboar/x500/src/lib/types/ContextMatcher";
-import type { ASN1Element, OBJECT_IDENTIFIER, BOOLEAN } from "asn1-ts";
+import type { ASN1Element, OBJECT_IDENTIFIER, BOOLEAN, EXTERNAL } from "asn1-ts";
 import type {
     PagedResultsRequest_newRequest,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/PagedResultsRequest-newRequest.ta";
@@ -89,7 +89,7 @@ import type { i18n } from "i18next";
 import {
     Context as X500Context,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
-import type { TlsOptions } from "tls";
+import type { TlsOptions, TLSSocket } from "tls";
 import type {
     CertificateList,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificateList.ta";
@@ -108,6 +108,7 @@ import {
     SignedSecurityLabel,
 } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/SignedSecurityLabel.ta";
 import { DSACredentials } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSACredentials.ta";
+import { DirectoryBindError, DSABindError } from "./errors";
 
 
 type EventReceiver<T> = (params: T) => void;
@@ -3036,6 +3037,18 @@ export interface LabellingAuthorityInfo {
 }
 
 /**
+ * A function that implements the `externalProcedure` authentication mechanism
+ * described in
+ * [ITU Recommendation X.511 (2019)](https://www.itu.int/rec/T-REC-X.511/en).
+ */
+export type ExternalAuthFunction = (
+    ctx: Context,
+    socket: Socket | TLSSocket,
+    ext: EXTERNAL,
+    BindErrorClass: (typeof DirectoryBindError) | (typeof DSABindError),
+) => Promise<BindReturn>;
+
+/**
  * @summary Type definition for the context object
  * @description
  *
@@ -3276,6 +3289,14 @@ interface Context {
      * attribute certificates containing the `singleUse` extension.
      */
     alreadyAssertedAttributeCertificates: Set<string>;
+
+    /**
+     * An index of functions that evaluate credentials asserted during a bind
+     * operation of the `externalProcedure` variant. These functions are indexed
+     * by the object identifier of the `direct-reference` field of the
+     * `EXTERNAL` that is asserted.
+     */
+    externalProcedureAuthFunctions: Map<IndexableOID, ExternalAuthFunction>;
 }
 
 /**

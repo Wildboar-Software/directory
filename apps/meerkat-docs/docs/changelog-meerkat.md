@@ -1,5 +1,30 @@
 # Changelog for Meerkat DSA
 
+## Version 3.2.0
+
+This new version introduces new features around authentication and chaining.
+
+### New Features / Improvements
+
+- Support for SPKM authentication
+- Support for `externalProcedure` authentication
+- Mutual binding: Meerkat DSA will now send strong credentials or SPKM
+  credentials back to the client.
+- Verifying credentials returned by DSAs during chaining.
+- Added the [`MEERKAT_TLS_REQUEST_CERT`](./env.md#meerkat_tls_request_cert)
+  option to enable the DSA to request the TLS client certificate, even when
+  client certificate authentication is not enforced.
+
+### Bug Fixes
+
+- Fixed incorrect object identifier for the
+[Simple Security Policy](./authorization.md#the-simple-security-policy).
+
+### Upgrading
+
+You do not have to do anything to upgrade to this version. Just update the
+Meerkat DSA version.
+
 ## Version 3.1.0
 
 This version introduces support for Rule-Based Access Control (RBAC), thereby

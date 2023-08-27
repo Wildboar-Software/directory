@@ -1209,7 +1209,7 @@ async function main (): Promise<void> {
     const tlsOptions: tls.TlsOptions = {
         ...ctx.config.tls,
         rejectUnauthorized: ctx.config.tls.rejectUnauthorizedClients,
-        enableTrace: isDebugging,
+        enableTrace: ctx.config.tls.enableTrace,
     };
     const onOCSPRequestCallback = getOnOCSPRequestCallback(ctx, ctx.config.tls);
 

@@ -170,6 +170,10 @@ Here is a breakdown of what each field means.
 | `dsas.*.accessPoints`            | An array of access points by which the DSA can be reached, in order of descending preference.  |
 | `dsas.*.accessPoints.*.urls`     | An array of URLs for accessing a given access point, listed in order of descending preference. |
 | `dsas.*.accessPoints.*.category` | `master`, `shadow`, or `writeableCopy` depending on what the DSA is.                           |
+| `dsas.*.tlsCertChain`            | File path to the PEM-encoded TLS cert chain to use for TLS client authentication               |
+| `dsas.*.tlsKey`                  | File path to the PEM-encoded TLS key to use for TLS client authentication                      |
+| `dsas.*.ca`                      | File path to the PEM-encoded certificate authorities to use for TLS                            |
+| `dsas.*.crl`                     | File path to the PEM-encoded certificate revocation lists to use for TLS                       |
 | `credentials.*.name`             | A case-sensitive name for a credential.                                                        |
 | `credentials.*.credential`       | The actual credential itself, which may take on multiple different forms.                      |
 | `credentials.*.credential.type`  | The type discriminator for a credential. Usually `simple`, `strong`, or `sasl`.                |

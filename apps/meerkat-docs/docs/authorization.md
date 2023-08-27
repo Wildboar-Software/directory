@@ -265,7 +265,7 @@ a `subjectKeyIdentifier` extension (or the equivalent `keyId` field of the
 
 For the sake of easy use of the Rule-Based Access Control (RBAC), Meerkat DSA
 comes with a security policy built-in, called the "simple security policy."
-It's object identifier is `1.3.6.1.4.1.56490.403.1`. This security policy does
+It's object identifier is `1.3.6.1.4.1.56490.5.403.1`. This security policy does
 nothing with security categories, and permits access to the labeled attribute
 value if the clearance level is greater than or equal to the clearance level
 required by the labeled attribute value. Unless you plan to make use of security

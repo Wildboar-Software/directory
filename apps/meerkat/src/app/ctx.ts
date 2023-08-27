@@ -114,6 +114,7 @@ import { subjectKeyIdentifier } from "@wildboar/x500/src/lib/modules/Certificate
 import { subjectAltName } from "@wildboar/x500/src/lib/modules/CertificateExtensions/subjectAltName.oa";
 import { Name } from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
 import { _encode_SubjectPublicKeyInfo } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/SubjectPublicKeyInfo.ta";
+import { id_tls_client_auth, tls_client_auth } from "./authn/external/tls_client_auth";
 
 export
 interface MeerkatTelemetryClient {
@@ -734,7 +735,10 @@ const config: Configuration = {
          * will be based on whether this DSA is acting as a server or client.
          */
         // rejectUnauthorized: (process.env.THIS_WAS_A_BUG === "1"),
-        requestCert: (process.env.MEERKAT_TLS_REJECT_UNAUTHORIZED_CLIENTS === "1"),
+        requestCert: (
+            (process.env.MEERKAT_TLS_REJECT_UNAUTHORIZED_CLIENTS === "1")
+            || (process.env.MEERKAT_TLS_REQUEST_CERT === "1")
+        ),
         cert: process.env.MEERKAT_TLS_CERT_FILE
             ? fs.readFileSync(process.env.MEERKAT_TLS_CERT_FILE, { encoding: "utf-8" })
             : undefined,
@@ -1169,6 +1173,7 @@ const ctx: MeerkatContext = {
     labellingAuthorities: new Map(),
     rbacPolicies: new Map([ [id_simpleSecurityPolicy.toString(), simple_rbac_acdf] ]),
     alreadyAssertedAttributeCertificates: new Set(),
+    externalProcedureAuthFunctions: new Map([ [id_tls_client_auth.toString(), tls_client_auth] ]),
 };
 
 for (const la of labellingAuthorities) {

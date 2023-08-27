@@ -266,6 +266,7 @@ data:
   # TODO: tls_pfx_file: not supported by this Helm chart. Use tls_key_file and tls_cert_file instead.
   tls_reject_unauthorized_clients: {{ .Values.tls_reject_unauthorized_clients | ternary 1 0 | quote }}
   tls_reject_unauthorized_servers: {{ .Values.tls_reject_unauthorized_servers | ternary 1 0 | quote }}
+  tls_request_cert: {{ .Values.tls_request_cert | ternary 1 0 | quote }}
   tls_request_ocsp: {{ .Values.tls_request_ocsp | ternary 1 0 | quote }}
   tls_session_timeout_in_seconds: {{ .Values.tls_session_timeout_in_seconds | default 600 | quote }}
   {{- if .Values.tls_sig_algs }}

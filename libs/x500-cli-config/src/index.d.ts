@@ -66,6 +66,10 @@ export interface ConfigDSA {
    * @minItems 1
    */
   accessPoints: [ConfigAccessPoint, ...ConfigAccessPoint[]];
+  tlsCertChain?: string;
+  tlsKey?: string;
+  ca?: string;
+  crl?: string;
   [k: string]: unknown;
 }
 /**

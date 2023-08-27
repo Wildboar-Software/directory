@@ -37,9 +37,7 @@ import {
     SecurityClassification_unclassified,
     SecurityClassification_unmarked,
 } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/SecurityClassification.ta";
-import {
-    id_wildboar,
-} from "@wildboar/parity-schema/src/lib/modules/Wildboar/id-wildboar.va";
+import { ds } from "@wildboar/parity-schema/src/lib/modules/Wildboar/ds.va";
 import { attributeValueSecurityLabelContext } from "@wildboar/x500/src/lib/collections/contexts";
 import {
     PERMISSION_CATEGORY_ADD,
@@ -48,7 +46,7 @@ import {
 } from "@wildboar/x500/src/lib/bac/bacACDF";
 
 // TODO: Add this to the registry.
-export const id_simpleSecurityPolicy = new ObjectIdentifier([ 403, 1 ], id_wildboar);
+export const id_simpleSecurityPolicy = new ObjectIdentifier([ 403, 1 ], ds);
 
 const modification_permissions: number[] = [
     PERMISSION_CATEGORY_ADD,

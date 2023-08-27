@@ -67,6 +67,8 @@ import { Validity } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/Validity.t
 import {
     CertificationPath as SpkmCertificationPath,
 } from "@wildboar/x500/src/lib/modules/SpkmGssTokens/CertificationPath.ta";
+import { ConfigDSA } from "@wildboar/x500-cli-config";
+import { readFile } from "node:fs/promises";
 
 // I created this function for testing SPKM auth. Tested and works.
 // I am keeping this around in case I want to integrate it later.
@@ -150,6 +152,7 @@ function createSpkmCreds (
 export
 async function connect (
     ctx: Context,
+    dsa: ConfigDSA,
     hostURL: string,
     bindDN: string,
     password?: Buffer,
@@ -186,6 +189,14 @@ async function connect (
     if (url.protocol.replace(":", "").toLowerCase().endsWith("s")) {
         socket = new tls.TLSSocket(socket, {
             rejectUnauthorized: true,
+            ca: dsa.ca,
+            crl: dsa.crl,
+            cert: dsa.tlsCertChain
+                ? await readFile(dsa.tlsCertChain, { encoding: "utf-8" })
+                : undefined,
+            key: dsa.tlsKey
+                ? await readFile(dsa.tlsKey, { encoding: "utf-8" })
+                : undefined,
         });
         // FIXME: Check .authorized!
     }
@@ -280,7 +291,15 @@ async function connect (
                 },
                 _encode_DSABindArgument(new DSABindArgument(
                     credentials,
-                    undefined, // v1
+                    // {
+                    //     externalProcedure: new External(
+                    //         new ObjectIdentifier([ 1, 3, 6, 1, 4, 1, 56490, 401, 1 ]),
+                    //         undefined,
+                    //         undefined,
+                    //         _encodeNull(null, DER),
+                    //     ),
+                    // },
+                    new Uint8ClampedArray([ TRUE_BIT, TRUE_BIT ]), // v1 and v2
                 ), DER),
             ),
         };

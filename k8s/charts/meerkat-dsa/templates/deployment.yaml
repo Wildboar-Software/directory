@@ -1127,6 +1127,12 @@ spec:
                   name: {{ include "meerkat-dsa.fullname" . }}-config
                   key: tls_reject_unauthorized_servers
                   optional: true
+            - name: MEERKAT_TLS_REQUEST_CERT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "meerkat-dsa.fullname" . }}-config
+                  key: tls_request_cert
+                  optional: true
             - name: MEERKAT_TLS_REQUEST_OCSP
               valueFrom:
                 configMapKeyRef:

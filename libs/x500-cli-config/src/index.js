@@ -149,6 +149,22 @@ exports.schema = {
                         $ref: "#/definitions/ConfigAccessPoint"
                     },
                     minItems: 1
+                },
+                tlsCertChain: {
+                    type: "string",
+                    minLength: 1
+                },
+                tlsKey: {
+                    type: "string",
+                    minLength: 1
+                },
+                ca: {
+                    type: "string",
+                    minLength: 1
+                },
+                crl: {
+                    type: "string",
+                    minLength: 1
                 }
             },
             additionalProperties: true
