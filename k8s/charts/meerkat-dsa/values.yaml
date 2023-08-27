@@ -305,6 +305,7 @@ tls_ocsp_unknown_is_failure: true
 # TODO: tls_pfx_file: not supported by this Helm chart. Use tls_key_file and tls_cert_file instead.
 tls_reject_unauthorized_clients: false
 tls_reject_unauthorized_servers: true
+tls_request_cert: false
 tls_request_ocsp: false
 # tls_session_timeout_in_seconds: 300
 # tls_sig_algs: rsa_pss_pss_sha512
