@@ -4,7 +4,7 @@ We will not promise any particular schedule of delivery of features or bug fixes
 at this time. However, the very high-level roadmap for Meerkat DSA can be
 broken down to the following versions.
 
-## Version 3.2.0 - Schema Update ("Wildboar Schema")
+## Version 3.3.0 - Schema Update ("Wildboar Schema")
 
 This update will introduce thousands of new schema objects defined by Wildboar
 Software into the default schema. This is desirable so that X.500 directories
@@ -15,13 +15,6 @@ using a `married` auxiliary object class that permits the presence of a
 `spouseDN` attribute in an entry. It would be unfortunate for directory
 administrators everywhere to define their own equivalent object classes, thereby
 duplicating work and reducing inter-domain compatibility.
-
-## Version 3.3.0 - SPKM Authentication
-
-This version will introduce SPKM Authentication as described in
-[ITU Recommendation X.511 (2019)](https://www.itu.int/rec/T-REC-X.511/en).
-This is another authentication mechanism that is as strong as the `strong`
-authentication mechanism, but it is a more standardized GSS-API mechanism.
 
 ## Integration, Scalability, and Security
 
