@@ -20,11 +20,9 @@ import versions from "../../versions";
 import {
     SecurityProblem_invalidCredentials,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
-import {
-    id_wildboar,
-} from "@wildboar/parity-schema/src/lib/modules/Wildboar/id-wildboar.va";
+import { ds } from "@wildboar/parity-schema/src/lib/modules/Wildboar/ds.va";
 
-export const id_tls_client_auth = new ObjectIdentifier([ 401, 1 ], id_wildboar);
+export const id_tls_client_auth = new ObjectIdentifier([ 401, 1 ], ds);
 
 export
 async function tls_client_auth (
