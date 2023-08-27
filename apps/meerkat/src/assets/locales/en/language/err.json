@@ -268,5 +268,7 @@
     "spkm_delegation_state": "Delegation requested in SPKM authentication, but it is unsupported by this DSA.",
     "spkm_src_name_mismatch": "SPKM token's src_name does not match subject (or subjectAltNames) in the asserted certification path.",
     "spkm_invalid_signature": "SPKM token had an invalid signature.",
-    "spkm_untrusted_cert_path": "SPKM token had an untrusted certification path."
+    "spkm_untrusted_cert_path": "SPKM token had an untrusted certification path.",
+    "unrecognized_external_auth_proc": "Unrecognized externalProcedure authentication mechanism.",
+    "ext_auth_invalid_peer_cert": "Invalid peer certificate: {{e}}"
 }

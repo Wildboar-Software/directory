@@ -114,6 +114,7 @@ import { subjectKeyIdentifier } from "@wildboar/x500/src/lib/modules/Certificate
 import { subjectAltName } from "@wildboar/x500/src/lib/modules/CertificateExtensions/subjectAltName.oa";
 import { Name } from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
 import { _encode_SubjectPublicKeyInfo } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/SubjectPublicKeyInfo.ta";
+import { id_tls_client_auth, tls_client_auth } from "./authn/external/tls_client_auth";
 
 export
 interface MeerkatTelemetryClient {
@@ -1169,6 +1170,7 @@ const ctx: MeerkatContext = {
     labellingAuthorities: new Map(),
     rbacPolicies: new Map([ [id_simpleSecurityPolicy.toString(), simple_rbac_acdf] ]),
     alreadyAssertedAttributeCertificates: new Set(),
+    externalProcedureAuthFunctions: new Map([ [id_tls_client_auth.toString(), tls_client_auth] ]),
 };
 
 for (const la of labellingAuthorities) {

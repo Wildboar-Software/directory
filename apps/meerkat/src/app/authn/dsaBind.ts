@@ -66,6 +66,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import { strict as assert } from "assert";
 import attemptSPKMAuth from "./attemptSPKMAuth";
+import attemptExternalAuth from "./attemptExternalAuth";
 
 /**
  * @summary X.500 Directory System Protocol (DSP) bind operation
@@ -397,6 +398,14 @@ async function bind (
             localQualifierPoints,
             source,
             socket,
+        );
+    } else if ("externalProcedure" in arg.credentials) {
+        return attemptExternalAuth(
+            ctx,
+            DSABindError,
+            socket,
+            arg.credentials.externalProcedure,
+            signErrors,
         );
     } else if ("spkm" in arg.credentials) {
         return attemptSPKMAuth(

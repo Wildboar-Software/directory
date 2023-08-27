@@ -1,7 +1,6 @@
 import {
     BindReturn,
     DirectoryBindError,
-    MistypedArgumentError,
 } from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
 import type { Socket } from "net";
@@ -69,6 +68,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/Chained-ResultType-OPTIONALLY-PROTECTED-Parameter1.ta";
 import { strict as assert } from "assert";
 import { attemptSPKMAuth } from "../authn/attemptSPKMAuth";
+import attemptExternalAuth from "../authn/attemptExternalAuth";
 
 const invalidCredentialsData = new DirectoryBindErrorData(
     versions,
@@ -398,6 +398,14 @@ async function bind (
             localQualifierPoints,
             source,
             socket,
+        );
+    } else if ("externalProcedure" in arg.credentials) {
+        return attemptExternalAuth(
+            ctx,
+            DirectoryBindError,
+            socket,
+            arg.credentials.externalProcedure,
+            signErrors,
         );
     } else if ("spkm" in arg.credentials) {
         return attemptSPKMAuth(

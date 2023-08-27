@@ -40,7 +40,10 @@ import versions from "../versions";
 import {
     DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as DirectoryBindErrorData,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindError-OPTIONALLY-PROTECTED-Parameter1.ta";
-import { SecurityProblem_invalidCredentials, SecurityProblem_unsupportedAuthenticationMethod } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+import {
+    SecurityProblem_invalidCredentials,
+    SecurityProblem_unsupportedAuthenticationMethod,
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
 import { ServiceProblem_unwillingToPerform } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
 import { REP_TI_TOKEN, Rep_ti_contents, _encode_Rep_ti_contents } from "@wildboar/x500/src/lib/modules/SpkmGssTokens/REP-TI-TOKEN.ta";
 import { randomBytes } from "node:crypto";
