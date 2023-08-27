@@ -735,7 +735,10 @@ const config: Configuration = {
          * will be based on whether this DSA is acting as a server or client.
          */
         // rejectUnauthorized: (process.env.THIS_WAS_A_BUG === "1"),
-        requestCert: (process.env.MEERKAT_TLS_REJECT_UNAUTHORIZED_CLIENTS === "1"),
+        requestCert: (
+            (process.env.MEERKAT_TLS_REJECT_UNAUTHORIZED_CLIENTS === "1")
+            || (process.env.MEERKAT_TLS_REQUEST_CERT === "1")
+        ),
         cert: process.env.MEERKAT_TLS_CERT_FILE
             ? fs.readFileSync(process.env.MEERKAT_TLS_CERT_FILE, { encoding: "utf-8" })
             : undefined,

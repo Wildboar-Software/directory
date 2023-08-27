@@ -2276,6 +2276,12 @@ check the identities of peers that it connects to over TLS!
 
 :::
 
+## MEERKAT_TLS_REQUEST_CERT
+
+If set to `1`, Meerkat DSA will request the client certificate on TLS or
+StartTLS associations. Note that this option is automatically enabled when
+[`MEERKAT_TLS_REJECT_UNAUTHORIZED_CLIENTS`](./env.md#meerkat_tls_reject_unauthorized_clients).
+
 ## MEERKAT_TLS_REQUEST_OCSP
 
 If set to `1`, Meerkat DSA will request OCSP stapling from TLS peers to which
