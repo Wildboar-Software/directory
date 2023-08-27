@@ -19,6 +19,7 @@ services:
       # MEERKAT_LOG_LEVEL: info
       MEERKAT_LOG_LEVEL: debug
       MEERKAT_IDM_PORT: 4632
+      MEERKAT_IDMS_PORT: 44632
       MEERKAT_OPEN_TOP_LEVEL: 1
       MEERKAT_OB_AUTO_ACCEPT: 1
       MEERKAT_MY_ACCESS_POINT_NSAPS: idm://dsa1:4632
@@ -39,9 +40,11 @@ services:
       MEERKAT_ENABLE_DOP: 1
       MEERKAT_ENABLE_DSP: 1
       MEERKAT_TRUST_FOR_IBRA: 1
-      # MEERKAT_TLS_CA_FILE: /pki/god.crt
-      # MEERKAT_TLS_CERT_FILE: /pki/dsa1.chain.crt
-      # MEERKAT_TLS_KEY_FILE: /pki/dsa1.key.pem
+      MEERKAT_TLS_CA_FILE: /pki/god.crt
+      MEERKAT_TLS_CERT_FILE: /pki/dsa1.chain.crt
+      # MEERKAT_TLS_CLIENT_CERT_AUTH: 1
+      # MEERKAT_TLS_REJECT_UNAUTHORIZED_CLIENTS: 1
+      MEERKAT_TLS_KEY_FILE: /pki/dsa1.key.pem
       MEERKAT_SIGNING_CA_FILE: /pki/god.crt
       MEERKAT_SIGNING_CERTS_CHAIN_FILE: /pki/dsa1.chain.crt
       MEERKAT_SIGNING_KEY_FILE: /pki/dsa1.key.pem
@@ -62,6 +65,7 @@ services:
     ports:
       - '1389:389/tcp' # LDAP TCP Port
       - '14632:4632/tcp' # IDM Socket
+      - '14633:44632/tcp' # IDM Socket
       - '18080:18080/tcp' # Web administration console
       - '19229:9229/tcp' # NodeJS Debugging
     volumes:
