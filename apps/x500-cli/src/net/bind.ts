@@ -190,6 +190,7 @@ async function createConnection (
             // TODO: Iterate over URLs.
             const connection = await connect(
                 ctx,
+                dsa!,
                 accessPoint.urls[0],
                 bindDN,
                 password,
