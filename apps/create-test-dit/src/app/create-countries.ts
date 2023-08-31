@@ -910,7 +910,7 @@ async function seedCountries (
             const createCountry = addCountryArgument(
                 baseObject,
                 country,
-                targetSystem,
+                ctx.single ? undefined : targetSystem,
             );
             const outcome = await conn.writeOperation({
                 opCode: addEntry["&operationCode"],
