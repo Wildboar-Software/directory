@@ -458,7 +458,7 @@ async function mergeSortAndPageSearch(
             return unsignedReturnValue;
         }
 
-        const signableBytes = Buffer.from(_encode_SearchResult(totalResult, DER).toBytes().buffer);
+        const signableBytes = _encode_SearchResult(totalResult, DER).toBytes();
         const key = ctx.config.signing?.key;
         if (!key) { // Signing is permitted to fail, per ITU Recommendation X.511 (2019), Section 7.10.
             return unsignedReturnValue;
@@ -569,7 +569,7 @@ async function mergeSortAndPageSearch(
                 connection_uuid: assn.id,
                 query_ref: searchState.paging![0],
                 result_index: i,
-                entry_info: Buffer.from(_encode_EntryInformation(entry, DER).toBytes().buffer),
+                entry_info: _encode_EntryInformation(entry, DER).toBytes(),
                 // TODO: Supply entry ID too.
             })),
         });
@@ -672,25 +672,23 @@ async function mergeSortAndPageSearch(
     */
 
     const nameBuffer = (state.chainingArguments.aliasDereferenced && mergedResult.name)
-        ? Buffer.from(_encode_Name(mergedResult.name, DER).toBytes().buffer)
+        ? _encode_Name(mergedResult.name, DER).toBytes()
         : Buffer.allocUnsafe(0);
     const poqBuffer = poq
-        ? Buffer.from(
-            $._encode_explicit(ASN1TagClass.context, 2, () => _encode_PartialOutcomeQualifier, DER)(poq, DER)
-            .toBytes().buffer)
+        ? $._encode_explicit(ASN1TagClass.context, 2, () => _encode_PartialOutcomeQualifier, DER)(poq, DER).toBytes()
         : Buffer.allocUnsafe(0);
     const altMatchingBuffer = (mergedResult.altMatching !== undefined)
         ? Buffer.from([ 0xA3, 0x03, 0x01, 0x01, 0xFF ]) // [3] TRUE
         : Buffer.allocUnsafe(0);
     const spBuffer = sp
-        ? Buffer.from(
-            $._encode_explicit(ASN1TagClass.context, 30, () => _encode_SecurityParameters, DER)(sp, DER)
-                .toBytes().buffer
-        )
+        ? $._encode_explicit(ASN1TagClass.context, 30, () => _encode_SecurityParameters, DER)(sp, DER).toBytes()
         : Buffer.allocUnsafe(0);
-    const performerBuffer = Buffer.from(
-        $._encode_explicit(ASN1TagClass.context, 29, () => _encode_DistinguishedName, DER)
-        (ctx.dsa.accessPoint.ae_title.rdnSequence, DER).toBytes().buffer);
+    const performerBuffer = $._encode_explicit(
+        ASN1TagClass.context,
+        29,
+        () => _encode_DistinguishedName,
+        DER,
+    )(ctx.dsa.accessPoint.ae_title.rdnSequence, DER).toBytes();
     const adBuffer = state.chainingArguments.aliasDereferenced
         ? Buffer.from([ 0xBD, 0x03, 0x01, 0x01, 0xFF ]) // [29] TRUE
         : Buffer.allocUnsafe(0);
@@ -807,7 +805,7 @@ async function mergeSortAndPageSearch(
         return unsignedReturnValue;
     }
     const [ sigAlg, sigValue ] = signingResult;
-    const algIdBuffer = Buffer.from(_encode_AlgorithmIdentifier(sigAlg, DER).toBytes().buffer);
+    const algIdBuffer = _encode_AlgorithmIdentifier(sigAlg, DER).toBytes();
     const sigValueTagAndLengthBytes = (sigValue.length + 1) >= 128
         ? (() => {
             const lengthBytes = encodeUnsignedBigEndianInteger(sigValue.length + 1);

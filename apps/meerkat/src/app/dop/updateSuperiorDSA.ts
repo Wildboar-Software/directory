@@ -274,7 +274,7 @@ async function updateSuperiorDSA (
                     binding_type: id_op_binding_hierarchical.toString(),
                     binding_identifier: hob.binding_identifier,
                     binding_version: hob.binding_version + 1,
-                    agreement_ber: Buffer.from(encodedNewAgreement.toBytes().buffer),
+                    agreement_ber: encodedNewAgreement.toBytes(),
                     access_point: {
                         connect: {
                             id: hob.access_point.id,
@@ -344,14 +344,14 @@ async function updateSuperiorDSA (
                                 },
                             },
                             security_certification_path: sp?.certification_path
-                                ? Buffer.from(_encode_CertificationPath(sp.certification_path, DER).toBytes().buffer)
+                                ? _encode_CertificationPath(sp.certification_path, DER).toBytes()
                                 : undefined,
                             security_name: accessPoint.ae_title.rdnSequence.map(rdnToJson),
                             security_time: sp?.time
                                 ? getDateFromTime(sp.time)
                                 : undefined,
                             security_random: sp?.random
-                                ? Buffer.from(packBits(sp.random).buffer)
+                                ? Buffer.from(packBits(sp.random))
                                 : undefined,
                             security_target: (sp?.target !== undefined)
                                 ? Number(sp.target)

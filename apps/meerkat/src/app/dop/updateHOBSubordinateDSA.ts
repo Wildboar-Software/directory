@@ -209,9 +209,9 @@ async function updateHOBSubordinateDSA (
         binding_type: id_op_binding_hierarchical.toString(),
         binding_identifier: Number(currentBindingID.identifier),
         binding_version: Number(currentBindingID.version) + 1,
-        agreement_ber: Buffer.from(agr_element.toBytes().buffer),
+        agreement_ber: agr_element.toBytes(),
         initiator: OperationalBindingInitiator.ROLE_A,
-        initiator_ber: Buffer.from(_encode_SuperiorToSubordinateModification(sup2sub, BER).toBytes()),
+        initiator_ber: _encode_SuperiorToSubordinateModification(sup2sub, BER).toBytes(),
         access_point: {
             connect: {
                 id: previous_ob.access_point_id,

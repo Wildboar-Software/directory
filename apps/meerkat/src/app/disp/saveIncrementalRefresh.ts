@@ -59,7 +59,7 @@ async function saveIncrementalRefresh (
     const bytes = _encode_IncrementalStepRefresh(toSave, BER).toBytes();
     await ctx.db.pendingShadowIncrementalStepRefresh.create({
         data: {
-            ber: Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength),
+            ber: bytes,
             binding_identifier: binding_id,
             rename: !!(
                 actual_change.changes.sDSEChanges

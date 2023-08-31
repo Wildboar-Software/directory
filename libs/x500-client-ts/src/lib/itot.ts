@@ -411,14 +411,14 @@ function break_down_ae_title (aet?: GeneralName): [ AP_title | undefined, AE_qua
         ];
     }
     else if ("registeredID" in aet) {
-        const len = aet.registeredID._nodes.length;
+        const len = aet.registeredID.nodes.length;
         if (len <= 2) {
             // OIDs must be at least two nodes, so we cannot break it down
             // further if it is 2 nodes or fewer.
             return [ undefined, undefined ];
         }
-        const last_arc = aet.registeredID._nodes[len - 1];
-        const prefix = aet.registeredID._nodes.slice(0, -1);
+        const last_arc = aet.registeredID.nodes[len - 1];
+        const prefix = aet.registeredID.nodes.slice(0, -1);
         return [
             {
                 ap_title_form2: new ObjectIdentifier(prefix),

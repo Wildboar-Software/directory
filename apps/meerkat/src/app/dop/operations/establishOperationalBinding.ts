@@ -306,14 +306,14 @@ async function modifySOB_delete_me (
             validity_start: new Date(),
             validity_end: addYears(new Date(), 5),
             security_certification_path: sp?.certification_path
-                ? Buffer.from(_encode_CertificationPath(sp.certification_path, DER).toBytes().buffer)
+                ? _encode_CertificationPath(sp.certification_path, DER).toBytes()
                 : undefined,
             security_name: sp?.name?.map((rdn) => rdnToJson(rdn)),
             security_time: sp?.time
                 ? getDateFromTime(sp.time)
                 : undefined,
             security_random: sp?.random
-                ? Buffer.from(packBits(sp.random).buffer)
+                ? Buffer.from(packBits(sp.random))
                 : undefined,
             security_target: (sp?.target !== undefined)
                 ? Number (sp.target)
@@ -764,7 +764,7 @@ async function relayedEstablishOperationalBinding (
                 binding_type: bindingType.toString(),
                 binding_identifier: Number(data.bindingID.identifier),
                 binding_version: Number(data.bindingID.version),
-                agreement_ber: Buffer.from(agreement.toBytes().buffer),
+                agreement_ber: agreement.toBytes(),
                 initiator: (() => {
                     if ("roleA_initiates" in relay_init) {
                         return OperationalBindingInitiator.ROLE_A;
@@ -795,14 +795,14 @@ async function relayedEstablishOperationalBinding (
                 validity_start: validFrom,
                 validity_end: validUntil,
                 security_certification_path: sp?.certification_path
-                    ? Buffer.from(_encode_CertificationPath(sp.certification_path, DER).toBytes().buffer)
+                    ? _encode_CertificationPath(sp.certification_path, DER).toBytes()
                     : undefined,
                 security_name: sp?.name?.map((rdn) => rdnToJson(rdn)),
                 security_time: sp?.time
                     ? getDateFromTime(sp.time)
                     : undefined,
                 security_random: sp?.random
-                    ? Buffer.from(packBits(sp.random).buffer)
+                    ? Buffer.from(packBits(sp.random))
                     : undefined,
                 security_target: (sp?.target !== undefined)
                     ? Number(sp.target)
@@ -816,7 +816,7 @@ async function relayedEstablishOperationalBinding (
                 source_tcp_port: assn.socket.remotePort,
                 source_credentials_type: 1,
                 source_certificate_path: sp?.certification_path
-                    ? Buffer.from(_encode_CertificationPath(sp.certification_path, DER).toBytes().buffer)
+                    ? _encode_CertificationPath(sp.certification_path, DER).toBytes()
                     : undefined,
                 source_strong_name: ctx.dsa.accessPoint.ae_title.rdnSequence.map(rdnToJson),
                 supply_contexts: null,
@@ -1533,7 +1533,7 @@ async function establishOperationalBinding (
             }
             return Buffer.from(data.initiator.symmetric.toBytes());
         })(),
-        agreement_ber: Buffer.from(data.agreement.toBytes().buffer),
+        agreement_ber: data.agreement.toBytes(),
         access_point: {
             connect: {
                 id: access_point_id,
@@ -1542,14 +1542,14 @@ async function establishOperationalBinding (
         validity_start: validFrom,
         validity_end: validUntil,
         security_certification_path: sp?.certification_path
-            ? Buffer.from(_encode_CertificationPath(sp.certification_path, DER).toBytes().buffer)
+            ? _encode_CertificationPath(sp.certification_path, DER).toBytes()
             : undefined,
         security_name: sp?.name?.map((rdn) => rdnToJson(rdn)),
         security_time: sp?.time
             ? getDateFromTime(sp.time)
             : undefined,
         security_random: sp?.random
-            ? Buffer.from(packBits(sp.random).buffer)
+            ? Buffer.from(packBits(sp.random))
             : undefined,
         security_target: (sp?.target !== undefined)
             ? Number(sp.target)
@@ -1587,20 +1587,20 @@ async function establishOperationalBinding (
             && ("strong" in assn.bind.credentials)
             && assn.bind.credentials.strong.certification_path
         )
-            ? Buffer.from(_encode_CertificationPath(assn.bind.credentials.strong.certification_path, DER).toBytes().buffer)
+            ? _encode_CertificationPath(assn.bind.credentials.strong.certification_path, DER).toBytes()
             : undefined,
         source_attr_cert_path: (
             assn.bind?.credentials
             && ("strong" in assn.bind.credentials)
             && assn.bind.credentials.strong.attributeCertificationPath
         )
-            ? Buffer.from(_encode_ACP(assn.bind.credentials.strong.attributeCertificationPath, DER).toBytes().buffer)
+            ? _encode_ACP(assn.bind.credentials.strong.attributeCertificationPath, DER).toBytes()
             : undefined,
         source_bind_token: (
             assn.bind?.credentials
             && ("strong" in assn.bind.credentials)
         )
-            ? Buffer.from(_encode_Token(assn.bind.credentials.strong.bind_token, DER).toBytes().buffer)
+            ? _encode_Token(assn.bind.credentials.strong.bind_token, DER).toBytes()
             : undefined,
         source_strong_name: (
             assn.bind?.credentials

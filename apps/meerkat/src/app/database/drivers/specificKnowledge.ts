@@ -109,7 +109,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
         where: {
             entry_id: vertex.dse.id,
             knowledge_type: Knowledge.SPECIFIC,
-            ber: Buffer.from(value.value.toBytes().buffer),
+            ber: value.value.toBytes(),
         },
     }));
 };

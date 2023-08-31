@@ -348,14 +348,14 @@ async function setEntryPassword (
                     encrypted: Buffer.from(encrypted),
                     algorithm_oid: encAlg.algorithm.toString(),
                     algorithm_parameters_der: encAlg.parameters
-                        ? Buffer.from(encAlg.parameters.toBytes())
+                        ? encAlg.parameters.toBytes()
                         : undefined,
                 },
                 update: {
                     encrypted: Buffer.from(encrypted),
                     algorithm_oid: encAlg.algorithm.toString(),
                     algorithm_parameters_der: encAlg.parameters
-                        ? Buffer.from(encAlg.parameters.toBytes())
+                        ? encAlg.parameters.toBytes()
                         : undefined,
                 },
                 select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252

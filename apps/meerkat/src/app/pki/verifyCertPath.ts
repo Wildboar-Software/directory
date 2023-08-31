@@ -1051,11 +1051,11 @@ function verifySignature (
     const pubKey: KeyObject = keyOrSPKI instanceof KeyObject
         ? keyOrSPKI
         : (() => {
-            const spkiBytes: Uint8Array = ((keyOrSPKI instanceof SubjectPublicKeyInfo)
+            const spkiBytes: Buffer = ((keyOrSPKI instanceof SubjectPublicKeyInfo)
                 ? _encode_SubjectPublicKeyInfo(keyOrSPKI, DER)
                 : _encode_SubjectAltPublicKeyInfo(keyOrSPKI, DER)).toBytes();
             const issuerPublicKey = createPublicKey({
-                key: Buffer.from(spkiBytes.buffer),
+                key: spkiBytes,
                 format: "der",
                 type: "spki",
             });
@@ -2093,8 +2093,8 @@ async function verifyCACertificate (
              */
             return (
                 !Buffer.compare(
-                    Buffer.from(tatbs.serialNumber.buffer),
-                    Buffer.from(tbs.serialNumber.buffer),
+                    Buffer.from(tatbs.serialNumber.buffer, tatbs.serialNumber.byteOffset, tatbs.serialNumber.byteLength),
+                    Buffer.from(tbs.serialNumber.buffer, tbs.serialNumber.byteOffset, tbs.serialNumber.byteLength),
                 )
                 && (tatbs.issuer.rdnSequence.length === tbs.issuer.rdnSequence.length)
                 && (tatbs.subject.rdnSequence.length === tbs.subject.rdnSequence.length)
@@ -2102,14 +2102,14 @@ async function verifyCACertificate (
                 && (tatbs.subjectPublicKeyInfo.algorithm.algorithm
                     .isEqualTo(tbs.subjectPublicKeyInfo.algorithm.algorithm))
                 && !Buffer.compare(
-                    Buffer.from(tatbs.subjectPublicKeyInfo.subjectPublicKey.buffer),
-                    Buffer.from(tbs.subjectPublicKeyInfo.subjectPublicKey.buffer)
+                    Buffer.from(tatbs.subjectPublicKeyInfo.subjectPublicKey),
+                    Buffer.from(tbs.subjectPublicKeyInfo.subjectPublicKey)
                 )
                 && (ta.certificate.algorithmIdentifier.algorithm
                     .isEqualTo(cert.algorithmIdentifier.algorithm))
                 && !Buffer.compare(
-                    Buffer.from(ta.certificate.signature.buffer),
-                    Buffer.from(cert.signature.buffer),
+                    Buffer.from(ta.certificate.signature),
+                    Buffer.from(cert.signature),
                 )
             );
         } else if ("tbsCert" in ta) {
@@ -2125,8 +2125,8 @@ async function verifyCACertificate (
              */
             return (
                 !Buffer.compare(
-                    Buffer.from(tatbs.serialNumber.buffer),
-                    Buffer.from(tbs.serialNumber.buffer),
+                    Buffer.from(tatbs.serialNumber),
+                    Buffer.from(tbs.serialNumber),
                 )
                 && (tatbs.issuer.rdnSequence.length === cert.toBeSigned.issuer.rdnSequence.length)
                 && (tatbs.subject.rdnSequence.length === cert.toBeSigned.subject.rdnSequence.length)
@@ -2134,8 +2134,8 @@ async function verifyCACertificate (
                 && (tatbs.subjectPublicKeyInfo.algorithm.algorithm
                     .isEqualTo(tbs.subjectPublicKeyInfo.algorithm.algorithm))
                 && !Buffer.compare(
-                    Buffer.from(tatbs.subjectPublicKeyInfo.subjectPublicKey.buffer),
-                    Buffer.from(tbs.subjectPublicKeyInfo.subjectPublicKey.buffer)
+                    Buffer.from(tatbs.subjectPublicKeyInfo.subjectPublicKey),
+                    Buffer.from(tbs.subjectPublicKeyInfo.subjectPublicKey)
                 )
             );
         } else if ("taInfo" in ta) {
@@ -2144,8 +2144,8 @@ async function verifyCACertificate (
                 (ta.taInfo.exts?.length === cert.toBeSigned.extensions?.length)
                 && (ta.taInfo.pubKey.algorithm.algorithm.isEqualTo(cert.toBeSigned.subjectPublicKeyInfo.algorithm.algorithm))
                 && !Buffer.compare(
-                    Buffer.from(ta.taInfo.pubKey.subjectPublicKey.buffer),
-                    Buffer.from(cert.toBeSigned.subjectPublicKeyInfo.subjectPublicKey.buffer),
+                    Buffer.from(ta.taInfo.pubKey.subjectPublicKey),
+                    Buffer.from(cert.toBeSigned.subjectPublicKeyInfo.subjectPublicKey),
                 )
             );
         } else {

@@ -76,7 +76,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
             knowledge_type: Knowledge.SECONDARY_SUPPLIER,
             OR: [
                 {
-                    ber: Buffer.from(value.value.toBytes().buffer),
+                    ber: value.value.toBytes(),
                 },
                 {
                     ae_title: {
@@ -145,7 +145,7 @@ const hasValue: SpecialAttributeValueDetector = async (
             active: true,
             OR: [
                 {
-                    ber: Buffer.from(value.value.toBytes().buffer),
+                    ber: value.value.toBytes(),
                 },
                 {
                     ae_title: {

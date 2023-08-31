@@ -383,7 +383,7 @@ async function addValues(
                                     tag_class: cv.tagClass,
                                     constructed: (cv.construction === ASN1Construction.constructed),
                                     tag_number: cv.tagNumber,
-                                    ber: Buffer.from(cv.toBytes().buffer),
+                                    ber: cv.toBytes(),
                                     fallback: context.fallback ?? false,
                                 }))),
                         },

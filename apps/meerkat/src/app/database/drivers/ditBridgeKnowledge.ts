@@ -58,7 +58,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             domain_local_id: dbk.domainLocalID
                 ? directoryStringToString(dbk.domainLocalID)
                 : undefined,
-            ber: Buffer.from(value.value.toBytes().buffer),
+            ber: value.value.toBytes(),
         },
         select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
     }));
@@ -76,7 +76,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     }
     pendingUpdates.otherWrites.push(ctx.db.ditBridgeKnowledge.deleteMany({
         where: {
-            ber: Buffer.from(value.value.toBytes().buffer),
+            ber: value.value.toBytes(),
         },
     }));
 };
@@ -117,7 +117,7 @@ const hasValue: SpecialAttributeValueDetector = async (
 ): Promise<boolean> => {
     return !!(await ctx.db.ditBridgeKnowledge.findFirst({
         where: {
-            ber: Buffer.from(value.value.toBytes().buffer),
+            ber: value.value.toBytes(),
         },
     }));
 };

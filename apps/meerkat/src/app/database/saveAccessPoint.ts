@@ -86,15 +86,15 @@ async function saveAccessPoint (
 ): Promise<number> {
     const ber: Buffer = ((): Buffer => {
         if (ap instanceof AccessPoint) {
-            return Buffer.from(_encode_AccessPoint(ap, DER).toBytes().buffer);
+            return _encode_AccessPoint(ap, DER).toBytes();
         } else if (ap instanceof MasterOrShadowAccessPoint) {
-            return Buffer.from(_encode_MasterOrShadowAccessPoint(ap, DER).toBytes().buffer);
+            return _encode_MasterOrShadowAccessPoint(ap, DER).toBytes();
         } else if (ap instanceof SupplierOrConsumer) {
-            return Buffer.from(_encode_SupplierOrConsumer(ap, DER).toBytes().buffer);
+            return _encode_SupplierOrConsumer(ap, DER).toBytes();
         } else if (ap instanceof SupplierInformation) {
-            return Buffer.from(_encode_SupplierInformation(ap, DER).toBytes().buffer);
+            return _encode_SupplierInformation(ap, DER).toBytes();
         } else {
-            return Buffer.from(_encode_SupplierAndConsumers(ap, DER).toBytes().buffer);
+            return _encode_SupplierAndConsumers(ap, DER).toBytes();
         }
     })();
     const non_supplying_master_id = (("non_supplying_master" in ap) && ap.non_supplying_master)
@@ -126,13 +126,13 @@ async function saveAccessPoint (
                         const uri = naddrToURI(nsap);
                         if (!uri) {
                             return {
-                                bytes: Buffer.from(nsap.buffer),
+                                bytes: Buffer.from(nsap.buffer, nsap.byteOffset, nsap.byteLength),
                             };
                         }
                         const url = new URL(uri);
                         return {
                             url: url.toString(),
-                            bytes: Buffer.from(nsap.buffer),
+                            bytes: Buffer.from(nsap.buffer, nsap.byteOffset, nsap.byteLength),
                             hostname: url.hostname,
                         };
                     }),

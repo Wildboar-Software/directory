@@ -54,8 +54,8 @@ function isCertInTrustAnchor (
             && (tatbs.subjectPublicKeyInfo.algorithm.algorithm
                 .isEqualTo(tbs.subjectPublicKeyInfo.algorithm.algorithm))
             && !Buffer.compare(
-                Buffer.from(tatbs.subjectPublicKeyInfo.subjectPublicKey.buffer),
-                Buffer.from(tbs.subjectPublicKeyInfo.subjectPublicKey.buffer)
+                Buffer.from(tatbs.subjectPublicKeyInfo.subjectPublicKey),
+                Buffer.from(tbs.subjectPublicKeyInfo.subjectPublicKey)
             )
         );
     }
@@ -64,8 +64,8 @@ function isCertInTrustAnchor (
             (trust_anchor.taInfo.exts?.length === cert.toBeSigned.extensions?.length)
             && (trust_anchor.taInfo.pubKey.algorithm.algorithm.isEqualTo(cert.toBeSigned.subjectPublicKeyInfo.algorithm.algorithm))
             && !Buffer.compare(
-                Buffer.from(trust_anchor.taInfo.pubKey.subjectPublicKey.buffer),
-                Buffer.from(cert.toBeSigned.subjectPublicKeyInfo.subjectPublicKey.buffer),
+                Buffer.from(trust_anchor.taInfo.pubKey.subjectPublicKey),
+                Buffer.from(cert.toBeSigned.subjectPublicKeyInfo.subjectPublicKey),
             )
         );
     }
