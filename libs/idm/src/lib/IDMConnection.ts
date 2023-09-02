@@ -487,7 +487,7 @@ class IDMConnection {
      * @public
      * @function
      */
-    public write (data: Uint8Array, final: boolean = true): void {
+    public write (data: Uint8Array | Uint8Array[], final: boolean = true): void {
         const header = ((): Buffer => {
             switch (this.version ?? IDMVersion.v1) {
             case (IDMVersion.v1): {
@@ -519,8 +519,17 @@ class IDMConnection {
             }
         })();
         this.socket.cork();
+        // Under the hood, NodeJS uses vectored I/O when you cork and uncork.
+        // See: https://github.com/nodejs/node/issues/49421
         this.socket.write(header);
-        this.socket.write(data);
+        if (Array.isArray(data)) {
+            for (const d of data) {
+                this.socket.write(d);
+            }
+        } else {
+            this.socket.write(data);
+        }
+        // this.socket.write(data);
         this.socket.uncork();
         // Instead of doing this, which requires an unnecessary heap allocation:
         // this.socket.write(Buffer.concat([
@@ -554,7 +563,7 @@ class IDMConnection {
         const idm: IDM_PDU = {
             bind,
         };
-        this.write(_encode_IDM_PDU(idm, BER).toBytes());
+        this.write(_encode_IDM_PDU(idm, BER).toBuffers());
     }
 
     /**
@@ -580,7 +589,7 @@ class IDMConnection {
         const idm: IDM_PDU = {
             bindResult,
         };
-        this.write(_encode_IDM_PDU(idm, BER).toBytes());
+        this.write(_encode_IDM_PDU(idm, BER).toBuffers());
     }
 
     /**
@@ -611,7 +620,7 @@ class IDMConnection {
         const idm: IDM_PDU = {
             bindError,
         };
-        this.write(_encode_IDM_PDU(idm, BER).toBytes());
+        this.write(_encode_IDM_PDU(idm, BER).toBuffers());
     }
 
     /**
@@ -632,7 +641,7 @@ class IDMConnection {
         const idm: IDM_PDU = {
             request,
         };
-        this.write(_encode_IDM_PDU(idm, BER).toBytes());
+        this.write(_encode_IDM_PDU(idm, BER).toBuffers());
     }
 
     /**
@@ -653,7 +662,7 @@ class IDMConnection {
         const idm: IDM_PDU = {
             result,
         };
-        this.write(_encode_IDM_PDU(idm, BER).toBytes());
+        this.write(_encode_IDM_PDU(idm, BER).toBuffers());
     }
 
     /**
@@ -674,7 +683,7 @@ class IDMConnection {
         const idm: IDM_PDU = {
             error,
         };
-        this.write(_encode_IDM_PDU(idm, BER).toBytes());
+        this.write(_encode_IDM_PDU(idm, BER).toBuffers());
     }
 
     /**
@@ -694,7 +703,7 @@ class IDMConnection {
         const idm: IDM_PDU = {
             reject,
         };
-        this.write(_encode_IDM_PDU(idm, BER).toBytes());
+        this.write(_encode_IDM_PDU(idm, BER).toBuffers());
     }
 
     /**
@@ -712,7 +721,7 @@ class IDMConnection {
         const idm: IDM_PDU = {
             unbind,
         };
-        this.write(_encode_IDM_PDU(idm, BER).toBytes());
+        this.write(_encode_IDM_PDU(idm, BER).toBuffers());
     }
 
     /**
@@ -731,7 +740,7 @@ class IDMConnection {
             const idm: IDM_PDU = {
                 abort,
             };
-            this.write(_encode_IDM_PDU(idm, BER).toBytes());
+            this.write(_encode_IDM_PDU(idm, BER).toBuffers());
             this.close();
         } catch {
             //
@@ -752,7 +761,7 @@ class IDMConnection {
         const idm: IDM_PDU = {
             startTLS: null,
         };
-        this.write(_encode_IDM_PDU(idm, BER).toBytes());
+        this.write(_encode_IDM_PDU(idm, BER).toBuffers());
     }
 
     /**
@@ -768,7 +777,7 @@ class IDMConnection {
         const idm: IDM_PDU = {
             tLSResponse,
         };
-        this.write(_encode_IDM_PDU(idm, BER).toBytes());
+        this.write(_encode_IDM_PDU(idm, BER).toBuffers());
     }
 
     /**
