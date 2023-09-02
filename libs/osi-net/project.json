@@ -5,25 +5,26 @@
     "projectType": "library",
     "targets": {
         "build": {
-            "executor": "@nrwl/js:tsc",
+            "executor": "@nx/js:tsc",
             "outputs": ["{options.outputPath}"],
             "options": {
                 "outputPath": "dist/libs/osi-net",
                 "tsConfig": "libs/osi-net/tsconfig.lib.json",
                 "packageJson": "libs/osi-net/package.json",
                 "main": "libs/osi-net/src/index.ts",
-                "assets": ["libs/osi-net/*.md"]
+                "assets": ["libs/osi-net/*.md"],
+                "updateBuildableProjectDepsInPackageJson": true
             }
         },
         "lint": {
-            "executor": "@nrwl/linter:eslint",
+            "executor": "@nx/linter:eslint",
             "outputs": ["{options.outputFile}"],
             "options": {
                 "lintFilePatterns": ["libs/osi-net/**/*.ts"]
             }
         },
         "test": {
-            "executor": "@nrwl/jest:jest",
+            "executor": "@nx/jest:jest",
             "outputs": ["{workspaceRoot}/coverage/libs/osi-net"],
             "options": {
                 "jestConfig": "libs/osi-net/jest.config.ts",

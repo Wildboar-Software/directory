@@ -5,18 +5,19 @@
     "projectType": "library",
     "targets": {
         "build": {
-            "executor": "@nrwl/js:tsc",
+            "executor": "@nx/js:tsc",
             "outputs": ["{options.outputPath}"],
             "options": {
                 "outputPath": "dist/libs/x500-client-ts",
                 "main": "libs/x500-client-ts/src/index.ts",
                 "tsConfig": "libs/x500-client-ts/tsconfig.lib.json",
-                "assets": ["libs/x500-client-ts/*.md"]
+                "assets": ["libs/x500-client-ts/*.md"],
+                "updateBuildableProjectDepsInPackageJson": true
             },
             "dependsOn": [
                 {
-                    "projects": "dependencies",
-                    "target": "build"
+                    "target": "build",
+                    "dependencies": true
                 }
             ]
         },
@@ -27,20 +28,19 @@
             },
             "dependsOn": [
                 {
-                    "projects": "self",
                     "target": "build"
                 }
             ]
         },
         "lint": {
-            "executor": "@nrwl/linter:eslint",
+            "executor": "@nx/linter:eslint",
             "outputs": ["{options.outputFile}"],
             "options": {
                 "lintFilePatterns": ["libs/x500-client-ts/**/*.ts"]
             }
         },
         "test": {
-            "executor": "@nrwl/jest:jest",
+            "executor": "@nx/jest:jest",
             "outputs": ["{workspaceRoot}/coverage/libs/x500-client-ts"],
             "options": {
                 "jestConfig": "libs/x500-client-ts/jest.config.ts",

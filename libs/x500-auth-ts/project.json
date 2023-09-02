@@ -5,44 +5,44 @@
     "projectType": "library",
     "targets": {
         "build": {
-            "executor": "@nrwl/js:tsc",
+            "executor": "@nx/js:tsc",
             "outputs": ["{options.outputPath}"],
             "options": {
                 "outputPath": "dist/libs/x500-auth-ts",
                 "main": "libs/x500-auth-ts/src/index.ts",
                 "tsConfig": "libs/x500-auth-ts/tsconfig.lib.json",
                 "assets": ["libs/x500-auth-ts/*.md"],
-                "buildableProjectDepsInPackageJsonType": "dependencies"
+                "buildableProjectDepsInPackageJsonType": "dependencies",
+                "updateBuildableProjectDepsInPackageJson": true
             },
             "dependsOn": [
                 {
-                    "projects": "dependencies",
-                    "target": "build"
+                    "target": "build",
+                    "dependencies": true
                 }
             ]
         },
         "publish": {
-            "executor": "@nrwl/workspace:run-commands",
+            "executor": "@nx/workspace:run-commands",
             "options": {
                 "command": "node tools/scripts/publish.mjs x500-auth-ts {args.ver} {args.tag}"
             },
             "dependsOn": [
                 {
-                    "projects": "self",
                     "target": "build"
                 }
             ]
         },
         "lint": {
-            "executor": "@nrwl/linter:eslint",
+            "executor": "@nx/linter:eslint",
             "outputs": ["{options.outputFile}"],
             "options": {
                 "lintFilePatterns": ["libs/x500-auth-ts/**/*.ts"]
             }
         },
         "test": {
-            "executor": "@nrwl/jest:jest",
-            "outputs": ["coverage/libs/x500-auth-ts"],
+            "executor": "@nx/jest:jest",
+            "outputs": ["{workspaceRoot}/coverage/libs/x500-auth-ts"],
             "options": {
                 "jestConfig": "libs/x500-auth-ts/jest.config.ts",
                 "passWithNoTests": true

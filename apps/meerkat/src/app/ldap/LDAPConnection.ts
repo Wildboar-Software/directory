@@ -533,18 +533,6 @@ class LDAPAssociation extends ClientAssociation {
     private buffer: Buffer = Buffer.alloc(0);
 
     /**
-     * @summary The bound vertex
-     * @description
-     *
-     * The bound vertex. This value not being `undefined` does not imply that
-     * the user has authenticated successfully.
-     *
-     * @public
-     * @property
-     */
-    public boundEntry: Vertex | undefined;
-
-    /**
      * @summary Attempt a bind
      * @description
      *

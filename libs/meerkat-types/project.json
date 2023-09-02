@@ -5,25 +5,26 @@
     "projectType": "library",
     "targets": {
         "build": {
-            "executor": "@nrwl/js:tsc",
+            "executor": "@nx/js:tsc",
             "outputs": ["{options.outputPath}"],
             "options": {
                 "outputPath": "dist/libs/meerkat-types",
                 "tsConfig": "libs/meerkat-types/tsconfig.lib.json",
                 "packageJson": "libs/meerkat-types/package.json",
                 "main": "libs/meerkat-types/src/index.ts",
-                "assets": ["libs/meerkat-types/*.md"]
+                "assets": ["libs/meerkat-types/*.md"],
+                "updateBuildableProjectDepsInPackageJson": true
             }
         },
         "lint": {
-            "executor": "@nrwl/linter:eslint",
+            "executor": "@nx/linter:eslint",
             "options": {
                 "lintFilePatterns": ["libs/meerkat-types/**/*.ts"]
             },
             "outputs": ["{options.outputFile}"]
         },
         "test": {
-            "executor": "@nrwl/jest:jest",
+            "executor": "@nx/jest:jest",
             "outputs": ["{workspaceRoot}/coverage/libs/meerkat-types"],
             "options": {
                 "jestConfig": "libs/meerkat-types/jest.config.ts",

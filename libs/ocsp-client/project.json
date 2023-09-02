@@ -5,25 +5,26 @@
     "projectType": "library",
     "targets": {
         "build": {
-            "executor": "@nrwl/js:tsc",
+            "executor": "@nx/js:tsc",
             "outputs": ["{options.outputPath}"],
             "options": {
                 "outputPath": "dist/libs/ocsp-client",
                 "tsConfig": "libs/ocsp-client/tsconfig.lib.json",
                 "packageJson": "libs/ocsp-client/package.json",
                 "main": "libs/ocsp-client/src/index.ts",
-                "assets": ["libs/ocsp-client/*.md"]
+                "assets": ["libs/ocsp-client/*.md"],
+                "updateBuildableProjectDepsInPackageJson": true
             }
         },
         "lint": {
-            "executor": "@nrwl/linter:eslint",
+            "executor": "@nx/linter:eslint",
             "outputs": ["{options.outputFile}"],
             "options": {
                 "lintFilePatterns": ["libs/ocsp-client/**/*.ts"]
             }
         },
         "test": {
-            "executor": "@nrwl/jest:jest",
+            "executor": "@nx/jest:jest",
             "outputs": ["{workspaceRoot}/coverage/libs/ocsp-client"],
             "options": {
                 "jestConfig": "libs/ocsp-client/jest.config.ts",

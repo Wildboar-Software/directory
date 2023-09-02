@@ -37,7 +37,7 @@
             }
         },
         "serve": {
-            "executor": "@nrwl/node:node",
+            "executor": "@nx/js:node",
             "options": {
                 "buildTarget": "meerkat:build:dev",
                 "inspect": "inspect",
@@ -45,14 +45,14 @@
             }
         },
         "lint": {
-            "executor": "@nrwl/linter:eslint",
+            "executor": "@nx/linter:eslint",
             "options": {
                 "lintFilePatterns": ["apps/meerkat/**/*.ts"]
             },
             "outputs": ["{options.outputFile}"]
         },
         "test": {
-            "executor": "@nrwl/jest:jest",
+            "executor": "@nx/jest:jest",
             "outputs": ["{workspaceRoot}/coverage/apps/meerkat"],
             "options": {
                 "jestConfig": "apps/meerkat/jest.config.ts",
