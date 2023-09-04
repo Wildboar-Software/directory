@@ -1,5 +1,6 @@
 import type { Context } from "@wildboar/meerkat-types";
 import {
+    PartialAttributeList,
     SearchResultEntry,
 } from "@wildboar/ldap/src/lib/modules/Lightweight-Directory-Access-Protocol-V3/SearchResultEntry.ta";
 import type {
@@ -29,11 +30,17 @@ function getSearchResultEntryFromEntryInfo (
     ctx: Context,
     einfo: EntryInformation,
 ): SearchResultEntry {
+    const attrs: PartialAttributeList = [];
+    for (const info of einfo.information ?? []) {
+        const pattr = getPartialAttributeFromEntryInfoItem(ctx, info);
+        if (!pattr) {
+            continue;
+        }
+        attrs.push(pattr);
+    }
     return new SearchResultEntry(
         encodeLDAPDN(ctx, einfo.name.rdnSequence),
-        einfo.information
-            ?.map((item) => getPartialAttributeFromEntryInfoItem(ctx, item))
-            .filter((item): item is PartialAttribute => !!item) ?? [],
+        attrs,
     );
 }
 
