@@ -5,3 +5,4 @@
 
 export function oidFromStr(s: string): Array<number> | null
 export function oidFromBytes(b: Uint8Array): Array<number> | null
+export function prepString(s: string, caseFold: boolean): string | null

@@ -234,7 +234,8 @@ if (!nativeBinding) {
     throw new Error(`Failed to load native binding`)
 }
 
-const { oidFromStr, oidFromBytes } = nativeBinding
+const { oidFromStr, oidFromBytes, prepString } = nativeBinding
 
 module.exports.oidFromStr = oidFromStr
 module.exports.oidFromBytes = oidFromBytes
+module.exports.prepString = prepString
