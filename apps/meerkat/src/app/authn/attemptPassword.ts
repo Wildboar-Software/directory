@@ -483,7 +483,6 @@ async function attemptPassword (
                     newFailsEl.value.byteOffset,
                     newFailsEl.value.byteLength,
                 ),
-                jer: fails + 1,
             },
             {
                 entry_id: vertex.dse.id,
@@ -497,7 +496,6 @@ async function attemptPassword (
                     nowElement.value.byteOffset,
                     nowElement.value.byteLength,
                 ),
-                jer: nowElement.toJSON() as string,
             },
         ];
 
@@ -510,7 +508,6 @@ async function attemptPassword (
                 constructed: false,
                 tag_number: ASN1UniversalType.boolean,
                 content_octets: Buffer.from([ 0xFF ]),
-                jer: true,
             });
             new_attrs.push({
                 entry_id: vertex.dse.id,
@@ -524,7 +521,6 @@ async function attemptPassword (
                     nowElement.value.byteOffset,
                     nowElement.value.byteLength,
                 ),
-                jer: nowElement.toJSON() as string,
             });
         }
 
@@ -540,9 +536,9 @@ async function attemptPassword (
                     },
                 },
             }),
-            ctx.db.attributeValue.createMany({
-                data: new_attrs,
-            }),
+            ...new_attrs.map((new_attr) => ctx.db.attributeValue.create({
+                data: new_attr,
+            })),
         ];
         await ctx.db.$transaction(dbPromises);
         return {
@@ -627,37 +623,35 @@ async function attemptPassword (
                 },
             },
         }),
-        ctx.db.attributeValue.createMany({
-            data: [
-                {
-                    entry_id: vertex.dse.id,
-                    type_oid: pwdFails["&id"].toBytes(),
-                    operational: true,
-                    tag_class: ASN1TagClass.universal,
-                    constructed: false,
-                    tag_number: ASN1UniversalType.integer,
-                    content_octets: Buffer.from(
-                        zeroFailsEl.value.buffer,
-                        zeroFailsEl.value.byteOffset,
-                        zeroFailsEl.value.byteLength,
-                    ),
-                    jer: 0,
-                },
-                {
-                    entry_id: vertex.dse.id,
-                    type_oid: pwdLastSuccess["&id"].toBytes(),
-                    operational: true,
-                    tag_class: ASN1TagClass.universal,
-                    constructed: false,
-                    tag_number: ASN1UniversalType.generalizedTime,
-                    content_octets: Buffer.from(
-                        nowElement.value.buffer,
-                        nowElement.value.byteOffset,
-                        nowElement.value.byteLength,
-                    ),
-                    jer: now.toISOString(),
-                },
-            ],
+        ctx.db.attributeValue.create({
+            data: {
+                entry_id: vertex.dse.id,
+                type_oid: pwdFails["&id"].toBytes(),
+                operational: true,
+                tag_class: ASN1TagClass.universal,
+                constructed: false,
+                tag_number: ASN1UniversalType.integer,
+                content_octets: Buffer.from(
+                    zeroFailsEl.value.buffer,
+                    zeroFailsEl.value.byteOffset,
+                    zeroFailsEl.value.byteLength,
+                ),
+            },
+        }),
+        ctx.db.attributeValue.create({
+            data: {
+                entry_id: vertex.dse.id,
+                type_oid: pwdLastSuccess["&id"].toBytes(),
+                operational: true,
+                tag_class: ASN1TagClass.universal,
+                constructed: false,
+                tag_number: ASN1UniversalType.generalizedTime,
+                content_octets: Buffer.from(
+                    nowElement.value.buffer,
+                    nowElement.value.byteOffset,
+                    nowElement.value.byteLength,
+                ),
+            },
         }),
     ]);
 

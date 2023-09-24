@@ -19,6 +19,8 @@ import { getServerStatistics } from "../telemetry/getServerStatistics";
 import sleep from "../utils/sleep";
 import stringifyDN from "../x500/stringifyDN";
 import { rdnFromJson } from "../x500/rdnFromJson";
+import { BERElement } from "asn1-ts";
+import { _decode_RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
 
 const conformancePath = path.join(__dirname, "assets", "static", "conformance.md");
 const ROBOTS: string = `User-agent: *\r\nDisallow: /\r\n`;
@@ -165,8 +167,12 @@ export class HomeController {
         if (!ob) {
             throw new NotFoundException();
         }
-        const cp_rdn = ((typeof ob.new_context_prefix_rdn === "object") && ob.new_context_prefix_rdn)
-            ? rdnFromJson(ob.new_context_prefix_rdn as Record<string, string>)
+        const cp_rdn = ob.new_context_prefix_rdn
+            ? (() => {
+                const el = new BERElement();
+                el.fromBytes(ob.new_context_prefix_rdn);
+                return _decode_RelativeDistinguishedName(el);
+            })()
             : undefined;
         const cp_superior_dn = Array.isArray(ob.immediate_superior)
             ? ob.immediate_superior.map(rdnFromJson)

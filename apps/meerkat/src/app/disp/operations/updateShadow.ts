@@ -95,7 +95,7 @@ import { LocalName } from "@wildboar/x500/src/lib/modules/InformationFramework/L
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import readSubordinates from "../../dit/readSubordinates";
 import { Refinement } from "@wildboar/x500/src/lib/modules/InformationFramework/Refinement.ta";
-import { OperationalBindingInitiator, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import createEntry, { createDse } from "../../database/createEntry";
 import stringifyDN from "../../x500/stringifyDN";
 import { ContentChange } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ContentChange.ta";
@@ -628,11 +628,9 @@ async function applyTotalRefresh (
                         subordinate_completeness: refresh.sDSE.subComplete ?? FALSE,
                         attribute_completeness: refresh.sDSE.attComplete,
                         EntryAttributeValuesIncomplete: {
-                            createMany: {
-                                data: refresh.sDSE.attValIncomplete?.map((oid) => ({
-                                    attribute_type: oid.toString(),
-                                })) ?? [],
-                            },
+                            create: refresh.sDSE.attValIncomplete?.map((oid) => ({
+                                attribute_type: oid.toString(),
+                            })) ?? [],
                         },
                         lastShadowUpdate: new Date(),
                     },
@@ -659,11 +657,9 @@ async function applyTotalRefresh (
                         subordinate_completeness: refresh.sDSE.subComplete ?? FALSE,
                         attribute_completeness: refresh.sDSE.attComplete,
                         EntryAttributeValuesIncomplete: {
-                            createMany: {
-                                data: refresh.sDSE.attValIncomplete?.map((oid) => ({
-                                    attribute_type: oid.toString(),
-                                })) ?? [],
-                            },
+                            create: refresh.sDSE.attValIncomplete?.map((oid) => ({
+                                attribute_type: oid.toString(),
+                            })) ?? [],
                         },
                         lastShadowUpdate: new Date(),
                     },
@@ -739,12 +735,12 @@ async function applyTotalRefresh (
                         glue: isGlue,
                     },
                 }),
-                ctx.db.entryAttributeValuesIncomplete.createMany({
-                    data: refresh.sDSE.attValIncomplete?.map((oid) => ({
+                ...refresh.sDSE.attValIncomplete?.map((oid) => ctx.db.entryAttributeValuesIncomplete.create({
+                    data: {
                         entry_id: vertex.dse.id,
                         attribute_type: oid.toString(),
-                    })) ?? [],
-                }),
+                    },
+                })) ?? [],
             ]);
         }
     }
@@ -1217,11 +1213,9 @@ async function applyContentChange (
                 subordinate_completeness: change.subComplete ?? FALSE,
                 attribute_completeness: change.attComplete ?? FALSE,
                 EntryAttributeValuesIncomplete: {
-                    createMany: {
-                        data: change.attValIncomplete?.map((oid) => ({
-                            attribute_type: oid.toString(),
-                        })) ?? [],
-                    },
+                    create: change.attValIncomplete?.map((oid) => ({
+                        attribute_type: oid.toString(),
+                    })) ?? [],
                 },
 
             },
@@ -1443,11 +1437,9 @@ async function applyIncrementalRefreshStep (
                         subordinate_completeness: change.subComplete ?? FALSE,
                         attribute_completeness: change.attComplete,
                         EntryAttributeValuesIncomplete: {
-                            createMany: {
-                                data: change.attValIncomplete?.map((oid) => ({
-                                    attribute_type: oid.toString(),
-                                })) ?? [],
-                            },
+                            create: change.attValIncomplete?.map((oid) => ({
+                                attribute_type: oid.toString(),
+                            })) ?? [],
                         },
                     }, attributes, undefined, signErrors);
                 } else if (object_classes.some((oc) => oc.isEqualTo(child["&id"]))) {
@@ -1726,9 +1718,9 @@ async function updateShadow (
     }
     const iAmSupplier: boolean = (
         // The initiator was the supplier and this DSA was the initiator...
-        ((ob.initiator === OperationalBindingInitiator.ROLE_A) && (ob.outbound))
+        ((ob.initiator === "ROLE_A") && (ob.outbound))
         // ...or, the initiator was the consumer, and this DSA was NOT the initiator.
-        || ((ob.initiator === OperationalBindingInitiator.ROLE_B) && (!ob.outbound))
+        || ((ob.initiator === "ROLE_B") && (!ob.outbound))
     );
     if (iAmSupplier) {
         throw new ShadowError(
@@ -1990,11 +1982,11 @@ async function updateShadow (
                 {
                     OR: [ // This DSA is the supplier if one of these conditions are true.
                         { // This DSA initiated an OB in which it is the supplier.
-                            initiator: OperationalBindingInitiator.ROLE_A,
+                            initiator: "ROLE_A",
                             outbound: true,
                         },
                         { // This DSA accepted an OB from a consumer.
-                            initiator: OperationalBindingInitiator.ROLE_B,
+                            initiator: "ROLE_B",
                             outbound: false,
                         },
                     ],

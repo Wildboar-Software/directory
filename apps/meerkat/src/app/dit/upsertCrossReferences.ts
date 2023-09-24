@@ -5,7 +5,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/CrossReference.ta";
 import { createDse } from "../database/createEntry";
 import saveAccessPoint from "../database/saveAccessPoint";
-import { Knowledge } from "@prisma/client";
 
 /**
  * @summary Upsert cross references into the local DSAIT
@@ -48,10 +47,10 @@ async function upsertCrossReferences (
             glue: false,
             AccessPoint: {
                 deleteMany: {
-                    knowledge_type: Knowledge.SPECIFIC,
+                    knowledge_type: "SPECIFIC",
                 },
             },
         },
     });
-    await saveAccessPoint(ctx, xr.accessPoint, Knowledge.SPECIFIC, current.dse.id);
+    await saveAccessPoint(ctx, xr.accessPoint, "SPECIFIC", current.dse.id);
 }

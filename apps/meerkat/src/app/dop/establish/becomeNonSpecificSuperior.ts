@@ -4,7 +4,6 @@ import {
     SuperiorToSubordinate,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SuperiorToSubordinate.ta";
 import dnToVertex from "../../dit/dnToVertex";
-import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
 import * as errors from "@wildboar/meerkat-types";
 import {
     SecurityErrorData,
@@ -174,7 +173,7 @@ async function becomeNonSpecificSuperior (
             ?.map((ap) => saveAccessPoint(
                 ctx,
                 ap,
-                Knowledge.NON_SPECIFIC,
+                "NON_SPECIFIC",
                 superior.dse.id,
                 undefined,
                 nsk_group,
@@ -225,11 +224,11 @@ async function becomeNonSpecificSuperior (
                 {
                     OR: [ // This DSA is the supplier if one of these conditions are true.
                         { // This DSA initiated an OB in which it is the supplier.
-                            initiator: OperationalBindingInitiator.ROLE_A,
+                            initiator: "ROLE_A",
                             outbound: true,
                         },
                         { // This DSA accepted an OB from a consumer.
-                            initiator: OperationalBindingInitiator.ROLE_B,
+                            initiator: "ROLE_B",
                             outbound: false,
                         },
                     ],

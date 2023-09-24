@@ -37,7 +37,6 @@ import type {
     Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
 import { ASN1Element, BERElement, FALSE, packBits, unpackBits } from "asn1-ts";
-import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 import {
     _encode_CertificationPath,
@@ -50,6 +49,8 @@ import {
 import {
     HierarchicalAgreement,
     _decode_HierarchicalAgreement,
+    _encode_DistinguishedName,
+    _encode_RelativeDistinguishedName,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
 import {
     SuperiorToSubordinateModification,
@@ -134,14 +135,14 @@ import { becomeShadowConsumer } from "../establish/becomeShadowConsumer";
 import { becomeShadowSupplier } from "../establish/becomeShadowSupplier";
 import dnToVertex from "../../dit/dnToVertex";
 
-function getInitiator (init: Initiator): OperationalBindingInitiator {
+function getInitiator (init: Initiator): string {
     // NOTE: Initiator is not extensible, so this is an exhaustive list.
     if ("symmetric" in init) {
-        return OperationalBindingInitiator.SYMMETRIC;
+        return "SYMMETRIC";
     } else if ("roleA_initiates" in init) {
-        return OperationalBindingInitiator.ROLE_A;
+        return "ROLE_A";
     } else  {
-        return OperationalBindingInitiator.ROLE_B;
+        return "ROLE_B";
     }
 }
 
@@ -463,7 +464,7 @@ async function modifyOperationalBinding (
             : undefined);
 
     const createdAccessPoint = data.accessPoint
-        ? await saveAccessPoint(ctx, data.accessPoint, Knowledge.OB_REQUEST)
+        ? await saveAccessPoint(ctx, data.accessPoint, "OB_REQUEST")
         : undefined;
 
     const sp = data.securityParameters;
@@ -498,7 +499,9 @@ async function modifyOperationalBinding (
             security_certification_path: sp?.certification_path
                 ? _encode_CertificationPath(sp.certification_path, DER).toBytes()
                 : undefined,
-            security_name: sp?.name?.map((rdn) => rdnToJson(rdn)),
+            security_name: sp?.name
+                ? _encode_DistinguishedName(sp.name, DER).toBytes()
+                : undefined,
             security_time: sp?.time
                 ? getDateFromTime(sp.time)
                 : undefined,
@@ -563,7 +566,7 @@ async function modifyOperationalBinding (
                 && ("strong" in assn.bind.credentials)
                 && assn.bind.credentials.strong.name
             )
-                ? assn.bind.credentials.strong.name.map(rdnToJson)
+                ? _encode_DistinguishedName(assn.bind.credentials.strong.name, DER).toBytes()
                 : undefined,
             requested_time: new Date(),
         },
@@ -715,8 +718,8 @@ async function modifyOperationalBinding (
                 id: created.id,
             },
             data: {
-                new_context_prefix_rdn: rdnToJson(newAgreement.rdn),
-                immediate_superior: newAgreement.immediateSuperior.map(rdnToJson),
+                new_context_prefix_rdn: _encode_RelativeDistinguishedName(newAgreement.rdn, DER).toBytes(),
+                immediate_superior: _encode_DistinguishedName(newAgreement.immediateSuperior, DER).toBytes(),
             },
             select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
         });
@@ -1288,7 +1291,7 @@ async function modifyOperationalBinding (
             await ctx.db.accessPoint.deleteMany({
                 where: {
                     entry_id: nssr_id,
-                    knowledge_type: Knowledge.NON_SPECIFIC,
+                    knowledge_type: "NON_SPECIFIC",
                     nssr_binding_identifier: created.binding_identifier,
                 },
             });
@@ -1298,7 +1301,7 @@ async function modifyOperationalBinding (
                     ?.map((ap) => saveAccessPoint(
                         ctx,
                         ap,
-                        Knowledge.NON_SPECIFIC,
+                        "NON_SPECIFIC",
                         nssr_id,
                         undefined,
                         nsk_group,
@@ -1324,10 +1327,10 @@ async function modifyOperationalBinding (
         }
     }
     else if (data.bindingType.isEqualTo(id_op_binding_shadow)) {
-        const iAmSupplier: boolean = (created.initiator === OperationalBindingInitiator.ROLE_B);
+        const iAmSupplier: boolean = (created.initiator === "ROLE_B");
         const iWasSupplier: boolean = (
-            (opBinding.initiator === OperationalBindingInitiator.ROLE_A && opBinding.outbound)
-            || (opBinding.initiator === OperationalBindingInitiator.ROLE_B && !opBinding.outbound)
+            (opBinding.initiator === "ROLE_A" && opBinding.outbound)
+            || (opBinding.initiator === "ROLE_B" && !opBinding.outbound)
         );
         // Role-reversal is not allowed in an SOB.
         if (iAmSupplier && !iWasSupplier) {

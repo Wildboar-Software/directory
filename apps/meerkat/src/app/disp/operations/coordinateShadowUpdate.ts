@@ -27,7 +27,6 @@ import { _decode_AccessPoint } from "@wildboar/x500/src/lib/modules/DistributedO
 import stringifyDN from "../../x500/stringifyDN";
 import { ShadowingAgreementInfo, _decode_ShadowingAgreementInfo } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
 import { UpdateWindow } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/UpdateWindow.ta";
-import { OperationalBindingInitiator } from "@prisma/client";
 
 /**
  * @summary The coordinateShadowUpdate operation defined in ITU Rec. X.525 (2019)
@@ -197,9 +196,9 @@ async function coordinateShadowUpdate (
     }
     const iAmSupplier: boolean = (
         // The initiator was the supplier and this DSA was the initiator...
-        ((ob.initiator === OperationalBindingInitiator.ROLE_A) && (ob.outbound))
+        ((ob.initiator === "ROLE_A") && (ob.outbound))
         // ...or, the initiator was the consumer, and this DSA was NOT the initiator.
-        || ((ob.initiator === OperationalBindingInitiator.ROLE_B) && (!ob.outbound))
+        || ((ob.initiator === "ROLE_B") && (!ob.outbound))
     );
     if (iAmSupplier) {
         throw new ShadowError(

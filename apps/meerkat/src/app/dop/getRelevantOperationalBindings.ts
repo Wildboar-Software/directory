@@ -2,7 +2,6 @@ import type { Context } from "@wildboar/meerkat-types";
 import {
     id_op_binding_hierarchical,
 } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
-import { OperationalBindingInitiator } from "@prisma/client";
 import { id_op_binding_non_specific_hierarchical } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
 
 /**
@@ -45,11 +44,11 @@ function getRelevantOperationalBindings (ctx: Context, localDSAIsSuperior: boole
                 {
                     OR: [
                         { // Local DSA initiated role A (meaning local DSA is superior.)
-                            initiator: OperationalBindingInitiator.ROLE_A,
+                            initiator: "ROLE_A",
                             outbound: localDSAIsSuperior,
                         },
                         { // Remote DSA initiated role B (meaning local DSA is superior again.)
-                            initiator: OperationalBindingInitiator.ROLE_B,
+                            initiator: "ROLE_B",
                             outbound: !localDSAIsSuperior,
                         },
                     ],

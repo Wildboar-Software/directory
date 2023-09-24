@@ -20,10 +20,10 @@ import {
     _encode_SupplierAndConsumers,
 } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/SupplierAndConsumers.ta";
 import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
-import { Knowledge } from "@prisma/client";
 import rdnToJson from "../x500/rdnToJson";
 import { DER } from "asn1-ts/dist/node/functional";
 import { URL } from "url";
+import { _encode_Name } from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
 
 /**
  * @summary Save an access point to the database
@@ -78,7 +78,7 @@ export
 async function saveAccessPoint (
     ctx: Context,
     ap: AccessPoint | MasterOrShadowAccessPoint | SupplierOrConsumer | SupplierInformation | SupplierAndConsumers,
-    knowledge_type: Knowledge,
+    knowledge_type: string,
     entry_id?: number,
     is_consumer_of_id?: number,
     nsk_group?: bigint,
@@ -98,12 +98,12 @@ async function saveAccessPoint (
         }
     })();
     const non_supplying_master_id = (("non_supplying_master" in ap) && ap.non_supplying_master)
-        ? await saveAccessPoint(ctx, ap.non_supplying_master, Knowledge.NON_SUPPLYING_MASTER, undefined)
+        ? await saveAccessPoint(ctx, ap.non_supplying_master, "NON_SUPPLYING_MASTER", undefined)
         : undefined;
     const created = await ctx.db.accessPoint.create({
         data: {
             knowledge_type,
-            ae_title: ap.ae_title.rdnSequence.map((rdn) => rdnToJson(rdn)),
+            ae_title: _encode_Name(ap.ae_title, DER).toBytes(),
             category: ("category" in ap)
                 ? ap.category
                 : undefined,
@@ -121,22 +121,20 @@ async function saveAccessPoint (
             nssr_binding_identifier: nhob_id,
             active: true,
             NSAP: {
-                createMany: {
-                    data: ap.address.nAddresses.map((nsap) => {
-                        const uri = naddrToURI(nsap);
-                        if (!uri) {
-                            return {
-                                bytes: Buffer.from(nsap.buffer, nsap.byteOffset, nsap.byteLength),
-                            };
-                        }
-                        const url = new URL(uri);
+                create: ap.address.nAddresses.map((nsap) => {
+                    const uri = naddrToURI(nsap);
+                    if (!uri) {
                         return {
-                            url: url.toString(),
                             bytes: Buffer.from(nsap.buffer, nsap.byteOffset, nsap.byteLength),
-                            hostname: url.hostname,
                         };
-                    }),
-                },
+                    }
+                    const url = new URL(uri);
+                    return {
+                        url: url.toString(),
+                        bytes: Buffer.from(nsap.buffer, nsap.byteOffset, nsap.byteLength),
+                        hostname: url.hostname,
+                    };
+                }),
             },
         },
         select: {
@@ -145,7 +143,7 @@ async function saveAccessPoint (
     });
     if (("consumers" in ap) && ap.consumers) {
         await Promise.all(
-            ap.consumers.map((consumer) => saveAccessPoint(ctx, consumer, Knowledge.CONSUMER, undefined, created.id)),
+            ap.consumers.map((consumer) => saveAccessPoint(ctx, consumer, "CONSUMER", undefined, created.id)),
         );
     }
     return created.id;

@@ -9,6 +9,7 @@ import type {
 import {
     AccessPoint,
     _decode_AccessPoint,
+    _encode_Name,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 import {
     EstablishOperationalBindingArgumentData, Validity,
@@ -46,6 +47,7 @@ import {
 import {
     HierarchicalAgreement,
     _decode_HierarchicalAgreement,
+    _encode_RelativeDistinguishedName,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
 import {
     SuperiorToSubordinate,
@@ -69,11 +71,9 @@ import {
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import { ASN1Element, packBits } from "asn1-ts";
 import becomeSubordinate from "../establish/becomeSubordinate";
-import { OperationalBindingInitiator, Knowledge } from "@prisma/client";
 import {
     _encode_CertificationPath,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
-import rdnToJson from "../../x500/rdnToJson";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { DER, _encodeNull } from "asn1-ts/dist/node/functional";
@@ -140,7 +140,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NHOBSuperiorToSubordinate.ta";
 import becomeNonSpecificSuperior from "../establish/becomeNonSpecificSuperior";
 import becomeSuperior from "../establish/becomeSuperior";
-import { Prisma, ShadowedKnowledgeType } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import stringifyDN from "../../x500/stringifyDN";
 import type {
     DistinguishedName,
@@ -159,7 +159,7 @@ import { updateShadowConsumer } from "../../disp/createShadowUpdate";
 import { AttributeUsage_dSAOperation } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
 import { addYears, subSeconds } from "date-fns";
 import { ModificationParameter, _encode_ModificationParameter } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ModificationParameter.ta";
-import { AreaSpecification, SubtreeSpecification } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/AreaSpecification.ta";
+import { AreaSpecification, SubtreeSpecification, _encode_DistinguishedName } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/AreaSpecification.ta";
 import { id_op_modifyOperationalBinding } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-op-modifyOperationalBinding.va";
 import scheduleShadowUpdates from "../../disp/scheduleShadowUpdates";
 import { PeriodicStrategy, SchedulingParameters } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SchedulingParameters.ta";
@@ -298,8 +298,8 @@ async function modifySOB_delete_me (
                 }
                 : {}),
             initiator: iAmSupplier
-                ? OperationalBindingInitiator.ROLE_A
-                : OperationalBindingInitiator.ROLE_B,
+                ? "ROLE_A"
+                : "ROLE_B",
             initiator_ber: iAmSupplier
                 ? Buffer.from(_encodeNull(null, DER).toBytes())
                 : Buffer.from(_encode_ModificationParameter(new ModificationParameter([]), DER).toBytes()),
@@ -308,7 +308,9 @@ async function modifySOB_delete_me (
             security_certification_path: sp?.certification_path
                 ? _encode_CertificationPath(sp.certification_path, DER).toBytes()
                 : undefined,
-            security_name: sp?.name?.map((rdn) => rdnToJson(rdn)),
+            security_name: sp?.name
+                ? _encode_DistinguishedName(sp.name, DER).toBytes()
+                : undefined,
             security_time: sp?.time
                 ? getDateFromTime(sp.time)
                 : undefined,
@@ -757,7 +759,7 @@ async function relayedEstablishOperationalBinding (
                     ),
                 );
             }
-            const access_point_id = await saveAccessPoint(ctx, relayTo, Knowledge.OB_REQUEST);
+            const access_point_id = await saveAccessPoint(ctx, relayTo, "OB_REQUEST");
             const ob_db_data: Prisma.OperationalBindingCreateInput = {
                 accepted: true,
                 outbound: true,
@@ -767,13 +769,13 @@ async function relayedEstablishOperationalBinding (
                 agreement_ber: agreement.toBytes(),
                 initiator: (() => {
                     if ("roleA_initiates" in relay_init) {
-                        return OperationalBindingInitiator.ROLE_A;
+                        return "ROLE_A";
                     }
                     else if ("roleB_initiates" in relay_init) {
-                        return OperationalBindingInitiator.ROLE_B;
+                        return "ROLE_B";
                     }
                     else {
-                        return OperationalBindingInitiator.SYMMETRIC;
+                        return "SYMMETRIC";
                     }
                 })(),
                 initiator_ber: (() => {
@@ -797,7 +799,9 @@ async function relayedEstablishOperationalBinding (
                 security_certification_path: sp?.certification_path
                     ? _encode_CertificationPath(sp.certification_path, DER).toBytes()
                     : undefined,
-                security_name: sp?.name?.map((rdn) => rdnToJson(rdn)),
+                security_name: sp?.name
+                    ? _encode_DistinguishedName(sp.name, DER).toBytes()
+                    : undefined,
                 security_time: sp?.time
                     ? getDateFromTime(sp.time)
                     : undefined,
@@ -818,7 +822,7 @@ async function relayedEstablishOperationalBinding (
                 source_certificate_path: sp?.certification_path
                     ? _encode_CertificationPath(sp.certification_path, DER).toBytes()
                     : undefined,
-                source_strong_name: ctx.dsa.accessPoint.ae_title.rdnSequence.map(rdnToJson),
+                source_strong_name: _encode_Name(ctx.dsa.accessPoint.ae_title, DER).toBytes(),
                 supply_contexts: null,
                 requested_time: new Date(),
             };
@@ -1001,7 +1005,7 @@ async function relayedEstablishOperationalBinding (
             else if (bindingType.isEqualTo(id_op_binding_shadow)) {
                 const agr = _decode_ShadowingAgreementInfo(agreement);
                 const master_ap_id = agr.master
-                    ? await saveAccessPoint(ctx, agr.master, Knowledge.OB_SHADOW_MASTER)
+                    ? await saveAccessPoint(ctx, agr.master, "OB_SHADOW_MASTER")
                     : undefined;
                 const updateMode = agr.updateMode ?? ShadowingAgreementInfo._default_value_for_updateMode;
                 const schedule = ("supplierInitiated" in updateMode)
@@ -1017,13 +1021,13 @@ async function relayedEstablishOperationalBinding (
                     },
                     data: {
                         entry_id: cp?.dse.id,
-                        shadowed_context_prefix: agr.shadowSubject.area.contextPrefix.map(rdnToJson),
+                        shadowed_context_prefix: _encode_DistinguishedName(agr.shadowSubject.area.contextPrefix, DER).toBytes(),
                         knowledge_type: (agr.shadowSubject.knowledge === undefined)
                             ? undefined
                             : ({
-                                Knowledge_knowledgeType_both: ShadowedKnowledgeType.BOTH,
-                                Knowledge_knowledgeType_master: ShadowedKnowledgeType.MASTER,
-                                Knowledge_knowledgeType_shadow: ShadowedKnowledgeType.SHADOW,
+                                Knowledge_knowledgeType_both: "BOTH",
+                                Knowledge_knowledgeType_master: "MASTER",
+                                Knowledge_knowledgeType_shadow: "SHADOW",
                             })[agr.shadowSubject.knowledge.knowledgeType],
                         subordinates: agr.shadowSubject.subordinates,
                         supply_contexts: (agr.shadowSubject.supplyContexts === undefined)
@@ -1139,11 +1143,11 @@ async function relayedEstablishOperationalBinding (
                         {
                             OR: [ // This DSA is the supplier if one of these conditions are true.
                                 { // This DSA initiated an OB in which it is the supplier.
-                                    initiator: OperationalBindingInitiator.ROLE_A,
+                                    initiator: "ROLE_A",
                                     outbound: true,
                                 },
                                 { // This DSA accepted an OB from a consumer.
-                                    initiator: OperationalBindingInitiator.ROLE_B,
+                                    initiator: "ROLE_B",
                                     outbound: false,
                                 },
                             ],
@@ -1508,7 +1512,7 @@ async function establishOperationalBinding (
         });
     };
 
-    const access_point_id = await saveAccessPoint(ctx, data.accessPoint, Knowledge.OB_REQUEST);
+    const access_point_id = await saveAccessPoint(ctx, data.accessPoint, "OB_REQUEST");
 
     const ob_db_data: Prisma.OperationalBindingCreateInput = {
         outbound: false,
@@ -1517,12 +1521,12 @@ async function establishOperationalBinding (
         binding_version: Number(bindingID.version),
         initiator: (() => {
             if ("roleA_initiates" in data.initiator) {
-                return OperationalBindingInitiator.ROLE_A;
+                return "ROLE_A";
             }
             if ("roleB_initiates" in data.initiator) {
-                return OperationalBindingInitiator.ROLE_B;
+                return "ROLE_B";
             }
-            return OperationalBindingInitiator.SYMMETRIC;
+            return "SYMMETRIC";
         })(),
         initiator_ber: (() => {
             if ("roleA_initiates" in data.initiator) {
@@ -1544,7 +1548,9 @@ async function establishOperationalBinding (
         security_certification_path: sp?.certification_path
             ? _encode_CertificationPath(sp.certification_path, DER).toBytes()
             : undefined,
-        security_name: sp?.name?.map((rdn) => rdnToJson(rdn)),
+        security_name: sp?.name
+            ? _encode_DistinguishedName(sp.name, DER).toBytes()
+            : undefined,
         security_time: sp?.time
             ? getDateFromTime(sp.time)
             : undefined,
@@ -1607,7 +1613,7 @@ async function establishOperationalBinding (
             && ("strong" in assn.bind.credentials)
             && assn.bind.credentials.strong.name
         )
-            ? assn.bind.credentials.strong.name.map(rdnToJson)
+            ? _encode_DistinguishedName(assn.bind.credentials.strong.name, DER).toBytes()
             : undefined,
         supply_contexts: null,
         requested_time: new Date(),
@@ -1761,8 +1767,8 @@ async function establishOperationalBinding (
             const created = await ctx.db.operationalBinding.create({
                 data: {
                     ...ob_db_data,
-                    new_context_prefix_rdn: rdnToJson(agreement.rdn),
-                    immediate_superior: agreement.immediateSuperior.map(rdnToJson),
+                    new_context_prefix_rdn: _encode_RelativeDistinguishedName(agreement.rdn, DER).toBytes(),
+                    immediate_superior: _encode_DistinguishedName(agreement.immediateSuperior, DER).toBytes(),
                 },
                 select: {
                     uuid: true,
@@ -1959,8 +1965,8 @@ async function establishOperationalBinding (
             const created = await ctx.db.operationalBinding.create({
                 data: {
                     ...ob_db_data,
-                    new_context_prefix_rdn: rdnToJson(agreement.rdn),
-                    immediate_superior: agreement.immediateSuperior.map(rdnToJson),
+                    new_context_prefix_rdn: _encode_RelativeDistinguishedName(agreement.rdn, DER).toBytes(),
+                    immediate_superior: _encode_DistinguishedName(agreement.immediateSuperior, DER).toBytes(),
                 },
                 select: {
                     uuid: true,
@@ -2186,7 +2192,7 @@ async function establishOperationalBinding (
             const created = await ctx.db.operationalBinding.create({
                 data: {
                     ...ob_db_data,
-                    immediate_superior: agreement.immediateSuperior.map(rdnToJson),
+                    immediate_superior: _encode_DistinguishedName(agreement.immediateSuperior, DER).toBytes(),
                 },
                 select: {
                     uuid: true,
@@ -2381,7 +2387,7 @@ async function establishOperationalBinding (
             const created = await ctx.db.operationalBinding.create({
                 data: {
                     ...ob_db_data,
-                    immediate_superior: agreement.immediateSuperior.map(rdnToJson),
+                    immediate_superior: _encode_DistinguishedName(agreement.immediateSuperior, DER).toBytes(),
                 },
                 select: {
                     id: true,
@@ -2683,18 +2689,18 @@ async function establishOperationalBinding (
             }
         }
         const master_ap_id = agreement.master
-            ? await saveAccessPoint(ctx, agreement.master, Knowledge.OB_SHADOW_MASTER)
+            ? await saveAccessPoint(ctx, agreement.master, "OB_SHADOW_MASTER")
             : undefined;
         const created = await ctx.db.operationalBinding.create({
             data: {
                 ...ob_db_data,
-                shadowed_context_prefix: agreement.shadowSubject.area.contextPrefix.map(rdnToJson),
+                shadowed_context_prefix: _encode_DistinguishedName(agreement.shadowSubject.area.contextPrefix, DER).toBytes(),
                 knowledge_type: (agreement.shadowSubject.knowledge === undefined)
                     ? undefined
                     : ({
-                        Knowledge_knowledgeType_both: ShadowedKnowledgeType.BOTH,
-                        Knowledge_knowledgeType_master: ShadowedKnowledgeType.MASTER,
-                        Knowledge_knowledgeType_shadow: ShadowedKnowledgeType.SHADOW,
+                        Knowledge_knowledgeType_both:   "BOTH",
+                        Knowledge_knowledgeType_master: "MASTER",
+                        Knowledge_knowledgeType_shadow: "SHADOW",
                     })[agreement.shadowSubject.knowledge.knowledgeType],
                 subordinates: agreement.shadowSubject.subordinates,
                 supply_contexts: (agreement.shadowSubject.supplyContexts === undefined)

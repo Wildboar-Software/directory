@@ -7,7 +7,6 @@ import {
     SubordinateToSuperior,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
 import dnToVertex from "../../dit/dnToVertex";
-import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
 import * as errors from "@wildboar/meerkat-types";
 import {
     SecurityErrorData,
@@ -174,8 +173,8 @@ async function updateLocalSubr (
                     entry_id: oldSubordinate.dse.id,
                 },
             }),
-            ctx.db.distinguishedValue.createMany({
-                data: newAgreement.rdn.map((atav, i) => ({
+            ...newAgreement.rdn.map((atav, i) => ctx.db.distinguishedValue.create({
+                data: {
                     entry_id: oldSubordinate.dse.id,
                     type_oid: atav.type_.toBytes(),
                     tag_class: atav.value.tagClass,
@@ -188,15 +187,16 @@ async function updateLocalSubr (
                     ),
                     order_index: i,
                     normalized_str: getEqualityNormalizer(ctx)?.(atav.type_)?.(ctx, atav.value),
-                })),
-            }),
+                },
+            }))
+            ,
         ]);
     }
 
     await ctx.db.accessPoint.updateMany({
         where: {
             entry_id: oldSubordinate.dse.id,
-            knowledge_type: Knowledge.SPECIFIC,
+            knowledge_type: "SPECIFIC",
         },
         data: {
             active: false,
@@ -207,12 +207,12 @@ async function updateLocalSubr (
         await Promise.all(
             sub2sup.accessPoints
                 .map((ap) => saveAccessPoint(
-                    ctx, ap, Knowledge.SPECIFIC, oldSubordinate.dse.id)),
+                    ctx, ap, "SPECIFIC", oldSubordinate.dse.id)),
         );
         await ctx.db.accessPoint.deleteMany({
             where: {
                 entry_id: oldSubordinate.dse.id,
-                knowledge_type: Knowledge.SPECIFIC,
+                knowledge_type: "SPECIFIC",
                 active: false,
             },
         });
@@ -315,11 +315,11 @@ async function updateLocalSubr (
                 {
                     OR: [ // This DSA is the supplier if one of these conditions are true.
                         { // This DSA initiated an OB in which it is the supplier.
-                            initiator: OperationalBindingInitiator.ROLE_A,
+                            initiator: "ROLE_A",
                             outbound: true,
                         },
                         { // This DSA accepted an OB from a consumer.
-                            initiator: OperationalBindingInitiator.ROLE_B,
+                            initiator: "ROLE_B",
                             outbound: false,
                         },
                     ],

@@ -11,13 +11,12 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
-import { Knowledge } from "@prisma/client";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
     secondaryShadows,
 } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/secondaryShadows.oa";
-import rdnToJson from "../../x500/rdnToJson";
 import saveAccessPoint from "../saveAccessPoint";
+import { _encode_Name } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/Name.ta";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -48,8 +47,8 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             vertex.dse.cp.secondaryShadows = [ decoded ];
         }
     }
-    const ssid = await saveAccessPoint(ctx, decoded, Knowledge.SECONDARY_SUPPLIER);
-    const cids = await Promise.all(decoded.consumers.map((c) => saveAccessPoint(ctx, c, Knowledge.SECONDARY_CONSUMER)));
+    const ssid = await saveAccessPoint(ctx, decoded, "SECONDARY_SUPPLIER");
+    const cids = await Promise.all(decoded.consumers.map((c) => saveAccessPoint(ctx, c, "SECONDARY_CONSUMER")));
     pendingUpdates.otherWrites.push(ctx.db.accessPoint.updateMany({
         where: {
             id: {
@@ -73,14 +72,14 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates.otherWrites.push(ctx.db.accessPoint.deleteMany({
         where: {
             entry_id: vertex.dse.id,
-            knowledge_type: Knowledge.SECONDARY_SUPPLIER,
+            knowledge_type: "SECONDARY_SUPPLIER",
             OR: [
                 {
                     ber: value.value.toBytes(),
                 },
                 {
                     ae_title: {
-                        equals: decoded.ae_title.rdnSequence.map(rdnToJson),
+                        equals: _encode_Name(decoded.ae_title, DER).toBytes(),
                     },
                 },
             ],
@@ -102,10 +101,10 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
             entry_id: vertex.dse.id,
             OR: [
                 {
-                    knowledge_type: Knowledge.SECONDARY_SUPPLIER,
+                    knowledge_type: "SECONDARY_SUPPLIER",
                 },
                 {
-                    knowledge_type: Knowledge.SECONDARY_CONSUMER,
+                    knowledge_type: "SECONDARY_CONSUMER",
                 },
             ],
         },
@@ -141,7 +140,7 @@ const hasValue: SpecialAttributeValueDetector = async (
     return !!(await ctx.db.accessPoint.findFirst({
         where: {
             entry_id: vertex.dse.id,
-            knowledge_type: Knowledge.SECONDARY_SUPPLIER,
+            knowledge_type: "SECONDARY_SUPPLIER",
             active: true,
             OR: [
                 {
@@ -149,7 +148,7 @@ const hasValue: SpecialAttributeValueDetector = async (
                 },
                 {
                     ae_title: {
-                        equals: decoded.ae_title.rdnSequence.map(rdnToJson),
+                        equals: _encode_Name(decoded.ae_title, DER).toBytes(),
                     },
                 },
             ],

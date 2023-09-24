@@ -411,5 +411,9 @@
     "reverse_dsa_bind_auth_fail": "Reverse DSA bind credentials are invalid: {{e}}",
     "reverse_dsa_bind_other_err": "Reverse DSA bind failed: {{e}}",
     "reverse_dsa_bind_auth_required": "The DSA bind result did not include credentials, but the local DSA requires mutual authentication.",
-    "reverse_dsa_bind_auth_optional": "Reverse DSA bind credentials were not supplied or invalid, but the local DSA is configured to ignore this."
+    "reverse_dsa_bind_auth_optional": "Reverse DSA bind credentials were not supplied or invalid, but the local DSA is configured to ignore this.",
+    "configured_mmap": "Configured Memory-Mapped I/O.",
+    "configured_sqlite_cache": "Configured SQLite cache size.",
+    "failed_configure_mmap": "Failed to configure mmap: {{e}}",
+    "failed_configure_cache": "Failed to configure cache in SQLite: {{e}}"
 }

@@ -11,17 +11,16 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
-import { Knowledge } from "@prisma/client";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
     superiorKnowledge,
 } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/superiorKnowledge.oa";
-import rdnToJson from "../../x500/rdnToJson";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import isFirstLevelDSA from "../../dit/isFirstLevelDSA";
 import saveAccessPoint from "../saveAccessPoint";
 import compareRDNSequence from "@wildboar/x500/src/lib/comparators/compareRDNSequence";
+import { _encode_Name } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/Name.ta";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -75,7 +74,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
         };
     }
     // We create the access point now...
-    const apid = await saveAccessPoint(ctx, decoded, Knowledge.SUPERIOR);
+    const apid = await saveAccessPoint(ctx, decoded, "SUPERIOR");
     // But within the transaction, we associate them with this DSE.
     pendingUpdates.otherWrites.push(ctx.db.accessPoint.updateMany({
         where: {
@@ -107,14 +106,14 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates.otherWrites.push(ctx.db.accessPoint.deleteMany({
         where: {
             entry_id: vertex.dse.id,
-            knowledge_type: Knowledge.SUPERIOR,
+            knowledge_type: "SUPERIOR",
             OR: [
                 {
                     ber: value.value.toBytes(),
                 },
                 {
                     ae_title: {
-                        equals: decoded.ae_title.rdnSequence.map(rdnToJson),
+                        equals: _encode_Name(decoded.ae_title, DER).toBytes(),
                     },
                 },
             ],
@@ -132,7 +131,7 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
     pendingUpdates.otherWrites.push(ctx.db.accessPoint.deleteMany({
         where: {
             entry_id: vertex.dse.id,
-            knowledge_type: Knowledge.SUPERIOR,
+            knowledge_type: "SUPERIOR",
         },
     }));
 };

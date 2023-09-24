@@ -46,6 +46,7 @@ import {
 import {
     Attribute,
     ServiceErrorData,
+    _encode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import {
     AttributeTypeAndValue,
@@ -147,12 +148,10 @@ import {
     hierarchicalOperationalBinding,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/hierarchicalOperationalBinding.oa";
 import {
-    HierarchicalAgreement,
+    HierarchicalAgreement, _encode_RelativeDistinguishedName,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
 import getDistinguishedName from "../x500/getDistinguishedName";
 import saveAccessPoint from "../database/saveAccessPoint";
-import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
-import { rdnToJson } from "../x500/rdnToJson";
 import { getDateFromOBTime } from "../dop/getDateFromOBTime";
 import { printInvokeId } from "../utils/printInvokeId";
 import {
@@ -1322,7 +1321,7 @@ async function addEntry (
         const accessPointId: number = await saveAccessPoint(
             ctx,
             resultData.accessPoint,
-            Knowledge.SPECIFIC,
+            "SPECIFIC",
         );
         const createdOB = await ctx.db.operationalBinding.create({
             data: {
@@ -1341,12 +1340,12 @@ async function addEntry (
                         id: accessPointId,
                     },
                 },
-                initiator: OperationalBindingInitiator.ROLE_A,
+                initiator: "ROLE_A",
                 initiator_ber: Buffer.from(_encode_SuperiorToSubordinate(obArg.initiator, DER).toBytes()),
                 validity_start: validFrom,
                 validity_end: validUntil,
-                new_context_prefix_rdn: rdnToJson(agreement.rdn),
-                immediate_superior: agreement.immediateSuperior.map(rdnToJson),
+                new_context_prefix_rdn: _encode_RelativeDistinguishedName(agreement.rdn, DER).toBytes(),
+                immediate_superior: _encode_DistinguishedName(agreement.immediateSuperior, DER).toBytes(),
                 requested_time: new Date(),
             },
             select: {

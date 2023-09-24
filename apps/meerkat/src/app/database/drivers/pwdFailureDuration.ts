@@ -19,7 +19,6 @@ import {
 import {
     pwdAdminSubentry,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/pwdAdminSubentry.oa";
-import type { Prisma } from "@prisma/client";
 import { attributeValueFromDB } from "../attributeValueFromDB";
 
 const ID_PWD_SUBENTRY: string = pwdAdminSubentry["&id"].toString();
@@ -94,7 +93,6 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                 value.value.value.byteOffset,
                 value.value.value.byteLength,
             ),
-            jer: value.value.toJSON() as Prisma.InputJsonValue,
             normalized_str: value.value.integer.toString(),
         },
         select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252

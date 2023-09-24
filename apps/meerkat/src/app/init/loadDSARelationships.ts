@@ -6,7 +6,7 @@ import {
     _encode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers";
-import { Prisma, OperationalBindingInitiator } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import {
     id_op_binding_hierarchical,
 } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-hierarchical.va";
@@ -43,11 +43,11 @@ function getWhere (): Prisma.OperationalBindingWhereInput {
             {
                 OR: [
                     { // Remote DSA initiated role A (meaning remote DSA is superior.)
-                        initiator: OperationalBindingInitiator.ROLE_A,
+                        initiator: "ROLE_A",
                         outbound: true,
                     },
                     { // Local DSA initiated role B (meaning remote DSA is superior again.)
-                        initiator: OperationalBindingInitiator.ROLE_B,
+                        initiator: "ROLE_B",
                         outbound: false,
                     },
                 ],

@@ -8,7 +8,6 @@ import {
     AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 import saveAccessPoint from "../../database/saveAccessPoint";
-import { Knowledge } from "@prisma/client";
 import {
     SupplierInformation,
 } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/SupplierInformation.ta";
@@ -65,21 +64,19 @@ async function becomeShadowConsumer (
                     createTimestamp: new Date(),
                     modifyTimestamp: new Date(),
                     RDN: {
-                        createMany: {
-                            data: rdn.map((atav, i): Prisma.DistinguishedValueCreateWithoutEntryInput => ({
-                                type_oid: atav.type_.toBytes(),
-                                tag_class: atav.value.tagClass,
-                                constructed: (atav.value.construction === ASN1Construction.constructed),
-                                tag_number: atav.value.tagNumber,
-                                content_octets: Buffer.from(
-                                    atav.value.value.buffer,
-                                    atav.value.value.byteOffset,
-                                    atav.value.value.byteLength,
-                                ),
-                                order_index: i,
-                                normalized_str: NORMALIZER_GETTER(atav.type_)?.(ctx, atav.value),
-                            })),
-                        },
+                        create: rdn.map((atav, i): Prisma.DistinguishedValueCreateWithoutEntryInput => ({
+                            type_oid: atav.type_.toBytes(),
+                            tag_class: atav.value.tagClass,
+                            constructed: (atav.value.construction === ASN1Construction.constructed),
+                            tag_number: atav.value.tagNumber,
+                            content_octets: Buffer.from(
+                                atav.value.value.buffer,
+                                atav.value.value.byteOffset,
+                                atav.value.value.byteLength,
+                            ),
+                            order_index: i,
+                            normalized_str: NORMALIZER_GETTER(atav.type_)?.(ctx, atav.value),
+                        })),
                     },
                 },
                 select: {
@@ -147,7 +144,7 @@ async function becomeShadowConsumer (
         supplier_is_master,
         agreement.master,
     );
-    await saveAccessPoint(ctx, supplier, Knowledge.SUPPLIER, currentRoot.dse.id);
+    await saveAccessPoint(ctx, supplier, "SUPPLIER", currentRoot.dse.id);
 
     if (currentRoot.dse.cp) {
         if (!currentRoot.dse.cp.supplierKnowledge) {

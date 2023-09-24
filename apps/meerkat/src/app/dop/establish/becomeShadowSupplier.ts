@@ -4,7 +4,6 @@ import {
     AccessPoint,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/AccessPoint.ta";
 import saveAccessPoint from "../../database/saveAccessPoint";
-import { Knowledge } from "@prisma/client";
 import {
     SupplierOrConsumer,
 } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/SupplierOrConsumer.ta";
@@ -53,7 +52,7 @@ async function becomeShadowSupplier (
         responder.protocolInformation,
         obid,
     );
-    await saveAccessPoint(ctx, consumer, Knowledge.CONSUMER, cp.dse.id);
+    await saveAccessPoint(ctx, consumer, "CONSUMER", cp.dse.id);
     if (cp.dse.cp) {
         if (!cp.dse.cp.consumerKnowledge) {
             cp.dse.cp.consumerKnowledge = [];

@@ -21,8 +21,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
-import rdnToJson from "../../x500/rdnToJson";
-import { Prisma } from "@prisma/client";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -50,7 +48,8 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     if (!vertex.dse.shadow) {
         return;
     }
-    pendingUpdates.entryUpdate.modifiersName = _decode_DistinguishedName(value.value).map(rdnToJson);
+    _decode_DistinguishedName(value.value);
+    pendingUpdates.entryUpdate.modifiersName = value.value.toBytes();
 };
 
 export
@@ -63,7 +62,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     if (!vertex.dse.shadow) {
         return;
     }
-    pendingUpdates.entryUpdate.modifiersName = Prisma.DbNull;
+    pendingUpdates.entryUpdate.modifiersName = null;
 };
 
 export
@@ -75,7 +74,7 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
     if (!vertex.dse.shadow) {
         return;
     }
-    pendingUpdates.entryUpdate.modifiersName = Prisma.DbNull;
+    pendingUpdates.entryUpdate.modifiersName = null;
 };
 
 export

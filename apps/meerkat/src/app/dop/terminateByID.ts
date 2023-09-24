@@ -6,7 +6,6 @@ import { DERElement } from "asn1-ts";
 import {
     _decode_HierarchicalAgreement,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
-import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
 import removeSubordinate from "./terminate/removeSubordinate";
 import {
     id_op_binding_non_specific_hierarchical,
@@ -60,9 +59,9 @@ async function terminate (
             const agreement = _decode_HierarchicalAgreement(el);
             const iAmSuperior: boolean = (
                 // The initiator was the superior and this DSA was the initiator...
-                ((ob.initiator === OperationalBindingInitiator.ROLE_A) && (ob.outbound))
+                ((ob.initiator === "ROLE_A") && (ob.outbound))
                 // ...or, the initiator was the subordinate, and this DSA was NOT the initiator.
-                || ((ob.initiator === OperationalBindingInitiator.ROLE_B) && (!ob.outbound))
+                || ((ob.initiator === "ROLE_B") && (!ob.outbound))
             );
             if (iAmSuperior) {
                 removeSubordinate(ctx, agreement)
@@ -86,9 +85,9 @@ async function terminate (
             const nssr_dn = [ ...agreement.immediateSuperior ];
             const iAmSuperior: boolean = (
                 // The initiator was the superior and this DSA was the initiator...
-                ((ob.initiator === OperationalBindingInitiator.ROLE_A) && (ob.outbound))
+                ((ob.initiator === "ROLE_A") && (ob.outbound))
                 // ...or, the initiator was the subordinate, and this DSA was NOT the initiator.
-                || ((ob.initiator === OperationalBindingInitiator.ROLE_B) && (!ob.outbound))
+                || ((ob.initiator === "ROLE_B") && (!ob.outbound))
             );
             if (iAmSuperior) {
                 const nssr = await dnToVertex(ctx, ctx.dit.root, nssr_dn);
@@ -96,7 +95,7 @@ async function terminate (
                     await ctx.db.accessPoint.deleteMany({
                         where: {
                             entry_id: nssr.dse.id,
-                            knowledge_type: Knowledge.NON_SPECIFIC,
+                            knowledge_type: "NON_SPECIFIC",
                             operational_bindings: {
                                 some: {
                                     binding_type: ob.binding_type,
@@ -108,7 +107,7 @@ async function terminate (
                     const remaining_nssr_aps = await ctx.db.accessPoint.count({
                         where: {
                             entry_id: nssr.dse.id,
-                            knowledge_type: Knowledge.NON_SPECIFIC,
+                            knowledge_type: "NON_SPECIFIC",
                         },
                     });
                     if (remaining_nssr_aps === 0) {
@@ -142,9 +141,9 @@ async function terminate (
             ctx.shadowUpdateCycles.delete(ob.binding_identifier);
             const iAmSupplier: boolean = (
                 // The initiator was the supplier and this DSA was the initiator...
-                ((ob.initiator === OperationalBindingInitiator.ROLE_A) && (ob.outbound))
+                ((ob.initiator === "ROLE_A") && (ob.outbound))
                 // ...or, the initiator was the consumer, and this DSA was NOT the initiator.
-                || ((ob.initiator === OperationalBindingInitiator.ROLE_B) && (!ob.outbound))
+                || ((ob.initiator === "ROLE_B") && (!ob.outbound))
             );
             if (iAmSupplier) {
                 await removeConsumer(ctx, ob.binding_identifier);

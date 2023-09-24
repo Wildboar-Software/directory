@@ -1,5 +1,5 @@
 import type { Context, Vertex, ClientAssociation, OperationReturn } from "@wildboar/meerkat-types";
-import { ObjectIdentifier, unpackBits } from "asn1-ts";
+import { ObjectIdentifier, decodeSignedBigEndianInteger, unpackBits } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
@@ -406,10 +406,10 @@ async function changePassword (
                 operational: true,
             },
             select: {
-                jer: true,
+                content_octets: true,
             },
         }))
-            .map(({ jer }) => jer as boolean)
+            .map(({ content_octets }) => decodeSignedBigEndianInteger(content_octets))
             .every((x) => x);
 
         if (!allowed) {

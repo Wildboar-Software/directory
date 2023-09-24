@@ -10,7 +10,6 @@ import {
     SubordinateToSuperior,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/SubordinateToSuperior.ta";
 import dnToVertex from "../../dit/dnToVertex";
-import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
 import * as errors from "@wildboar/meerkat-types";
 import {
     SecurityErrorData,
@@ -208,7 +207,7 @@ async function becomeSuperior (
     );
     await Promise.all(
         sub2sup.accessPoints
-            ?.map((ap) => saveAccessPoint(ctx, ap, Knowledge.SPECIFIC, subr.dse.id)) ?? [],
+            ?.map((ap) => saveAccessPoint(ctx, ap, "SPECIFIC", subr.dse.id)) ?? [],
     );
     const now = new Date();
     const possibly_related_sobs = await ctx.db.operationalBinding.findMany({
@@ -253,11 +252,11 @@ async function becomeSuperior (
                 {
                     OR: [ // This DSA is the supplier if one of these conditions are true.
                         { // This DSA initiated an OB in which it is the supplier.
-                            initiator: OperationalBindingInitiator.ROLE_A,
+                            initiator: "ROLE_A",
                             outbound: true,
                         },
                         { // This DSA accepted an OB from a consumer.
-                            initiator: OperationalBindingInitiator.ROLE_B,
+                            initiator: "ROLE_B",
                             outbound: false,
                         },
                     ],

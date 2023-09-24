@@ -6,7 +6,6 @@ import {
     _decode_ShadowingAgreementInfo,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
 import dnToVertex from "../dit/dnToVertex";
-import { ShadowUpdateStrategy } from "@prisma/client";
 import { bindForDISP } from "../net/bindToOtherDSA";
 import {
     id_ac_shadowSupplierInitiatedAsynchronousAC,
@@ -97,7 +96,7 @@ async function _updateShadowConsumer (
         || !ob.local_last_update // If this DSA never replicated to this consumer at all,
         // ...or, the reported last update time is behind the local last update time.
         || (ob.remote_last_update && (ob.remote_last_update < ob.local_last_update))
-        || (ob.requested_strategy === ShadowUpdateStrategy.TOTAL)
+        || (ob.requested_strategy === "TOTAL")
     );
 
     const since: Date = ob.remote_last_update ?? ob.local_last_update ?? new Date();

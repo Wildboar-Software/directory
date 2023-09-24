@@ -19,7 +19,6 @@ import type {
 import {
     id_op_binding_non_specific_hierarchical,
 } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
-import { OperationalBindingInitiator } from "@prisma/client";
 import { _decode_NonSpecificHierarchicalAgreement } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NonSpecificHierarchicalAgreement.ta";
 import updateHOBSubordinateDSA from "./updateHOBSubordinateDSA";
 
@@ -53,8 +52,8 @@ async function updateAffectedSubordinateDSAs (
             continue;
         }
         const i_am_superior: boolean = (
-            ((hob.initiator === OperationalBindingInitiator.ROLE_A) && hob.outbound)
-            || ((hob.initiator === OperationalBindingInitiator.ROLE_B) && !hob.outbound)
+            ((hob.initiator === "ROLE_A") && hob.outbound)
+            || ((hob.initiator === "ROLE_B") && !hob.outbound)
         );
         if (
             (hob.binding_type === id_op_binding_non_specific_hierarchical.toString())

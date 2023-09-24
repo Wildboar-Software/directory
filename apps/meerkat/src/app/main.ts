@@ -87,7 +87,6 @@ import { createWriteStream } from "node:fs";
 import { disp_ip } from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/disp-ip.oa";
 import DISPAssociation from "./disp/DISPConnection";
 import { id_op_binding_shadow } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-shadow.va";
-import { OperationalBindingInitiator } from "@prisma/client";
 import {
     _decode_ShadowingAgreementInfo,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/ShadowingAgreementInfo.ta";
@@ -1495,10 +1494,24 @@ async function main (): Promise<void> {
             : sob.requested_time;
         const iAmSupplier: boolean = (
             // The initiator was the supplier and this DSA was the initiator...
-            ((sob.initiator === OperationalBindingInitiator.ROLE_A) && (sob.outbound))
+            ((sob.initiator === "ROLE_A") && (sob.outbound))
             // ...or, the initiator was the consumer, and this DSA was NOT the initiator.
-            || ((sob.initiator === OperationalBindingInitiator.ROLE_B) && (!sob.outbound))
+            || ((sob.initiator === "ROLE_B") && (!sob.outbound))
         );
         scheduleShadowUpdates(ctx, agreement, sob.id, sob.binding_identifier, ob_time, iAmSupplier);
     }
+
+    // You have to run these commands at start-up, because they do not persist.
+    // This configures memory-mapped I/O: https://www.sqlite.org/mmap.html
+    ctx.db.$queryRawUnsafe("PRAGMA mmap_size=268435456;").then(() => {
+        ctx.log.info(ctx.i18n.t("log:configured_mmap"));
+    }).catch((e) => {
+        ctx.log.error(ctx.i18n.t("log:failed_configure_mmap", { e }));
+    });
+
+    ctx.db.$queryRawUnsafe("PRAGMA cache_size=-2000000;").then(() => {
+        ctx.log.info(ctx.i18n.t("log:configured_sqlite_cache"));
+    }).catch((e) => {
+        ctx.log.error(ctx.i18n.t("log:failed_configure_cache", { e }));
+    });
 }

@@ -511,15 +511,15 @@ async function mergeSortAndPageList(
             }
         }
         const nonSkippedResults = mergedResult.subordinates.slice(pageNumberSkips);
-        await ctx.db.enqueuedListResult.createMany({
-            data: nonSkippedResults.map((sub, i) => ({
+        await ctx.db.$transaction(nonSkippedResults.map((sub, i) => ctx.db.enqueuedListResult.create({
+            data: {
                 connection_uuid: assn.id,
                 query_ref: queryReference!,
                 result_index: i,
                 subordinate_info: _encode_ListResultData_listInfo_subordinates_Item(sub, DER).toBytes(),
                 // TODO: Supply entry ID too.
-            })),
-        });
+            },
+        })));
         paging.totalResults = nonSkippedResults.length;
         mergedResult.subordinates.length = 0;
     }

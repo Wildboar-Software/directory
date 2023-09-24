@@ -11,7 +11,6 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
-import { Knowledge } from "@prisma/client";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
     specificKnowledge,
@@ -73,12 +72,12 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     // pendingUpdates.otherWrites.push(ctx.db.accessPoint.deleteMany({
     //     where: {
     //         entry_id: vertex.dse.id,
-    //         knowledge_type: Knowledge.SPECIFIC,
+    //         knowledge_type: "SPECIFIC",
     //     },
     // }));
     // We create the access points now...
     const createdAccessPointIds = await Promise.all(
-        decoded.map((mosap) => saveAccessPoint(ctx, mosap, Knowledge.SPECIFIC)));
+        decoded.map((mosap) => saveAccessPoint(ctx, mosap, "SPECIFIC")));
     // But within the transaction, we associate them with this DSE.
     pendingUpdates.otherWrites.push(ctx.db.accessPoint.updateMany({
         where: {
@@ -108,7 +107,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates.otherWrites.push(ctx.db.accessPoint.deleteMany({
         where: {
             entry_id: vertex.dse.id,
-            knowledge_type: Knowledge.SPECIFIC,
+            knowledge_type: "SPECIFIC",
             ber: value.value.toBytes(),
         },
     }));
@@ -132,7 +131,7 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
     pendingUpdates.otherWrites.push(ctx.db.accessPoint.deleteMany({
         where: {
             entry_id: vertex.dse.id,
-            knowledge_type: Knowledge.SPECIFIC,
+            knowledge_type: "SPECIFIC",
         },
     }));
 };

@@ -28,7 +28,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NHOBSuperiorToSubordinate.ta";
 import { createContextPrefixEntry } from "./becomeSubordinate";
 import saveAccessPoint from "../../database/saveAccessPoint";
-import { Knowledge } from "@prisma/client";
 
 /**
  * @summary Create the necessary DSEs to establish a new non-specifi context prefix
@@ -88,7 +87,7 @@ async function becomeNonSpecificSubordinate (
                         ?.map((ap) => saveAccessPoint(
                             ctx,
                             ap,
-                            Knowledge.SPECIFIC,
+                            "SPECIFIC",
                             existingEntry.dse.id,
                         )) ?? [],
                 );

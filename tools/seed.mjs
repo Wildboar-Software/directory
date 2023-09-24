@@ -10,19 +10,18 @@ async function main() {
     const boundary_file = path.join(process.cwd(), "data", "zonal", "boundary.csv");
     const gazette_data = await fs.readFile(gazette_file, { encoding: "utf-8" });
     const boundary_data = await fs.readFile(boundary_file, { encoding: "utf-8" });
-    await prisma.postalCodesGazetteEntry.createMany({
-        data: gazette_data
-            .split(/\r?\n/)
-            .map((line) => {
-                const [ c, st, l, pc ] = line.split(",");
-                return {
-                    c2c: c,
-                    st,
-                    locality: l.length > 0 ? l : undefined,
-                    postal_code: pc,
-                };
-            }),
-    });
+    const gazette_items = gazette_data
+        .split(/\r?\n/)
+        .map((line) => {
+            const [ c, st, l, pc ] = line.split(",");
+            return {
+                c2c: c,
+                st,
+                locality: l.length > 0 ? l : undefined,
+                postal_code: pc,
+            };
+        });
+    await prisma.$transaction(gazette_items.map((g) => prisma.postalCodesGazetteEntry.create({ data: g })));
     const ids = await prisma.postalCodesGazetteEntry.findMany({
         select: {
             id: true,
@@ -35,28 +34,27 @@ async function main() {
     }
     const boundary_lines = boundary_data.split(/\r?\n/);
     for (let i = 0; i < boundary_lines.length; i += 10_000) {
-        await prisma.postalCodeBoundaryPoints.createMany({
-            data: boundary_lines
-                .slice(i, i + 10_000)
-                .map((line) => {
-                    const [ c, st, l, pc, n, e ] = line.split(",");
-                    const id = pc2id.get(pc);
-                    if (!id) {
-                        console.log(pc);
-                    }
-                    const easting = Number.parseInt(e, 10);
-                    const northing = Number.parseInt(n, 10);
-                    if (Number.isNaN(easting) || Number.isNaN(northing)) {
-                        console.log(c, st, l, pc, n, e);
-                        process.exit(1);
-                    }
-                    return {
-                        easting,
-                        northing,
-                        postal_code_id: id,
-                    };
-                }),
-        });
+        const boundary_points = boundary_lines
+            .slice(i, i + 10_000)
+            .map((line) => {
+                const [ c, st, l, pc, n, e ] = line.split(",");
+                const id = pc2id.get(pc);
+                if (!id) {
+                    console.log(pc);
+                }
+                const easting = Number.parseInt(e, 10);
+                const northing = Number.parseInt(n, 10);
+                if (Number.isNaN(easting) || Number.isNaN(northing)) {
+                    console.log(c, st, l, pc, n, e);
+                    process.exit(1);
+                }
+                return {
+                    easting,
+                    northing,
+                    postal_code_id: id,
+                };
+            });
+        await prisma.$transaction(boundary_points.map((b) => prisma.postalCodeBoundaryPoints.create({ data: b })));
     }
 }
 

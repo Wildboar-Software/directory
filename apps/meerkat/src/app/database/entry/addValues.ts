@@ -8,8 +8,7 @@ import {
 } from "@wildboar/meerkat-types";
 import { ASN1Construction } from "asn1-ts";
 import type { Prisma } from "@prisma/client";
-import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import rdnToJson from "../../x500/rdnToJson";
+import { _encode_DistinguishedName, type DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import {
     AttributeProblem_attributeOrValueAlreadyExists,
     AttributeProblem_contextViolation,
@@ -32,6 +31,7 @@ import {
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import hasValueWithoutDriver from "./hasValueWithoutDriver";
 import getEqualityNormalizer from "../../x500/getEqualityNormalizer";
+import { DER } from "asn1-ts/dist/node/functional";
 
 /**
  * @summary Validate the values to be added to the entry
@@ -311,7 +311,9 @@ async function addValues(
     const pendingUpdates: PendingUpdates = otherPromises ?? {
         entryUpdate: {
             modifyTimestamp: new Date(),
-            modifiersName: modifier?.map(rdnToJson),
+            modifiersName: modifier
+                ? _encode_DistinguishedName(modifier, DER).toBytes()
+                : undefined,
         },
         otherWrites: [],
     };
@@ -342,8 +344,8 @@ async function addValues(
             select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
         }),
         ...pendingUpdates.otherWrites,
-        ctx.db.attributeValue.createMany({
-            data: unspecialValuesWithNoContexts.map((attr): Prisma.AttributeValueCreateManyInput => ({
+        ...unspecialValuesWithNoContexts.map((attr) => ctx.db.attributeValue.create({
+            data: {
                 entry_id: entry.dse.id,
                 type_oid: attr.type.toBytes(),
                 operational: ((ctx.attributeTypes.get(attr.type.toString())?.usage ?? userApplications) !== userApplications),
@@ -355,10 +357,10 @@ async function addValues(
                     attr.value.value.byteOffset,
                     attr.value.value.byteLength,
                 ),
-                jer: attr.value.toJSON() as Prisma.InputJsonValue,
                 normalized_str: normalizerGetter(attr.type)?.(ctx, attr.value),
-            })),
-        }),
+            },
+        })),
+        // TODO: Since migrating to SQLite, there is no reason to split up values with and without contexts.
         ...unspecialValuesWithContexts // The ContextValue relation is only available in .create(), not .createMany().
             .map((attr) => ctx.db.attributeValue.create({
                 data: {
@@ -373,20 +375,17 @@ async function addValues(
                         attr.value.value.byteOffset,
                         attr.value.value.byteLength,
                     ),
-                    jer: attr.value.toJSON() as Prisma.InputJsonValue,
                     normalized_str: normalizerGetter(attr.type)?.(ctx, attr.value),
                     ContextValue: {
-                        createMany: {
-                            data: (attr.contexts ?? [])
-                                .flatMap((context) => context.contextValues.map((cv) => ({
-                                    type: context.contextType.toString(),
-                                    tag_class: cv.tagClass,
-                                    constructed: (cv.construction === ASN1Construction.constructed),
-                                    tag_number: cv.tagNumber,
-                                    ber: cv.toBytes(),
-                                    fallback: context.fallback ?? false,
-                                }))),
-                        },
+                        create: (attr.contexts ?? [])
+                        .flatMap((context) => context.contextValues.map((cv) => ({
+                            type: context.contextType.toString(),
+                            tag_class: cv.tagClass,
+                            constructed: (cv.construction === ASN1Construction.constructed),
+                            tag_number: cv.tagNumber,
+                            ber: cv.toBytes(),
+                            fallback: context.fallback ?? false,
+                        }))),
                     },
                 },
                 select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252

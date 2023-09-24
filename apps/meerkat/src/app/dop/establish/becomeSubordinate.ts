@@ -15,7 +15,6 @@ import {
     MasterOrShadowAccessPoint_category_master,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint-category.ta";
 import dnToVertex from "../../dit/dnToVertex";
-import { Knowledge } from "@prisma/client";
 import { DER, _decodeObjectIdentifier } from "asn1-ts/dist/node/functional";
 import createEntry from "../../database/createEntry";
 import {
@@ -134,7 +133,7 @@ async function createContextPrefixEntry (
     );
     await Promise.all(
         vertex.accessPoints?.map((ap) => saveAccessPoint(
-            ctx, ap, Knowledge.SPECIFIC, createdEntry.dse.id)) ?? [],
+            ctx, ap, "SPECIFIC", createdEntry.dse.id)) ?? [],
     );
     if (immSupr) {
         createdEntry.dse.immSupr = {
@@ -250,7 +249,7 @@ async function becomeSubordinate (
                         ?.map((ap) => saveAccessPoint(
                             ctx,
                             ap,
-                            Knowledge.SPECIFIC,
+                            "SPECIFIC",
                             existingEntry.dse.id,
                         )) ?? [],
                 );

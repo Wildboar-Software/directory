@@ -4,18 +4,18 @@ import type {
     PendingUpdates,
 } from "@wildboar/meerkat-types";
 import type { Prisma } from "@prisma/client";
-import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import { _encode_DistinguishedName, type DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import { validateValues } from "./addValues";
 import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
 import valuesFromAttribute from "../../x500/valuesFromAttribute";
-import rdnToJson from "../../x500/rdnToJson";
 import getEqualityNormalizer from "../../x500/getEqualityNormalizer";
 import {
     AttributeUsage_userApplications as userApplications,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
 import { ASN1Construction } from "asn1-ts";
+import { DER } from "asn1-ts/dist/node/functional";
 
 /**
  * @summary Add attributes to an entry.
@@ -60,7 +60,9 @@ async function addAttributes (
     const pendingUpdates: PendingUpdates = {
         entryUpdate: {
             modifyTimestamp: new Date(),
-            modifiersName: modifier?.map(rdnToJson),
+            modifiersName: modifier
+                ? _encode_DistinguishedName(modifier, DER).toBytes()
+                : undefined,
         },
         otherWrites: [],
     };
@@ -82,7 +84,7 @@ async function addAttributes (
                 }
             }),
     );
-    const noContextValueCreates: Prisma.AttributeValueCreateManyInput[] = [];
+    const noContextValueCreates: Prisma.AttributeValueUncheckedCreateInput[] = [];
     const contextPromises: Prisma.PrismaPromise<any>[] = [];
     for (const attr of unspecialAttributes) {
         const type_oid = attr.type_.toBytes();
@@ -101,8 +103,6 @@ async function addAttributes (
                     value.value.byteOffset,
                     value.value.byteLength,
                 ),
-                // TODO: Should you just get rid of this column? Or at least not fill it in?
-                jer: value.toJSON() as Prisma.InputJsonValue,
                 normalized_str: normalizer?.(ctx, value),
             });
         }
@@ -120,20 +120,17 @@ async function addAttributes (
                         vwc.value.value.byteOffset,
                         vwc.value.value.byteLength,
                     ),
-                    jer: vwc.value.toJSON() as Prisma.InputJsonValue,
                     normalized_str: normalizer?.(ctx, vwc.value),
                     ContextValue: {
-                        createMany: {
-                            data: vwc.contextList
-                                .flatMap((context) => context.contextValues.map((cv) => ({
-                                    type: context.contextType.toString(),
-                                    tag_class: cv.tagClass,
-                                    constructed: (cv.construction === ASN1Construction.constructed),
-                                    tag_number: cv.tagNumber,
-                                    ber: cv.toBytes(),
-                                    fallback: context.fallback ?? false,
-                                }))),
-                        },
+                        create: vwc.contextList
+                            .flatMap((context) => context.contextValues.map((cv) => ({
+                                type: context.contextType.toString(),
+                                tag_class: cv.tagClass,
+                                constructed: (cv.construction === ASN1Construction.constructed),
+                                tag_number: cv.tagNumber,
+                                ber: cv.toBytes(),
+                                fallback: context.fallback ?? false,
+                            }))),
                     },
                 },
                 select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
@@ -149,7 +146,9 @@ async function addAttributes (
             select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
         }),
         ...pendingUpdates.otherWrites,
-        ctx.db.attributeValue.createMany({ data: noContextValueCreates }),
+        ...noContextValueCreates.map((avc) => ctx.db.attributeValue.create({
+            data: avc,
+        })),
         ...contextPromises,
     ];
 }
