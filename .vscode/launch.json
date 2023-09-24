@@ -17,6 +17,18 @@
             ]
         },
         {
+            "type": "pwa-node",
+            "request": "attach",
+            "port": 9229,
+            "name": "Attach to Meerkat (Port 9229)",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/dist/apps/meerkat/**/*.js"
+            ]
+        },
+        {
             "type": "node",
             "request": "attach",
             "port": 19229,
