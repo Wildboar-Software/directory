@@ -37,12 +37,20 @@ async function getRelevantSubentries (
     entryDN: DistinguishedName,
     admPoint: Vertex,
     where?: Prisma.EntryWhereInput,
+    subentryCache?: Map<number, Vertex[]>,
 ): Promise<Vertex[]> {
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
-    const subentries = await readSubordinates(ctx, admPoint, undefined, undefined, undefined, {
-        ...where,
-        subentry: true,
-    });
+    const subentries = subentryCache?.get(admPoint.dse.id) ?? await readSubordinates(
+        ctx,
+        admPoint,
+        undefined,
+        undefined,
+        undefined,
+        {
+            ...where,
+            subentry: true,
+        },
+    );
     const objectClasses = Array.isArray(entry)
         ? entry
         : Array.from(entry.dse.objectClass.values()).map(ObjectIdentifier.fromString);
@@ -83,6 +91,7 @@ async function getRelevantSubentries (
             relevant_sub_ids.delete(subentry.dse.id);
         }
     }
+    subentryCache?.set(admPoint.dse.id, subentries);
     return ret;
 }
 

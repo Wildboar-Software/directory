@@ -1085,7 +1085,10 @@ const ctx: MeerkatContext = {
             app: "meerkat",
         },
     }),
-    db: new PrismaClient(),
+    db: new PrismaClient({
+        // log: ["query"],
+        // log: ['query', 'info', 'warn', 'error'],
+    }),
     telemetry: {
         init: async (): Promise<void> => {
             try {

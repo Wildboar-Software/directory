@@ -267,6 +267,7 @@ async function search_procedures (
         depth: 0,
         excludedById: new Set(),
         matching_rule_substitutions: new Map(),
+        subentriesCache: new Map(),
     };
 
     const use_search_ii: boolean = (
@@ -816,6 +817,7 @@ class OperationDispatcher {
                 effectiveHierarchySelections: data.hierarchySelections,
                 effectiveSearchControls: data.searchControlOptions,
                 effectiveServiceControls: data.serviceControls?.options,
+                subentriesCache: new Map(),
             };
 
             const use_search_rule_check_ii: boolean = (nameResolutionPhase === completed);
@@ -1498,6 +1500,7 @@ class OperationDispatcher {
             matching_rule_substitutions: new Map(),
             notification: [],
             effectiveEntryLimit: MAX_RESULTS,
+            subentriesCache: new Map(),
         };
         await relatedEntryProcedure(
             ctx,
