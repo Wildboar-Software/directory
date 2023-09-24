@@ -1094,6 +1094,7 @@ const ctx: MeerkatContext = {
         },
     }),
     db: new PrismaClient({
+        // log: ["query"],
         // log: ['query', 'info', 'warn', 'error'],
     }),
     telemetry: {
