@@ -1503,13 +1503,13 @@ async function main (): Promise<void> {
 
     // You have to run these commands at start-up, because they do not persist.
     // This configures memory-mapped I/O: https://www.sqlite.org/mmap.html
-    ctx.db.$queryRawUnsafe("PRAGMA mmap_size=268435456;").then(() => {
+    ctx.db.$queryRawUnsafe(`PRAGMA mmap_size=${ctx.config.db.mmapSize};`).then(() => {
         ctx.log.info(ctx.i18n.t("log:configured_mmap"));
     }).catch((e) => {
         ctx.log.error(ctx.i18n.t("log:failed_configure_mmap", { e }));
     });
 
-    ctx.db.$queryRawUnsafe("PRAGMA cache_size=-2000000;").then(() => {
+    ctx.db.$queryRawUnsafe(`PRAGMA cache_size=-${ctx.config.db.cacheSize};`).then(() => {
         ctx.log.info(ctx.i18n.t("log:configured_sqlite_cache"));
     }).catch((e) => {
         ctx.log.error(ctx.i18n.t("log:failed_configure_cache", { e }));

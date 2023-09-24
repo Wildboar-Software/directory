@@ -301,6 +301,20 @@ credentials, etc. are susceptible to inspection by intermediaries, which is a
 security problem. These operations may not be susceptible to tampering (other
 than by omission) if cryptographic signing is used.
 
+## MEERKAT_DB_CACHE_SIZE
+
+The size in kilobytes of the SQLite cache. SQLite defaults to 2000KB of cache
+(2 megabytes), but Meerkat DSA defaults to a 16 megabytes. You should increase
+this amount if you have the memory to accomodate more.
+
+## MEERKAT_DB_MMAP_SIZE
+
+The maximum number of bytes of the underlying SQLite database file that will be
+accessed using memory-mapped I/O. If set to 0, memory-mapping will be disabled.
+The default value is 128 megabytes. If you have more memory available, you
+should probably bump this up, but it should not matter unless you're DSA is
+serving a lot of concurrent users.
+
 ## MEERKAT_DEFAULT_ENTRY_TTL
 
 The default value of the `entryTtl` operational attribute, if an entry
