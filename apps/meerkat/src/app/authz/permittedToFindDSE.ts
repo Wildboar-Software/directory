@@ -77,6 +77,7 @@ async function permittedToFindDSE (
     const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
     let accessControlScheme: OBJECT_IDENTIFIER | undefined;
     let authorizedToDiscloseOnError: boolean = false;
+    const subentriesCache: Map<number, Vertex[]> = new Map();
 
     for (let i = 0; i < needleDN.length; i++) {
         const rdn = needleDN[i];
@@ -105,7 +106,14 @@ async function permittedToFindDSE (
                 ? [ ...admPoints, dse_i ]
                 : [ ...admPoints ];
             const relevantSubentries: Vertex[] = (await Promise.all(
-                relevantAdmPoints.map((ap) => getRelevantSubentries(ctx, dse_i, childDN, ap)),
+                relevantAdmPoints.map((ap) => getRelevantSubentries(
+                    ctx,
+                    dse_i,
+                    childDN,
+                    ap,
+                    undefined,
+                    subentriesCache,
+                )),
             )).flat();
             const targetACI = await getACIItems(
                 ctx,
