@@ -167,6 +167,13 @@ interface ListState extends Partial<WithRequestStatistics>, Partial<WithOutcomeS
     resultSets: ListResult[];
     poq?: PartialOutcomeQualifier;
     queryReference?: string;
+
+    /**
+     * A mapping of the administrative point's database ID to all of its
+     * subentries. This avoids the expensive process of loading all subentries
+     * for an admin point for every search result that is to be evaluated.
+     */
+    subentriesCache: Map<number, Vertex[]>;
 }
 
 /**
@@ -306,21 +313,6 @@ async function list_i (
         : undefined;
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const subentries: boolean = (data.serviceControls?.options?.[subentriesBit] === TRUE_BIT);
-    const targetRelevantSubentries: Vertex[] = (await Promise.all(
-        state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
-    )).flat();
-    const targetAccessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
-        .reverse()
-        .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
-    const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
-
-    const isParent: boolean = target.dse.objectClass.has(PARENT);
-    const isChild: boolean = target.dse.objectClass.has(CHILD);
-    const isAncestor: boolean = (isParent && !isChild);
-
-    let pagingRequest: PagedResultsRequest_newRequest | undefined;
-    let queryReference: string | undefined;
-    let cursorId: number | undefined;
     const signDSPResult: boolean = (
         (state.chainingArguments.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
         && (assn instanceof DSPAssociation)
@@ -341,7 +333,28 @@ async function list_i (
         chaining: chainingResults,
         results: [],
         resultSets: [],
+        subentriesCache: new Map(),
     };
+    const targetRelevantSubentries: Vertex[] = (await Promise.all(
+        state.admPoints.map((ap) => getRelevantSubentries(
+            ctx,
+            target,
+            targetDN,
+            ap,
+            undefined,
+            ret.subentriesCache,
+        )),
+    )).flat();
+    const targetAccessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
+        .reverse()
+        .find((ap) => ap.dse.admPoint!.accessControlScheme)?.dse.admPoint!.accessControlScheme;
+    const isMemberOfGroup = getIsGroupMember(ctx, NAMING_MATCHER);
+    const isParent: boolean = target.dse.objectClass.has(PARENT);
+    const isChild: boolean = target.dse.objectClass.has(CHILD);
+    const isAncestor: boolean = (isParent && !isChild);
+    let pagingRequest: PagedResultsRequest_newRequest | undefined;
+    let queryReference: string | undefined;
+    let cursorId: number | undefined;
     if (data.pagedResults) {
         if ("newRequest" in data.pagedResults) {
             const nr = data.pagedResults.newRequest;
@@ -581,9 +594,23 @@ async function list_i (
                     : [ ...targetRelevantSubentries ]; // Must spread to create a new reference. Otherwise...
                 if (subordinate.dse.admPoint?.administrativeRole.has(ID_AC_SPECIFIC)) { // ... (keep going)
                     effectiveRelevantSubentries.length = 0; // ...this will modify the target-relevant subentries!
-                    effectiveRelevantSubentries.push(...(await getRelevantSubentries(ctx, subordinate, subordinateDN, subordinate)));
+                    effectiveRelevantSubentries.push(...(await getRelevantSubentries(
+                        ctx,
+                        subordinate,
+                        subordinateDN,
+                        subordinate,
+                        undefined,
+                        ret.subentriesCache,
+                    )));
                 } else if (subordinate.dse.admPoint?.administrativeRole.has(ID_AC_INNER)) {
-                    effectiveRelevantSubentries.push(...(await getRelevantSubentries(ctx, subordinate, subordinateDN, subordinate)));
+                    effectiveRelevantSubentries.push(...(await getRelevantSubentries(
+                        ctx,
+                        subordinate,
+                        subordinateDN,
+                        subordinate,
+                        undefined,
+                        ret.subentriesCache,
+                    )));
                 }
                 const subordinateACI = await getACIItems(
                     ctx,
