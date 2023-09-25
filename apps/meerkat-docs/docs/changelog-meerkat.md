@@ -1,5 +1,9 @@
 # Changelog for Meerkat DSA
 
+## Version 3.2.1
+
+Fix bug with writing to IDM sockets.
+
 ## Version 3.2.0
 
 This new version introduces new features around authentication and chaining.
