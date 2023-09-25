@@ -1,5 +1,12 @@
 # Changelog for Meerkat DSA
 
+## Version 3.2.2
+
+This version **dramatically** improves the performance of the DSA for `search`
+and `list` operations and for `addEntry` when performed in rapid succession, as
+well as for a few other use cases. In general, you should see a 400% to 1000%
+increase in performance.
+
 ## Version 3.2.1
 
 Fix bug with writing to IDM sockets.
