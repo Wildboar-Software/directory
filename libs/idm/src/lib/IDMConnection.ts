@@ -488,6 +488,9 @@ class IDMConnection {
      * @function
      */
     public write (data: Uint8Array | Uint8Array[], final: boolean = true): void {
+        const len = Array.isArray(data)
+            ? data.map((d) => d.length).reduce((acc, curr) => acc + curr, 0)
+            : data.length;
         const header = ((): Buffer => {
             switch (this.version ?? IDMVersion.v1) {
             case (IDMVersion.v1): {
@@ -498,7 +501,7 @@ class IDMConnection {
                 const ret = Buffer.alloc(IDM_V1_FRAME_SIZE);
                 ret.writeUInt8(VERSION_V1_BYTE, 0);
                 ret.writeUInt8(FINAL_BYTE, 1);
-                ret.writeUInt32BE(data.length, 2);
+                ret.writeUInt32BE(len, 2);
                 return ret;
             }
             case (IDMVersion.v2): {
@@ -510,7 +513,7 @@ class IDMConnection {
                 ret.writeUInt8(VERSION_V2_BYTE, 0);
                 ret.writeUInt8(FINAL_BYTE, 1);
                 ret.writeUInt16BE(0x0000, 2); // Only BER is supported
-                ret.writeUInt32BE(data.length, 4);
+                ret.writeUInt32BE(len, 4);
                 return ret;
             }
             default: {
