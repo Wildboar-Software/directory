@@ -3425,6 +3425,12 @@ interface WithIntegerProtocolVersion {
     protocolVersion?: number;
 }
 
+export
+interface WithSubentryCache {
+    subentriesCache: Map<number, Vertex[]>;
+    subentriesCacheExpiration: Date;
+}
+
 /**
  * @summary An application association with this DSA.
  * @description
@@ -3435,7 +3441,7 @@ interface WithIntegerProtocolVersion {
  * @class
  */
 export
-abstract class ClientAssociation implements WithIntegerProtocolVersion {
+abstract class ClientAssociation implements WithIntegerProtocolVersion, WithSubentryCache {
 
     /** The version number of the protocol in use. */
     public protocolVersion?: number | undefined;
@@ -3445,6 +3451,9 @@ abstract class ClientAssociation implements WithIntegerProtocolVersion {
 
     /** A UUID that uniquely identifies this association */
     public readonly id = randomUUID();
+
+    public subentriesCache: Map<number, Vertex[]> = new Map();
+    public subentriesCacheExpiration: Date = new Date();
 
     /**
      * The vertex of the DIT to which the remote host bound.
