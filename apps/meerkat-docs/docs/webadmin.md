@@ -7,9 +7,10 @@ of Javascript means that you can access your Meerkat DSA web admin console over
 [TOR](https://www.torproject.org/).
 
 The web admin console is only necessary for accepting or rejecting requested
-operational bindings and triggering [hibernation](./administration.md#hibernation); everything else can be done using the X.500 protocols. In
-the future, we will find a way to make even this possible without the web
-console.
+operational bindings and triggering
+[hibernation](./administration.md#hibernation); everything else can be done
+using the X.500 protocols. In the future, we will find a way to make even this
+possible without the web console.
 
 :::caution
 
@@ -20,6 +21,10 @@ If you do not expect to need this, it is strongly recommended that you do not
 enable it.
 
 :::
+
+Below is a depiction of the web admin portal.
+
+![Web Admin Portal](../static/img/webadmin.png)
 
 ## Authentication
 
