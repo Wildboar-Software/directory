@@ -2,7 +2,7 @@ class MeerkatDSA < Formula
     desc "X.500 Directory Server (DSA) and LDAP Server by Wildboar Software"
     homepage "https://github.com/Wildboar-Software/directory"
     url "https://github.com/Wildboar-Software/directory/archive/v1.1.0.tar.gz"
-    version = "3.2.1"
+    version = "3.2.2"
     # sha256 "e86694b2e15d8d4da2477c44e584fb5e860666787d010801199a0a77bcf28a2d"
 
     def install

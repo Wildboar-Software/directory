@@ -192,6 +192,7 @@ async function list_ii (
         (data.securityParameters?.errorProtection === ErrorProtectionRequest_signed)
         && (assn.authorizedForSignedErrors)
     );
+    const subentriesCache: Map<number, Vertex[]> = new Map();
     const requestor: DistinguishedName | undefined = data
         .securityParameters
         ?.certification_path
@@ -300,7 +301,7 @@ async function list_ii (
         )
         : undefined;
     const targetRelevantSubentries: Vertex[] = (await Promise.all(
-        state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
+        state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap, undefined, subentriesCache)),
     )).flat();
     const targetAccessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
         .reverse()
@@ -553,9 +554,23 @@ async function list_ii (
                     : targetRelevantSubentries;
                 if (subordinate.dse.admPoint?.administrativeRole.has(ID_AC_SPECIFIC)) {
                     effectiveRelevantSubentries.length = 0;
-                    effectiveRelevantSubentries.push(...(await getRelevantSubentries(ctx, subordinate, subordinateDN, subordinate)));
+                    effectiveRelevantSubentries.push(...(await getRelevantSubentries(
+                        ctx,
+                        subordinate,
+                        subordinateDN,
+                        subordinate,
+                        undefined,
+                        subentriesCache,
+                    )));
                 } else if (subordinate.dse.admPoint?.administrativeRole.has(ID_AC_INNER)) {
-                    effectiveRelevantSubentries.push(...(await getRelevantSubentries(ctx, subordinate, subordinateDN, subordinate)));
+                    effectiveRelevantSubentries.push(...(await getRelevantSubentries(
+                        ctx,
+                        subordinate,
+                        subordinateDN,
+                        subordinate,
+                        undefined,
+                        subentriesCache,
+                    )));
                 }
                 const subordinateACI = await getACIItems(
                     ctx,

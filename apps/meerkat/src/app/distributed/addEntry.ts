@@ -91,7 +91,7 @@ import {
     id_opcode_addEntry,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/id-opcode-addEntry.va";
 import establishSubordinate from "../dop/establishSubordinate";
-import { differenceInMilliseconds } from "date-fns";
+import { addSeconds, differenceInMilliseconds } from "date-fns";
 import {
     ServiceProblem_timeLimitExceeded
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceProblem.ta";
@@ -260,6 +260,11 @@ async function addEntry (
     assn: ClientAssociation,
     state: OperationDispatcherState,
 ): Promise<OperationReturn> {
+    const now = new Date();
+    if (assn.subentriesCacheExpiration <= now) {
+        assn.subentriesCache.clear();
+        assn.subentriesCacheExpiration = addSeconds(now, 10);
+    }
     const argument = _decode_AddEntryArgument(state.operationArgument);
     const data = getOptionallyProtectedValue(argument);
     const signErrors: boolean = (
@@ -393,7 +398,14 @@ async function addEntry (
     const relevantSubentries: Vertex[] = ctx.config.bulkInsertMode
         ? []
         : (await Promise.all(
-            state.admPoints.map((ap) => getRelevantSubentries(ctx, objectClasses, targetDN, ap)),
+            state.admPoints.map((ap) => getRelevantSubentries(
+                ctx,
+                objectClasses,
+                targetDN,
+                ap,
+                undefined,
+                assn.subentriesCache,
+            )),
         )).flat();
     const accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
         .reverse()
@@ -801,9 +813,23 @@ async function addEntry (
                 : [ ...relevantSubentries ]; // Must spread to create a new reference. Otherwise...
             if (existing.dse.admPoint?.administrativeRole.has(ID_AC_SPECIFIC)) { // ... (keep going)
                 effectiveRelevantSubentries.length = 0; // ...this will modify the target-relevant subentries!
-                effectiveRelevantSubentries.push(...(await getRelevantSubentries(ctx, existing, targetDN, existing)));
+                effectiveRelevantSubentries.push(...(await getRelevantSubentries(
+                    ctx,
+                    existing,
+                    targetDN,
+                    existing,
+                    undefined,
+                    assn.subentriesCache,
+                )));
             } else if (existing.dse.admPoint?.administrativeRole.has(ID_AC_INNER)) {
-                effectiveRelevantSubentries.push(...(await getRelevantSubentries(ctx, existing, targetDN, existing)));
+                effectiveRelevantSubentries.push(...(await getRelevantSubentries(
+                    ctx,
+                    existing,
+                    targetDN,
+                    existing,
+                    undefined,
+                    assn.subentriesCache,
+                )));
             }
             const subordinateACI = await getACIItems(
                 ctx,

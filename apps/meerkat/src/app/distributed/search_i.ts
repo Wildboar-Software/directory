@@ -412,6 +412,13 @@ interface SearchState extends Partial<WithRequestStatistics>, Partial<WithOutcom
     effectiveEntryLimit: number;
     effectiveFamilyGrouping?: FamilyGrouping;
     effectiveFamilyReturn?: FamilyReturn;
+
+    /**
+     * A mapping of the administrative point's database ID to all of its
+     * subentries. This avoids the expensive process of loading all subentries
+     * for an admin point for every search result that is to be evaluated.
+     */
+    subentriesCache: Map<number, Vertex[]>;
 }
 
 /**
@@ -1677,7 +1684,7 @@ async function search_i_ex (
     const targetDN = getDistinguishedName(target);
     const NAMING_MATCHER = getNamingMatcherGetter(ctx);
     const relevantSubentries: Vertex[] = (await Promise.all(
-        state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
+        state.admPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap, undefined, searchState.subentriesCache)),
     )).flat();
     const accessControlScheme = [ ...state.admPoints ] // Array.reverse() works in-place, so we create a new array.
         .reverse()
@@ -3271,7 +3278,7 @@ async function search_i_ex (
                     )
                 ) {
                     const relevantSubentries: Vertex[] = (await Promise.all(
-                        adminPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap)),
+                        adminPoints.map((ap) => getRelevantSubentries(ctx, target, targetDN, ap, undefined, searchState.subentriesCache)),
                     )).flat();
                     const targetACI = await getACIItems(
                         ctx,

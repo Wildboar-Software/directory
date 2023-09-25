@@ -327,6 +327,7 @@ export
         (errorProtection === ErrorProtectionRequest_signed)
         && (!assn || (assn.authorizedForSignedErrors))
     );
+    const subentriesCache: Map<number, Vertex[]> = new Map();
 
     // Service controls
     const manageDSAIT: boolean = (
@@ -995,7 +996,14 @@ export
                         ? [...state.admPoints, matchedVertex]
                         : [...state.admPoints];
                     const relevantSubentries: Vertex[] = (await Promise.all(
-                        relevantAdmPoints.map((ap) => getRelevantSubentries(ctx, matchedVertex, childDN, ap)),
+                        relevantAdmPoints.map((ap) => getRelevantSubentries(
+                            ctx,
+                            matchedVertex,
+                            childDN,
+                            ap,
+                            undefined,
+                            subentriesCache,
+                        )),
                     )).flat();
                     const targetACI = await getACIItems(
                         ctx,
@@ -1177,7 +1185,14 @@ export
                             ? [...state.admPoints, child]
                             : [...state.admPoints];
                         const relevantSubentries: Vertex[] = (await Promise.all(
-                            relevantAdmPoints.map((ap) => getRelevantSubentries(ctx, child, childDN, ap)),
+                            relevantAdmPoints.map((ap) => getRelevantSubentries(
+                                ctx,
+                                child,
+                                childDN,
+                                ap,
+                                undefined,
+                                subentriesCache,
+                            )),
                         )).flat();
                         const targetACI = await getACIItems(
                             ctx,
@@ -1346,7 +1361,14 @@ export
                 : undefined;
             const currentDN = getDistinguishedName(dse_i);
             const relevantSubentries: Vertex[] = (await Promise.all(
-                state.admPoints.map((ap) => getRelevantSubentries(ctx, dse_i, currentDN, ap)),
+                state.admPoints.map((ap) => getRelevantSubentries(
+                    ctx,
+                    dse_i,
+                    currentDN,
+                    ap,
+                    undefined,
+                    subentriesCache,
+                )),
             )).flat();
             const targetACI = await getACIItems(
                 ctx,
