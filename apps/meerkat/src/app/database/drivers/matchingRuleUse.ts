@@ -15,7 +15,6 @@ import { DER } from "asn1-ts/dist/node/functional";
 import { matchingRuleUse } from "@wildboar/x500/src/lib/modules/SchemaAdministration/matchingRuleUse.oa";
 import { subschema } from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
 import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
-import readMatchingRuleUseDescriptions from "../readers/readMatchingRuleUseDescriptions";
 
 const SUBSCHEMA: string = subschema["&id"].toString();
 
@@ -27,11 +26,10 @@ const readValues: SpecialAttributeDatabaseReader = async (
     if (!vertex.dse.subentry || !vertex.dse.objectClass.has(SUBSCHEMA)) {
         return [];
     }
-    return (await readMatchingRuleUseDescriptions(ctx, vertex.dse.id))
-        .map((value) => ({
-            type: matchingRuleUse["&id"],
-            value: matchingRuleUse.encoderFor["&Type"]!(value, DER),
-        }));
+    return vertex.dse.subentry.matchingRuleUse?.map((mru) => ({
+        type: matchingRuleUse["&id"],
+        value: matchingRuleUse.encoderFor["&Type"]!(mru, DER),
+    })) ?? [];
 };
 
 export

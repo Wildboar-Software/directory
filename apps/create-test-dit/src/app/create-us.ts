@@ -960,7 +960,7 @@ async function seedUS (
     const peepantsGang: DistinguishedName[] = [];
     const newEntryArgs: [cn: string, arg: AddEntryArgument][] = [];
     // Create random people
-    for (let i = 1; i < 1000; i++) {
+    for (let i = 1; i < 10_000; i++) {
         // TODO: pgpKeyInfo
         // TODO: simpleSecurityObject
         // TODO: uidObject
@@ -1355,7 +1355,7 @@ async function seedUS (
         newEntryArgs,
         ([cn, arg]) => idempotentAddEntry(ctx, conn, `C=US,ST=FL,L=HIL,L=Tampa,L=Westchase,CN=${cn}`, arg),
         {
-            concurrency: 10,
+            concurrency: 20,
         },
     );
 
