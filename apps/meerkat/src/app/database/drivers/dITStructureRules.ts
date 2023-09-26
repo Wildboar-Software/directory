@@ -15,7 +15,6 @@ import { DER } from "asn1-ts/dist/node/functional";
 import { dITStructureRules } from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITStructureRules.oa";
 import { subschema } from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
 import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
-import readDITStructureRuleDescriptions from "../readers/readDITStructureRuleDescriptions";
 import {
     id_ar_subschemaAdminSpecificArea,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-subschemaAdminSpecificArea.va";
@@ -32,11 +31,10 @@ const readValues: SpecialAttributeDatabaseReader = async (
     if (!vertex.dse.subentry || !vertex.dse.objectClass.has(SUBSCHEMA)) {
         return [];
     }
-    return (await readDITStructureRuleDescriptions(ctx, vertex.dse.id))
-        .map((value) => ({
-            type: dITStructureRules["&id"],
-            value: dITStructureRules.encoderFor["&Type"]!(value, DER),
-        }));
+    return vertex.dse.subentry.ditStructureRules?.map((dsr) => ({
+        type: dITStructureRules["&id"],
+        value: dITStructureRules.encoderFor["&Type"]!(dsr, DER),
+    })) ?? [];
 };
 
 export

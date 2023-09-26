@@ -15,7 +15,6 @@ import { DER } from "asn1-ts/dist/node/functional";
 import { dITContextUse } from "@wildboar/x500/src/lib/modules/SchemaAdministration/dITContextUse.oa";
 import { subschema } from "@wildboar/x500/src/lib/modules/SchemaAdministration/subschema.oa";
 import directoryStringToString from "@wildboar/x500/src/lib/stringifiers/directoryStringToString";
-import readDITContextUseDescriptions from "../readers/readDITContextUseDescriptions";
 
 const SUBSCHEMA: string = subschema["&id"].toString();
 
@@ -27,11 +26,10 @@ const readValues: SpecialAttributeDatabaseReader = async (
     if (!vertex.dse.subentry || !vertex.dse.objectClass.has(SUBSCHEMA)) {
         return [];
     }
-    return (await readDITContextUseDescriptions(ctx, vertex.dse.id))
-        .map((value) => ({
-            type: dITContextUse["&id"],
-            value: dITContextUse.encoderFor["&Type"]!(value, DER),
-        }));
+    return vertex.dse.subentry.ditContextUse?.map((cur) => ({
+        type: dITContextUse["&id"],
+        value: dITContextUse.encoderFor["&Type"]!(cur, DER),
+    })) ?? [];
 };
 
 export
