@@ -5,6 +5,24 @@ import I18FileSystemBackend from "i18next-fs-backend";
 import osLocale from "os-locale";
 import * as path from "path";
 import main from "./app/main";
+import { oidFromBytes, oidFromStr } from "./app/native/index";
+import { ASN1Error, ObjectIdentifier } from "asn1-ts";
+
+ObjectIdentifier.fromBytes = function (bytes: Uint8Array): ObjectIdentifier {
+    const arcs = oidFromBytes(bytes);
+    if (!arcs) {
+        throw new ASN1Error("Malformed OID.");
+    }
+    return new ObjectIdentifier(arcs);
+};
+
+ObjectIdentifier.fromString = function (s: string): ObjectIdentifier {
+    const arcs = oidFromStr(s);
+    if (!arcs) {
+        throw new ASN1Error("Malformed OID.");
+    }
+    return new ObjectIdentifier(arcs);
+};
 
 i18n
     .use(I18FileSystemBackend)

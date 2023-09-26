@@ -51,32 +51,33 @@ function getPartialAttributesFromEntryInformation (
     ctx: Context,
     infoItems: EntryInformation_information_Item[],
 ): PartialAttribute[] {
-    return infoItems.flatMap((einfo) => {
+    const ret: PartialAttribute[] = [];
+    for (const einfo of infoItems) {
         if ("attributeType" in einfo) {
             const attrType = einfo.attributeType;
             const attrSpec = ctx.attributeTypes.get(attrType.toString());
             if (!attrSpec) {
-                return undefined;
+                continue;
             }
             const nonDupedName = attrSpec.ldapNames?.find((name) => !ctx.duplicatedLDAPNames.has(name));
             const descriptor: Uint8Array = nonDupedName
                 ? Buffer.from(nonDupedName, "utf-8")
                 : encodeLDAPOID(attrType);
-            return new PartialAttribute(
+            ret.push(new PartialAttribute(
                 descriptor,
                 [],
-            );
+            ));
         } else if ("attribute" in einfo) {
             const attrType = einfo.attribute.type_;
             const attrSpec = ctx.attributeTypes.get(attrType.toString());
             if (!attrSpec?.ldapSyntax) {
                 // ctx.log.warn(`No LDAP syntax defined for attribute ${attrType.toString()}.`);
-                return undefined;
+                continue;
             }
             const ldapSyntax = ctx.ldapSyntaxes.get(attrSpec.ldapSyntax.toString());
             if (!ldapSyntax?.encoder) {
                 // ctx.log.warn(`LDAP Syntax ${attrSpec.ldapSyntax} not understood or had no encoder.`);
-                return undefined;
+                continue;
             }
 
             // Wrap the encoder in error handling so we can ignore attributes that don't encode successfully.
@@ -149,7 +150,7 @@ function getPartialAttributesFromEntryInformation (
             const descriptor: Uint8Array = nonDupedName
                 ? Buffer.from(nonDupedName, "utf-8")
                 : encodeLDAPOID(attrType);
-            return [
+            ret.push(
                 new PartialAttribute(
                     descriptor,
                     [
@@ -170,12 +171,12 @@ function getPartialAttributesFromEntryInformation (
                         ]),
                         values.map(encoder).filter((v): v is Uint8Array => !!v),
                     )),
-            ];
+            );
         } else {
-            return undefined;
+            continue;
         }
-    })
-        .filter((attr): attr is PartialAttribute => !!attr);
+    }
+    return ret;
 }
 
 export default getPartialAttributesFromEntryInformation;

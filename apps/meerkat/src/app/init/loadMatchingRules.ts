@@ -3,6 +3,7 @@ import type {
     MatchingRuleInfo,
     SortKeyGetter,
     SortKey,
+    ValueNormalizer,
 } from "@wildboar/meerkat-types";
 import type {
     MATCHING_RULE,
@@ -611,6 +612,9 @@ import {
     getPolicySpecificationMatcher,
 } from "../matching/equality/policySpecificationMatch";
 import * as norms from "../matching/normalizers";
+import { prepString } from "../native/index";
+import { teletexToString } from "@wildboar/x500";
+import { betterDS } from "../utils/directoryStringToString";
 
 const caseIgnoreSortKeyGetter: SortKeyGetter = (element: ASN1Element): SortKey | null => {
     const ds = _decode_UnboundedDirectoryString(element);
@@ -652,6 +656,43 @@ const relaxations: [ OBJECT_IDENTIFIER, OBJECT_IDENTIFIER ][] = [
     [ x500mr.caseIgnoreMatch["&id"], x500mr.wordMatch["&id"] ],
 ];
 
+const betterCaseIgnoreMatch: EqualityMatcher = (
+    assertion: ASN1Element,
+    value: ASN1Element
+): boolean => {
+    const a_str = betterDS(assertion);
+    if (!a_str) {
+        throw new Error("7dba8a5b-8481-4ffb-9490-0c8be4c37756");
+    }
+    const v_str = betterDS(value);
+    if (!v_str) {
+        return false;
+    }
+    const a: string | null = prepString(a_str, true);
+    const v: string | null = prepString(v_str, true);
+    if (a === undefined) {
+        return false;
+        // throw new Error("cdf4ca97-db0c-450c-87e7-74d826b9ed2a: Invalid characters in caseIgnoreMatch assertion.");
+    }
+    if (v === undefined) {
+        return false;
+    }
+    // The specification specifically says that you lowercase prior to comparison.
+    return a === v;
+};
+
+const betterCaseIgnoreNormalizer: ValueNormalizer = (ctx: Context, value: ASN1Element): string | undefined => {
+    const v_str = betterDS(value);
+    if (!v_str) {
+        return undefined;
+    }
+    const v: string | null = prepString(v_str, true);
+    if (!v) {
+        return undefined;
+    }
+    return prepString(v, true) ?? undefined;
+};
+
 /**
  * @summary Initialize Meerkat DSA's internal index of known matching rules.
  * @description
@@ -680,7 +721,7 @@ function loadMatchingRules (ctx: Context): void {
         [ x500mr.caseExactMatch, caseExactMatch ],
         [ x500mr.caseIgnoreIA5Match, caseIgnoreIA5Match ],
         [ x500mr.caseIgnoreListMatch, caseIgnoreListMatch ],
-        [ x500mr.caseIgnoreMatch, caseIgnoreMatch ],
+        [ x500mr.caseIgnoreMatch, betterCaseIgnoreMatch ], // This didn't seem to make the search faster...
         [ x500mr.certificateExactMatch, certificateExactMatch ],
         [ x500mr.certificateListExactMatch, certificateListExactMatch ],
         [ x500mr.certificateListMatch, certificateListMatch ],
@@ -929,7 +970,7 @@ function loadMatchingRules (ctx: Context): void {
     ctx.orderingMatchingRules.get(x500mr.caseExactOrderingMatch["&id"]!.toString())!.sortKeyGetter = caseExactSortKeyGetter;
     ctx.orderingMatchingRules.get(x500mr.caseIgnoreOrderingMatch["&id"]!.toString())!.sortKeyGetter = caseIgnoreSortKeyGetter;
 
-    ctx.equalityMatchingRules.get(x500mr.caseIgnoreMatch["&id"].toString())!.normalizer = norms.caseIgnoreMatch;
+    ctx.equalityMatchingRules.get(x500mr.caseIgnoreMatch["&id"].toString())!.normalizer = betterCaseIgnoreNormalizer;
     ctx.equalityMatchingRules.get(x500mr.caseExactMatch["&id"].toString())!.normalizer = norms.caseExactMatch;
     ctx.equalityMatchingRules.get(x500mr.booleanMatch["&id"].toString())!.normalizer = norms.booleanMatch;
     ctx.equalityMatchingRules.get(x500mr.integerMatch["&id"].toString())!.normalizer = norms.integerMatch;

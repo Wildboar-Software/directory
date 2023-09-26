@@ -37,9 +37,6 @@ function getPartialAttributeFromAttribute (ctx: Context, attr: Attribute): Parti
         return undefined;
     }
     const ldapSyntax = getLDAPSyntax(ctx, spec.id);
-    if (!ldapSyntax?.decoder) {
-        return undefined;
-    }
     const encoder = ldapSyntax?.encoder;
     if (!encoder) {
         return undefined;
