@@ -1,5 +1,10 @@
 # Changelog for Meerkat DSA
 
+## Version 3.2.4
+
+This version _doubles_ the speed of inserting new entries by caching
+subschema subentries between invocations of the `addEntry` operation.
+
 ## Version 3.2.3
 
 This version improves the speed of inserting new entries by about 10% by caching
