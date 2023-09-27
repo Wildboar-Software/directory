@@ -394,10 +394,6 @@ async function addEntry (
      * subentry by checking that the `subentry` object class is present.
      */
     const isSubentry: boolean = objectClassesIndex.has(id_sc_subentry.toString());
-    if (isSubentry) {
-        assn.subentriesCache.delete(immediateSuperior.dse.id);
-    }
-
     const isSubschemaSubentry: boolean = isSubentry && objectClasses.some((oc) => oc.isEqualTo(subschema["&id"]));
     const relevantSubentries: Vertex[] = ctx.config.bulkInsertMode
         ? []
@@ -1661,6 +1657,9 @@ async function addEntry (
         structuralObjectClass: structuralObjectClass.toString(),
         cp,
     }, data.entry, user?.dn);
+    if (isSubentry) {
+        assn.subentriesCache.delete(immediateSuperior.dse.id);
+    }
     if (!ctx.config.bulkInsertMode) {
         ctx.log.debug(ctx.i18n.t("log:add_entry", {
             aid: assn.id,
