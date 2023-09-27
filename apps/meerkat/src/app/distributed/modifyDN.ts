@@ -1351,7 +1351,7 @@ async function modifyDN (
     let newGoverningStructureRule: INTEGER | undefined;
     const schemaSubentry = target.dse.subentry // Schema rules only apply to entries.
         ? undefined
-        : await getSubschemaSubentry(ctx, superior);
+        : await getSubschemaSubentry(ctx, superior, new Map());
     if (!isSubentry && schemaSubentry) { // Schema rules only apply to entries.
         const structuralRules = (schemaSubentry.dse.subentry?.ditStructureRules ?? [])
             .filter((rule) => ( // TODO: You can do better than this ugly code.

@@ -27,6 +27,7 @@ const SUBSCHEMA_OC: string = id_soc_subschema.toString();
  *
  * @param ctx The contxt object
  * @param entry The DSE whose applicable subschema is to be located
+ * @param subentriesCache The subentries cached in memory, indexed by admin point ID
  * @returns A the vertex of the applicable subschema, if it can be found, or
  *  `undefined` otherwise
  *
@@ -37,19 +38,31 @@ export
 async function getSubschemaSubentry (
     ctx: Context,
     entry: Vertex,
+    subentriesCache: Map<number, Vertex[]>,
 ): Promise<Vertex | undefined> {
     let current = entry;
     let i: number = 0;
     while (i < MAX_TRAVERSAL) {
         if (current.dse.admPoint?.administrativeRole.has(SUBSCHEMA)) {
-            const results = await readSubordinates(ctx, current, undefined, undefined, undefined, {
+            const results = subentriesCache.get(current.dse.id) ?? await readSubordinates(ctx, current, undefined, undefined, undefined, {
                 subentry: true,
-                EntryObjectClass: {
-                    some: {
-                        object_class: SUBSCHEMA_OC,
+                /* If we're in bulk insert mode, getRelevantSubentries() is not
+                called, so no subentries caching is ever established. So if
+                bulk insert mode is on, we want to just fetch all subentries,
+                and cache them. */
+                EntryObjectClass: ctx.config.bulkInsertMode
+                    ? undefined
+                    : {
+                        some: {
+                            object_class: SUBSCHEMA_OC,
+                        },
                     },
-                },
             });
+            /* See above. If we used bulk insert mode, we are fetching all
+            subentries rather than just the subschema subentries. */
+            if (ctx.config.bulkInsertMode) {
+                subentriesCache.set(current.dse.id, results);
+            }
             // Return the first one that we find, since there is only supposed
             // to be one subschema anyway.
             return results

@@ -179,6 +179,7 @@ async function validateEntry (
     aliasDereferenced: BOOLEAN,
     manageDSAIT: BOOLEAN,
     invokeId: InvokeId,
+    subentriesCache: Map<number, Vertex[]>,
     tolerateUnknownSchema: boolean = false,
     signErrors: boolean = false,
 ): Promise<ValidateEntryReturn> {
@@ -1061,7 +1062,7 @@ async function validateEntry (
     let governingStructureRule: number | undefined;
     const schemaSubentry = (isSubentry || !immediateSuperior) // Schema rules only apply to entries.
         ? undefined
-        : await getSubschemaSubentry(ctx, immediateSuperior);
+        : await getSubschemaSubentry(ctx, immediateSuperior, subentriesCache);
     if (!isExemptFromSubschema && schemaSubentry && immediateSuperior) { // Schema rules only apply to entries.
         assert(schemaSubentry.dse.subentry);
         assert(immediateSuperior.dse.governingStructureRule !== undefined); // Checked above.
