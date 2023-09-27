@@ -65,7 +65,7 @@ async function createContextPrefixEntry (
     // If the governing structure rule was not present in the context prefix
     // vertex, we have to calculate it.
     if (last && !attributes.some((attr) => attr.type_.isEqualTo(governingStructureRule["&id"]))) {
-        const schemaSubentry = await getSubschemaSubentry(ctx, currentRoot);
+        const schemaSubentry = await getSubschemaSubentry(ctx, currentRoot, new Map());
         // TODO: This next section was copy-pasted a lot. Refactor.
         if (schemaSubentry && (typeof currentRoot.dse.governingStructureRule === "number")) {
             if (!schemaSubentry?.dse.subentry) {
@@ -265,7 +265,7 @@ async function becomeSubordinate (
     // If the governing structure rule for the new CP was not supplied in the
     // HOB attributes, we have to calculate it.
     if (cp_gsr === undefined) {
-        const schemaSubentry = await getSubschemaSubentry(ctx, immediateSuperior);
+        const schemaSubentry = await getSubschemaSubentry(ctx, immediateSuperior, new Map());
         if (schemaSubentry && (typeof immediateSuperior.dse.governingStructureRule === "number")) {
             if (!schemaSubentry?.dse.subentry) {
                 throw new Error("e41612c3-6239-451f-a971-a9d59bfb5183");

@@ -376,6 +376,7 @@ async function addEntry (
         state.chainingArguments.aliasDereferenced ?? ChainingArguments._default_value_for_aliasDereferenced,
         manageDSAIT,
         state.invokeId,
+        assn.subentriesCache,
         // If this entry is going to wind up in another DSA, it is up to that
         // DSA to determine if any schema is unrecognized.
         Boolean(data.targetSystem),
@@ -393,6 +394,9 @@ async function addEntry (
      * subentry by checking that the `subentry` object class is present.
      */
     const isSubentry: boolean = objectClassesIndex.has(id_sc_subentry.toString());
+    if (isSubentry) {
+        assn.subentriesCache.delete(immediateSuperior.dse.id);
+    }
 
     const isSubschemaSubentry: boolean = isSubentry && objectClasses.some((oc) => oc.isEqualTo(subschema["&id"]));
     const relevantSubentries: Vertex[] = ctx.config.bulkInsertMode

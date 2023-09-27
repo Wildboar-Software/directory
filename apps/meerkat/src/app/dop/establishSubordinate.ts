@@ -321,7 +321,7 @@ async function establishSubordinate (
         newEntryInfo
         && !newEntryInfo.some((info) => info.type_.isEqualTo(governingStructureRule["&id"]))
     ) {
-        const schemaSubentry = await getSubschemaSubentry(ctx, immediateSuperior);
+        const schemaSubentry = await getSubschemaSubentry(ctx, immediateSuperior, new Map());
         if (schemaSubentry && (typeof immediateSuperior.dse.governingStructureRule === "number")) {
             if (!schemaSubentry?.dse.subentry) {
                 throw new Error("e41612c3-6239-451f-a971-a9d59bfb5183");

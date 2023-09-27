@@ -2719,7 +2719,7 @@ async function modifyEntry (
     const precludedAttributes: Set<IndexableOID> = new Set();
     const permittedAuxiliaries: Set<IndexableOID> = new Set();
     const contextRulesIndex: ContextRulesIndex = new Map();
-    const subschemaSubentry = await getSubschemaSubentry(ctx, target);
+    const subschemaSubentry = await getSubschemaSubentry(ctx, target, new Map());
     if (!ctx.config.bulkInsertMode && subschemaSubentry && !isSubentry) {
         const contentRule = (subschemaSubentry.dse.subentry?.ditContentRules ?? [])
             // .find(), because there should only be one per SOC.

@@ -359,6 +359,7 @@ async function relayedEstablishOperationalBinding (
     relayTo: AccessPoint,
     signErrors: boolean,
 ): Promise<EstablishOperationalBindingResult> {
+    const subentriesCache: Map<number, Vertex[]> = new Map();
     let relay_agreement: ASN1Element | undefined;
     let relay_init: EstablishOperationalBindingArgumentData_initiator | undefined;
     let cp: Vertex | undefined;
@@ -500,6 +501,7 @@ async function relayedEstablishOperationalBinding (
                 {
                     present: invokeId,
                 },
+                subentriesCache,
                 false,
                 signErrors,
             );
@@ -527,6 +529,7 @@ async function relayedEstablishOperationalBinding (
                     {
                         present: invokeId,
                     },
+                    subentriesCache,
                     false,
                     signErrors,
                 );
@@ -1710,6 +1713,7 @@ async function establishOperationalBinding (
                 );
             }
 
+            const subentriesCache: Map<number, Vertex[]> = new Map();
             let structuralObjectClass!: ValidateEntryReturn["structuralObjectClass"];
             let governingStructureRule: ValidateEntryReturn["governingStructureRule"] | undefined;
             try {
@@ -1728,6 +1732,7 @@ async function establishOperationalBinding (
                     {
                         present: invokeId,
                     },
+                    subentriesCache,
                     false,
                     signErrors,
                 );
