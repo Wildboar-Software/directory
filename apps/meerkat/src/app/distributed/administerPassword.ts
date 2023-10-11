@@ -1,5 +1,5 @@
 import type { Context, Vertex, ClientAssociation, OperationReturn } from "@wildboar/meerkat-types";
-import { ASN1TagClass, ASN1UniversalType, ObjectIdentifier, unpackBits } from "asn1-ts";
+import { ASN1TagClass, ASN1UniversalType, ObjectIdentifier, decodeSignedBigEndianInteger, unpackBits } from "asn1-ts";
 import * as errors from "@wildboar/meerkat-types";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
@@ -389,10 +389,10 @@ async function administerPassword (
                     operational: true,
                 },
                 select: {
-                    jer: true,
+                    content_octets: true,
                 },
             }))
-                .map(({ jer }) => jer as number)
+                .map(({ content_octets }) => decodeSignedBigEndianInteger(content_octets))
                 // Do not reduce with initialValue = 0! Use undefined, then default to a large number.
                 .reduce((acc, curr) => Math.min(Number(acc), Number(curr)), undefined)
                 ?? 10_000_000;
@@ -479,7 +479,6 @@ async function administerPassword (
                 constructed: false,
                 tag_number: ASN1UniversalType.boolean,
                 content_octets: Buffer.from([ 0xFF ]),
-                jer: true,
                 normalized_str: "TRUE",
             },
             select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252

@@ -136,7 +136,7 @@ import {
     ServiceControlOptions_dontSelectFriends,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
 import {
-    ServiceErrorData,
+    ServiceErrorData, _encode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceErrorData.ta";
 import {
     serviceError,
@@ -214,7 +214,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
 import compareElements from "@wildboar/x500/src/lib/comparators/compareElements";
 import readValuesOfType from "../utils/readValuesOfType";
-import rdnToJson from "../x500/rdnToJson";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
 import { id_aca_subentryACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-subentryACI.va";
 import { id_aca_prescriptiveACI } from "@wildboar/x500/src/lib/modules/BasicAccessControl/id-aca-prescriptiveACI.va";
@@ -660,10 +659,10 @@ async function checkPermissionToModifyPassword (
             operational: true,
         },
         select: {
-            jer: true,
+            content_octets: true,
         },
     }))
-        .map(({ jer }) => jer as boolean)
+        .map(({ content_octets }) => ((content_octets.length > 0) && (content_octets[0] !== 0x00)))
         .every((x) => x);
 }
 
@@ -3549,7 +3548,9 @@ async function modifyEntry (
             id: target.dse.id,
         },
         data: {
-            modifiersName: user?.dn.map(rdnToJson),
+            modifiersName: user?.dn
+                ? _encode_DistinguishedName(user?.dn, DER).toBytes()
+                : undefined,
             modifyTimestamp: new Date(),
             admPoint: isAdmPoint || undefined, // Even if no new admin roles were added, it could already be an admin point.
         },
@@ -3686,7 +3687,6 @@ async function modifyEntry (
                         autonomousId.value.byteOffset,
                         autonomousId.value.byteLength,
                     ),
-                    jer: id_ar_autonomousArea.toJSON(),
                     normalized_str: id_ar_autonomousArea.toString(),
                 },
                 select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252

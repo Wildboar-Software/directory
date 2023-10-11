@@ -141,13 +141,12 @@ const addAttribute: SpecialAttributeBatchDatabaseEditor = async (
             vertex.immediateSuperior.dse.familyMember = true;
         }
     }
-    pendingUpdates.otherWrites.push(ctx.db.entryObjectClass.createMany({
-        data: oids.map((oid) => ({
+    pendingUpdates.otherWrites.push(...oids.map((oid) => ctx.db.entryObjectClass.create({
+        data: {
             entry_id: vertex.dse.id,
             object_class: oid.toString(),
-        })),
-        skipDuplicates: true,
-    }));
+        },
+    })));
 };
 
 export

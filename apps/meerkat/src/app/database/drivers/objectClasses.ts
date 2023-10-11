@@ -30,7 +30,7 @@ import {
     ObjectClassKind_auxiliary,
     ObjectClassKind_structural,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
-import { Prisma, ObjectClassKind as PrismaObjectClassKind } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 const SUBSCHEMA: string = subschema["&id"].toString();
 
@@ -59,9 +59,9 @@ const readValues: SpecialAttributeDatabaseReader = async (
             new ObjectClassInformation(
                 oc.subclassOf?.split(" ").map(ObjectIdentifier.fromString),
                 ({
-                    [PrismaObjectClassKind.ABSTRACT]: ObjectClassKind_abstract,
-                    [PrismaObjectClassKind.AUXILIARY]: ObjectClassKind_auxiliary,
-                    [PrismaObjectClassKind.STRUCTURAL]: ObjectClassKind_structural,
+                    ["ABSTRACT"]: ObjectClassKind_abstract,
+                    ["AUXILIARY"]: ObjectClassKind_auxiliary,
+                    ["STRUCTURAL"]: ObjectClassKind_structural,
                 }[oc.kind]),
                 oc.mandatories?.split(" ").map(ObjectIdentifier.fromString),
                 oc.optionals?.split(" ").map(ObjectIdentifier.fromString),
@@ -143,11 +143,11 @@ const addValue: SpecialAttributeDatabaseEditor = async (
         kind: (() => {
             switch (decoded.information.kind) {
             case (ObjectClassKind_abstract):
-                return PrismaObjectClassKind.ABSTRACT;
+                return "ABSTRACT";
             case (ObjectClassKind_auxiliary):
-                return PrismaObjectClassKind.AUXILIARY
+                return "AUXILIARY";
             case (ObjectClassKind_structural):
-                return PrismaObjectClassKind.STRUCTURAL;
+                return "STRUCTURAL";
             default: return undefined;
             }
         })(),

@@ -11,15 +11,14 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
-import { Knowledge } from "@prisma/client";
 import { DER } from "asn1-ts/dist/node/functional";
 import {
     supplierKnowledge,
 } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/supplierKnowledge.oa";
-import rdnToJson from "../../x500/rdnToJson";
 import saveAccessPoint from "../saveAccessPoint";
 import compareRDNSequence from "@wildboar/x500/src/lib/comparators/compareRDNSequence";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import { _encode_Name } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/Name.ta";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -49,7 +48,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     }
     let nsmId: number | null = null;
     if (decoded.non_supplying_master) {
-        nsmId = await saveAccessPoint(ctx, decoded.non_supplying_master, Knowledge.NON_SUPPLYING_MASTER);
+        nsmId = await saveAccessPoint(ctx, decoded.non_supplying_master, "NON_SUPPLYING_MASTER");
         pendingUpdates.otherWrites.push(ctx.db.accessPoint.update({
             where: {
                 id: nsmId,
@@ -60,7 +59,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
         }));
     }
-    const supplierId = await saveAccessPoint(ctx, decoded, Knowledge.SUPPLIER);
+    const supplierId = await saveAccessPoint(ctx, decoded, "SUPPLIER");
     pendingUpdates.otherWrites.push(ctx.db.accessPoint.update({
         where: {
             id: supplierId,
@@ -87,14 +86,14 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates.otherWrites.push(ctx.db.accessPoint.deleteMany({
         where: {
             entry_id: vertex.dse.id,
-            knowledge_type: Knowledge.SUPPLIER,
+            knowledge_type: "SUPPLIER",
             OR: [
                 {
                     ber: value.value.toBytes(),
                 },
                 {
                     ae_title: {
-                        equals: decoded.ae_title.rdnSequence.map(rdnToJson),
+                        equals: _encode_Name(decoded.ae_title, DER).toBytes(),
                     },
                 },
             ],
@@ -114,7 +113,7 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
     pendingUpdates.otherWrites.push(ctx.db.accessPoint.deleteMany({
         where: {
             entry_id: vertex.dse.id,
-            knowledge_type: Knowledge.SUPPLIER,
+            knowledge_type: "SUPPLIER",
         },
     }));
 };

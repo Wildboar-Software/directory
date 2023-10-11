@@ -6,7 +6,6 @@ import {
     SubordinateChanges, _encode_IncrementalStepRefresh,
 } from "@wildboar/x500/src/lib/modules/DirectoryShadowAbstractService/SubordinateChanges.ta";
 import { BER } from "asn1-ts/dist/node/functional";
-import { ShadowIncrementType } from "@prisma/client";
 
 /**
  * @summary Enqueue an incremental refresh for replication to a shadow consumer
@@ -44,16 +43,16 @@ async function saveIncrementalRefresh (
         current = current.immediateSuperior;
     }
     const toSave = ret.changes;
-    let change_type: ShadowIncrementType = ShadowIncrementType.OTHER;
+    let change_type = "OTHER";
     if (actual_change.changes.sDSEChanges) {
         if ("add" in actual_change.changes.sDSEChanges) {
-            change_type = ShadowIncrementType.ADD;
+            change_type = "ADD";
         }
         else if ("remove" in actual_change.changes.sDSEChanges) {
-            change_type = ShadowIncrementType.REMOVE;
+            change_type = "REMOVE";
         }
         else if ("modify" in actual_change.changes.sDSEChanges) {
-            change_type = ShadowIncrementType.MODIFY;
+            change_type = "MODIFY";
         }
     }
     const bytes = _encode_IncrementalStepRefresh(toSave, BER).toBytes();

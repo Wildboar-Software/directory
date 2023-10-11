@@ -9,7 +9,6 @@ import type {
     DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import dnToVertex from "../../dit/dnToVertex";
-import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
 import { DER } from "asn1-ts/dist/node/functional";
 import createEntry from "../../database/createEntry";
 import addAttributes from "../../database/entry/addAttributes";
@@ -149,7 +148,7 @@ async function updateContextPrefix (
             [],
         );
         for (const ap of vertex.accessPoints ?? []) {
-            await saveAccessPoint(ctx, ap, Knowledge.SPECIFIC, createdEntry.dse.id);
+            await saveAccessPoint(ctx, ap, "SPECIFIC", createdEntry.dse.id);
         }
         const dbe = await ctx.db.entry.findUnique({
             where: {
@@ -261,7 +260,7 @@ async function updateContextPrefix (
             const alreadySavedAccessPoint = await ctx.db.accessPoint.findFirst({
                 where: {
                     ber,
-                    knowledge_type: Knowledge.SUPERIOR,
+                    knowledge_type: "SUPERIOR",
                     active: true,
                 },
                 select: {
@@ -271,7 +270,7 @@ async function updateContextPrefix (
             if (alreadySavedAccessPoint) {
                 return;
             }
-            saveAccessPoint(ctx, ap, Knowledge.SUPERIOR, ctx.dit.root.dse.id); // INTENTIONAL_NO_AWAIT
+            saveAccessPoint(ctx, ap, "SUPERIOR", ctx.dit.root.dse.id); // INTENTIONAL_NO_AWAIT
         });
 
     const now = new Date();
@@ -317,11 +316,11 @@ async function updateContextPrefix (
                 {
                     OR: [ // This DSA is the supplier if one of these conditions are true.
                         { // This DSA initiated an OB in which it is the supplier.
-                            initiator: OperationalBindingInitiator.ROLE_A,
+                            initiator: "ROLE_A",
                             outbound: true,
                         },
                         { // This DSA accepted an OB from a consumer.
-                            initiator: OperationalBindingInitiator.ROLE_B,
+                            initiator: "ROLE_B",
                             outbound: false,
                         },
                     ],

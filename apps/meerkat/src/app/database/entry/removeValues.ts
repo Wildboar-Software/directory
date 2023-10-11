@@ -7,7 +7,8 @@ import type {
 import { ASN1Construction } from "asn1-ts";
 import type { Prisma } from "@prisma/client";
 import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import rdnToJson from "../../x500/rdnToJson";
+import { _encode_RDNSequence } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RDNSequence.ta";
+import { DER } from "asn1-ts/dist/node/functional";
 
 /**
  * @summary Delete an attribute from an entry
@@ -39,7 +40,9 @@ async function removeValues (
     const pendingUpdates: PendingUpdates = {
         entryUpdate: {
             modifyTimestamp: new Date(),
-            modifiersName: modifier?.map(rdnToJson),
+            modifiersName: modifier
+                ? _encode_RDNSequence(modifier, DER).toBytes()
+                : undefined,
         },
         otherWrites: [],
     };

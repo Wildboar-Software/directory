@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import { Context, Vertex } from "@wildboar/meerkat-types";
 
 export
@@ -41,10 +40,10 @@ async function stripEntry (ctx: Context, vertex: Vertex): Promise<void> {
                 dsSubentry: false,
                 entryUUID: null,
                 hierarchyParent_id: null,
-                hierarchyParentDN: Prisma.DbNull,
+                hierarchyParentDN: null,
                 hierarchyParentStr: null,
                 hierarchyTop_id: null,
-                hierarchyTopDN: Prisma.DbNull,
+                hierarchyTopDN: null,
                 hierarchyTopStr: null,
                 hierarchyPath: null,
                 hierarchyLevel: null,

@@ -19,7 +19,6 @@ import {
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/MasterOrShadowAccessPoint.ta";
 import attributesFromValues from "../x500/attributesFromValues";
 import attributeFromDatabaseAttribute from "./attributeFromDatabaseAttribute";
-import { Knowledge } from "@prisma/client";
 import {
     _decode_DitBridgeKnowledge,
 } from "@wildboar/x500/src/lib/modules/DistributedOperations/DitBridgeKnowledge.ta";
@@ -154,7 +153,7 @@ async function dseFromDatabaseEntry (
         const superiorKnowledgeRows = await ctx.db.accessPoint.findMany({
             where: {
                 entry_id: dbe.id,
-                knowledge_type: Knowledge.SUPERIOR,
+                knowledge_type: "SUPERIOR",
                 active: true,
             },
             select: {
@@ -192,7 +191,7 @@ async function dseFromDatabaseEntry (
         const supplierRows = await ctx.db.accessPoint.findMany({
             where: {
                 entry_id: dbe.id,
-                knowledge_type: Knowledge.SUPPLIER,
+                knowledge_type: "SUPPLIER",
                 active: true,
             },
             select: {
@@ -202,7 +201,7 @@ async function dseFromDatabaseEntry (
         const consumerRows = await ctx.db.accessPoint.findMany({
             where: {
                 entry_id: dbe.id,
-                knowledge_type: Knowledge.CONSUMER,
+                knowledge_type: "CONSUMER",
                 active: true,
             },
             select: {
@@ -212,7 +211,7 @@ async function dseFromDatabaseEntry (
         const secondaryRows = await ctx.db.accessPoint.findMany({
             where: {
                 entry_id: dbe.id,
-                knowledge_type: Knowledge.SECONDARY_SUPPLIER,
+                knowledge_type: "SECONDARY_SUPPLIER",
                 active: true,
             },
         });
@@ -268,7 +267,7 @@ async function dseFromDatabaseEntry (
         const subordinateKnowledgeRows = await ctx.db.accessPoint.findMany({
             where: {
                 entry_id: dbe.id,
-                knowledge_type: Knowledge.SPECIFIC,
+                knowledge_type: "SPECIFIC",
                 active: true,
             },
             select: {
@@ -290,7 +289,7 @@ async function dseFromDatabaseEntry (
         const nssrs = await ctx.db.accessPoint.findMany({
             where: {
                 entry_id: dbe.id,
-                knowledge_type: Knowledge.NON_SPECIFIC,
+                knowledge_type: "NON_SPECIFIC",
                 active: true,
             },
             select: {
@@ -314,7 +313,7 @@ async function dseFromDatabaseEntry (
         const subordinateKnowledgeRows = await ctx.db.accessPoint.findMany({
             where: {
                 entry_id: dbe.id,
-                knowledge_type: Knowledge.SPECIFIC,
+                knowledge_type: "SPECIFIC",
                 active: true,
             },
             select: {
@@ -406,7 +405,7 @@ async function dseFromDatabaseEntry (
         const subordinateKnowledgeRows = await ctx.db.accessPoint.findMany({
             where: {
                 entry_id: dbe.id,
-                knowledge_type: Knowledge.SPECIFIC,
+                knowledge_type: "SPECIFIC",
                 active: true,
             },
             select: {

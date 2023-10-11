@@ -4,9 +4,9 @@ import type {
     PendingUpdates,
 } from "@wildboar/meerkat-types";
 import type { Prisma } from "@prisma/client";
-import type { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+import { _encode_DistinguishedName, type DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import type { AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
-import rdnToJson from "../../x500/rdnToJson";
+import { DER } from "asn1-ts/dist/node/functional";
 
 /**
  * @summary Delete an attribute from an entry
@@ -38,7 +38,9 @@ async function removeAttribute (
     const pendingUpdates: PendingUpdates = {
         entryUpdate: {
             modifyTimestamp: new Date(),
-            modifiersName: modifier?.map(rdnToJson),
+            modifiersName: modifier
+                ? _encode_DistinguishedName(modifier, DER).toBytes()
+                : undefined,
         },
         otherWrites: [],
     };

@@ -1,5 +1,4 @@
 import { Context } from "@wildboar/meerkat-types";
-import { Knowledge } from "@prisma/client";
 import {
     _decode_ConsumerInformation,
 } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/ConsumerInformation.ta";
@@ -25,7 +24,7 @@ async function removeConsumer (
 ): Promise<void> {
     const all_consumer_aps = await ctx.db.accessPoint.findMany({
         where: {
-            knowledge_type: Knowledge.CONSUMER,
+            knowledge_type: "CONSUMER",
             active: true,
         },
         select: {

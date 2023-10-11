@@ -16,7 +16,7 @@ import getStructuralObjectClass from "../x500/getStructuralObjectClass";
 import {
     entryTtl,
 } from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa";
-import { ASN1Construction, OBJECT_IDENTIFIER } from "asn1-ts";
+import { ASN1Construction, DERElement, OBJECT_IDENTIFIER } from "asn1-ts";
 import {
     Attribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
@@ -117,8 +117,8 @@ async function createDse (
             immediate_superior_id: superior.dse.id,
             materialized_path,
             entryUUID: randomUUID(),
-            creatorsName: [],
-            modifiersName: [],
+            creatorsName: DERElement.fromSequence([]).toBytes(),
+            modifiersName: DERElement.fromSequence([]).toBytes(),
             createTimestamp: entryInit.createTimestamp ?? now,
             modifyTimestamp: entryInit.modifyTimestamp ?? now,
             // This entry is intentionally created as deleted first, in case the transaction fails.
@@ -139,21 +139,19 @@ async function createDse (
             structuralObjectClass: entryInit.structuralObjectClass ?? soc.toString(),
             governingStructureRule: entryInit.governingStructureRule,
             RDN: {
-                createMany: {
-                    data: rdn.map((atav, i): Prisma.DistinguishedValueCreateWithoutEntryInput => ({
-                        type_oid: atav.type_.toBytes(),
-                        tag_class: atav.value.tagClass,
-                        constructed: (atav.value.construction === ASN1Construction.constructed),
-                        tag_number: atav.value.tagNumber,
-                        content_octets: Buffer.from(
-                            atav.value.value.buffer,
-                            atav.value.value.byteOffset,
-                            atav.value.value.byteLength,
-                        ),
-                        order_index: i,
-                        normalized_str: NORMALIZER_GETTER(atav.type_)?.(ctx, atav.value),
-                    })),
-                },
+                create: rdn.map((atav, i): Prisma.DistinguishedValueCreateWithoutEntryInput => ({
+                    type_oid: atav.type_.toBytes(),
+                    tag_class: atav.value.tagClass,
+                    constructed: (atav.value.construction === ASN1Construction.constructed),
+                    tag_number: atav.value.tagNumber,
+                    content_octets: Buffer.from(
+                        atav.value.value.buffer,
+                        atav.value.value.byteOffset,
+                        atav.value.value.byteLength,
+                    ),
+                    order_index: i,
+                    normalized_str: NORMALIZER_GETTER(atav.type_)?.(ctx, atav.value),
+                })),
             },
             EntryAttributeValuesIncomplete: entryInit.EntryAttributeValuesIncomplete,
             subordinate_completeness: entryInit.subordinate_completeness,
@@ -226,8 +224,8 @@ async function createDse (
                 ? {
                     attributeCompleteness: entryInit.attribute_completeness ?? false,
                     attributeValuesIncomplete: new Set(
-                        Array.isArray(entryInit.EntryAttributeValuesIncomplete?.createMany?.data)
-                            ? (entryInit.EntryAttributeValuesIncomplete?.createMany?.data.map((x) => x.attribute_type) ?? [])
+                        Array.isArray(entryInit.EntryAttributeValuesIncomplete?.create)
+                            ? (entryInit.EntryAttributeValuesIncomplete?.create.map((x) => x.attribute_type) ?? [])
                             : [],
                     ),
                     subordinateCompleteness: entryInit.subordinate_completeness ?? false,
@@ -362,8 +360,8 @@ async function createEntry (
             immediate_superior_id: superior.dse.id,
             materialized_path,
             entryUUID: randomUUID(),
-            creatorsName: [],
-            modifiersName: [],
+            creatorsName: DERElement.fromSequence([]).toBytes(),
+            modifiersName: DERElement.fromSequence([]).toBytes(),
             createTimestamp: entryInit.createTimestamp ?? now,
             modifyTimestamp: entryInit.modifyTimestamp ?? now,
             // This entry is intentionally created as deleted first, in case the transaction fails.
@@ -385,21 +383,19 @@ async function createEntry (
                 ?? getStructuralObjectClass(ctx, objectClasses).toString(),
             governingStructureRule: entryInit.governingStructureRule,
             RDN: {
-                createMany: {
-                    data: rdn.map((atav, i): Prisma.DistinguishedValueCreateWithoutEntryInput => ({
-                        type_oid: atav.type_.toBytes(),
-                        tag_class: atav.value.tagClass,
-                        constructed: (atav.value.construction === ASN1Construction.constructed),
-                        tag_number: atav.value.tagNumber,
-                        content_octets: Buffer.from(
-                            atav.value.value.buffer,
-                            atav.value.value.byteOffset,
-                            atav.value.value.byteLength,
-                        ),
-                        order_index: i,
-                        normalized_str: NORMALIZER_GETTER(atav.type_)?.(ctx, atav.value),
-                    })),
-                },
+                create: rdn.map((atav, i): Prisma.DistinguishedValueCreateWithoutEntryInput => ({
+                    type_oid: atav.type_.toBytes(),
+                    tag_class: atav.value.tagClass,
+                    constructed: (atav.value.construction === ASN1Construction.constructed),
+                    tag_number: atav.value.tagNumber,
+                    content_octets: Buffer.from(
+                        atav.value.value.buffer,
+                        atav.value.value.byteOffset,
+                        atav.value.value.byteLength,
+                    ),
+                    order_index: i,
+                    normalized_str: NORMALIZER_GETTER(atav.type_)?.(ctx, atav.value),
+                })),
             },
             EntryAttributeValuesIncomplete: entryInit.EntryAttributeValuesIncomplete,
             subordinate_completeness: entryInit.subordinate_completeness,
@@ -471,8 +467,8 @@ async function createEntry (
                 ? {
                     attributeCompleteness: entryInit.attribute_completeness ?? false,
                     attributeValuesIncomplete: new Set(
-                        Array.isArray(entryInit.EntryAttributeValuesIncomplete?.createMany?.data)
-                            ? (entryInit.EntryAttributeValuesIncomplete?.createMany?.data.map((x) => x.attribute_type) ?? [])
+                        Array.isArray(entryInit.EntryAttributeValuesIncomplete?.create)
+                            ? (entryInit.EntryAttributeValuesIncomplete?.create.map((x) => x.attribute_type) ?? [])
                             : [],
                     ),
                     subordinateCompleteness: entryInit.subordinate_completeness ?? false,

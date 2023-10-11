@@ -15,11 +15,10 @@ import { DER } from "asn1-ts/dist/node/functional";
 import {
     consumerKnowledge,
 } from "@wildboar/x500/src/lib/modules/DSAOperationalAttributeTypes/consumerKnowledge.oa";
-import { Knowledge } from "@prisma/client";
-import rdnToJson from "../../x500/rdnToJson";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import saveAccessPoint from "../saveAccessPoint";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import { _encode_Name } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/Name.ta";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (
@@ -50,7 +49,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             vertex.dse.cp.consumerKnowledge = [ decoded ];
         }
     }
-    const cid = await saveAccessPoint(ctx, decoded, Knowledge.CONSUMER);
+    const cid = await saveAccessPoint(ctx, decoded, "CONSUMER");
     pendingUpdates.otherWrites.push(ctx.db.accessPoint.update({
         where: {
             id: cid,
@@ -73,14 +72,14 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates.otherWrites.push(ctx.db.accessPoint.deleteMany({
         where: {
             entry_id: vertex.dse.id,
-            knowledge_type: Knowledge.CONSUMER,
+            knowledge_type: "CONSUMER",
             OR: [
                 {
                     ber: value.value.toBytes(),
                 },
                 {
                     ae_title: {
-                        equals: decoded.ae_title.rdnSequence.map(rdnToJson),
+                        equals: _encode_Name(decoded.ae_title, DER).toBytes(),
                     },
                 },
             ],
@@ -100,7 +99,7 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
     pendingUpdates.otherWrites.push(ctx.db.accessPoint.deleteMany({
         where: {
             entry_id: vertex.dse.id,
-            knowledge_type: Knowledge.CONSUMER,
+            knowledge_type: "CONSUMER",
         },
     }));
 };

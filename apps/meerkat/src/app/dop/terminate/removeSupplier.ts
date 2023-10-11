@@ -1,5 +1,4 @@
 import { Context } from "@wildboar/meerkat-types";
-import { Knowledge } from "@prisma/client";
 import { BERElement } from "asn1-ts";
 import {
     _decode_SupplierInformation,
@@ -25,7 +24,7 @@ async function removeSupplier (
 ): Promise<void> {
     const all_supplier_aps = await ctx.db.accessPoint.findMany({
         where: {
-            knowledge_type: Knowledge.SUPPLIER,
+            knowledge_type: "SUPPLIER",
             active: true,
         },
         select: {

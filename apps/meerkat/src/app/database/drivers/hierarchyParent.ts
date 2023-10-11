@@ -13,11 +13,9 @@ import {
     UpdateError,
 } from "@wildboar/meerkat-types";
 import { DER } from "asn1-ts/dist/node/functional";
-import rdnToJson from "../../x500/rdnToJson";
 import {
     hierarchyParent,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyParent.oa";
-import { Prisma } from "@prisma/client";
 import compareDistinguishedName from "@wildboar/x500/src/lib/comparators/compareDistinguishedName";
 import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
 import {
@@ -206,18 +204,20 @@ const addValue: SpecialAttributeDatabaseEditor = async (
         },
         data: {
             hierarchyPath: parent.dse.hierarchy.path,
-            hierarchyTopDN: parent.dse.hierarchy.top.map(rdnToJson),
+            hierarchyTopDN: _encode_DistinguishedName(parent.dse.hierarchy.top, DER).toBytes(),
             hierarchyLevel: parent.dse.hierarchy.level,
             hierarchyParent_id: parent.dse.hierarchy.parent_id,
             hierarchyTop_id: parent.dse.hierarchy.top_id,
-            hierarchyParentDN: parent.dse.hierarchy.parent?.map(rdnToJson),
+            hierarchyParentDN: parent.dse.hierarchy.parent
+                ? _encode_DistinguishedName(parent.dse.hierarchy.parent, DER).toBytes()
+                : undefined,
             hierarchyParentStr: parent_parent_dn_str,
             hierarchyTopStr: top_dn_str,
         },
         select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
     }));
     pendingUpdates.entryUpdate.hierarchyPath = vertex.dse.hierarchy.path;
-    pendingUpdates.entryUpdate.hierarchyTopDN = vertex.dse.hierarchy.top.map(rdnToJson);
+    pendingUpdates.entryUpdate.hierarchyTopDN = _encode_DistinguishedName(vertex.dse.hierarchy.top, DER).toBytes();
     pendingUpdates.entryUpdate.hierarchyLevel = vertex.dse.hierarchy.level;
     pendingUpdates.entryUpdate.hierarchyParent = {
         connect: {
@@ -229,7 +229,9 @@ const addValue: SpecialAttributeDatabaseEditor = async (
             id: vertex.dse.hierarchy.top_id,
         },
     };
-    pendingUpdates.entryUpdate.hierarchyParentDN = vertex.dse.hierarchy.parent?.map(rdnToJson);
+    pendingUpdates.entryUpdate.hierarchyParentDN = vertex.dse.hierarchy.parent
+        ? _encode_DistinguishedName(vertex.dse.hierarchy.parent, DER).toBytes()
+        : undefined;
     pendingUpdates.entryUpdate.hierarchyParentStr = parent_dn_str;
     pendingUpdates.entryUpdate.hierarchyTopStr = top_dn_str;
 
@@ -284,8 +286,8 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
     pendingUpdates.entryUpdate.hierarchyParent = {
         disconnect: true,
     };
-    pendingUpdates.entryUpdate.hierarchyParentDN = Prisma.DbNull;
-    pendingUpdates.entryUpdate.hierarchyTopDN = Prisma.DbNull;
+    pendingUpdates.entryUpdate.hierarchyParentDN = null;
+    pendingUpdates.entryUpdate.hierarchyTopDN = null;
     pendingUpdates.entryUpdate.hierarchyPath = null;
     /**
      * ITU Recommendation X.501 (2016), Section 14.10 states that, when a
@@ -320,8 +322,8 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
                 id: child.id,
             },
             data: {
-                hierarchyTopDN: Prisma.DbNull,
-                hierarchyParentDN: Prisma.DbNull,
+                hierarchyTopDN: null,
+                hierarchyParentDN: null,
                 hierarchyParent_id: null,
                 hierarchyPath: child.id.toString() + ".",
                 hierarchyLevel: 0,
@@ -357,7 +359,7 @@ const removeAttribute: SpecialAttributeDatabaseRemover = async (
                             ?.replace(child.hierarchyPath!, `${child.id}.`),
                         hierarchyLevel: (descendant.hierarchyLevel ?? 0) + 1,
                         hierarchyTop_id: child.id,
-                        hierarchyTopDN: Prisma.DbNull,
+                        hierarchyTopDN: null,
                         hierarchyTopStr: null,
                     },
                 })),

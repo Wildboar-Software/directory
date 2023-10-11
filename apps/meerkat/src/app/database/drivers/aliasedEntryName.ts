@@ -17,7 +17,6 @@ import {
     _decode_DistinguishedName,
     _encode_DistinguishedName,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import rdnToJson from "../../x500/rdnToJson";
 import dnToID from "../../dit/dnToID";
 
 export
@@ -53,7 +52,7 @@ const addValue: SpecialAttributeDatabaseEditor = async (
     pendingUpdates.otherWrites.push(ctx.db.alias.create({
         data: {
             alias_entry_id: vertex.dse.id,
-            aliased_entry_name: decodedName.map(rdnToJson),
+            aliased_entry_name: _encode_DistinguishedName(decodedName, DER).toBytes(),
             aliased_entry_id: aliasedEntryId,
         },
         select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
@@ -82,7 +81,7 @@ const removeValue: SpecialAttributeDatabaseEditor = async (
             where: {
                 alias_entry_id: vertex.dse.id,
                 aliased_entry_name: {
-                    equals: decodedName.map(rdnToJson),
+                    equals: _encode_DistinguishedName(decodedName, DER).toBytes(),
                 },
             },
         }));
@@ -146,7 +145,7 @@ const hasValue: SpecialAttributeValueDetector = async (
             where: {
                 alias_entry_id: vertex.dse.id,
                 aliased_entry_name: {
-                    equals: decodedName.map(rdnToJson),
+                    equals: _encode_DistinguishedName(decodedName, DER).toBytes(),
                 },
             },
         }))

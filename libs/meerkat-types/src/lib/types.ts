@@ -1568,6 +1568,26 @@ interface RBACOptions {
 }
 
 /**
+ * Configuration options pertaining to the underlying SQLite database.
+ */
+export
+interface DatabaseConfig {
+
+    /**
+     * The maximum number of bytes of the underlying SQLite database file that
+     * will be accessed using memory-mapped I/O.
+     */
+    mmapSize: number;
+
+    /**
+     * The size in kilobytes of the SQLite cache. SQLite defaults to 2000KB of
+     * cache (2MB), but Meerkat DSA defaults to a larger value.
+     */
+    cacheSize: number;
+
+}
+
+/**
  * @summary Meerkat DSA configuration
  * @description
  *
@@ -1577,6 +1597,8 @@ interface RBACOptions {
  */
 export
 interface Configuration {
+
+    db: DatabaseConfig;
 
     /**
      * Overrides the name of the vendor of this DSA, which is displayed in the

@@ -9,6 +9,7 @@ import {
     HierarchicalAgreement,
     _decode_HierarchicalAgreement,
     _encode_HierarchicalAgreement,
+    _encode_RelativeDistinguishedName,
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/HierarchicalAgreement.ta";
 import {
     AccessPoint,
@@ -71,12 +72,10 @@ import {
 import {
     OpBindingErrorParam_problem_invalidNewID,
 } from "@wildboar/x500/src/lib/modules/OperationalBindingManagement/OpBindingErrorParam-problem.ta";
-import { OperationalBindingInitiator } from "@prisma/client";
 import {
     _encode_CertificationPath,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/CertificationPath.ta";
 import getDateFromTime from "@wildboar/x500/src/lib/utils/getDateFromTime";
-import { rdnToJson } from "../x500/rdnToJson";
 import type {
     Code,
 } from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
@@ -93,6 +92,7 @@ import {
     id_pr_targetDsaUnavailable,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-pr-targetDsaUnavailable.va";
 import { id_op_binding_non_specific_hierarchical } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
+import { _encode_RDNSequence } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RDNSequence.ta";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {
@@ -280,12 +280,12 @@ async function updateSuperiorDSA (
                             id: hob.access_point.id,
                         },
                     },
-                    initiator: OperationalBindingInitiator.ROLE_B,
+                    initiator: "ROLE_B",
                     initiator_ber: Buffer.from(encodedSub2Sup.toBytes()),
                     validity_start: hob.validity_start,
                     validity_end: hob.validity_end,
-                    new_context_prefix_rdn: rdnToJson(newCP.dse.rdn),
-                    immediate_superior: newAgreement.immediateSuperior.map(rdnToJson),
+                    new_context_prefix_rdn: _encode_RelativeDistinguishedName(newCP.dse.rdn, DER).toBytes(),
+                    immediate_superior: _encode_RDNSequence(newAgreement.immediateSuperior, DER).toBytes(),
                     // TODO: Add more source info once signing is implemented.
                     requested_time: new Date(),
                 },
@@ -346,7 +346,7 @@ async function updateSuperiorDSA (
                             security_certification_path: sp?.certification_path
                                 ? _encode_CertificationPath(sp.certification_path, DER).toBytes()
                                 : undefined,
-                            security_name: accessPoint.ae_title.rdnSequence.map(rdnToJson),
+                            security_name: _encode_RDNSequence(accessPoint.ae_title.rdnSequence, DER).toBytes(),
                             security_time: sp?.time
                                 ? getDateFromTime(sp.time)
                                 : undefined,

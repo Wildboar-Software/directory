@@ -1,6 +1,5 @@
 import { Context, Vertex } from "@wildboar/meerkat-types";
 import { RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
-import { Prisma } from "@prisma/client";
 import { ASN1Construction, INTEGER } from "asn1-ts";
 import getEqualityNormalizer from "../x500/getEqualityNormalizer";
 
@@ -51,8 +50,8 @@ async function renameEntry (
                 entry_id: target.dse.id,
             },
         }),
-        ctx.db.distinguishedValue.createMany({
-            data: newRDN.map((atav, i): Prisma.DistinguishedValueCreateManyInput => ({
+        ...newRDN.map((atav, i) => ctx.db.distinguishedValue.create({
+            data: {
                 entry_id: target.dse.id,
                 type_oid: atav.type_.toBytes(),
                 tag_class: atav.value.tagClass,
@@ -65,8 +64,8 @@ async function renameEntry (
                 ),
                 order_index: i,
                 normalized_str: getEqualityNormalizer(ctx)?.(atav.type_)?.(ctx, atav.value),
-            })),
-        }),
+            },
+        })),
         ...materializedPathsToUpdate.map((mp) => ctx.db.entry.update({
             where: {
                 id: mp.id,

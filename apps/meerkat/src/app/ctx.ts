@@ -571,6 +571,14 @@ const bindOverrides: SigningInfo["bindOverrides"] = {
 };
 
 const config: Configuration = {
+    db: {
+        mmapSize: process.env.MEERKAT_DB_MMAP_SIZE
+            ? Number.parseInt(process.env.MEERKAT_DB_MMAP_SIZE)
+            : 128_000_000, // 128MB
+        cacheSize: process.env.MEERKAT_DB_CACHE_SIZE
+            ? Number.parseInt(process.env.MEERKAT_DB_CACHE_SIZE)
+            : 16_000, // 16MB
+    },
     vendorName: process.env.MEERKAT_VENDOR_NAME?.length
         ? process.env.MEERKAT_VENDOR_NAME
         : undefined,

@@ -36,7 +36,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/HierarchicalOperationalBindings/NonSpecificHierarchicalAgreement.ta";
 import { getEntryAttributesToShareInOpBinding } from "../dit/getEntryAttributesToShareInOpBinding";
 import stringifyDN from "../x500/stringifyDN";
-import { Prisma, OperationalBindingInitiator } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import {
     id_op_binding_non_specific_hierarchical,
 } from "@wildboar/x500/src/lib/modules/DirectoryOperationalBindingTypes/id-op-binding-non-specific-hierarchical.va";
@@ -201,7 +201,7 @@ async function updateNHOBSubordinateDSA (
         binding_identifier: Number(currentBindingID.identifier),
         binding_version: Number(currentBindingID.version) + 1,
         agreement_ber: agr_element.toBytes(),
-        initiator: OperationalBindingInitiator.ROLE_A,
+        initiator: "ROLE_A",
         initiator_ber: Buffer.from(_encode_SuperiorToSubordinateModification(sup2sub, BER).toBytes()),
         access_point: {
             connect: {

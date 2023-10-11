@@ -4,7 +4,7 @@ import {
     PwdVocabulary_noGeographicalNames,
     PwdVocabulary_noPersonNames,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/PwdVocabulary.ta";
-import { BERElement, BIT_STRING, ObjectIdentifier, TRUE_BIT } from "asn1-ts";
+import { BERElement, BIT_STRING, ObjectIdentifier, TRUE_BIT, decodeSignedBigEndianInteger } from "asn1-ts";
 import {
     _decode_UserPwd,
 } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
@@ -27,6 +27,7 @@ import {
 } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMaxLength.oa";
 import { groupByOID } from "../utils/groupByOID";
 import { attributeValueFromDB } from "../database/attributeValueFromDB";
+import { _decode_PwdAlphabet } from "@wildboar/x500/src/lib/modules/PasswordPolicy/PwdAlphabet.ta";
 
 export const CHECK_PWD_QUALITY_OK: number = 0;
 export const CHECK_PWD_QUALITY_LENGTH: number = -1;
@@ -44,6 +45,13 @@ const ID_MIN_TIH: string = pwdMinTimeInHistory["&id"].toString();
 const ID_MIN_LEN: string = pwdMinLength["&id"].toString();
 const IN_MAX_LEN: string = pwdMaxLength["&id"].toString();
 
+function decode_maybe_integer (maybe: Buffer | undefined): number | undefined {
+    if (!maybe) {
+        return undefined;
+    }
+    return decodeSignedBigEndianInteger(maybe);
+}
+
 // NOTE: This was refactored out of `checkPasswordQualityAndHistory()` since
 // `addEntry` needs to check password quality, but not history.
 export
@@ -57,38 +65,47 @@ async function checkPasswordQuality (
         return CHECK_PWD_QUALITY_OK;
     }
 
-    const minLength: number = length_constraints?.[0] ?? (await ctx.db.attributeValue.findFirst({
+    const minLength: number = length_constraints?.[0] ?? decode_maybe_integer((await ctx.db.attributeValue.findFirst({
         where: {
             entry_id: subentry.dse.id,
             type_oid: pwdMinLength["&id"].toBytes(),
         },
         select: {
-            jer: true,
+            content_octets: true
         },
-    }))?.jer as number ?? 0;
-    const maxLength: number = length_constraints?.[1] ?? (await ctx.db.attributeValue.findFirst({
+    }))?.content_octets) ?? 0;
+    const maxLength: number = length_constraints?.[1] ?? decode_maybe_integer((await ctx.db.attributeValue.findFirst({
         where: {
             entry_id: subentry.dse.id,
             type_oid: pwdMaxLength["&id"].toBytes(),
         },
         select: {
-            jer: true,
+            content_octets: true,
         },
-    }))?.jer as number ?? 100_000;
+    }))?.content_octets) ?? 100_000;
 
     if ((password.length < minLength) || (password.length > maxLength)) {
         return CHECK_PWD_QUALITY_LENGTH;
     }
 
-    const alphabet: string[] = (await ctx.db.attributeValue.findFirst({
+    const alphabetBytes = (await ctx.db.attributeValue.findFirst({
         where: {
             entry_id: subentry.dse.id,
             type_oid: pwdAlphabet["&id"].toBytes(),
         },
         select: {
-            jer: true,
+            tag_class: true,
+            tag_number: true,
+            constructed: true,
+            content_octets: true,
         },
-    }))?.jer as string[] ?? [];
+    }));
+    const alphabet: string[] = alphabetBytes
+        ? (() => {
+            const value = attributeValueFromDB(alphabetBytes);
+            return _decode_PwdAlphabet(value);
+        })()
+        : [];
 
     const passwordCharacters: Set<string> = new Set(Array.from(password));
     // TODO: Unit testing to ensure the continue-to-label works as expected.
@@ -218,16 +235,16 @@ async function checkPasswordQualityAndHistory (
         },
         select: {
             type_oid: true,
-            jer: true,
+            content_octets: true,
         },
     });
 
     const subentry_attrs = groupByOID(subentry_value_rows, (r) => ObjectIdentifier.fromBytes(r.type_oid).toString());
-    const slots: number | undefined = subentry_attrs[ID_HISTORY_SLOTS]?.[0].jer as number;
-    const max_tih: number | undefined = subentry_attrs[ID_MAX_TIH]?.[0].jer as number;
-    const min_tih: number | undefined = subentry_attrs[ID_MIN_TIH]?.[0].jer as number;
-    const min_len: number | undefined = subentry_attrs[ID_MIN_LEN]?.[0].jer as number;
-    const max_len: number | undefined = subentry_attrs[IN_MAX_LEN]?.[0].jer as number;
+    const slots: number | undefined = decode_maybe_integer(subentry_attrs[ID_HISTORY_SLOTS]?.[0].content_octets);
+    const max_tih: number | undefined = decode_maybe_integer(subentry_attrs[ID_MAX_TIH]?.[0].content_octets);
+    const min_tih: number | undefined = decode_maybe_integer(subentry_attrs[ID_MIN_TIH]?.[0].content_octets);
+    const min_len: number | undefined = decode_maybe_integer(subentry_attrs[ID_MIN_LEN]?.[0].content_octets);
+    const max_len: number | undefined = decode_maybe_integer(subentry_attrs[IN_MAX_LEN]?.[0].content_octets);
 
     const qualityResult = await checkPasswordQuality(
         ctx,

@@ -29,7 +29,7 @@ import {
     AttributeUsage_distributedOperation,
     AttributeUsage_userApplications,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
-import { Prisma, AttributeUsage as PrismaAttributeUsage } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import asn1SyntaxInfo from "../../x500/asn1SyntaxToInfo";
 
 const SUBSCHEMA: string = subschema["&id"].toString();
@@ -78,10 +78,10 @@ const readValues: SpecialAttributeDatabaseReader = async (
                 at.collective,
                 at.userModifiable,
                 {
-                    [PrismaAttributeUsage.DSA_OPERATION]: AttributeUsage_dSAOperation,
-                    [PrismaAttributeUsage.DIRECTORY_OPERATION]: AttributeUsage_directoryOperation,
-                    [PrismaAttributeUsage.DISTRIBUTED_OPERATION]: AttributeUsage_distributedOperation,
-                    [PrismaAttributeUsage.USER_APPLICATIONS]: AttributeUsage_userApplications,
+                    ["DSA_OPERATION"]: AttributeUsage_dSAOperation,
+                    ["DIRECTORY_OPERATION"]: AttributeUsage_directoryOperation,
+                    ["DISTRIBUTED_OPERATION"]: AttributeUsage_distributedOperation,
+                    ["USER_APPLICATIONS"]: AttributeUsage_userApplications,
                 }[at.application] ?? AttributeUsage_userApplications,
             ),
         ));
@@ -173,15 +173,15 @@ const addValue: SpecialAttributeDatabaseEditor = async (
         application: (() => {
             switch (decoded.information.application) {
             case (AttributeUsage_dSAOperation):
-                return PrismaAttributeUsage.DSA_OPERATION;
+                return "DSA_OPERATION";
             case (AttributeUsage_directoryOperation):
-                return PrismaAttributeUsage.DIRECTORY_OPERATION;
+                return "DIRECTORY_OPERATION";
             case (AttributeUsage_distributedOperation):
-                return PrismaAttributeUsage.DISTRIBUTED_OPERATION;
+                return "DISTRIBUTED_OPERATION";
             case (AttributeUsage_userApplications):
-                return PrismaAttributeUsage.USER_APPLICATIONS;
+                return "USER_APPLICATIONS";
             default:
-                return PrismaAttributeUsage.USER_APPLICATIONS;
+                return "USER_APPLICATIONS";
             }
         })(),
     };

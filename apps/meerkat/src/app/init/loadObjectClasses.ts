@@ -1,7 +1,6 @@
 import { Context } from "@wildboar/meerkat-types";
 import objectClassFromInformationObject from "./objectClassFromInformationObject";
 import * as x500oc from "@wildboar/x500/src/lib/collections/objectClasses";
-import { ObjectClassKind as PrismaObjectClassKind } from "@prisma/client";
 import {
     ObjectClassKind,
     ObjectClassKind_abstract,
@@ -841,15 +840,15 @@ import {
     callPreferenceURIObject,
 } from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/callPreferenceURIObject.oa";
 
-function prismaOCK2OCK (ock: PrismaObjectClassKind): ObjectClassKind {
+function prismaOCK2OCK (ock: string): ObjectClassKind {
     switch (ock) {
-    case (PrismaObjectClassKind.ABSTRACT): {
+    case ("ABSTRACT"): {
         return ObjectClassKind_abstract;
     }
-    case (PrismaObjectClassKind.AUXILIARY): {
+    case ("AUXILIARY"): {
         return ObjectClassKind_auxiliary;
     }
-    case (PrismaObjectClassKind.STRUCTURAL): {
+    case ("STRUCTURAL"): {
         return ObjectClassKind_structural;
     }
     default: throw new AssertionError();

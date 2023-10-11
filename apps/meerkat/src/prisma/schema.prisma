@@ -9,7 +9,7 @@
 
 datasource db {
   url      = env("DATABASE_URL")
-  provider = "mysql"
+  provider = "sqlite"
   // provider = "postgresql"
   // provider = "sqlserver"
 }
@@ -66,11 +66,11 @@ model Entry {
   createTimestamp     DateTime // Can be non-null: even SDSEs are required to transmit createTimestamp.
   modifyTimestamp     DateTime // Can be non-null: even SDSEs are required to transmit modifyTimestamp.
   deleteTimestamp     DateTime? // This is not a standard attribute. This is kept just to permit "soft-deletion."
-  creatorsName        Json? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
-  modifiersName       Json? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
+  creatorsName        Bytes? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
+  modifiersName       Bytes? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
   expiresTimestamp    DateTime? // This is used for entryTTL.
   modifyNameTimestamp DateTime?
-  previousName        Json? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
+  previousName        Bytes? // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
 
   // This should be stored, rather than calculated. The reason for this is that
   // the permitted superior structure rules refers to the governingStructureRule
@@ -81,7 +81,7 @@ model Entry {
   governingStructureRule Int?
 
   // The structural object class is not permitted to change for an entry.
-  structuralObjectClass String? @db.VarChar(128) // OID
+  structuralObjectClass String? // OID
 
   // Shadowing flags. See ITU Recommendation X.525 (2019), Section 7.2.1.
   subordinate_completeness Boolean?
@@ -103,17 +103,14 @@ model Entry {
   // This means that we can just use database IDs to represent hierarchy members.
   hierarchyParent_id Int?
   hierarchyParent    Entry?  @relation(name: "parent", fields: [hierarchyParent_id], references: [id])
-  hierarchyParentDN  Json?
-  hierarchyParentStr String? @db.VarChar(2048)
+  hierarchyParentDN  Bytes?
+  hierarchyParentStr String?
   hierarchyTop_id    Int?
   hierarchyTop       Entry?  @relation(name: "top", fields: [hierarchyTop_id], references: [id])
-  hierarchyTopDN     Json?
-  hierarchyTopStr    String? @db.VarChar(2048)
+  hierarchyTopDN     Bytes?
+  hierarchyTopStr    String?
   hierarchyPath      String? // Period-delimited database IDs
   hierarchyLevel     Int?
-
-  // For storing other arbitrary data in the entry.
-  otherData Json?
 
   subordinates         Entry[]                @relation("superior")
   hierarchicalChildren Entry[]                @relation("parent")
@@ -155,7 +152,7 @@ model Password {
   entry_id                 Int
   entry                    Entry  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
   encrypted                Bytes
-  algorithm_oid            String @db.VarChar(128) // OID
+  algorithm_oid            String // OID
   algorithm_parameters_der Bytes?
 
   @@unique([entry_id])
@@ -176,7 +173,7 @@ model PasswordHistory {
 // ASN.1 module.
 model PasswordDictionaryItem {
   id   Int    @id @default(autoincrement())
-  bit  Int    @db.SmallInt
+  bit  Int
   item String
 
   @@unique([bit, item])
@@ -195,59 +192,57 @@ model AttributeValue {
   entry          Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
   type_oid       Bytes // BinaryOID
   operational    Boolean @default(false) // True if attribute type is not userApplications
-  tag_class      Int     @db.SmallInt
+  tag_class      Int
   constructed    Boolean
   tag_number     Int
   content_octets Bytes
-  jer            Json?
-  normalized_str String? @db.VarChar(16000)
+  normalized_str String?
 
   ContextValue ContextValue[]
 
   // 128 is the old upper bound on most string types. See UpperBounds.asn1.
-  @@index([entry_id, type_oid(length: 32), tag_class, constructed, tag_number, normalized_str(length: 128)])
-  @@index([entry_id, operational, type_oid(length: 32)])
-  @@index([type_oid(length: 32), tag_class, constructed, tag_number, normalized_str(length: 128)])
+  @@index([entry_id, type_oid, tag_class, constructed, tag_number, normalized_str])
+  @@index([entry_id, operational, type_oid])
+  @@index([type_oid, tag_class, constructed, tag_number, normalized_str])
 }
 
 model ContextValue {
   id          Int            @id @default(autoincrement())
   value_id    Int
   value       AttributeValue @relation(fields: [value_id], references: [id], onDelete: Cascade)
-  type        String         @db.VarChar(128) // OID
-  tag_class   Int            @db.SmallInt
+  type        String
+  tag_class   Int
   constructed Boolean
   tag_number  Int
   ber         Bytes
-  jer         Json?
   fallback    Boolean
 
   @@index([value_id])
 }
 
-enum Knowledge {
-  MY_ACCESS_POINT
-  SUPERIOR
-  SPECIFIC
-  NON_SPECIFIC
-  SUPPLIER
-  CONSUMER
-  SECONDARY_SUPPLIER
-  SECONDARY_CONSUMER
-  // DIT_BRIDGE
-  OTHER
-  OB_REQUEST
-  OB_SHADOW_MASTER // Purely informational. From ShadowingAgreementInfo.master.
-  NON_SUPPLYING_MASTER
-}
+// enum Knowledge {
+//   MY_ACCESS_POINT
+//   SUPERIOR
+//   SPECIFIC
+//   NON_SPECIFIC
+//   SUPPLIER
+//   CONSUMER
+//   SECONDARY_SUPPLIER
+//   SECONDARY_CONSUMER
+//   // DIT_BRIDGE
+//   OTHER
+//   OB_REQUEST
+//   OB_SHADOW_MASTER // Purely informational. From ShadowingAgreementInfo.master.
+//   NON_SUPPLYING_MASTER
+// }
 
 // Type: MY, supr, supplier, consumer, secondary consumer, xr, immSupr, subr, nssr?
 // Satisfies AccessPoint, MasterOrShadowAccessPoint, SupplierOrConsumer, ConsumerInformation, and SupplierInformation
 model AccessPoint {
   id                       Int                         @id @default(autoincrement())
   ber                      Bytes // This will depend on the knowledge type. If SpecK or NSK => MOSAP.
-  knowledge_type           Knowledge
-  ae_title                 Json // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
+  knowledge_type           String
+  ae_title                 Bytes // [{"2.5.4.3":"Jonathan Wilbur"}, {"2.5.4.10":"Wildboar Software"}]
   category                 Int?
   chainingRequired         Boolean?
   supplier_is_master       Boolean?
@@ -293,7 +288,7 @@ model AccessPoint {
 
 model NetworkServiceAccessPoint {
   id              Int         @id @default(autoincrement())
-  hostname        String?     @db.VarChar(255)
+  hostname        String?
   port            Int? // @db.SmallUnsignedInt
   url             String?
   bytes           Bytes
@@ -309,11 +304,11 @@ model DitBridgeKnowledge {
   ber             Bytes
 }
 
-enum ObjectClassKind {
-  ABSTRACT
-  STRUCTURAL
-  AUXILIARY
-}
+// enum ObjectClassKind {
+//   ABSTRACT
+//   STRUCTURAL
+//   AUXILIARY
+// }
 
 // NAME-FORM ::= CLASS {
 //     &namedObjectClass     OBJECT-CLASS,
@@ -332,14 +327,14 @@ enum ObjectClassKind {
 // Also satisfies NameFormDescription
 model NameForm {
   id                  Int      @id @default(autoincrement())
-  namedObjectClass    String   @db.VarChar(128) // OID
-  mandatoryAttributes String   @db.Text // OIDs
-  optionalAttributes  String?  @db.Text // OIDs
-  ldapName            String?  @db.Text
-  ldapDesc            String?  @db.Text
-  identifier          String   @db.VarChar(128) // OID
+  namedObjectClass    String
+  mandatoryAttributes String
+  optionalAttributes  String?
+  ldapName            String?
+  ldapDesc            String?
+  identifier          String
   name                String?
-  description         String?  @db.Text
+  description         String?
   obsolete            Boolean  @default(false)
   created_at          DateTime @default(now())
 
@@ -362,10 +357,10 @@ model NameForm {
 model DITStructureRule {
   id                     Int      @id @default(autoincrement())
   ruleIdentifier         Int
-  nameForm               String   @db.VarChar(128) // OID
-  superiorStructureRules String?  @db.Text // OIDs
+  nameForm               String
+  superiorStructureRules String?
   name                   String?
-  description            String?  @db.Text
+  description            String?
   obsolete               Boolean  @default(false)
   entry_id               Int
   entry                  Entry    @relation(fields: [entry_id], references: [id])
@@ -389,13 +384,13 @@ model DITStructureRule {
 // Also satisfies DITContentRuleDescription
 model ContentRule {
   id                   Int      @id @default(autoincrement())
-  structural_class     String   @db.VarChar(128) // OID
-  auxiliary_classes    String?  @db.Text // OIDs
-  mandatory_attributes String?  @db.Text // OIDs
-  optional_attributes  String?  @db.Text // OIDs
-  precluded_attributes String?  @db.Text // OIDs
+  structural_class     String
+  auxiliary_classes    String?
+  mandatory_attributes String?
+  optional_attributes  String?
+  precluded_attributes String?
   name                 String?
-  description          String?  @db.Text
+  description          String?
   obsolete             Boolean  @default(false)
   entry_id             Int
   entry                Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
@@ -415,11 +410,11 @@ model ContentRule {
 // Also satisfies DITContextUseDescription
 model ContextUseRule {
   id            Int      @id @default(autoincrement())
-  attributeType String   @db.VarChar(128) // OID
-  mandatory     String?  @db.Text // OIDs
-  optional      String?  @db.Text // OIDs
+  attributeType String
+  mandatory     String?
+  optional      String?
   name          String?
-  description   String?  @db.Text
+  description   String?
   obsolete      Boolean  @default(false)
   entry_id      Int
   entry         Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
@@ -437,10 +432,10 @@ model ContextUseRule {
 // Also satisfies FriendsDescription
 model Friendship {
   id          Int      @id @default(autoincrement())
-  anchor      String   @db.VarChar(128) // OID
-  friends     String   @db.Text // OIDs
+  anchor      String
+  friends     String
   name        String?
-  description String?  @db.Text
+  description String?
   obsolete    Boolean  @default(false)
   entry_id    Int
   entry       Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
@@ -459,11 +454,11 @@ model Friendship {
 //   ... }
 model MatchingRuleUse {
   id          Int      @id @default(autoincrement())
-  identifier  String   @db.VarChar(128) // OID
+  identifier  String
   name        String?
-  description String?  @db.Text
+  description String?
   obsolete    Boolean  @default(false)
-  information String   @db.Text // OIDs
+  information String
   entry_id    Int
   entry       Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
   created_at  DateTime @default(now())
@@ -471,33 +466,26 @@ model MatchingRuleUse {
   @@unique([entry_id, identifier])
 }
 
-enum AttributeUsage {
-  USER_APPLICATIONS
-  DSA_OPERATION
-  DISTRIBUTED_OPERATION
-  DIRECTORY_OPERATION
-}
-
 model AttributeTypeDescription {
   id              Int            @id @default(autoincrement())
-  identifier      String         @db.VarChar(128) // OID
+  identifier      String
   name            String?
-  description     String?        @db.Text
+  description     String?
   obsolete        Boolean        @default(false)
-  derivation      String?        @db.VarChar(128) // OID
-  equalityMatch   String?        @db.VarChar(128) // OID
-  orderingMatch   String?        @db.VarChar(128) // OID
-  substringsMatch String?        @db.VarChar(128) // OID
-  attributeSyntax String?        @db.Text
+  derivation      String?
+  equalityMatch   String?
+  orderingMatch   String?
+  substringsMatch String?
+  attributeSyntax String?
   multiValued     Boolean        @default(true)
   collective      Boolean        @default(false)
   userModifiable  Boolean        @default(true)
-  application     AttributeUsage @default(USER_APPLICATIONS)
+  application     String @default("USER_APPLICATIONS")
 
   // Fields not present in AttributeTypeDescription
-  ldapSyntax      String?  @db.VarChar(128) // OID
+  ldapSyntax      String?
   ldapNames       String?
-  ldapDescription String?  @db.Text
+  ldapDescription String?
   dummy           Boolean  @default(false)
   created_at      DateTime @default(now())
 
@@ -511,16 +499,16 @@ model AttributeTypeDescription {
 
 model ObjectClassDescription {
   id              Int             @id @default(autoincrement())
-  identifier      String          @db.VarChar(128) // OID
+  identifier      String
   name            String?
-  description     String?         @db.Text
+  description     String?
   obsolete        Boolean         @default(false)
-  subclassOf      String?         @db.Text // OIDs
-  kind            ObjectClassKind @default(STRUCTURAL)
-  mandatories     String?         @db.Text // OIDs
-  optionals       String?         @db.Text // OIDs
+  subclassOf      String?
+  kind            String         @default("STRUCTURAL")
+  mandatories     String?
+  optionals       String?
   ldapNames       String?
-  ldapDescription String?         @db.Text
+  ldapDescription String?
   created_at      DateTime        @default(now())
 
   // Why entry_id if object classes are universal? So schema shadowed from
@@ -533,12 +521,12 @@ model ObjectClassDescription {
 
 model ContextDescription {
   id              Int      @id @default(autoincrement())
-  identifier      String   @db.VarChar(128) // OID
+  identifier      String
   name            String?
-  description     String?  @db.Text
+  description     String?
   obsolete        Boolean  @default(false)
-  syntax          String   @db.Text
-  assertionSyntax String?  @db.Text
+  syntax          String
+  assertionSyntax String?
   created_at      DateTime @default(now())
 
   // For some reason, these are not present in the ASN.1 definition for
@@ -554,24 +542,6 @@ model ContextDescription {
   @@unique([entry_id, identifier])
 }
 
-enum OperationalBindingInitiator {
-  SYMMETRIC
-  ROLE_A
-  ROLE_B
-}
-
-enum ShadowedKnowledgeType {
-  MASTER
-  SHADOW
-  BOTH
-}
-
-enum ShadowUpdateStrategy {
-  TOTAL
-  INCREMENTAL
-  EXTERNAL
-}
-
 model OperationalBinding {
   id                 Int                         @id @default(autoincrement())
   entry_id           Int? // This is valuable for pointing to the CP of a shadowed context or HOB.
@@ -580,36 +550,36 @@ model OperationalBinding {
   previous           OperationalBinding?         @relation(name: "previous", fields: [previous_id], references: [id])
   outbound           Boolean
   uuid               String                      @default(uuid()) // @db.Uuid
-  binding_type       String                      @db.VarChar(128) // OID
+  binding_type       String
   binding_identifier Int
   binding_version    Int
   agreement_ber      Bytes
   access_point_id    Int? // Made optional just so saveAccessPoint can be used.
   access_point       AccessPoint?                @relation("ob_access_point", fields: [access_point_id], references: [id])
-  initiator          OperationalBindingInitiator
+  initiator          String
   initiator_ber      Bytes
   validity_start     DateTime
   validity_end       DateTime? // NULL means "until explicitly requested"
 
   // Security parameters
   security_certification_path Bytes?
-  security_name               Json?
+  security_name               Bytes?
   security_time               DateTime?
   security_random             Bytes?
-  security_target             Int?      @db.SmallInt
+  security_target             Int?
   security_operationCode      String?
-  security_errorProtection    Int?      @db.SmallInt
+  security_errorProtection    Int?
   security_errorCode          String?
 
   // Hierarchical Operation Binding
-  new_context_prefix_rdn Json?
-  immediate_superior     Json?
+  new_context_prefix_rdn Bytes?
+  immediate_superior     Bytes?
 
   // Shadowing Operational Binding
-  shadowed_context_prefix Json?
-  knowledge_type          ShadowedKnowledgeType?
+  shadowed_context_prefix Bytes?
+  knowledge_type          String?
   subordinates            Boolean?
-  supply_contexts         String?                @db.Text // OIDs length of 0 means "allContexts"
+  supply_contexts         String?
   supplier_initiated      Boolean?
   periodic_beginTime      DateTime?
   periodic_windowSize     Int?
@@ -625,11 +595,11 @@ model OperationalBinding {
   // of the originating DSA.
   source_ip               String? // @db.Inet
   source_tcp_port         Int?
-  source_ae_title         Json?
-  source_credentials_type Int?    @db.SmallInt // 0 = simple, 1 = strong, 2 = external, 3 = spkm
+  source_ae_title         Bytes?
+  source_credentials_type Int? // 0 = simple, 1 = strong, 2 = external, 3 = spkm
   source_certificate_path Bytes?
   source_bind_token       Bytes?
-  source_strong_name      Json?
+  source_strong_name      Bytes?
   source_attr_cert_path   Bytes?
 
   // Status
@@ -638,11 +608,11 @@ model OperationalBinding {
   terminated_time                 DateTime?
   accepted                        Boolean?
   last_update                     DateTime? // Should not be used. Use local_last_update and remote_last_update.
-  last_ob_problem                 Int?                  @db.SmallInt
-  last_shadow_problem             Int?                  @db.SmallInt
+  last_ob_problem                 Int?
+  last_shadow_problem             Int?
   local_last_update               DateTime? // Time this DSA thinks the last shadow update was
   remote_last_update              DateTime? // Time the remote DSA thinks the last shadow update was. If this DSA is the supplier, this is populated from the requestShadowUpdate.
-  requested_strategy              ShadowUpdateStrategy?
+  requested_strategy              String?
   requested_strategy_external_ber Bytes?
 
   next_version OperationalBinding[] @relation("previous")
@@ -656,35 +626,35 @@ model OperationalBinding {
 
 model NamedObjectIdentifier {
   id   Int    @id @default(autoincrement())
-  oid  String @db.VarChar(128) // OID
-  name String @db.VarChar(128)
+  oid  String
+  name String
 
   @@unique([oid])
   @@index([name])
 }
 
 model DistinguishedValue {
-  id             BigInt  @id @default(autoincrement())
+  id             Int  @id @default(autoincrement())
   entry_id       Int
   entry          Entry   @relation(fields: [entry_id], references: [id], onDelete: Cascade)
   type_oid       Bytes // BinaryOID
-  tag_class      Int     @db.SmallInt
+  tag_class      Int
   constructed    Boolean
   tag_number     Int
   content_octets Bytes
   normalized_str String?
   order_index    Int
 
-  @@unique([entry_id, type_oid(length: 32)])
+  @@unique([entry_id, type_oid])
   // I'm not sure if the entry_id really belongs in the index, but
-  @@unique([type_oid(length: 32), normalized_str, entry_id])
+  @@unique([type_oid, normalized_str, entry_id])
 }
 
 model EntryObjectClass {
-  id           BigInt   @id @default(autoincrement())
+  id           Int   @id @default(autoincrement())
   entry_id     Int
   entry        Entry    @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  object_class String   @db.VarChar(128) // OID
+  object_class String
   created_at   DateTime @default(now())
 
   @@unique([entry_id, object_class])
@@ -697,7 +667,7 @@ model Alias {
   alias_entry        Entry    @relation(name: "alias_entry", fields: [alias_entry_id], references: [id], onDelete: Cascade)
   aliased_entry_id   Int?     @unique
   aliased_entry      Entry?   @relation(name: "aliased_entry", fields: [aliased_entry_id], references: [id], onDelete: SetNull)
-  aliased_entry_name Json?
+  aliased_entry_name Bytes?
   created_at         DateTime @default(now())
   updated_at         DateTime @default(now()) @updatedAt
 
@@ -709,7 +679,7 @@ model EntryAttributeValuesIncomplete {
   id             Int    @id @default(autoincrement())
   entry_id       Int
   entry          Entry  @relation(fields: [entry_id], references: [id], onDelete: Cascade)
-  attribute_type String @db.VarChar(128) // OID
+  attribute_type String // OID
 
   @@unique([entry_id, attribute_type])
 }
@@ -725,7 +695,7 @@ model InstalledVersions {
   id                 Int      @id @default(autoincrement())
   installedTimestamp DateTime @default(now())
   version            String
-  migration_problems String?  @db.Text
+  migration_problems String?
 
   @@index([version])
 }
@@ -733,8 +703,8 @@ model InstalledVersions {
 // To save, sort, and paginate over a large number of search results.
 model EnqueuedSearchResult {
   id              Int    @id @default(autoincrement())
-  connection_uuid String @db.VarChar(40) // UUID of the connection.
-  query_ref       String @db.VarChar(40) // Could be a pagination UUID or something else.
+  connection_uuid String
+  query_ref       String
   result_index    Int // The 0-based index in which this entry appears in the results.
   entry_id        Int?
   entry           Entry? @relation(fields: [entry_id], references: [id], onDelete: Cascade)
@@ -746,8 +716,8 @@ model EnqueuedSearchResult {
 // To save, sort, and paginate over a large number of list results.
 model EnqueuedListResult {
   id               Int    @id @default(autoincrement())
-  connection_uuid  String @db.VarChar(40) // UUID of the connection.
-  query_ref        String @db.VarChar(40) // Could be a pagination UUID or something else.
+  connection_uuid  String // UUID of the connection.
+  query_ref        String // Could be a pagination UUID or something else.
   result_index     Int // The 0-based index in which this entry appears in the results.
   entry_id         Int?
   entry            Entry? @relation(fields: [entry_id], references: [id], onDelete: Cascade)
@@ -763,7 +733,7 @@ model AccessPointCredentials {
   updated_at                                DateTime    @default(now()) @updatedAt
   access_point_id                           Int
   access_point                              AccessPoint @relation(fields: [access_point_id], references: [id], onDelete: Cascade)
-  simple_name                               Json?
+  simple_name                               Bytes?
   simple_password_unprotected               Bytes?
   simple_password_hash_value                Bytes?
   simple_password_hash_algorithm_oid        String? // OID
@@ -778,7 +748,7 @@ model AccessPointCredentials {
 
 model PostalCodesGazetteEntry {
   id                       Int                        @id @default(autoincrement())
-  c2c                      String                     @db.Char(2)
+  c2c                      String
   st                       String
   locality                 String
   postal_code              String
@@ -797,14 +767,6 @@ model PostalCodeBoundaryPoints {
   @@index([postal_code_id])
 }
 
-enum ShadowIncrementType {
-  OTHER // A fallback for future-extensibility.
-  ADD
-  REMOVE
-  MODIFY
-  MULTI // If incremental steps are ever compressed, they may contain multiple different types of updates.
-}
-
 // Pending incremental updates to be replicated to shadow consumers
 model PendingShadowIncrementalStepRefresh {
   id                 Int                 @id @default(autoincrement())
@@ -814,7 +776,7 @@ model PendingShadowIncrementalStepRefresh {
   submitted          Boolean             @default(false) // Whether the updateShadow was sent containing this step.
   acknowledged       Boolean             @default(false) // Whether the updateShadow containing this step received a result.
   rename             Boolean             @default(false) // Whether the step renamed a shadowed DSE.
-  type               ShadowIncrementType
+  type               String
 
   @@index([binding_identifier, time])
 }

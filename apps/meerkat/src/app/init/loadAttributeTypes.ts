@@ -2,7 +2,6 @@ import type { Context } from "@wildboar/meerkat-types";
 import * as x500at from "@wildboar/x500/src/lib/collections/attributes";
 import * as x500mr from "@wildboar/x500/src/lib/collections/matchingRules";
 import attributeFromInformationObject from "./attributeFromInformationObject";
-import { AttributeUsage } from "@prisma/client";
 import entryUUID from "../schema/attributes/entryUUID";
 import { userPwdHistory } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdHistory.oa";
 import { userPwdRecentlyExpired } from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwdRecentlyExpired.oa";
@@ -5015,7 +5014,7 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
             // Only user-modifiable attributes may be loaded
             || !storedType.userModifiable
             // Only userApplications attributes may be loaded
-            || (storedType.application !== AttributeUsage.USER_APPLICATIONS)
+            || (storedType.application !== "USER_APPLICATIONS")
             // If the attribute is already present, ignore.
             || ctx.attributeTypes.has(storedType.identifier)
         ) {

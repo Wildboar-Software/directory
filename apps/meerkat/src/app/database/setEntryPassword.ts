@@ -40,6 +40,7 @@ import {
     ASN1UniversalType,
     DERElement,
     ObjectIdentifier,
+    decodeSignedBigEndianInteger,
 } from "asn1-ts";
 
 /**
@@ -133,10 +134,10 @@ async function setEntryPassword (
             operational: true,
         },
         select: {
-            jer: true,
+            content_octets: true,
         },
     }))
-        .map(({ jer }) => jer as number)
+        .map(({ content_octets }) => decodeSignedBigEndianInteger(content_octets))
         // Do not reduce with initialValue = 0! Use undefined, then default to 0.
         .reduce((acc, curr) => Math.min(Number(acc ?? Infinity), Number(curr)), undefined);
 
@@ -149,10 +150,10 @@ async function setEntryPassword (
             operational: true,
         },
         select: {
-            jer: true,
+            content_octets: true,
         },
     }))
-        .map(({ jer }) => jer as number)
+        .map(({ content_octets }) => decodeSignedBigEndianInteger(content_octets))
         // Do not reduce with initialValue = 0! Use undefined, then default to 0.
         .reduce((acc, curr) => Math.min(Number(acc ?? Infinity), Number(curr)), undefined);
 
@@ -227,38 +228,39 @@ async function setEntryPassword (
                 },
             },
         }),
-        ctx.db.attributeValue.createMany({
-            data: [
-                {
-                    entry_id: vertex.dse.id,
-                    type_oid: pwdStartTime["&id"].toBytes(),
-                    operational: true,
-                    tag_class: nowElement.tagClass,
-                    constructed: false,
-                    tag_number: nowElement.tagNumber,
-                    content_octets: Buffer.from(
-                        nowElement.value.buffer,
-                        nowElement.value.byteOffset,
-                        nowElement.value.byteLength,
-                    ),
-                    jer: nowElement.toJSON() as string,
-                },
-                {
-                    entry_id: vertex.dse.id,
-                    type_oid: pwdEncAlg["&id"].toBytes(),
-                    operational: true,
-                    tag_class: ASN1TagClass.universal,
-                    constructed: true,
-                    tag_number: ASN1UniversalType.sequence,
-                    content_octets: Buffer.from(
-                        encoded_enc_alg.value.buffer,
-                        encoded_enc_alg.value.byteOffset,
-                        encoded_enc_alg.value.byteLength,
-                    ),
-                    jer: encoded_enc_alg.toJSON() as object,
-                },
-                ...(exp_time_el
-                    ? [{
+        ctx.db.attributeValue.create({
+            data: {
+                entry_id: vertex.dse.id,
+                type_oid: pwdEncAlg["&id"].toBytes(),
+                operational: true,
+                tag_class: ASN1TagClass.universal,
+                constructed: true,
+                tag_number: ASN1UniversalType.sequence,
+                content_octets: Buffer.from(
+                    encoded_enc_alg.value.buffer,
+                    encoded_enc_alg.value.byteOffset,
+                    encoded_enc_alg.value.byteLength,
+                ),
+            },
+        }),
+        ctx.db.attributeValue.create({
+            data: {
+                entry_id: vertex.dse.id,
+                type_oid: pwdStartTime["&id"].toBytes(),
+                operational: true,
+                tag_class: nowElement.tagClass,
+                constructed: false,
+                tag_number: nowElement.tagNumber,
+                content_octets: Buffer.from(
+                    nowElement.value.buffer,
+                    nowElement.value.byteOffset,
+                    nowElement.value.byteLength,
+                ),
+            },
+        }),
+        ...(exp_time_el
+            ? [ctx.db.attributeValue.create({
+                    data: {
                         entry_id: vertex.dse.id,
                         type_oid: pwdExpiryTime["&id"].toBytes(),
                         operational: true,
@@ -270,48 +272,49 @@ async function setEntryPassword (
                             exp_time_el.value.byteOffset,
                             exp_time_el.value.byteLength,
                         ),
-                        jer: nowElement.toJSON() as string,
-                    }]
-                    : []),
-                ...(end_time_el
-                    ? [{
-                        entry_id: vertex.dse.id,
-                        type_oid: pwdEndTime["&id"].toBytes(),
-                        operational: true,
-                        tag_class: ASN1TagClass.universal,
-                        constructed: false,
-                        tag_number: ASN1UniversalType.generalizedTime,
-                        content_octets: Buffer.from(
-                            end_time_el.value.buffer,
-                            end_time_el.value.byteOffset,
-                            end_time_el.value.byteLength,
-                        ),
-                        jer: nowElement.toJSON() as string,
-                    }]
-                    : []),
-                /**
-                 * I think `userPwdRecentlyExpired` is a really poorly named
-                 * attribute, because its real purpose is to store the previous
-                 * password, which needs to stick around for a little while to
-                 * compensate for replication latency.
-                 */
-                ...(encodedOldPwd
-                    ? [{
-                        entry_id: vertex.dse.id,
-                        type_oid: userPwdRecentlyExpired["&id"].toBytes(),
-                        operational: true,
-                        tag_class: encodedOldPwd.tagClass,
-                        constructed: (encodedOldPwd.construction === ASN1Construction.constructed),
-                        tag_number: encodedOldPwd.tagNumber,
-                        content_octets: Buffer.from(
-                            encodedOldPwd.value.buffer,
-                            encodedOldPwd.value.byteOffset,
-                            encodedOldPwd.value.byteLength,
-                        ),
-                    }]
-                    : []),
-            ],
-        }),
+                    },
+                })]
+            : []),
+        ...(end_time_el
+            ? [ctx.db.attributeValue.create({
+                data: {
+                    entry_id: vertex.dse.id,
+                    type_oid: pwdEndTime["&id"].toBytes(),
+                    operational: true,
+                    tag_class: ASN1TagClass.universal,
+                    constructed: false,
+                    tag_number: ASN1UniversalType.generalizedTime,
+                    content_octets: Buffer.from(
+                        end_time_el.value.buffer,
+                        end_time_el.value.byteOffset,
+                        end_time_el.value.byteLength,
+                    ),
+                },
+            })]
+            : []),
+        /**
+         * I think `userPwdRecentlyExpired` is a really poorly named
+         * attribute, because its real purpose is to store the previous
+         * password, which needs to stick around for a little while to
+         * compensate for replication latency.
+         */
+        ...(encodedOldPwd
+            ? [ctx.db.attributeValue.create({
+                data: {
+                    entry_id: vertex.dse.id,
+                    type_oid: userPwdRecentlyExpired["&id"].toBytes(),
+                    operational: true,
+                    tag_class: encodedOldPwd.tagClass,
+                    constructed: (encodedOldPwd.construction === ASN1Construction.constructed),
+                    tag_number: encodedOldPwd.tagNumber,
+                    content_octets: Buffer.from(
+                        encodedOldPwd.value.buffer,
+                        encodedOldPwd.value.byteOffset,
+                        encodedOldPwd.value.byteLength,
+                    ),
+                },
+            })]
+            : []),
         /**
          * The first entry with a password added will have permission to add
          * top-level DSEs. Outside of this, this flag must be set using the

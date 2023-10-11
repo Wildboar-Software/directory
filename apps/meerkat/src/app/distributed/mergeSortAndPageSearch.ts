@@ -564,15 +564,15 @@ async function mergeSortAndPageSearch(
         }
 
         const nonSkippedResults = mergedResult.entries.slice(pageNumberSkips);
-        await ctx.db.enqueuedSearchResult.createMany({
-            data: nonSkippedResults.map((entry, i) => ({
+        await ctx.db.$transaction(nonSkippedResults.map((entry, i) => ctx.db.enqueuedSearchResult.create({
+            data: {
                 connection_uuid: assn.id,
                 query_ref: searchState.paging![0],
                 result_index: i,
                 entry_info: _encode_EntryInformation(entry, DER).toBytes(),
                 // TODO: Supply entry ID too.
-            })),
-        });
+            },
+        })));
         searchState.paging[1].totalResults = nonSkippedResults.length;
         mergedResult.entries.length = 0;
     }

@@ -1,9 +1,9 @@
 import type { Context, DIT } from "@wildboar/meerkat-types";
 import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry";
 import { randomUUID } from "crypto";
-import type { Prisma } from "@prisma/client";
+import { DERElement } from "asn1-ts";
 
-const ROOT_DSE_NAME: Prisma.InputJsonArray = [];
+const ROOT_DSE_NAME = DERElement.fromSequence([]).toBytes();
 
 /**
  * @summary Load or initialize the DIT
