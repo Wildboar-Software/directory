@@ -78,7 +78,7 @@ RtInit: [Protocol error] desired session requirements unavailable
 This means that I cannot even get past authentication. So I have to end this
 little experiment at the moment. Bummer!
 */
-describe.skip("MUA Client", () => {
+describe("MUA Client", () => {
 
     it("works with ITOT transport", async () => {
         const socket = createConnection({
