@@ -273,10 +273,8 @@ async function modifySOB_delete_me (
         });
     dop.unbind();
     if (!("result" in outcome)) {
-        console.error(outcome);
         return;
     }
-    console.log("MODIFIED SOB");
     const agr_el = _encode_ShadowingAgreementInfo(newAgreement, DER).toBytes();
 
     const { id } = await ctx.db.operationalBinding.create({
@@ -1916,7 +1914,9 @@ async function establishOperationalBinding (
                             last_ob_problem: e.data.problem,
                         },
                         select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-                    }).then().catch();
+                    })
+                        .then()
+                        .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_cancel_ob"), e));
                 } else {
                     ctx.db.operationalBinding.update({
                         where: {
@@ -1926,7 +1926,9 @@ async function establishOperationalBinding (
                             accepted: false,
                         },
                         select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-                    }).then().catch();
+                    })
+                        .then()
+                        .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_cancel_ob"), e));
                 }
                 throw e;
             }
@@ -2106,7 +2108,9 @@ async function establishOperationalBinding (
                             last_ob_problem: e.data.problem,
                         },
                         select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-                    }).then().catch();
+                    })
+                        .then()
+                        .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_cancel_ob"), e));
                 } else {
                     ctx.db.operationalBinding.update({
                         where: {
@@ -2116,7 +2120,9 @@ async function establishOperationalBinding (
                             accepted: false,
                         },
                         select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-                    }).then().catch();
+                    })
+                        .then()
+                        .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_cancel_ob"), e));
                 }
                 throw e;
             }
@@ -2327,6 +2333,7 @@ async function establishOperationalBinding (
                     uuid: created.uuid,
                     e,
                 }));
+                // TODO: These error handling sections are all duplicated. You could deduplicate them.
                 if (e instanceof errors.OperationalBindingError) {
                     ctx.db.operationalBinding.update({
                         where: {
@@ -2337,7 +2344,9 @@ async function establishOperationalBinding (
                             last_ob_problem: e.data.problem,
                         },
                         select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-                    }).then().catch();
+                    })
+                        .then()
+                        .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_cancel_ob"), e));
                 } else {
                     ctx.db.operationalBinding.update({
                         where: {
@@ -2347,7 +2356,9 @@ async function establishOperationalBinding (
                             accepted: false,
                         },
                         select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-                    }).then().catch();
+                    })
+                        .then()
+                        .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_cancel_ob"), e));
                 }
                 throw e;
             }
@@ -2536,7 +2547,9 @@ async function establishOperationalBinding (
                             last_ob_problem: e.data.problem,
                         },
                         select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-                    }).then().catch();
+                    })
+                        .then()
+                        .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_cancel_ob"), e));
                 } else {
                     ctx.db.operationalBinding.update({
                         where: {
@@ -2546,7 +2559,9 @@ async function establishOperationalBinding (
                             accepted: false,
                         },
                         select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-                    }).then().catch();
+                    })
+                        .then()
+                        .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_cancel_ob"), e));
                 }
                 throw e;
             }
@@ -2887,7 +2902,9 @@ async function establishOperationalBinding (
                             last_ob_problem: e.data.problem,
                         },
                         select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-                    }).then().catch();
+                    })
+                        .then()
+                        .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_cancel_ob"), e));
                 } else {
                     ctx.db.operationalBinding.update({
                         where: {
@@ -2897,7 +2914,9 @@ async function establishOperationalBinding (
                             accepted: false,
                         },
                         select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-                    }).then().catch();
+                    })
+                        .then()
+                        .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_cancel_ob"), e));
                 }
                 throw e;
             }
@@ -3089,7 +3108,9 @@ async function establishOperationalBinding (
                             last_ob_problem: e.data.problem,
                         },
                         select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-                    }).then().catch();
+                    })
+                        .then()
+                        .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_cancel_ob"), e));
                 } else {
                     ctx.db.operationalBinding.update({
                         where: {
@@ -3099,7 +3120,9 @@ async function establishOperationalBinding (
                             accepted: false,
                         },
                         select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-                    }).then().catch();
+                    })
+                        .then()
+                        .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_cancel_ob"), e));
                 }
                 throw e;
             }

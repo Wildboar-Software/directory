@@ -413,7 +413,9 @@ async function updateHOBSubordinateDSA (
             problem: response,
         }), logInfo);
     }
-    assn.unbind().catch(); // INTENTIONAL NO AWAIT
+    assn
+        .unbind() // INTENTIONAL NO AWAIT
+        .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_unbind"), e));
 }
 
 export default updateHOBSubordinateDSA;

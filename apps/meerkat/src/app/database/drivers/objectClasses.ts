@@ -207,8 +207,10 @@ const addValue: SpecialAttributeDatabaseEditor = async (
                 select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
             })
                 .then()
-                .catch(); // TODO: Log something.
-
+                .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_save@objet_class", { oid: OID, e }), {
+                    oid: OID,
+                    e,
+                }));
             const info: ObjectClassInfo = {
                 id: decoded.identifier,
                 name: decoded.name?.map(directoryStringToString),

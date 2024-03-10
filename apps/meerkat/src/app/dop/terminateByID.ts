@@ -67,7 +67,7 @@ async function terminate (
             if (iAmSuperior) {
                 removeSubordinate(ctx, agreement)
                     .then()
-                    .catch()
+                    .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_remove_subordinate"), e))
                     ; // Async, but we do not need to await.
             }
             /*

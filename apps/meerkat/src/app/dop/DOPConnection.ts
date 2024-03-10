@@ -783,7 +783,8 @@ class DOPAssociation extends ClientAssociation {
         for (const req of this.prebindRequests) {
             // We process these requests serially, just because there could be
             // many of them backed up prior to binding.
-            await handleRequestAndErrors(this.ctx, this, req).catch();
+            await handleRequestAndErrors(this.ctx, this, req)
+                .catch((e) => console.error(e)); // This should never really happen.
         }
     }
 
@@ -812,12 +813,12 @@ class DOPAssociation extends ClientAssociation {
             where: {
                 connection_uuid: this.id,
             },
-        }).then().catch();
+        }).then().catch(() => {});
         this.ctx.db.enqueuedSearchResult.deleteMany({ // INTENTIONAL_NO_AWAIT
             where: {
                 connection_uuid: this.id,
             },
-        }).then().catch();
+        }).then().catch(() => {});
     }
 
     /**

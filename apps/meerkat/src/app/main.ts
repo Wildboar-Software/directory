@@ -1135,8 +1135,8 @@ async function main (): Promise<void> {
         cwd: process.cwd(),
     }));
 
-    ctx.db.enqueuedListResult.deleteMany().then().catch();
-    ctx.db.enqueuedSearchResult.deleteMany().then().catch();
+    ctx.db.enqueuedListResult.deleteMany().then().catch(() => {});
+    ctx.db.enqueuedSearchResult.deleteMany().then().catch(() => {});
 
     const signingCertPath = ctx.config.signing.certPath;
 
@@ -1386,7 +1386,7 @@ async function main (): Promise<void> {
     ctx.log.info(ctx.i18n.t("log:docs"));
 
     if (versionSlug) {
-        checkForUpdates(ctx, versionSlug).catch();
+        checkForUpdates(ctx, versionSlug).catch(() => {});
     }
 
     if (ctx.config.bulkInsertMode) {
@@ -1397,7 +1397,7 @@ async function main (): Promise<void> {
 
     setInterval(() => {
         const dbReportPromise = createDatabaseReport(ctx);
-        dbReportPromise.catch();
+        dbReportPromise.catch(() => {});
         dbReportPromise.then((report) => {
             ctx.telemetry.trackEvent({
                 name: "dbreport",
@@ -1409,7 +1409,7 @@ async function main (): Promise<void> {
                     administratorEmail: ctx.config.administratorEmail,
                 },
             });
-        }).catch(); // This handles the new promise returned by .then().
+        }).catch(() => {}); // This handles the new promise returned by .then().
     }, 604_800_000); // Weekly
 
     /**

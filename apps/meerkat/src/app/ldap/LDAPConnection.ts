@@ -565,12 +565,12 @@ class LDAPAssociation extends ClientAssociation {
             where: {
                 connection_uuid: this.id,
             },
-        }).then().catch();
+        }).then().catch(() => {});
         this.ctx.db.enqueuedListResult.deleteMany({
             where: {
                 connection_uuid: this.id,
             },
-        }).then().catch();
+        }).then().catch(() => {});
     }
 
     /**
