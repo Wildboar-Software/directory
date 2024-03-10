@@ -421,7 +421,9 @@ async function establishSubordinate (
             key: ctx.config.signing.key,
         };
         const response = await assn.establishHOBWithSubordinate(opts);
-        assn.unbind().then().catch(); // INTENTIONAL_NO_AWAIT
+        assn.unbind() // INTENTIONAL_NO_AWAIT
+            .then()
+            .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_unbind"), e));
         if ("result" in response && response.result) {
             const result = response.result.parameter;
             if ("signed" in result) {

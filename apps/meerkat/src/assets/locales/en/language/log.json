@@ -411,5 +411,15 @@
     "reverse_dsa_bind_auth_fail": "Reverse DSA bind credentials are invalid: {{e}}",
     "reverse_dsa_bind_other_err": "Reverse DSA bind failed: {{e}}",
     "reverse_dsa_bind_auth_required": "The DSA bind result did not include credentials, but the local DSA requires mutual authentication.",
-    "reverse_dsa_bind_auth_optional": "Reverse DSA bind credentials were not supplied or invalid, but the local DSA is configured to ignore this."
+    "reverse_dsa_bind_auth_optional": "Reverse DSA bind credentials were not supplied or invalid, but the local DSA is configured to ignore this.",
+    "failed_to_delete_pwd_lockout": "Failed to delete pwdLockout and pwdAccountLockedTime attributes: {{e}}",
+    "failed_to_save@attr_type": "Failed to save attribute type definition {{oid}} to database: {{e}}",
+    "failed_to_save@object_class": "Failed to save object class definition {{oid}} to database: {{e}}",
+    "failed_to_save@context_type": "Failed to save context type definition to database: {{e}}",
+    "failed_to_save@name_form": "Failed to save name_form definition to {{oid}} database: {{e}}",
+    "failed_to_cancel_ob": "Failed to mark operational binding as rejected in response to error: ",
+    "failed_to_update_gsr": "Failed to update governing structure rule for immediate superior: ",
+    "failed_to_remove_hp": "Failed to remove hierarchyParent attribute from deleted entry: ",
+    "failed_to_unbind": "Failed to unbind: ",
+    "failed_to_remove_subordinate": "Failed to remove subordinate DSE: "
 }

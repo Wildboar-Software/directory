@@ -489,7 +489,6 @@ describe.skip("Meerkat DSA", () => {
     // Manual-testing only.
     it.skip("The DSA refuses an excessive number of connections from the same remote address", async () => {
         for (let i = 0; i < 100; i++) {
-            console.log(i);
             net.createConnection({
                 host: HOST,
                 port: PORT,
@@ -1012,7 +1011,7 @@ describe.skip("Meerkat DSA", () => {
             idm!,
             read["&operationCode"]!,
             _encode_ReadArgument(arg, DER),
-        ).catch();
+        ).catch((e) => console.error(e));
         idm.close();
         expect(connect()).resolves.toBeTruthy();
     });

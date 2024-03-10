@@ -149,7 +149,6 @@ async function id_to_dn (
     let current_id: number | null = id;
     const dn: DistinguishedName = [];
     while (current_id) {
-        console.log(current_id);
         const cached = rdnsById.get(current_id);
         if (cached) {
             const [ superior_id, rdn ] = cached;

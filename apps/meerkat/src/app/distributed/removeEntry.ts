@@ -588,7 +588,7 @@ async function removeEntry (
     /** Remove the `hierarchyParent` attribute so hierarchical children are updated */
     ctx.db.$transaction(await removeAttribute(ctx, target, hierarchyParent["&id"]))
         .then()
-        .catch();
+        .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_remove_hp"), e));
     await deleteEntry(ctx, target, alsoDeleteFamily);
 
     if (target.dse.subentry) {

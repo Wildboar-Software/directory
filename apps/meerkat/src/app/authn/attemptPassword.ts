@@ -420,7 +420,7 @@ async function attemptPassword (
             }
         })
             .then() // INTENTIONAL_NO_AWAIT
-            .catch(); // If we fail, we just let it fail. // TODO: Log this.
+            .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_delete_pwd_lockout", { e }))); // If we fail, we just let it fail.
     }
     const passwordRecentlyExpiredValue = entry_attrs[userPwdRecentlyExpired["&id"].toString()]?.[0];
     const password2 = passwordRecentlyExpiredValue

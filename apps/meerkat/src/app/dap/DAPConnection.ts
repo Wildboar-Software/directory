@@ -773,7 +773,8 @@ class DAPAssociation extends ClientAssociation {
         for (const req of this.prebindRequests) {
             // We process these requests serially, just because there could be
             // many of them backed up prior to binding.
-            await handleRequestAndErrors(this.ctx, this, req).catch();
+            await handleRequestAndErrors(this.ctx, this, req)
+                .catch((e) => console.error(e)); // This should never really happen.
         }
     }
 
@@ -788,7 +789,8 @@ class DAPAssociation extends ClientAssociation {
      * @function
      */
     private handleRequest (request: RequestParameters): void {
-        handleRequestAndErrors(this.ctx, this, request).catch();
+        handleRequestAndErrors(this.ctx, this, request)
+            .catch((e) => console.error(e)); // This should never really happen.
     }
 
     public reset (): void {
@@ -800,12 +802,12 @@ class DAPAssociation extends ClientAssociation {
             where: {
                 connection_uuid: this.id,
             },
-        }).then().catch();
+        }).then().catch(() => {});
         this.ctx.db.enqueuedSearchResult.deleteMany({ // INTENTIONAL_NO_AWAIT
             where: {
                 connection_uuid: this.id,
             },
-        }).then().catch();
+        }).then().catch(() => {});
     }
 
     /**

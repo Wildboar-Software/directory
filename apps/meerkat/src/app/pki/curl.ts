@@ -396,6 +396,8 @@ async function curlFTP (
         return null;
     } finally {
         client.close();
-        rm(localFilePath).then().catch(); // Errors are just ignored.
+        rm(localFilePath)
+            .then()
+            .catch((e) => console.error(e));
     }
 }

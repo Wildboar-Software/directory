@@ -159,7 +159,6 @@ export function general_check_of_search_filter(
         ("and" in rule.attributeCombination)
         && (rule.attributeCombination.and.length === 0)
     )) {
-        console.log(rule.attributeCombination);
         state.missingSearchAttributes.push(...Array
             .from(required_attrs.values())
             .map((s) => ObjectIdentifier.fromString(s)));

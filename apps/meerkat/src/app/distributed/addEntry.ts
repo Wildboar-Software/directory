@@ -1398,7 +1398,9 @@ async function addEntry (
                     accepted: false,
                 },
                 select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-            }).then().catch();
+            })
+                .then()
+                .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_cancel_ob"), e));
             throw e;
         }
         /**
@@ -1419,7 +1421,9 @@ async function addEntry (
                     accepted: false,
                 },
                 select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-            }).then().catch();
+            })
+                .then()
+                .catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_cancel_ob"), e));
             throw new errors.UnknownError(ctx.i18n.t("err:could_not_find_new_subr"));
         }
         await ctx.db.operationalBinding.update({
@@ -1719,7 +1723,7 @@ async function addEntry (
                     governingStructureRule: Number(structuralRuleThatAppliesToImmediateSuperior.ruleIdentifier),
                 },
                 select: { id: true }, // UNNECESSARY See: https://github.com/prisma/prisma/issues/6252
-            }).catch(); // TODO: Log
+            }).catch((e) => ctx.log.error(ctx.i18n.t("log:failed_to_update_gsr"), e));
         }
     }
 
