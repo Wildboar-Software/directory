@@ -101,8 +101,9 @@ async function addAttributes (
                     value.value.byteOffset,
                     value.value.byteLength,
                 ),
-                // TODO: Should you just get rid of this column? Or at least not fill it in?
-                jer: value.toJSON() as Prisma.InputJsonValue,
+                jer: (value.construction === ASN1Construction.primitive)
+                    ? value.toJSON() as Prisma.InputJsonValue
+                    : undefined,
                 normalized_str: normalizer?.(ctx, value),
             });
         }
@@ -120,7 +121,9 @@ async function addAttributes (
                         vwc.value.value.byteOffset,
                         vwc.value.value.byteLength,
                     ),
-                    jer: vwc.value.toJSON() as Prisma.InputJsonValue,
+                    jer: (vwc.value.construction === ASN1Construction.primitive)
+                        ? vwc.value.toJSON() as Prisma.InputJsonValue
+                        : undefined,
                     normalized_str: normalizer?.(ctx, vwc.value),
                     ContextValue: {
                         createMany: {

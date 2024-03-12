@@ -355,7 +355,9 @@ async function addValues(
                     attr.value.value.byteOffset,
                     attr.value.value.byteLength,
                 ),
-                jer: attr.value.toJSON() as Prisma.InputJsonValue,
+                jer: (attr.value.construction === ASN1Construction.primitive)
+                    ? attr.value.toJSON() as Prisma.InputJsonValue
+                    : undefined,
                 normalized_str: normalizerGetter(attr.type)?.(ctx, attr.value),
             })),
         }),
@@ -373,7 +375,9 @@ async function addValues(
                         attr.value.value.byteOffset,
                         attr.value.value.byteLength,
                     ),
-                    jer: attr.value.toJSON() as Prisma.InputJsonValue,
+                    jer: (attr.value.construction === ASN1Construction.primitive)
+                        ? attr.value.toJSON() as Prisma.InputJsonValue
+                        : undefined,
                     normalized_str: normalizerGetter(attr.type)?.(ctx, attr.value),
                     ContextValue: {
                         createMany: {
