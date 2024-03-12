@@ -16,6 +16,7 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["relationJoins"]
 }
 
 // Subentry attributes, such as those documented in X.501, Section 14.4.3,
