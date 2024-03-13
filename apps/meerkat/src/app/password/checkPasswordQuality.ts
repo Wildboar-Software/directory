@@ -80,15 +80,21 @@ async function checkPasswordQuality (
         return CHECK_PWD_QUALITY_LENGTH;
     }
 
-    const alphabet: string[] = (await ctx.db.attributeValue.findFirst({
+    const alphabetResult = await ctx.db.attributeValue.findFirst({
         where: {
             entry_id: subentry.dse.id,
             type_oid: pwdAlphabet["&id"].toBytes(),
         },
         select: {
-            jer: true,
+            tag_class: true,
+            tag_number: true,
+            constructed: true,
+            content_octets: true,
         },
-    }))?.jer as string[] ?? [];
+    });
+    const alphabet = alphabetResult
+        ? pwdAlphabet.decoderFor["&Type"]!(attributeValueFromDB(alphabetResult))
+        : [];
 
     const passwordCharacters: Set<string> = new Set(Array.from(password));
     // TODO: Unit testing to ensure the continue-to-label works as expected.
