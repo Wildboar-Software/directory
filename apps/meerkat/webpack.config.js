@@ -4,6 +4,17 @@ const { merge } = require('webpack-merge');
 
 module.exports = (config, context) => {
   return merge(config, {
+    module: {
+        rules: [
+            {
+                test: /\.node$/,
+                loader: "node-loader",
+                options: {
+                    name: "[name].[ext]",
+                },
+            },
+        ],
+    },
     plugins: [
         ...(config.plugins || []),
         /**

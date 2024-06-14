@@ -1,4 +1,4 @@
-import { Vertex, ClientAssociation, OperationStatistics } from "@wildboar/meerkat-types";
+import { ClientAssociation, OperationStatistics } from "@wildboar/meerkat-types";
 import * as errors from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx";
 import * as net from "net";
@@ -177,8 +177,6 @@ async function handleRequest (
             association_id: assn.id,
         });
     }
-    // let toWriteBuffer: Buffer = Buffer.alloc(0);
-    // let resultsBuffered: number = 0;
     const onEntry = (searchResEntry: SearchResultEntry): void => {
         const resultMessage = new LDAPMessage(
             message.messageID,
@@ -187,16 +185,11 @@ async function handleRequest (
             },
             undefined,
         );
-        // resultsBuffered++;
-        // toWriteBuffer = Buffer.concat([
-        //     toWriteBuffer,
-        //     _encode_LDAPMessage(resultMessage, BER).toBytes(),
-        // ]);
-        // if (resultsBuffered >= 100) {
-        //     conn.socket.write(toWriteBuffer);
-        //     toWriteBuffer = Buffer.alloc(0);
-        // }
-        assn.socket.write(_encode_LDAPMessage(resultMessage, BER).toBytes());
+        assn.socket.cork();
+        for (const buf of _encode_LDAPMessage(resultMessage, BER).toBuffers()) {
+            assn.socket.write(buf);
+        }
+        assn.socket.uncork();
     };
     if (
         ("searchRequest" in message.protocolOp)
