@@ -1,0 +1,115 @@
+syntax = "proto3";
+
+package asn1;
+
+import "google/protobuf/empty.proto";
+
+message BitString {
+    bytes buffer = 1;
+    uint32 trailingBits = 2;
+}
+
+message ObjectIdentifier {
+    repeated uint32 oid = 1;
+    string descriptor = 2;
+}
+
+message External {
+    // TODO:
+}
+
+message EmbeddedPDV {
+    // TODO:
+}
+
+message CharacterString {
+    // TODO:
+}
+
+message ASN1Values {
+    repeated ASN1Value elements = 1;
+}
+
+message Date {
+    int32 year = 1;
+    uint32 month = 2; // 1-indexed: 1 = January.
+    uint32 day = 3; // 1-indexed: 1 = First day of the month.
+}
+
+message TimeOfDay {
+    uint32 hour = 1; // 0 - 23
+    uint32 minute = 2; // 0 - 59
+    uint32 second = 3; // 0 - 59
+}
+
+message DateTime {
+    Date date = 1;
+    TimeOfDay time = 2;
+}
+
+message ASN1Value {
+    reserved 15;
+    oneof variant {
+        bool boolean = 1;
+        int64 integer = 2;
+        asn1.BitString bitString = 3;
+        bytes octetString = 4;
+        google.protobuf.Empty null = 5;
+        ObjectIdentifier objectIdentifier = 6;
+        string objectDescriptor = 7;
+        External external = 8;
+        double real = 9;
+        int32 enumerated = 10;
+        EmbeddedPDV embeddedPDV = 11;
+        string utf8String = 12;
+        ObjectIdentifier relativeOID = 13;
+        string time = 14;
+        ASN1Values sequence = 16;
+        ASN1Values set = 17;
+        string numericString = 18;
+        string printableString = 19;
+
+        // Implementations that translate this to ASN.1 MUST decode Teletex.
+        // Protobuf strings are UTF-8, which is NOT a superset of Teletex.
+        string teletexString = 20;
+        bytes videotexString = 21;
+        string ia5String = 22;
+
+        /* This is not translated to a google.protobuf.Timestamp because it is
+        not standardized what the two-digit years field means. */
+        string utcTime = 23;
+
+        /* This is not translated to a google.protobuf.Timestamp because the
+        GeneralizedTime type can represent precision as coarse as hours, but
+        also times that are infinitely precise. */
+        string generalizedTime = 24;
+
+        string graphicString = 25;
+        string visibleString = 26;
+        string generalString = 27;
+        string universalString = 28;
+        CharacterString characterString = 29;
+        string bmpString = 30;
+        Date date = 31;
+        TimeOfDay timeOfDay = 32;
+
+        /* This is not translated to a google.protobuf.Timestamp because the
+        DATE-TIME type is defined as using the local time zone, which is not
+        necessarily known. It is therefore impossible to know in advance that we
+        will be able to translate every DATE-TIME value to a UTC-based
+        timestamp. (In my opinion, this was a gross mistake on the part of the
+        ASN.1 specifications, and its one of the reasons Meerkat DSA still uses
+        GeneralizedTime.) */
+        DateTime dateTime = 33;
+
+        /* This is not translated to a google.protobuf.Duration because doing so
+        would obscure how the duration was specified: we would not know whether
+        it was P1Y or P12M or P365D, for instance. */
+        string duration = 34;
+
+        string oidIRI = 35;
+        string relativeOIDIRI = 36;
+
+        bytes other = 50;
+    }
+}

@@ -1,0 +1,390 @@
+syntax = "proto3";
+
+package x500;
+
+import "proto/asn1.proto";
+
+enum CombinationType {
+    CRITERIA_AND = 0;
+    CRITERIA_NOT = 1;
+    CRITERIA_OR = 2;
+}
+
+enum SearchSubset {
+    SEARCH_SUBSET_BASE_OBJECT = 0;
+    SEARCH_SUBSET_ONE_LEVEL = 1;
+    SEARCH_SUBSET_WHOLE_SUBTREE = 2;
+}
+
+enum AttributeUsage {
+    ATTR_USAGE_USER = 0; // userApplications
+    ATTR_USAGE_DIRECTORY = 1; // directoryOperation
+    ATTR_USAGE_DISTRIBUTED = 2; // distributedOperation
+    ATTR_USAGE_DSA = 3; // dSAOperation
+}
+
+enum ObjectClassKind {
+    OBJ_CLASS_KIND_ABSTRACT = 0;
+    OBJ_CLASS_KIND_STRUCTURAL = 1;
+    OBJ_CLASS_KIND_AUXILIARY = 2;
+}
+
+message AlgorithmIdentifier {
+    asn1.ObjectIdentifier = 1;
+    optional asn1.ASN1Value parameters = 2;
+}
+
+message PostalAddress {
+    repeated string lines = 1;
+}
+
+message FacsimileTelephoneNumber {
+    string telephoneNumber = 1;
+    BitString parameters = 2;
+}
+
+message NameAndOptionalUID {
+    DistinguishedName dn = 1;
+    asn1.BitString uid = 2;
+}
+
+message NameAndString {
+    DistinguishedName dn = 1;
+    string str = 2;
+}
+
+message CriteriaItem {
+    oneof variant {
+        asn1.ObjectIdentifier equality = 1;
+        asn1.ObjectIdentifier substrings = 1;
+        asn1.ObjectIdentifier greaterOrEqual = 1;
+        asn1.ObjectIdentifier lessOrEqual = 1;
+        asn1.ObjectIdentifier approximateMatch = 1;
+    }
+}
+
+message Criteria {
+    optional CriteriaItem item = 1;
+    CombinationType subType = 2;
+    // If there is more than one `not`, they shall be ANDed together.
+    repeated Criteria subs = 3;
+}
+
+message Guide {
+    asn1.ObjectIdentifier objectClass = 1;
+    Criteria criteria = 2;
+}
+
+message EnhancedGuide {
+    asn1.ObjectIdentifier objectClass = 1;
+    Criteria criteria = 2;
+    SearchSubset subset = 3; // DEFAULT oneLevel
+}
+
+message WGS84Coordinates {
+    float latitude = 1;
+    float longitude = 2;
+}
+
+message WGS84Position {
+    float latitude = 1;
+    float longitude = 2;
+    optional float altitudeInMeters = 3;
+}
+
+message WGS84Line {
+    repeated WGS84Position positions = 1;
+}
+
+message WGS84Polygon {
+    repeated WGS84Position positions = 1;
+}
+
+message ComplexNumber {
+    double real = 1;
+    double imaginary = 2;
+}
+
+message DecimalValue {
+    int64 quantity = 1;
+    uint32 decimalDigits = 2;
+}
+
+message Currency {
+    oneof units {
+        string fiat = 1; // e.g. "USD"
+        string cryptocurrency = 2; // e.g. "BTC"
+        asn1.ObjectIdentifier custom = 3;
+    };
+    DecimalValue amount = 4;
+}
+
+message TextualKeyValue {
+    string key = 1;
+    string value = 2;
+}
+
+message CIDR {
+    bytes ip = 1;
+    uint32 mask = 2; // 0-32 for IPv4, 0-128 for IPv6.
+}
+
+message HostPort {
+    bytes ip = 1;
+    uint32 port = 2;
+}
+
+message TransportAddress {
+    bytes ip = 1;
+    uint32 port = 2;
+    uint32 ipProtocol = 3;
+}
+
+/* This can be used to represent a SIGNATURE, HASH, etc. */
+message Crypto {
+    AlgorithmIdentifier algorithm = 1;
+    asn1.BitString value = 2;
+}
+
+message Criteria {
+    optional CriteriaItem item = 1;
+    CombinationType subType = 2;
+    // If there is more than one `not`, they shall be ANDed together.
+    repeated Criteria subs = 3;
+}
+
+message Refinement {
+    asn1.ObjectIdentifier item = 1;
+    CombinationType subType = 2;
+    // If there is more than one `not`, they shall be ANDed together.
+    repeated Refinement subs = 3;
+}
+
+message SpecificExclusion {
+    bool after = 1; // If true, this is chopAfter, otherwise: chopBefore.
+    repeated DistinguishedName chop = 2;
+}
+
+message SubtreeSpecification {
+    DistinguishedName base = 1;
+    repeated SpecificExclusion specificExclusions = 2;
+    uint32 minimum = 3;
+    uint32 maximum = 4;
+    optional Refinement specificationFilter = 5;
+}
+
+message DITStructureRuleDescription {
+    repeated string name = 1;
+    string description = 2;
+    bool obsolete = 3;
+    int64 ruleIdentifier = 4;
+    asn1.ObjectIdentifier nameForm = 5;
+    repeated int64 superiorStructureRules = 6;
+}
+
+message DITContentRuleDescription {
+    repeated string name = 1;
+    string description = 2;
+    bool obsolete = 3;
+    asn1.ObjectIdentifier structuralObjectClass = 4;
+    repeated asn1.ObjectIdentifier auxiliaries = 5;
+    repeated asn1.ObjectIdentifier mandatory = 6;
+    repeated asn1.ObjectIdentifier optional = 7;
+    repeated asn1.ObjectIdentifier precluded = 8;
+}
+
+message MatchingRuleDescription {
+    repeated string name = 1;
+    string description = 2;
+    bool obsolete = 3;
+    asn1.ObjectIdentifier identifier = 4;
+    string information = 5;
+}
+
+message AttributeTypeDescription {
+    repeated string name = 1;
+    string description = 2;
+    bool obsolete = 3;
+    asn1.ObjectIdentifier identifier = 4;
+    asn1.ObjectIdentifier derivation = 5;
+    asn1.ObjectIdentifier equalityMatch = 6;
+    asn1.ObjectIdentifier orderingMatch = 7;
+    asn1.ObjectIdentifier substringsMatch = 8;
+    string attributeSyntax = 9;
+    bool singleValued = 10;
+    bool collective = 11;
+    bool notUserModifiable = 12; // Inverted so defaulting to false is correct.
+    AttributeUsage application = 13;
+}
+
+message ObjectClassDescription {
+    repeated string name = 1;
+    string description = 2;
+    bool obsolete = 3;
+    asn1.ObjectIdentifier identifier = 4;
+    repeated asn1.ObjectIdentifier subclassOf = 5;
+    ObjectClassKind kind = 6;
+    repeated asn1.ObjectIdentifier mandatories = 7;
+    repeated asn1.ObjectIdentifier optionals = 8;
+}
+
+message NameFormDescription {
+    repeated string name = 1;
+    string description = 2;
+    bool obsolete = 3;
+    asn1.ObjectIdentifier identifier = 4;
+    asn1.ObjectIdentifier subordinate = 5;
+    repeated asn1.ObjectIdentifier namingMandatories = 6;
+    repeated asn1.ObjectIdentifier namingOptionals = 7;
+}
+
+message MatchingRuleUseDescription {
+    repeated string name = 1;
+    string description = 2;
+    bool obsolete = 3;
+    asn1.ObjectIdentifier identifier = 4;
+    repeated asn1.ObjectIdentifier information = 5;
+}
+
+message ContextDescription {
+    repeated string name = 1;
+    string description = 2;
+    bool obsolete = 3;
+    asn1.ObjectIdentifier identifier = 4;
+    string syntax = 5;
+    string assertionSyntax = 6;
+}
+
+message DITContextUseDescription {
+    repeated string name = 1;
+    string description = 2;
+    bool obsolete = 3;
+    asn1.ObjectIdentifier identifier = 4;
+    repeated asn1.ObjectIdentifier mandatoryContexts = 5;
+    repeated asn1.ObjectIdentifier optionalContexts = 6;
+}
+
+message FriendsDescription {
+    repeated string name = 1;
+    string description = 2;
+    bool obsolete = 3;
+    asn1.ObjectIdentifier anchor = 4;
+    repeated asn1.ObjectIdentifier friends = 5;
+}
+
+message X500Value {
+    oneof variant {
+        asn1.ASN1Value asn1 = 1;
+        DistinguishedName dn = 2;
+        PostalAddress postalAddress = 3;
+        FacsimileTelephoneNumber fax = 4;
+        NameAndOptionalUID nameAndOptionalUID = 5;
+        Guide guide = 6;
+        EnhancedGuide enhancedGuide = 7;
+        AlgorithmIdentifier algorithmIdentifier = 8;
+        SubtreeSpecification subtreeSpec = 9;
+
+        // Schema attributes
+        DITStructureRuleDescription structureRule = 10;
+        DITContentRuleDescription contentRule = 11;
+        MatchingRuleDescription matchingRule = 12;
+        AttributeTypeDescription attributeType = 13;
+        ObjectClassDescription objectClass = 14;
+        NameFormDescription nameForm = 15;
+        MatchingRuleUseDescription matchingRuleUse = 16;
+        ContextDescription contextType = 17;
+        DITContextUseDescription contextUse = 18;
+        FriendsDescription friends = 19;
+
+        GeneralName generalName = 30;
+        WGS84Coordinates wgs84Coords = 31;
+        WGS84Position wgs84Pos = 32;
+        WGS84Line wgs84Line = 33;
+        WGS84Polygon wgs84Poly = 34;
+        ComplexNumber complexNumber = 35;
+        Currency currency = 36;
+        TextualKeyValue textkv = 37;
+        CIDR cidr = 39;
+        HostPort hostport = 40;
+        TransportAddress transportAddress = 41;
+        NameAndString nameAndString = 42;
+        Crypto crypto = 43;
+
+        // Catch-all for all remaining BER-encoded values. This MUST contain
+        // the entire tag-length-value, not just the content octets.
+        bytes berTLV = 50;
+    };
+}
+
+message AttributeTypeAndValue {
+    asn1.ObjectIdentifier type = 1;
+    X500Value value = 2;
+}
+
+message RelativeDistinguishedName {
+    repeated AttributeTypeAndValue values = 1;
+}
+
+message DistinguishedName {
+    repeated RelativeDistinguishedName rdns = 1;
+}
+
+message DirectoryName {
+    oneof variant {
+        DistinguishedName rdnSequence = 1;
+        // These variants from an Amendment to X.501 published in 2021.
+        string dnsName = 2;
+        asn1.ObjectIdentifier oid = 3;
+    }
+}
+
+message OtherName {
+    asn1.ObjectIdentifier typeId = 1;
+    bytes ber = 2; // BER encoding
+
+    // May be used only if `ber` is empty and if the correct syntax of the
+    // other name is UTF8String.
+    string text = 3;
+}
+
+message EDIPartyName {
+    string nameAssigner = 1;
+    string partyName = 2;
+}
+
+message GeneralName {
+    reserved 4; // x400Address
+    oneof variant {
+        OtherName otherName = 1;
+        string rfc822Name = 2;
+        string dnsName = 3;
+        DirectoryName directoryName = 5;
+        EDIPartyName ediPartyName = 6;
+        string uniformResourceIdentifier = 7;
+        bytes iPAddress = 8;
+        asn1.ObjectIdentifier registeredID = 9;
+    }
+}
+
+message Context {
+    asn1.ObjectIdentifier contextType = 1;
+    repeated X500Value contextValues = 2;
+    bool fallback = 3;
+}
+
+message AttributeValue {
+    X500Value value = 1;
+    repeated Context contextList = 2;
+}
+
+message Attribute {
+    asn1.ObjectIdentifier type = 1;
+    repeated AttributeValue values = 2;
+}
+
+// There is technically nothing in the specification prohibiting these fields
+// from having negative values, though it would be unwise.
+message OperationalBindingID {
+    int64 identifier = 1;
+    int64 version = 2;
+}

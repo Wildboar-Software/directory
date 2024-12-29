@@ -1,0 +1,173 @@
+syntax = "proto3";
+
+package rose;
+
+import "proto/asn1.proto";
+import "proto/x500.proto";
+
+message Code {
+    oneof variant {
+        uint32 local = 1;
+        asn1.ObjectIdentifier global = 2;
+    }
+}
+
+enum AETitleError {
+    callingAETitleNotAccepted = 0;
+    calledAETitleNotRecognized = 1;
+}
+
+enum RejectReason {
+    mistypedPDU = 0;
+    duplicateInvokeIDRequest = 1;
+    unsupportedOperationRequest = 2;
+    unknownOperationRequest = 3;
+    mistypedArgumentRequest = 4;
+    resourceLimitationRequest = 5;
+    unknownInvokeIDResult = 6;
+    mistypedResultRequest = 7;
+    unknownInvokeIDError = 8;
+    unknownError = 9;
+    mistypedParameterError = 10;
+    unsupportedIdmVersion = 11;
+    unsuitableIdmVersion = 12;
+    invalidIdmVersion = 13;
+}
+
+enum AbortReason {
+    mistypedPDU = 0;
+    unboundRequest = 1;
+    invalidPDU = 2;
+    resourceLimitation = 3;
+    connectionFailed = 4;
+    invalidProtocol = 5;
+    reasonNotSpecified = 6;
+}
+
+enum TLSResponse {
+    success = 0;
+    operationsError = 1;
+    protocolError = 2;
+    unavailable = 3;
+}
+
+message Bind {
+    asn1.ObjectIdentifier protocolID = 1;
+    optional x500.GeneralName callingAETitle = 2;
+    optional x500.GeneralName calledAETitle = 3;
+    bytes argument = 4;
+    string language = 5; // ISO-639 language code for textual messages.
+
+    // The signature over the bytes of the argument field.
+    x500.Crypto signature = 6;
+}
+
+message BindResult {
+    asn1.ObjectIdentifier protocolID = 1;
+    optional x500.GeneralName respondingAETitle = 2;
+    bytes result = 3;
+
+    // The signature over the bytes of the result field.
+    x500.Crypto signature = 5;
+}
+
+message BindError {
+    asn1.ObjectIdentifier protocolID = 1;
+    optional x500.GeneralName respondingAETitle = 2;
+    optional AETitleError aeTitleError = 3;
+    bytes error = 4;
+
+    // The signature over the bytes of the error field.
+    x500.Crypto signature = 5;
+}
+
+message Request {
+    uint32 invokeID = 1;
+    Code opCode = 2;
+    bytes argument = 3;
+
+    // The signature over the bytes of the argument field.
+    x500.Crypto signature = 4;
+}
+
+message Result {
+    uint32 invokeID = 1;
+    Code opCode = 2;
+    bytes result = 3;
+
+    // The signature over the bytes of the result field.
+    x500.Crypto signature = 4;
+}
+
+message Error {
+    uint32 invokeID = 1;
+    Code errcode = 2;
+    bytes error = 3;
+    string text = 4; // Human-friendly text to display.
+
+    // The signature over the bytes of the error field.
+    x500.Crypto signature = 5;
+}
+
+message Reject {
+    uint32 invokeID = 1;
+    RejectReason reason = 2;
+    string text = 3; // Human-friendly text to display.
+}
+
+message Abort {
+    AbortReason reason = 1;
+    string text = 2; // Human-friendly text to display.
+}
+
+message Unbind {
+    // Intentionally empty message.
+}
+
+message StartTLS {
+    // Intentionally empty message.
+}
+
+message RosePDU {
+    oneof pdu {
+        Bind bind = 1;
+        BindResult bindResult = 2;
+        BindError bindError = 3;
+        Request request = 4;
+        Result result = 5;
+        Error error = 6;
+        Reject reject = 7;
+        Unbind unbind = 8;
+        Abort abort = 9;
+        StartTLS startTLS = 10;
+        TLSResponse tlsResponse = 11;
+    }
+}
+
+message BindOutcome {
+    oneof pdu {
+        Bind bind = 1;
+        BindResult bindResult = 2;
+        BindError bindError = 3;
+        Abort abort = 9;
+    }
+    boolean batchingSupported = 10;
+}
+
+message OperationOutcome {
+    oneof pdu {
+        Result result = 5;
+        Error error = 6;
+        Reject reject = 7;
+        Abort abort = 9;
+    }
+}
+
+message UnbindOutcome {}
+
+service ROSEServer {
+    rpc Bind (Bind) returns (BindOutcome);
+    rpc Request (Request) returns (OperationOutcome);
+    rpc Unbind (Unbind) returns (UnbindOutcome);
+    rpc StartTLS (StartTLS) returns (TLSResponse);
+}

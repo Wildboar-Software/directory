@@ -1,0 +1,908 @@
+syntax = "proto3";
+
+package dap;
+
+import "proto/asn1.proto";
+import "proto/rose.proto";
+import "proto/x500.proto";
+// import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
+
+enum AbandonedProblem {
+    ABANDONED_PROB_PAGING = 0; // pagingAbandoned
+}
+
+enum AbandonProblem {
+    ABANDON_PROB_NO_SUCH_OP = 0; // noSuchOperation
+    ABANDON_PROB_TOO_LATE = 1; // tooLate
+    ABANDON_CANNOT = 2; // cannotAbandon
+}
+
+enum AttributeProblem {
+    ATTR_PROB_NO_SUCH_ATTR_OR_VALUE = 0; // noSuchAttributeOrValue
+    ATTR_PROB_INVALID_ATTR_SYNTAX = 1; // invalidAttributeSyntax
+    ATTR_PROB_UNDEFINED_ATTR_TYPE = 2; // undefinedAttributeType
+    ATTR_PROB_INAPPROPRIATE_MATCHING = 3; // inappropriateMatching
+    ATTR_PROB_CONSTRAINT_VIOLATION = 4; // constraintViolation
+    ATTR_PROB_ALREADY_EXISTS = 5; // attributeOrValueAlreadyExists
+    ATTR_PROB_CONTEXT_VIOLATION = 6; // contextViolation
+}
+
+enum NameProblem {
+    NAME_PROB_NO_SUCH_OBJECT = 0; // noSuchObject
+    NAME_PROB_ALIAS = 1; // aliasProblem
+    NAME_PROB_INVALID_ATTR_SYNTAX = 2; // invalidAttributeSyntax
+    NAME_PROB_ALIAS_DEREF = 3; // aliasDereferencingProblem
+}
+
+enum SecurityProblem {
+    SEC_PROB_INAPPROPRIATE_AUTHN = 1; // inappropriateAuthentication
+    SEC_PROB_INVALID_CREDENTIALS = 2; // invalidCredentials
+    SEC_PROB_INSUFFICIENT_ACCESS = 3; // insufficientAccessRights
+    SEC_PROB_INVALID_SIGNATURE = 4; // invalidSignature
+    SEC_PROB_PROTECTION_REQUIRED = 5; // protectionRequired
+    SEC_PROB_NO_INFORMATION = 6; // noInformation
+    SEC_PROB_BLOCKED_CREDENTIALS = 7; // blockedCredentials
+    SEC_PROB_INVALID_QOP_MATCH = 8; // invalidQOPMatch
+    SEC_PROB_SPKM_ERROR = 9; // spkmError
+    SEC_PROB_UNSUPP_AUTHN_METHOD = 10; // unsupportedAuthenticationMethod
+    SEC_PROB_PASSWORD_EXPIRED = 11; // passwordExpired
+    SEC_PROB_INAPPROPRIATE_ALGORITHMS = 12; // inappropriateAlgorithms
+}
+
+enum ServiceProblem {
+    SVC_PROB_BUSY = 0; // busy
+    SVC_PROB_UNAVAILABLE = 1; // unavailable
+    SVC_PROB_UNWILLING_TO_PERFORM = 2; // unwillingToPerform
+    SVC_PROB_CHAINING_REQUIRED = 3; // chainingRequired
+    SVC_PROB_UNABLE_TO_PROCEED = 4; // unableToProceed
+    SVC_PROB_INVALID_REFERENCE = 5; // invalidReference
+    SVC_PROB_TIME_LIMIT_EXCEEDED = 6; // timeLimitExceeded
+    SVC_PROB_ADMIN_LIMIT_EXCEEDED = 7; // administrativeLimitExceeded
+    SVC_PROB_LOOP_DETECTED = 8; // loopDetected
+    SVC_PROB_UNAVAILABLE_CRITICAL_EXT = 9; // unavailableCriticalExtension
+    SVC_PROB_OUT_OF_SCOPE = 10; // outOfScope
+    SVC_PROB_DIT_ERROR = 11; // ditError
+    SVC_PROB_INVALID_QUERY_REF = 12; // invalidQueryReference
+    SVC_PROB_SERVICE_NOT_AVAILABLE = 13; // requestedServiceNotAvailable
+    SVC_PROB_UNSUPPORTED_MATCHING_USE = 14; // unsupportedMatchingUse
+    SVC_PROB_AMBIGUOUS_KEY_ATTRS = 15; // ambiguousKeyAttributes
+    SVC_PROB_SASL_BIND_IN_PROGRESS = 16; // saslBindInProgress
+    SVC_PROB_NOT_SUPPORTED_BY_LDAP = 17; // notSupportedByLDAP
+}
+
+enum UpdateProblem {
+    UPDATE_PROB_NAMING_VIOLATION = 0; // namingViolation
+    UPDATE_PROB_OBJECT_CLASS_VIOLATION = 1; // objectClassViolation
+    UPDATE_PROB_NOT_ALLOWED_ON_NON_LEAF = 2; // notAllowedOnNonLeaf
+    UPDATE_PROB_NOT_ALLOWED_ON_RDN = 3; // notAllowedOnRDN
+    UPDATE_PROB_ENTRY_ALREADY_EXISTS = 4; // entryAlreadyExists
+    UPDATE_PROB_AFFECTS_MULTIPLE_DSAS = 5; // affectsMultipleDSAs
+    UPDATE_PROB_OBJ_CLASS_MOD_PROHIBITED = 6; // objectClassModificationProhibited
+    UPDATE_PROB_NO_SUCH_SUPERIOR = 7; // noSuchSuperior
+    UPDATE_PROB_NOT_ANCESTOR = 8; // notAncestor
+    UPDATE_PROB_PARENT_NOT_ANCESTOR = 9; // parentNotAncestor
+    UPDATE_PROB_HIERARCHY_RULE_VIOLATION = 10; // hierarchyRuleViolation
+    UPDATE_PROB_FAMILY_RULE_VIOLATION = 11; // familyRuleViolation
+    UPDATE_PROB_INSUFFICIENT_PWD_QUALITY = 12; // insufficientPasswordQuality
+    UPDATE_PROB_PASSWORD_IN_HISTORY = 13; // passwordInHistory
+    UPDATE_PROB_NO_PASSWORD_SLOT = 14; // noPasswordSlot
+}
+
+enum FamilyGrouping {
+    FAMGROUP_ENTRY_ONLY = 0;
+    FAMGROUP_COMPOUND_ENTRY = 1;
+    FAMGROUP_STRANDS = 2;
+    FAMGROUP_MULTISTRAND = 3;
+}
+
+enum FamilyMemberSelect {
+    CONTRIBUTING_ENTRIES_ONLY = 0;
+    PARTICIPATING_ENTRIES_ONLY = 1;
+    COMPOUND_ENTRY = 2;
+}
+
+enum Priority {
+    PRIORITY_LOW = 0;
+    PRIORITY_MEDIUM = 1;
+    PRIORITY_HIGH = 2;
+}
+
+enum ReferralScope {
+    REFERRAL_SCOPE_DMD = 0;
+    REFERRAL_SCOPE_COUNTRY = 1;
+}
+
+enum ProtectionRequest {
+    PROT_REQ_NONE = 0;
+    PROT_REQ_SIGNED = 1;
+}
+
+enum ErrorProtectionRequest {
+    ERR_PROT_REQ_NONE = 0;
+    ERR_PROT_REQ_SIGNED = 1;
+}
+
+enum NameResolutionPhase {
+    NRP_NOT_STARTED = 0;
+    NRP_PROCEEDING = 1;
+    NRP_COMPLETED = 2;
+}
+
+enum ReferenceType {
+    SUPERIOR = 0;
+    SUBORDINATE = 1;
+    CROSS = 2;
+    NON_SPECIFIC_SUBORDINATE = 3;
+    SUPPLIER = 4;
+    MASTER = 5;
+    IMMEDIATE_SUPERIOR = 6;
+    SELF = 7;
+    DIT_BRIDGE = 8;
+}
+
+enum InfoSelection {
+    INFO_TYPES_ONLY = 0;
+    INFO_TYPES_AND_VALUES = 1;
+}
+
+// It is important that AND remains the first option, so that filters default to
+// and:{}, which is the default for SearchArgumentData.
+enum FilterType {
+    FILTER_AND = 0;
+    FILTER_NOT = 1;
+    FILTER_OR = 2;
+}
+
+enum PwdResponseError {
+    PWD_RES_ERR_PASSWORD_EXPIRED = 0;
+    PWD_RES_ERR_CHANGE_AFTER_RESET = 1;
+}
+
+enum LimitProblem {
+    LIMIT_PROB_TIME = 0; // timeLimitExceeded
+    LIMIT_PROB_SIZE = 1; // sizeLimitExceeded
+    LIMIT_PROB_ADMIN = 2; // administrativeLimitExceeded
+}
+
+enum EntryCountType {
+    ENTRY_COUNT_NONE = 0;
+    ENTRY_COUNT_EXACT = 1;
+    ENTRY_COUNT_LOW_EST = 2;
+    ENTRY_COUNT_BEST_EST = 3;
+}
+
+enum AccessPointCategory {
+    ACCESS_POINT_CATEGORY_MASTER = 0;
+    ACCESS_POINT_CATEGORY_SHADOW = 1;
+    ACCESS_POINT_CATEGORY_WRITE_COPY = 2;
+}
+
+enum JoinType {
+    JOIN_TYPE_INNER = 0;
+    JOIN_TYPE_LEFT_OUTER = 1;
+    JOIN_TYPE_FULL_OUTER = 2;
+}
+
+message ServiceControlOptions {
+    bool preferChaining = 1;
+    bool chainingProhibited = 2;
+    bool localScope = 3;
+    bool dontUseCopy = 4;
+    bool dontDereferenceAliases = 5;
+    bool subentries = 6;
+    bool copyShallDo = 7;
+    bool partialNameResolution = 8;
+    bool manageDSAIT = 9;
+    bool noSubtypeMatch = 10;
+    bool noSubtypeSelection = 11;
+    bool countFamily = 12;
+    bool dontSelectFriends = 13;
+    bool dontMatchFriends = 14;
+    bool allowWriteableCopy = 15;
+}
+
+message ManageDSAITPlaneRef {
+    x500.DirectoryName dsaName = 1;
+    x500.OperationalBindingID agreementID = 2;
+}
+
+message ServiceControls {
+    // All false is the default in the ASN.1 DAP too.
+    ServiceControlOptions options = 1;
+    Priority priority = 2;
+    uint32 timeLimit = 3;
+    uint32 sizeLimit = 4;
+    optional ReferralScope scopeOfReferral = 5;
+    uint32 attributeSizeLimit = 6;
+    optional ManageDSAITPlaneRef manageDSAITPlaneRef = 7;
+    asn1.ObjectIdentifier serviceType = 8;
+    optional int64 userClass = 9;
+}
+
+message CertificationPath {
+    Certificate userCertificate = 1;
+    repeated CertificatePair theCACertificates = 2;
+}
+
+message SecurityParameters {
+    CertificationPath certificationPath = 1;
+    x500.DistinguishedName name = 2;
+    google.protobuf.Timestamp time = 3;
+    asn1.BitString random = 4;
+    ProtectionRequest target = 5;
+    optional rose.Code operationCode = 6;
+    ErrorProtectionRequest errorProtection = 7;
+    optional rose.Code errorCode = 8;
+}
+
+message OperationProgress {
+    NameResolutionPhase nameResolutionPhase = 1;
+    // This is not restricted by the ASN.1 syntax from being negative, but it
+    // implicitly cannot be, since it is a depth into the DIT.
+    optional uint32 nextRDNToBeResolved = 2;
+}
+
+message ContextAssertion {
+    asn1.ObjectIdentifier contextType = 1;
+    repeated X500Value contextValues = 2;
+}
+
+message TypeAndContextAssertion {
+
+    asn1.ObjectIdentifier type = 1;
+
+    // This is the value of .contextAssertions.preference or
+    // contextAssertions.all.
+    repeated ContextAssertion contextAssertions = 2;
+
+    // This indicates if contextAssertions was the `all` variant. If false,
+    // it was the `preference` variant.
+    bool all = 3;
+}
+
+message ContextSelection {
+    // An empty array means "allContexts."
+    repeated TypeAndContextAssertion selectedContexts = 1;
+}
+
+message CommonArguments {
+    optional ServiceControls serviceControls = 1;
+    optional SecurityParameters securityParameters = 2;
+    optional x500.DistinguishedName requestor = 3;
+    optional OperationProgress operationProgress = 4;
+    optional uint32 aliasedRDNs = 5;
+    optional asn1.BitString criticalExtensions = 6;
+    optional ReferenceType referenceType = 7;
+    boolean entryOnly = 8;
+    repeated x500.RelativeDistinguishedName exclusions = 9;
+    boolean nameResolveOnMaster = 10;
+    optional ContextSelection operationContexts = 11;
+    FamilyGrouping familyGrouping = 12;
+}
+
+message CommonResults {
+    optional SecurityParameters securityParameters = 1;
+    optional x500.DistinguishedName performer = 2;
+    bool aliasDereferenced = 3;
+    repeated x500.Attribute notification = 4;
+}
+
+message HierarchySelections {
+    bool self = 1;
+    bool children = 2;
+    bool parent = 3;
+    bool hierarchy = 4;
+    bool top = 5;
+    bool subtree = 6;
+    bool siblings = 7;
+    bool siblingChildren = 8;
+    bool siblingSubtree = 9;
+    bool all = 10;
+}
+
+message SearchControlOptions {
+    bool searchAliases = 1;
+    bool matchedValuesOnly = 2;
+    bool checkOverspecified = 3;
+    bool performExactly = 4;
+    bool includeAllAreas = 5;
+    bool noSystemRelaxation = 6;
+    bool dnAttribute = 7;
+    bool matchOnResidualName = 8;
+    bool entryCount = 9;
+    bool useSubset = 10;
+    bool separateFamilyMembers = 11;
+    bool searchFamily = 12;
+}
+
+message FamilyReturn {
+    FamilyMemberSelect memberSelect = 1;
+    repeated asn1.ObjectIdentifier familySelect = 2;
+}
+
+message AttributeSelection {
+    bool all = 1;
+    repeated asn1.ObjectIdentifier select = 2;
+}
+
+message EntryInformationSelection {
+    AttributeSelection userAttributes = 1;
+    InfoSelection infoTypes = 2;
+    optional AttributeSelection extraAttributes = 3;
+    optional ContextSelection contextSelection = 4;
+    bool returnContexts = 5;
+    optional FamilyReturn familyReturn = 6;
+}
+
+message EntryInformation {
+    x500.DirectoryName name = 1;
+    bool notFromEntry = 2; // Name "inverted" so it defaults to false correctly.
+
+    // Use empty attributes to represent types only.
+    repeated x500.Attribute information = 3;
+
+    bool incompleteEntry = 4;
+    bool partialName = 5;
+    bool derivedEntry = 6;
+
+    /* This is not a separate field in the ASN.1 definition of EntryInformation,
+    but since every entry has an object class, it is worthwhile to have a
+    separate field that is already strongly-typed to represent these values. The
+    information field shall still contain the objectClasses values as well. */
+    repeated asn1.ObjectIdentifier objectClasses = 7;
+
+    /* This is also not a separate field in the ASN.1 definition of
+    EntryInformation, but since it itself is composed of entry-like data
+    structures, it seems worthwhile for an implementation to return this
+    information in an already-decoded useful serialization. */
+    repeated FamilyEntries familyInformation = 8;
+}
+
+message FamilyEntry {
+    x500.RelativeDistinguishedName rdn = 1;
+    // Use empty attributes to represent types only.
+    repeated x500.Attribute information = 2;
+    repeated FamilyEntries familyInfo = 3;
+}
+
+message FamilyEntries {
+    asn1.ObjectIdentifier familyClass = 1;
+    repeated FamilyEntry familyEntries = 2;
+}
+
+message AttributeValueAssertion {
+    asn1.ObjectIdentifier type = 1;
+    X500Value assertion = 2;
+    bool allContexts = 3;
+    repeated ContextAssertion selectedContexts = 4;
+}
+
+message SubstringsAssertion {
+    asn1.ObjectIdentifier type = 1;
+    oneof strings {
+        X500Value initial = 2;
+        X500Value any = 3;
+        X500Value final = 4;
+        x500.Attribute control = 5;
+    };
+}
+
+message MatchingRuleAssertion {
+    repeated asn1.ObjectIdentifier matchingRule = 1;
+    optional asn1.ObjectIdentifier type = 2;
+    X500Value matchValue = 3;
+    bool dnAttributes = 4;
+}
+
+message AttributeTypeAssertion {
+    asn1.ObjectIdentifier type = 1;
+    repeated ContextAssertion assertedContexts = 2;
+}
+
+message FilterItem {
+    oneof variant {
+        AttributeValueAssertion equality = 1;
+        SubstringsAssertion substrings = 2;
+        AttributeValueAssertion greaterOrEqual = 3;
+        AttributeValueAssertion lessOrEqual = 4;
+        asn1.ObjectIdentifier present = 5;
+        AttributeValueAssertion approximateMatch = 6;
+        MatchingRuleAssertion extensibleMatch = 7;
+        AttributeTypeAssertion contextPresent = 8;
+    };
+}
+
+/* The default value of this happens to be and:{}, which is the default value
+for SearchArgumentData. */
+message Filter {
+    optional FilterItem item = 1;
+    FilterType subfilterType = 2;
+    // If there is more than one `not`, they shall be ANDed together.
+    repeated Filter subfilters = 3;
+}
+
+message SortKey {
+    asn1.ObjectIdentifier type = 1;
+    asn1.ObjectIdentifier orderingRule = 2;
+}
+
+message NewPagedResultsRequest {
+    uint32 pageSize = 1;
+    repeated SortKey sortKeys = 2;
+    bool reverse = 3;
+    bool unmerged = 4;
+    uint32 pageNumber = 5;
+}
+
+message PagedResultsRequest {
+    oneof variant {
+        NewPagedResultsRequest newRequest = 1;
+        bytes queryReference = 2;
+        bytes abandonQuery = 3;
+    };
+}
+
+message Hash {
+    x500.AlgorithmIdentifier algorithmIdentifier = 1;
+    asn1.BitString hashValue = 2;
+}
+
+message EncryptedPassword {
+    x500.AlgorithmIdentifier algorithmIdentifier = 1;
+    bytes encryptedString = 2;
+}
+
+message UserPwd {
+    oneof variant {
+        string clear = 1;
+        EncryptedPassword encrypted = 2;
+    }
+}
+
+message SimpleCredentialsPassword {
+    oneof variant {
+        bytes unprotected = 1;
+        Hash protected = 2;
+        UserPwd userPwd = 3;
+    };
+}
+
+message SimpleCredentials {
+    x500.DistinguishedName name = 1;
+    google.protobuf.Timestamp time1 = 2;
+    google.protobuf.Timestamp time2 = 3;
+    asn1.BitString random1 = 4;
+    asn1.BitString random2 = 5;
+    optional SimpleCredentialsPassword password = 6;
+}
+
+message ACPathData {
+    optional Certificate certificate = 1;
+    optional AttributeCertificate attributeCertificate = 2;
+}
+
+message Certificate {
+    bytes der = 1;
+}
+
+message AttributeCertificate {
+    bytes der = 1;
+}
+
+message CertificatePair {
+    optional Certificate issuedToThisCA = 1;
+    optional Certificate issuedByThisCA = 2;
+}
+
+message Signed {
+    // The DER encoding of the entire SIGNED{ToBeSigned} value.
+    bytes der = 1;
+}
+
+message AttributeCertificationPath {
+    AttributeCertificate attributeCertificate = 1;
+    repeated ACPathData acPath = 2;
+}
+
+message StrongCredentials {
+    optional CertificationPath certificationPath = 1;
+    Signed bindToken = 2;
+    optional x500.DistinguishedName name = 3;
+    optional AttributeCertificationPath attributeCertificationPath = 4;
+}
+
+message SaslCredentials {
+    string mechanism = 1;
+    bytes credentials = 2;
+    bool saslAbort = 3;
+}
+
+message Credentials {
+    oneof variant {
+        SimpleCredentials simple = 1;
+        StrongCredentials strong = 2;
+        asn1.External externalProcedure = 3;
+        bytes spkmReq = 4;
+        bytes spkmRep = 5;
+        SaslCredentials sasl = 6;
+    };
+}
+
+message Versions {
+    bool v1 = 1;
+    bool v2 = 2;
+}
+
+message DirectoryBindArgument {
+    optional Credentials credentials = 1;
+    Versions versions = 2;
+}
+
+message DirectoryBindResult {
+    optional Credentials credentials = 1;
+    Versions versions = 2;
+    optional uint32 timeLeft = 3;
+    optional uint32 graceRemaining = 4;
+    optional PwdResponseError error = 5;
+}
+
+message DirectoryBindError {
+    Versions versions = 1;
+    oneof error {
+        ServiceProblem serviceError = 2;
+        SecurityProblem securityError = 3;
+    };
+    optional SecurityParameters securityParameters = 4;
+}
+
+message ReadArgument {
+    x500.DirectoryName object = 1;
+    optional EntryInformationSelection selection = 2;
+    bool modifyRightsRequest = 3;
+    optional CommonArguments commonArguments = 4;
+}
+
+message ModifyRights {
+    oneof item {
+        google.protobuf.Empty entry = 1;
+        asn1.ObjectIdentifier attribute = 2;
+        AttributeTypeAndValue value = 3;
+    };
+    bool add = 4;
+    bool remove = 5;
+    bool rename = 6;
+    bool move = 7;
+}
+
+message ReadResult {
+    EntryInformation entry = 1;
+    optional ModifyRights modifyRights = 2;
+    optional CommonResults commonResults = 3;
+}
+
+message CompareArgument {
+    x500.DirectoryName object = 1;
+    AttributeValueAssertion purported = 2;
+    optional CommonArguments commonArguments = 3;
+}
+
+message CompareResult {
+    optional x500.DirectoryName name = 1;
+    bool matched = 2;
+    bool notFromEntry = 3; // Inverted so it defaults to false correctly.
+    optional asn1.ObjectIdentifier matchedSubtype = 4;
+    optional CommonResults commonResults = 5;
+}
+
+message AbandonArgument {
+    int64 invokeId = 1;
+}
+
+message AbandonResult {
+    int64 invokeId = 1;
+    optional CommonResults commonResults = 2;
+}
+
+message ListArgument {
+    x500.DirectoryName object = 1;
+    optional PagedResultsRequest pagedResults = 2;
+    bool listFamily = 3;
+    optional CommonArguments commonArguments = 4;
+}
+
+message PresentationAddress {
+    bytes pSelector = 1;
+    bytes sSelector = 2;
+    bytes tSelector = 3;
+    optional bytes nAddresses = 4;
+}
+
+message ProtocolInformation {
+    bytes nAddress = 1;
+    repeated asn1.ObjectIdentifier profiles = 2;
+}
+
+message MasterOrShadowAccessPoint {
+    x500.DirectoryName aeTitle = 1;
+    PresentationAddress address = 2;
+    repeated ProtocolInformation protocolInformation = 3;
+    AccessPointCategory category = 4;
+    bool chainingRequired = 5;
+}
+
+message AccessPointInformation {
+    MasterOrShadowAccessPoint mainPoint = 1;
+    repeated MasterOrShadowAccessPoint additionalPoints = 2;
+}
+
+message ContinuationReference {
+    x500.DirectoryName targetObject = 1;
+    optional uint32 aliasedRDNs = 2;
+    OperationProgress operationProgress = 3;
+    uint32 rdnsResolved = 4;
+    ReferenceType referenceType = 5;
+    repeated AccessPointInformation accessPoints = 6;
+    bool entryOnly = 7;
+    repeated x500.RelativeDistinguishedName exclusions = 8;
+    bool returnToDUA = 9;
+    bool nameResolveOnMaster = 10;
+}
+
+message PartialOutcomeQualifier {
+    optional LimitProblem limitProblem = 1;
+    repeated ContinuationReference unexplored = 2;
+    bool unavailableCriticalExtensions = 3;
+    repeated asn1.ASN1Value unknownErrors = 4;
+    bytes queryReference = 5;
+    Filter overspecFilter = 6;
+    repeated x500.Attribute notification = 7;
+    EntryCountType entryCountType = 8;
+    uint32 entryCount = 9;
+}
+
+message ListSubordinate {
+    x500.RelativeDistinguishedName rdn = 1;
+    bool aliasEntry = 2;
+    bool notFromEntry = 3; // Inverted so it defaults to false correctly.
+}
+
+message ListInfo {
+    x500.DirectoryName name = 1;
+    repeated ListSubordinate subordinates = 2;
+    PartialOutcomeQualifier poq = 3;
+    optional CommonResults commonResults = 4;
+}
+
+message ListResult {
+    optional ListInfo listInfo = 1;
+    repeated ListResult uncorrelatedListInfo = 2;
+}
+
+message Mapping {
+    asn1.ObjectIdentifier mappingFunction = 1;
+    int64 level = 2;
+}
+
+message MRSubstitution {
+    asn1.ObjectIdentifier attribute = 1;
+    optional asn1.ObjectIdentifier oldMatchingRule = 1;
+    optional asn1.ObjectIdentifier newMatchingRule = 1;
+}
+
+message MRMapping {
+    repeated Mapping mapping = 1;
+    repeated MRSubstitution substitution = 2;
+}
+
+message RelaxationPolicy {
+    MRMapping basic = 1;
+    repeated MRMapping tightenings = 2;
+    repeated MRMapping relaxations = 3;
+    uint32 maximum = 4;
+    uint32 minimum = 5;
+}
+
+message JoinAttPair {
+    asn1.ObjectIdentifier baseAtt = 1;
+    asn1.ObjectIdentifier joinAtt = 2;
+    repeated asn1.ObjectIdentifier joinContext = 3;
+}
+
+message JoinArgument {
+    x500.DirectoryName joinBaseObject = 1;
+    string domainLocalID = 2;
+    x500.SearchSubset joinSubset = 3;
+    optional Filter joinFilter = 4;
+    repeated JoinAttPair joinAttributes = 5;
+    optional EntryInformationSelection joinSelection = 6;
+}
+
+// searchAliases, matchedValuesOnly, and checkOverspecified are search control
+// options already, so they are omitted from this message type.
+message SearchArgument {
+    x500.DirectoryName baseObject = 1;
+    x500.SearchSubset subset = 2;
+    Filter filter = 3;
+    EntryInformationSelection selection = 4;
+    PagedResultsRequest pagedResults = 5;
+    Filter extendedFilter = 6;
+    optional RelaxationPolicy relaxationPolicy = 7;
+    optional int32 extendedArea = 8;
+    optional HierarchySelections hierarchySelections = 9;
+    optional SearchControlOptions searchControlOptions = 10;
+    repeated JoinArgument joinArguments = 11;
+    JoinType joinType = 12;
+    optional CommonArguments commonArguments = 13;
+}
+
+message SearchInfo {
+    optional x500.DirectoryName name = 1;
+    repeated EntryInformation entries = 2;
+    PartialOutcomeQualifier poq = 3;
+    bool altMatching = 4;
+    optional CommonResults commonResults = 5;
+}
+
+message SearchResult {
+    optional SearchInfo searchInfo = 1;
+    repeated SearchResult uncorrelatedSearchInfo = 2;
+}
+
+message AddEntryArgument {
+    x500.DirectoryName object = 1;
+    repeated x500.Attribute entry = 2;
+    MasterOrShadowAccessPoint targetSystem = 3;
+    optional CommonArguments commonArguments = 4;
+}
+
+message AddEntryResult {
+    optional CommonResults commonResults = 1;
+}
+
+message RemoveEntryArgument {
+    x500.DirectoryName object = 1;
+    optional CommonArguments commonArguments = 2;
+}
+
+message RemoveEntryResult {
+    optional CommonResults commonResults = 1;
+}
+
+message EntryModification {
+    oneof variant {
+        Attribute addAttribute = 1;
+        asn1.ObjectIdentifier removeAttribute = 2;
+        Attribute addValues = 3;
+        Attribute removeValues = 4;
+        AttributeTypeAndValue alterValues = 5;
+        asn1.ObjectIdentifier resetValue = 6;
+        Attribute replaceValues = 7;
+    }
+}
+
+message ModifyEntryArgument {
+    x500.DirectoryName object = 1;
+    repeated EntryModification changes = 2;
+    optional EntryInformationSelection selection = 3;
+    optional CommonArguments commonArguments = 4;
+}
+
+message ModifyEntryResult {
+    optional EntryInformation entry = 1;
+    optional CommonResults commonResults = 2;
+}
+
+message ModifyDNArgument {
+    x500.DirectoryName object = 1;
+    x500.RelativeDistinguishedName newRDN = 2;
+    bool deleteOldRDN = 3;
+    optional x500.DistinguishedName newSuperior = 4;
+    optional CommonArguments commonArguments = 4;
+}
+
+message ModifyDNResult {
+    optional x500.RelativeDistinguishedName newRDN = 1;
+    optional CommonResults commonResults = 2;
+}
+
+message ChangePasswordArgument {
+    x500.DirectoryName object = 1;
+    UserPwd oldPwd = 2;
+    UserPwd newPwd = 3;
+}
+
+message ChangePasswordResult {
+    optional CommonResults commonResults = 2;
+}
+
+message AdministerPasswordArgument {
+    x500.DirectoryName object = 1;
+    UserPwd newPwd = 2;
+}
+
+message AdministerPasswordResult {
+    optional CommonResults commonResults = 2;
+}
+
+message LdapArgument {
+    x500.DirectoryName object = 1;
+    bytes ldapMessage = 2; // BER-encoded LDAPMessage
+    optional int64 linkId = 3;
+    optional CommonArguments commonArguments = 4;
+}
+
+message LdapResult {
+    repeated bytes ldapMessages = 1; // Each is a BER-encoded LDAPMessage
+    bool returnToClient = 2;
+    optional CommonResults commonResults = 2;
+}
+
+message LinkedArgument {
+    x500.DirectoryName object = 1;
+    bytes ldapMessage = 2; // BER-encoded LDAPMessage
+    int64 linkId = 3;
+    bool returnToClient = 4;
+    optional CommonArguments commonArguments = 4;
+}
+
+message LinkedResult {
+    // Intentionally empty.
+}
+
+message Abandoned {
+    optional AbandonedProblem problem = 1;
+    optional CommonResults commonResults = 2;
+}
+
+message AbandonFailed {
+    AbandonProblem problem = 1;
+    int64 operation = 2;
+    optional CommonResults commonResults = 2;
+}
+
+message AttributeProblemInfo {
+    AttributeProblem problem = 1;
+    asn1.ObjectIdentifier type = 2;
+    optional X500Value value = 3;
+}
+
+message AttributeError {
+    x500.DirectoryName object = 1;
+    repeated AttributeProblemInfo problems = 2;
+    optional CommonResults commonResults = 2;
+}
+
+message NameError {
+    NameProblem problem = 1;
+    x500.DirectoryName matched = 2;
+    optional CommonResults commonResults = 2;
+}
+
+message Referral {
+    ContinuationReference candidate = 1;
+    optional CommonResults commonResults = 2;
+}
+
+message EncPwdInfo {
+    repeated x500.AlgorithmIdentifier algorithms = 1;
+    repeated x500.AttributeTypeAndValue pwdQualityRule = 2;
+}
+
+message SecurityError {
+    SecurityProblem problem = 1;
+    bytes spkmInfo = 2;
+    optional EncPwdInfo encPwdInfo = 3;
+    optional CommonResults commonResults = 4;
+}
+
+message ServiceError {
+    ServiceProblem problem = 1;
+    optional CommonResults commonResults = 2;
+}
+
+message UpdateError {
+    UpdateProblem problem = 1;
+    repeated x500.Attribute attributeInfo = 2; // Use empty attributes to represent types.
+    optional CommonResults commonResults = 3;
+}
