@@ -39,7 +39,7 @@ func ASN1RawValueToStr(value asn1.RawValue) (output string, err error) {
 		}
 	case asn1.TagOctetString:
 		{
-			return fmt.Sprint("% x", value.Bytes), nil
+			return fmt.Sprintf("% x", value.Bytes), nil
 		}
 	case asn1.TagNull:
 		{
