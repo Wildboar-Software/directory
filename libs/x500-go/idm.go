@@ -780,17 +780,24 @@ func localOpCode(opcode byte) asn1.RawValue {
 	}
 }
 
-func getToBeSigned[T any](signedBytes []byte, isSet bool) (res *T, err error) {
+func getToBeSigned[T any](signedBytes []byte, dataIsSet bool) (res *T, err error) {
 	signedResult := SIGNED{}
 	var innerResult T
-	rest, err := asn1.Unmarshal(signedBytes, &signedResult)
+	var rest []byte
+	if dataIsSet {
+		// If the signed data is a SET, the SIGNED is a SEQUENCE
+		rest, err = asn1.Unmarshal(signedBytes, &signedResult)
+	} else {
+		// If the signed data is NOT a SET, the SIGNED is an [0] IMPLICIT SEQUENCE
+		rest, err = asn1.UnmarshalWithParams(signedBytes, &signedResult, "tag:0")
+	}
 	if err != nil {
 		return nil, err
 	}
 	if len(rest) > 0 {
 		return nil, errors.New("trailing bytes in result encoding")
 	}
-	if isSet {
+	if dataIsSet {
 		rest, err = asn1.UnmarshalWithParams(signedResult.ToBeSigned.FullBytes, &innerResult, "set")
 	} else {
 		rest, err = asn1.Unmarshal(signedResult.ToBeSigned.FullBytes, &innerResult)
@@ -802,6 +809,41 @@ func getToBeSigned[T any](signedBytes []byte, isSet bool) (res *T, err error) {
 		return nil, errors.New("trailing bytes in result data encoding")
 	}
 	return &innerResult, nil
+}
+
+func getDataFromNullOrOptProtSeq[T any](outcome X500OpOutcome) (response X500OpOutcome, result *T, err error) {
+	if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
+		return outcome, nil, nil
+	}
+	param := outcome.Parameter
+	if param.Class == asn1.ClassContextSpecific && param.Tag == 0 {
+		tbs, err := getToBeSigned[T](outcome.Parameter.FullBytes, false)
+		if err != nil {
+			return outcome, nil, err
+		}
+		return outcome, tbs, nil
+	}
+	if param.Class != asn1.ClassUniversal {
+		// We don't recognize this result syntax. Just return the outcome.
+		return outcome, nil, nil
+	}
+	if param.Tag == asn1.TagNull {
+		// There's no data to return if this variant is used.
+		return outcome, nil, nil
+	} else if param.Tag == asn1.TagSequence {
+		var res T
+		rest, err := asn1.Unmarshal(outcome.Parameter.FullBytes, &res)
+		if err != nil {
+			return outcome, nil, err
+		}
+		if len(rest) > 0 {
+			return outcome, nil, errors.New("trailing bytes in result encoding")
+		}
+		return outcome, &res, nil
+	} else {
+		// We don't recognize this result syntax. Just return the outcome.
+		return outcome, nil, nil
+	}
 }
 
 func (stack *IDMProtocolStack) Read(arg_data ReadArgumentData) (response X500OpOutcome, result *ReadResultData, err error) {
@@ -864,7 +906,6 @@ func (stack *IDMProtocolStack) Read(arg_data ReadArgumentData) (response X500OpO
 		return outcome, nil, nil
 	}
 	if outcome.Parameter.Tag == asn1.TagSet {
-		// res := ReadResultData{}
 		var res ReadResultData
 		rest, err := asn1.UnmarshalWithParams(outcome.Parameter.FullBytes, &res, "set")
 		if err != nil {
@@ -886,7 +927,7 @@ func (stack *IDMProtocolStack) Read(arg_data ReadArgumentData) (response X500OpO
 	}
 }
 
-func (stack *IDMProtocolStack) Compare(arg_data CompareArgumentData) (resp X500OpOutcome, result *CompareResult, err error) {
+func (stack *IDMProtocolStack) Compare(arg_data CompareArgumentData) (resp X500OpOutcome, result *CompareResultData, err error) {
 	opCode := localOpCode(2) // Compare operation
 	invokeId := stack.GetNextInvokeId()
 	iidBytes, err := asn1.Marshal(invokeId)
@@ -941,17 +982,33 @@ func (stack *IDMProtocolStack) Compare(arg_data CompareArgumentData) (resp X500O
 	if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
 		return outcome, nil, nil
 	}
-	rest, err := asn1.Unmarshal(outcome.Parameter.FullBytes, &result)
-	if err != nil {
-		return X500OpOutcome{}, nil, err
+	if outcome.Parameter.Class != asn1.ClassUniversal {
+		// We don't recognize this result syntax.
+		return outcome, nil, nil
 	}
-	if len(rest) > 0 {
-		return X500OpOutcome{}, nil, errors.New("trailing bytes")
+	if outcome.Parameter.Tag == asn1.TagSet {
+		var res CompareResultData
+		rest, err := asn1.UnmarshalWithParams(outcome.Parameter.FullBytes, &res, "set")
+		if err != nil {
+			return outcome, nil, err
+		}
+		if len(rest) > 0 {
+			return outcome, nil, errors.New("trailing bytes in result encoding")
+		}
+		return outcome, &res, nil
+	} else if outcome.Parameter.Tag == asn1.TagSequence {
+		tbs, err := getToBeSigned[CompareResultData](outcome.Parameter.FullBytes, true)
+		if err != nil {
+			return outcome, nil, err
+		}
+		return outcome, tbs, nil
+	} else {
+		// We don't recognize this result syntax. Just return the outcome.
+		return outcome, nil, nil
 	}
-	return outcome, result, nil
 }
 
-func (stack *IDMProtocolStack) Abandon(arg_data AbandonArgumentData) (resp X500OpOutcome, result *AbandonResult, err error) {
+func (stack *IDMProtocolStack) Abandon(arg_data AbandonArgumentData) (resp X500OpOutcome, result *AbandonResultData, err error) {
 	opCode := localOpCode(3) // Abandon operation
 	invokeId := stack.GetNextInvokeId()
 	iidBytes, err := asn1.Marshal(invokeId)
@@ -993,20 +1050,10 @@ func (stack *IDMProtocolStack) Abandon(arg_data AbandonArgumentData) (resp X500O
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
-	if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
-		return outcome, nil, nil
-	}
-	rest, err := asn1.Unmarshal(outcome.Parameter.FullBytes, &result)
-	if err != nil {
-		return X500OpOutcome{}, nil, err
-	}
-	if len(rest) > 0 {
-		return X500OpOutcome{}, nil, errors.New("trailing bytes")
-	}
-	return outcome, result, nil
+	return getDataFromNullOrOptProtSeq[AbandonResultData](outcome)
 }
 
-func (stack *IDMProtocolStack) List(arg_data ListArgumentData) (resp X500OpOutcome, result *ListResult, err error) {
+func (stack *IDMProtocolStack) List(arg_data ListArgumentData) (resp X500OpOutcome, info *ListResultData_listInfo, err error) {
 	opCode := localOpCode(4) // List operation
 	invokeId := stack.GetNextInvokeId()
 	iidBytes, err := asn1.Marshal(invokeId)
@@ -1061,17 +1108,37 @@ func (stack *IDMProtocolStack) List(arg_data ListArgumentData) (resp X500OpOutco
 	if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
 		return outcome, nil, nil
 	}
-	rest, err := asn1.Unmarshal(outcome.Parameter.FullBytes, &result)
+	param := outcome.Parameter
+	if param.Class == asn1.ClassUniversal && param.Tag == asn1.TagSequence {
+		signedResult := SIGNED{}
+		rest, err := asn1.Unmarshal(param.FullBytes, &signedResult)
+		if err != nil {
+			return outcome, nil, err
+		}
+		if len(rest) > 0 {
+			return outcome, nil, errors.New("trailing bytes")
+		}
+		param = signedResult.ToBeSigned
+	}
+	if param.Class == asn1.ClassContextSpecific && param.Tag == 0 {
+		// This is the uncorrelatedListInfo: we can't simplify this any further.
+		return outcome, nil, nil
+	}
+	if param.Class != asn1.ClassUniversal || param.Tag != asn1.TagSet {
+		// This is some other syntax other than listInfo.
+		return outcome, nil, nil
+	}
+	rest, err := asn1.Unmarshal(outcome.Parameter.FullBytes, &info)
 	if err != nil {
-		return X500OpOutcome{}, nil, err
+		return outcome, nil, err
 	}
 	if len(rest) > 0 {
-		return X500OpOutcome{}, nil, errors.New("trailing bytes")
+		return outcome, nil, errors.New("trailing bytes")
 	}
-	return outcome, result, nil
+	return outcome, info, nil
 }
 
-func (stack *IDMProtocolStack) Search(arg_data SearchArgumentData) (resp X500OpOutcome, result *SearchResult, err error) {
+func (stack *IDMProtocolStack) Search(arg_data SearchArgumentData) (resp X500OpOutcome, info *SearchResultData_searchInfo, err error) {
 	opCode := localOpCode(5) // Search operation
 	invokeId := stack.GetNextInvokeId()
 	iidBytes, err := asn1.Marshal(invokeId)
@@ -1126,17 +1193,37 @@ func (stack *IDMProtocolStack) Search(arg_data SearchArgumentData) (resp X500OpO
 	if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
 		return outcome, nil, nil
 	}
-	rest, err := asn1.Unmarshal(outcome.Parameter.FullBytes, &result)
+	param := outcome.Parameter
+	if param.Class == asn1.ClassUniversal && param.Tag == asn1.TagSequence {
+		signedResult := SIGNED{}
+		rest, err := asn1.Unmarshal(param.FullBytes, &signedResult)
+		if err != nil {
+			return outcome, nil, err
+		}
+		if len(rest) > 0 {
+			return outcome, nil, errors.New("trailing bytes")
+		}
+		param = signedResult.ToBeSigned
+	}
+	if param.Class == asn1.ClassContextSpecific && param.Tag == 0 {
+		// This is the uncorrelatedSearchInfo: we can't simplify this any further.
+		return outcome, nil, nil
+	}
+	if param.Class != asn1.ClassUniversal || param.Tag != asn1.TagSet {
+		// This is some other syntax other than searchInfo.
+		return outcome, nil, nil
+	}
+	rest, err := asn1.Unmarshal(outcome.Parameter.FullBytes, &info)
 	if err != nil {
-		return X500OpOutcome{}, nil, err
+		return outcome, nil, err
 	}
 	if len(rest) > 0 {
-		return X500OpOutcome{}, nil, errors.New("trailing bytes")
+		return outcome, nil, errors.New("trailing bytes")
 	}
-	return outcome, result, nil
+	return outcome, info, nil
 }
 
-func (stack *IDMProtocolStack) AddEntry(arg_data AddEntryArgumentData) (resp X500OpOutcome, result *AddEntryResult, err error) {
+func (stack *IDMProtocolStack) AddEntry(arg_data AddEntryArgumentData) (resp X500OpOutcome, result *AddEntryResultData, err error) {
 	opCode := localOpCode(6) // AddEntry operation
 	invokeId := stack.GetNextInvokeId()
 	iidBytes, err := asn1.Marshal(invokeId)
@@ -1188,20 +1275,10 @@ func (stack *IDMProtocolStack) AddEntry(arg_data AddEntryArgumentData) (resp X50
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
-	if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
-		return outcome, nil, nil
-	}
-	rest, err := asn1.Unmarshal(outcome.Parameter.FullBytes, &result)
-	if err != nil {
-		return X500OpOutcome{}, nil, err
-	}
-	if len(rest) > 0 {
-		return X500OpOutcome{}, nil, errors.New("trailing bytes")
-	}
-	return outcome, result, nil
+	return getDataFromNullOrOptProtSeq[AddEntryResultData](outcome)
 }
 
-func (stack *IDMProtocolStack) RemoveEntry(arg_data RemoveEntryArgumentData) (resp X500OpOutcome, result *RemoveEntryResult, err error) {
+func (stack *IDMProtocolStack) RemoveEntry(arg_data RemoveEntryArgumentData) (resp X500OpOutcome, result *RemoveEntryResultData, err error) {
 	opCode := localOpCode(7) // RemoveEntry operation
 	invokeId := stack.GetNextInvokeId()
 	iidBytes, err := asn1.Marshal(invokeId)
@@ -1253,20 +1330,10 @@ func (stack *IDMProtocolStack) RemoveEntry(arg_data RemoveEntryArgumentData) (re
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
-	if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
-		return outcome, nil, nil
-	}
-	rest, err := asn1.Unmarshal(outcome.Parameter.FullBytes, &result)
-	if err != nil {
-		return X500OpOutcome{}, nil, err
-	}
-	if len(rest) > 0 {
-		return X500OpOutcome{}, nil, errors.New("trailing bytes")
-	}
-	return outcome, result, nil
+	return getDataFromNullOrOptProtSeq[RemoveEntryResultData](outcome)
 }
 
-func (stack *IDMProtocolStack) ModifyEntry(arg_data ModifyEntryArgumentData) (resp X500OpOutcome, result *ModifyEntryResult, err error) {
+func (stack *IDMProtocolStack) ModifyEntry(arg_data ModifyEntryArgumentData) (resp X500OpOutcome, result *ModifyEntryResultData, err error) {
 	opCode := localOpCode(8) // ModifyEntry operation
 	invokeId := stack.GetNextInvokeId()
 	iidBytes, err := asn1.Marshal(invokeId)
@@ -1318,20 +1385,10 @@ func (stack *IDMProtocolStack) ModifyEntry(arg_data ModifyEntryArgumentData) (re
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
-	if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
-		return outcome, nil, nil
-	}
-	rest, err := asn1.Unmarshal(outcome.Parameter.FullBytes, &result)
-	if err != nil {
-		return X500OpOutcome{}, nil, err
-	}
-	if len(rest) > 0 {
-		return X500OpOutcome{}, nil, errors.New("trailing bytes")
-	}
-	return outcome, result, nil
+	return getDataFromNullOrOptProtSeq[ModifyEntryResultData](outcome)
 }
 
-func (stack *IDMProtocolStack) ModifyDN(arg_data ModifyDNArgumentData) (resp X500OpOutcome, result *ModifyDNResult, err error) {
+func (stack *IDMProtocolStack) ModifyDN(arg_data ModifyDNArgumentData) (resp X500OpOutcome, result *ModifyDNResultData, err error) {
 	opCode := localOpCode(9) // ModifyDN operation
 	invokeId := stack.GetNextInvokeId()
 	iidBytes, err := asn1.Marshal(invokeId)
@@ -1383,20 +1440,10 @@ func (stack *IDMProtocolStack) ModifyDN(arg_data ModifyDNArgumentData) (resp X50
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
-	if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
-		return outcome, nil, nil
-	}
-	rest, err := asn1.Unmarshal(outcome.Parameter.FullBytes, &result)
-	if err != nil {
-		return X500OpOutcome{}, nil, err
-	}
-	if len(rest) > 0 {
-		return X500OpOutcome{}, nil, errors.New("trailing bytes")
-	}
-	return outcome, result, nil
+	return getDataFromNullOrOptProtSeq[ModifyDNResultData](outcome)
 }
 
-func (stack *IDMProtocolStack) ChangePassword(arg_data ChangePasswordArgumentData) (resp X500OpOutcome, result *ChangePasswordResult, err error) {
+func (stack *IDMProtocolStack) ChangePassword(arg_data ChangePasswordArgumentData) (resp X500OpOutcome, result *ChangePasswordResultData, err error) {
 	opCode := localOpCode(10) // ChangePassword operation
 	invokeId := stack.GetNextInvokeId()
 	iidBytes, err := asn1.Marshal(invokeId)
@@ -1438,20 +1485,10 @@ func (stack *IDMProtocolStack) ChangePassword(arg_data ChangePasswordArgumentDat
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
-	if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
-		return outcome, nil, nil
-	}
-	rest, err := asn1.Unmarshal(outcome.Parameter.FullBytes, &result)
-	if err != nil {
-		return X500OpOutcome{}, nil, err
-	}
-	if len(rest) > 0 {
-		return X500OpOutcome{}, nil, errors.New("trailing bytes")
-	}
-	return outcome, result, nil
+	return getDataFromNullOrOptProtSeq[ChangePasswordResultData](outcome)
 }
 
-func (stack *IDMProtocolStack) AdministerPassword(arg_data AdministerPasswordArgumentData) (resp X500OpOutcome, result *AdministerPasswordResult, err error) {
+func (stack *IDMProtocolStack) AdministerPassword(arg_data AdministerPasswordArgumentData) (resp X500OpOutcome, result *AdministerPasswordResultData, err error) {
 	opCode := localOpCode(11) // AdministerPassword operation
 	invokeId := stack.GetNextInvokeId()
 	iidBytes, err := asn1.Marshal(invokeId)
@@ -1493,15 +1530,5 @@ func (stack *IDMProtocolStack) AdministerPassword(arg_data AdministerPasswordArg
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
-	if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
-		return outcome, nil, nil
-	}
-	rest, err := asn1.Unmarshal(outcome.Parameter.FullBytes, &result)
-	if err != nil {
-		return X500OpOutcome{}, nil, err
-	}
-	if len(rest) > 0 {
-		return X500OpOutcome{}, nil, errors.New("trailing bytes")
-	}
-	return outcome, result, nil
+	return getDataFromNullOrOptProtSeq[AdministerPasswordResultData](outcome)
 }
