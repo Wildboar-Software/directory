@@ -153,7 +153,7 @@ type X500Abort struct {
 	UserReason                        Abort // Only used by IDM Abort
 }
 
-type X500OperationOutcome struct {
+type X500OpOutcome struct {
 	OutcomeType   int // See the OPERATION_OUTCOME_* constants defined above.
 	InvokeId      InvokeId
 	OpCode        Code
@@ -175,14 +175,29 @@ type X500UnbindOutcome struct {
 
 type X500Operation struct {
 	Req   X500Request
-	Res   X500OperationOutcome
+	Res   *X500OpOutcome
 	Done  chan bool
-	Error error
+	Error *error
 }
 
 // Examples: IDMStack, ITOTStack, LPPStack (IETF RFC 1085), DIXIEStack (IETF RFC 1249)
 type DirectoryProtocolStack interface {
 	Bind(arg X500AssociateArgument) (response X500AssociateOutcome, err error)
-	Request(req X500Request) (response X500OperationOutcome, err error)
+	Request(req X500Request) (response X500OpOutcome, err error)
 	Unbind(req X500UnbindRequest) (response X500UnbindOutcome, err error)
+}
+
+type DirectoryAccessStack interface {
+	DirectoryProtocolStack
+	Read(arg_data ReadArgumentData) (resp X500OpOutcome, result *ReadResult, err error)
+	Compare(arg_data CompareArgumentData) (resp X500OpOutcome, result *CompareResult, err error)
+	Abandon(arg_data AbandonArgumentData) (resp X500OpOutcome, result *AbandonResult, err error)
+	List(arg_data ListArgumentData) (resp X500OpOutcome, result *ListResult, err error)
+	Search(arg_data SearchArgumentData) (resp X500OpOutcome, result *SearchResult, err error)
+	AddEntry(arg_data AddEntryArgumentData) (resp X500OpOutcome, result *AddEntryResult, err error)
+	RemoveEntry(arg_data RemoveEntryArgumentData) (resp X500OpOutcome, result *RemoveEntryResult, err error)
+	ModifyEntry(arg_data ModifyEntryArgumentData) (resp X500OpOutcome, result *ModifyEntryResult, err error)
+	ModifyDN(arg_data ModifyDNArgumentData) (resp X500OpOutcome, result *ModifyDNResult, err error)
+	ChangePassword(arg_data ChangePasswordArgumentData) (resp X500OpOutcome, result *ChangePasswordResult, err error)
+	AdministerPassword(arg_data AdministerPasswordArgumentData) (resp X500OpOutcome, result *AdministerPasswordResult, err error)
 }
