@@ -9,15 +9,15 @@ import (
 //
 // ```asn1
 // SIGNATURE ::= SEQUENCE {
-//   agorithmIdentifier  AlgorithmIdentifier{{SupportedAlgorithms}},
+//   algorithmIdentifier  AlgorithmIdentifier{{SupportedAlgorithms}},
 //   signature            BIT STRING,
 //   ... }
 // ```
 //
 //
 type SIGNATURE struct {
-	AgorithmIdentifier AlgorithmIdentifier
-	Signature          asn1.BitString
+	AlgorithmIdentifier AlgorithmIdentifier
+	Signature           asn1.BitString
 }
 
 /* END_OF_SYMBOL_DEFINITION SIGNATURE */ /* START_OF_SYMBOL_DEFINITION SIGNED */

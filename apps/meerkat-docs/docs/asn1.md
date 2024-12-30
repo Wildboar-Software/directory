@@ -5164,7 +5164,7 @@ IMPORTS
 -- parameterized types
 
 SIGNATURE ::= SEQUENCE {
-  agorithmIdentifier  AlgorithmIdentifier{{SupportedAlgorithms}},
+  algorithmIdentifier  AlgorithmIdentifier{{SupportedAlgorithms}},
   signature            BIT STRING,
   ... }
 
