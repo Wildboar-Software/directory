@@ -9,6 +9,7 @@ import (
 	"os"
 	"sync"
 	"testing"
+	"time"
 )
 
 func TestReadAnEntry(t *testing.T) {
@@ -489,4 +490,149 @@ func TestTLS(t *testing.T) {
 	for _, sub := range res.Subordinates {
 		fmt.Printf("%v\n", sub.Rdn)
 	}
+}
+
+func TestAbandon(t *testing.T) {
+	conn, err := net.Dial("tcp", "localhost:4632")
+	if err != nil {
+		os.Exit(53)
+	}
+	errchan := make(chan error)
+	idm := IDMProtocolStack{
+		socket:            conn,
+		ReceivedData:      make([]byte, 0),
+		NextInvokeId:      1,
+		PendingOperations: make(map[int]*X500Operation),
+		bound:             make(chan bool),
+		mutex:             sync.Mutex{},
+		resultSigning:     ProtectionRequest_None,
+		errorSigning:      ProtectionRequest_None,
+		signingKey:        nil,
+		signingCert:       nil,
+		errorChannel:      errchan,
+	}
+	go func() {
+		e := <-errchan
+		fmt.Printf("Error: %v\n", e)
+		os.Exit(40)
+	}()
+	go idm.ProcessReceivedPDUs()
+	_, err = idm.BindAnonymously()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(2)
+	}
+	dn := DistinguishedName{
+		[]pkix.AttributeTypeAndValue{
+			{
+				Type: Id_at_countryName,
+				Value: asn1.RawValue{
+					Tag:        asn1.TagPrintableString,
+					Class:      asn1.ClassUniversal,
+					IsCompound: false,
+					Bytes:      []byte("US"),
+				},
+			},
+		},
+		// c=US,st=FL,l=HIL,l=Tampa,l=Westchase
+		[]pkix.AttributeTypeAndValue{
+			{
+				Type: Id_at_stateOrProvinceName,
+				Value: asn1.RawValue{
+					Tag:        asn1.TagPrintableString,
+					Class:      asn1.ClassUniversal,
+					IsCompound: false,
+					Bytes:      []byte("FL"),
+				},
+			},
+		},
+		[]pkix.AttributeTypeAndValue{
+			{
+				Type: Id_at_localityName,
+				Value: asn1.RawValue{
+					Tag:        asn1.TagPrintableString,
+					Class:      asn1.ClassUniversal,
+					IsCompound: false,
+					Bytes:      []byte("HIL"),
+				},
+			},
+		},
+		[]pkix.AttributeTypeAndValue{
+			{
+				Type: Id_at_localityName,
+				Value: asn1.RawValue{
+					Tag:        asn1.TagPrintableString,
+					Class:      asn1.ClassUniversal,
+					IsCompound: false,
+					Bytes:      []byte("Tampa"),
+				},
+			},
+		},
+		[]pkix.AttributeTypeAndValue{
+			{
+				Type: Id_at_localityName,
+				Value: asn1.RawValue{
+					Tag:        asn1.TagPrintableString,
+					Class:      asn1.ClassUniversal,
+					IsCompound: false,
+					Bytes:      []byte("Westchase"),
+				},
+			},
+		},
+	}
+	name_bytes, err := asn1.Marshal(dn)
+	if err != nil {
+		os.Exit(6)
+	}
+	name := asn1.RawValue{FullBytes: name_bytes}
+	arg_data := ListArgumentData{
+		Object: asn1.RawValue{
+			Tag:        0,
+			Class:      asn1.ClassContextSpecific,
+			IsCompound: true,
+			Bytes:      name.FullBytes,
+		},
+		SecurityParameters: SecurityParameters{
+			// No signing so we get searchInfo instead of uncorrelatedSearchInfo
+			Target:          ProtectionRequest_None,
+			ErrorProtection: ErrorProtectionRequest_None,
+		},
+	}
+	abandon_arg_data := AbandonArgumentData{
+		InvokeID: asn1.RawValue{
+			Class:      asn1.ClassContextSpecific,
+			Tag:        0,
+			IsCompound: true,
+			Bytes:      []byte{2, 1, byte(1)},
+		},
+	}
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		outcome, _, err := idm.List(arg_data)
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(9)
+			return
+		}
+		if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_ERROR {
+			t.Logf("Did not receive error. Outcome type=%d", outcome.OutcomeType)
+			os.Exit(11)
+		}
+		wg.Done()
+	}()
+	go func() {
+		// Abandon MUST run AFTER the list operation.
+		time.Sleep(time.Duration(500) * time.Millisecond)
+		outcome, _, err := idm.Abandon(abandon_arg_data)
+		if err != nil {
+			panic(err)
+		}
+		if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
+			t.Logf("Did not receive abort result. Outcome type=%d", outcome.OutcomeType)
+			os.Exit(13)
+		}
+		wg.Done()
+	}()
+	wg.Wait()
 }
