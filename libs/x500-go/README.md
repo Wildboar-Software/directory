@@ -6,11 +6,14 @@
 - [x] Fix operations other than `read`
 - [ ] IDMv2
 - [x] TLS
-- [ ] StartTLS
+- [x] StartTLS
 - [ ] Configurable Timeouts?
 - [ ] Context object?
+- [ ] Make some functions private
+- [ ] Handle bind errors correctly
 - [ ] Documentation
-- [ ] Test operation abandonment
+- [ ] Simpler way to create an IDM connection (`New()` function)
+- [x] Test operation abandonment
 - [ ] Update `DirectoryAccessStack` interface to match implementations
 - [x] Test list operation
 - [x] Replace with types from `crypto/x509/pkix`
@@ -24,4 +27,4 @@
   - [x] `RelativeDistinguishedNameSET`
   - [x] `RevokedCertificate`
   - [x] `TBSCertificateList`
-- [ ] Implement `String()` for `DistinguishedName`?
+- [ ] Implement `String()` for `DistinguishedName` et al?

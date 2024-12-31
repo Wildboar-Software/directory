@@ -7,12 +7,14 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/tls"
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"sync"
 	"time"
 )
@@ -56,6 +58,7 @@ type Socket interface {
 
 type IDMProtocolStack struct {
 	socket            Socket
+	startTLSResponse  chan TLSResponse
 	PendingOperations map[int]*X500Operation
 	mutex             sync.Mutex
 	NextInvokeId      int
@@ -65,6 +68,7 @@ type IDMProtocolStack struct {
 	signingCert       *CertificationPath
 	resultSigning     ProtectionRequest
 	errorSigning      ErrorProtectionRequest
+	tlsConfig         *tls.Config
 
 	// Channel where errors can be returned to the main thread.
 	errorChannel chan error
@@ -159,7 +163,6 @@ func (stack *IDMProtocolStack) ReadIDMv1PDU(pdu *IDM_PDU) (bytesRead uint32, err
 		   would give us the next IDM PDU. */
 		if frameBytesRead == 0 {
 			receiveBuffer := make([]byte, BIND_RESPONSE_RECEIVE_BUFFER_SIZE)
-			// FIXME: This needs to go at the end. Reading will block subsequent IDM packets from being read.
 			bytesReceived, err := stack.socket.Read(receiveBuffer)
 			if err != nil {
 				return 0, err
@@ -280,20 +283,35 @@ func (stack *IDMProtocolStack) HandleRejectPDU(pdu IdmReject) {
 }
 
 func (stack *IDMProtocolStack) HandleUnbindPDU(pdu Unbind) {
-	fmt.Println("UNBIND")
+	stack.errorChannel <- errors.New("server sent unbind message, which is not allowed")
 }
 
 func (stack *IDMProtocolStack) HandleAbortPDU(pdu Abort) {
-	// TODO: Set all outstanding operations to abort
+	stack.mutex.Lock()
+	defer stack.mutex.Unlock()
+	for _, op := range stack.PendingOperations {
+		op.Res = &X500OpOutcome{
+			OutcomeType: OPERATION_OUTCOME_TYPE_ABORT,
+			InvokeId:    op.Req.InvokeId,
+			OpCode:      op.Req.OpCode,
+			Abort: X500Abort{
+				UserReason: pdu,
+			},
+		}
+		op.Done <- true
+	}
+	stack.NextInvokeId = 1
+	stack.ReceivedData = make([]byte, 0)
+	stack.bound <- false
 	stack.socket.Close()
 }
 
 func (stack *IDMProtocolStack) HandleStartTLSPDU(pdu StartTLS) {
-
+	stack.errorChannel <- errors.New("server sent starttls message, which is not allowed")
 }
 
 func (stack *IDMProtocolStack) HandleTLSResponsePDU(pdu TLSResponse) {
-
+	stack.startTLSResponse <- pdu
 }
 
 //	IDM-PDU{IDM-PROTOCOL:protocol} ::= CHOICE {
@@ -309,8 +327,6 @@ func (stack *IDMProtocolStack) HandleTLSResponsePDU(pdu TLSResponse) {
 //		startTLS     [9]  StartTLS,
 //		tLSResponse  [10] TLSResponse,
 //		... }
-//
-// TODO: Do something with errors
 func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 	if pdu.Class != asn1.ClassContextSpecific {
 		return
@@ -484,6 +500,44 @@ func (stack *IDMProtocolStack) BindAnonymously() (response X500AssociateOutcome,
 		V2: true,
 	}
 	return stack.Bind(arg)
+}
+
+func (stack *IDMProtocolStack) StartTLS() (response TLSResponse, err error) {
+	idm_payload := []byte{0xA9, 2, 0, 0} // This is the entire startTLS [9] EXPLICIT NULL
+	frame := GetIdmFrame(idm_payload)
+	stack.mutex.Lock()
+	_, err = stack.socket.Write(frame)
+	if err != nil {
+		return TLSResponse_ProtocolError, err
+	}
+	_, err = stack.socket.Write(idm_payload)
+	if err != nil {
+		return TLSResponse_ProtocolError, err
+	}
+	stack.mutex.Unlock()
+	response = <-stack.startTLSResponse
+	switch response {
+	case TLSResponse_Success:
+		netconn, is_tcp := stack.socket.(net.Conn)
+		if !is_tcp {
+			stack.errorChannel <- errors.New("tls already in use")
+			return
+		}
+		if stack.tlsConfig == nil {
+			stack.errorChannel <- errors.New("no tlsconfig defined: not performing x509 authentication of peer")
+			return
+		}
+		stack.socket = tls.Client(netconn, stack.tlsConfig)
+	case TLSResponse_Unavailable:
+		return response, errors.New("tls unavailable")
+	case TLSResponse_OperationsError:
+		return response, errors.New("starttls operations error")
+	case TLSResponse_ProtocolError:
+		return response, errors.New("starttls protocol error")
+	default:
+		return response, errors.New("unrecognized starttls error")
+	}
+	return response, nil
 }
 
 func (stack *IDMProtocolStack) Bind(arg X500AssociateArgument) (response X500AssociateOutcome, err error) {
