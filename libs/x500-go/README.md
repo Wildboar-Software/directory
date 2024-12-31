@@ -11,4 +11,15 @@
 - [ ] Context object?
 - [ ] Documentation
 - [ ] Test operation abandonment
-- [ ] Test list operation
+- [x] Test list operation
+- [x] Replace with types from `crypto/x509/pkix`
+  - [x] `AlgorithmIdentifier`
+  - [x] `AttributeTypeAndValue`
+  - [ ] `AttributeTypeAndValueSET`
+  - [x] `CertificateList`
+  - [x] `Extension`
+  - [x] ~~`Name`~~ (Does not support the new alternatives.)
+  - [x] `RDNSequence`
+  - [x] `RelativeDistinguishedNameSET`
+  - [x] `RevokedCertificate`
+  - [x] `TBSCertificateList`

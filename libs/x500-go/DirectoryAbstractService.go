@@ -1,6 +1,7 @@
 package x500_go
 
 import (
+	"crypto/x509/pkix"
 	"encoding/asn1"
 )
 
@@ -711,11 +712,11 @@ type Token = SIGNED // DefinedType
 //
 //
 type TokenContent struct {
-	Algorithm AlgorithmIdentifier `asn1:"explicit,tag:0"`
-	Name      DistinguishedName   `asn1:"explicit,tag:1"`
-	Time      Time                `asn1:"explicit,tag:2"`
-	Random    asn1.BitString      `asn1:"explicit,tag:3"`
-	Response  asn1.BitString      `asn1:"optional,explicit,tag:4"`
+	Algorithm pkix.AlgorithmIdentifier `asn1:"explicit,tag:0"`
+	Name      DistinguishedName        `asn1:"explicit,tag:1"`
+	Time      Time                     `asn1:"explicit,tag:2"`
+	Random    asn1.BitString           `asn1:"explicit,tag:3"`
+	Response  asn1.BitString           `asn1:"optional,explicit,tag:4"`
 }
 
 /* END_OF_SYMBOL_DEFINITION TokenContent */ /* START_OF_SYMBOL_DEFINITION Versions */
@@ -1422,20 +1423,24 @@ type SearchResultData = asn1.RawValue
 // AddEntryArgument  ::=  OPTIONALLY-PROTECTED { AddEntryArgumentData }
 // ```
 type AddEntryArgument = OPTIONALLY_PROTECTED // DefinedType
-/* END_OF_SYMBOL_DEFINITION AddEntryArgument */ /* START_OF_SYMBOL_DEFINITION AddEntryArgumentData */
+/* END_OF_SYMBOL_DEFINITION AddEntryArgument */
+
+// WARNING: If you encounter a bug encoding or decoding, it is probably the
+// Entry field, which may need to be a `[]pkix.AttributeTypeAndValueSET`.
+//
 // ### ASN.1 Definition:
 //
 // ```asn1
-// AddEntryArgumentData ::= SET {
-//   object        [0]  Name,
-//   entry         [1]  SET OF Attribute{{SupportedAttributes}},
-//   targetSystem  [2]  AccessPoint OPTIONAL,
-//   ...,
-//   ...,
-//   COMPONENTS OF      CommonArguments }
+//
+//	AddEntryArgumentData ::= SET {
+//	  object        [0]  Name,
+//	  entry         [1]  SET OF Attribute{{SupportedAttributes}},
+//	  targetSystem  [2]  AccessPoint OPTIONAL,
+//	  ...,
+//	  ...,
+//	  COMPONENTS OF      CommonArguments }
+//
 // ```
-//
-//
 type AddEntryArgumentData struct {
 	Object              Name               `asn1:"explicit,tag:0"`
 	Entry               [](Attribute)      `asn1:"explicit,tag:1,set"`
@@ -2256,8 +2261,8 @@ const SecurityProblem_InappropriateAlgorithms SecurityProblem = 12 // LONG_NAMED
 //
 //
 type EncPwdInfo struct {
-	Algorithms     [](AlgorithmIdentifier)   `asn1:"optional,explicit,tag:0"`
-	PwdQualityRule [](AttributeTypeAndValue) `asn1:"optional,explicit,tag:1"`
+	Algorithms     [](pkix.AlgorithmIdentifier)   `asn1:"optional,explicit,tag:0"`
+	PwdQualityRule [](pkix.AttributeTypeAndValue) `asn1:"optional,explicit,tag:1"`
 }
 
 /* END_OF_SYMBOL_DEFINITION EncPwdInfo */ /* START_OF_SYMBOL_DEFINITION ServiceErrorData */
@@ -2773,7 +2778,7 @@ type ModifyRights_Item struct {
 //
 //
 type ListResultData_listInfo_subordinates_Item struct {
-	Rdn        RelativeDistinguishedName
+	Rdn        pkix.RelativeDistinguishedNameSET
 	AliasEntry bool `asn1:"optional,explicit,tag:0"`
 	FromEntry  bool `asn1:"optional,explicit,tag:1"`
 }

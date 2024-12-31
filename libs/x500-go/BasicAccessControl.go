@@ -1,6 +1,7 @@
 package x500_go
 
 import (
+	"crypto/x509/pkix"
 	"encoding/asn1"
 )
 
@@ -71,19 +72,19 @@ type Precedence = int64
 //
 //
 type ProtectedItems struct {
-	Entry                          asn1.RawValue             `asn1:"optional,explicit,tag:0"`
-	AllUserAttributeTypes          asn1.RawValue             `asn1:"optional,explicit,tag:1"`
-	AttributeType                  [](AttributeType)         `asn1:"optional,explicit,tag:2,set"`
-	AllAttributeValues             [](AttributeType)         `asn1:"optional,explicit,tag:3,set"`
-	AllUserAttributeTypesAndValues asn1.RawValue             `asn1:"optional,explicit,tag:4"`
-	AttributeValue                 [](AttributeTypeAndValue) `asn1:"optional,explicit,tag:5,set"`
-	SelfValue                      [](AttributeType)         `asn1:"optional,explicit,tag:6,set"`
-	RangeOfValues                  Filter                    `asn1:"optional,explicit,tag:7"`
-	MaxValueCount                  [](MaxValueCount)         `asn1:"optional,explicit,tag:8,set"`
-	MaxImmSub                      int                       `asn1:"optional,explicit,tag:9"`
-	RestrictedBy                   [](RestrictedValue)       `asn1:"optional,explicit,tag:10,set"`
-	Contexts                       [](ContextAssertion)      `asn1:"optional,explicit,tag:11,set"`
-	Classes                        Refinement                `asn1:"optional,explicit,tag:12"`
+	Entry                          asn1.RawValue                `asn1:"optional,explicit,tag:0"`
+	AllUserAttributeTypes          asn1.RawValue                `asn1:"optional,explicit,tag:1"`
+	AttributeType                  [](AttributeType)            `asn1:"optional,explicit,tag:2,set"`
+	AllAttributeValues             [](AttributeType)            `asn1:"optional,explicit,tag:3,set"`
+	AllUserAttributeTypesAndValues asn1.RawValue                `asn1:"optional,explicit,tag:4"`
+	AttributeValue                 []pkix.AttributeTypeAndValue `asn1:"optional,explicit,tag:5,set"`
+	SelfValue                      [](AttributeType)            `asn1:"optional,explicit,tag:6,set"`
+	RangeOfValues                  Filter                       `asn1:"optional,explicit,tag:7"`
+	MaxValueCount                  [](MaxValueCount)            `asn1:"optional,explicit,tag:8,set"`
+	MaxImmSub                      int                          `asn1:"optional,explicit,tag:9"`
+	RestrictedBy                   [](RestrictedValue)          `asn1:"optional,explicit,tag:10,set"`
+	Contexts                       [](ContextAssertion)         `asn1:"optional,explicit,tag:11,set"`
+	Classes                        Refinement                   `asn1:"optional,explicit,tag:12"`
 }
 
 /* END_OF_SYMBOL_DEFINITION ProtectedItems */ /* START_OF_SYMBOL_DEFINITION MaxValueCount */

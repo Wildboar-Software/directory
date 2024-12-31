@@ -1,6 +1,7 @@
 package x500_go
 
 import (
+	"crypto/x509/pkix"
 	"encoding/asn1"
 	"time"
 )
@@ -121,55 +122,34 @@ type AttributeTypeAssertion struct {
 // ```
 type Name = asn1.RawValue
 
-/* END_OF_SYMBOL_DEFINITION Name */ /* START_OF_SYMBOL_DEFINITION RDNSequence */
-// ### ASN.1 Definition:
-//
-// ```asn1
-// RDNSequence  ::=  SEQUENCE OF RelativeDistinguishedName
-// ```
-type RDNSequence = [](RelativeDistinguishedName) // SequenceOfType
-/* END_OF_SYMBOL_DEFINITION RDNSequence */ /* START_OF_SYMBOL_DEFINITION DistinguishedName */
+/* END_OF_SYMBOL_DEFINITION Name */
+/* START_OF_SYMBOL_DEFINITION DistinguishedName */
 // ### ASN.1 Definition:
 //
 // ```asn1
 // DistinguishedName  ::=  RDNSequence
 // ```
-type DistinguishedName = RDNSequence // DefinedType
+type DistinguishedName = pkix.RDNSequence // DefinedType
 /* END_OF_SYMBOL_DEFINITION DistinguishedName */ /* START_OF_SYMBOL_DEFINITION RelativeDistinguishedName */
 // ### ASN.1 Definition:
 //
 // ```asn1
 // RelativeDistinguishedName  ::=  SET SIZE (1..MAX) OF AttributeTypeAndValue
 // ```
-type RelativeDistinguishedName = [](AttributeTypeAndValue) // SetOfType
+type RelativeDistinguishedName = [](pkix.AttributeTypeAndValue) // SetOfType
 /* END_OF_SYMBOL_DEFINITION RelativeDistinguishedName */ /* START_OF_SYMBOL_DEFINITION AttributeTypeAndValue */
-// ### ASN.1 Definition:
-//
-// ```asn1
-// AttributeTypeAndValue ::= SEQUENCE {
-//   type                  ATTRIBUTE.&id({SupportedAttributes}),
-//   value                 ATTRIBUTE.&Type({SupportedAttributes}{@type}),
-//   ... }
-// ```
-//
-//
-type AttributeTypeAndValue struct {
-	Type  asn1.ObjectIdentifier
-	Value asn1.RawValue
-}
 
-/* END_OF_SYMBOL_DEFINITION AttributeTypeAndValue */ /* START_OF_SYMBOL_DEFINITION SubtreeSpecification */
 // ### ASN.1 Definition:
 //
 // ```asn1
-// SubtreeSpecification ::= SEQUENCE {
-//   base                 [0]  LocalName DEFAULT {},
-//   COMPONENTS OF             ChopSpecification,
-//   specificationFilter  [4]  Refinement OPTIONAL,
-//   ... }
+//
+//	SubtreeSpecification ::= SEQUENCE {
+//	  base                 [0]  LocalName DEFAULT {},
+//	  COMPONENTS OF             ChopSpecification,
+//	  specificationFilter  [4]  Refinement OPTIONAL,
+//	  ... }
+//
 // ```
-//
-//
 type SubtreeSpecification struct {
 	Base                LocalName                                     `asn1:"optional,explicit,tag:0"`
 	SpecificExclusions  [](ChopSpecification_specificExclusions_Item) `asn1:"optional,explicit,tag:1,set"`
@@ -178,13 +158,15 @@ type SubtreeSpecification struct {
 	SpecificationFilter Refinement                                    `asn1:"optional,explicit,tag:4"`
 }
 
-/* END_OF_SYMBOL_DEFINITION SubtreeSpecification */ /* START_OF_SYMBOL_DEFINITION LocalName */
+/* END_OF_SYMBOL_DEFINITION SubtreeSpecification */
+
+/* START_OF_SYMBOL_DEFINITION LocalName */
 // ### ASN.1 Definition:
 //
 // ```asn1
 // LocalName  ::=  RDNSequence
 // ```
-type LocalName = RDNSequence // DefinedType
+type LocalName = pkix.RDNSequence // DefinedType
 /* END_OF_SYMBOL_DEFINITION LocalName */ /* START_OF_SYMBOL_DEFINITION ChopSpecification_specificExclusions_Item */
 // ### ASN.1 Definition:
 //

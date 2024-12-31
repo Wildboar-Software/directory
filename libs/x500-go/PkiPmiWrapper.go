@@ -1,6 +1,7 @@
 package x500_go
 
 import (
+	"crypto/x509/pkix"
 	"encoding/asn1"
 )
 
@@ -30,7 +31,7 @@ type PDU_wrapper = SIGNED // DefinedType
 //
 type TBSPDU_wrapper struct {
 	Version            Version `asn1:"optional"`
-	SignatureAlgorithm AlgorithmIdentifier
+	SignatureAlgorithm pkix.AlgorithmIdentifier
 	CertPath           PkiPath          `asn1:"tag:0"`
 	SignedAttrs        SignedAttributes `asn1:"optional,tag:1"`
 	Conf               TBSPDU_wrapper_conf
@@ -135,7 +136,7 @@ type SenderStaticInfo struct {
 //
 //
 type SenderDhPublicKey struct {
-	Algorithm AlgorithmIdentifier
+	Algorithm pkix.AlgorithmIdentifier
 	PublicKey asn1.BitString
 }
 

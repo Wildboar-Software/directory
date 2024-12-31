@@ -1,6 +1,8 @@
 package x500_go
 
 import (
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/asn1"
 )
 
@@ -16,7 +18,7 @@ import (
 //
 //
 type SIGNATURE struct {
-	AlgorithmIdentifier AlgorithmIdentifier
+	AlgorithmIdentifier pkix.AlgorithmIdentifier
 	Signature           asn1.BitString
 }
 
@@ -39,7 +41,7 @@ type SIGNATURE struct {
 //
 type SIGNED struct {
 	ToBeSigned          asn1.RawValue
-	AlgorithmIdentifier AlgorithmIdentifier
+	AlgorithmIdentifier pkix.AlgorithmIdentifier
 	Signature           asn1.BitString
 }
 
@@ -57,7 +59,7 @@ type SIGNED struct {
 //
 //
 type HASH struct {
-	AlgorithmIdentifier AlgorithmIdentifier
+	AlgorithmIdentifier pkix.AlgorithmIdentifier
 	HashValue           asn1.BitString
 }
 
@@ -82,22 +84,6 @@ type ENCRYPTED = asn1.BitString
 // ```
 type ENCRYPTED_HASH = asn1.BitString
 
-/* END_OF_SYMBOL_DEFINITION ENCRYPTED_HASH */ /* START_OF_SYMBOL_DEFINITION AlgorithmIdentifier */
-// ### ASN.1 Definition:
-//
-// ```asn1
-// AlgorithmIdentifier{ALGORITHM:SupportedAlgorithms} ::= SEQUENCE {
-//   algorithm       ALGORITHM.&id({SupportedAlgorithms}),
-//   parameters      ALGORITHM.&Type({SupportedAlgorithms}{@algorithm}) OPTIONAL,
-//   ... }
-// ```
-//
-//
-type AlgorithmIdentifier struct {
-	Algorithm  asn1.ObjectIdentifier
-	Parameters asn1.RawValue `asn1:"optional"`
-}
-
 /* END_OF_SYMBOL_DEFINITION AlgorithmIdentifier */ /* START_OF_SYMBOL_DEFINITION FingerPrint */
 // ### ASN.1 Definition:
 //
@@ -110,7 +96,7 @@ type AlgorithmIdentifier struct {
 //
 //
 type FingerPrint struct {
-	AlgorithmIdentifier AlgorithmIdentifier
+	AlgorithmIdentifier pkix.AlgorithmIdentifier
 	Fingerprint         asn1.BitString
 }
 
@@ -143,48 +129,8 @@ type SupportedCurves = asn1.ObjectIdentifier
 //
 //
 var DummyCurv asn1.ObjectIdentifier = []int{2, 5, 5} /* OBJECT_IDENTIFIER */
-/* END_OF_SYMBOL_DEFINITION DummyCurv */ /* START_OF_SYMBOL_DEFINITION Certificate */
-// ### ASN.1 Definition:
-//
-// ```asn1
-// Certificate  ::=  SIGNED{TBSCertificate}
-// ```
-type Certificate = SIGNED // DefinedType
-/* END_OF_SYMBOL_DEFINITION Certificate */ /* START_OF_SYMBOL_DEFINITION TBSCertificate */
-// ### ASN.1 Definition:
-//
-// ```asn1
-// TBSCertificate ::= SEQUENCE {
-//   version                  [0]  Version DEFAULT v1,
-//   serialNumber                  CertificateSerialNumber,
-//   signature                     AlgorithmIdentifier{{SupportedAlgorithms}},
-//   issuer                        Name,
-//   validity                      Validity,
-//   subject                       Name,
-//   subjectPublicKeyInfo          SubjectPublicKeyInfo,
-//   issuerUniqueIdentifier   [1] IMPLICIT UniqueIdentifier OPTIONAL,
-//   ...,
-//   [[2:  -- if present, version shall be v2 or v3
-//   subjectUniqueIdentifier  [2] IMPLICIT UniqueIdentifier OPTIONAL]],
-//   [[3:  -- if present, version shall be v2 or v3
-//   extensions               [3]  Extensions OPTIONAL ]]
-//   -- If present, version shall be v3]]
-//  } (CONSTRAINED BY { -- shall be DER encoded -- } )
-// ```
-//
-//
-type TBSCertificate struct {
-	Version                Version `asn1:"optional,explicit,tag:0"`
-	SerialNumber           CertificateSerialNumber
-	Signature              AlgorithmIdentifier
-	Issuer                 Name
-	Validity               Validity
-	Subject                Name
-	SubjectPublicKeyInfo   SubjectPublicKeyInfo
-	IssuerUniqueIdentifier UniqueIdentifier `asn1:"optional,tag:1"`
-}
-
-/* END_OF_SYMBOL_DEFINITION TBSCertificate */ /* START_OF_SYMBOL_DEFINITION Version */
+/* END_OF_SYMBOL_DEFINITION DummyCurv */
+/* START_OF_SYMBOL_DEFINITION Version */
 // ### ASN.1 Definition:
 //
 // ```asn1
@@ -240,7 +186,7 @@ type Validity struct {
 //
 //
 type SubjectPublicKeyInfo struct {
-	Algorithm        AlgorithmIdentifier
+	Algorithm        pkix.AlgorithmIdentifier
 	SubjectPublicKey PublicKey
 }
 
@@ -268,28 +214,9 @@ type X509Time = asn1.RawValue
 // ```asn1
 // Extensions  ::=  SEQUENCE SIZE (1..MAX) OF Extension
 // ```
-type Extensions = [](Extension) // SequenceOfType
-/* END_OF_SYMBOL_DEFINITION Extensions */ /* START_OF_SYMBOL_DEFINITION Extension */
-// ### ASN.1 Definition:
-//
-// ```asn1
-// Extension ::= SEQUENCE {
-//   extnId     EXTENSION.&id({ExtensionSet}),
-//   critical   BOOLEAN DEFAULT FALSE,
-//   extnValue  OCTET STRING
-//     (CONTAINING EXTENSION.&ExtnType({ExtensionSet}{@extnId})
-//        ENCODED BY der),
-//   ... }
-// ```
-//
-//
-type Extension struct {
-	ExtnId    asn1.ObjectIdentifier
-	Critical  bool `asn1:"optional"`
-	ExtnValue []byte
-}
-
-/* END_OF_SYMBOL_DEFINITION Extension */ /* START_OF_SYMBOL_DEFINITION Der */
+type Extensions = [](pkix.Extension) // SequenceOfType
+/* END_OF_SYMBOL_DEFINITION Extensions */
+/* START_OF_SYMBOL_DEFINITION Der */
 // ### ASN.1 Definition:
 //
 // ```asn1
@@ -310,7 +237,7 @@ type Extension struct {
 //
 //
 type Certificates struct {
-	UserCertificate   Certificate
+	UserCertificate   x509.Certificate
 	CertificationPath ForwardCertificationPath `asn1:"optional"`
 }
 
@@ -327,7 +254,7 @@ type ForwardCertificationPath = [](CrossCertificates) // SequenceOfType
 // ```asn1
 // CrossCertificates  ::=  SET SIZE (1..MAX) OF Certificate
 // ```
-type CrossCertificates = [](Certificate) // SetOfType
+type CrossCertificates = [](x509.Certificate) // SetOfType
 /* END_OF_SYMBOL_DEFINITION CrossCertificates */ /* START_OF_SYMBOL_DEFINITION CertificationPath */
 // ### ASN.1 Definition:
 //
@@ -340,7 +267,7 @@ type CrossCertificates = [](Certificate) // SetOfType
 //
 //
 type CertificationPath struct {
-	UserCertificate   Certificate
+	UserCertificate   x509.Certificate
 	TheCACertificates [](CertificatePair) `asn1:"optional"`
 }
 
@@ -350,47 +277,7 @@ type CertificationPath struct {
 // ```asn1
 // PkiPath  ::=  SEQUENCE SIZE (1..MAX) OF Certificate
 // ```
-type PkiPath = [](Certificate) // SequenceOfType
-/* END_OF_SYMBOL_DEFINITION PkiPath */ /* START_OF_SYMBOL_DEFINITION CertificateList */
-// ### ASN.1 Definition:
-//
-// ```asn1
-// CertificateList  ::=  SIGNED{CertificateListContent}
-// ```
-type CertificateList = SIGNED // DefinedType
-/* END_OF_SYMBOL_DEFINITION CertificateList */ /* START_OF_SYMBOL_DEFINITION CertificateListContent */
-// ### ASN.1 Definition:
-//
-// ```asn1
-// CertificateListContent ::= SEQUENCE {
-//   version              Version OPTIONAL,
-//   -- if present, version shall be v2
-//   signature            AlgorithmIdentifier{{SupportedAlgorithms}},
-//   issuer               Name,
-//   thisUpdate           Time,
-//   nextUpdate           Time OPTIONAL,
-//   revokedCertificates  SEQUENCE OF SEQUENCE {
-//     serialNumber         CertificateSerialNumber,
-//     revocationDate       Time,
-//     crlEntryExtensions   Extensions OPTIONAL,
-//     ...} OPTIONAL,
-//   ...,
-//   ...,
-//   crlExtensions   [0]  Extensions OPTIONAL }
-// ```
-//
-//
-type CertificateListContent struct {
-	Version             Version `asn1:"optional"`
-	Signature           AlgorithmIdentifier
-	Issuer              Name
-	ThisUpdate          Time
-	NextUpdate          Time                                                `asn1:"optional"`
-	RevokedCertificates [](CertificateListContent_revokedCertificates_Item) `asn1:"optional"`
-	CrlExtensions       Extensions                                          `asn1:"optional,explicit,tag:0"`
-}
-
-/* END_OF_SYMBOL_DEFINITION CertificateListContent */ /* START_OF_SYMBOL_DEFINITION CertAVL */
+type PkiPath = [](x509.Certificate) // SequenceOfType
 // ### ASN.1 Definition:
 //
 // ```asn1
@@ -424,7 +311,7 @@ type CertAVL = SIGNED // DefinedType
 type TBSCertAVL struct {
 	Version       Version         `asn1:"optional,tag:0"`
 	SerialNumber  AvlSerialNumber `asn1:"optional"`
-	Signature     AlgorithmIdentifier
+	Signature     pkix.AlgorithmIdentifier
 	Issuer        Name
 	Constrained   bool
 	Entries       [](TBSCertAVL_entries_Item)
@@ -504,8 +391,8 @@ type ScopeRestriction struct {
 //
 //
 type CertificatePair struct {
-	IssuedToThisCA Certificate `asn1:"optional,explicit,tag:0"`
-	IssuedByThisCA Certificate `asn1:"optional,explicit,tag:1"`
+	IssuedToThisCA x509.Certificate `asn1:"optional,explicit,tag:0"`
+	IssuedByThisCA x509.Certificate `asn1:"optional,explicit,tag:1"`
 }
 
 /* END_OF_SYMBOL_DEFINITION CertificatePair */ /* START_OF_SYMBOL_DEFINITION SupportedAlgorithm */
@@ -521,7 +408,7 @@ type CertificatePair struct {
 //
 //
 type SupportedAlgorithm struct {
-	AlgorithmIdentifier         AlgorithmIdentifier
+	AlgorithmIdentifier         pkix.AlgorithmIdentifier
 	IntendedUsage               KeyUsage                  `asn1:"optional,explicit,tag:0"`
 	IntendedCertificatePolicies CertificatePoliciesSyntax `asn1:"optional,explicit,tag:1"`
 }
@@ -583,7 +470,7 @@ type PolicyID = CertPolicyId // DefinedType
 //
 //
 type SupportedPublicKeyAlgorithms struct {
-	AlgorithmIdentifier AlgorithmIdentifier
+	AlgorithmIdentifier pkix.AlgorithmIdentifier
 	MinKeySize          int
 	Extensions          [](OidOrAttr) `asn1:"optional,explicit,tag:0"`
 }
@@ -824,21 +711,8 @@ var Id_lsx_x509CertificatePair asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1
 //
 //
 var Id_lsx_x509SupportedAlgorithm asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 49} /* OBJECT_IDENTIFIER */
-/* END_OF_SYMBOL_DEFINITION Id_lsx_x509SupportedAlgorithm */ /* START_OF_SYMBOL_DEFINITION CertificateListContent_revokedCertificates_Item */
-// ### ASN.1 Definition:
-//
-// ```asn1
-// CertificateListContent-revokedCertificates-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
-// ```
-//
-//
-type CertificateListContent_revokedCertificates_Item struct {
-	SerialNumber       CertificateSerialNumber
-	RevocationDate     Time
-	CrlEntryExtensions Extensions `asn1:"optional"`
-}
-
-/* END_OF_SYMBOL_DEFINITION CertificateListContent_revokedCertificates_Item */ /* START_OF_SYMBOL_DEFINITION TBSCertAVL_entries_Item_idType */
+/* END_OF_SYMBOL_DEFINITION Id_lsx_x509SupportedAlgorithm */
+/* START_OF_SYMBOL_DEFINITION TBSCertAVL_entries_Item_idType */
 // ### ASN.1 Definition:
 //
 // ```asn1

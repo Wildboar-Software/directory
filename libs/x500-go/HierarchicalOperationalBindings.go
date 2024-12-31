@@ -63,7 +63,11 @@ type Vertex struct {
 	AccessPoints MasterAndShadowAccessPoints `asn1:"optional,explicit,tag:3"`
 }
 
-/* END_OF_SYMBOL_DEFINITION Vertex */ /* START_OF_SYMBOL_DEFINITION SubentryInfo */
+/* END_OF_SYMBOL_DEFINITION Vertex */
+/* START_OF_SYMBOL_DEFINITION SubentryInfo */
+// WARNING: If you encounter a bug encoding or decoding, it is probably the
+// info field, which may need to be a `[]pkix.AttributeTypeAndValueSET`.
+//
 // ### ASN.1 Definition:
 //
 // ```asn1

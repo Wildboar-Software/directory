@@ -1,6 +1,7 @@
 package x500_go
 
 import (
+	"crypto/x509"
 	"encoding/asn1"
 	"time"
 )
@@ -93,7 +94,7 @@ type CertRsp struct {
 //
 //
 type CertOK struct {
-	DhCert Certificate
+	DhCert x509.Certificate
 }
 
 /* END_OF_SYMBOL_DEFINITION CertOK */ /* START_OF_SYMBOL_DEFINITION CertErr */
@@ -1180,7 +1181,7 @@ type CertSubscribeRsp_result = asn1.RawValue
 //
 //
 type CertSubscribeOK_Item_ok struct {
-	Cert         Certificate
+	Cert         x509.Certificate
 	Status       CertStatus
 	RevokeReason CRLReason `asn1:"optional"`
 }
@@ -1269,7 +1270,7 @@ type CertUnsubscribeOK_Item = asn1.RawValue
 //
 type CertReplaceReq_certs_Item struct {
 	Old CertificateSerialNumber
-	New Certificate
+	New x509.Certificate
 }
 
 /* END_OF_SYMBOL_DEFINITION CertReplaceReq_certs_Item */ /* START_OF_SYMBOL_DEFINITION CertReplaceRsp_result */

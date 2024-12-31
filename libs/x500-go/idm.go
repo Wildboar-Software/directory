@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/x509/pkix"
 	"encoding/asn1"
 	"encoding/binary"
 	"errors"
@@ -620,7 +621,7 @@ func (stack *IDMProtocolStack) Unbind(req X500UnbindRequest) (response X500Unbin
 	return X500UnbindOutcome{}, nil
 }
 
-func HashAlgFromHash(h crypto.Hash) (alg AlgorithmIdentifier, err error) {
+func HashAlgFromHash(h crypto.Hash) (alg pkix.AlgorithmIdentifier, err error) {
 	switch h {
 	case crypto.MD5:
 		{
@@ -691,14 +692,14 @@ func sign(signer crypto.Signer, data []byte) (sig SIGNATURE, err error) {
 	_, is_ed25519 := signer.(ed25519.PrivateKey)
 	if is_ed25519 {
 		opts = crypto.Hash(0)
-		sig.AlgorithmIdentifier = AlgorithmIdentifier{
+		sig.AlgorithmIdentifier = pkix.AlgorithmIdentifier{
 			Algorithm: asn1.ObjectIdentifier{1, 3, 101, 113}, // Not defined in the X.500 standards.
 			// Will this handle the undefined value correctly?
 		}
 	}
 	_, is_ecdsa := signer.(*ecdsa.PrivateKey)
 	if is_ecdsa {
-		sig.AlgorithmIdentifier = AlgorithmIdentifier{
+		sig.AlgorithmIdentifier = pkix.AlgorithmIdentifier{
 			Algorithm: Ecdsa_with_SHA256,
 		}
 		hash := sha256.Sum256(data)
@@ -711,7 +712,7 @@ func sign(signer crypto.Signer, data []byte) (sig SIGNATURE, err error) {
 			Hash:       crypto.SHA256,
 		}
 		pss_params := RSASSA_PSS_Type{
-			HashAlgorithm: AlgorithmIdentifier{
+			HashAlgorithm: pkix.AlgorithmIdentifier{
 				Algorithm: Id_sha256,
 			},
 			SaltLength:   32, // Recommended to be size of hash output.
@@ -721,7 +722,7 @@ func sign(signer crypto.Signer, data []byte) (sig SIGNATURE, err error) {
 		if err != nil {
 			return SIGNATURE{}, err
 		}
-		sig.AlgorithmIdentifier = AlgorithmIdentifier{
+		sig.AlgorithmIdentifier = pkix.AlgorithmIdentifier{
 			Algorithm:  Id_RSASSA_PSS,
 			Parameters: asn1.RawValue{FullBytes: pss_params_bytes},
 		}
@@ -1128,7 +1129,8 @@ func (stack *IDMProtocolStack) List(arg_data ListArgumentData) (resp X500OpOutco
 		// This is some other syntax other than listInfo.
 		return outcome, nil, nil
 	}
-	rest, err := asn1.Unmarshal(outcome.Parameter.FullBytes, &info)
+	info = &ListResultData_listInfo{}
+	rest, err := asn1.UnmarshalWithParams(param.FullBytes, info, "set")
 	if err != nil {
 		return outcome, nil, err
 	}
@@ -1213,7 +1215,8 @@ func (stack *IDMProtocolStack) Search(arg_data SearchArgumentData) (resp X500OpO
 		// This is some other syntax other than searchInfo.
 		return outcome, nil, nil
 	}
-	rest, err := asn1.Unmarshal(outcome.Parameter.FullBytes, &info)
+	info = &SearchResultData_searchInfo{}
+	rest, err := asn1.UnmarshalWithParams(param.FullBytes, info, "set")
 	if err != nil {
 		return outcome, nil, err
 	}

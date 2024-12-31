@@ -1,6 +1,7 @@
 package x500_go
 
 import (
+	"crypto/x509/pkix"
 	"encoding/asn1"
 )
 
@@ -35,7 +36,7 @@ const (
 
 type SignatureInfo struct {
 	Content   []byte // The value over which the signature was calculated
-	Algorithm AlgorithmIdentifier
+	Algorithm pkix.AlgorithmIdentifier
 	Value     []byte // The value of the signature itself
 }
 

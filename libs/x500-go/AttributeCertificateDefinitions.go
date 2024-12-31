@@ -1,6 +1,8 @@
 package x500_go
 
 import (
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/asn1"
 	"time"
 )
@@ -36,7 +38,7 @@ type TBSAttributeCertificate struct {
 	Version                AttCertVersion
 	Holder                 Holder
 	Issuer                 AttCertIssuer
-	Signature              AlgorithmIdentifier
+	Signature              pkix.AlgorithmIdentifier
 	SerialNumber           CertificateSerialNumber
 	AttrCertValidityPeriod AttCertValidityPeriod
 	Attributes             [](Attribute)
@@ -113,7 +115,7 @@ type IssuerSerial struct {
 type ObjectDigestInfo struct {
 	DigestedObjectType ObjectDigestInfo_digestedObjectType
 	OtherObjectTypeID  asn1.ObjectIdentifier `asn1:"optional"`
-	DigestAlgorithm    AlgorithmIdentifier
+	DigestAlgorithm    pkix.AlgorithmIdentifier
 	ObjectDigest       asn1.BitString
 }
 
@@ -182,7 +184,7 @@ type AttributeCertificationPath struct {
 //
 //
 type ACPathData struct {
-	Certificate          Certificate          `asn1:"optional,tag:0"`
+	Certificate          x509.Certificate     `asn1:"optional,tag:0"`
 	AttributeCertificate AttributeCertificate `asn1:"optional,tag:1"`
 }
 
@@ -1138,8 +1140,8 @@ type AttributeMappings_Item_typeMappings struct {
 //
 //
 type AttributeMappings_Item_typeValueMappings struct {
-	Local  AttributeTypeAndValue `asn1:"tag:0"`
-	Remote AttributeTypeAndValue `asn1:"tag:1"`
+	Local  pkix.AttributeTypeAndValue `asn1:"tag:0"`
+	Remote pkix.AttributeTypeAndValue `asn1:"tag:1"`
 }
 
 /* END_OF_SYMBOL_DEFINITION AttributeMappings_Item_typeValueMappings */ /* START_OF_SYMBOL_DEFINITION AttributeMappings_Item */

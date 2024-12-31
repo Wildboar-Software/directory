@@ -1,6 +1,7 @@
 package x500_go
 
 import (
+	"crypto/x509/pkix"
 	"encoding/asn1"
 	"time"
 )
@@ -850,7 +851,7 @@ type ProtRestriction = [](asn1.ObjectIdentifier) // SequenceOfType
 //
 //
 type SubjectAltPublicKeyInfo struct {
-	Algorithm           AlgorithmIdentifier
+	Algorithm           pkix.AlgorithmIdentifier
 	SubjectAltPublicKey asn1.BitString
 }
 
@@ -860,7 +861,7 @@ type SubjectAltPublicKeyInfo struct {
 // ```asn1
 // AltSignatureAlgorithm  ::=  AlgorithmIdentifier{{SupportedAlgorithms}}
 // ```
-type AltSignatureAlgorithm = AlgorithmIdentifier // DefinedType
+type AltSignatureAlgorithm = pkix.AlgorithmIdentifier // DefinedType
 /* END_OF_SYMBOL_DEFINITION AltSignatureAlgorithm */ /* START_OF_SYMBOL_DEFINITION AltSignatureValue */
 // ### ASN.1 Definition:
 //

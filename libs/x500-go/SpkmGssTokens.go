@@ -1,6 +1,8 @@
 package x500_go
 
 import (
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/asn1"
 	"time"
 )
@@ -36,7 +38,7 @@ type SPKM_REQ struct {
 //
 type CertificationData struct {
 	CertificationPath         SPKMCertificationPath `asn1:"optional,tag:0"`
-	CertificateRevocationList CertificateList       `asn1:"optional,tag:1"`
+	CertificateRevocationList x509.RevocationList   `asn1:"optional,tag:1"`
 }
 
 /* END_OF_SYMBOL_DEFINITION CertificationData */ /* START_OF_SYMBOL_DEFINITION CertificationPath */
@@ -55,9 +57,9 @@ type CertificationData struct {
 //
 type SPKMCertificationPath struct {
 	UserKeyId         []byte              `asn1:"optional,tag:0"`
-	UserCertif        Certificate         `asn1:"optional,tag:1"`
+	UserCertif        x509.Certificate    `asn1:"optional,tag:1"`
 	VerifKeyId        []byte              `asn1:"optional,tag:2"`
-	UserVerifCertif   Certificate         `asn1:"optional,tag:3"`
+	UserVerifCertif   x509.Certificate    `asn1:"optional,tag:3"`
 	TheCACertificates [](CertificatePair) `asn1:"optional,tag:4"`
 }
 
@@ -75,7 +77,7 @@ type SPKMCertificationPath struct {
 //
 type REQ_TOKEN struct {
 	Req_contents  Req_contents
-	AlgId         AlgorithmIdentifier
+	AlgId         pkix.AlgorithmIdentifier
 	Req_integrity Integrity
 }
 
@@ -227,21 +229,21 @@ type Conf_Algs = asn1.RawValue
 // ```asn1
 // Intg-Algs  ::=  SEQUENCE OF AlgorithmIdentifier{{SupportedAlgorithms}}
 // ```
-type Intg_Algs = [](AlgorithmIdentifier) // SequenceOfType
+type Intg_Algs = [](pkix.AlgorithmIdentifier) // SequenceOfType
 /* END_OF_SYMBOL_DEFINITION Intg_Algs */ /* START_OF_SYMBOL_DEFINITION OWF_Algs */
 // ### ASN.1 Definition:
 //
 // ```asn1
 // OWF-Algs  ::=  SEQUENCE OF AlgorithmIdentifier{{SupportedAlgorithms}}
 // ```
-type OWF_Algs = [](AlgorithmIdentifier) // SequenceOfType
+type OWF_Algs = [](pkix.AlgorithmIdentifier) // SequenceOfType
 /* END_OF_SYMBOL_DEFINITION OWF_Algs */ /* START_OF_SYMBOL_DEFINITION Key_Estb_Algs */
 // ### ASN.1 Definition:
 //
 // ```asn1
 // Key-Estb-Algs  ::=  SEQUENCE OF AlgorithmIdentifier{{SupportedAlgorithms}}
 // ```
-type Key_Estb_Algs = [](AlgorithmIdentifier) // SequenceOfType
+type Key_Estb_Algs = [](pkix.AlgorithmIdentifier) // SequenceOfType
 /* END_OF_SYMBOL_DEFINITION Key_Estb_Algs */ /* START_OF_SYMBOL_DEFINITION SPKM_REP_TI */
 // ### ASN.1 Definition:
 //
@@ -273,7 +275,7 @@ type SPKM_REP_TI struct {
 //
 type REP_TI_TOKEN struct {
 	Rep_ti_contents Rep_ti_contents
-	AlgId           AlgorithmIdentifier
+	AlgId           pkix.AlgorithmIdentifier
 	Rep_ti_integ    Integrity
 }
 
@@ -308,9 +310,9 @@ type Rep_ti_contents struct {
 	Targ_name    Name
 	RandSrc      Random_Integer
 	Rep_data     Context_Data
-	Validity     Validity            `asn1:"optional,tag:2"`
-	Key_estb_id  AlgorithmIdentifier `asn1:"optional"`
-	Key_estb_str asn1.BitString      `asn1:"optional"`
+	Validity     Validity                 `asn1:"optional,tag:2"`
+	Key_estb_id  pkix.AlgorithmIdentifier `asn1:"optional"`
+	Key_estb_str asn1.BitString           `asn1:"optional"`
 }
 
 /* END_OF_SYMBOL_DEFINITION Rep_ti_contents */ /* START_OF_SYMBOL_DEFINITION SPKM_REP_IT */
@@ -327,7 +329,7 @@ type Rep_ti_contents struct {
 //
 type SPKM_REP_IT struct {
 	ResponseToken REP_IT_TOKEN
-	AlgId         AlgorithmIdentifier
+	AlgId         pkix.AlgorithmIdentifier
 	Rep_it_integ  Integrity
 }
 
@@ -371,7 +373,7 @@ type REP_IT_TOKEN struct {
 //
 type SPKM_ERROR struct {
 	ErrorToken ERROR_TOKEN
-	AlgId      AlgorithmIdentifier
+	AlgId      pkix.AlgorithmIdentifier
 	Integrity  Integrity
 }
 
@@ -422,8 +424,8 @@ type SPKM_MIC struct {
 type Mic_Header struct {
 	Tok_id     int
 	Context_id Random_Integer
-	Int_alg    AlgorithmIdentifier `asn1:"optional,tag:0"`
-	Snd_seq    SeqNum              `asn1:"optional,tag:1"`
+	Int_alg    pkix.AlgorithmIdentifier `asn1:"optional,tag:0"`
+	Snd_seq    SeqNum                   `asn1:"optional,tag:1"`
 }
 
 /* END_OF_SYMBOL_DEFINITION Mic_Header */ /* START_OF_SYMBOL_DEFINITION SeqNum */
@@ -473,9 +475,9 @@ type SPKM_WRAP struct {
 type Wrap_Header struct {
 	Tok_id     int
 	Context_id Random_Integer
-	Int_alg    AlgorithmIdentifier `asn1:"optional,tag:0"`
-	Conf_alg   Conf_Alg            `asn1:"optional,tag:1"`
-	Snd_seq    SeqNum              `asn1:"optional,tag:2"`
+	Int_alg    pkix.AlgorithmIdentifier `asn1:"optional,tag:0"`
+	Conf_alg   Conf_Alg                 `asn1:"optional,tag:1"`
+	Snd_seq    SeqNum                   `asn1:"optional,tag:2"`
 }
 
 /* END_OF_SYMBOL_DEFINITION Wrap_Header */ /* START_OF_SYMBOL_DEFINITION Wrap_Body */
@@ -535,8 +537,8 @@ type SPKM_DEL struct {
 type Del_Header struct {
 	Tok_id     int
 	Context_id Random_Integer
-	Int_alg    AlgorithmIdentifier `asn1:"optional,tag:0"`
-	Snd_seq    SeqNum              `asn1:"optional,tag:1"`
+	Int_alg    pkix.AlgorithmIdentifier `asn1:"optional,tag:0"`
+	Snd_seq    SeqNum                   `asn1:"optional,tag:1"`
 }
 
 /* END_OF_SYMBOL_DEFINITION Del_Header */ /* START_OF_SYMBOL_DEFINITION MechType */

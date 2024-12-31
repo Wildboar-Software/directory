@@ -1,6 +1,7 @@
 package x500_go
 
 import (
+	"crypto/x509/pkix"
 	"encoding/asn1"
 )
 
@@ -308,7 +309,7 @@ type DitBridgeKnowledge struct {
 // ```asn1
 // Exclusions  ::=  SET SIZE (1..MAX) OF RDNSequence
 // ```
-type Exclusions = [](RDNSequence) // SetOfType
+type Exclusions = [](pkix.RDNSequence) // SetOfType
 /* END_OF_SYMBOL_DEFINITION Exclusions */ /* START_OF_SYMBOL_DEFINITION ContinuationReference */
 // ### ASN.1 Definition:
 //

@@ -1,6 +1,7 @@
 package x500_go
 
 import (
+	"crypto/x509/pkix"
 	"encoding/asn1"
 )
 
@@ -1110,9 +1111,9 @@ type ValidationParms struct {
 //
 //
 type RSASSA_PSS_Type struct {
-	HashAlgorithm AlgorithmIdentifier `asn1:"explicit,tag:0"`
-	SaltLength    int                 `asn1:"optional,explicit,tag:2,default:20"`
-	TrailerField  int                 `asn1:"optional,explicit,tag:3,default:1"`
+	HashAlgorithm pkix.AlgorithmIdentifier `asn1:"explicit,tag:0"`
+	SaltLength    int                      `asn1:"optional,explicit,tag:2,default:20"`
+	TrailerField  int                      `asn1:"optional,explicit,tag:3,default:1"`
 }
 
 /* END_OF_SYMBOL_DEFINITION RSASSA_PSS_Type */

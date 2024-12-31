@@ -1,6 +1,7 @@
 package x500_go
 
 import (
+	"crypto/x509/pkix"
 	"encoding/asn1"
 )
 
@@ -54,7 +55,7 @@ type PwdAlphabet = [](string) // SequenceOfType
 // ```asn1
 // PwdEncAlg  ::=  AlgorithmIdentifier{{SupportedAlgorithms}}
 // ```
-type PwdEncAlg = AlgorithmIdentifier // DefinedType
+type PwdEncAlg = pkix.AlgorithmIdentifier // DefinedType
 /* END_OF_SYMBOL_DEFINITION PwdEncAlg */ /* START_OF_SYMBOL_DEFINITION Id_at_userPwd */
 // ### ASN.1 Definition:
 //
@@ -370,7 +371,7 @@ var Id_asx_pwdEncAlgDescription asn1.ObjectIdentifier = []int{2, 5, 40, 3} /* OB
 //
 //
 type UserPwd_encrypted struct {
-	AlgorithmIdentifier AlgorithmIdentifier
+	AlgorithmIdentifier pkix.AlgorithmIdentifier
 	EncryptedString     []byte
 }
 

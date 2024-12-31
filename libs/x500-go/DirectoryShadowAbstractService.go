@@ -460,7 +460,11 @@ type TotalRefresh struct {
 	Subtree [](Subtree) `asn1:"optional,set"`
 }
 
-/* END_OF_SYMBOL_DEFINITION TotalRefresh */ /* START_OF_SYMBOL_DEFINITION SDSEContent */
+/* END_OF_SYMBOL_DEFINITION TotalRefresh */
+/* START_OF_SYMBOL_DEFINITION SDSEContent */
+// WARNING: If you encounter a bug encoding or decoding, it is probably the
+// Attributes field, which may need to be a `[]pkix.AttributeTypeAndValueSET`.
+//
 // ### ASN.1 Definition:
 //
 // ```asn1
@@ -472,7 +476,6 @@ type TotalRefresh struct {
 //   attValIncomplete  SET OF AttributeType DEFAULT {},
 //   ...}
 // ```
-//
 //
 type SDSEContent struct {
 	SDSEType         SDSEType
