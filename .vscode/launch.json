@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "pwa-node",
+            "type": "node",
             "request": "attach",
             "port": 24010,
             "name": "Attach to Meerkat",
@@ -14,7 +14,11 @@
             ],
             "outFiles": [
                 "${workspaceFolder}/dist/apps/meerkat/**/*.js"
-            ]
+            ],
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "webpack://@wildboar/meerkat-dsa/./src/*": "${workspaceFolder}/apps/meerkat/src/*"
+            }
         },
         {
             "type": "node",

@@ -7,7 +7,7 @@
         "types": ["node"],
         "esModuleInterop": true,
         "resolveJsonModule": true,
-        "sourceMap": false
+        "sourceMap": true
     },
     "exclude": [
         "**/*.spec.ts",
