@@ -152,7 +152,7 @@ async function abandon (
     op.abandonTime = new Date();
     const acknowledgement = await Promise.race<number | undefined>([
         new Promise<number>((resolve) => op.events.once("abandon", () => resolve(Number(invokeID)))),
-        new Promise<undefined>((_, reject) => setTimeout(reject, 3000)), // Wait three seconds before timing out.
+        new Promise<undefined>((resolve) => setTimeout(resolve, 3000)), // Wait three seconds before timing out.
     ]);
     if (acknowledgement !== invokeID) {
         throw new errors.AbandonFailedError(
