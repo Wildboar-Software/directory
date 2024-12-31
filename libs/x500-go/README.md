@@ -5,12 +5,13 @@
 
 - [x] Fix operations other than `read`
 - [ ] IDMv2
-- [ ] TLS
+- [x] TLS
 - [ ] StartTLS
 - [ ] Configurable Timeouts?
 - [ ] Context object?
 - [ ] Documentation
 - [ ] Test operation abandonment
+- [ ] Update `DirectoryAccessStack` interface to match implementations
 - [x] Test list operation
 - [x] Replace with types from `crypto/x509/pkix`
   - [x] `AlgorithmIdentifier`
@@ -23,3 +24,4 @@
   - [x] `RelativeDistinguishedNameSET`
   - [x] `RevokedCertificate`
   - [x] `TBSCertificateList`
+- [ ] Implement `String()` for `DistinguishedName`?

@@ -12,7 +12,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"net"
+	"io"
 	"sync"
 	"time"
 )
@@ -47,8 +47,15 @@ type IDMFrame struct {
 	Data     []byte
 }
 
+// Socket defines a type that works with both TCP and TLS connections
+type Socket interface {
+	io.Reader
+	io.Writer
+	Close() error
+}
+
 type IDMProtocolStack struct {
-	socket            net.Conn
+	socket            Socket
 	PendingOperations map[int]*X500Operation
 	mutex             sync.Mutex
 	NextInvokeId      int

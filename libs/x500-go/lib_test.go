@@ -1,6 +1,7 @@
 package x500_go
 
 import (
+	"crypto/tls"
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"fmt"
@@ -346,6 +347,80 @@ func TestManySimultaneousReads(t *testing.T) {
 
 func TestListAnEntry(t *testing.T) {
 	conn, err := net.Dial("tcp", "localhost:4632")
+	if err != nil {
+		os.Exit(53)
+	}
+	errchan := make(chan error)
+	idm := IDMProtocolStack{
+		socket:            conn,
+		ReceivedData:      make([]byte, 0),
+		NextInvokeId:      1,
+		PendingOperations: make(map[int]*X500Operation),
+		bound:             make(chan bool),
+		mutex:             sync.Mutex{},
+		resultSigning:     ProtectionRequest_None,
+		errorSigning:      ProtectionRequest_None,
+		signingKey:        nil,
+		signingCert:       nil,
+		errorChannel:      errchan,
+	}
+	go func() {
+		e := <-errchan
+		fmt.Printf("Error: %v\n", e)
+		os.Exit(40)
+	}()
+	go idm.ProcessReceivedPDUs()
+	_, err = idm.BindAnonymously()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(2)
+	}
+	dn := DistinguishedName{
+		[]pkix.AttributeTypeAndValue{
+			{
+				Type: Id_at_countryName,
+				Value: asn1.RawValue{
+					Tag:        asn1.TagPrintableString,
+					Class:      asn1.ClassUniversal,
+					IsCompound: false,
+					Bytes:      []byte("US"),
+				},
+			},
+		},
+	}
+	name_bytes, err := asn1.Marshal(dn)
+	if err != nil {
+		os.Exit(6)
+	}
+	name := asn1.RawValue{FullBytes: name_bytes}
+	arg_data := ListArgumentData{
+		Object: asn1.RawValue{
+			Tag:        0,
+			Class:      asn1.ClassContextSpecific,
+			IsCompound: true,
+			Bytes:      name.FullBytes,
+		},
+		SecurityParameters: SecurityParameters{
+			// No signing so we get searchInfo instead of uncorrelatedSearchInfo
+			Target:          ProtectionRequest_None,
+			ErrorProtection: ErrorProtectionRequest_None,
+		},
+	}
+	_, res, err := idm.List(arg_data)
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(9)
+		return
+	}
+	for _, sub := range res.Subordinates {
+		fmt.Printf("%v\n", sub.Rdn)
+	}
+}
+
+func TestTLS(t *testing.T) {
+	conn, err := tls.Dial("tcp", "localhost:44632", &tls.Config{
+		InsecureSkipVerify: true,
+	})
 	if err != nil {
 		os.Exit(53)
 	}
