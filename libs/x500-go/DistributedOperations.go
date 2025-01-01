@@ -203,7 +203,7 @@ type TraceItem struct {
 //   ditBridge              (9),
 //   ... }
 // ```
-type ReferenceType = int
+type ReferenceType = asn1.Enumerated
 
 const (
 	ReferenceType_Superior               ReferenceType = 1 // LONG_NAMED_ENUMERATED_VALUE,
@@ -414,7 +414,7 @@ type Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 struct {
 // ```asn1
 // OperationProgress-nameResolutionPhase ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 // ```
-type OperationProgress_nameResolutionPhase = int
+type OperationProgress_nameResolutionPhase = asn1.Enumerated
 
 const (
 	OperationProgress_nameResolutionPhase_NotStarted OperationProgress_nameResolutionPhase = 1 // LONG_NAMED_ENUMERATED_VALUE,
@@ -428,7 +428,7 @@ const (
 // ```asn1
 // MasterOrShadowAccessPoint-category ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 // ```
-type MasterOrShadowAccessPoint_category = int
+type MasterOrShadowAccessPoint_category = asn1.Enumerated
 
 const (
 	MasterOrShadowAccessPoint_category_Master        MasterOrShadowAccessPoint_category = 0 // LONG_NAMED_ENUMERATED_VALUE,

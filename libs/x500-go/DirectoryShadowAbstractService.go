@@ -680,7 +680,7 @@ type UnitOfReplication_supplyContexts = asn1.RawValue
 // ```asn1
 // Knowledge-knowledgeType ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 // ```
-type Knowledge_knowledgeType = int
+type Knowledge_knowledgeType = asn1.Enumerated
 
 const (
 	Knowledge_knowledgeType_Master Knowledge_knowledgeType = 0 // LONG_NAMED_ENUMERATED_VALUE,
@@ -694,7 +694,7 @@ const (
 // ```asn1
 // CoordinateShadowUpdateArgumentData-updateStrategy-standard ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 // ```
-type CoordinateShadowUpdateArgumentData_updateStrategy_standard = int
+type CoordinateShadowUpdateArgumentData_updateStrategy_standard = asn1.Enumerated
 
 const (
 	CoordinateShadowUpdateArgumentData_updateStrategy_standard_NoChanges   CoordinateShadowUpdateArgumentData_updateStrategy_standard = 0 // LONG_NAMED_ENUMERATED_VALUE,
@@ -716,7 +716,7 @@ type CoordinateShadowUpdateArgumentData_updateStrategy = asn1.RawValue
 // ```asn1
 // RequestShadowUpdateArgumentData-requestedStrategy-standard ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 // ```
-type RequestShadowUpdateArgumentData_requestedStrategy_standard = int
+type RequestShadowUpdateArgumentData_requestedStrategy_standard = asn1.Enumerated
 
 const (
 	RequestShadowUpdateArgumentData_requestedStrategy_standard_Incremental RequestShadowUpdateArgumentData_requestedStrategy_standard = 1 // LONG_NAMED_ENUMERATED_VALUE,

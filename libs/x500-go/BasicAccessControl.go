@@ -461,7 +461,7 @@ type ACIItem_itemOrUserFirst = asn1.RawValue
 // ```asn1
 // AuthenticationLevel-basicLevels-level ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 // ```
-type AuthenticationLevel_basicLevels_level = int
+type AuthenticationLevel_basicLevels_level = asn1.Enumerated
 
 const (
 	AuthenticationLevel_basicLevels_level_None   AuthenticationLevel_basicLevels_level = 0 // LONG_NAMED_ENUMERATED_VALUE,

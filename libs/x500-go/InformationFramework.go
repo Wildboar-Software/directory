@@ -226,7 +226,7 @@ type Refinement = asn1.RawValue
 //   structural (1),
 //   auxiliary  (2)}
 // ```
-type ObjectClassKind = int
+type ObjectClassKind = asn1.Enumerated
 
 const (
 	ObjectClassKind_Abstract   ObjectClassKind = 0 // LONG_NAMED_ENUMERATED_VALUE,
@@ -245,7 +245,7 @@ const (
 //   dSAOperation         (3),
 //   ... }
 // ```
-type AttributeUsage = int
+type AttributeUsage = asn1.Enumerated
 
 const (
 	AttributeUsage_UserApplications     AttributeUsage = 0 // LONG_NAMED_ENUMERATED_VALUE,

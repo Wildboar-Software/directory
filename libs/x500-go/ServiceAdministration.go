@@ -90,7 +90,7 @@ const AllowedSubset_WholeSubtree int32 = 2 /* LONG_NAMED_BIT */
 // ```asn1
 // ImposedSubset  ::=  ENUMERATED {baseObject(0), oneLevel(1), wholeSubtree(2),...}
 // ```
-type ImposedSubset = int
+type ImposedSubset = asn1.Enumerated
 
 const (
 	ImposedSubset_BaseObject   ImposedSubset = 0 // LONG_NAMED_ENUMERATED_VALUE,

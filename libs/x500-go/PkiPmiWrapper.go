@@ -235,7 +235,7 @@ var Id_messageDigest asn1.ObjectIdentifier = []int{1, 2, 840, 113549, 1, 9, 4} /
 //   decryptionFailed                    (18),
 //   ... }
 // ```
-type PkiWaError = int
+type PkiWaError = asn1.Enumerated
 
 const (
 	PkiWaError_UnsupportedWrapperVersion           PkiWaError = 0  // LONG_NAMED_ENUMERATED_VALUE,

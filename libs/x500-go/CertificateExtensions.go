@@ -520,7 +520,7 @@ type CRLStreamIdentifier = int64
 //   ascRevDate   (1),
 //   ...}
 // ```
-type OrderedListSyntax = int
+type OrderedListSyntax = asn1.Enumerated
 
 const (
 	OrderedListSyntax_AscSerialNum OrderedListSyntax = 0 // LONG_NAMED_ENUMERATED_VALUE,
@@ -683,7 +683,7 @@ type ExpiredCertsOnCRL = time.Time // GeneralizedTime
 //   ...,
 //   weakAlgorithmOrKey   (11) }
 // ```
-type CRLReason = int
+type CRLReason = asn1.Enumerated
 
 const (
 	CRLReason_Unspecified          CRLReason = 0  // LONG_NAMED_ENUMERATED_VALUE,
@@ -1647,7 +1647,7 @@ type PolicyMappingsSyntax_Item struct {
 // ```asn1
 // AltNameType-builtinNameForm ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 // ```
-type AltNameType_builtinNameForm = int
+type AltNameType_builtinNameForm = asn1.Enumerated
 
 const (
 	AltNameType_builtinNameForm_Rfc822Name                AltNameType_builtinNameForm = 1 // LONG_NAMED_ENUMERATED_VALUE,

@@ -30,7 +30,7 @@ type AVMPcommonComponents struct {
 // ```asn1
 // AVMPversion  ::=  ENUMERATED { v1(1), v2(2), v3(3), ... }
 // ```
-type AVMPversion = int
+type AVMPversion = asn1.Enumerated
 
 const (
 	AVMPversion_V1 AVMPversion = 1 // LONG_NAMED_ENUMERATED_VALUE,
@@ -366,7 +366,7 @@ type CASPcommonComponents struct {
 // ```asn1
 // CASPversion  ::=  ENUMERATED { v1(1), v2(2), v3(3), ... }
 // ```
-type CASPversion = int
+type CASPversion = asn1.Enumerated
 
 const (
 	CASPversion_V1 CASPversion = 1 // LONG_NAMED_ENUMERATED_VALUE,
@@ -449,7 +449,7 @@ type CertSubscribeOK = [](CertSubscribeOK_Item) // SequenceOfType
 //   expired (3),
 //   ... }
 // ```
-type CertStatus = int
+type CertStatus = asn1.Enumerated
 
 const (
 	CertStatus_Good    CertStatus = 0 // LONG_NAMED_ENUMERATED_VALUE,
@@ -467,7 +467,7 @@ const (
 //   unknownCert    (2),
 //   ... }
 // ```
-type CASP_CertStatusCode = int
+type CASP_CertStatusCode = asn1.Enumerated
 
 const (
 	CASP_CertStatusCode_NoReason    CASP_CertStatusCode = 1 // LONG_NAMED_ENUMERATED_VALUE,
@@ -731,7 +731,7 @@ type RejectCAsubscribe struct {
 //   unsupportedHashAlgorithm           (6),
 //   ... }
 // ```
-type SignedData_error = int
+type SignedData_error = asn1.Enumerated
 
 const (
 	SignedData_error_NoReason                      SignedData_error = 0 // LONG_NAMED_ENUMERATED_VALUE,
@@ -751,7 +751,7 @@ const (
 //   noReason                           (0),
 //   ... }
 // ```
-type EnvelopedData_error = int
+type EnvelopedData_error = asn1.Enumerated
 
 const (
 	EnvelopedData_error_NoReason EnvelopedData_error = 0 // LONG_NAMED_ENUMERATED_VALUE
@@ -786,7 +786,7 @@ const (
 //   unsupportedScopeRestriction        (21),
 //   ... }
 // ```
-type AVMP_error = int
+type AVMP_error = asn1.Enumerated
 
 const (
 	AVMP_error_NoReason                          AVMP_error = 0  // LONG_NAMED_ENUMERATED_VALUE,
@@ -829,7 +829,7 @@ const (
 //   unknownCert                   (8),
 //   ... }
 // ```
-type CASP_error = int
+type CASP_error = asn1.Enumerated
 
 const (
 	CASP_error_NoReason                CASP_error = 0 // LONG_NAMED_ENUMERATED_VALUE,
@@ -1383,7 +1383,7 @@ type CertUpdateOK_Item = asn1.RawValue
 // ```asn1
 // TBerror-code ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 // ```
-type TBerror_code = int
+type TBerror_code = asn1.Enumerated
 
 const (
 	TBerror_code_CaCertInvalid        TBerror_code = 1  // LONG_NAMED_ENUMERATED_VALUE,

@@ -568,7 +568,7 @@ type OctetSubstringAssertion = [](OctetSubstringAssertion_Item) // SequenceOfTyp
 //   sequenceProviderDefined        (5),
 //   ... }
 // ```
-type SequenceMatchType = int
+type SequenceMatchType = asn1.Enumerated
 
 const (
 	SequenceMatchType_SequenceExact                  SequenceMatchType = 0 // LONG_NAMED_ENUMERATED_VALUE,
@@ -590,7 +590,7 @@ const (
 //   wordProviderDefined (3),
 //   ... }
 // ```
-type WordMatchTypes = int
+type WordMatchTypes = asn1.Enumerated
 
 const (
 	WordMatchTypes_WordExact           WordMatchTypes = 0 // LONG_NAMED_ENUMERATED_VALUE,
@@ -609,7 +609,7 @@ const (
 //   characterMapped     (2),
 //   ... }
 // ```
-type CharacterMatchTypes = int
+type CharacterMatchTypes = asn1.Enumerated
 
 const (
 	CharacterMatchTypes_CharacterExact      CharacterMatchTypes = 0 // LONG_NAMED_ENUMERATED_VALUE,
@@ -634,7 +634,7 @@ type ZonalSelect = [](AttributeType) // SequenceOfType
 //   multiple-mappings     (3),
 //    ... }
 // ```
-type ZonalResult = int
+type ZonalResult = asn1.Enumerated
 
 const (
 	ZonalResult_Cannot_select_mapping ZonalResult = 0 // LONG_NAMED_ENUMERATED_VALUE,
@@ -3105,7 +3105,7 @@ const PreferredDeliveryMethod_Item_Telephone_delivery PreferredDeliveryMethod_It
 // ```asn1
 // UiiFormat-subset ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 // ```
-type UiiFormat_subset = int
+type UiiFormat_subset = asn1.Enumerated
 
 const (
 	UiiFormat_subset_BaseObject   UiiFormat_subset = 0 // LONG_NAMED_ENUMERATED_VALUE,
@@ -3135,7 +3135,7 @@ type EpcFormat_fields_Item_charField = asn1.RawValue
 // ```asn1
 // EpcFormat-fields-Item-result ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 // ```
-type EpcFormat_fields_Item_result = int
+type EpcFormat_fields_Item_result = asn1.Enumerated
 
 const (
 	EpcFormat_fields_Item_result_NumericPad EpcFormat_fields_Item_result = 0 // LONG_NAMED_ENUMERATED_VALUE,
@@ -3171,7 +3171,7 @@ type PwdResponse_warning = asn1.RawValue
 // ```asn1
 // PwdResponse-error ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 // ```
-type PwdResponse_error = int
+type PwdResponse_error = asn1.Enumerated
 
 const (
 	PwdResponse_error_PasswordExpired  PwdResponse_error = 0 // LONG_NAMED_ENUMERATED_VALUE,
@@ -3365,7 +3365,7 @@ type Period_months = asn1.RawValue
 // ```asn1
 // NamedDay-intNamedDays ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 // ```
-type NamedDay_intNamedDays = int
+type NamedDay_intNamedDays = asn1.Enumerated
 
 const (
 	NamedDay_intNamedDays_Sunday    NamedDay_intNamedDays = 1 // LONG_NAMED_ENUMERATED_VALUE,

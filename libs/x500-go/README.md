@@ -7,7 +7,8 @@
 - [x] IDMv2
 - [x] TLS
 - [x] StartTLS
-- [ ] Use `asn1.Enumerated`
+- [x] Use `asn1.Enumerated`
+- [ ] Use bigint
 - [ ] Configurable Timeouts?
 - [ ] Context object?
 - [ ] Make some functions private

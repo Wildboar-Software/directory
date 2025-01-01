@@ -90,7 +90,7 @@ type CommonArgumentsSeq struct {
 //   multiStrand   (4),
 //   ... }
 // ```
-type FamilyGrouping = int
+type FamilyGrouping = asn1.Enumerated
 
 const (
 	FamilyGrouping_EntryOnly     FamilyGrouping = 1 // LONG_NAMED_ENUMERATED_VALUE,
@@ -1969,7 +1969,7 @@ type AbandonedData struct {
 // AbandonedProblem   ::=  ENUMERATED {
 //   pagingAbandoned (0) }
 // ```
-type AbandonedProblem = int
+type AbandonedProblem = asn1.Enumerated
 
 const (
 	AbandonedProblem_PagingAbandoned AbandonedProblem = 0 // LONG_NAMED_ENUMERATED_VALUE
@@ -2595,7 +2595,7 @@ type TypeAndContextAssertion_contextAssertions = asn1.RawValue
 // ```asn1
 // FamilyReturn-memberSelect ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 // ```
-type FamilyReturn_memberSelect = int
+type FamilyReturn_memberSelect = asn1.Enumerated
 
 const (
 	FamilyReturn_memberSelect_ContributingEntriesOnly  FamilyReturn_memberSelect = 1 // LONG_NAMED_ENUMERATED_VALUE,
@@ -2709,7 +2709,7 @@ type PwdResponseValue_warning = asn1.RawValue
 // ```asn1
 // PwdResponseValue-error ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 // ```
-type PwdResponseValue_error = int
+type PwdResponseValue_error = asn1.Enumerated
 
 const (
 	PwdResponseValue_error_PasswordExpired  PwdResponseValue_error = 0 // LONG_NAMED_ENUMERATED_VALUE,
@@ -2835,7 +2835,7 @@ const SearchArgumentData_subset_WholeSubtree SearchArgumentData_subset = 2 // LO
 // ```asn1
 // SearchArgumentData-joinType ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 // ```
-type SearchArgumentData_joinType = int
+type SearchArgumentData_joinType = asn1.Enumerated
 
 const (
 	SearchArgumentData_joinType_InnerJoin     SearchArgumentData_joinType = 0 // LONG_NAMED_ENUMERATED_VALUE,
@@ -2849,7 +2849,7 @@ const (
 // ```asn1
 // JoinArgument-joinSubset ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 // ```
-type JoinArgument_joinSubset = int
+type JoinArgument_joinSubset = asn1.Enumerated
 
 const (
 	JoinArgument_joinSubset_BaseObject   JoinArgument_joinSubset = 0 // LONG_NAMED_ENUMERATED_VALUE,

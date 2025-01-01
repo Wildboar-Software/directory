@@ -423,7 +423,7 @@ type TerminateOperationalBindingArgumentData_initiator = asn1.RawValue
 // ```asn1
 // OpBindingErrorParam-problem ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 // ```
-type OpBindingErrorParam_problem = int
+type OpBindingErrorParam_problem = asn1.Enumerated
 
 const (
 	OpBindingErrorParam_problem_InvalidID              OpBindingErrorParam_problem = 0  // LONG_NAMED_ENUMERATED_VALUE,

@@ -195,7 +195,7 @@ type Unbind = asn1.RawValue // NullType
 //   reasonNotSpecified  (6),
 //   ...}
 // ```
-type Abort = int
+type Abort = asn1.Enumerated
 
 const (
 	Abort_MistypedPDU        Abort = 0 // LONG_NAMED_ENUMERATED_VALUE,
@@ -225,7 +225,7 @@ type StartTLS = asn1.RawValue // NullType
 //   unavailable     (3),
 //   ...}
 // ```
-type TLSResponse = int
+type TLSResponse = asn1.Enumerated
 
 const (
 	TLSResponse_Success         TLSResponse = 0 // LONG_NAMED_ENUMERATED_VALUE,
@@ -240,7 +240,7 @@ const (
 // ```asn1
 // IdmBindError-aETitleError ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 // ```
-type IdmBindError_aETitleError = int
+type IdmBindError_aETitleError = asn1.Enumerated
 
 const (
 	IdmBindError_aETitleError_CallingAETitleNotAccepted  IdmBindError_aETitleError = 0 // LONG_NAMED_ENUMERATED_VALUE,
@@ -253,7 +253,7 @@ const (
 // ```asn1
 // IdmReject-reason ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 // ```
-type IdmReject_reason = int
+type IdmReject_reason = asn1.Enumerated
 
 const (
 	IdmReject_reason_MistypedPDU                 IdmReject_reason = 0  // LONG_NAMED_ENUMERATED_VALUE,

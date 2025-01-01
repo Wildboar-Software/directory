@@ -1089,7 +1089,7 @@ var Id_mr_dualStringMatch asn1.ObjectIdentifier = []int{2, 5, 13, 69} /* OBJECT_
 // ```asn1
 // ObjectDigestInfo-digestedObjectType ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 // ```
-type ObjectDigestInfo_digestedObjectType = int
+type ObjectDigestInfo_digestedObjectType = asn1.Enumerated
 
 const (
 	ObjectDigestInfo_digestedObjectType_PublicKey        ObjectDigestInfo_digestedObjectType = 0 // LONG_NAMED_ENUMERATED_VALUE,
