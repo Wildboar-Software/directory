@@ -4,6 +4,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
+	"math/big"
 )
 
 /* START_OF_SYMBOL_DEFINITION SIGNATURE */
@@ -156,7 +157,7 @@ const Version_V3 Version = 2 // LONG_NAMED_INTEGER_VALUE
 // ```asn1
 // CertificateSerialNumber  ::=  INTEGER
 // ```
-type CertificateSerialNumber = int64
+type CertificateSerialNumber = *big.Int
 
 /* END_OF_SYMBOL_DEFINITION CertificateSerialNumber */ /* START_OF_SYMBOL_DEFINITION Validity */
 // ### ASN.1 Definition:
@@ -324,7 +325,7 @@ type TBSCertAVL struct {
 // ```asn1
 // AvlSerialNumber  ::=  INTEGER (0..MAX)
 // ```
-type AvlSerialNumber = int64
+type AvlSerialNumber = *big.Int
 
 /* END_OF_SYMBOL_DEFINITION AvlSerialNumber */ /* START_OF_SYMBOL_DEFINITION PKCertIdentifier */
 // ### ASN.1 Definition:

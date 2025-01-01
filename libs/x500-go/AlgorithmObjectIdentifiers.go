@@ -3,6 +3,7 @@ package x500_go
 import (
 	"crypto/x509/pkix"
 	"encoding/asn1"
+	"math/big"
 )
 
 /* START_OF_SYMBOL_DEFINITION ID */
@@ -1059,9 +1060,9 @@ type KEA_Parms_Id = []byte // OctetStringType
 //
 //
 type DSS_Parms struct {
-	P int
-	Q int
-	G int
+	P *big.Int
+	Q *big.Int
+	G *big.Int
 }
 
 /* END_OF_SYMBOL_DEFINITION DSS_Parms */ /* START_OF_SYMBOL_DEFINITION DomainParameters */
@@ -1079,10 +1080,10 @@ type DSS_Parms struct {
 //
 //
 type DomainParameters struct {
-	P               int
-	G               int
-	Q               int
-	J               int             `asn1:"optional"`
+	P               *big.Int
+	G               *big.Int
+	Q               *big.Int
+	J               *big.Int        `asn1:"optional"`
 	ValidationParms ValidationParms `asn1:"optional"`
 }
 

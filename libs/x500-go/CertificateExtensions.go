@@ -3,6 +3,7 @@ package x500_go
 import (
 	"crypto/x509/pkix"
 	"encoding/asn1"
+	"math/big"
 	"time"
 )
 
@@ -509,7 +510,7 @@ type DeltaRefInfo struct {
 // ```asn1
 // CRLStreamIdentifier  ::=  INTEGER (0..MAX)
 // ```
-type CRLStreamIdentifier = int64
+type CRLStreamIdentifier = *big.Int
 
 /* END_OF_SYMBOL_DEFINITION CRLStreamIdentifier */ /* START_OF_SYMBOL_DEFINITION OrderedListSyntax */
 // ### ASN.1 Definition:

@@ -8,7 +8,7 @@
 - [x] TLS
 - [x] StartTLS
 - [x] Use `asn1.Enumerated`
-- [ ] Use bigint
+- [x] Use `big.Int`
 - [ ] Configurable Timeouts?
 - [ ] Context object?
 - [ ] Make some functions private
