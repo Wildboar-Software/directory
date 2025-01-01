@@ -1,6 +1,7 @@
 package x500_go
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509/pkix"
 	"encoding/asn1"
@@ -12,6 +13,8 @@ import (
 	"time"
 )
 
+var sensibleTimeout = time.Duration(5) * time.Second
+
 func TestReadAnEntry(t *testing.T) {
 	conn, err := net.Dial("tcp", "localhost:4632")
 	if err != nil {
@@ -21,7 +24,7 @@ func TestReadAnEntry(t *testing.T) {
 	idm := IDMProtocolStack{
 		socket:            conn,
 		ReceivedData:      make([]byte, 0),
-		startTLSResponse:  make(chan asn1.Enumerated),
+		startTLSResponse:  make(chan asn1.Enumerated, 1),
 		NextInvokeId:      1,
 		PendingOperations: make(map[int]*X500Operation),
 		bound:             make(chan bool),
@@ -37,7 +40,9 @@ func TestReadAnEntry(t *testing.T) {
 		e := <-errchan
 		fmt.Printf("Error: %v\n", e)
 	}()
-	_, err = idm.BindAnonymously()
+	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	_, err = idm.BindAnonymously(ctx)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		os.Exit(2)
@@ -164,7 +169,7 @@ func TestReadAnEntry2(t *testing.T) {
 		socket:            conn,
 		ReceivedData:      make([]byte, 0),
 		NextInvokeId:      1,
-		startTLSResponse:  make(chan asn1.Enumerated),
+		startTLSResponse:  make(chan asn1.Enumerated, 1),
 		PendingOperations: make(map[int]*X500Operation),
 		bound:             make(chan bool),
 		mutex:             sync.Mutex{},
@@ -180,7 +185,9 @@ func TestReadAnEntry2(t *testing.T) {
 		fmt.Printf("Error: %v\n", e)
 		os.Exit(40)
 	}()
-	_, err = idm.BindAnonymously()
+	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	_, err = idm.BindAnonymously(ctx)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		os.Exit(2)
@@ -278,7 +285,7 @@ func TestManySimultaneousReads(t *testing.T) {
 		socket:            conn,
 		ReceivedData:      make([]byte, 0),
 		NextInvokeId:      1,
-		startTLSResponse:  make(chan asn1.Enumerated),
+		startTLSResponse:  make(chan asn1.Enumerated, 1),
 		PendingOperations: make(map[int]*X500Operation),
 		bound:             make(chan bool),
 		mutex:             sync.Mutex{},
@@ -294,7 +301,9 @@ func TestManySimultaneousReads(t *testing.T) {
 		fmt.Printf("Error: %v\n", e)
 		os.Exit(40)
 	}()
-	_, err = idm.BindAnonymously()
+	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	_, err = idm.BindAnonymously(ctx)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		os.Exit(2)
@@ -359,7 +368,7 @@ func TestListAnEntry(t *testing.T) {
 		socket:            conn,
 		ReceivedData:      make([]byte, 0),
 		NextInvokeId:      1,
-		startTLSResponse:  make(chan asn1.Enumerated),
+		startTLSResponse:  make(chan asn1.Enumerated, 1),
 		PendingOperations: make(map[int]*X500Operation),
 		bound:             make(chan bool),
 		mutex:             sync.Mutex{},
@@ -375,7 +384,9 @@ func TestListAnEntry(t *testing.T) {
 		fmt.Printf("Error: %v\n", e)
 		os.Exit(40)
 	}()
-	_, err = idm.BindAnonymously()
+	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	_, err = idm.BindAnonymously(ctx)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		os.Exit(2)
@@ -434,7 +445,7 @@ func TestTLS(t *testing.T) {
 		socket:            conn,
 		ReceivedData:      make([]byte, 0),
 		NextInvokeId:      1,
-		startTLSResponse:  make(chan asn1.Enumerated),
+		startTLSResponse:  make(chan asn1.Enumerated, 1),
 		PendingOperations: make(map[int]*X500Operation),
 		bound:             make(chan bool),
 		mutex:             sync.Mutex{},
@@ -450,7 +461,9 @@ func TestTLS(t *testing.T) {
 		fmt.Printf("Error: %v\n", e)
 		os.Exit(40)
 	}()
-	_, err = idm.BindAnonymously()
+	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	_, err = idm.BindAnonymously(ctx)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		os.Exit(2)
@@ -507,7 +520,7 @@ func TestAbandon(t *testing.T) {
 		socket:            conn,
 		ReceivedData:      make([]byte, 0),
 		NextInvokeId:      1,
-		startTLSResponse:  make(chan asn1.Enumerated),
+		startTLSResponse:  make(chan asn1.Enumerated, 1),
 		PendingOperations: make(map[int]*X500Operation),
 		bound:             make(chan bool),
 		mutex:             sync.Mutex{},
@@ -523,7 +536,9 @@ func TestAbandon(t *testing.T) {
 		fmt.Printf("Error: %v\n", e)
 		os.Exit(40)
 	}()
-	_, err = idm.BindAnonymously()
+	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	_, err = idm.BindAnonymously(ctx)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		os.Exit(2)
@@ -651,7 +666,7 @@ func TestStartTLS(t *testing.T) {
 	errchan := make(chan error)
 	idm := IDMProtocolStack{
 		socket:            conn,
-		startTLSResponse:  make(chan asn1.Enumerated),
+		startTLSResponse:  make(chan asn1.Enumerated, 1),
 		ReceivedData:      make([]byte, 0),
 		NextInvokeId:      1,
 		PendingOperations: make(map[int]*X500Operation),
@@ -672,7 +687,9 @@ func TestStartTLS(t *testing.T) {
 		fmt.Printf("Error: %v\n", e)
 		os.Exit(40)
 	}()
-	_, err = idm.BindAnonymously()
+	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	_, err = idm.BindAnonymously(ctx)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		os.Exit(2)
@@ -729,7 +746,7 @@ func TestIDMv2(t *testing.T) {
 		idmVersion:        2,
 		socket:            conn,
 		ReceivedData:      make([]byte, 0),
-		startTLSResponse:  make(chan asn1.Enumerated),
+		startTLSResponse:  make(chan asn1.Enumerated, 1),
 		NextInvokeId:      1,
 		PendingOperations: make(map[int]*X500Operation),
 		bound:             make(chan bool),
@@ -746,7 +763,9 @@ func TestIDMv2(t *testing.T) {
 		fmt.Printf("Error: %v\n", e)
 		os.Exit(40)
 	}()
-	_, err = idm.BindAnonymously()
+	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	_, err = idm.BindAnonymously(ctx)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		os.Exit(2)
@@ -790,5 +809,41 @@ func TestIDMv2(t *testing.T) {
 	}
 	for _, sub := range res.Subordinates {
 		fmt.Printf("%v\n", sub.Rdn)
+	}
+}
+
+func TestBindTimeout(t *testing.T) {
+	conn, err := net.Dial("tcp", "localhost:4632")
+	if err != nil {
+		os.Exit(53)
+	}
+	errchan := make(chan error)
+	idm := IDMProtocolStack{
+		idmVersion:        2,
+		socket:            conn,
+		ReceivedData:      make([]byte, 0),
+		startTLSResponse:  make(chan asn1.Enumerated, 1),
+		NextInvokeId:      1,
+		PendingOperations: make(map[int]*X500Operation),
+		bound:             make(chan bool),
+		mutex:             sync.Mutex{},
+		resultSigning:     ProtectionRequest_None,
+		errorSigning:      ProtectionRequest_None,
+		signingKey:        nil,
+		signingCert:       nil,
+		errorChannel:      errchan,
+		StartTLSPolicy:    StartTLSNever,
+	}
+	go func() {
+		e := <-errchan
+		fmt.Printf("Error: %v\n", e)
+		os.Exit(40)
+	}()
+	impossibleTimeout := time.Duration(1) * time.Microsecond
+	ctx, cancel := context.WithTimeout(context.Background(), impossibleTimeout)
+	defer cancel()
+	_, err = idm.BindAnonymously(ctx)
+	if err == nil {
+		t.Fail()
 	}
 }

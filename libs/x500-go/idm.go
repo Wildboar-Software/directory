@@ -1,6 +1,7 @@
 package x500_go
 
 import (
+	"context"
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/ed25519"
@@ -560,15 +561,15 @@ func (stack *IDMProtocolStack) ProcessReceivedPDUs() (err error) {
 	return err
 }
 
-func (stack *IDMProtocolStack) BindAnonymously() (response X500AssociateOutcome, err error) {
+func (stack *IDMProtocolStack) BindAnonymously(ctx context.Context) (response X500AssociateOutcome, err error) {
 	arg := X500AssociateArgument{
 		V1: true,
 		V2: true,
 	}
-	return stack.Bind(arg)
+	return stack.Bind(ctx, arg)
 }
 
-func (stack *IDMProtocolStack) StartTLS() (response TLSResponse, err error) {
+func (stack *IDMProtocolStack) StartTLS(ctx context.Context) (response TLSResponse, err error) {
 	go stack.ProcessNextPDU() // Listen for a single StartTLS response PDU.
 	// TODO: This entire PDU has predictable form. Just use one write.
 	idm_payload := []byte{0xA9, 2, 5, 0} // This is the entire startTLS [9] EXPLICIT NULL
@@ -583,7 +584,13 @@ func (stack *IDMProtocolStack) StartTLS() (response TLSResponse, err error) {
 		return TLSResponse_ProtocolError, err
 	}
 	stack.mutex.Unlock()
-	response = <-stack.startTLSResponse
+
+	select {
+	case response = <-stack.startTLSResponse:
+		break
+	case <-ctx.Done():
+		return TLSResponse_OperationsError, ctx.Err()
+	}
 	switch response {
 	case TLSResponse_Success:
 		netconn, is_tcp := stack.socket.(net.Conn)
@@ -594,7 +601,7 @@ func (stack *IDMProtocolStack) StartTLS() (response TLSResponse, err error) {
 			return response, errors.New("no tlsconfig defined: not performing x509 authentication of peer")
 		}
 		tlsConn := tls.Client(netconn, stack.tlsConfig)
-		err = tlsConn.Handshake()
+		err = tlsConn.HandshakeContext(ctx)
 		if err != nil {
 			return response, err
 		}
@@ -611,10 +618,14 @@ func (stack *IDMProtocolStack) StartTLS() (response TLSResponse, err error) {
 	return response, nil
 }
 
-func (stack *IDMProtocolStack) Bind(arg X500AssociateArgument) (response X500AssociateOutcome, err error) {
+func (stack *IDMProtocolStack) Bind(ctx context.Context, arg X500AssociateArgument) (response X500AssociateOutcome, err error) {
+	// TODO: Return if already bound?
 	_, tls_not_in_use := stack.socket.(net.Conn)
 	if tls_not_in_use && stack.StartTLSPolicy != StartTLSNever {
-		_, err = stack.StartTLS()
+		// starttlsTimeout := time.Duration(5) * time.Second // TODO: Make configurable
+		// starttlsCtx, cancelStartTLS := context.WithTimeout(context.TODO(), starttlsTimeout)
+		// defer cancelStartTLS()
+		_, err = stack.StartTLS(ctx)
 		if err != nil && stack.StartTLSPolicy == StartTLSDemand {
 			return X500AssociateOutcome{}, err
 		}
@@ -680,8 +691,13 @@ func (stack *IDMProtocolStack) Bind(arg X500AssociateArgument) (response X500Ass
 		return X500AssociateOutcome{}, err
 	}
 	stack.mutex.Unlock()
-	<-stack.bound
-	return
+	// FIXME: The response is never actually populated.
+	select {
+	case <-stack.bound:
+		return
+	case <-ctx.Done():
+		return response, ctx.Err()
+	}
 }
 
 func (stack *IDMProtocolStack) Request(req X500Request) (response X500OpOutcome, err error) {
