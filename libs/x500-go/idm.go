@@ -209,7 +209,6 @@ func (stack *IDMProtocolStack) ReadPDU(pdu *IDM_PDU) (bytesRead uint32, err erro
 			if err != nil {
 				return 0, err
 			}
-			fmt.Printf("Read Bytes: % x\n", receiveBuffer[0:bytesReceived])
 			stack.mutex.Lock()
 			stack.ReceivedData = append(stack.ReceivedData, receiveBuffer[0:bytesReceived]...)
 			stack.mutex.Unlock()
@@ -700,7 +699,7 @@ func (stack *IDMProtocolStack) Bind(ctx context.Context, arg X500AssociateArgume
 	}
 }
 
-func (stack *IDMProtocolStack) Request(req X500Request) (response X500OpOutcome, err error) {
+func (stack *IDMProtocolStack) Request(ctx context.Context, req X500Request) (response X500OpOutcome, err error) {
 	var invokeId int = 0
 	rest, err := asn1.Unmarshal(req.InvokeId.FullBytes, &invokeId)
 	if err != nil {
@@ -749,11 +748,11 @@ func (stack *IDMProtocolStack) Request(req X500Request) (response X500OpOutcome,
 	stack.mutex.Unlock()
 	select {
 	case <-op.Done:
-	case <-time.After(15 * time.Second):
+	case <-ctx.Done():
 		stack.mutex.Lock()
 		delete(stack.PendingOperations, invokeId)
 		stack.mutex.Unlock()
-		return X500OpOutcome{}, errors.New("request timeout")
+		return X500OpOutcome{}, ctx.Err()
 	}
 	stack.mutex.Lock()
 	delete(stack.PendingOperations, invokeId)
@@ -1017,7 +1016,7 @@ func getDataFromNullOrOptProtSeq[T any](outcome X500OpOutcome) (response X500OpO
 	}
 }
 
-func (stack *IDMProtocolStack) Read(arg_data ReadArgumentData) (response X500OpOutcome, result *ReadResultData, err error) {
+func (stack *IDMProtocolStack) Read(ctx context.Context, arg_data ReadArgumentData) (response X500OpOutcome, result *ReadResultData, err error) {
 	opCode := localOpCode(1) // Read operation
 	invokeId := stack.GetNextInvokeId()
 	iidBytes, err := asn1.Marshal(invokeId)
@@ -1065,7 +1064,7 @@ func (stack *IDMProtocolStack) Read(arg_data ReadArgumentData) (response X500OpO
 		OpCode:   opCode,
 		Argument: asn1.RawValue{FullBytes: arg_bytes},
 	}
-	outcome, err := stack.Request(req)
+	outcome, err := stack.Request(ctx, req)
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
@@ -1098,7 +1097,7 @@ func (stack *IDMProtocolStack) Read(arg_data ReadArgumentData) (response X500OpO
 	}
 }
 
-func (stack *IDMProtocolStack) Compare(arg_data CompareArgumentData) (resp X500OpOutcome, result *CompareResultData, err error) {
+func (stack *IDMProtocolStack) Compare(ctx context.Context, arg_data CompareArgumentData) (resp X500OpOutcome, result *CompareResultData, err error) {
 	opCode := localOpCode(2) // Compare operation
 	invokeId := stack.GetNextInvokeId()
 	iidBytes, err := asn1.Marshal(invokeId)
@@ -1146,7 +1145,7 @@ func (stack *IDMProtocolStack) Compare(arg_data CompareArgumentData) (resp X500O
 		OpCode:   opCode,
 		Argument: asn1.RawValue{FullBytes: arg_bytes},
 	}
-	outcome, err := stack.Request(req)
+	outcome, err := stack.Request(ctx, req)
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
@@ -1179,7 +1178,7 @@ func (stack *IDMProtocolStack) Compare(arg_data CompareArgumentData) (resp X500O
 	}
 }
 
-func (stack *IDMProtocolStack) Abandon(arg_data AbandonArgumentData) (resp X500OpOutcome, result *AbandonResultData, err error) {
+func (stack *IDMProtocolStack) Abandon(ctx context.Context, arg_data AbandonArgumentData) (resp X500OpOutcome, result *AbandonResultData, err error) {
 	opCode := localOpCode(3) // Abandon operation
 	invokeId := stack.GetNextInvokeId()
 	iidBytes, err := asn1.Marshal(invokeId)
@@ -1217,14 +1216,14 @@ func (stack *IDMProtocolStack) Abandon(arg_data AbandonArgumentData) (resp X500O
 		OpCode:   opCode,
 		Argument: asn1.RawValue{FullBytes: arg_bytes},
 	}
-	outcome, err := stack.Request(req)
+	outcome, err := stack.Request(ctx, req)
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
 	return getDataFromNullOrOptProtSeq[AbandonResultData](outcome)
 }
 
-func (stack *IDMProtocolStack) List(arg_data ListArgumentData) (resp X500OpOutcome, info *ListResultData_listInfo, err error) {
+func (stack *IDMProtocolStack) List(ctx context.Context, arg_data ListArgumentData) (resp X500OpOutcome, info *ListResultData_listInfo, err error) {
 	opCode := localOpCode(4) // List operation
 	invokeId := stack.GetNextInvokeId()
 	iidBytes, err := asn1.Marshal(invokeId)
@@ -1272,7 +1271,7 @@ func (stack *IDMProtocolStack) List(arg_data ListArgumentData) (resp X500OpOutco
 		OpCode:   opCode,
 		Argument: asn1.RawValue{FullBytes: arg_bytes},
 	}
-	outcome, err := stack.Request(req)
+	outcome, err := stack.Request(ctx, req)
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
@@ -1310,7 +1309,7 @@ func (stack *IDMProtocolStack) List(arg_data ListArgumentData) (resp X500OpOutco
 	return outcome, info, nil
 }
 
-func (stack *IDMProtocolStack) Search(arg_data SearchArgumentData) (resp X500OpOutcome, info *SearchResultData_searchInfo, err error) {
+func (stack *IDMProtocolStack) Search(ctx context.Context, arg_data SearchArgumentData) (resp X500OpOutcome, info *SearchResultData_searchInfo, err error) {
 	opCode := localOpCode(5) // Search operation
 	invokeId := stack.GetNextInvokeId()
 	iidBytes, err := asn1.Marshal(invokeId)
@@ -1358,7 +1357,7 @@ func (stack *IDMProtocolStack) Search(arg_data SearchArgumentData) (resp X500OpO
 		OpCode:   opCode,
 		Argument: asn1.RawValue{FullBytes: arg_bytes},
 	}
-	outcome, err := stack.Request(req)
+	outcome, err := stack.Request(ctx, req)
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
@@ -1396,7 +1395,7 @@ func (stack *IDMProtocolStack) Search(arg_data SearchArgumentData) (resp X500OpO
 	return outcome, info, nil
 }
 
-func (stack *IDMProtocolStack) AddEntry(arg_data AddEntryArgumentData) (resp X500OpOutcome, result *AddEntryResultData, err error) {
+func (stack *IDMProtocolStack) AddEntry(ctx context.Context, arg_data AddEntryArgumentData) (resp X500OpOutcome, result *AddEntryResultData, err error) {
 	opCode := localOpCode(6) // AddEntry operation
 	invokeId := stack.GetNextInvokeId()
 	iidBytes, err := asn1.Marshal(invokeId)
@@ -1444,14 +1443,14 @@ func (stack *IDMProtocolStack) AddEntry(arg_data AddEntryArgumentData) (resp X50
 		OpCode:   opCode,
 		Argument: asn1.RawValue{FullBytes: arg_bytes},
 	}
-	outcome, err := stack.Request(req)
+	outcome, err := stack.Request(ctx, req)
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
 	return getDataFromNullOrOptProtSeq[AddEntryResultData](outcome)
 }
 
-func (stack *IDMProtocolStack) RemoveEntry(arg_data RemoveEntryArgumentData) (resp X500OpOutcome, result *RemoveEntryResultData, err error) {
+func (stack *IDMProtocolStack) RemoveEntry(ctx context.Context, arg_data RemoveEntryArgumentData) (resp X500OpOutcome, result *RemoveEntryResultData, err error) {
 	opCode := localOpCode(7) // RemoveEntry operation
 	invokeId := stack.GetNextInvokeId()
 	iidBytes, err := asn1.Marshal(invokeId)
@@ -1499,14 +1498,14 @@ func (stack *IDMProtocolStack) RemoveEntry(arg_data RemoveEntryArgumentData) (re
 		OpCode:   opCode,
 		Argument: asn1.RawValue{FullBytes: arg_bytes},
 	}
-	outcome, err := stack.Request(req)
+	outcome, err := stack.Request(ctx, req)
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
 	return getDataFromNullOrOptProtSeq[RemoveEntryResultData](outcome)
 }
 
-func (stack *IDMProtocolStack) ModifyEntry(arg_data ModifyEntryArgumentData) (resp X500OpOutcome, result *ModifyEntryResultData, err error) {
+func (stack *IDMProtocolStack) ModifyEntry(ctx context.Context, arg_data ModifyEntryArgumentData) (resp X500OpOutcome, result *ModifyEntryResultData, err error) {
 	opCode := localOpCode(8) // ModifyEntry operation
 	invokeId := stack.GetNextInvokeId()
 	iidBytes, err := asn1.Marshal(invokeId)
@@ -1554,14 +1553,14 @@ func (stack *IDMProtocolStack) ModifyEntry(arg_data ModifyEntryArgumentData) (re
 		OpCode:   opCode,
 		Argument: asn1.RawValue{FullBytes: arg_bytes},
 	}
-	outcome, err := stack.Request(req)
+	outcome, err := stack.Request(ctx, req)
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
 	return getDataFromNullOrOptProtSeq[ModifyEntryResultData](outcome)
 }
 
-func (stack *IDMProtocolStack) ModifyDN(arg_data ModifyDNArgumentData) (resp X500OpOutcome, result *ModifyDNResultData, err error) {
+func (stack *IDMProtocolStack) ModifyDN(ctx context.Context, arg_data ModifyDNArgumentData) (resp X500OpOutcome, result *ModifyDNResultData, err error) {
 	opCode := localOpCode(9) // ModifyDN operation
 	invokeId := stack.GetNextInvokeId()
 	iidBytes, err := asn1.Marshal(invokeId)
@@ -1609,14 +1608,14 @@ func (stack *IDMProtocolStack) ModifyDN(arg_data ModifyDNArgumentData) (resp X50
 		OpCode:   opCode,
 		Argument: asn1.RawValue{FullBytes: arg_bytes},
 	}
-	outcome, err := stack.Request(req)
+	outcome, err := stack.Request(ctx, req)
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
 	return getDataFromNullOrOptProtSeq[ModifyDNResultData](outcome)
 }
 
-func (stack *IDMProtocolStack) ChangePassword(arg_data ChangePasswordArgumentData) (resp X500OpOutcome, result *ChangePasswordResultData, err error) {
+func (stack *IDMProtocolStack) ChangePassword(ctx context.Context, arg_data ChangePasswordArgumentData) (resp X500OpOutcome, result *ChangePasswordResultData, err error) {
 	opCode := localOpCode(10) // ChangePassword operation
 	invokeId := stack.GetNextInvokeId()
 	iidBytes, err := asn1.Marshal(invokeId)
@@ -1654,14 +1653,14 @@ func (stack *IDMProtocolStack) ChangePassword(arg_data ChangePasswordArgumentDat
 		OpCode:   opCode,
 		Argument: asn1.RawValue{FullBytes: arg_bytes},
 	}
-	outcome, err := stack.Request(req)
+	outcome, err := stack.Request(ctx, req)
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
 	return getDataFromNullOrOptProtSeq[ChangePasswordResultData](outcome)
 }
 
-func (stack *IDMProtocolStack) AdministerPassword(arg_data AdministerPasswordArgumentData) (resp X500OpOutcome, result *AdministerPasswordResultData, err error) {
+func (stack *IDMProtocolStack) AdministerPassword(ctx context.Context, arg_data AdministerPasswordArgumentData) (resp X500OpOutcome, result *AdministerPasswordResultData, err error) {
 	opCode := localOpCode(11) // AdministerPassword operation
 	invokeId := stack.GetNextInvokeId()
 	iidBytes, err := asn1.Marshal(invokeId)
@@ -1699,7 +1698,7 @@ func (stack *IDMProtocolStack) AdministerPassword(arg_data AdministerPasswordArg
 		OpCode:   opCode,
 		Argument: asn1.RawValue{FullBytes: arg_bytes},
 	}
-	outcome, err := stack.Request(req)
+	outcome, err := stack.Request(ctx, req)
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}

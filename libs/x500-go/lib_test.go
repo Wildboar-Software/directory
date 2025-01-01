@@ -96,7 +96,9 @@ func TestReadAnEntry(t *testing.T) {
 		},
 		Argument: asn1.RawValue{FullBytes: arg_bytes},
 	}
-	outcome, err := idm.Request(req)
+	ctx, cancel = context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	outcome, err := idm.Request(ctx, req)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(9)
@@ -222,7 +224,9 @@ func TestReadAnEntry2(t *testing.T) {
 			ErrorProtection: idm.errorSigning,
 		},
 	}
-	_, res, err := idm.Read(arg_data)
+	ctx, cancel = context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	_, res, err := idm.Read(ctx, arg_data)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(9)
@@ -344,7 +348,9 @@ func TestManySimultaneousReads(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			outcome, _, err := idm.Read(arg_data)
+			ctx, cancel = context.WithTimeout(context.Background(), sensibleTimeout)
+			defer cancel()
+			outcome, _, err := idm.Read(ctx, arg_data)
 			if err != nil {
 				fmt.Println(err.Error())
 				os.Exit(9)
@@ -422,7 +428,9 @@ func TestListAnEntry(t *testing.T) {
 			ErrorProtection: ErrorProtectionRequest_None,
 		},
 	}
-	_, res, err := idm.List(arg_data)
+	ctx, cancel = context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	_, res, err := idm.List(ctx, arg_data)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(9)
@@ -499,7 +507,9 @@ func TestTLS(t *testing.T) {
 			ErrorProtection: ErrorProtectionRequest_None,
 		},
 	}
-	_, res, err := idm.List(arg_data)
+	ctx, cancel = context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	_, res, err := idm.List(ctx, arg_data)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(9)
@@ -630,7 +640,9 @@ func TestAbandon(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go func() {
-		outcome, _, err := idm.List(arg_data)
+		ctx, cancel = context.WithTimeout(context.Background(), sensibleTimeout)
+		defer cancel()
+		outcome, _, err := idm.List(ctx, arg_data)
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(9)
@@ -645,7 +657,9 @@ func TestAbandon(t *testing.T) {
 	go func() {
 		// Abandon MUST run AFTER the list operation.
 		time.Sleep(time.Duration(500) * time.Millisecond)
-		outcome, _, err := idm.Abandon(abandon_arg_data)
+		ctx, cancel = context.WithTimeout(context.Background(), sensibleTimeout)
+		defer cancel()
+		outcome, _, err := idm.Abandon(ctx, abandon_arg_data)
 		if err != nil {
 			panic(err)
 		}
@@ -725,7 +739,9 @@ func TestStartTLS(t *testing.T) {
 			ErrorProtection: ErrorProtectionRequest_None,
 		},
 	}
-	_, res, err := idm.List(arg_data)
+	ctx, cancel = context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	_, res, err := idm.List(ctx, arg_data)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(9)
@@ -801,7 +817,9 @@ func TestIDMv2(t *testing.T) {
 			ErrorProtection: ErrorProtectionRequest_None,
 		},
 	}
-	_, res, err := idm.List(arg_data)
+	ctx, cancel = context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	_, res, err := idm.List(ctx, arg_data)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(9)
@@ -843,6 +861,78 @@ func TestBindTimeout(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), impossibleTimeout)
 	defer cancel()
 	_, err = idm.BindAnonymously(ctx)
+	if err == nil {
+		t.Fail()
+	}
+}
+
+func TestRequestTimeout(t *testing.T) {
+	conn, err := net.Dial("tcp", "localhost:4632")
+	if err != nil {
+		os.Exit(53)
+	}
+	errchan := make(chan error)
+	idm := IDMProtocolStack{
+		socket:            conn,
+		ReceivedData:      make([]byte, 0),
+		NextInvokeId:      1,
+		startTLSResponse:  make(chan asn1.Enumerated, 1),
+		PendingOperations: make(map[int]*X500Operation),
+		bound:             make(chan bool),
+		mutex:             sync.Mutex{},
+		resultSigning:     ProtectionRequest_None,
+		errorSigning:      ProtectionRequest_None,
+		signingKey:        nil,
+		signingCert:       nil,
+		errorChannel:      errchan,
+		StartTLSPolicy:    StartTLSNever,
+	}
+	go func() {
+		e := <-errchan
+		fmt.Printf("Error: %v\n", e)
+		os.Exit(40)
+	}()
+	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	_, err = idm.BindAnonymously(ctx)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(2)
+	}
+	dn := DistinguishedName{
+		[]pkix.AttributeTypeAndValue{
+			{
+				Type: Id_at_countryName,
+				Value: asn1.RawValue{
+					Tag:        asn1.TagPrintableString,
+					Class:      asn1.ClassUniversal,
+					IsCompound: false,
+					Bytes:      []byte("US"),
+				},
+			},
+		},
+	}
+	name_bytes, err := asn1.Marshal(dn)
+	if err != nil {
+		os.Exit(6)
+	}
+	name := asn1.RawValue{FullBytes: name_bytes}
+	arg_data := ReadArgumentData{
+		Object: asn1.RawValue{
+			Tag:        0,
+			Class:      asn1.ClassContextSpecific,
+			IsCompound: true,
+			Bytes:      name.FullBytes,
+		},
+		SecurityParameters: SecurityParameters{
+			Target:          idm.resultSigning,
+			ErrorProtection: idm.errorSigning,
+		},
+	}
+	impossibleTimeout := time.Duration(1) * time.Millisecond
+	ctx, cancel = context.WithTimeout(context.Background(), impossibleTimeout)
+	defer cancel()
+	_, _, err = idm.Read(ctx, arg_data)
 	if err == nil {
 		t.Fail()
 	}
