@@ -21,3 +21,4 @@
 - [x] Replace with types from `crypto/x509/pkix`
 - [ ] Implement `String()` for `DistinguishedName` et al?
 - [ ] Error when requests are sent unbound.
+- [ ] Format generated ASN.1 comments

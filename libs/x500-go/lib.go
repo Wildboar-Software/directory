@@ -158,10 +158,10 @@ type X500OpOutcome struct {
 	OutcomeType   int // See the OPERATION_OUTCOME_* constants defined above.
 	InvokeId      InvokeId
 	OpCode        Code
-	ErrCode       Code          // Only meaningful if OutcomeType == OPERATION_OUTCOME_TYPE_ERROR
-	Parameter     asn1.RawValue // The result or error.
-	RejectProblem int           // Only meaningful if OutcomeType == OPERATION_OUTCOME_TYPE_REJECT
-	Abort         X500Abort     // Only meaningful if OutcomeType == OPERATION_OUTCOME_TYPE_ABORT
+	ErrCode       Code            // Only meaningful if OutcomeType == OPERATION_OUTCOME_TYPE_ERROR
+	Parameter     asn1.RawValue   // The result or error.
+	RejectProblem asn1.Enumerated // Only meaningful if OutcomeType == OPERATION_OUTCOME_TYPE_REJECT
+	Abort         X500Abort       // Only meaningful if OutcomeType == OPERATION_OUTCOME_TYPE_ABORT
 }
 
 type X500UnbindRequest struct {

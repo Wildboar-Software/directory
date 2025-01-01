@@ -488,7 +488,7 @@ func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 		}
 	case 8:
 		{
-			abortReason := 0
+			var abortReason asn1.Enumerated = 0
 			rest, err := asn1.Unmarshal(pdu.Bytes, &abortReason)
 			if err != nil {
 				stack.errorChannel <- err
@@ -526,7 +526,7 @@ func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
-			stack.HandleTLSResponsePDU(int(tlsResponse))
+			stack.HandleTLSResponsePDU(tlsResponse)
 		}
 	default:
 		{
