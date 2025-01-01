@@ -21,24 +21,19 @@ import (
 
 const BIND_RESPONSE_RECEIVE_BUFFER_SIZE = 4096
 const SIZE_OF_IDMV1_FRAME = uint32(6)
-const SIZE_OF_IDMv2_FRAME = 8
+const SIZE_OF_IDMV2_FRAME = uint32(8)
 
-func GetIdmFrame(payload []byte) []byte {
-	idm_prefix := []byte{0x01, 0x01}
+func GetIdmFrame(payload []byte, version int) []byte {
+	var idm_prefix []byte
+	if version <= 1 {
+		idm_prefix = []byte{0x01, 0x01}
+	} else {
+		idm_prefix = []byte{0x02, 0x01, 0, 0} // v=2, DER encoding
+	}
 	payload_length := make([]byte, 4)
 	binary.BigEndian.PutUint32(payload_length, uint32(len(payload)))
 	frame := idm_prefix
 	frame = append(frame, payload_length...)
-	return frame
-}
-
-func FrameIdm(payload []byte) []byte {
-	idm_prefix := []byte{0x01, 0x01}
-	payload_length := make([]byte, 4)
-	binary.BigEndian.PutUint32(payload_length[:], uint32(len(payload)))
-	frame := idm_prefix[:]
-	frame = append(frame, payload_length[:]...)
-	frame = append(frame, payload[:]...)
 	return frame
 }
 
@@ -56,8 +51,20 @@ type Socket interface {
 	Close() error
 }
 
+type StartTLSChoice int
+
+const (
+	// Demand StartTLS: if TLS cannot be started, return an error.
+	StartTLSDemand StartTLSChoice = iota
+	// Try to start TLS. If it cannot be started, just continue without it.
+	StartTLSPrefer StartTLSChoice = iota
+	// Never attempt to start TLS.
+	StartTLSNever StartTLSChoice = iota
+)
+
 type IDMProtocolStack struct {
 	socket            Socket
+	idmVersion        int
 	startTLSResponse  chan TLSResponse
 	PendingOperations map[int]*X500Operation
 	mutex             sync.Mutex
@@ -69,6 +76,7 @@ type IDMProtocolStack struct {
 	resultSigning     ProtectionRequest
 	errorSigning      ErrorProtectionRequest
 	tlsConfig         *tls.Config
+	StartTLSPolicy    StartTLSChoice
 
 	// Channel where errors can be returned to the main thread.
 	errorChannel chan error
@@ -127,7 +135,7 @@ func (stack *IDMProtocolStack) ReadIDMv1Frame(startIndex uint32, frame *IDMFrame
 		return
 	}
 	if stack.ReceivedData[startIndex] != 1 {
-		err = fmt.Errorf("non idm v1 response; first byte=0x% x", stack.ReceivedData[0])
+		err = fmt.Errorf("non idm v1 response; first byte=0x%02x", stack.ReceivedData[0])
 		return
 	}
 	lengthOfDataField := binary.BigEndian.Uint32(stack.ReceivedData[startIndex+2 : startIndex+SIZE_OF_IDMV1_FRAME])
@@ -144,13 +152,45 @@ func (stack *IDMProtocolStack) ReadIDMv1Frame(startIndex uint32, frame *IDMFrame
 	return
 }
 
-func (stack *IDMProtocolStack) ReadIDMv1PDU(pdu *IDM_PDU) (bytesRead uint32, err error) {
+func (stack *IDMProtocolStack) ReadIDMv2Frame(startIndex uint32, frame *IDMFrame) (bytesRead uint32, err error) {
+	stack.mutex.Lock()
+	defer stack.mutex.Unlock()
+	if uint32(len(stack.ReceivedData)) < SIZE_OF_IDMV2_FRAME {
+		bytesRead = 0
+		return
+	}
+	if stack.ReceivedData[startIndex] != 2 {
+		err = fmt.Errorf("non idm v2 response; first byte=0x%02x", stack.ReceivedData[0])
+		return
+	}
+	lengthOfDataField := binary.BigEndian.Uint32(stack.ReceivedData[startIndex+4 : startIndex+SIZE_OF_IDMV2_FRAME])
+	lengthNeeded := (startIndex + SIZE_OF_IDMV2_FRAME + lengthOfDataField)
+	// TODO: Check if it's too large.
+	if lengthNeeded > uint32(len(stack.ReceivedData)) {
+		bytesRead = 0
+	} else {
+		bytesRead = SIZE_OF_IDMV2_FRAME + lengthOfDataField
+		frame.Version = 2
+		frame.Final = stack.ReceivedData[startIndex+1]
+		frame.Data = stack.ReceivedData[startIndex+SIZE_OF_IDMV2_FRAME : lengthNeeded]
+	}
+	return
+}
+
+func (stack *IDMProtocolStack) ReadPDU(pdu *IDM_PDU) (bytesRead uint32, err error) {
 	var frames = make([]IDMFrame, 0)
 	var startIndex uint32 = 0
 	index := startIndex
 	for err == nil {
 		frame := IDMFrame{}
-		frameBytesRead, err := stack.ReadIDMv1Frame(index, &frame)
+		var frameBytesRead uint32
+		if stack.idmVersion <= 1 {
+			frameBytesRead, err = stack.ReadIDMv1Frame(index, &frame)
+		} else if stack.idmVersion == 2 {
+			frameBytesRead, err = stack.ReadIDMv2Frame(index, &frame)
+		} else {
+			return 0, errors.New("unsupported idm version")
+		}
 		if err != nil {
 			return 0, err
 		}
@@ -162,11 +202,13 @@ func (stack *IDMProtocolStack) ReadIDMv1PDU(pdu *IDM_PDU) (bytesRead uint32, err
 		   block on a read() call when there is already data in the buffer that
 		   would give us the next IDM PDU. */
 		if frameBytesRead == 0 {
+			// FIXME: Don't allocate a new buffer each time.
 			receiveBuffer := make([]byte, BIND_RESPONSE_RECEIVE_BUFFER_SIZE)
 			bytesReceived, err := stack.socket.Read(receiveBuffer)
 			if err != nil {
 				return 0, err
 			}
+			fmt.Printf("Read Bytes: % x\n", receiveBuffer[0:bytesReceived])
 			stack.mutex.Lock()
 			stack.ReceivedData = append(stack.ReceivedData, receiveBuffer[0:bytesReceived]...)
 			stack.mutex.Unlock()
@@ -337,9 +379,11 @@ func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 			payload := IdmBind{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
+				stack.errorChannel <- err
 				return
 			}
 			if len(rest) > 0 {
+				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
 			stack.HandleBindPDU(payload)
@@ -349,9 +393,11 @@ func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 			payload := IdmBindResult{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
+				stack.errorChannel <- err
 				return
 			}
 			if len(rest) > 0 {
+				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
 			stack.HandleBindResultPDU(payload)
@@ -361,9 +407,11 @@ func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 			payload := IdmBindError{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
+				stack.errorChannel <- err
 				return
 			}
 			if len(rest) > 0 {
+				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
 			stack.HandleBindErrorPDU(payload)
@@ -373,9 +421,11 @@ func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 			payload := Request{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
+				stack.errorChannel <- err
 				return
 			}
 			if len(rest) > 0 {
+				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
 			stack.HandleRequestPDU(payload)
@@ -385,9 +435,11 @@ func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 			payload := IdmResult{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
+				stack.errorChannel <- err
 				return
 			}
 			if len(rest) > 0 {
+				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
 			stack.HandleResultPDU(payload)
@@ -397,9 +449,11 @@ func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 			payload := IdmError{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
+				stack.errorChannel <- err
 				return
 			}
 			if len(rest) > 0 {
+				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
 			stack.HandleErrorPDU(payload)
@@ -409,9 +463,11 @@ func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 			payload := IdmReject{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
+				stack.errorChannel <- err
 				return
 			}
 			if len(rest) > 0 {
+				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
 			stack.HandleRejectPDU(payload)
@@ -421,9 +477,11 @@ func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 			payload := Unbind{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
+				stack.errorChannel <- err
 				return
 			}
 			if len(rest) > 0 {
+				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
 			stack.HandleUnbindPDU(payload)
@@ -433,9 +491,11 @@ func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 			abortReason := 0
 			rest, err := asn1.Unmarshal(pdu.Bytes, &abortReason)
 			if err != nil {
+				stack.errorChannel <- err
 				return
 			}
 			if len(rest) > 0 {
+				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
 			stack.HandleAbortPDU(abortReason)
@@ -445,27 +505,32 @@ func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 			payload := StartTLS{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
+				stack.errorChannel <- err
 				return
 			}
 			if len(rest) > 0 {
+				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
 			stack.HandleStartTLSPDU(payload)
 		}
 	case 10:
 		{
-			tlsResponse := 0
+			var tlsResponse asn1.Enumerated = 0
 			rest, err := asn1.Unmarshal(pdu.Bytes, &tlsResponse)
 			if err != nil {
+				stack.errorChannel <- err
 				return
 			}
 			if len(rest) > 0 {
+				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
-			stack.HandleTLSResponsePDU(tlsResponse)
+			stack.HandleTLSResponsePDU(int(tlsResponse))
 		}
 	default:
 		{
+			stack.errorChannel <- errors.New("unrecognized idm pdu")
 			return
 		}
 	}
@@ -473,12 +538,12 @@ func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 
 func (stack *IDMProtocolStack) ProcessNextPDU() (bytesRead uint32, err error) {
 	pdu := IDM_PDU{}
-	bytesRead, err = stack.ReadIDMv1PDU(&pdu)
+	bytesRead, err = stack.ReadPDU(&pdu)
 	if err != nil {
-		return
+		return bytesRead, err
 	}
 	if bytesRead == 0 {
-		return
+		return bytesRead, err
 	}
 	go stack.HandlePDU(pdu)
 	return
@@ -488,6 +553,7 @@ func (stack *IDMProtocolStack) ProcessReceivedPDUs() (err error) {
 	for err == nil {
 		_, err := stack.ProcessNextPDU()
 		if err != nil {
+			stack.errorChannel <- err
 			return err
 		}
 	}
@@ -503,8 +569,10 @@ func (stack *IDMProtocolStack) BindAnonymously() (response X500AssociateOutcome,
 }
 
 func (stack *IDMProtocolStack) StartTLS() (response TLSResponse, err error) {
-	idm_payload := []byte{0xA9, 2, 0, 0} // This is the entire startTLS [9] EXPLICIT NULL
-	frame := GetIdmFrame(idm_payload)
+	go stack.ProcessNextPDU() // Listen for a single StartTLS response PDU.
+	// TODO: This entire PDU has predictable form. Just use one write.
+	idm_payload := []byte{0xA9, 2, 5, 0} // This is the entire startTLS [9] EXPLICIT NULL
+	frame := GetIdmFrame(idm_payload, stack.idmVersion)
 	stack.mutex.Lock()
 	_, err = stack.socket.Write(frame)
 	if err != nil {
@@ -520,14 +588,17 @@ func (stack *IDMProtocolStack) StartTLS() (response TLSResponse, err error) {
 	case TLSResponse_Success:
 		netconn, is_tcp := stack.socket.(net.Conn)
 		if !is_tcp {
-			stack.errorChannel <- errors.New("tls already in use")
-			return
+			return response, errors.New("tls already in use")
 		}
 		if stack.tlsConfig == nil {
-			stack.errorChannel <- errors.New("no tlsconfig defined: not performing x509 authentication of peer")
-			return
+			return response, errors.New("no tlsconfig defined: not performing x509 authentication of peer")
 		}
-		stack.socket = tls.Client(netconn, stack.tlsConfig)
+		tlsConn := tls.Client(netconn, stack.tlsConfig)
+		err = tlsConn.Handshake()
+		if err != nil {
+			return response, err
+		}
+		stack.socket = tlsConn
 	case TLSResponse_Unavailable:
 		return response, errors.New("tls unavailable")
 	case TLSResponse_OperationsError:
@@ -541,6 +612,15 @@ func (stack *IDMProtocolStack) StartTLS() (response TLSResponse, err error) {
 }
 
 func (stack *IDMProtocolStack) Bind(arg X500AssociateArgument) (response X500AssociateOutcome, err error) {
+	_, tls_not_in_use := stack.socket.(net.Conn)
+	if tls_not_in_use && stack.StartTLSPolicy != StartTLSNever {
+		_, err = stack.StartTLS()
+		if err != nil && stack.StartTLSPolicy == StartTLSDemand {
+			return X500AssociateOutcome{}, err
+		}
+	}
+	// TODO: Make idempotent
+	go stack.ProcessReceivedPDUs()
 	bind_arg, err := ConvertX500AssociateToIdmBind(arg)
 	if err != nil {
 		return X500AssociateOutcome{}, err
@@ -577,14 +657,26 @@ func (stack *IDMProtocolStack) Bind(arg X500AssociateArgument) (response X500Ass
 	if err != nil {
 		return X500AssociateOutcome{}, err
 	}
-	frame := GetIdmFrame(idm_payload)
+	frame := GetIdmFrame(idm_payload, stack.idmVersion)
+	if stack.idmVersion == 2 {
+		/* We request DER encoding because technically, this Golang library only
+		   supports encoding and decoding DER. Fortunately, Meerkat DSA encodes
+		   all BER responses in definite-length form, so it is pretty much DER
+		   compatible anyway. If the server doesn't give us DER encoding, it must
+		   mean that it gave us BER encoding. But regardless of whether BER or DER,
+		   we don't do anything other than hope this library can tolerate whatever
+		   encoding is returned. */
+		frame[2] = 0b1000_0000
+	}
 	stack.mutex.Lock()
 	_, err = stack.socket.Write(frame)
 	if err != nil {
+		stack.mutex.Unlock()
 		return X500AssociateOutcome{}, err
 	}
 	_, err = stack.socket.Write(idm_payload)
 	if err != nil {
+		stack.mutex.Unlock()
 		return X500AssociateOutcome{}, err
 	}
 	stack.mutex.Unlock()
@@ -625,7 +717,7 @@ func (stack *IDMProtocolStack) Request(req X500Request) (response X500OpOutcome,
 		Done:  make(chan bool),
 		Error: nil,
 	}
-	frame := GetIdmFrame(pduBytes)
+	frame := GetIdmFrame(pduBytes, stack.idmVersion)
 	stack.mutex.Lock()
 	stack.PendingOperations[invokeId] = &op
 	_, err = stack.socket.Write(frame)
@@ -657,6 +749,7 @@ func (stack *IDMProtocolStack) Request(req X500Request) (response X500OpOutcome,
 }
 
 func (stack *IDMProtocolStack) Unbind(req X500UnbindRequest) (response X500UnbindOutcome, err error) {
+	// TODO: This entire PDU has predictable form. Send this in a single write.
 	op_element := asn1.RawValue{
 		Class:      asn1.ClassContextSpecific,
 		Tag:        7,
@@ -667,7 +760,7 @@ func (stack *IDMProtocolStack) Unbind(req X500UnbindRequest) (response X500Unbin
 	if err != nil {
 		return X500UnbindOutcome{}, err
 	}
-	frame := GetIdmFrame(idm_payload)
+	frame := GetIdmFrame(idm_payload, stack.idmVersion)
 	stack.mutex.Lock()
 	_, err = stack.socket.Write(frame)
 	if err != nil {

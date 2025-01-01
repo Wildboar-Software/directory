@@ -21,6 +21,7 @@ func TestReadAnEntry(t *testing.T) {
 	idm := IDMProtocolStack{
 		socket:            conn,
 		ReceivedData:      make([]byte, 0),
+		startTLSResponse:  make(chan int),
 		NextInvokeId:      1,
 		PendingOperations: make(map[int]*X500Operation),
 		bound:             make(chan bool),
@@ -30,12 +31,12 @@ func TestReadAnEntry(t *testing.T) {
 		signingKey:        nil,
 		signingCert:       nil,
 		errorChannel:      errchan,
+		StartTLSPolicy:    StartTLSNever,
 	}
 	go func() {
 		e := <-errchan
 		fmt.Printf("Error: %v\n", e)
 	}()
-	go idm.ProcessReceivedPDUs()
 	_, err = idm.BindAnonymously()
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
@@ -163,6 +164,7 @@ func TestReadAnEntry2(t *testing.T) {
 		socket:            conn,
 		ReceivedData:      make([]byte, 0),
 		NextInvokeId:      1,
+		startTLSResponse:  make(chan int),
 		PendingOperations: make(map[int]*X500Operation),
 		bound:             make(chan bool),
 		mutex:             sync.Mutex{},
@@ -171,13 +173,13 @@ func TestReadAnEntry2(t *testing.T) {
 		signingKey:        nil,
 		signingCert:       nil,
 		errorChannel:      errchan,
+		StartTLSPolicy:    StartTLSNever,
 	}
 	go func() {
 		e := <-errchan
 		fmt.Printf("Error: %v\n", e)
 		os.Exit(40)
 	}()
-	go idm.ProcessReceivedPDUs()
 	_, err = idm.BindAnonymously()
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
@@ -276,6 +278,7 @@ func TestManySimultaneousReads(t *testing.T) {
 		socket:            conn,
 		ReceivedData:      make([]byte, 0),
 		NextInvokeId:      1,
+		startTLSResponse:  make(chan int),
 		PendingOperations: make(map[int]*X500Operation),
 		bound:             make(chan bool),
 		mutex:             sync.Mutex{},
@@ -284,13 +287,13 @@ func TestManySimultaneousReads(t *testing.T) {
 		signingKey:        nil,
 		signingCert:       nil,
 		errorChannel:      errchan,
+		StartTLSPolicy:    StartTLSNever,
 	}
 	go func() {
 		e := <-errchan
 		fmt.Printf("Error: %v\n", e)
 		os.Exit(40)
 	}()
-	go idm.ProcessReceivedPDUs()
 	_, err = idm.BindAnonymously()
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
@@ -356,6 +359,7 @@ func TestListAnEntry(t *testing.T) {
 		socket:            conn,
 		ReceivedData:      make([]byte, 0),
 		NextInvokeId:      1,
+		startTLSResponse:  make(chan int),
 		PendingOperations: make(map[int]*X500Operation),
 		bound:             make(chan bool),
 		mutex:             sync.Mutex{},
@@ -364,13 +368,13 @@ func TestListAnEntry(t *testing.T) {
 		signingKey:        nil,
 		signingCert:       nil,
 		errorChannel:      errchan,
+		StartTLSPolicy:    StartTLSNever,
 	}
 	go func() {
 		e := <-errchan
 		fmt.Printf("Error: %v\n", e)
 		os.Exit(40)
 	}()
-	go idm.ProcessReceivedPDUs()
 	_, err = idm.BindAnonymously()
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
@@ -430,6 +434,7 @@ func TestTLS(t *testing.T) {
 		socket:            conn,
 		ReceivedData:      make([]byte, 0),
 		NextInvokeId:      1,
+		startTLSResponse:  make(chan int),
 		PendingOperations: make(map[int]*X500Operation),
 		bound:             make(chan bool),
 		mutex:             sync.Mutex{},
@@ -438,13 +443,13 @@ func TestTLS(t *testing.T) {
 		signingKey:        nil,
 		signingCert:       nil,
 		errorChannel:      errchan,
+		StartTLSPolicy:    StartTLSNever,
 	}
 	go func() {
 		e := <-errchan
 		fmt.Printf("Error: %v\n", e)
 		os.Exit(40)
 	}()
-	go idm.ProcessReceivedPDUs()
 	_, err = idm.BindAnonymously()
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
@@ -502,6 +507,7 @@ func TestAbandon(t *testing.T) {
 		socket:            conn,
 		ReceivedData:      make([]byte, 0),
 		NextInvokeId:      1,
+		startTLSResponse:  make(chan int),
 		PendingOperations: make(map[int]*X500Operation),
 		bound:             make(chan bool),
 		mutex:             sync.Mutex{},
@@ -510,13 +516,13 @@ func TestAbandon(t *testing.T) {
 		signingKey:        nil,
 		signingCert:       nil,
 		errorChannel:      errchan,
+		StartTLSPolicy:    StartTLSNever,
 	}
 	go func() {
 		e := <-errchan
 		fmt.Printf("Error: %v\n", e)
 		os.Exit(40)
 	}()
-	go idm.ProcessReceivedPDUs()
 	_, err = idm.BindAnonymously()
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
@@ -645,6 +651,7 @@ func TestStartTLS(t *testing.T) {
 	errchan := make(chan error)
 	idm := IDMProtocolStack{
 		socket:            conn,
+		startTLSResponse:  make(chan int),
 		ReceivedData:      make([]byte, 0),
 		NextInvokeId:      1,
 		PendingOperations: make(map[int]*X500Operation),
@@ -655,22 +662,94 @@ func TestStartTLS(t *testing.T) {
 		signingKey:        nil,
 		signingCert:       nil,
 		errorChannel:      errchan,
+		StartTLSPolicy:    StartTLSDemand,
+		tlsConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
 	}
 	go func() {
 		e := <-errchan
 		fmt.Printf("Error: %v\n", e)
 		os.Exit(40)
 	}()
-	go idm.ProcessReceivedPDUs()
 	_, err = idm.BindAnonymously()
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		os.Exit(2)
 	}
-	_, err = idm.StartTLS()
+	dn := DistinguishedName{
+		[]pkix.AttributeTypeAndValue{
+			{
+				Type: Id_at_countryName,
+				Value: asn1.RawValue{
+					Tag:        asn1.TagPrintableString,
+					Class:      asn1.ClassUniversal,
+					IsCompound: false,
+					Bytes:      []byte("US"),
+				},
+			},
+		},
+	}
+	name_bytes, err := asn1.Marshal(dn)
+	if err != nil {
+		os.Exit(6)
+	}
+	name := asn1.RawValue{FullBytes: name_bytes}
+	arg_data := ListArgumentData{
+		Object: asn1.RawValue{
+			Tag:        0,
+			Class:      asn1.ClassContextSpecific,
+			IsCompound: true,
+			Bytes:      name.FullBytes,
+		},
+		SecurityParameters: SecurityParameters{
+			// No signing so we get searchInfo instead of uncorrelatedSearchInfo
+			Target:          ProtectionRequest_None,
+			ErrorProtection: ErrorProtectionRequest_None,
+		},
+	}
+	_, res, err := idm.List(arg_data)
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(9)
+		return
+	}
+	for _, sub := range res.Subordinates {
+		fmt.Printf("%v\n", sub.Rdn)
+	}
+}
+
+func TestIDMv2(t *testing.T) {
+	conn, err := net.Dial("tcp", "localhost:4632")
+	if err != nil {
+		os.Exit(53)
+	}
+	errchan := make(chan error)
+	idm := IDMProtocolStack{
+		idmVersion:        2,
+		socket:            conn,
+		ReceivedData:      make([]byte, 0),
+		startTLSResponse:  make(chan int),
+		NextInvokeId:      1,
+		PendingOperations: make(map[int]*X500Operation),
+		bound:             make(chan bool),
+		mutex:             sync.Mutex{},
+		resultSigning:     ProtectionRequest_None,
+		errorSigning:      ProtectionRequest_None,
+		signingKey:        nil,
+		signingCert:       nil,
+		errorChannel:      errchan,
+		StartTLSPolicy:    StartTLSNever,
+	}
+	go func() {
+		e := <-errchan
+		fmt.Printf("Error: %v\n", e)
+		os.Exit(40)
+	}()
+	_, err = idm.BindAnonymously()
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
-		os.Exit(43)
+		os.Exit(2)
 	}
 	dn := DistinguishedName{
 		[]pkix.AttributeTypeAndValue{

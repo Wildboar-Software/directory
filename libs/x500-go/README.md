@@ -4,9 +4,10 @@
 ## TODO
 
 - [x] Fix operations other than `read`
-- [ ] IDMv2
+- [x] IDMv2
 - [x] TLS
 - [x] StartTLS
+- [ ] Use `asn1.Enumerated`
 - [ ] Configurable Timeouts?
 - [ ] Context object?
 - [ ] Make some functions private
@@ -17,14 +18,5 @@
 - [ ] Update `DirectoryAccessStack` interface to match implementations
 - [x] Test list operation
 - [x] Replace with types from `crypto/x509/pkix`
-  - [x] `AlgorithmIdentifier`
-  - [x] `AttributeTypeAndValue`
-  - [ ] `AttributeTypeAndValueSET`
-  - [x] `CertificateList`
-  - [x] `Extension`
-  - [x] ~~`Name`~~ (Does not support the new alternatives.)
-  - [x] `RDNSequence`
-  - [x] `RelativeDistinguishedNameSET`
-  - [x] `RevokedCertificate`
-  - [x] `TBSCertificateList`
 - [ ] Implement `String()` for `DistinguishedName` et al?
+- [ ] Error when requests are sent unbound.
