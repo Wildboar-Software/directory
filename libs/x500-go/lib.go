@@ -155,13 +155,13 @@ type X500Abort struct {
 }
 
 type X500OpOutcome struct {
-	OutcomeType   int // See the OPERATION_OUTCOME_* constants defined above.
-	InvokeId      InvokeId
-	OpCode        Code
-	ErrCode       Code            // Only meaningful if OutcomeType == OPERATION_OUTCOME_TYPE_ERROR
+	OutcomeType   int             // See the OPERATION_OUTCOME_* constants defined above.
+	InvokeId      InvokeId        // This is always set for any outcome type.
+	OpCode        Code            // Only set if OutcomeType == OPERATION_OUTCOME_TYPE_RESULT
+	ErrCode       Code            // Only set if OutcomeType == OPERATION_OUTCOME_TYPE_ERROR
 	Parameter     asn1.RawValue   // The result or error.
-	RejectProblem asn1.Enumerated // Only meaningful if OutcomeType == OPERATION_OUTCOME_TYPE_REJECT
-	Abort         X500Abort       // Only meaningful if OutcomeType == OPERATION_OUTCOME_TYPE_ABORT
+	RejectProblem asn1.Enumerated // Only set if OutcomeType == OPERATION_OUTCOME_TYPE_REJECT
+	Abort         X500Abort       // Only set if OutcomeType == OPERATION_OUTCOME_TYPE_ABORT
 }
 
 type X500UnbindRequest struct {
@@ -172,13 +172,6 @@ type X500UnbindRequest struct {
 type X500UnbindOutcome struct {
 	PresentationContextIdentifier Presentation_context_identifier
 	Reason                        Release_response_reason
-}
-
-type X500Operation struct {
-	Req   X500Request
-	Res   *X500OpOutcome
-	Done  chan bool
-	Error *error // TODO: Is this ever used?
 }
 
 // Examples: IDMStack, ITOTStack, LPPStack (IETF RFC 1085), DIXIEStack (IETF RFC 1249)

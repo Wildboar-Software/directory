@@ -67,7 +67,7 @@ type IDMProtocolStack struct {
 	socket            Socket
 	idmVersion        int
 	startTLSResponse  chan TLSResponse
-	PendingOperations map[int]*X500Operation
+	PendingOperations map[int]chan X500OpOutcome
 	mutex             sync.Mutex
 	NextInvokeId      int
 	ReceivedData      []byte
@@ -277,8 +277,7 @@ func (stack *IDMProtocolStack) HandleResultPDU(pdu IdmResult) {
 		OpCode:      pdu.Opcode,
 		Parameter:   pdu.Result,
 	}
-	op.Res = &res
-	op.Done <- true
+	op <- res
 }
 
 func (stack *IDMProtocolStack) HandleErrorPDU(pdu IdmError) {
@@ -295,12 +294,10 @@ func (stack *IDMProtocolStack) HandleErrorPDU(pdu IdmError) {
 	res := X500OpOutcome{
 		OutcomeType: OPERATION_OUTCOME_TYPE_ERROR,
 		InvokeId:    asn1.RawValue{FullBytes: iidBytes},
-		OpCode:      op.Req.OpCode,
 		ErrCode:     pdu.Errcode,
 		Parameter:   pdu.Error,
 	}
-	op.Res = &res
-	op.Done <- true
+	op <- res
 }
 
 func (stack *IDMProtocolStack) HandleRejectPDU(pdu IdmReject) {
@@ -317,11 +314,9 @@ func (stack *IDMProtocolStack) HandleRejectPDU(pdu IdmReject) {
 	res := X500OpOutcome{
 		OutcomeType:   OPERATION_OUTCOME_TYPE_REJECT,
 		InvokeId:      asn1.RawValue{FullBytes: iidBytes},
-		OpCode:        op.Req.OpCode,
 		RejectProblem: pdu.Reason,
 	}
-	op.Res = &res
-	op.Done <- true
+	op <- res
 }
 
 func (stack *IDMProtocolStack) HandleUnbindPDU(pdu Unbind) {
@@ -331,16 +326,19 @@ func (stack *IDMProtocolStack) HandleUnbindPDU(pdu Unbind) {
 func (stack *IDMProtocolStack) HandleAbortPDU(pdu Abort) {
 	stack.mutex.Lock()
 	defer stack.mutex.Unlock()
-	for _, op := range stack.PendingOperations {
-		op.Res = &X500OpOutcome{
+	for iid, op := range stack.PendingOperations {
+		iidBytes, err := asn1.Marshal(iid)
+		if err != nil {
+			stack.DispatchError(err)
+			return
+		}
+		op <- X500OpOutcome{
 			OutcomeType: OPERATION_OUTCOME_TYPE_ABORT,
-			InvokeId:    op.Req.InvokeId,
-			OpCode:      op.Req.OpCode,
+			InvokeId:    asn1.RawValue{FullBytes: iidBytes},
 			Abort: X500Abort{
 				UserReason: pdu,
 			},
 		}
-		op.Done <- true
 	}
 	stack.NextInvokeId = 1
 	stack.ReceivedData = make([]byte, 0)
@@ -724,14 +722,10 @@ func (stack *IDMProtocolStack) Request(ctx context.Context, req X500Request) (re
 	if err != nil {
 		return X500OpOutcome{}, err
 	}
-	op := X500Operation{
-		Req:   req,
-		Done:  make(chan bool),
-		Error: nil,
-	}
+	op := make(chan X500OpOutcome)
 	frame := GetIdmFrame(pduBytes, stack.idmVersion)
 	stack.mutex.Lock()
-	stack.PendingOperations[invokeId] = &op
+	stack.PendingOperations[invokeId] = op
 	_, err = stack.socket.Write(frame)
 	if err != nil {
 		delete(stack.PendingOperations, invokeId)
@@ -744,7 +738,7 @@ func (stack *IDMProtocolStack) Request(ctx context.Context, req X500Request) (re
 	}
 	stack.mutex.Unlock()
 	select {
-	case <-op.Done:
+	case response = <-op:
 		break
 	case <-ctx.Done():
 		stack.mutex.Lock()
@@ -758,7 +752,7 @@ func (stack *IDMProtocolStack) Request(ctx context.Context, req X500Request) (re
 	if err != nil {
 		return X500OpOutcome{}, err
 	}
-	return *op.Res, nil
+	return response, nil
 }
 
 func (stack *IDMProtocolStack) Unbind(_ context.Context, req X500UnbindRequest) (response X500UnbindOutcome, err error) {
