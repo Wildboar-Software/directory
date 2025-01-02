@@ -16,7 +16,7 @@
 - [ ] Documentation
 - [x] Simpler way to create an IDM connection (`New()` function)
 - [x] Test operation abandonment
-- [ ] Update `DirectoryAccessStack` interface to match implementations
+- [x] Update `DirectoryAccessStack` interface to match implementations
 - [x] Test list operation
 - [x] Replace with types from `crypto/x509/pkix`
 - [ ] Implement `String()` for `DistinguishedName` et al?

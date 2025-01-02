@@ -1,6 +1,7 @@
 package x500_go
 
 import (
+	"context"
 	"encoding/asn1"
 	"math/big"
 )
@@ -177,22 +178,22 @@ type X500UnbindOutcome struct {
 
 // Examples: IDMStack, ITOTStack, LPPStack (IETF RFC 1085), DIXIEStack (IETF RFC 1249)
 type DirectoryProtocolStack interface {
-	Bind(arg X500AssociateArgument) (response X500AssociateOutcome, err error)
-	Request(req X500Request) (response X500OpOutcome, err error)
-	Unbind(req X500UnbindRequest) (response X500UnbindOutcome, err error)
+	Bind(ctx context.Context, arg X500AssociateArgument) (response X500AssociateOutcome, err error)
+	Request(ctx context.Context, req X500Request) (response X500OpOutcome, err error)
+	Unbind(_ context.Context, req X500UnbindRequest) (response X500UnbindOutcome, err error)
 }
 
-type DirectoryAccessStack interface {
+type DirectoryAccessClient interface {
 	DirectoryProtocolStack
-	Read(arg_data ReadArgumentData) (resp X500OpOutcome, result *ReadResult, err error)
-	Compare(arg_data CompareArgumentData) (resp X500OpOutcome, result *CompareResult, err error)
-	Abandon(arg_data AbandonArgumentData) (resp X500OpOutcome, result *AbandonResult, err error)
-	List(arg_data ListArgumentData) (resp X500OpOutcome, result *ListResult, err error)
-	Search(arg_data SearchArgumentData) (resp X500OpOutcome, result *SearchResult, err error)
-	AddEntry(arg_data AddEntryArgumentData) (resp X500OpOutcome, result *AddEntryResult, err error)
-	RemoveEntry(arg_data RemoveEntryArgumentData) (resp X500OpOutcome, result *RemoveEntryResult, err error)
-	ModifyEntry(arg_data ModifyEntryArgumentData) (resp X500OpOutcome, result *ModifyEntryResult, err error)
-	ModifyDN(arg_data ModifyDNArgumentData) (resp X500OpOutcome, result *ModifyDNResult, err error)
-	ChangePassword(arg_data ChangePasswordArgumentData) (resp X500OpOutcome, result *ChangePasswordResult, err error)
-	AdministerPassword(arg_data AdministerPasswordArgumentData) (resp X500OpOutcome, result *AdministerPasswordResult, err error)
+	Read(ctx context.Context, arg_data ReadArgumentData) (response X500OpOutcome, result *ReadResultData, err error)
+	Compare(ctx context.Context, arg_data CompareArgumentData) (resp X500OpOutcome, result *CompareResultData, err error)
+	Abandon(ctx context.Context, arg_data AbandonArgumentData) (resp X500OpOutcome, result *AbandonResultData, err error)
+	List(ctx context.Context, arg_data ListArgumentData) (resp X500OpOutcome, info *ListResultData_listInfo, err error)
+	Search(ctx context.Context, arg_data SearchArgumentData) (resp X500OpOutcome, info *SearchResultData_searchInfo, err error)
+	AddEntry(ctx context.Context, arg_data AddEntryArgumentData) (resp X500OpOutcome, result *AddEntryResultData, err error)
+	RemoveEntry(ctx context.Context, arg_data RemoveEntryArgumentData) (resp X500OpOutcome, result *RemoveEntryResultData, err error)
+	ModifyEntry(ctx context.Context, arg_data ModifyEntryArgumentData) (resp X500OpOutcome, result *ModifyEntryResultData, err error)
+	ModifyDN(ctx context.Context, arg_data ModifyDNArgumentData) (resp X500OpOutcome, result *ModifyDNResultData, err error)
+	ChangePassword(ctx context.Context, arg_data ChangePasswordArgumentData) (resp X500OpOutcome, result *ChangePasswordResultData, err error)
+	AdministerPassword(ctx context.Context, arg_data AdministerPasswordArgumentData) (resp X500OpOutcome, result *AdministerPasswordResultData, err error)
 }
