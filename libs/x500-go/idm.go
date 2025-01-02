@@ -85,7 +85,7 @@ type IDMProtocolStack struct {
 	errorChannel chan error
 }
 
-func (stack *IDMProtocolStack) DispatchError(err error) {
+func (stack *IDMProtocolStack) dispatchError(err error) {
 	stack.errorChannel <- err
 }
 
@@ -130,7 +130,7 @@ func ConvertX500AssociateToIdmBind(arg X500AssociateArgument) (req IdmBind, err 
 	return req, nil
 }
 
-func (stack *IDMProtocolStack) ReadIDMv1Frame(startIndex uint32, frame *IDMFrame) (bytesRead uint32, err error) {
+func (stack *IDMProtocolStack) readIDMv1Frame(startIndex uint32, frame *IDMFrame) (bytesRead uint32, err error) {
 	stack.mutex.Lock()
 	defer stack.mutex.Unlock()
 	if uint32(len(stack.ReceivedData)) < SIZE_OF_IDMV1_FRAME {
@@ -155,7 +155,7 @@ func (stack *IDMProtocolStack) ReadIDMv1Frame(startIndex uint32, frame *IDMFrame
 	return
 }
 
-func (stack *IDMProtocolStack) ReadIDMv2Frame(startIndex uint32, frame *IDMFrame) (bytesRead uint32, err error) {
+func (stack *IDMProtocolStack) readIDMv2Frame(startIndex uint32, frame *IDMFrame) (bytesRead uint32, err error) {
 	stack.mutex.Lock()
 	defer stack.mutex.Unlock()
 	if uint32(len(stack.ReceivedData)) < SIZE_OF_IDMV2_FRAME {
@@ -180,7 +180,7 @@ func (stack *IDMProtocolStack) ReadIDMv2Frame(startIndex uint32, frame *IDMFrame
 	return
 }
 
-func (stack *IDMProtocolStack) ReadPDU(pdu *IDM_PDU) (bytesRead uint32, err error) {
+func (stack *IDMProtocolStack) readPDU(pdu *IDM_PDU) (bytesRead uint32, err error) {
 	var frames = make([]IDMFrame, 0)
 	var startIndex uint32 = 0
 	index := startIndex
@@ -188,9 +188,9 @@ func (stack *IDMProtocolStack) ReadPDU(pdu *IDM_PDU) (bytesRead uint32, err erro
 		frame := IDMFrame{}
 		var frameBytesRead uint32
 		if stack.idmVersion <= 1 {
-			frameBytesRead, err = stack.ReadIDMv1Frame(index, &frame)
+			frameBytesRead, err = stack.readIDMv1Frame(index, &frame)
 		} else if stack.idmVersion == 2 {
-			frameBytesRead, err = stack.ReadIDMv2Frame(index, &frame)
+			frameBytesRead, err = stack.readIDMv2Frame(index, &frame)
 		} else {
 			return 0, errors.New("unsupported idm version")
 		}
@@ -244,19 +244,19 @@ func (stack *IDMProtocolStack) ReadPDU(pdu *IDM_PDU) (bytesRead uint32, err erro
 	return bytesRead, nil
 }
 
-func (stack *IDMProtocolStack) HandleBindPDU(pdu IdmBind) {
-	stack.DispatchError(errors.New("server sent bind"))
+func (stack *IDMProtocolStack) handleBindPDU(pdu IdmBind) {
+	stack.dispatchError(errors.New("server sent bind"))
 }
 
-func (stack *IDMProtocolStack) HandleBindResultPDU(pdu IdmBindResult) {
+func (stack *IDMProtocolStack) handleBindResultPDU(pdu IdmBindResult) {
 	var dirBindResult DirectoryBindResult
 	rest, err := asn1.UnmarshalWithParams(pdu.Result.Bytes, &dirBindResult, "set")
 	if err != nil {
-		stack.DispatchError(err)
+		stack.dispatchError(err)
 		return
 	}
 	if len(rest) > 0 {
-		stack.DispatchError(errors.New("trailing bytes in bind result parameter"))
+		stack.dispatchError(errors.New("trailing bytes in bind result parameter"))
 		return
 	}
 	v1 := true
@@ -309,12 +309,12 @@ func (stack *IDMProtocolStack) HandleBindResultPDU(pdu IdmBindResult) {
 	}
 }
 
-func (stack *IDMProtocolStack) HandleBindErrorPDU(pdu IdmBindError) {
+func (stack *IDMProtocolStack) handleBindErrorPDU(pdu IdmBindError) {
 	// FIXME: This is not correct. Unmarshal the signed structure.
 	var dirBindErr DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1
 	optProtDirBindErr := asn1.RawValue{FullBytes: pdu.Error.Bytes}
 	if optProtDirBindErr.Class != asn1.ClassUniversal {
-		stack.DispatchError(errors.New("unrecognized bind error syntax (1)"))
+		stack.dispatchError(errors.New("unrecognized bind error syntax (1)"))
 		return
 	}
 	var rest []byte
@@ -325,27 +325,27 @@ func (stack *IDMProtocolStack) HandleBindErrorPDU(pdu IdmBindError) {
 		signed := SIGNED{}
 		rest, err = asn1.Unmarshal(optProtDirBindErr.FullBytes, &signed)
 		if err != nil {
-			stack.DispatchError(err)
+			stack.dispatchError(err)
 			return
 		}
 		if len(rest) > 0 {
-			stack.DispatchError(errors.New("trailing bytes in bind error signature"))
+			stack.dispatchError(errors.New("trailing bytes in bind error signature"))
 			return
 		}
 		unsignedBindErr = signed.ToBeSigned
 	} else if optProtDirBindErr.Tag == asn1.TagSet {
 		unsignedBindErr = optProtDirBindErr
 	} else {
-		stack.DispatchError(errors.New("unrecognized bind error syntax (2)"))
+		stack.dispatchError(errors.New("unrecognized bind error syntax (2)"))
 		return
 	}
 	rest, err = asn1.Unmarshal(unsignedBindErr.FullBytes, &dirBindErr)
 	if err != nil {
-		stack.DispatchError(err)
+		stack.dispatchError(err)
 		return
 	}
 	if len(rest) > 0 {
-		stack.DispatchError(errors.New("trailing bytes in bind result parameter"))
+		stack.dispatchError(errors.New("trailing bytes in bind result parameter"))
 		return
 	}
 	v1 := true
@@ -370,11 +370,11 @@ func (stack *IDMProtocolStack) HandleBindErrorPDU(pdu IdmBindError) {
 			rest, err = asn1.Unmarshal(dirBindErr.Error.Bytes, &securityError)
 		}
 		if err != nil {
-			stack.DispatchError(err)
+			stack.dispatchError(err)
 			return
 		}
 		if len(rest) > 0 {
-			stack.DispatchError(errors.New("trailing bytes in bind error code"))
+			stack.dispatchError(errors.New("trailing bytes in bind error code"))
 			return
 		}
 		// We treat busy, unavailable, ditError, saslBindInProgress as "transient"
@@ -409,21 +409,21 @@ func (stack *IDMProtocolStack) HandleBindErrorPDU(pdu IdmBindError) {
 	}
 }
 
-func (stack *IDMProtocolStack) HandleRequestPDU(pdu Request) {
-	stack.DispatchError(errors.New("server sent request"))
+func (stack *IDMProtocolStack) handleRequestPDU(pdu Request) {
+	stack.dispatchError(errors.New("server sent request"))
 }
 
-func (stack *IDMProtocolStack) HandleResultPDU(pdu IdmResult) {
+func (stack *IDMProtocolStack) handleResultPDU(pdu IdmResult) {
 	stack.mutex.Lock()
 	op, op_known := stack.PendingOperations[pdu.InvokeID]
 	stack.mutex.Unlock()
 	if !op_known {
-		stack.DispatchError(errors.New("unrecognized result invoke id"))
+		stack.dispatchError(errors.New("unrecognized result invoke id"))
 		return
 	}
 	iidBytes, err := asn1.Marshal(pdu.InvokeID)
 	if err != nil {
-		stack.DispatchError(err)
+		stack.dispatchError(err)
 		return
 	}
 	res := X500OpOutcome{
@@ -435,15 +435,15 @@ func (stack *IDMProtocolStack) HandleResultPDU(pdu IdmResult) {
 	op <- res
 }
 
-func (stack *IDMProtocolStack) HandleErrorPDU(pdu IdmError) {
+func (stack *IDMProtocolStack) handleErrorPDU(pdu IdmError) {
 	op, op_known := stack.PendingOperations[pdu.InvokeID]
 	if !op_known {
-		stack.DispatchError(errors.New("unrecognized error invoke id"))
+		stack.dispatchError(errors.New("unrecognized error invoke id"))
 		return
 	}
 	iidBytes, err := asn1.Marshal(pdu.InvokeID)
 	if err != nil {
-		stack.DispatchError(err)
+		stack.dispatchError(err)
 		return
 	}
 	res := X500OpOutcome{
@@ -455,15 +455,15 @@ func (stack *IDMProtocolStack) HandleErrorPDU(pdu IdmError) {
 	op <- res
 }
 
-func (stack *IDMProtocolStack) HandleRejectPDU(pdu IdmReject) {
+func (stack *IDMProtocolStack) handleRejectPDU(pdu IdmReject) {
 	op, op_known := stack.PendingOperations[pdu.InvokeID]
 	if !op_known {
-		stack.DispatchError(errors.New("unrecognized error invoke id"))
+		stack.dispatchError(errors.New("unrecognized error invoke id"))
 		return
 	}
 	iidBytes, err := asn1.Marshal(pdu.InvokeID)
 	if err != nil {
-		stack.DispatchError(err)
+		stack.dispatchError(err)
 		return
 	}
 	res := X500OpOutcome{
@@ -474,11 +474,11 @@ func (stack *IDMProtocolStack) HandleRejectPDU(pdu IdmReject) {
 	op <- res
 }
 
-func (stack *IDMProtocolStack) HandleUnbindPDU(pdu Unbind) {
+func (stack *IDMProtocolStack) handleUnbindPDU(pdu Unbind) {
 	stack.errorChannel <- errors.New("server sent unbind message, which is not allowed")
 }
 
-func (stack *IDMProtocolStack) HandleAbortPDU(pdu Abort) {
+func (stack *IDMProtocolStack) handleAbortPDU(pdu Abort) {
 	stack.mutex.Lock()
 	defer stack.mutex.Unlock()
 	stack.socket.Close()
@@ -486,7 +486,7 @@ func (stack *IDMProtocolStack) HandleAbortPDU(pdu Abort) {
 	for iid, op := range stack.PendingOperations {
 		iidBytes, err := asn1.Marshal(iid)
 		if err != nil {
-			stack.DispatchError(err)
+			stack.dispatchError(err)
 			return
 		}
 		op <- X500OpOutcome{
@@ -501,11 +501,11 @@ func (stack *IDMProtocolStack) HandleAbortPDU(pdu Abort) {
 	stack.ReceivedData = make([]byte, 0)
 }
 
-func (stack *IDMProtocolStack) HandleStartTLSPDU(pdu StartTLS) {
+func (stack *IDMProtocolStack) handleStartTLSPDU(pdu StartTLS) {
 	stack.errorChannel <- errors.New("server sent starttls message, which is not allowed")
 }
 
-func (stack *IDMProtocolStack) HandleTLSResponsePDU(pdu TLSResponse) {
+func (stack *IDMProtocolStack) handleTLSResponsePDU(pdu TLSResponse) {
 	stack.startTLSResponse <- pdu
 }
 
@@ -522,7 +522,7 @@ func (stack *IDMProtocolStack) HandleTLSResponsePDU(pdu TLSResponse) {
 //		startTLS     [9]  StartTLS,
 //		tLSResponse  [10] TLSResponse,
 //		... }
-func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
+func (stack *IDMProtocolStack) handlePDU(pdu IDM_PDU) {
 	if pdu.Class != asn1.ClassContextSpecific {
 		return
 	}
@@ -539,7 +539,7 @@ func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
-			stack.HandleBindPDU(payload)
+			stack.handleBindPDU(payload)
 		}
 	case 1:
 		{
@@ -553,7 +553,7 @@ func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
-			stack.HandleBindResultPDU(payload)
+			stack.handleBindResultPDU(payload)
 		}
 	case 2:
 		{
@@ -567,7 +567,7 @@ func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
-			stack.HandleBindErrorPDU(payload)
+			stack.handleBindErrorPDU(payload)
 		}
 	case 3:
 		{
@@ -581,7 +581,7 @@ func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
-			stack.HandleRequestPDU(payload)
+			stack.handleRequestPDU(payload)
 		}
 	case 4:
 		{
@@ -595,7 +595,7 @@ func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
-			stack.HandleResultPDU(payload)
+			stack.handleResultPDU(payload)
 		}
 	case 5:
 		{
@@ -609,7 +609,7 @@ func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
-			stack.HandleErrorPDU(payload)
+			stack.handleErrorPDU(payload)
 		}
 	case 6:
 		{
@@ -623,7 +623,7 @@ func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
-			stack.HandleRejectPDU(payload)
+			stack.handleRejectPDU(payload)
 		}
 	case 7:
 		{
@@ -637,7 +637,7 @@ func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
-			stack.HandleUnbindPDU(payload)
+			stack.handleUnbindPDU(payload)
 		}
 	case 8:
 		{
@@ -651,7 +651,7 @@ func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
-			stack.HandleAbortPDU(abortReason)
+			stack.handleAbortPDU(abortReason)
 		}
 	case 9:
 		{
@@ -665,7 +665,7 @@ func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
-			stack.HandleStartTLSPDU(payload)
+			stack.handleStartTLSPDU(payload)
 		}
 	case 10:
 		{
@@ -679,7 +679,7 @@ func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
-			stack.HandleTLSResponsePDU(tlsResponse)
+			stack.handleTLSResponsePDU(tlsResponse)
 		}
 	default:
 		{
@@ -689,22 +689,22 @@ func (stack *IDMProtocolStack) HandlePDU(pdu IDM_PDU) {
 	}
 }
 
-func (stack *IDMProtocolStack) ProcessNextPDU() (bytesRead uint32, err error) {
+func (stack *IDMProtocolStack) processNextPDU() (bytesRead uint32, err error) {
 	pdu := IDM_PDU{}
-	bytesRead, err = stack.ReadPDU(&pdu)
+	bytesRead, err = stack.readPDU(&pdu)
 	if err != nil {
 		return bytesRead, err
 	}
 	if bytesRead == 0 {
 		return bytesRead, err
 	}
-	go stack.HandlePDU(pdu)
+	go stack.handlePDU(pdu)
 	return
 }
 
-func (stack *IDMProtocolStack) ProcessReceivedPDUs() (err error) {
+func (stack *IDMProtocolStack) processReceivedPDUs() (err error) {
 	for err == nil {
-		_, err := stack.ProcessNextPDU()
+		_, err := stack.processNextPDU()
 		if err != nil {
 			stack.errorChannel <- err
 			return err
@@ -721,8 +721,8 @@ func (stack *IDMProtocolStack) BindAnonymously(ctx context.Context) (response X5
 	return stack.Bind(ctx, arg)
 }
 
-func (stack *IDMProtocolStack) StartTLS(ctx context.Context) (response TLSResponse, err error) {
-	go stack.ProcessNextPDU() // Listen for a single StartTLS response PDU.
+func (stack *IDMProtocolStack) startTLS(ctx context.Context) (response TLSResponse, err error) {
+	go stack.processNextPDU() // Listen for a single StartTLS response PDU.
 	// TODO: This entire PDU has predictable form. Just use one write.
 	idm_payload := []byte{0xA9, 2, 5, 0} // This is the entire startTLS [9] EXPLICIT NULL
 	frame := GetIdmFrame(idm_payload, stack.idmVersion)
@@ -774,13 +774,13 @@ func (stack *IDMProtocolStack) Bind(ctx context.Context, arg X500AssociateArgume
 	// TODO: Return if already bound?
 	_, tls_not_in_use := stack.socket.(net.Conn)
 	if tls_not_in_use && stack.StartTLSPolicy != StartTLSNever {
-		_, err = stack.StartTLS(ctx)
+		_, err = stack.startTLS(ctx)
 		if err != nil && stack.StartTLSPolicy == StartTLSDemand {
 			return X500AssociateOutcome{}, err
 		}
 	}
 	// TODO: Make idempotent
-	go stack.ProcessReceivedPDUs()
+	go stack.processReceivedPDUs()
 	bind_arg, err := ConvertX500AssociateToIdmBind(arg)
 	if err != nil {
 		return X500AssociateOutcome{}, err
