@@ -71,13 +71,15 @@ type IDMProtocolStack struct {
 	mutex             sync.Mutex
 	NextInvokeId      int
 	ReceivedData      []byte
-	bound             chan bool
+	bound             bool
+	bindOutcome       chan X500AssociateOutcome
 	signingKey        *crypto.Signer
 	signingCert       *CertificationPath
 	resultSigning     ProtectionRequest
 	errorSigning      ErrorProtectionRequest
 	tlsConfig         *tls.Config
 	StartTLSPolicy    StartTLSChoice
+	derAccepted       bool
 
 	// Channel where errors can be returned to the main thread.
 	errorChannel chan error
@@ -247,11 +249,164 @@ func (stack *IDMProtocolStack) HandleBindPDU(pdu IdmBind) {
 }
 
 func (stack *IDMProtocolStack) HandleBindResultPDU(pdu IdmBindResult) {
-	stack.bound <- true
+	var dirBindResult DirectoryBindResult
+	rest, err := asn1.UnmarshalWithParams(pdu.Result.Bytes, &dirBindResult, "set")
+	if err != nil {
+		stack.DispatchError(err)
+		return
+	}
+	if len(rest) > 0 {
+		stack.DispatchError(errors.New("trailing bytes in bind result parameter"))
+		return
+	}
+	v1 := true
+	v2 := false
+	if len(dirBindResult.Versions.Bytes) > 0 {
+		if dirBindResult.Versions.BitLength >= 2 {
+			v1 = dirBindResult.Versions.Bytes[0]&0b1000_0000 > 0
+			v2 = dirBindResult.Versions.Bytes[0]&0b0100_0000 > 0
+		} else if dirBindResult.Versions.BitLength == 1 {
+			v1 = dirBindResult.Versions.Bytes[0]&0b1000_0000 > 0
+		}
+	}
+
+	timeLeft := -1
+	gracesRemaining := -1
+	pwdError := -1
+	if dirBindResult.PwdResponseValue != nil {
+		pwd := dirBindResult.PwdResponseValue
+		if pwd.Warning.Class == asn1.ClassContextSpecific {
+			// Just ignore the errors from these. It's only informative.
+			switch pwd.Warning.Tag {
+			case 0:
+				asn1.Unmarshal(pwd.Warning.Bytes, &timeLeft)
+			case 1:
+				asn1.Unmarshal(pwd.Warning.Bytes, &gracesRemaining)
+			}
+		}
+		if pwd.Error != nil {
+			pwdError = int(*pwd.Error)
+		}
+	}
+
+	// TODO: Is there a better way?
+	// We return this value regardless of what the server responded, since we
+	// still send DER exclusively.
+	transferSyntax := asn1.ObjectIdentifier{2, 1, 2, 1} // Distinguished Encoding Rules
+	stack.bindOutcome <- X500AssociateOutcome{
+		OutcomeType:                OPERATION_OUTCOME_TYPE_RESULT,
+		ACSEResult:                 Associate_result_Accepted,
+		ApplicationContext:         pdu.ProtocolID, // Technically not an application context
+		TransferSyntaxName:         transferSyntax,
+		RespondingAETitle:          pdu.RespondingAETitle,
+		Parameter:                  pdu.Result,
+		V1:                         v1,
+		V2:                         v2,
+		Credentials:                dirBindResult.Credentials,
+		PwdResponseTimeLeft:        timeLeft,
+		PwdResponseGracesRemaining: gracesRemaining,
+		PwdResponseError:           pwdError,
+	}
 }
 
 func (stack *IDMProtocolStack) HandleBindErrorPDU(pdu IdmBindError) {
-	stack.bound <- false
+	// FIXME: This is not correct. Unmarshal the signed structure.
+	var dirBindErr DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1
+	optProtDirBindErr := asn1.RawValue{FullBytes: pdu.Error.Bytes}
+	if optProtDirBindErr.Class != asn1.ClassUniversal {
+		stack.DispatchError(errors.New("unrecognized bind error syntax (1)"))
+		return
+	}
+	var rest []byte
+	var err error
+	var unsignedBindErr asn1.RawValue
+	if optProtDirBindErr.Tag == asn1.TagSequence {
+		// This is the signed variant.
+		signed := SIGNED{}
+		rest, err = asn1.Unmarshal(optProtDirBindErr.FullBytes, &signed)
+		if err != nil {
+			stack.DispatchError(err)
+			return
+		}
+		if len(rest) > 0 {
+			stack.DispatchError(errors.New("trailing bytes in bind error signature"))
+			return
+		}
+		unsignedBindErr = signed.ToBeSigned
+	} else if optProtDirBindErr.Tag == asn1.TagSet {
+		unsignedBindErr = optProtDirBindErr
+	} else {
+		stack.DispatchError(errors.New("unrecognized bind error syntax (2)"))
+		return
+	}
+	rest, err = asn1.Unmarshal(unsignedBindErr.FullBytes, &dirBindErr)
+	if err != nil {
+		stack.DispatchError(err)
+		return
+	}
+	if len(rest) > 0 {
+		stack.DispatchError(errors.New("trailing bytes in bind result parameter"))
+		return
+	}
+	v1 := true
+	v2 := false
+	if len(dirBindErr.Versions.Bytes) > 0 {
+		if dirBindErr.Versions.BitLength >= 2 {
+			v1 = dirBindErr.Versions.Bytes[0]&0b1000_0000 > 0
+			v2 = dirBindErr.Versions.Bytes[0]&0b0100_0000 > 0
+		} else if dirBindErr.Versions.BitLength == 1 {
+			v1 = dirBindErr.Versions.Bytes[0]&0b1000_0000 > 0
+		}
+	}
+
+	var serviceError int64 = 0
+	var securityError int64 = 0
+	acseResult := Associate_result_Rejected_permanent
+	if dirBindErr.Error.Class == asn1.ClassContextSpecific {
+		switch dirBindErr.Error.Tag {
+		case 1:
+			rest, err = asn1.Unmarshal(dirBindErr.Error.Bytes, &serviceError)
+		case 2:
+			rest, err = asn1.Unmarshal(dirBindErr.Error.Bytes, &securityError)
+		}
+		if err != nil {
+			stack.DispatchError(err)
+			return
+		}
+		if len(rest) > 0 {
+			stack.DispatchError(errors.New("trailing bytes in bind error code"))
+			return
+		}
+		// We treat busy, unavailable, ditError, saslBindInProgress as "transient"
+		switch serviceError {
+		case ServiceProblem_Busy:
+			fallthrough
+		case ServiceProblem_Unavailable:
+			fallthrough
+		case ServiceProblem_DitError:
+			fallthrough
+		case ServiceProblem_SaslBindInProgress:
+			acseResult = Associate_result_Rejected_transient
+		}
+	}
+
+	// TODO: Is there a better way?
+	// We return this value regardless of what the server responded, since we
+	// still send DER exclusively.
+	transferSyntax := asn1.ObjectIdentifier{2, 1, 2, 1} // Distinguished Encoding Rules
+	stack.bindOutcome <- X500AssociateOutcome{
+		OutcomeType:        OPERATION_OUTCOME_TYPE_ERROR,
+		ACSEResult:         acseResult,
+		ApplicationContext: pdu.ProtocolID, // Technically not an application context
+		TransferSyntaxName: transferSyntax,
+		RespondingAETitle:  pdu.RespondingAETitle,
+		Parameter:          pdu.Error,
+		V1:                 v1,
+		V2:                 v2,
+		SecurityParameters: dirBindErr.SecurityParameters,
+		ServiceError:       serviceError,
+		SecurityError:      securityError,
+	}
 }
 
 func (stack *IDMProtocolStack) HandleRequestPDU(pdu Request) {
@@ -326,6 +481,8 @@ func (stack *IDMProtocolStack) HandleUnbindPDU(pdu Unbind) {
 func (stack *IDMProtocolStack) HandleAbortPDU(pdu Abort) {
 	stack.mutex.Lock()
 	defer stack.mutex.Unlock()
+	stack.socket.Close()
+	stack.bound = false
 	for iid, op := range stack.PendingOperations {
 		iidBytes, err := asn1.Marshal(iid)
 		if err != nil {
@@ -342,8 +499,6 @@ func (stack *IDMProtocolStack) HandleAbortPDU(pdu Abort) {
 	}
 	stack.NextInvokeId = 1
 	stack.ReceivedData = make([]byte, 0)
-	stack.bound <- false
-	stack.socket.Close()
 }
 
 func (stack *IDMProtocolStack) HandleStartTLSPDU(pdu StartTLS) {
@@ -685,10 +840,9 @@ func (stack *IDMProtocolStack) Bind(ctx context.Context, arg X500AssociateArgume
 		return X500AssociateOutcome{}, err
 	}
 	stack.mutex.Unlock()
-	// FIXME: The response is never actually populated.
 	select {
-	case <-stack.bound:
-		return
+	case response = <-stack.bindOutcome:
+		return response, nil
 	case <-ctx.Done():
 		return response, ctx.Err()
 	}

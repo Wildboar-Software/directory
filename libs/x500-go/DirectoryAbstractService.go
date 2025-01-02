@@ -748,9 +748,9 @@ const Versions_V2 int32 = 1 /* LONG_NAMED_BIT */
 //
 //
 type DirectoryBindResult struct {
-	Credentials      Credentials      `asn1:"optional,explicit,tag:0"`
-	Versions         Versions         `asn1:"optional,explicit,tag:1"`
-	PwdResponseValue PwdResponseValue `asn1:"optional,explicit,tag:2"`
+	Credentials      Credentials       `asn1:"optional,explicit,tag:0"`
+	Versions         Versions          `asn1:"optional,explicit,tag:1"`
+	PwdResponseValue *PwdResponseValue `asn1:"optional,explicit,tag:2"`
 }
 
 /* END_OF_SYMBOL_DEFINITION DirectoryBindResult */ /* START_OF_SYMBOL_DEFINITION PwdResponseValue */
@@ -771,7 +771,7 @@ type DirectoryBindResult struct {
 //
 type PwdResponseValue struct {
 	Warning PwdResponseValue_warning `asn1:"optional"`
-	Error   PwdResponseValue_error   `asn1:"optional"`
+	Error   *PwdResponseValue_error  `asn1:"optional"`
 }
 
 /* END_OF_SYMBOL_DEFINITION PwdResponseValue */ /* START_OF_SYMBOL_DEFINITION DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 */

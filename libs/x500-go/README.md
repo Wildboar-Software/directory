@@ -9,10 +9,10 @@
 - [x] StartTLS
 - [x] Use `asn1.Enumerated`
 - [x] Use `big.Int`
-- [ ] Configurable Timeouts?
-- [ ] Context object?
+- [x] Configurable Timeouts
+- [x] Context object
 - [ ] Make some functions private
-- [ ] Handle bind errors correctly
+- [x] Handle bind errors correctly
 - [ ] Documentation
 - [ ] Simpler way to create an IDM connection (`New()` function)
 - [x] Test operation abandonment
@@ -22,3 +22,8 @@
 - [ ] Implement `String()` for `DistinguishedName` et al?
 - [ ] Error when requests are sent unbound.
 - [ ] Format generated ASN.1 comments
+- [ ] Check that channels cannot get stuck
+- [ ] Race condition checks
+- [ ] Test Bind Errors
+- [ ] Test socket closures
+

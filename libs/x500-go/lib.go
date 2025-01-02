@@ -1,44 +1,42 @@
 package x500_go
 
 import (
-	"crypto/x509/pkix"
 	"encoding/asn1"
+	"math/big"
 )
+
+type OutcomeType = int
 
 const (
-	OPERATION_OUTCOME_TYPE_FAILURE = 0
-	OPERATION_OUTCOME_TYPE_PENDING = 1
-	OPERATION_OUTCOME_TYPE_RESULT  = 2
-	OPERATION_OUTCOME_TYPE_ERROR   = 3
-	OPERATION_OUTCOME_TYPE_REJECT  = 4
-	OPERATION_OUTCOME_TYPE_ABORT   = 8
-	OPERATION_OUTCOME_TYPE_OTHER   = 22
+	OPERATION_OUTCOME_TYPE_FAILURE OutcomeType = 0
+	OPERATION_OUTCOME_TYPE_PENDING OutcomeType = 1
+	OPERATION_OUTCOME_TYPE_RESULT  OutcomeType = 2
+	OPERATION_OUTCOME_TYPE_ERROR   OutcomeType = 3
+	OPERATION_OUTCOME_TYPE_REJECT  OutcomeType = 4
+	OPERATION_OUTCOME_TYPE_ABORT   OutcomeType = 8
+	OPERATION_OUTCOME_TYPE_OTHER   OutcomeType = 22
 )
+
+type RejectProblem = asn1.Enumerated
 
 const (
-	REJECT_PROBLEM_UNRECOGNIZED_PDU               = 0
-	REJECT_PROBLEM_MISTYPED_PDU                   = 1
-	REJECT_PROBLEM_BADLY_STRUCTURED_PDU           = 2
-	REJECT_PROBLEM_DUPLICATE_INVOCATION           = 10
-	REJECT_PROBLEM_UNRECOGNIZED_OPERATION         = 11
-	REJECT_PROBLEM_MISTYPED_ARGUMENT              = 12
-	REJECT_PROBLEM_RESOURCE_LIMITATION            = 13
-	REJECT_PROBLEM_RELEASE_IN_PROGRESS            = 14
-	REJECT_PROBLEM_UNRECOGNIZED_INVOCATION_RESULT = 20
-	REJECT_PROBLEM_RESULT_RESPONSE_UNEXPECTED     = 21
-	REJECT_PROBLEM_MISTYPED_RESULT                = 22
-	REJECT_PROBLEM_UNRECOGNIZED_INVOCATION_ERROR  = 30
-	REJECT_PROBLEM_ERROR_RESPONSE_UNEXPECTED      = 31
-	REJECT_PROBLEM_UNRECOGNIZED_ERROR             = 32
-	REJECT_PROBLEM_UNEXPECTED_ERROR               = 33
-	REJECT_PROBLEM_MISTYPED_PARAMETER             = 34
+	REJECT_PROBLEM_UNRECOGNIZED_PDU               RejectProblem = 0
+	REJECT_PROBLEM_MISTYPED_PDU                   RejectProblem = 1
+	REJECT_PROBLEM_BADLY_STRUCTURED_PDU           RejectProblem = 2
+	REJECT_PROBLEM_DUPLICATE_INVOCATION           RejectProblem = 10
+	REJECT_PROBLEM_UNRECOGNIZED_OPERATION         RejectProblem = 11
+	REJECT_PROBLEM_MISTYPED_ARGUMENT              RejectProblem = 12
+	REJECT_PROBLEM_RESOURCE_LIMITATION            RejectProblem = 13
+	REJECT_PROBLEM_RELEASE_IN_PROGRESS            RejectProblem = 14
+	REJECT_PROBLEM_UNRECOGNIZED_INVOCATION_RESULT RejectProblem = 20
+	REJECT_PROBLEM_RESULT_RESPONSE_UNEXPECTED     RejectProblem = 21
+	REJECT_PROBLEM_MISTYPED_RESULT                RejectProblem = 22
+	REJECT_PROBLEM_UNRECOGNIZED_INVOCATION_ERROR  RejectProblem = 30
+	REJECT_PROBLEM_ERROR_RESPONSE_UNEXPECTED      RejectProblem = 31
+	REJECT_PROBLEM_UNRECOGNIZED_ERROR             RejectProblem = 32
+	REJECT_PROBLEM_UNEXPECTED_ERROR               RejectProblem = 33
+	REJECT_PROBLEM_MISTYPED_PARAMETER             RejectProblem = 34
 )
-
-type SignatureInfo struct {
-	Content   []byte // The value over which the signature was calculated
-	Algorithm pkix.AlgorithmIdentifier
-	Value     []byte // The value of the signature itself
-}
 
 type AttributeOrValueProblem struct {
 	Problem int // Meaningless in updateError
@@ -60,7 +58,6 @@ type X500OperationError struct {
 	Performer          DistinguishedName
 	AliasDereferenced  bool
 	Notification       []Attribute
-	Signature          SignatureInfo
 }
 
 type X500AssociateArgument struct {
@@ -93,13 +90,18 @@ type X500AssociateArgument struct {
 }
 
 // Describes the result of a directory bind, using either IDM or OSI protocols,
-// and covering both bind success (result) and bind error.
-// To determine success, just check that ACSEResult == 0.
+// and covering both bind success (result), bind error, and abort.
+// (Reject is not a valid outcome for a bind operation.)
+// To determine success, just check that OutcomeType == OPERATION_OUTCOME_TYPE_RESULT.
 type X500AssociateOutcome struct {
+	OutcomeType OutcomeType
+	Parameter   asn1.RawValue // Only set if OutcomeType != OPERATION_OUTCOME_TYPE_ABORT
+	Abort       X500Abort     // Only set if OutcomeType == OPERATION_OUTCOME_TYPE_ABORT
+
 	// OSI Protocol Fields
 	ModeSelector                      int // SHOULD always be 1
 	OSIProtocolVersion1               bool
-	RespondingPresentationSelector    []byte
+	RespondingPresentationSelector    *big.Int
 	PresentationContextDefinitionList Result_list
 	TransferSyntaxName                asn1.ObjectIdentifier
 	PresentationContextIdentifier     int
@@ -135,7 +137,6 @@ type X500AssociateOutcome struct {
 	ServiceError               ServiceProblem  // Set to -1 if unset
 	SecurityError              SecurityProblem // Set to -1 if unset
 	SecurityParameters         SecurityParameters
-	Signature                  SignatureInfo
 }
 
 type X500Request struct {
@@ -155,13 +156,13 @@ type X500Abort struct {
 }
 
 type X500OpOutcome struct {
-	OutcomeType   int             // See the OPERATION_OUTCOME_* constants defined above.
-	InvokeId      InvokeId        // This is always set for any outcome type.
-	OpCode        Code            // Only set if OutcomeType == OPERATION_OUTCOME_TYPE_RESULT
-	ErrCode       Code            // Only set if OutcomeType == OPERATION_OUTCOME_TYPE_ERROR
-	Parameter     asn1.RawValue   // The result or error.
-	RejectProblem asn1.Enumerated // Only set if OutcomeType == OPERATION_OUTCOME_TYPE_REJECT
-	Abort         X500Abort       // Only set if OutcomeType == OPERATION_OUTCOME_TYPE_ABORT
+	OutcomeType   OutcomeType
+	InvokeId      InvokeId      // This is always set for any outcome type.
+	OpCode        Code          // Only set if OutcomeType == OPERATION_OUTCOME_TYPE_RESULT
+	ErrCode       Code          // Only set if OutcomeType == OPERATION_OUTCOME_TYPE_ERROR
+	Parameter     asn1.RawValue // The result or error.
+	RejectProblem RejectProblem // Only set if OutcomeType == OPERATION_OUTCOME_TYPE_REJECT
+	Abort         X500Abort     // Only set if OutcomeType == OPERATION_OUTCOME_TYPE_ABORT
 }
 
 type X500UnbindRequest struct {
