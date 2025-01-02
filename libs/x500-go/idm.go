@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
 	"sync"
 	"time"
 )
@@ -67,32 +68,81 @@ type IDMProtocolStack struct {
 	socket            Socket
 	idmVersion        int
 	startTLSResponse  chan TLSResponse
-	PendingOperations map[int]chan X500OpOutcome
+	pendingOperations map[int]chan X500OpOutcome
 	mutex             sync.Mutex
-	NextInvokeId      int
-	ReceivedData      []byte
+	nextInvokeId      int
+	receivedData      []byte
 	bound             bool
 	bindOutcome       chan X500AssociateOutcome
-	signingKey        *crypto.Signer
-	signingCert       *CertificationPath
-	resultSigning     ProtectionRequest
-	errorSigning      ErrorProtectionRequest
-	tlsConfig         *tls.Config
+	SigningKey        *crypto.Signer
+	SigningCert       *CertificationPath
+	ResultsSigning    ProtectionRequest
+	ErrorSigning      ErrorProtectionRequest
+	TlsConfig         *tls.Config
 	StartTLSPolicy    StartTLSChoice
-	derAccepted       bool
+	derAccepted       bool // TODO: Remove?
 
 	// Channel where errors can be returned to the main thread.
-	errorChannel chan error
+	ErrorChannel chan error
+}
+
+type IDMClientConfig struct {
+	ResultSigning  ProtectionRequest
+	ErrorSigning   ErrorProtectionRequest
+	TlsConfig      *tls.Config
+	SigningKey     *crypto.Signer
+	SigningCert    *CertificationPath
+	StartTLSPolicy StartTLSChoice
+	UseIDMv1       bool
+	Errchan        chan error
+}
+
+func IDMClient(socket Socket, options *IDMClientConfig) *IDMProtocolStack {
+	if options == nil {
+		errchan := make(chan error, 1)
+		options = &IDMClientConfig{
+			ResultSigning:  ProtectionRequest_None,
+			ErrorSigning:   ProtectionRequest_None,
+			TlsConfig:      nil,
+			SigningKey:     nil,
+			SigningCert:    nil,
+			StartTLSPolicy: StartTLSDemand,
+			UseIDMv1:       false, // Prefer IDMv2: we can request DER encoding.
+			Errchan:        errchan,
+		}
+		// If the user isn't handling errors, we will.
+		go func() {
+			e := <-errchan
+			fmt.Fprintf(os.Stderr, "x.500/idm client error: %v\n", e)
+		}()
+	}
+	return &IDMProtocolStack{
+		socket:            socket,
+		receivedData:      make([]byte, 0),
+		nextInvokeId:      1,
+		startTLSResponse:  make(chan asn1.Enumerated, 1),
+		pendingOperations: make(map[int]chan X500OpOutcome),
+		bound:             false,
+		bindOutcome:       make(chan X500AssociateOutcome),
+		mutex:             sync.Mutex{},
+		ResultsSigning:    options.ResultSigning,
+		ErrorSigning:      options.ErrorSigning,
+		SigningKey:        options.SigningKey,
+		SigningCert:       options.SigningCert,
+		ErrorChannel:      options.Errchan,
+		StartTLSPolicy:    options.StartTLSPolicy,
+		TlsConfig:         options.TlsConfig,
+	}
 }
 
 func (stack *IDMProtocolStack) dispatchError(err error) {
-	stack.errorChannel <- err
+	stack.ErrorChannel <- err
 }
 
 func (stack *IDMProtocolStack) GetNextInvokeId() int {
 	stack.mutex.Lock()
-	ret := stack.NextInvokeId
-	stack.NextInvokeId++
+	ret := stack.nextInvokeId
+	stack.nextInvokeId++
 	stack.mutex.Unlock()
 	return ret
 }
@@ -133,24 +183,24 @@ func ConvertX500AssociateToIdmBind(arg X500AssociateArgument) (req IdmBind, err 
 func (stack *IDMProtocolStack) readIDMv1Frame(startIndex uint32, frame *IDMFrame) (bytesRead uint32, err error) {
 	stack.mutex.Lock()
 	defer stack.mutex.Unlock()
-	if uint32(len(stack.ReceivedData)) < SIZE_OF_IDMV1_FRAME {
+	if uint32(len(stack.receivedData)) < SIZE_OF_IDMV1_FRAME {
 		bytesRead = 0
 		return
 	}
-	if stack.ReceivedData[startIndex] != 1 {
-		err = fmt.Errorf("non idm v1 response; first byte=0x%02x", stack.ReceivedData[0])
+	if stack.receivedData[startIndex] != 1 {
+		err = fmt.Errorf("non idm v1 response; first byte=0x%02x", stack.receivedData[0])
 		return
 	}
-	lengthOfDataField := binary.BigEndian.Uint32(stack.ReceivedData[startIndex+2 : startIndex+SIZE_OF_IDMV1_FRAME])
+	lengthOfDataField := binary.BigEndian.Uint32(stack.receivedData[startIndex+2 : startIndex+SIZE_OF_IDMV1_FRAME])
 	lengthNeeded := (startIndex + SIZE_OF_IDMV1_FRAME + lengthOfDataField)
 	// TODO: Check if it's too large.
-	if lengthNeeded > uint32(len(stack.ReceivedData)) {
+	if lengthNeeded > uint32(len(stack.receivedData)) {
 		bytesRead = 0
 	} else {
 		bytesRead = SIZE_OF_IDMV1_FRAME + lengthOfDataField
 		frame.Version = 1
-		frame.Final = stack.ReceivedData[startIndex+1]
-		frame.Data = stack.ReceivedData[startIndex+SIZE_OF_IDMV1_FRAME : lengthNeeded]
+		frame.Final = stack.receivedData[startIndex+1]
+		frame.Data = stack.receivedData[startIndex+SIZE_OF_IDMV1_FRAME : lengthNeeded]
 	}
 	return
 }
@@ -158,24 +208,24 @@ func (stack *IDMProtocolStack) readIDMv1Frame(startIndex uint32, frame *IDMFrame
 func (stack *IDMProtocolStack) readIDMv2Frame(startIndex uint32, frame *IDMFrame) (bytesRead uint32, err error) {
 	stack.mutex.Lock()
 	defer stack.mutex.Unlock()
-	if uint32(len(stack.ReceivedData)) < SIZE_OF_IDMV2_FRAME {
+	if uint32(len(stack.receivedData)) < SIZE_OF_IDMV2_FRAME {
 		bytesRead = 0
 		return
 	}
-	if stack.ReceivedData[startIndex] != 2 {
-		err = fmt.Errorf("non idm v2 response; first byte=0x%02x", stack.ReceivedData[0])
+	if stack.receivedData[startIndex] != 2 {
+		err = fmt.Errorf("non idm v2 response; first byte=0x%02x", stack.receivedData[0])
 		return
 	}
-	lengthOfDataField := binary.BigEndian.Uint32(stack.ReceivedData[startIndex+4 : startIndex+SIZE_OF_IDMV2_FRAME])
+	lengthOfDataField := binary.BigEndian.Uint32(stack.receivedData[startIndex+4 : startIndex+SIZE_OF_IDMV2_FRAME])
 	lengthNeeded := (startIndex + SIZE_OF_IDMV2_FRAME + lengthOfDataField)
 	// TODO: Check if it's too large.
-	if lengthNeeded > uint32(len(stack.ReceivedData)) {
+	if lengthNeeded > uint32(len(stack.receivedData)) {
 		bytesRead = 0
 	} else {
 		bytesRead = SIZE_OF_IDMV2_FRAME + lengthOfDataField
 		frame.Version = 2
-		frame.Final = stack.ReceivedData[startIndex+1]
-		frame.Data = stack.ReceivedData[startIndex+SIZE_OF_IDMV2_FRAME : lengthNeeded]
+		frame.Final = stack.receivedData[startIndex+1]
+		frame.Data = stack.receivedData[startIndex+SIZE_OF_IDMV2_FRAME : lengthNeeded]
 	}
 	return
 }
@@ -212,7 +262,7 @@ func (stack *IDMProtocolStack) readPDU(pdu *IDM_PDU) (bytesRead uint32, err erro
 				return 0, err
 			}
 			stack.mutex.Lock()
-			stack.ReceivedData = append(stack.ReceivedData, receiveBuffer[0:bytesReceived]...)
+			stack.receivedData = append(stack.receivedData, receiveBuffer[0:bytesReceived]...)
 			stack.mutex.Unlock()
 		}
 		index += frameBytesRead
@@ -233,7 +283,7 @@ func (stack *IDMProtocolStack) readPDU(pdu *IDM_PDU) (bytesRead uint32, err erro
 			bytesRead = index - startIndex
 			// We purge the buffer of unneeded data once we parse a full IDM PDU
 			stack.mutex.Lock()
-			stack.ReceivedData = stack.ReceivedData[startIndex+bytesRead:]
+			stack.receivedData = stack.receivedData[startIndex+bytesRead:]
 			stack.mutex.Unlock()
 			return bytesRead, nil
 		} else {
@@ -415,7 +465,7 @@ func (stack *IDMProtocolStack) handleRequestPDU(pdu Request) {
 
 func (stack *IDMProtocolStack) handleResultPDU(pdu IdmResult) {
 	stack.mutex.Lock()
-	op, op_known := stack.PendingOperations[pdu.InvokeID]
+	op, op_known := stack.pendingOperations[pdu.InvokeID]
 	stack.mutex.Unlock()
 	if !op_known {
 		stack.dispatchError(errors.New("unrecognized result invoke id"))
@@ -436,7 +486,7 @@ func (stack *IDMProtocolStack) handleResultPDU(pdu IdmResult) {
 }
 
 func (stack *IDMProtocolStack) handleErrorPDU(pdu IdmError) {
-	op, op_known := stack.PendingOperations[pdu.InvokeID]
+	op, op_known := stack.pendingOperations[pdu.InvokeID]
 	if !op_known {
 		stack.dispatchError(errors.New("unrecognized error invoke id"))
 		return
@@ -456,7 +506,7 @@ func (stack *IDMProtocolStack) handleErrorPDU(pdu IdmError) {
 }
 
 func (stack *IDMProtocolStack) handleRejectPDU(pdu IdmReject) {
-	op, op_known := stack.PendingOperations[pdu.InvokeID]
+	op, op_known := stack.pendingOperations[pdu.InvokeID]
 	if !op_known {
 		stack.dispatchError(errors.New("unrecognized error invoke id"))
 		return
@@ -475,7 +525,7 @@ func (stack *IDMProtocolStack) handleRejectPDU(pdu IdmReject) {
 }
 
 func (stack *IDMProtocolStack) handleUnbindPDU(pdu Unbind) {
-	stack.errorChannel <- errors.New("server sent unbind message, which is not allowed")
+	stack.ErrorChannel <- errors.New("server sent unbind message, which is not allowed")
 }
 
 func (stack *IDMProtocolStack) handleAbortPDU(pdu Abort) {
@@ -483,7 +533,7 @@ func (stack *IDMProtocolStack) handleAbortPDU(pdu Abort) {
 	defer stack.mutex.Unlock()
 	stack.socket.Close()
 	stack.bound = false
-	for iid, op := range stack.PendingOperations {
+	for iid, op := range stack.pendingOperations {
 		iidBytes, err := asn1.Marshal(iid)
 		if err != nil {
 			stack.dispatchError(err)
@@ -497,12 +547,12 @@ func (stack *IDMProtocolStack) handleAbortPDU(pdu Abort) {
 			},
 		}
 	}
-	stack.NextInvokeId = 1
-	stack.ReceivedData = make([]byte, 0)
+	stack.nextInvokeId = 1
+	stack.receivedData = make([]byte, 0)
 }
 
 func (stack *IDMProtocolStack) handleStartTLSPDU(pdu StartTLS) {
-	stack.errorChannel <- errors.New("server sent starttls message, which is not allowed")
+	stack.ErrorChannel <- errors.New("server sent starttls message, which is not allowed")
 }
 
 func (stack *IDMProtocolStack) handleTLSResponsePDU(pdu TLSResponse) {
@@ -532,11 +582,11 @@ func (stack *IDMProtocolStack) handlePDU(pdu IDM_PDU) {
 			payload := IdmBind{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
-				stack.errorChannel <- err
+				stack.ErrorChannel <- err
 				return
 			}
 			if len(rest) > 0 {
-				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
+				stack.ErrorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
 			stack.handleBindPDU(payload)
@@ -546,11 +596,11 @@ func (stack *IDMProtocolStack) handlePDU(pdu IDM_PDU) {
 			payload := IdmBindResult{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
-				stack.errorChannel <- err
+				stack.ErrorChannel <- err
 				return
 			}
 			if len(rest) > 0 {
-				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
+				stack.ErrorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
 			stack.handleBindResultPDU(payload)
@@ -560,11 +610,11 @@ func (stack *IDMProtocolStack) handlePDU(pdu IDM_PDU) {
 			payload := IdmBindError{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
-				stack.errorChannel <- err
+				stack.ErrorChannel <- err
 				return
 			}
 			if len(rest) > 0 {
-				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
+				stack.ErrorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
 			stack.handleBindErrorPDU(payload)
@@ -574,11 +624,11 @@ func (stack *IDMProtocolStack) handlePDU(pdu IDM_PDU) {
 			payload := Request{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
-				stack.errorChannel <- err
+				stack.ErrorChannel <- err
 				return
 			}
 			if len(rest) > 0 {
-				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
+				stack.ErrorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
 			stack.handleRequestPDU(payload)
@@ -588,11 +638,11 @@ func (stack *IDMProtocolStack) handlePDU(pdu IDM_PDU) {
 			payload := IdmResult{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
-				stack.errorChannel <- err
+				stack.ErrorChannel <- err
 				return
 			}
 			if len(rest) > 0 {
-				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
+				stack.ErrorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
 			stack.handleResultPDU(payload)
@@ -602,11 +652,11 @@ func (stack *IDMProtocolStack) handlePDU(pdu IDM_PDU) {
 			payload := IdmError{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
-				stack.errorChannel <- err
+				stack.ErrorChannel <- err
 				return
 			}
 			if len(rest) > 0 {
-				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
+				stack.ErrorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
 			stack.handleErrorPDU(payload)
@@ -616,11 +666,11 @@ func (stack *IDMProtocolStack) handlePDU(pdu IDM_PDU) {
 			payload := IdmReject{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
-				stack.errorChannel <- err
+				stack.ErrorChannel <- err
 				return
 			}
 			if len(rest) > 0 {
-				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
+				stack.ErrorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
 			stack.handleRejectPDU(payload)
@@ -630,11 +680,11 @@ func (stack *IDMProtocolStack) handlePDU(pdu IDM_PDU) {
 			payload := Unbind{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
-				stack.errorChannel <- err
+				stack.ErrorChannel <- err
 				return
 			}
 			if len(rest) > 0 {
-				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
+				stack.ErrorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
 			stack.handleUnbindPDU(payload)
@@ -644,11 +694,11 @@ func (stack *IDMProtocolStack) handlePDU(pdu IDM_PDU) {
 			var abortReason asn1.Enumerated = 0
 			rest, err := asn1.Unmarshal(pdu.Bytes, &abortReason)
 			if err != nil {
-				stack.errorChannel <- err
+				stack.ErrorChannel <- err
 				return
 			}
 			if len(rest) > 0 {
-				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
+				stack.ErrorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
 			stack.handleAbortPDU(abortReason)
@@ -658,11 +708,11 @@ func (stack *IDMProtocolStack) handlePDU(pdu IDM_PDU) {
 			payload := StartTLS{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
-				stack.errorChannel <- err
+				stack.ErrorChannel <- err
 				return
 			}
 			if len(rest) > 0 {
-				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
+				stack.ErrorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
 			stack.handleStartTLSPDU(payload)
@@ -672,18 +722,18 @@ func (stack *IDMProtocolStack) handlePDU(pdu IDM_PDU) {
 			var tlsResponse asn1.Enumerated = 0
 			rest, err := asn1.Unmarshal(pdu.Bytes, &tlsResponse)
 			if err != nil {
-				stack.errorChannel <- err
+				stack.ErrorChannel <- err
 				return
 			}
 			if len(rest) > 0 {
-				stack.errorChannel <- errors.New("trailing bytes after idm pdu")
+				stack.ErrorChannel <- errors.New("trailing bytes after idm pdu")
 				return
 			}
 			stack.handleTLSResponsePDU(tlsResponse)
 		}
 	default:
 		{
-			stack.errorChannel <- errors.New("unrecognized idm pdu")
+			stack.ErrorChannel <- errors.New("unrecognized idm pdu")
 			return
 		}
 	}
@@ -706,7 +756,7 @@ func (stack *IDMProtocolStack) processReceivedPDUs() (err error) {
 	for err == nil {
 		_, err := stack.processNextPDU()
 		if err != nil {
-			stack.errorChannel <- err
+			stack.ErrorChannel <- err
 			return err
 		}
 	}
@@ -749,10 +799,10 @@ func (stack *IDMProtocolStack) startTLS(ctx context.Context) (response TLSRespon
 		if !is_tcp {
 			return response, errors.New("tls already in use")
 		}
-		if stack.tlsConfig == nil {
+		if stack.TlsConfig == nil {
 			return response, errors.New("no tlsconfig defined: not performing x509 authentication of peer")
 		}
-		tlsConn := tls.Client(netconn, stack.tlsConfig)
+		tlsConn := tls.Client(netconn, stack.TlsConfig)
 		err = tlsConn.HandshakeContext(ctx)
 		if err != nil {
 			return response, err
@@ -879,15 +929,15 @@ func (stack *IDMProtocolStack) Request(ctx context.Context, req X500Request) (re
 	op := make(chan X500OpOutcome)
 	frame := GetIdmFrame(pduBytes, stack.idmVersion)
 	stack.mutex.Lock()
-	stack.PendingOperations[invokeId] = op
+	stack.pendingOperations[invokeId] = op
 	_, err = stack.socket.Write(frame)
 	if err != nil {
-		delete(stack.PendingOperations, invokeId)
+		delete(stack.pendingOperations, invokeId)
 		return X500OpOutcome{}, err
 	}
 	_, err = stack.socket.Write(pduBytes)
 	if err != nil {
-		delete(stack.PendingOperations, invokeId)
+		delete(stack.pendingOperations, invokeId)
 		return X500OpOutcome{}, err
 	}
 	stack.mutex.Unlock()
@@ -896,12 +946,12 @@ func (stack *IDMProtocolStack) Request(ctx context.Context, req X500Request) (re
 		break
 	case <-ctx.Done():
 		stack.mutex.Lock()
-		delete(stack.PendingOperations, invokeId)
+		delete(stack.pendingOperations, invokeId)
 		stack.mutex.Unlock()
 		return X500OpOutcome{}, ctx.Err()
 	}
 	stack.mutex.Lock()
-	delete(stack.PendingOperations, invokeId)
+	delete(stack.pendingOperations, invokeId)
 	stack.mutex.Unlock()
 	if err != nil {
 		return X500OpOutcome{}, err
@@ -1169,12 +1219,12 @@ func (stack *IDMProtocolStack) Read(ctx context.Context, arg_data ReadArgumentDa
 		return X500OpOutcome{}, nil, err
 	}
 	var arg_bytes []byte
-	if stack.signingKey != nil && stack.signingCert != nil {
+	if stack.SigningKey != nil && stack.SigningCert != nil {
 		sp, err := createSecurityParameters(
 			opCode,
-			stack.signingCert,
-			stack.resultSigning,
-			stack.errorSigning,
+			stack.SigningCert,
+			stack.ResultsSigning,
+			stack.ErrorSigning,
 			nil,
 		)
 		if err != nil {
@@ -1185,7 +1235,7 @@ func (stack *IDMProtocolStack) Read(ctx context.Context, arg_data ReadArgumentDa
 		if err != nil {
 			return X500OpOutcome{}, nil, err
 		}
-		sig, err := sign(*stack.signingKey, arg_bytes)
+		sig, err := sign(*stack.SigningKey, arg_bytes)
 		if err != nil {
 			return X500OpOutcome{}, nil, err
 		}
@@ -1250,12 +1300,12 @@ func (stack *IDMProtocolStack) Compare(ctx context.Context, arg_data CompareArgu
 		return X500OpOutcome{}, nil, err
 	}
 	var arg_bytes []byte
-	if stack.signingKey != nil && stack.signingCert != nil {
+	if stack.SigningKey != nil && stack.SigningCert != nil {
 		sp, err := createSecurityParameters(
 			opCode,
-			stack.signingCert,
-			stack.resultSigning,
-			stack.errorSigning,
+			stack.SigningCert,
+			stack.ResultsSigning,
+			stack.ErrorSigning,
 			nil,
 		)
 		if err != nil {
@@ -1266,7 +1316,7 @@ func (stack *IDMProtocolStack) Compare(ctx context.Context, arg_data CompareArgu
 		if err != nil {
 			return X500OpOutcome{}, nil, err
 		}
-		sig, err := sign(*stack.signingKey, arg_bytes)
+		sig, err := sign(*stack.SigningKey, arg_bytes)
 		if err != nil {
 			return X500OpOutcome{}, nil, err
 		}
@@ -1331,12 +1381,12 @@ func (stack *IDMProtocolStack) Abandon(ctx context.Context, arg_data AbandonArgu
 		return X500OpOutcome{}, nil, err
 	}
 	var arg_bytes []byte
-	if stack.signingKey != nil && stack.signingCert != nil {
+	if stack.SigningKey != nil && stack.SigningCert != nil {
 		arg_bytes, err = asn1.Marshal(arg_data)
 		if err != nil {
 			return X500OpOutcome{}, nil, err
 		}
-		sig, err := sign(*stack.signingKey, arg_bytes)
+		sig, err := sign(*stack.SigningKey, arg_bytes)
 		if err != nil {
 			return X500OpOutcome{}, nil, err
 		}
@@ -1376,12 +1426,12 @@ func (stack *IDMProtocolStack) List(ctx context.Context, arg_data ListArgumentDa
 		return X500OpOutcome{}, nil, err
 	}
 	var arg_bytes []byte
-	if stack.signingKey != nil && stack.signingCert != nil {
+	if stack.SigningKey != nil && stack.SigningCert != nil {
 		sp, err := createSecurityParameters(
 			opCode,
-			stack.signingCert,
-			stack.resultSigning,
-			stack.errorSigning,
+			stack.SigningCert,
+			stack.ResultsSigning,
+			stack.ErrorSigning,
 			nil,
 		)
 		if err != nil {
@@ -1392,7 +1442,7 @@ func (stack *IDMProtocolStack) List(ctx context.Context, arg_data ListArgumentDa
 		if err != nil {
 			return X500OpOutcome{}, nil, err
 		}
-		sig, err := sign(*stack.signingKey, arg_bytes)
+		sig, err := sign(*stack.SigningKey, arg_bytes)
 		if err != nil {
 			return X500OpOutcome{}, nil, err
 		}
@@ -1462,12 +1512,12 @@ func (stack *IDMProtocolStack) Search(ctx context.Context, arg_data SearchArgume
 		return X500OpOutcome{}, nil, err
 	}
 	var arg_bytes []byte
-	if stack.signingKey != nil && stack.signingCert != nil {
+	if stack.SigningKey != nil && stack.SigningCert != nil {
 		sp, err := createSecurityParameters(
 			opCode,
-			stack.signingCert,
-			stack.resultSigning,
-			stack.errorSigning,
+			stack.SigningCert,
+			stack.ResultsSigning,
+			stack.ErrorSigning,
 			nil,
 		)
 		if err != nil {
@@ -1478,7 +1528,7 @@ func (stack *IDMProtocolStack) Search(ctx context.Context, arg_data SearchArgume
 		if err != nil {
 			return X500OpOutcome{}, nil, err
 		}
-		sig, err := sign(*stack.signingKey, arg_bytes)
+		sig, err := sign(*stack.SigningKey, arg_bytes)
 		if err != nil {
 			return X500OpOutcome{}, nil, err
 		}
@@ -1548,12 +1598,12 @@ func (stack *IDMProtocolStack) AddEntry(ctx context.Context, arg_data AddEntryAr
 		return X500OpOutcome{}, nil, err
 	}
 	var arg_bytes []byte
-	if stack.signingKey != nil && stack.signingCert != nil {
+	if stack.SigningKey != nil && stack.SigningCert != nil {
 		sp, err := createSecurityParameters(
 			opCode,
-			stack.signingCert,
-			stack.resultSigning,
-			stack.errorSigning,
+			stack.SigningCert,
+			stack.ResultsSigning,
+			stack.ErrorSigning,
 			nil,
 		)
 		if err != nil {
@@ -1564,7 +1614,7 @@ func (stack *IDMProtocolStack) AddEntry(ctx context.Context, arg_data AddEntryAr
 		if err != nil {
 			return X500OpOutcome{}, nil, err
 		}
-		sig, err := sign(*stack.signingKey, arg_bytes)
+		sig, err := sign(*stack.SigningKey, arg_bytes)
 		if err != nil {
 			return X500OpOutcome{}, nil, err
 		}
@@ -1603,12 +1653,12 @@ func (stack *IDMProtocolStack) RemoveEntry(ctx context.Context, arg_data RemoveE
 		return X500OpOutcome{}, nil, err
 	}
 	var arg_bytes []byte
-	if stack.signingKey != nil && stack.signingCert != nil {
+	if stack.SigningKey != nil && stack.SigningCert != nil {
 		sp, err := createSecurityParameters(
 			opCode,
-			stack.signingCert,
-			stack.resultSigning,
-			stack.errorSigning,
+			stack.SigningCert,
+			stack.ResultsSigning,
+			stack.ErrorSigning,
 			nil,
 		)
 		if err != nil {
@@ -1619,7 +1669,7 @@ func (stack *IDMProtocolStack) RemoveEntry(ctx context.Context, arg_data RemoveE
 		if err != nil {
 			return X500OpOutcome{}, nil, err
 		}
-		sig, err := sign(*stack.signingKey, arg_bytes)
+		sig, err := sign(*stack.SigningKey, arg_bytes)
 		if err != nil {
 			return X500OpOutcome{}, nil, err
 		}
@@ -1658,12 +1708,12 @@ func (stack *IDMProtocolStack) ModifyEntry(ctx context.Context, arg_data ModifyE
 		return X500OpOutcome{}, nil, err
 	}
 	var arg_bytes []byte
-	if stack.signingKey != nil && stack.signingCert != nil {
+	if stack.SigningKey != nil && stack.SigningCert != nil {
 		sp, err := createSecurityParameters(
 			opCode,
-			stack.signingCert,
-			stack.resultSigning,
-			stack.errorSigning,
+			stack.SigningCert,
+			stack.ResultsSigning,
+			stack.ErrorSigning,
 			nil,
 		)
 		if err != nil {
@@ -1674,7 +1724,7 @@ func (stack *IDMProtocolStack) ModifyEntry(ctx context.Context, arg_data ModifyE
 		if err != nil {
 			return X500OpOutcome{}, nil, err
 		}
-		sig, err := sign(*stack.signingKey, arg_bytes)
+		sig, err := sign(*stack.SigningKey, arg_bytes)
 		if err != nil {
 			return X500OpOutcome{}, nil, err
 		}
@@ -1713,12 +1763,12 @@ func (stack *IDMProtocolStack) ModifyDN(ctx context.Context, arg_data ModifyDNAr
 		return X500OpOutcome{}, nil, err
 	}
 	var arg_bytes []byte
-	if stack.signingKey != nil && stack.signingCert != nil {
+	if stack.SigningKey != nil && stack.SigningCert != nil {
 		sp, err := createSecurityParameters(
 			opCode,
-			stack.signingCert,
-			stack.resultSigning,
-			stack.errorSigning,
+			stack.SigningCert,
+			stack.ResultsSigning,
+			stack.ErrorSigning,
 			nil,
 		)
 		if err != nil {
@@ -1729,7 +1779,7 @@ func (stack *IDMProtocolStack) ModifyDN(ctx context.Context, arg_data ModifyDNAr
 		if err != nil {
 			return X500OpOutcome{}, nil, err
 		}
-		sig, err := sign(*stack.signingKey, arg_bytes)
+		sig, err := sign(*stack.SigningKey, arg_bytes)
 		if err != nil {
 			return X500OpOutcome{}, nil, err
 		}
@@ -1768,12 +1818,12 @@ func (stack *IDMProtocolStack) ChangePassword(ctx context.Context, arg_data Chan
 		return X500OpOutcome{}, nil, err
 	}
 	var arg_bytes []byte
-	if stack.signingKey != nil && stack.signingCert != nil {
+	if stack.SigningKey != nil && stack.SigningCert != nil {
 		arg_bytes, err = asn1.Marshal(arg_data)
 		if err != nil {
 			return X500OpOutcome{}, nil, err
 		}
-		sig, err := sign(*stack.signingKey, arg_bytes)
+		sig, err := sign(*stack.SigningKey, arg_bytes)
 		if err != nil {
 			return X500OpOutcome{}, nil, err
 		}
@@ -1813,12 +1863,12 @@ func (stack *IDMProtocolStack) AdministerPassword(ctx context.Context, arg_data 
 		return X500OpOutcome{}, nil, err
 	}
 	var arg_bytes []byte
-	if stack.signingKey != nil && stack.signingCert != nil {
+	if stack.SigningKey != nil && stack.SigningCert != nil {
 		arg_bytes, err = asn1.Marshal(arg_data)
 		if err != nil {
 			return X500OpOutcome{}, nil, err
 		}
-		sig, err := sign(*stack.signingKey, arg_bytes)
+		sig, err := sign(*stack.SigningKey, arg_bytes)
 		if err != nil {
 			return X500OpOutcome{}, nil, err
 		}

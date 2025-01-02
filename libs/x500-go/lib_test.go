@@ -21,22 +21,10 @@ func TestReadAnEntry(t *testing.T) {
 		os.Exit(53)
 	}
 	errchan := make(chan error)
-	idm := IDMProtocolStack{
-		socket:            conn,
-		ReceivedData:      make([]byte, 0),
-		startTLSResponse:  make(chan asn1.Enumerated, 1),
-		NextInvokeId:      1,
-		PendingOperations: make(map[int]chan X500OpOutcome),
-		bound:             false,
-		bindOutcome:       make(chan X500AssociateOutcome),
-		mutex:             sync.Mutex{},
-		resultSigning:     ProtectionRequest_None,
-		errorSigning:      ProtectionRequest_None,
-		signingKey:        nil,
-		signingCert:       nil,
-		errorChannel:      errchan,
-		StartTLSPolicy:    StartTLSNever,
-	}
+	idm := IDMClient(conn, &IDMClientConfig{
+		StartTLSPolicy: StartTLSNever,
+		Errchan:        errchan,
+	})
 	go func() {
 		e := <-errchan
 		fmt.Printf("Error: %v\n", e)
@@ -168,22 +156,10 @@ func TestReadAnEntry2(t *testing.T) {
 		os.Exit(53)
 	}
 	errchan := make(chan error)
-	idm := IDMProtocolStack{
-		socket:            conn,
-		ReceivedData:      make([]byte, 0),
-		NextInvokeId:      1,
-		startTLSResponse:  make(chan asn1.Enumerated, 1),
-		PendingOperations: make(map[int]chan X500OpOutcome),
-		bound:             false,
-		bindOutcome:       make(chan X500AssociateOutcome),
-		mutex:             sync.Mutex{},
-		resultSigning:     ProtectionRequest_None,
-		errorSigning:      ProtectionRequest_None,
-		signingKey:        nil,
-		signingCert:       nil,
-		errorChannel:      errchan,
-		StartTLSPolicy:    StartTLSNever,
-	}
+	idm := IDMClient(conn, &IDMClientConfig{
+		StartTLSPolicy: StartTLSNever,
+		Errchan:        errchan,
+	})
 	go func() {
 		e := <-errchan
 		fmt.Printf("Error: %v\n", e)
@@ -222,8 +198,8 @@ func TestReadAnEntry2(t *testing.T) {
 			Bytes:      name.FullBytes,
 		},
 		SecurityParameters: SecurityParameters{
-			Target:          idm.resultSigning,
-			ErrorProtection: idm.errorSigning,
+			Target:          idm.ResultsSigning,
+			ErrorProtection: idm.ErrorSigning,
 		},
 	}
 	ctx, cancel = context.WithTimeout(context.Background(), sensibleTimeout)
@@ -287,22 +263,10 @@ func TestManySimultaneousReads(t *testing.T) {
 		os.Exit(53)
 	}
 	errchan := make(chan error)
-	idm := IDMProtocolStack{
-		socket:            conn,
-		ReceivedData:      make([]byte, 0),
-		NextInvokeId:      1,
-		startTLSResponse:  make(chan asn1.Enumerated, 1),
-		PendingOperations: make(map[int]chan X500OpOutcome),
-		bound:             false,
-		bindOutcome:       make(chan X500AssociateOutcome),
-		mutex:             sync.Mutex{},
-		resultSigning:     ProtectionRequest_None,
-		errorSigning:      ProtectionRequest_None,
-		signingKey:        nil,
-		signingCert:       nil,
-		errorChannel:      errchan,
-		StartTLSPolicy:    StartTLSNever,
-	}
+	idm := IDMClient(conn, &IDMClientConfig{
+		StartTLSPolicy: StartTLSNever,
+		Errchan:        errchan,
+	})
 	go func() {
 		e := <-errchan
 		fmt.Printf("Error: %v\n", e)
@@ -341,8 +305,8 @@ func TestManySimultaneousReads(t *testing.T) {
 			Bytes:      name.FullBytes,
 		},
 		SecurityParameters: SecurityParameters{
-			Target:          idm.resultSigning,
-			ErrorProtection: idm.errorSigning,
+			Target:          idm.ResultsSigning,
+			ErrorProtection: idm.ErrorSigning,
 		},
 	}
 	// Spam many requests all concurrently
@@ -373,22 +337,10 @@ func TestListAnEntry(t *testing.T) {
 		os.Exit(53)
 	}
 	errchan := make(chan error)
-	idm := IDMProtocolStack{
-		socket:            conn,
-		ReceivedData:      make([]byte, 0),
-		NextInvokeId:      1,
-		startTLSResponse:  make(chan asn1.Enumerated, 1),
-		PendingOperations: make(map[int]chan X500OpOutcome),
-		bound:             false,
-		bindOutcome:       make(chan X500AssociateOutcome),
-		mutex:             sync.Mutex{},
-		resultSigning:     ProtectionRequest_None,
-		errorSigning:      ProtectionRequest_None,
-		signingKey:        nil,
-		signingCert:       nil,
-		errorChannel:      errchan,
-		StartTLSPolicy:    StartTLSNever,
-	}
+	idm := IDMClient(conn, &IDMClientConfig{
+		StartTLSPolicy: StartTLSNever,
+		Errchan:        errchan,
+	})
 	go func() {
 		e := <-errchan
 		fmt.Printf("Error: %v\n", e)
@@ -453,22 +405,10 @@ func TestTLS(t *testing.T) {
 		os.Exit(53)
 	}
 	errchan := make(chan error)
-	idm := IDMProtocolStack{
-		socket:            conn,
-		ReceivedData:      make([]byte, 0),
-		NextInvokeId:      1,
-		startTLSResponse:  make(chan asn1.Enumerated, 1),
-		PendingOperations: make(map[int]chan X500OpOutcome),
-		bound:             false,
-		bindOutcome:       make(chan X500AssociateOutcome),
-		mutex:             sync.Mutex{},
-		resultSigning:     ProtectionRequest_None,
-		errorSigning:      ProtectionRequest_None,
-		signingKey:        nil,
-		signingCert:       nil,
-		errorChannel:      errchan,
-		StartTLSPolicy:    StartTLSNever,
-	}
+	idm := IDMClient(conn, &IDMClientConfig{
+		StartTLSPolicy: StartTLSNever,
+		Errchan:        errchan,
+	})
 	go func() {
 		e := <-errchan
 		fmt.Printf("Error: %v\n", e)
@@ -531,22 +471,10 @@ func TestAbandon(t *testing.T) {
 		os.Exit(53)
 	}
 	errchan := make(chan error)
-	idm := IDMProtocolStack{
-		socket:            conn,
-		ReceivedData:      make([]byte, 0),
-		NextInvokeId:      1,
-		startTLSResponse:  make(chan asn1.Enumerated, 1),
-		PendingOperations: make(map[int]chan X500OpOutcome),
-		bound:             false,
-		bindOutcome:       make(chan X500AssociateOutcome),
-		mutex:             sync.Mutex{},
-		resultSigning:     ProtectionRequest_None,
-		errorSigning:      ProtectionRequest_None,
-		signingKey:        nil,
-		signingCert:       nil,
-		errorChannel:      errchan,
-		StartTLSPolicy:    StartTLSNever,
-	}
+	idm := IDMClient(conn, &IDMClientConfig{
+		StartTLSPolicy: StartTLSNever,
+		Errchan:        errchan,
+	})
 	go func() {
 		e := <-errchan
 		fmt.Printf("Error: %v\n", e)
@@ -684,25 +612,13 @@ func TestStartTLS(t *testing.T) {
 		os.Exit(53)
 	}
 	errchan := make(chan error)
-	idm := IDMProtocolStack{
-		socket:            conn,
-		startTLSResponse:  make(chan asn1.Enumerated, 1),
-		ReceivedData:      make([]byte, 0),
-		NextInvokeId:      1,
-		PendingOperations: make(map[int]chan X500OpOutcome),
-		bound:             false,
-		bindOutcome:       make(chan X500AssociateOutcome),
-		mutex:             sync.Mutex{},
-		resultSigning:     ProtectionRequest_None,
-		errorSigning:      ProtectionRequest_None,
-		signingKey:        nil,
-		signingCert:       nil,
-		errorChannel:      errchan,
-		StartTLSPolicy:    StartTLSDemand,
-		tlsConfig: &tls.Config{
+	idm := IDMClient(conn, &IDMClientConfig{
+		StartTLSPolicy: StartTLSDemand,
+		TlsConfig: &tls.Config{
 			InsecureSkipVerify: true,
 		},
-	}
+		Errchan: errchan,
+	})
 	go func() {
 		e := <-errchan
 		fmt.Printf("Error: %v\n", e)
@@ -759,29 +675,17 @@ func TestStartTLS(t *testing.T) {
 	}
 }
 
-func TestIDMv2(t *testing.T) {
+func TestIDMv1(t *testing.T) {
 	conn, err := net.Dial("tcp", "localhost:4632")
 	if err != nil {
 		os.Exit(53)
 	}
 	errchan := make(chan error)
-	idm := IDMProtocolStack{
-		idmVersion:        2,
-		socket:            conn,
-		ReceivedData:      make([]byte, 0),
-		startTLSResponse:  make(chan asn1.Enumerated, 1),
-		NextInvokeId:      1,
-		PendingOperations: make(map[int]chan X500OpOutcome),
-		bound:             false,
-		bindOutcome:       make(chan X500AssociateOutcome),
-		mutex:             sync.Mutex{},
-		resultSigning:     ProtectionRequest_None,
-		errorSigning:      ProtectionRequest_None,
-		signingKey:        nil,
-		signingCert:       nil,
-		errorChannel:      errchan,
-		StartTLSPolicy:    StartTLSNever,
-	}
+	idm := IDMClient(conn, &IDMClientConfig{
+		StartTLSPolicy: StartTLSNever,
+		Errchan:        errchan,
+		UseIDMv1:       true,
+	})
 	go func() {
 		e := <-errchan
 		fmt.Printf("Error: %v\n", e)
@@ -844,23 +748,10 @@ func TestBindTimeout(t *testing.T) {
 		os.Exit(53)
 	}
 	errchan := make(chan error)
-	idm := IDMProtocolStack{
-		idmVersion:        2,
-		socket:            conn,
-		ReceivedData:      make([]byte, 0),
-		startTLSResponse:  make(chan asn1.Enumerated, 1),
-		NextInvokeId:      1,
-		PendingOperations: make(map[int]chan X500OpOutcome),
-		bound:             false,
-		bindOutcome:       make(chan X500AssociateOutcome),
-		mutex:             sync.Mutex{},
-		resultSigning:     ProtectionRequest_None,
-		errorSigning:      ProtectionRequest_None,
-		signingKey:        nil,
-		signingCert:       nil,
-		errorChannel:      errchan,
-		StartTLSPolicy:    StartTLSNever,
-	}
+	idm := IDMClient(conn, &IDMClientConfig{
+		StartTLSPolicy: StartTLSNever,
+		Errchan:        errchan,
+	})
 	go func() {
 		e := <-errchan
 		fmt.Printf("Error: %v\n", e)
@@ -881,22 +772,10 @@ func TestRequestTimeout(t *testing.T) {
 		os.Exit(53)
 	}
 	errchan := make(chan error)
-	idm := IDMProtocolStack{
-		socket:            conn,
-		ReceivedData:      make([]byte, 0),
-		NextInvokeId:      1,
-		startTLSResponse:  make(chan asn1.Enumerated, 1),
-		PendingOperations: make(map[int]chan X500OpOutcome),
-		bound:             false,
-		bindOutcome:       make(chan X500AssociateOutcome),
-		mutex:             sync.Mutex{},
-		resultSigning:     ProtectionRequest_None,
-		errorSigning:      ProtectionRequest_None,
-		signingKey:        nil,
-		signingCert:       nil,
-		errorChannel:      errchan,
-		StartTLSPolicy:    StartTLSNever,
-	}
+	idm := IDMClient(conn, &IDMClientConfig{
+		StartTLSPolicy: StartTLSNever,
+		Errchan:        errchan,
+	})
 	go func() {
 		e := <-errchan
 		fmt.Printf("Error: %v\n", e)
@@ -935,8 +814,8 @@ func TestRequestTimeout(t *testing.T) {
 			Bytes:      name.FullBytes,
 		},
 		SecurityParameters: SecurityParameters{
-			Target:          idm.resultSigning,
-			ErrorProtection: idm.errorSigning,
+			Target:          idm.ResultsSigning,
+			ErrorProtection: idm.ErrorSigning,
 		},
 	}
 	impossibleTimeout := time.Duration(1) * time.Millisecond
@@ -954,22 +833,10 @@ func TestUnbind(t *testing.T) {
 		os.Exit(53)
 	}
 	errchan := make(chan error)
-	idm := IDMProtocolStack{
-		socket:            conn,
-		ReceivedData:      make([]byte, 0),
-		NextInvokeId:      1,
-		startTLSResponse:  make(chan asn1.Enumerated, 1),
-		PendingOperations: make(map[int]chan X500OpOutcome),
-		bound:             false,
-		bindOutcome:       make(chan X500AssociateOutcome),
-		mutex:             sync.Mutex{},
-		resultSigning:     ProtectionRequest_None,
-		errorSigning:      ProtectionRequest_None,
-		signingKey:        nil,
-		signingCert:       nil,
-		errorChannel:      errchan,
-		StartTLSPolicy:    StartTLSNever,
-	}
+	idm := IDMClient(conn, &IDMClientConfig{
+		StartTLSPolicy: StartTLSNever,
+		Errchan:        errchan,
+	})
 	go func() {
 		e := <-errchan
 		fmt.Printf("Error: %v\n", e)

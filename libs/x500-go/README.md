@@ -11,10 +11,10 @@
 - [x] Use `big.Int`
 - [x] Configurable Timeouts
 - [x] Context object
-- [ ] Make some functions private
+- [x] Make some functions private
 - [x] Handle bind errors correctly
 - [ ] Documentation
-- [ ] Simpler way to create an IDM connection (`New()` function)
+- [x] Simpler way to create an IDM connection (`New()` function)
 - [x] Test operation abandonment
 - [ ] Update `DirectoryAccessStack` interface to match implementations
 - [x] Test list operation
