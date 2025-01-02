@@ -178,7 +178,7 @@ type X500Operation struct {
 	Req   X500Request
 	Res   *X500OpOutcome
 	Done  chan bool
-	Error *error
+	Error *error // TODO: Is this ever used?
 }
 
 // Examples: IDMStack, ITOTStack, LPPStack (IETF RFC 1085), DIXIEStack (IETF RFC 1249)

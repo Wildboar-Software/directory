@@ -621,9 +621,6 @@ func (stack *IDMProtocolStack) Bind(ctx context.Context, arg X500AssociateArgume
 	// TODO: Return if already bound?
 	_, tls_not_in_use := stack.socket.(net.Conn)
 	if tls_not_in_use && stack.StartTLSPolicy != StartTLSNever {
-		// starttlsTimeout := time.Duration(5) * time.Second // TODO: Make configurable
-		// starttlsCtx, cancelStartTLS := context.WithTimeout(context.TODO(), starttlsTimeout)
-		// defer cancelStartTLS()
 		_, err = stack.StartTLS(ctx)
 		if err != nil && stack.StartTLSPolicy == StartTLSDemand {
 			return X500AssociateOutcome{}, err
@@ -748,6 +745,7 @@ func (stack *IDMProtocolStack) Request(ctx context.Context, req X500Request) (re
 	stack.mutex.Unlock()
 	select {
 	case <-op.Done:
+		break
 	case <-ctx.Done():
 		stack.mutex.Lock()
 		delete(stack.PendingOperations, invokeId)
@@ -763,7 +761,7 @@ func (stack *IDMProtocolStack) Request(ctx context.Context, req X500Request) (re
 	return *op.Res, nil
 }
 
-func (stack *IDMProtocolStack) Unbind(req X500UnbindRequest) (response X500UnbindOutcome, err error) {
+func (stack *IDMProtocolStack) Unbind(_ context.Context, req X500UnbindRequest) (response X500UnbindOutcome, err error) {
 	// TODO: This entire PDU has predictable form. Send this in a single write.
 	op_element := asn1.RawValue{
 		Class:      asn1.ClassContextSpecific,
@@ -786,7 +784,6 @@ func (stack *IDMProtocolStack) Unbind(req X500UnbindRequest) (response X500Unbin
 		return X500UnbindOutcome{}, err
 	}
 	stack.mutex.Unlock()
-	<-stack.bound
 	return X500UnbindOutcome{}, nil
 }
 

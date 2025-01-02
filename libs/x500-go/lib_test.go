@@ -937,3 +937,45 @@ func TestRequestTimeout(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestUnbind(t *testing.T) {
+	conn, err := net.Dial("tcp", "localhost:4632")
+	if err != nil {
+		os.Exit(53)
+	}
+	errchan := make(chan error)
+	idm := IDMProtocolStack{
+		socket:            conn,
+		ReceivedData:      make([]byte, 0),
+		NextInvokeId:      1,
+		startTLSResponse:  make(chan asn1.Enumerated, 1),
+		PendingOperations: make(map[int]*X500Operation),
+		bound:             make(chan bool),
+		mutex:             sync.Mutex{},
+		resultSigning:     ProtectionRequest_None,
+		errorSigning:      ProtectionRequest_None,
+		signingKey:        nil,
+		signingCert:       nil,
+		errorChannel:      errchan,
+		StartTLSPolicy:    StartTLSNever,
+	}
+	go func() {
+		e := <-errchan
+		fmt.Printf("Error: %v\n", e)
+		os.Exit(40)
+	}()
+	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	_, err = idm.BindAnonymously(ctx)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(2)
+	}
+	ctx, cancel = context.WithTimeout(context.Background(), sensibleTimeout)
+	req := X500UnbindRequest{}
+	defer cancel()
+	_, err = idm.Unbind(ctx, req)
+	if err != nil {
+		t.Fail()
+	}
+}
