@@ -6,15 +6,15 @@ import (
 
 // # ASN.1 Definition:
 //
-// OSI-PDU{APPLICATION-CONTEXT:protocol}  ::=  TYPE-IDENTIFIER.&Type (
-//
-//	OsiBind{{protocol}} |
-//	OsiBindResult{{protocol}} |
-//	OsiBindError{{protocol}} |
-//	OsiOperation{{protocol.&Operations}} |
-//	OsiUnbind |
-//	PresentationAbort )
-type OSI_PDU = asn1.RawValue // ObjectClassFieldType
+//	OSI-PDU{APPLICATION-CONTEXT:protocol} ::= TYPE-IDENTIFIER.&Type (
+//		OsiBind{{protocol}} |
+//		OsiBindResult{{protocol}} |
+//		OsiBindError{{protocol}} |
+//		OsiOperation{{protocol.&Operations}} |
+//		OsiUnbind |
+//		PresentationAbort )
+type OSI_PDU = asn1.RawValue
+
 // # ASN.1 Definition:
 //
 //	OsiBind{APPLICATION-CONTEXT:Protocols} ::= SET {
@@ -41,28 +41,32 @@ type OsiBind struct {
 
 // # ASN.1 Definition:
 //
-// Presentation-selector  ::=  OCTET STRING(SIZE (1..4, ..., 5..MAX))
-type Presentation_selector = []byte // OctetStringType
+//	Presentation-selector ::= OCTET STRING(SIZE (1..4, ..., 5..MAX))
+type Presentation_selector = []byte
+
 // # ASN.1 Definition:
 //
-//	Context-list  ::=  SEQUENCE SIZE (2) OF SEQUENCE {
+//	Context-list ::= SEQUENCE SIZE (2) OF SEQUENCE {
 //	  presentation-context-identifier  Presentation-context-identifier,
 //	  abstract-syntax-name             Abstract-syntax-name,
 //	  transfer-syntax-name-list        SEQUENCE OF Transfer-syntax-name }
-type Context_list = [](Context_list_Item) // SequenceOfType
+type Context_list = [](Context_list_Item)
+
 // # ASN.1 Definition:
 //
-// Presentation-context-identifier  ::=  INTEGER(1..127, ..., 128..MAX)
+//	Presentation-context-identifier ::= INTEGER(1..127, ..., 128..MAX)
 type Presentation_context_identifier = int64
 
 // # ASN.1 Definition:
 //
-// Abstract-syntax-name  ::=  OBJECT IDENTIFIER
-type Abstract_syntax_name = asn1.ObjectIdentifier // ObjectIdentifierType
+//	Abstract-syntax-name ::= OBJECT IDENTIFIER
+type Abstract_syntax_name = asn1.ObjectIdentifier
+
 // # ASN.1 Definition:
 //
-// Transfer-syntax-name  ::=  OBJECT IDENTIFIER
-type Transfer_syntax_name = asn1.ObjectIdentifier // ObjectIdentifierType
+//	Transfer-syntax-name ::= OBJECT IDENTIFIER
+type Transfer_syntax_name = asn1.ObjectIdentifier
+
 // # ASN.1 Definition:
 //
 //	AARQ-apdu{APPLICATION-CONTEXT:Protocols} ::= [APPLICATION 0] IMPLICIT SEQUENCE {
@@ -97,39 +101,38 @@ type AARQ_apdu struct {
 
 // # ASN.1 Definition:
 //
-// Association-informationBind{APPLICATION-CONTEXT:Protocols}  ::=
-//
-//	SEQUENCE SIZE (1..MAX) OF
-//	  EXTERNAL
-//	    (WITH COMPONENTS {
-//	       identification         (WITH COMPONENTS {..., syntax ABSENT}),
-//	       data-value-descriptor  ABSENT,
-//	       data-value             (CONTAINING TheOsiBind{{Protocols}})})
-type Association_informationBind = [](asn1.RawValue) // SequenceOfType
+//	  Association-informationBind{APPLICATION-CONTEXT:Protocols} ::= SEQUENCE SIZE (1..MAX) OF
+//		  EXTERNAL
+//		    (WITH COMPONENTS {
+//		       identification         (WITH COMPONENTS {..., syntax ABSENT}),
+//		       data-value-descriptor  ABSENT,
+//		       data-value             (CONTAINING TheOsiBind{{Protocols}})})
+type Association_informationBind = [](asn1.RawValue)
+
 // # ASN.1 Definition:
 //
-// Application-context-name  ::=  OBJECT IDENTIFIER
-type Application_context_name = asn1.ObjectIdentifier // ObjectIdentifierType
+//	Application-context-name ::= OBJECT IDENTIFIER
+type Application_context_name = asn1.ObjectIdentifier
+
 // # ASN.1 Definition:
 //
-// AP-invocation-identifier  ::=  INTEGER
+//	AP-invocation-identifier ::= INTEGER
 type AP_invocation_identifier = int64
 
 // # ASN.1 Definition:
 //
-// AE-invocation-identifier  ::=  INTEGER
+//	AE-invocation-identifier ::= INTEGER
 type AE_invocation_identifier = int64
 
 // # ASN.1 Definition:
 //
-// Implementation-data  ::=  GraphicString
+//	Implementation-data ::= GraphicString
 type Implementation_data = string // GraphicString
 // # ASN.1 Definition:
 //
-// TheOsiBind{APPLICATION-CONTEXT:Protocols}  ::=
-//
-//	[16]  APPLICATION-CONTEXT.&bind-operation.&ArgumentType({Protocols})
-type TheOsiBind = asn1.RawValue // ObjectClassFieldType
+//	TheOsiBind{APPLICATION-CONTEXT:Protocols} ::= [16] APPLICATION-CONTEXT.&bind-operation.&ArgumentType({Protocols})
+type TheOsiBind = asn1.RawValue
+
 // # ASN.1 Definition:
 //
 //	OsiBindResult{APPLICATION-CONTEXT:Protocols} ::= SET {
@@ -156,7 +159,7 @@ type OsiBindResult struct {
 
 // # ASN.1 Definition:
 //
-//	Result  ::=  INTEGER {
+//	Result ::= INTEGER {
 //	  acceptance         (0),
 //	  user-rejection     (1),
 //	  provider-rejection (2)}
@@ -206,10 +209,11 @@ type AARE_apdu struct {
 //	      identification         (WITH COMPONENTS {..., syntax ABSENT}),
 //	      data-value-descriptor  ABSENT,
 //	      data-value             (CONTAINING TheOsiBindRes{{Protocols}})})
-type Association_informationBindRes = [](asn1.RawValue) // SequenceOfType
+type Association_informationBindRes = [](asn1.RawValue)
+
 // # ASN.1 Definition:
 //
-//	Associate-result  ::=  INTEGER {
+//	Associate-result ::= INTEGER {
 //	  accepted           (0),
 //	  rejected-permanent (1),
 //	  rejected-transient (2)}(0..2, ...)
@@ -223,7 +227,7 @@ const Associate_result_Rejected_transient Associate_result = 2
 
 // # ASN.1 Definition:
 //
-//	Associate-source-diagnostic  ::=  CHOICE {
+//	Associate-source-diagnostic ::= CHOICE {
 //	  acse-service-user     [1]  INTEGER {
 //	    null                                            (0),
 //	    no-reason-given                                 (1),
@@ -244,13 +248,12 @@ type Associate_source_diagnostic = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// TheOsiBindRes{APPLICATION-CONTEXT:Protocols}  ::=
-//
-//	[17]  APPLICATION-CONTEXT.&bind-operation.&ResultType({Protocols})
-type TheOsiBindRes = asn1.RawValue // ObjectClassFieldType
+//	TheOsiBindRes{APPLICATION-CONTEXT:Protocols} ::= [17] APPLICATION-CONTEXT.&bind-operation.&ResultType({Protocols})
+type TheOsiBindRes = asn1.RawValue
+
 // # ASN.1 Definition:
 //
-//	OsiBindError{APPLICATION-CONTEXT:Protocols}  ::=  CHOICE {
+//	OsiBindError{APPLICATION-CONTEXT:Protocols} ::= CHOICE {
 //	  normal-mode-parameters  SEQUENCE {
 //	    protocol-version               [0]  IMPLICIT BIT STRING {version-1(0)}
 //	                                          DEFAULT {version-1},
@@ -270,19 +273,18 @@ type OsiBindError = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// Result-list  ::=
-//
-//	SEQUENCE SIZE (2) OF SEQUENCE {
-//	  result                [0] IMPLICIT Result,
-//	  transfer-syntax-name  [1] IMPLICIT Transfer-syntax-name   OPTIONAL,
-//	  provider-reason       [2] IMPLICIT INTEGER {
-//	    reason-not-specified                     (0),
-//	    abstract-syntax-not-supported            (1),
-//	    proposed-transfer-syntaxes-not-supported (2)} OPTIONAL}
-type Result_list = [](Result_list_Item) // SequenceOfType
+//	Result-list ::= SEQUENCE SIZE (2) OF SEQUENCE {
+//		  result                [0] IMPLICIT Result,
+//		  transfer-syntax-name  [1] IMPLICIT Transfer-syntax-name   OPTIONAL,
+//		  provider-reason       [2] IMPLICIT INTEGER {
+//		    reason-not-specified                     (0),
+//		    abstract-syntax-not-supported            (1),
+//		    proposed-transfer-syntaxes-not-supported (2)} OPTIONAL}
+type Result_list = [](Result_list_Item)
+
 // # ASN.1 Definition:
 //
-//	Provider-reason  ::=  INTEGER {
+//	Provider-reason ::= INTEGER {
 //	  reason-not-specified                (0),
 //	  temporary-congestion                (1),
 //	  local-limit-exceeded                (2),
@@ -340,24 +342,22 @@ type AAREerr_apdu struct {
 
 // # ASN.1 Definition:
 //
-// Association-informationBindErr{APPLICATION-CONTEXT:Protocols}  ::=
-//
-//	SEQUENCE SIZE (1) OF
-//	  EXTERNAL (
-//	    WITH COMPONENTS {
-//	      identification         (WITH COMPONENTS {..., syntax ABSENT}),
-//	      data-value-descriptor  ABSENT,
-//	      data-value             (CONTAINING TheOsiBindErr{{Protocols}})})
-type Association_informationBindErr = [](asn1.RawValue) // SequenceOfType
+//	  Association-informationBindErr{APPLICATION-CONTEXT:Protocols} ::= SEQUENCE SIZE (1) OF
+//		EXTERNAL (
+//		  WITH COMPONENTS {
+//		    identification         (WITH COMPONENTS {..., syntax ABSENT}),
+//		    data-value-descriptor  ABSENT,
+//		    data-value             (CONTAINING TheOsiBindErr{{Protocols}})})
+type Association_informationBindErr = [](asn1.RawValue)
+
 // # ASN.1 Definition:
 //
-// TheOsiBindErr{APPLICATION-CONTEXT:Protocols}  ::=
-//
-//	[18]  APPLICATION-CONTEXT.&bind-operation.&Errors.&ParameterType ({Protocols})
-type TheOsiBindErr = asn1.RawValue // ObjectClassFieldType
+//	TheOsiBindErr{APPLICATION-CONTEXT:Protocols} ::= [18] APPLICATION-CONTEXT.&bind-operation.&Errors.&ParameterType ({Protocols})
+type TheOsiBindErr = asn1.RawValue
+
 // # ASN.1 Definition:
 //
-//	OsiUnbind  ::=  CHOICE {
+//	OsiUnbind ::= CHOICE {
 //	  fully-encoded-data
 //	    [APPLICATION 1] IMPLICIT SEQUENCE SIZE (1) OF SEQUENCE {
 //	       presentation-context-identifier  Presentation-context-identifier,
@@ -375,14 +375,14 @@ type TheOsiUnbind struct {
 
 // # ASN.1 Definition:
 //
-// Release-request-reason  ::=  INTEGER {normal(0)}
+//	Release-request-reason ::= INTEGER {normal(0)}
 type Release_request_reason = int64
 
 const Release_request_reason_Normal Release_request_reason = 0
 
 // # ASN.1 Definition:
 //
-//	OsiUnbindResult  ::=  CHOICE {
+//	OsiUnbindResult ::= CHOICE {
 //	  fully-encoded-data  [APPLICATION 1] IMPLICIT SEQUENCE SIZE (1) OF SEQUENCE {
 //	    presentation-context-identifier     Presentation-context-identifier,
 //	    presentation-data-values            CHOICE {
@@ -399,14 +399,14 @@ type TheOsiUnbindRes struct {
 
 // # ASN.1 Definition:
 //
-// Release-response-reason  ::=  INTEGER {normal(0)}
+//	Release-response-reason ::= INTEGER {normal(0)}
 type Release_response_reason = int64
 
 const Release_response_reason_Normal Release_response_reason = 0
 
 // # ASN.1 Definition:
 //
-//	OsiOperation{OPERATION:Operations}  ::=  CHOICE {
+//	OsiOperation{OPERATION:Operations} ::= CHOICE {
 //	  fully-encoded-data [APPLICATION 1] IMPLICIT SEQUENCE SIZE (1) OF SEQUENCE {
 //	    presentation-context-identifier    Presentation-context-identifier,
 //	    presentation-data-values           CHOICE {
@@ -416,7 +416,7 @@ type OsiOperation = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-//	OsiDirectoryOperation{OPERATION:Operations}  ::=  CHOICE {
+//	OsiDirectoryOperation{OPERATION:Operations} ::= CHOICE {
 //	  request  OsiReq{{Operations}},
 //	  result   OsiRes{{Operations}},
 //	  error    OsiErr{{Operations}},
@@ -477,7 +477,7 @@ type OsiRej struct {
 
 // # ASN.1 Definition:
 //
-//	GeneralProblem  ::=  INTEGER {
+//	GeneralProblem ::= INTEGER {
 //	  unrecognizedPDU          (0),
 //	  mistypedPDU              (1),
 //	  badlyStructuredPDU       (2) }
@@ -491,7 +491,7 @@ const GeneralProblem_BadlyStructuredPDU GeneralProblem = 2
 
 // # ASN.1 Definition:
 //
-//	InvokeProblem  ::=  INTEGER {
+//	InvokeProblem ::= INTEGER {
 //	  duplicateInvocation      (0),
 //	  unrecognizedOperation    (1),
 //	  mistypedArgument         (2),
@@ -511,7 +511,7 @@ const InvokeProblem_ReleaseInProgress InvokeProblem = 4
 
 // # ASN.1 Definition:
 //
-//	ReturnResultProblem  ::=  INTEGER {
+//	ReturnResultProblem ::= INTEGER {
 //	  unrecognizedInvocation   (0),
 //	  resultResponseUnexpected (1),
 //	  mistypedResult           (2)}
@@ -525,7 +525,7 @@ const ReturnResultProblem_MistypedResult ReturnResultProblem = 2
 
 // # ASN.1 Definition:
 //
-//	ReturnErrorProblem  ::=  INTEGER {
+//	ReturnErrorProblem ::= INTEGER {
 //	  unrecognizedInvocation   (0),
 //	  errorResponseUnexpected  (1),
 //	  unrecognizedError        (2),
@@ -545,14 +545,14 @@ const ReturnErrorProblem_MistypedParameter ReturnErrorProblem = 4
 
 // # ASN.1 Definition:
 //
-//	PresentationAbort  ::=  CHOICE {
+//	PresentationAbort ::= CHOICE {
 //	  aru-ppdu  ARU-PPDU,
 //	  arp-ppdu  ARP-PPDU }
 type PresentationAbort = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-//	ARU-PPDU  ::=  CHOICE {
+//	ARU-PPDU ::= CHOICE {
 //	  normal-mode-parameters     [0] IMPLICIT SEQUENCE {
 //	    presentation-context-identifier-list
 //	                                    [0] IMPLICIT Presentation-context-identifier-list,
@@ -565,10 +565,11 @@ type ARU_PPDU = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-//	Presentation-context-identifier-list  ::=  SEQUENCE SIZE (1) OF SEQUENCE {
+//	Presentation-context-identifier-list ::= SEQUENCE SIZE (1) OF SEQUENCE {
 //	  presentation-context-identifier  Presentation-context-identifier,
 //	  transfer-syntax-name             Transfer-syntax-name}
-type Presentation_context_identifier_list = [](Presentation_context_identifier_list_Item) // SequenceOfType
+type Presentation_context_identifier_list = [](Presentation_context_identifier_list_Item)
+
 // # ASN.1 Definition:
 //
 //	ABRT-apdu ::= [APPLICATION 4] IMPLICIT SEQUENCE {
@@ -579,7 +580,7 @@ type ABRT_apdu struct {
 
 // # ASN.1 Definition:
 //
-//	ABRT-source  ::=  INTEGER {
+//	ABRT-source ::= INTEGER {
 //	  acse-service-user     (0),
 //	  acse-service-provider (1) }
 type ABRT_source = int64
@@ -600,7 +601,7 @@ type ARP_PPDU struct {
 
 // # ASN.1 Definition:
 //
-//	Abort-reason  ::=  INTEGER {
+//	Abort-reason ::= INTEGER {
 //	  reason-not-specified                 (0),
 //	  unrecognized-ppdu                    (1),
 //	  unexpected-ppdu                      (2),
@@ -626,7 +627,7 @@ const Abort_reason_Invalid_ppdu_parameter_value Abort_reason = 6
 
 // # ASN.1 Definition:
 //
-//	Event-identifier  ::=  INTEGER {
+//	Event-identifier ::= INTEGER {
 //	  cp-PPDU              (0),
 //	  cpa-PPDU             (1),
 //	  cpr-PPDU             (2),
@@ -655,26 +656,26 @@ const Event_identifier_S_release_confirm Event_identifier = 15
 
 // # ASN.1 Definition:
 //
-// OsiBind-mode-selector ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	OsiBind-mode-selector ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type OsiBind_mode_selector struct {
 	Mode_value int `asn1:"tag:0"`
 }
 
 // # ASN.1 Definition:
 //
-// OsiBind-normal-mode-parameters-protocol-version ::= BIT STRING { -- REMOVED_FROM_UNNESTING -- }
+//	OsiBind-normal-mode-parameters-protocol-version ::= BIT STRING { -- REMOVED_FROM_UNNESTING -- }
 type OsiBind_normal_mode_parameters_protocol_version = asn1.BitString
 
 const OsiBind_normal_mode_parameters_protocol_version_Version_1 int32 = 0
 
 // # ASN.1 Definition:
 //
-// OsiBind-normal-mode-parameters-user-data-fully-encoded-data-Item-presentation-data-values ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	OsiBind-normal-mode-parameters-user-data-fully-encoded-data-Item-presentation-data-values ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type OsiBind_normal_mode_parameters_user_data_fully_encoded_data_Item_presentation_data_values = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// OsiBind-normal-mode-parameters-user-data-fully-encoded-data-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	OsiBind-normal-mode-parameters-user-data-fully-encoded-data-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type OsiBind_normal_mode_parameters_user_data_fully_encoded_data_Item struct {
 	Transfer_syntax_name            Transfer_syntax_name `asn1:"optional"`
 	Presentation_context_identifier Presentation_context_identifier
@@ -683,12 +684,12 @@ type OsiBind_normal_mode_parameters_user_data_fully_encoded_data_Item struct {
 
 // # ASN.1 Definition:
 //
-// OsiBind-normal-mode-parameters-user-data ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	OsiBind-normal-mode-parameters-user-data ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type OsiBind_normal_mode_parameters_user_data = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// OsiBind-normal-mode-parameters ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	OsiBind-normal-mode-parameters ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type OsiBind_normal_mode_parameters struct {
 	Protocol_version                     OsiBind_normal_mode_parameters_protocol_version `asn1:"optional,tag:0"`
 	Calling_presentation_selector        Presentation_selector                           `asn1:"optional,tag:1"`
@@ -699,7 +700,7 @@ type OsiBind_normal_mode_parameters struct {
 
 // # ASN.1 Definition:
 //
-// Context-list-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	Context-list-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type Context_list_Item struct {
 	Presentation_context_identifier Presentation_context_identifier
 	Abstract_syntax_name            Abstract_syntax_name
@@ -708,28 +709,28 @@ type Context_list_Item struct {
 
 // # ASN.1 Definition:
 //
-// AARQ-apdu-protocol-version ::= BIT STRING { -- REMOVED_FROM_UNNESTING -- }
+//	AARQ-apdu-protocol-version ::= BIT STRING { -- REMOVED_FROM_UNNESTING -- }
 type AARQ_apdu_protocol_version = asn1.BitString
 
 const AARQ_apdu_protocol_version_Version1 int32 = 0
 
 // # ASN.1 Definition:
 //
-// OsiBindResult-mode-selector ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	OsiBindResult-mode-selector ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type OsiBindResult_mode_selector struct {
 	Mode_value int `asn1:"tag:0"`
 }
 
 // # ASN.1 Definition:
 //
-// OsiBindResult-normal-mode-parameters-protocol-version ::= BIT STRING { -- REMOVED_FROM_UNNESTING -- }
+//	OsiBindResult-normal-mode-parameters-protocol-version ::= BIT STRING { -- REMOVED_FROM_UNNESTING -- }
 type OsiBindResult_normal_mode_parameters_protocol_version = asn1.BitString
 
 const OsiBindResult_normal_mode_parameters_protocol_version_Version_1 int32 = 0
 
 // # ASN.1 Definition:
 //
-// OsiBindResult-normal-mode-parameters-presentation-context-definition-result-list-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	OsiBindResult-normal-mode-parameters-presentation-context-definition-result-list-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type OsiBindResult_normal_mode_parameters_presentation_context_definition_result_list_Item struct {
 	Result               Result               `asn1:"tag:0"`
 	Transfer_syntax_name Transfer_syntax_name `asn1:"tag:1"`
@@ -737,12 +738,12 @@ type OsiBindResult_normal_mode_parameters_presentation_context_definition_result
 
 // # ASN.1 Definition:
 //
-// OsiBindResult-normal-mode-parameters-user-data-fully-encoded-data-Item-presentation-data-values ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	OsiBindResult-normal-mode-parameters-user-data-fully-encoded-data-Item-presentation-data-values ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type OsiBindResult_normal_mode_parameters_user_data_fully_encoded_data_Item_presentation_data_values = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// OsiBindResult-normal-mode-parameters-user-data-fully-encoded-data-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	OsiBindResult-normal-mode-parameters-user-data-fully-encoded-data-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type OsiBindResult_normal_mode_parameters_user_data_fully_encoded_data_Item struct {
 	Transfer_syntax_name            Transfer_syntax_name `asn1:"optional"`
 	Presentation_context_identifier Presentation_context_identifier
@@ -751,12 +752,12 @@ type OsiBindResult_normal_mode_parameters_user_data_fully_encoded_data_Item stru
 
 // # ASN.1 Definition:
 //
-// OsiBindResult-normal-mode-parameters-user-data ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	OsiBindResult-normal-mode-parameters-user-data ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type OsiBindResult_normal_mode_parameters_user_data = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// OsiBindResult-normal-mode-parameters ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	OsiBindResult-normal-mode-parameters ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type OsiBindResult_normal_mode_parameters struct {
 	Protocol_version                            OsiBindResult_normal_mode_parameters_protocol_version                                     `asn1:"optional,tag:0"`
 	Responding_presentation_selector            Presentation_selector                                                                     `asn1:"optional,tag:3"`
@@ -766,14 +767,14 @@ type OsiBindResult_normal_mode_parameters struct {
 
 // # ASN.1 Definition:
 //
-// AARE-apdu-protocol-version ::= BIT STRING { -- REMOVED_FROM_UNNESTING -- }
+//	AARE-apdu-protocol-version ::= BIT STRING { -- REMOVED_FROM_UNNESTING -- }
 type AARE_apdu_protocol_version = asn1.BitString
 
 const AARE_apdu_protocol_version_Version1 int32 = 0
 
 // # ASN.1 Definition:
 //
-// Associate-source-diagnostic-acse-service-user ::= INTEGER { -- REMOVED_FROM_UNNESTING -- }
+//	Associate-source-diagnostic-acse-service-user ::= INTEGER { -- REMOVED_FROM_UNNESTING -- }
 type Associate_source_diagnostic_acse_service_user = int64
 
 const Associate_source_diagnostic_acse_service_user_Null Associate_source_diagnostic_acse_service_user = 0
@@ -800,7 +801,7 @@ const Associate_source_diagnostic_acse_service_user_Called_AE_invocation_identif
 
 // # ASN.1 Definition:
 //
-// Associate-source-diagnostic-acse-service-provider ::= INTEGER { -- REMOVED_FROM_UNNESTING -- }
+//	Associate-source-diagnostic-acse-service-provider ::= INTEGER { -- REMOVED_FROM_UNNESTING -- }
 type Associate_source_diagnostic_acse_service_provider = int64
 
 const Associate_source_diagnostic_acse_service_provider_Null Associate_source_diagnostic_acse_service_provider = 0
@@ -811,19 +812,19 @@ const Associate_source_diagnostic_acse_service_provider_No_common_acse_version A
 
 // # ASN.1 Definition:
 //
-// OsiBindError-normal-mode-parameters-protocol-version ::= BIT STRING { -- REMOVED_FROM_UNNESTING -- }
+//	OsiBindError-normal-mode-parameters-protocol-version ::= BIT STRING { -- REMOVED_FROM_UNNESTING -- }
 type OsiBindError_normal_mode_parameters_protocol_version = asn1.BitString
 
 const OsiBindError_normal_mode_parameters_protocol_version_Version_1 int32 = 0
 
 // # ASN.1 Definition:
 //
-// OsiBindError-normal-mode-parameters-user-data-fully-encoded-data-Item-presentation-data-values ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	OsiBindError-normal-mode-parameters-user-data-fully-encoded-data-Item-presentation-data-values ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type OsiBindError_normal_mode_parameters_user_data_fully_encoded_data_Item_presentation_data_values = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// OsiBindError-normal-mode-parameters-user-data-fully-encoded-data-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	OsiBindError-normal-mode-parameters-user-data-fully-encoded-data-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type OsiBindError_normal_mode_parameters_user_data_fully_encoded_data_Item struct {
 	Transfer_syntax_name            Transfer_syntax_name `asn1:"optional"`
 	Presentation_context_identifier Presentation_context_identifier
@@ -832,12 +833,12 @@ type OsiBindError_normal_mode_parameters_user_data_fully_encoded_data_Item struc
 
 // # ASN.1 Definition:
 //
-// OsiBindError-normal-mode-parameters-user-data ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	OsiBindError-normal-mode-parameters-user-data ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type OsiBindError_normal_mode_parameters_user_data = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// OsiBindError-normal-mode-parameters ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	OsiBindError-normal-mode-parameters ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type OsiBindError_normal_mode_parameters struct {
 	Protocol_version                            OsiBindError_normal_mode_parameters_protocol_version `asn1:"optional,tag:0"`
 	Responding_presentation_selector            Presentation_selector                                `asn1:"optional,tag:3"`
@@ -848,7 +849,7 @@ type OsiBindError_normal_mode_parameters struct {
 
 // # ASN.1 Definition:
 //
-// Result-list-Item-provider-reason ::= INTEGER { -- REMOVED_FROM_UNNESTING -- }
+//	Result-list-Item-provider-reason ::= INTEGER { -- REMOVED_FROM_UNNESTING -- }
 type Result_list_Item_provider_reason = int64
 
 const Result_list_Item_provider_reason_Reason_not_specified Result_list_Item_provider_reason = 0
@@ -859,7 +860,7 @@ const Result_list_Item_provider_reason_Proposed_transfer_syntaxes_not_supported 
 
 // # ASN.1 Definition:
 //
-// Result-list-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	Result-list-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type Result_list_Item struct {
 	Result               Result                           `asn1:"tag:0"`
 	Transfer_syntax_name Transfer_syntax_name             `asn1:"optional,tag:1"`
@@ -868,19 +869,19 @@ type Result_list_Item struct {
 
 // # ASN.1 Definition:
 //
-// AAREerr-apdu-protocol-version ::= BIT STRING { -- REMOVED_FROM_UNNESTING -- }
+//	AAREerr-apdu-protocol-version ::= BIT STRING { -- REMOVED_FROM_UNNESTING -- }
 type AAREerr_apdu_protocol_version = asn1.BitString
 
 const AAREerr_apdu_protocol_version_Version1 int32 = 0
 
 // # ASN.1 Definition:
 //
-// OsiUnbind-fully-encoded-data-Item-presentation-data-values ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	OsiUnbind-fully-encoded-data-Item-presentation-data-values ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type OsiUnbind_fully_encoded_data_Item_presentation_data_values = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// OsiUnbind-fully-encoded-data-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	OsiUnbind-fully-encoded-data-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type OsiUnbind_fully_encoded_data_Item struct {
 	Presentation_context_identifier Presentation_context_identifier
 	Presentation_data_values        OsiUnbind_fully_encoded_data_Item_presentation_data_values
@@ -888,12 +889,12 @@ type OsiUnbind_fully_encoded_data_Item struct {
 
 // # ASN.1 Definition:
 //
-// OsiUnbindResult-fully-encoded-data-Item-presentation-data-values ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	OsiUnbindResult-fully-encoded-data-Item-presentation-data-values ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type OsiUnbindResult_fully_encoded_data_Item_presentation_data_values = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// OsiUnbindResult-fully-encoded-data-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	OsiUnbindResult-fully-encoded-data-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type OsiUnbindResult_fully_encoded_data_Item struct {
 	Presentation_context_identifier Presentation_context_identifier
 	Presentation_data_values        OsiUnbindResult_fully_encoded_data_Item_presentation_data_values
@@ -901,12 +902,12 @@ type OsiUnbindResult_fully_encoded_data_Item struct {
 
 // # ASN.1 Definition:
 //
-// OsiOperation-fully-encoded-data-Item-presentation-data-values ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	OsiOperation-fully-encoded-data-Item-presentation-data-values ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type OsiOperation_fully_encoded_data_Item_presentation_data_values = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// OsiOperation-fully-encoded-data-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	OsiOperation-fully-encoded-data-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type OsiOperation_fully_encoded_data_Item struct {
 	Presentation_context_identifier Presentation_context_identifier
 	Presentation_data_values        OsiOperation_fully_encoded_data_Item_presentation_data_values
@@ -914,7 +915,7 @@ type OsiOperation_fully_encoded_data_Item struct {
 
 // # ASN.1 Definition:
 //
-// OsiRes-result ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	OsiRes-result ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type OsiRes_result struct {
 	Opcode Code
 	Result asn1.RawValue
@@ -922,17 +923,17 @@ type OsiRes_result struct {
 
 // # ASN.1 Definition:
 //
-// OsiRej-problem ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	OsiRej-problem ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type OsiRej_problem = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// ARU-PPDU-normal-mode-parameters-user-data-fully-encoded-data-Item-presentation-data-values ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	ARU-PPDU-normal-mode-parameters-user-data-fully-encoded-data-Item-presentation-data-values ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type ARU_PPDU_normal_mode_parameters_user_data_fully_encoded_data_Item_presentation_data_values = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// ARU-PPDU-normal-mode-parameters-user-data-fully-encoded-data-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	ARU-PPDU-normal-mode-parameters-user-data-fully-encoded-data-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type ARU_PPDU_normal_mode_parameters_user_data_fully_encoded_data_Item struct {
 	Presentation_context_identifier Presentation_context_identifier
 	Presentation_data_values        ARU_PPDU_normal_mode_parameters_user_data_fully_encoded_data_Item_presentation_data_values
@@ -940,12 +941,12 @@ type ARU_PPDU_normal_mode_parameters_user_data_fully_encoded_data_Item struct {
 
 // # ASN.1 Definition:
 //
-// ARU-PPDU-normal-mode-parameters-user-data ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	ARU-PPDU-normal-mode-parameters-user-data ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type ARU_PPDU_normal_mode_parameters_user_data = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// ARU-PPDU-normal-mode-parameters ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	ARU-PPDU-normal-mode-parameters ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type ARU_PPDU_normal_mode_parameters struct {
 	Presentation_context_identifier_list Presentation_context_identifier_list `asn1:"tag:0"`
 	User_data                            ARU_PPDU_normal_mode_parameters_user_data
@@ -953,7 +954,7 @@ type ARU_PPDU_normal_mode_parameters struct {
 
 // # ASN.1 Definition:
 //
-// Presentation-context-identifier-list-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	Presentation-context-identifier-list-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type Presentation_context_identifier_list_Item struct {
 	Presentation_context_identifier Presentation_context_identifier
 	Transfer_syntax_name            Transfer_syntax_name

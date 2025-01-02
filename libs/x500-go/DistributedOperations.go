@@ -80,7 +80,7 @@ type ChainingArguments struct {
 
 // # ASN.1 Definition:
 //
-//	Time  ::=  CHOICE {
+//	Time ::= CHOICE {
 //	  utcTime          UTCTime,
 //	  generalizedTime  GeneralizedTime,
 //	  ... }
@@ -88,8 +88,9 @@ type Time = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// DomainInfo  ::=  ABSTRACT-SYNTAX.&Type
-type DomainInfo = asn1.RawValue // ObjectClassFieldType
+//	DomainInfo ::= ABSTRACT-SYNTAX.&Type
+type DomainInfo = asn1.RawValue
+
 // # ASN.1 Definition:
 //
 //	ChainingResults ::= SET {
@@ -133,8 +134,9 @@ type OperationProgress struct {
 
 // # ASN.1 Definition:
 //
-// TraceInformation  ::=  SEQUENCE OF TraceItem
-type TraceInformation = [](TraceItem) // SequenceOfType
+//	TraceInformation ::= SEQUENCE OF TraceItem
+type TraceInformation = [](TraceItem)
+
 // # ASN.1 Definition:
 //
 //	TraceItem ::= SET {
@@ -150,7 +152,7 @@ type TraceItem struct {
 
 // # ASN.1 Definition:
 //
-//	ReferenceType  ::=  ENUMERATED {
+//	ReferenceType ::= ENUMERATED {
 //	  superior               (1),
 //	  subordinate            (2),
 //	  cross                  (3),
@@ -210,8 +212,9 @@ type MasterOrShadowAccessPoint struct {
 
 // # ASN.1 Definition:
 //
-// MasterAndShadowAccessPoints  ::=  SET SIZE (1..MAX) OF MasterOrShadowAccessPoint
-type MasterAndShadowAccessPoints = [](MasterOrShadowAccessPoint) // SetOfType
+//	MasterAndShadowAccessPoints ::= SET SIZE (1..MAX) OF MasterOrShadowAccessPoint
+type MasterAndShadowAccessPoints = [](MasterOrShadowAccessPoint)
+
 // # ASN.1 Definition:
 //
 //	AccessPointInformation ::= SET {
@@ -240,8 +243,9 @@ type DitBridgeKnowledge struct {
 
 // # ASN.1 Definition:
 //
-// Exclusions  ::=  SET SIZE (1..MAX) OF RDNSequence
-type Exclusions = [](pkix.RDNSequence) // SetOfType
+//	Exclusions ::= SET SIZE (1..MAX) OF RDNSequence
+type Exclusions = [](pkix.RDNSequence)
+
 // # ASN.1 Definition:
 //
 //	ContinuationReference ::= SET {
@@ -282,7 +286,7 @@ type DSABindArgument struct {
 
 // # ASN.1 Definition:
 //
-//	DSACredentials   ::=   CHOICE  {
+//	DSACredentials  ::=  CHOICE  {
 //	  simple             [0]  SimpleCredentials,
 //	  strong             [1]  StrongCredentials,
 //	  externalProcedure  [2]  EXTERNAL,
@@ -292,8 +296,9 @@ type DSACredentials = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// DSABindResult   ::=   DSABindArgument
-type DSABindResult = DSABindArgument // DefinedType
+//	DSABindResult  ::=  DSABindArgument
+type DSABindResult = DSABindArgument
+
 // # ASN.1 Definition:
 //
 //	Chained-ArgumentType-OPTIONALLY-PROTECTED-Parameter1 {OPERATION:operation} ::= SET {
@@ -316,7 +321,7 @@ type Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 struct {
 
 // # ASN.1 Definition:
 //
-// OperationProgress-nameResolutionPhase ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
+//	OperationProgress-nameResolutionPhase ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 type OperationProgress_nameResolutionPhase = asn1.Enumerated
 
 const (
@@ -327,7 +332,7 @@ const (
 
 // # ASN.1 Definition:
 //
-// MasterOrShadowAccessPoint-category ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
+//	MasterOrShadowAccessPoint-category ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 type MasterOrShadowAccessPoint_category = asn1.Enumerated
 
 const (

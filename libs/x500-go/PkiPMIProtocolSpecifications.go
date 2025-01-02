@@ -21,7 +21,7 @@ type AVMPcommonComponents struct {
 
 // # ASN.1 Definition:
 //
-// AVMPversion  ::=  ENUMERATED { v1(1), v2(2), v3(3), ... }
+//	AVMPversion ::= ENUMERATED { v1(1), v2(2), v3(3), ... }
 type AVMPversion = asn1.Enumerated
 
 const (
@@ -32,7 +32,7 @@ const (
 
 // # ASN.1 Definition:
 //
-// AVMPsequence  ::=  INTEGER (1..MAX)
+//	AVMPsequence ::= INTEGER (1..MAX)
 type AVMPsequence = int64
 
 // # ASN.1 Definition:
@@ -87,8 +87,9 @@ type CertErr struct {
 
 // # ASN.1 Definition:
 //
-// Notifications  ::=  SEQUENCE SIZE (1..MAX) OF Attribute {{SupportedAttributes}}
-type Notifications = [](Attribute) // SequenceOfType
+//	Notifications ::= SEQUENCE SIZE (1..MAX) OF Attribute {{SupportedAttributes}}
+type Notifications = [](Attribute)
+
 // # ASN.1 Definition:
 //
 //	AddAvlReq ::= SEQUENCE {
@@ -258,7 +259,7 @@ type CASPcommonComponents struct {
 
 // # ASN.1 Definition:
 //
-// CASPversion  ::=  ENUMERATED { v1(1), v2(2), v3(3), ... }
+//	CASPversion ::= ENUMERATED { v1(1), v2(2), v3(3), ... }
 type CASPversion = asn1.Enumerated
 
 const (
@@ -269,7 +270,7 @@ const (
 
 // # ASN.1 Definition:
 //
-// CASPsequence  ::=  INTEGER (1..MAX)
+//	CASPsequence ::= INTEGER (1..MAX)
 type CASPsequence = int64
 
 // # ASN.1 Definition:
@@ -304,7 +305,7 @@ type CertSubscribeRsp struct {
 
 // # ASN.1 Definition:
 //
-//	CertSubscribeOK  ::=  SEQUENCE (SIZE (1..MAX)) OF CHOICE {
+//	CertSubscribeOK ::= SEQUENCE (SIZE (1..MAX)) OF CHOICE {
 //	  ok       [0] SEQUENCE {
 //	    cert         Certificate,
 //	    status       CertStatus,
@@ -314,10 +315,11 @@ type CertSubscribeRsp struct {
 //	    status       CASP-CertStatusCode,
 //	    ... },
 //	  ... }
-type CertSubscribeOK = [](CertSubscribeOK_Item) // SequenceOfType
+type CertSubscribeOK = [](CertSubscribeOK_Item)
+
 // # ASN.1 Definition:
 //
-//	CertStatus  ::=  ENUMERATED {
+//	CertStatus ::= ENUMERATED {
 //	  good    (0),
 //	  revoked (1),
 //	  on-hold (2),
@@ -334,7 +336,7 @@ const (
 
 // # ASN.1 Definition:
 //
-//	CASP-CertStatusCode  ::=  ENUMERATED {
+//	CASP-CertStatusCode ::= ENUMERATED {
 //	  noReason       (1),
 //	  unknownCert    (2),
 //	  ... }
@@ -386,7 +388,7 @@ type CertUnsubscribeRsp struct {
 
 // # ASN.1 Definition:
 //
-//	CertUnsubscribeOK  ::=  SEQUENCE (SIZE (1..MAX)) OF CHOICE {
+//	CertUnsubscribeOK ::= SEQUENCE (SIZE (1..MAX)) OF CHOICE {
 //	  ok       [0] SEQUENCE {
 //	    subject      Name,
 //	    serialNumber CertificateSerialNumber,
@@ -395,7 +397,8 @@ type CertUnsubscribeRsp struct {
 //	    status       CASP-CertStatusCode,
 //	    ... },
 //	  ... }
-type CertUnsubscribeOK = [](CertUnsubscribeOK_Item) // SequenceOfType
+type CertUnsubscribeOK = [](CertUnsubscribeOK_Item)
+
 // # ASN.1 Definition:
 //
 //	CertUnsubscribeErr ::= SEQUENCE {
@@ -437,7 +440,7 @@ type CertReplaceRsp struct {
 
 // # ASN.1 Definition:
 //
-//	CertReplaceOK  ::=  SEQUENCE (SIZE (1..MAX)) OF CHOICE {
+//	CertReplaceOK ::= SEQUENCE (SIZE (1..MAX)) OF CHOICE {
 //	  ok        [0] SEQUENCE {
 //	    issuer        Name,
 //	    serialNumber  CertificateSerialNumber,
@@ -446,7 +449,8 @@ type CertReplaceRsp struct {
 //	    status        CASP-CertStatusCode,
 //	    ... },
 //	  ... }
-type CertReplaceOK = [](CertReplaceOK_Item) // SequenceOfType
+type CertReplaceOK = [](CertReplaceOK_Item)
+
 // # ASN.1 Definition:
 //
 //	CertReplaceErr ::= SEQUENCE {
@@ -493,7 +497,7 @@ type CertUpdateRsp struct {
 
 // # ASN.1 Definition:
 //
-//	CertUpdateOK  ::=  SEQUENCE (SIZE (1..MAX)) OF CHOICE {
+//	CertUpdateOK ::= SEQUENCE (SIZE (1..MAX)) OF CHOICE {
 //	  ok        [0] SEQUENCE {
 //	    subject       Name,
 //	    serialNumber  CertificateSerialNumber,
@@ -502,7 +506,8 @@ type CertUpdateRsp struct {
 //	    status        CASP-CertStatusCode,
 //	    ... },
 //	  ... }
-type CertUpdateOK = [](CertUpdateOK_Item) // SequenceOfType
+type CertUpdateOK = [](CertUpdateOK_Item)
+
 // # ASN.1 Definition:
 //
 //	CertUpdateErr ::= SEQUENCE {
@@ -526,7 +531,7 @@ type RejectCAsubscribe struct {
 
 // # ASN.1 Definition:
 //
-//	SignedData-error  ::=  ENUMERATED {
+//	SignedData-error ::= ENUMERATED {
 //	  noReason                           (0),
 //	  signedDataContectTypeExpected      (1),
 //	  wrongSignedDataVersion             (2),
@@ -549,7 +554,7 @@ const (
 
 // # ASN.1 Definition:
 //
-//	EnvelopedData-error  ::=  ENUMERATED {
+//	EnvelopedData-error ::= ENUMERATED {
 //	  noReason                           (0),
 //	  ... }
 type EnvelopedData_error = asn1.Enumerated
@@ -560,7 +565,7 @@ const (
 
 // # ASN.1 Definition:
 //
-//	AVMP-error  ::=  ENUMERATED {
+//	AVMP-error ::= ENUMERATED {
 //	  noReason                           (0),
 //	  unknownAvlEntity                   (1),
 //	  unknownContentType                 (2),
@@ -613,7 +618,7 @@ const (
 
 // # ASN.1 Definition:
 //
-//	CASP-error  ::=  ENUMERATED {
+//	CASP-error ::= ENUMERATED {
 //	  noReason                      (0),
 //	  unknownContentType            (1),
 //	  unsupportedWLMPversion        (2),
@@ -640,97 +645,117 @@ const (
 
 // # ASN.1 Definition:
 //
-// id-signedData OBJECT IDENTIFIER ::= {iso(1) member-body(2)
-// us(840)rsadsi(113549) pkcs(1) pkcs7(7) 2}
-var Id_signedData asn1.ObjectIdentifier = []int{1, 2, 840, 113549, 1, 7, 2} /* OBJECT_IDENTIFIER */
+//	id-signedData OBJECT IDENTIFIER ::= {iso(1) member-body(2) us(840)rsadsi(113549) pkcs(1) pkcs7(7) 2}
+var Id_signedData asn1.ObjectIdentifier = []int{1, 2, 840, 113549, 1, 7, 2}
+
 // # ASN.1 Definition:
 //
-// id-envelopedData OBJECT IDENTIFIER ::= {iso(1) member-body(2) us(840)
-// rsadsi(113549) pkcs(1) pkcs7(7) 3}
-var Id_envelopedData asn1.ObjectIdentifier = []int{1, 2, 840, 113549, 1, 7, 3} /* OBJECT_IDENTIFIER */
+//	id-envelopedData OBJECT IDENTIFIER ::= {iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs7(7) 3}
+var Id_envelopedData asn1.ObjectIdentifier = []int{1, 2, 840, 113549, 1, 7, 3}
+
 // # ASN.1 Definition:
 //
-// id-certReq              OBJECT IDENTIFIER ::= {id-cmsct 0}
-var Id_certReq asn1.ObjectIdentifier = []int{2, 5, 42, 0} /* OBJECT_IDENTIFIER */
+//	id-certReq              OBJECT IDENTIFIER ::= {id-cmsct 0}
+var Id_certReq asn1.ObjectIdentifier = []int{2, 5, 42, 0}
+
 // # ASN.1 Definition:
 //
-// id-certRsp              OBJECT IDENTIFIER ::= {id-cmsct 1}
-var Id_certRsp asn1.ObjectIdentifier = []int{2, 5, 42, 1} /* OBJECT_IDENTIFIER */
+//	id-certRsp              OBJECT IDENTIFIER ::= {id-cmsct 1}
+var Id_certRsp asn1.ObjectIdentifier = []int{2, 5, 42, 1}
+
 // # ASN.1 Definition:
 //
-// id-addAvlReq            OBJECT IDENTIFIER ::= {id-cmsct 2}
-var Id_addAvlReq asn1.ObjectIdentifier = []int{2, 5, 42, 2} /* OBJECT_IDENTIFIER */
+//	id-addAvlReq            OBJECT IDENTIFIER ::= {id-cmsct 2}
+var Id_addAvlReq asn1.ObjectIdentifier = []int{2, 5, 42, 2}
+
 // # ASN.1 Definition:
 //
-// id-addAvlRsp            OBJECT IDENTIFIER ::= {id-cmsct 3}
-var Id_addAvlRsp asn1.ObjectIdentifier = []int{2, 5, 42, 3} /* OBJECT_IDENTIFIER */
+//	id-addAvlRsp            OBJECT IDENTIFIER ::= {id-cmsct 3}
+var Id_addAvlRsp asn1.ObjectIdentifier = []int{2, 5, 42, 3}
+
 // # ASN.1 Definition:
 //
-// id-replaceAvlReq        OBJECT IDENTIFIER ::= {id-cmsct 4}
-var Id_replaceAvlReq asn1.ObjectIdentifier = []int{2, 5, 42, 4} /* OBJECT_IDENTIFIER */
+//	id-replaceAvlReq        OBJECT IDENTIFIER ::= {id-cmsct 4}
+var Id_replaceAvlReq asn1.ObjectIdentifier = []int{2, 5, 42, 4}
+
 // # ASN.1 Definition:
 //
-// id-replaceAvlRsp        OBJECT IDENTIFIER ::= {id-cmsct 5}
-var Id_replaceAvlRsp asn1.ObjectIdentifier = []int{2, 5, 42, 5} /* OBJECT_IDENTIFIER */
+//	id-replaceAvlRsp        OBJECT IDENTIFIER ::= {id-cmsct 5}
+var Id_replaceAvlRsp asn1.ObjectIdentifier = []int{2, 5, 42, 5}
+
 // # ASN.1 Definition:
 //
-// id-updateAvlReq         OBJECT IDENTIFIER ::= {id-cmsct 6}
-var Id_updateAvlReq asn1.ObjectIdentifier = []int{2, 5, 42, 6} /* OBJECT_IDENTIFIER */
+//	id-updateAvlReq         OBJECT IDENTIFIER ::= {id-cmsct 6}
+var Id_updateAvlReq asn1.ObjectIdentifier = []int{2, 5, 42, 6}
+
 // # ASN.1 Definition:
 //
-// id-updateAvlRsp         OBJECT IDENTIFIER ::= {id-cmsct 7}
-var Id_updateAvlRsp asn1.ObjectIdentifier = []int{2, 5, 42, 7} /* OBJECT_IDENTIFIER */
+//	id-updateAvlRsp         OBJECT IDENTIFIER ::= {id-cmsct 7}
+var Id_updateAvlRsp asn1.ObjectIdentifier = []int{2, 5, 42, 7}
+
 // # ASN.1 Definition:
 //
-// id-deleteAvlReq         OBJECT IDENTIFIER ::= {id-cmsct 8}
-var Id_deleteAvlReq asn1.ObjectIdentifier = []int{2, 5, 42, 8} /* OBJECT_IDENTIFIER */
+//	id-deleteAvlReq         OBJECT IDENTIFIER ::= {id-cmsct 8}
+var Id_deleteAvlReq asn1.ObjectIdentifier = []int{2, 5, 42, 8}
+
 // # ASN.1 Definition:
 //
-// id-deleteAvlRsp         OBJECT IDENTIFIER ::= {id-cmsct 9}
-var Id_deleteAvlRsp asn1.ObjectIdentifier = []int{2, 5, 42, 9} /* OBJECT_IDENTIFIER */
+//	id-deleteAvlRsp         OBJECT IDENTIFIER ::= {id-cmsct 9}
+var Id_deleteAvlRsp asn1.ObjectIdentifier = []int{2, 5, 42, 9}
+
 // # ASN.1 Definition:
 //
-// id-rejectAVL            OBJECT IDENTIFIER ::= {id-cmsct 10}
-var Id_rejectAVL asn1.ObjectIdentifier = []int{2, 5, 42, 10} /* OBJECT_IDENTIFIER */
+//	id-rejectAVL            OBJECT IDENTIFIER ::= {id-cmsct 10}
+var Id_rejectAVL asn1.ObjectIdentifier = []int{2, 5, 42, 10}
+
 // # ASN.1 Definition:
 //
-// id-certSubscribeReq     OBJECT IDENTIFIER ::= {id-cmsct 11}
-var Id_certSubscribeReq asn1.ObjectIdentifier = []int{2, 5, 42, 11} /* OBJECT_IDENTIFIER */
+//	id-certSubscribeReq     OBJECT IDENTIFIER ::= {id-cmsct 11}
+var Id_certSubscribeReq asn1.ObjectIdentifier = []int{2, 5, 42, 11}
+
 // # ASN.1 Definition:
 //
-// id-certSubscribeRsp     OBJECT IDENTIFIER ::= {id-cmsct 12}
-var Id_certSubscribeRsp asn1.ObjectIdentifier = []int{2, 5, 42, 12} /* OBJECT_IDENTIFIER */
+//	id-certSubscribeRsp     OBJECT IDENTIFIER ::= {id-cmsct 12}
+var Id_certSubscribeRsp asn1.ObjectIdentifier = []int{2, 5, 42, 12}
+
 // # ASN.1 Definition:
 //
-// id-certUnsubscribeReq   OBJECT IDENTIFIER ::= {id-cmsct 13}
-var Id_certUnsubscribeReq asn1.ObjectIdentifier = []int{2, 5, 42, 13} /* OBJECT_IDENTIFIER */
+//	id-certUnsubscribeReq   OBJECT IDENTIFIER ::= {id-cmsct 13}
+var Id_certUnsubscribeReq asn1.ObjectIdentifier = []int{2, 5, 42, 13}
+
 // # ASN.1 Definition:
 //
-// id-certUnsubscribeRsp   OBJECT IDENTIFIER ::= {id-cmsct 14}
-var Id_certUnsubscribeRsp asn1.ObjectIdentifier = []int{2, 5, 42, 14} /* OBJECT_IDENTIFIER */
+//	id-certUnsubscribeRsp   OBJECT IDENTIFIER ::= {id-cmsct 14}
+var Id_certUnsubscribeRsp asn1.ObjectIdentifier = []int{2, 5, 42, 14}
+
 // # ASN.1 Definition:
 //
-// id-certReplaceReq       OBJECT IDENTIFIER ::= {id-cmsct 15}
-var Id_certReplaceReq asn1.ObjectIdentifier = []int{2, 5, 42, 15} /* OBJECT_IDENTIFIER */
+//	id-certReplaceReq       OBJECT IDENTIFIER ::= {id-cmsct 15}
+var Id_certReplaceReq asn1.ObjectIdentifier = []int{2, 5, 42, 15}
+
 // # ASN.1 Definition:
 //
-// id-certReplaceRsp       OBJECT IDENTIFIER ::= {id-cmsct 16}
-var Id_certReplaceRsp asn1.ObjectIdentifier = []int{2, 5, 42, 16} /* OBJECT_IDENTIFIER */
+//	id-certReplaceRsp       OBJECT IDENTIFIER ::= {id-cmsct 16}
+var Id_certReplaceRsp asn1.ObjectIdentifier = []int{2, 5, 42, 16}
+
 // # ASN.1 Definition:
 //
-// id-certUpdateReq        OBJECT IDENTIFIER ::= {id-cmsct 17}
-var Id_certUpdateReq asn1.ObjectIdentifier = []int{2, 5, 42, 17} /* OBJECT_IDENTIFIER */
+//	id-certUpdateReq        OBJECT IDENTIFIER ::= {id-cmsct 17}
+var Id_certUpdateReq asn1.ObjectIdentifier = []int{2, 5, 42, 17}
+
 // # ASN.1 Definition:
 //
-// id-certUpdateRsp        OBJECT IDENTIFIER ::= {id-cmsct 18}
-var Id_certUpdateRsp asn1.ObjectIdentifier = []int{2, 5, 42, 18} /* OBJECT_IDENTIFIER */
+//	id-certUpdateRsp        OBJECT IDENTIFIER ::= {id-cmsct 18}
+var Id_certUpdateRsp asn1.ObjectIdentifier = []int{2, 5, 42, 18}
+
 // # ASN.1 Definition:
 //
-// id-rejectCAsubscribe    OBJECT IDENTIFIER ::= {id-cmsct 19}
-var Id_rejectCAsubscribe asn1.ObjectIdentifier = []int{2, 5, 42, 19} /* OBJECT_IDENTIFIER */
+//	id-rejectCAsubscribe    OBJECT IDENTIFIER ::= {id-cmsct 19}
+var Id_rejectCAsubscribe asn1.ObjectIdentifier = []int{2, 5, 42, 19}
+
 // # ASN.1 Definition:
 //
-//	TBrequest  ::=  CHOICE {
+//	TBrequest ::= CHOICE {
 //	  caCert      [0] PKCertIdentifier,
 //	  subjectCert [1] PKCertIdentifier,
 //	  ... }
@@ -738,7 +763,7 @@ type TBrequest = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-//	TBresponse  ::=  CHOICE {
+//	TBresponse ::= CHOICE {
 //	  success [0]  TBOK,
 //	  failure [1]  TBerror,
 //	  ... }
@@ -782,32 +807,32 @@ type TBerror struct {
 
 // # ASN.1 Definition:
 //
-// CertRsp-result ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	CertRsp-result ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type CertRsp_result = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// CertErr-notOK ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	CertErr-notOK ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type CertErr_notOK = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// AddAvlRsp-result ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	AddAvlRsp-result ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type AddAvlRsp_result = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// ReplaceAvlRsp-result ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	ReplaceAvlRsp-result ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type ReplaceAvlRsp_result = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// DeleteAvlRsp-result ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	DeleteAvlRsp-result ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type DeleteAvlRsp_result = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// CertSubscribeReq-certs-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	CertSubscribeReq-certs-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type CertSubscribeReq_certs_Item struct {
 	Subject      Name
 	SerialNumber CertificateSerialNumber
@@ -815,12 +840,12 @@ type CertSubscribeReq_certs_Item struct {
 
 // # ASN.1 Definition:
 //
-// CertSubscribeRsp-result ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	CertSubscribeRsp-result ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type CertSubscribeRsp_result = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// CertSubscribeOK-Item-ok ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	CertSubscribeOK-Item-ok ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type CertSubscribeOK_Item_ok struct {
 	Cert         x509.Certificate
 	Status       CertStatus
@@ -829,19 +854,19 @@ type CertSubscribeOK_Item_ok struct {
 
 // # ASN.1 Definition:
 //
-// CertSubscribeOK-Item-not-ok ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	CertSubscribeOK-Item-not-ok ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type CertSubscribeOK_Item_not_ok struct {
 	Status CASP_CertStatusCode
 }
 
 // # ASN.1 Definition:
 //
-// CertSubscribeOK-Item ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	CertSubscribeOK-Item ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type CertSubscribeOK_Item = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// CertUnsubscribeReq-certs-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	CertUnsubscribeReq-certs-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type CertUnsubscribeReq_certs_Item struct {
 	Subject      Name
 	SerialNumber CertificateSerialNumber
@@ -849,12 +874,12 @@ type CertUnsubscribeReq_certs_Item struct {
 
 // # ASN.1 Definition:
 //
-// CertUnsubscribeRsp-result ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	CertUnsubscribeRsp-result ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type CertUnsubscribeRsp_result = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// CertUnsubscribeOK-Item-ok ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	CertUnsubscribeOK-Item-ok ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type CertUnsubscribeOK_Item_ok struct {
 	Subject      Name
 	SerialNumber CertificateSerialNumber
@@ -862,19 +887,19 @@ type CertUnsubscribeOK_Item_ok struct {
 
 // # ASN.1 Definition:
 //
-// CertUnsubscribeOK-Item-not-ok ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	CertUnsubscribeOK-Item-not-ok ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type CertUnsubscribeOK_Item_not_ok struct {
 	Status CASP_CertStatusCode
 }
 
 // # ASN.1 Definition:
 //
-// CertUnsubscribeOK-Item ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	CertUnsubscribeOK-Item ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type CertUnsubscribeOK_Item = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// CertReplaceReq-certs-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	CertReplaceReq-certs-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type CertReplaceReq_certs_Item struct {
 	Old CertificateSerialNumber
 	New x509.Certificate
@@ -882,12 +907,12 @@ type CertReplaceReq_certs_Item struct {
 
 // # ASN.1 Definition:
 //
-// CertReplaceRsp-result ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	CertReplaceRsp-result ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type CertReplaceRsp_result = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// CertReplaceOK-Item-ok ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	CertReplaceOK-Item-ok ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type CertReplaceOK_Item_ok struct {
 	Issuer       Name
 	SerialNumber CertificateSerialNumber
@@ -895,24 +920,24 @@ type CertReplaceOK_Item_ok struct {
 
 // # ASN.1 Definition:
 //
-// CertReplaceOK-Item-not-ok ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	CertReplaceOK-Item-not-ok ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type CertReplaceOK_Item_not_ok struct {
 	Status CASP_CertStatusCode
 }
 
 // # ASN.1 Definition:
 //
-// CertReplaceOK-Item ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	CertReplaceOK-Item ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type CertReplaceOK_Item = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// CertReplaceErr-code ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	CertReplaceErr-code ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type CertReplaceErr_code = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// CertUpdateReq-certs-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	CertUpdateReq-certs-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type CertUpdateReq_certs_Item struct {
 	Subject      Name
 	SerialNumber CertificateSerialNumber
@@ -921,12 +946,12 @@ type CertUpdateReq_certs_Item struct {
 
 // # ASN.1 Definition:
 //
-// CertUpdateRsp-result ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	CertUpdateRsp-result ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type CertUpdateRsp_result = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// CertUpdateOK-Item-ok ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	CertUpdateOK-Item-ok ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type CertUpdateOK_Item_ok struct {
 	Subject      Name
 	SerialNumber CertificateSerialNumber
@@ -934,19 +959,19 @@ type CertUpdateOK_Item_ok struct {
 
 // # ASN.1 Definition:
 //
-// CertUpdateOK-Item-not-ok ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	CertUpdateOK-Item-not-ok ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type CertUpdateOK_Item_not_ok struct {
 	Status CASP_CertStatusCode
 }
 
 // # ASN.1 Definition:
 //
-// CertUpdateOK-Item ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	CertUpdateOK-Item ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type CertUpdateOK_Item = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// TBerror-code ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
+//	TBerror-code ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 type TBerror_code = asn1.Enumerated
 
 const (

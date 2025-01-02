@@ -7,8 +7,9 @@ import (
 
 // # ASN.1 Definition:
 //
-// PDU-wrapper  ::=  SIGNED{TBSPDU-wrapper}
-type PDU_wrapper = SIGNED // DefinedType
+//	PDU-wrapper ::= SIGNED{TBSPDU-wrapper}
+type PDU_wrapper = SIGNED
+
 // # ASN.1 Definition:
 //
 //	TBSPDU-wrapper ::= SEQUENCE  {
@@ -31,8 +32,9 @@ type TBSPDU_wrapper struct {
 
 // # ASN.1 Definition:
 //
-// SignedAttributes  ::=  SET SIZE (1..MAX) OF Attribute{{SupportedSignedAttributes}}
-type SignedAttributes = [](Attribute) // SetOfType
+//	SignedAttributes ::= SET SIZE (1..MAX) OF Attribute{{SupportedSignedAttributes}}
+type SignedAttributes = [](Attribute)
+
 // # ASN.1 Definition:
 //
 //	WrappedPDUInfo ::= SEQUENCE {
@@ -71,7 +73,7 @@ type KeyAgreement struct {
 
 // # ASN.1 Definition:
 //
-//	SenderDhInfo  ::=  CHOICE {
+//	SenderDhInfo ::= CHOICE {
 //	  senderStaticInfo   [0] SenderStaticInfo,
 //	  senderDhPublicKey  [1] SenderDhPublicKey,
 //	  ... }
@@ -103,8 +105,9 @@ type SenderDhPublicKey struct {
 
 // # ASN.1 Definition:
 //
-// UserKeyingMaterial  ::=  OCTET STRING (SIZE (64))
-type UserKeyingMaterial = []byte // OctetStringType
+//	UserKeyingMaterial ::= OCTET STRING (SIZE (64))
+type UserKeyingMaterial = []byte
+
 // # ASN.1 Definition:
 //
 //	EncryptedPduInfo ::= SEQUENCE {
@@ -125,27 +128,32 @@ type EncryptedPduInfo struct {
 
 // # ASN.1 Definition:
 //
-// EncryptedKey  ::=  OCTET STRING
-type EncryptedKey = []byte // OctetStringType
+//	EncryptedKey ::= OCTET STRING
+type EncryptedKey = []byte
+
 // # ASN.1 Definition:
 //
-// EncryptedPdu  ::=  OCTET STRING
-type EncryptedPdu = []byte // OctetStringType
+//	EncryptedPdu ::= OCTET STRING
+type EncryptedPdu = []byte
+
 // # ASN.1 Definition:
 //
-// AttributeCertificateV2  ::=  AttributeCertificate
-type AttributeCertificateV2 = AttributeCertificate // DefinedType
+//	AttributeCertificateV2 ::= AttributeCertificate
+type AttributeCertificateV2 = AttributeCertificate
+
 // # ASN.1 Definition:
 //
-// id-contentType OBJECT IDENTIFIER ::= { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9) 3 }
-var Id_contentType asn1.ObjectIdentifier = []int{1, 2, 840, 113549, 1, 9, 3} /* OBJECT_IDENTIFIER */
+//	id-contentType OBJECT IDENTIFIER ::= { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9) 3 }
+var Id_contentType asn1.ObjectIdentifier = []int{1, 2, 840, 113549, 1, 9, 3}
+
 // # ASN.1 Definition:
 //
-// id-messageDigest OBJECT IDENTIFIER ::= { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9) 4 }
-var Id_messageDigest asn1.ObjectIdentifier = []int{1, 2, 840, 113549, 1, 9, 4} /* OBJECT_IDENTIFIER */
+//	id-messageDigest OBJECT IDENTIFIER ::= { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9) 4 }
+var Id_messageDigest asn1.ObjectIdentifier = []int{1, 2, 840, 113549, 1, 9, 4}
+
 // # ASN.1 Definition:
 //
-//	PkiWaError  ::=  ENUMERATED {
+//	PkiWaError ::= ENUMERATED {
 //	  unsupportedWrapperVersion           (0),
 //	  unsupportedSignatureAlgorithm       (1),
 //	  incompleteCertPath                  (2),
@@ -192,12 +200,12 @@ const (
 
 // # ASN.1 Definition:
 //
-// TBSPDU-wrapper-conf ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	TBSPDU-wrapper-conf ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type TBSPDU_wrapper_conf = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// KeyAgreement-keyEncryptionAlgorithm ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	KeyAgreement-keyEncryptionAlgorithm ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type KeyAgreement_keyEncryptionAlgorithm struct {
 	Algorithm  asn1.ObjectIdentifier
 	Parameters asn1.RawValue
@@ -205,7 +213,7 @@ type KeyAgreement_keyEncryptionAlgorithm struct {
 
 // # ASN.1 Definition:
 //
-// EncryptedPduInfo-pduEncryptionAlgorithm ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	EncryptedPduInfo-pduEncryptionAlgorithm ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type EncryptedPduInfo_pduEncryptionAlgorithm struct {
 	Algorithm asn1.ObjectIdentifier
 	Parameter asn1.RawValue

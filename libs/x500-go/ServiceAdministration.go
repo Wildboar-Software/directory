@@ -56,7 +56,7 @@ type SearchRuleId struct {
 
 // # ASN.1 Definition:
 //
-// AllowedSubset  ::=  BIT STRING {baseObject(0), oneLevel(1), wholeSubtree(2)}
+//	AllowedSubset ::= BIT STRING {baseObject(0), oneLevel(1), wholeSubtree(2)}
 type AllowedSubset = asn1.BitString
 
 const AllowedSubset_BaseObject int32 = 0
@@ -67,7 +67,7 @@ const AllowedSubset_WholeSubtree int32 = 2
 
 // # ASN.1 Definition:
 //
-// ImposedSubset  ::=  ENUMERATED {baseObject(0), oneLevel(1), wholeSubtree(2),...}
+//	ImposedSubset ::= ENUMERATED {baseObject(0), oneLevel(1), wholeSubtree(2),...}
 type ImposedSubset = asn1.Enumerated
 
 const (
@@ -116,7 +116,7 @@ type ContextProfile struct {
 
 // # ASN.1 Definition:
 //
-//	ContextCombination  ::=  CHOICE {
+//	ContextCombination ::= CHOICE {
 //	  context  [0]  CONTEXT.&id({SupportedContexts}),
 //	  and      [1]  SEQUENCE OF ContextCombination,
 //	  or       [2]  SEQUENCE OF ContextCombination,
@@ -138,7 +138,7 @@ type MatchingUse struct {
 
 // # ASN.1 Definition:
 //
-//	AttributeCombination  ::=  CHOICE {
+//	AttributeCombination ::= CHOICE {
 //	  attribute  [0]  AttributeType,
 //	  and        [1]  SEQUENCE OF AttributeCombination,
 //	  or         [2]  SEQUENCE OF AttributeCombination,
@@ -241,7 +241,7 @@ type MRSubstitution struct {
 
 // # ASN.1 Definition:
 //
-// RequestAttribute-defaultValues-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	RequestAttribute-defaultValues-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type RequestAttribute_defaultValues_Item struct {
 	EntryType asn1.ObjectIdentifier `asn1:"optional"`
 	Values    [](asn1.RawValue)
@@ -249,5 +249,5 @@ type RequestAttribute_defaultValues_Item struct {
 
 // # ASN.1 Definition:
 //
-// ResultAttribute-outputValues ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	ResultAttribute-outputValues ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type ResultAttribute_outputValues = asn1.RawValue

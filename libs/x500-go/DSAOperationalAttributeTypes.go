@@ -6,7 +6,7 @@ import (
 
 // # ASN.1 Definition:
 //
-//	DSEType  ::=  BIT STRING {
+//	DSEType ::= BIT STRING {
 //	  root           (0),  -- root DSE
 //	  glue           (1),  -- represents knowledge of a name only
 //	  cp             (2),  -- context prefix
@@ -94,8 +94,9 @@ type SupplierInformation struct {
 
 // # ASN.1 Definition:
 //
-// ConsumerInformation  ::=  SupplierOrConsumer
-type ConsumerInformation = SupplierOrConsumer // DefinedType
+//	ConsumerInformation ::= SupplierOrConsumer
+type ConsumerInformation = SupplierOrConsumer
+
 // # ASN.1 Definition:
 //
 //	SupplierAndConsumers ::= SET {
@@ -111,56 +112,69 @@ type SupplierAndConsumers struct {
 
 // # ASN.1 Definition:
 //
-// id-doa-dseType                  OBJECT IDENTIFIER ::= {id-doa 0}
-var Id_doa_dseType asn1.ObjectIdentifier = []int{2, 5, 12, 0} /* OBJECT_IDENTIFIER */
+//	id-doa-dseType                  OBJECT IDENTIFIER ::= {id-doa 0}
+var Id_doa_dseType asn1.ObjectIdentifier = []int{2, 5, 12, 0}
+
 // # ASN.1 Definition:
 //
-// id-doa-myAccessPoint            OBJECT IDENTIFIER ::= {id-doa 1}
-var Id_doa_myAccessPoint asn1.ObjectIdentifier = []int{2, 5, 12, 1} /* OBJECT_IDENTIFIER */
+//	id-doa-myAccessPoint            OBJECT IDENTIFIER ::= {id-doa 1}
+var Id_doa_myAccessPoint asn1.ObjectIdentifier = []int{2, 5, 12, 1}
+
 // # ASN.1 Definition:
 //
-// id-doa-superiorKnowledge        OBJECT IDENTIFIER ::= {id-doa 2}
-var Id_doa_superiorKnowledge asn1.ObjectIdentifier = []int{2, 5, 12, 2} /* OBJECT_IDENTIFIER */
+//	id-doa-superiorKnowledge        OBJECT IDENTIFIER ::= {id-doa 2}
+var Id_doa_superiorKnowledge asn1.ObjectIdentifier = []int{2, 5, 12, 2}
+
 // # ASN.1 Definition:
 //
-// id-doa-specificKnowledge        OBJECT IDENTIFIER ::= {id-doa 3}
-var Id_doa_specificKnowledge asn1.ObjectIdentifier = []int{2, 5, 12, 3} /* OBJECT_IDENTIFIER */
+//	id-doa-specificKnowledge        OBJECT IDENTIFIER ::= {id-doa 3}
+var Id_doa_specificKnowledge asn1.ObjectIdentifier = []int{2, 5, 12, 3}
+
 // # ASN.1 Definition:
 //
-// id-doa-nonSpecificKnowledge     OBJECT IDENTIFIER ::= {id-doa 4}
-var Id_doa_nonSpecificKnowledge asn1.ObjectIdentifier = []int{2, 5, 12, 4} /* OBJECT_IDENTIFIER */
+//	id-doa-nonSpecificKnowledge     OBJECT IDENTIFIER ::= {id-doa 4}
+var Id_doa_nonSpecificKnowledge asn1.ObjectIdentifier = []int{2, 5, 12, 4}
+
 // # ASN.1 Definition:
 //
-// id-doa-supplierKnowledge        OBJECT IDENTIFIER ::= {id-doa 5}
-var Id_doa_supplierKnowledge asn1.ObjectIdentifier = []int{2, 5, 12, 5} /* OBJECT_IDENTIFIER */
+//	id-doa-supplierKnowledge        OBJECT IDENTIFIER ::= {id-doa 5}
+var Id_doa_supplierKnowledge asn1.ObjectIdentifier = []int{2, 5, 12, 5}
+
 // # ASN.1 Definition:
 //
-// id-doa-consumerKnowledge        OBJECT IDENTIFIER ::= {id-doa 6}
-var Id_doa_consumerKnowledge asn1.ObjectIdentifier = []int{2, 5, 12, 6} /* OBJECT_IDENTIFIER */
+//	id-doa-consumerKnowledge        OBJECT IDENTIFIER ::= {id-doa 6}
+var Id_doa_consumerKnowledge asn1.ObjectIdentifier = []int{2, 5, 12, 6}
+
 // # ASN.1 Definition:
 //
-// id-doa-secondaryShadows         OBJECT IDENTIFIER ::= {id-doa 7}
-var Id_doa_secondaryShadows asn1.ObjectIdentifier = []int{2, 5, 12, 7} /* OBJECT_IDENTIFIER */
+//	id-doa-secondaryShadows         OBJECT IDENTIFIER ::= {id-doa 7}
+var Id_doa_secondaryShadows asn1.ObjectIdentifier = []int{2, 5, 12, 7}
+
 // # ASN.1 Definition:
 //
-// id-doa-ditBridgeKnowledge       OBJECT IDENTIFIER ::= {id-doa 8}
-var Id_doa_ditBridgeKnowledge asn1.ObjectIdentifier = []int{2, 5, 12, 8} /* OBJECT_IDENTIFIER */
+//	id-doa-ditBridgeKnowledge       OBJECT IDENTIFIER ::= {id-doa 8}
+var Id_doa_ditBridgeKnowledge asn1.ObjectIdentifier = []int{2, 5, 12, 8}
+
 // # ASN.1 Definition:
 //
-// id-kmr-accessPointMatch         OBJECT IDENTIFIER ::= {id-kmr 0}
-var Id_kmr_accessPointMatch asn1.ObjectIdentifier = []int{2, 5, 14, 0} /* OBJECT_IDENTIFIER */
+//	id-kmr-accessPointMatch         OBJECT IDENTIFIER ::= {id-kmr 0}
+var Id_kmr_accessPointMatch asn1.ObjectIdentifier = []int{2, 5, 14, 0}
+
 // # ASN.1 Definition:
 //
-// id-kmr-masterShadowMatch        OBJECT IDENTIFIER ::= {id-kmr 1}
-var Id_kmr_masterShadowMatch asn1.ObjectIdentifier = []int{2, 5, 14, 1} /* OBJECT_IDENTIFIER */
+//	id-kmr-masterShadowMatch        OBJECT IDENTIFIER ::= {id-kmr 1}
+var Id_kmr_masterShadowMatch asn1.ObjectIdentifier = []int{2, 5, 14, 1}
+
 // # ASN.1 Definition:
 //
-// id-kmr-supplierConsumerMatch    OBJECT IDENTIFIER ::= {id-kmr 2}
-var Id_kmr_supplierConsumerMatch asn1.ObjectIdentifier = []int{2, 5, 14, 2} /* OBJECT_IDENTIFIER */
+//	id-kmr-supplierConsumerMatch    OBJECT IDENTIFIER ::= {id-kmr 2}
+var Id_kmr_supplierConsumerMatch asn1.ObjectIdentifier = []int{2, 5, 14, 2}
+
 // # ASN.1 Definition:
 //
-// id-kmr-supplierConsumersMatch   OBJECT IDENTIFIER ::= {id-kmr 3}
-var Id_kmr_supplierConsumersMatch asn1.ObjectIdentifier = []int{2, 5, 14, 3} /* OBJECT_IDENTIFIER */
+//	id-kmr-supplierConsumersMatch   OBJECT IDENTIFIER ::= {id-kmr 3}
+var Id_kmr_supplierConsumersMatch asn1.ObjectIdentifier = []int{2, 5, 14, 3}
+
 // # ASN.1 Definition:
 //
 // supplierOrConsumerInformationMatch-AssertionType ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }

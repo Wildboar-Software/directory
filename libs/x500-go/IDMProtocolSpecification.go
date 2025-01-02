@@ -6,7 +6,7 @@ import (
 
 // # ASN.1 Definition:
 //
-//	IDM-PDU{IDM-PROTOCOL:protocol}  ::=  CHOICE {
+//	IDM-PDU{IDM-PROTOCOL:protocol} ::= CHOICE {
 //	  bind         [0]  IdmBind{{protocol}},
 //	  bindResult   [1]  IdmBindResult{{protocol}},
 //	  bindError    [2]  IdmBindError{{protocol}},
@@ -140,11 +140,12 @@ type IdmReject struct {
 
 // # ASN.1 Definition:
 //
-// Unbind  ::=  NULL
-type Unbind = asn1.RawValue // NullType
+//	Unbind ::= NULL
+type Unbind = asn1.RawValue
+
 // # ASN.1 Definition:
 //
-//	Abort  ::=  ENUMERATED {
+//	Abort ::= ENUMERATED {
 //	  mistypedPDU         (0),
 //	  unboundRequest      (1),
 //	  invalidPDU          (2),
@@ -167,11 +168,12 @@ const (
 
 // # ASN.1 Definition:
 //
-// StartTLS  ::=  NULL
-type StartTLS = asn1.RawValue // NullType
+//	StartTLS ::= NULL
+type StartTLS = asn1.RawValue
+
 // # ASN.1 Definition:
 //
-//	TLSResponse  ::=  ENUMERATED {
+//	TLSResponse ::= ENUMERATED {
 //	  success         (0),
 //	  operationsError (1),
 //	  protocolError   (2),
@@ -188,7 +190,7 @@ const (
 
 // # ASN.1 Definition:
 //
-// IdmBindError-aETitleError ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
+//	IdmBindError-aETitleError ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 type IdmBindError_aETitleError = asn1.Enumerated
 
 const (
@@ -198,7 +200,7 @@ const (
 
 // # ASN.1 Definition:
 //
-// IdmReject-reason ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
+//	IdmReject-reason ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 type IdmReject_reason = asn1.Enumerated
 
 const (

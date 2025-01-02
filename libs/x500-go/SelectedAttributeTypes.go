@@ -7,7 +7,7 @@ import (
 
 // # ASN.1 Definition:
 //
-//	UnboundedDirectoryString  ::=  CHOICE {
+//	UnboundedDirectoryString ::= CHOICE {
 //	  teletexString    TeletexString(SIZE (1..MAX)),
 //	  printableString  PrintableString(SIZE (1..MAX)),
 //	  bmpString        BMPString(SIZE (1..MAX)),
@@ -17,7 +17,7 @@ type UnboundedDirectoryString = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-//	DirectoryString{INTEGER:maxSize}  ::=  CHOICE {
+//	DirectoryString{INTEGER:maxSize} ::= CHOICE {
 //	  teletexString    TeletexString(SIZE (1..maxSize,...)),
 //	  printableString  PrintableString(SIZE (1..maxSize,...)),
 //	  bmpString        BMPString(SIZE (1..maxSize,...)),
@@ -27,7 +27,7 @@ type DirectoryString = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// UniqueIdentifier  ::=  BIT STRING
+//	UniqueIdentifier ::= BIT STRING
 type UniqueIdentifier = asn1.BitString
 
 // # ASN.1 Definition:
@@ -43,36 +43,40 @@ type UUIDPair struct {
 
 // # ASN.1 Definition:
 //
-// UUID  ::=  OCTET STRING(SIZE (16))
-type UUID = []byte // OctetStringType
+//	UUID ::= OCTET STRING(SIZE (16))
+type UUID = []byte
+
 // # ASN.1 Definition:
 //
-// URI  ::=  UTF8String
+//	URI ::= UTF8String
 type URI = string // UTF8String
 // # ASN.1 Definition:
 //
-// DomainName  ::=  UTF8String (CONSTRAINED BY { -- Conforms to the format of a domain name. -- })
+//	DomainName ::= UTF8String (CONSTRAINED BY { -- Conforms to the format of a domain name. -- })
 type DomainName = string // UTF8String
 // # ASN.1 Definition:
 //
-// IntEmail  ::=  UTF8String (CONSTRAINED BY { -- Conforms to the format of an (internationalized) email address. -- })
+//	IntEmail ::= UTF8String (CONSTRAINED BY { -- Conforms to the format of an (internationalized) email address. -- })
 type IntEmail = string // UTF8String
 // # ASN.1 Definition:
 //
-// Jid  ::=  UTF8String (CONSTRAINED BY { /* Conforms to the format of a jabber identifier. */ })
+//	Jid ::= UTF8String (CONSTRAINED BY { /* Conforms to the format of a jabber identifier. */ })
 type Jid = string // UTF8String
 // # ASN.1 Definition:
 //
-// CountryName  ::=  PrintableString(SIZE (2)) (CONSTRAINED BY { -- ISO 3166 alpha-2 codes only -- })
-type CountryName = string // PrintableString
+//	CountryName ::= PrintableString(SIZE (2)) (CONSTRAINED BY { -- ISO 3166 alpha-2 codes only -- })
+type CountryName = string
+
 // # ASN.1 Definition:
 //
-// CountryCode3c  ::=  PrintableString(SIZE (3)) (CONSTRAINED BY { -- ISO 3166 alpha-3 codes only -- })
-type CountryCode3c = string // PrintableString
+//	CountryCode3c ::= PrintableString(SIZE (3)) (CONSTRAINED BY { -- ISO 3166 alpha-3 codes only -- })
+type CountryCode3c = string
+
 // # ASN.1 Definition:
 //
-// CountryCode3n  ::=  NumericString(SIZE (3)) (CONSTRAINED BY { -- ISO 3166 numeric-3 codes only -- })
-type CountryCode3n = string // NumericString
+//	CountryCode3n ::= NumericString(SIZE (3)) (CONSTRAINED BY { -- ISO 3166 numeric-3 codes only -- })
+type CountryCode3n = string
+
 // # ASN.1 Definition:
 //
 //	UtmCoordinates ::= SEQUENCE {
@@ -98,7 +102,7 @@ type Guide struct {
 
 // # ASN.1 Definition:
 //
-//	Criteria  ::=  CHOICE {
+//	Criteria ::= CHOICE {
 //	  type  [0]  CriteriaItem,
 //	  and   [1]  SET OF Criteria,
 //	  or    [2]  SET OF Criteria,
@@ -108,7 +112,7 @@ type Criteria = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-//	CriteriaItem  ::=  CHOICE {
+//	CriteriaItem ::= CHOICE {
 //	  equality          [0]  AttributeType,
 //	  substrings        [1]  AttributeType,
 //	  greaterOrEqual    [2]  AttributeType,
@@ -135,15 +139,17 @@ type EnhancedGuide struct {
 
 // # ASN.1 Definition:
 //
-// PostalAddress  ::=  SEQUENCE SIZE (1..MAX) OF UnboundedDirectoryString
-type PostalAddress = [](UnboundedDirectoryString) // SequenceOfType
+//	PostalAddress ::= SEQUENCE SIZE (1..MAX) OF UnboundedDirectoryString
+type PostalAddress = [](UnboundedDirectoryString)
+
 // # ASN.1 Definition:
 //
-// TelephoneNumber  ::=  PrintableString(SIZE (1..ub-telephone-number))
-type TelephoneNumber = string // PrintableString
+//	TelephoneNumber ::= PrintableString(SIZE (1..ub-telephone-number))
+type TelephoneNumber = string
+
 // # ASN.1 Definition:
 //
-// ub-telephone-number INTEGER ::= 32
+//	ub-telephone-number INTEGER ::= 32
 //
 // const Ub_telephone_number int = 32
 // # ASN.1 Definition:
@@ -161,27 +167,6 @@ type TelexNumber struct {
 
 // # ASN.1 Definition:
 //
-// ub-telex-number INTEGER ::= 14
-//
-//
-// const Ub_telex_number int = 14
-
-// # ASN.1 Definition:
-//
-// ub-country-code INTEGER ::= 4
-//
-//
-// const Ub_country_code int = 4
-
-// # ASN.1 Definition:
-//
-// ub-answerback   INTEGER ::= 8
-//
-//
-// const Ub_answerback int = 8
-
-// # ASN.1 Definition:
-//
 //	FacsimileTelephoneNumber ::= SEQUENCE {
 //	  telephoneNumber  TelephoneNumber,
 //	  parameters       G3FacsimileNonBasicParameters OPTIONAL,
@@ -193,43 +178,34 @@ type FacsimileTelephoneNumber struct {
 
 // # ASN.1 Definition:
 //
-// X121Address  ::=  NumericString(SIZE (1..ub-x121-address))
-type X121Address = string // NumericString
-// # ASN.1 Definition:
-//
-// ub-x121-address INTEGER ::= 15
-//
-//
-// const Ub_x121_address int = 15
+//	X121Address ::= NumericString(SIZE (1..ub-x121-address))
+type X121Address = string
 
 // # ASN.1 Definition:
 //
 // InternationalISDNNumber  ::=
 //
 //	NumericString(SIZE (1..ub-international-isdn-number))
-type InternationalISDNNumber = string // NumericString
-// # ASN.1 Definition:
-//
-// ub-international-isdn-number INTEGER ::= 16
-//
-//
-// const Ub_international_isdn_number int = 16
+type InternationalISDNNumber = string
 
 // # ASN.1 Definition:
 //
-// DestinationIndicator  ::=  PrintableString(SIZE (1..MAX))
-type DestinationIndicator = string // PrintableString
+//	DestinationIndicator ::= PrintableString(SIZE (1..MAX))
+type DestinationIndicator = string
+
 // # ASN.1 Definition:
 //
-// CommunicationsService  ::=  OBJECT IDENTIFIER
-type CommunicationsService = asn1.ObjectIdentifier // ObjectIdentifierType
+//	CommunicationsService ::= OBJECT IDENTIFIER
+type CommunicationsService = asn1.ObjectIdentifier
+
 // # ASN.1 Definition:
 //
-// CommunicationsNetwork  ::=  OBJECT IDENTIFIER
-type CommunicationsNetwork = asn1.ObjectIdentifier // ObjectIdentifierType
+//	CommunicationsNetwork ::= OBJECT IDENTIFIER
+type CommunicationsNetwork = asn1.ObjectIdentifier
+
 // # ASN.1 Definition:
 //
-//	PreferredDeliveryMethod  ::=  SEQUENCE OF INTEGER {
+//	PreferredDeliveryMethod ::= SEQUENCE OF INTEGER {
 //	  any-delivery-method   (0),
 //	  mhs-delivery          (1),
 //	  physical-delivery     (2),
@@ -240,7 +216,8 @@ type CommunicationsNetwork = asn1.ObjectIdentifier // ObjectIdentifierType
 //	  ia5-terminal-delivery (7),
 //	  videotex-delivery     (8),
 //	  telephone-delivery    (9) }
-type PreferredDeliveryMethod = [](PreferredDeliveryMethod_Item) // SequenceOfType
+type PreferredDeliveryMethod = [](PreferredDeliveryMethod_Item)
+
 // # ASN.1 Definition:
 //
 //	PresentationAddress ::= SEQUENCE {
@@ -296,7 +273,7 @@ type UiiFormat struct {
 
 // # ASN.1 Definition:
 //
-//	UiiFilter  ::=  CHOICE {
+//	UiiFilter ::= CHOICE {
 //	  item  [0]  UiiItem,
 //	  and   [1]  SET OF UiiFilter,
 //	  or    [2]  SET OF UiiFilter,
@@ -348,8 +325,9 @@ type MultipleMatchingLocalities struct {
 
 // # ASN.1 Definition:
 //
-// MRMappings  ::=  SEQUENCE OF MRMapping
-type MRMappings = [](MRMapping) // SequenceOfType
+//	MRMappings ::= SEQUENCE OF MRMapping
+type MRMappings = [](MRMapping)
+
 // # ASN.1 Definition:
 //
 //	PwdResponse ::= SEQUENCE {
@@ -368,7 +346,7 @@ type PwdResponse struct {
 
 // # ASN.1 Definition:
 //
-//	SubstringAssertion  ::=  SEQUENCE OF CHOICE {
+//	SubstringAssertion ::= SEQUENCE OF CHOICE {
 //	  initial  [0]  UnboundedDirectoryString,
 //	  any      [1]  UnboundedDirectoryString,
 //	  final    [2]  UnboundedDirectoryString,
@@ -376,22 +354,25 @@ type PwdResponse struct {
 //	  control       Attribute{{SupportedAttributes}},
 //	    -- Used to specify interpretation of the following items
 //	  ... }
-type SubstringAssertion = [](SubstringAssertion_Item) // SequenceOfType
+type SubstringAssertion = [](SubstringAssertion_Item)
+
 // # ASN.1 Definition:
 //
-// CaseIgnoreList  ::=  SEQUENCE OF UnboundedDirectoryString
-type CaseIgnoreList = [](UnboundedDirectoryString) // SequenceOfType
+//	CaseIgnoreList ::= SEQUENCE OF UnboundedDirectoryString
+type CaseIgnoreList = [](UnboundedDirectoryString)
+
 // # ASN.1 Definition:
 //
-//	OctetSubstringAssertion  ::=  SEQUENCE OF CHOICE {
+//	OctetSubstringAssertion ::= SEQUENCE OF CHOICE {
 //	  initial  [0]  OCTET STRING,
 //	  any      [1]  OCTET STRING,
 //	  final    [2]  OCTET STRING,
 //	  ... }
-type OctetSubstringAssertion = [](OctetSubstringAssertion_Item) // SequenceOfType
+type OctetSubstringAssertion = [](OctetSubstringAssertion_Item)
+
 // # ASN.1 Definition:
 //
-//	SequenceMatchType  ::=  ENUMERATED {
+//	SequenceMatchType ::= ENUMERATED {
 //	  sequenceExact                  (0),
 //	  sequenceDeletion               (1),
 //	  sequenceRestrictedDeletion     (2),
@@ -412,7 +393,7 @@ const (
 
 // # ASN.1 Definition:
 //
-//	WordMatchTypes  ::=  ENUMERATED {
+//	WordMatchTypes ::= ENUMERATED {
 //	  wordExact           (0),
 //	  wordTruncated       (1),
 //	  wordPhonetic        (2),
@@ -429,7 +410,7 @@ const (
 
 // # ASN.1 Definition:
 //
-//	CharacterMatchTypes  ::=  ENUMERATED {
+//	CharacterMatchTypes ::= ENUMERATED {
 //	  characterExact      (0),
 //	  characterCaseIgnore (1),
 //	  characterMapped     (2),
@@ -444,11 +425,12 @@ const (
 
 // # ASN.1 Definition:
 //
-// ZonalSelect  ::=  SEQUENCE OF AttributeType
-type ZonalSelect = [](AttributeType) // SequenceOfType
+//	ZonalSelect ::= SEQUENCE OF AttributeType
+type ZonalSelect = [](AttributeType)
+
 // # ASN.1 Definition:
 //
-//	ZonalResult  ::=  ENUMERATED {
+//	ZonalResult ::= ENUMERATED {
 //	  cannot-select-mapping (0),
 //	  zero-mappings         (2),
 //	  multiple-mappings     (3),
@@ -463,8 +445,9 @@ const (
 
 // # ASN.1 Definition:
 //
-// LanguageContextSyntax  ::=  PrintableString(SIZE (2..3))
-type LanguageContextSyntax = string // PrintableString
+//	LanguageContextSyntax ::= PrintableString(SIZE (2..3))
+type LanguageContextSyntax = string
+
 // # ASN.1 Definition:
 //
 //	TimeSpecification ::= SEQUENCE {
@@ -538,7 +521,7 @@ type Period struct {
 
 // # ASN.1 Definition:
 //
-//	XDayOf  ::=  CHOICE {
+//	XDayOf ::= CHOICE {
 //	  first   [1]  NamedDay,
 //	  second  [2]  NamedDay,
 //	  third   [3]  NamedDay,
@@ -548,7 +531,7 @@ type XDayOf = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-//	NamedDay  ::=  CHOICE {
+//	NamedDay ::= CHOICE {
 //	  intNamedDays ENUMERATED {
 //	    sunday      (1),
 //	    monday      (2),
@@ -593,12 +576,12 @@ type DayTime struct {
 
 // # ASN.1 Definition:
 //
-// TimeZone  ::=  INTEGER(-12..12)
+//	TimeZone ::= INTEGER(-12..12)
 type TimeZone = int64
 
 // # ASN.1 Definition:
 //
-//	TimeAssertion  ::=  CHOICE {
+//	TimeAssertion ::= CHOICE {
 //	  now             NULL,
 //	  at              GeneralizedTime,
 //	  between         SEQUENCE {
@@ -611,7 +594,7 @@ type TimeAssertion = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-//	LocaleContextSyntax  ::=  CHOICE {
+//	LocaleContextSyntax ::= CHOICE {
 //	  localeID1  OBJECT IDENTIFIER,
 //	  localeID2  UnboundedDirectoryString,
 //	  ... }
@@ -619,985 +602,1229 @@ type LocaleContextSyntax = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// AttributeOptionList  ::=  SEQUENCE OF UTF8String
-type AttributeOptionList = [](string) // SequenceOfType
+//	AttributeOptionList ::= SEQUENCE OF UTF8String
+type AttributeOptionList = [](string)
+
 // # ASN.1 Definition:
 //
-// id-at-knowledgeInformation                OBJECT IDENTIFIER ::= {id-at 2}
-var Id_at_knowledgeInformation asn1.ObjectIdentifier = []int{2, 5, 4, 2} /* OBJECT_IDENTIFIER */
+//	id-at-knowledgeInformation                OBJECT IDENTIFIER ::= {id-at 2}
+var Id_at_knowledgeInformation asn1.ObjectIdentifier = []int{2, 5, 4, 2}
+
 // # ASN.1 Definition:
 //
-// id-at-commonName                          OBJECT IDENTIFIER ::= {id-at 3}
-var Id_at_commonName asn1.ObjectIdentifier = []int{2, 5, 4, 3} /* OBJECT_IDENTIFIER */
+//	id-at-commonName                          OBJECT IDENTIFIER ::= {id-at 3}
+var Id_at_commonName asn1.ObjectIdentifier = []int{2, 5, 4, 3}
+
 // # ASN.1 Definition:
 //
-// id-at-surname                             OBJECT IDENTIFIER ::= {id-at 4}
-var Id_at_surname asn1.ObjectIdentifier = []int{2, 5, 4, 4} /* OBJECT_IDENTIFIER */
+//	id-at-surname                             OBJECT IDENTIFIER ::= {id-at 4}
+var Id_at_surname asn1.ObjectIdentifier = []int{2, 5, 4, 4}
+
 // # ASN.1 Definition:
 //
-// id-at-serialNumber                        OBJECT IDENTIFIER ::= {id-at 5}
-var Id_at_serialNumber asn1.ObjectIdentifier = []int{2, 5, 4, 5} /* OBJECT_IDENTIFIER */
+//	id-at-serialNumber                        OBJECT IDENTIFIER ::= {id-at 5}
+var Id_at_serialNumber asn1.ObjectIdentifier = []int{2, 5, 4, 5}
+
 // # ASN.1 Definition:
 //
-// id-at-countryName                         OBJECT IDENTIFIER ::= {id-at 6}
-var Id_at_countryName asn1.ObjectIdentifier = []int{2, 5, 4, 6} /* OBJECT_IDENTIFIER */
+//	id-at-countryName                         OBJECT IDENTIFIER ::= {id-at 6}
+var Id_at_countryName asn1.ObjectIdentifier = []int{2, 5, 4, 6}
+
 // # ASN.1 Definition:
 //
-// id-at-localityName                        OBJECT IDENTIFIER ::= {id-at 7}
-var Id_at_localityName asn1.ObjectIdentifier = []int{2, 5, 4, 7} /* OBJECT_IDENTIFIER */
+//	id-at-localityName                        OBJECT IDENTIFIER ::= {id-at 7}
+var Id_at_localityName asn1.ObjectIdentifier = []int{2, 5, 4, 7}
+
 // # ASN.1 Definition:
 //
-// id-at-collectiveLocalityName              OBJECT IDENTIFIER ::= {id-at 7 1}
-var Id_at_collectiveLocalityName asn1.ObjectIdentifier = []int{2, 5, 4, 7, 1} /* OBJECT_IDENTIFIER */
+//	id-at-collectiveLocalityName              OBJECT IDENTIFIER ::= {id-at 7 1}
+var Id_at_collectiveLocalityName asn1.ObjectIdentifier = []int{2, 5, 4, 7, 1}
+
 // # ASN.1 Definition:
 //
-// id-at-stateOrProvinceName                 OBJECT IDENTIFIER ::= {id-at 8}
-var Id_at_stateOrProvinceName asn1.ObjectIdentifier = []int{2, 5, 4, 8} /* OBJECT_IDENTIFIER */
+//	id-at-stateOrProvinceName                 OBJECT IDENTIFIER ::= {id-at 8}
+var Id_at_stateOrProvinceName asn1.ObjectIdentifier = []int{2, 5, 4, 8}
+
 // # ASN.1 Definition:
 //
-// id-at-collectiveStateOrProvinceName       OBJECT IDENTIFIER ::= {id-at 8 1}
-var Id_at_collectiveStateOrProvinceName asn1.ObjectIdentifier = []int{2, 5, 4, 8, 1} /* OBJECT_IDENTIFIER */
+//	id-at-collectiveStateOrProvinceName       OBJECT IDENTIFIER ::= {id-at 8 1}
+var Id_at_collectiveStateOrProvinceName asn1.ObjectIdentifier = []int{2, 5, 4, 8, 1}
+
 // # ASN.1 Definition:
 //
-// id-at-streetAddress                       OBJECT IDENTIFIER ::= {id-at 9}
-var Id_at_streetAddress asn1.ObjectIdentifier = []int{2, 5, 4, 9} /* OBJECT_IDENTIFIER */
+//	id-at-streetAddress                       OBJECT IDENTIFIER ::= {id-at 9}
+var Id_at_streetAddress asn1.ObjectIdentifier = []int{2, 5, 4, 9}
+
 // # ASN.1 Definition:
 //
-// id-at-collectiveStreetAddress             OBJECT IDENTIFIER ::= {id-at 9 1}
-var Id_at_collectiveStreetAddress asn1.ObjectIdentifier = []int{2, 5, 4, 9, 1} /* OBJECT_IDENTIFIER */
+//	id-at-collectiveStreetAddress             OBJECT IDENTIFIER ::= {id-at 9 1}
+var Id_at_collectiveStreetAddress asn1.ObjectIdentifier = []int{2, 5, 4, 9, 1}
+
 // # ASN.1 Definition:
 //
-// id-at-organizationName                    OBJECT IDENTIFIER ::= {id-at 10}
-var Id_at_organizationName asn1.ObjectIdentifier = []int{2, 5, 4, 10} /* OBJECT_IDENTIFIER */
+//	id-at-organizationName                    OBJECT IDENTIFIER ::= {id-at 10}
+var Id_at_organizationName asn1.ObjectIdentifier = []int{2, 5, 4, 10}
+
 // # ASN.1 Definition:
 //
-// id-at-collectiveOrganizationName          OBJECT IDENTIFIER ::= {id-at 10 1}
-var Id_at_collectiveOrganizationName asn1.ObjectIdentifier = []int{2, 5, 4, 10, 1} /* OBJECT_IDENTIFIER */
+//	id-at-collectiveOrganizationName          OBJECT IDENTIFIER ::= {id-at 10 1}
+var Id_at_collectiveOrganizationName asn1.ObjectIdentifier = []int{2, 5, 4, 10, 1}
+
 // # ASN.1 Definition:
 //
-// id-at-organizationalUnitName              OBJECT IDENTIFIER ::= {id-at 11}
-var Id_at_organizationalUnitName asn1.ObjectIdentifier = []int{2, 5, 4, 11} /* OBJECT_IDENTIFIER */
+//	id-at-organizationalUnitName              OBJECT IDENTIFIER ::= {id-at 11}
+var Id_at_organizationalUnitName asn1.ObjectIdentifier = []int{2, 5, 4, 11}
+
 // # ASN.1 Definition:
 //
-// id-at-collectiveOrganizationalUnitName    OBJECT IDENTIFIER ::= {id-at 11 1}
-var Id_at_collectiveOrganizationalUnitName asn1.ObjectIdentifier = []int{2, 5, 4, 11, 1} /* OBJECT_IDENTIFIER */
+//	id-at-collectiveOrganizationalUnitName    OBJECT IDENTIFIER ::= {id-at 11 1}
+var Id_at_collectiveOrganizationalUnitName asn1.ObjectIdentifier = []int{2, 5, 4, 11, 1}
+
 // # ASN.1 Definition:
 //
-// id-at-title                               OBJECT IDENTIFIER ::= {id-at 12}
-var Id_at_title asn1.ObjectIdentifier = []int{2, 5, 4, 12} /* OBJECT_IDENTIFIER */
+//	id-at-title                               OBJECT IDENTIFIER ::= {id-at 12}
+var Id_at_title asn1.ObjectIdentifier = []int{2, 5, 4, 12}
+
 // # ASN.1 Definition:
 //
-// id-at-description                         OBJECT IDENTIFIER ::= {id-at 13}
-var Id_at_description asn1.ObjectIdentifier = []int{2, 5, 4, 13} /* OBJECT_IDENTIFIER */
+//	id-at-description                         OBJECT IDENTIFIER ::= {id-at 13}
+var Id_at_description asn1.ObjectIdentifier = []int{2, 5, 4, 13}
+
 // # ASN.1 Definition:
 //
-// id-at-searchGuide                         OBJECT IDENTIFIER ::= {id-at 14}
-var Id_at_searchGuide asn1.ObjectIdentifier = []int{2, 5, 4, 14} /* OBJECT_IDENTIFIER */
+//	id-at-searchGuide                         OBJECT IDENTIFIER ::= {id-at 14}
+var Id_at_searchGuide asn1.ObjectIdentifier = []int{2, 5, 4, 14}
+
 // # ASN.1 Definition:
 //
-// id-at-businessCategory                    OBJECT IDENTIFIER ::= {id-at 15}
-var Id_at_businessCategory asn1.ObjectIdentifier = []int{2, 5, 4, 15} /* OBJECT_IDENTIFIER */
+//	id-at-businessCategory                    OBJECT IDENTIFIER ::= {id-at 15}
+var Id_at_businessCategory asn1.ObjectIdentifier = []int{2, 5, 4, 15}
+
 // # ASN.1 Definition:
 //
-// id-at-postalAddress                       OBJECT IDENTIFIER ::= {id-at 16}
-var Id_at_postalAddress asn1.ObjectIdentifier = []int{2, 5, 4, 16} /* OBJECT_IDENTIFIER */
+//	id-at-postalAddress                       OBJECT IDENTIFIER ::= {id-at 16}
+var Id_at_postalAddress asn1.ObjectIdentifier = []int{2, 5, 4, 16}
+
 // # ASN.1 Definition:
 //
-// id-at-collectivePostalAddress             OBJECT IDENTIFIER ::= {id-at 16 1}
-var Id_at_collectivePostalAddress asn1.ObjectIdentifier = []int{2, 5, 4, 16, 1} /* OBJECT_IDENTIFIER */
+//	id-at-collectivePostalAddress             OBJECT IDENTIFIER ::= {id-at 16 1}
+var Id_at_collectivePostalAddress asn1.ObjectIdentifier = []int{2, 5, 4, 16, 1}
+
 // # ASN.1 Definition:
 //
-// id-at-postalCode                          OBJECT IDENTIFIER ::= {id-at 17}
-var Id_at_postalCode asn1.ObjectIdentifier = []int{2, 5, 4, 17} /* OBJECT_IDENTIFIER */
+//	id-at-postalCode                          OBJECT IDENTIFIER ::= {id-at 17}
+var Id_at_postalCode asn1.ObjectIdentifier = []int{2, 5, 4, 17}
+
 // # ASN.1 Definition:
 //
-// id-at-collectivePostalCode                OBJECT IDENTIFIER ::= {id-at 17 1}
-var Id_at_collectivePostalCode asn1.ObjectIdentifier = []int{2, 5, 4, 17, 1} /* OBJECT_IDENTIFIER */
+//	id-at-collectivePostalCode                OBJECT IDENTIFIER ::= {id-at 17 1}
+var Id_at_collectivePostalCode asn1.ObjectIdentifier = []int{2, 5, 4, 17, 1}
+
 // # ASN.1 Definition:
 //
-// id-at-postOfficeBox                       OBJECT IDENTIFIER ::= {id-at 18}
-var Id_at_postOfficeBox asn1.ObjectIdentifier = []int{2, 5, 4, 18} /* OBJECT_IDENTIFIER */
+//	id-at-postOfficeBox                       OBJECT IDENTIFIER ::= {id-at 18}
+var Id_at_postOfficeBox asn1.ObjectIdentifier = []int{2, 5, 4, 18}
+
 // # ASN.1 Definition:
 //
-// id-at-collectivePostOfficeBox             OBJECT IDENTIFIER ::= {id-at 18 1}
-var Id_at_collectivePostOfficeBox asn1.ObjectIdentifier = []int{2, 5, 4, 18, 1} /* OBJECT_IDENTIFIER */
+//	id-at-collectivePostOfficeBox             OBJECT IDENTIFIER ::= {id-at 18 1}
+var Id_at_collectivePostOfficeBox asn1.ObjectIdentifier = []int{2, 5, 4, 18, 1}
+
 // # ASN.1 Definition:
 //
-// id-at-physicalDeliveryOfficeName          OBJECT IDENTIFIER ::= {id-at 19}
-var Id_at_physicalDeliveryOfficeName asn1.ObjectIdentifier = []int{2, 5, 4, 19} /* OBJECT_IDENTIFIER */
+//	id-at-physicalDeliveryOfficeName          OBJECT IDENTIFIER ::= {id-at 19}
+var Id_at_physicalDeliveryOfficeName asn1.ObjectIdentifier = []int{2, 5, 4, 19}
+
 // # ASN.1 Definition:
 //
-// id-at-collectivePhysicalDeliveryOfficeName
+//	  id-at-collectivePhysicalDeliveryOfficeName
 //
-//	OBJECT IDENTIFIER ::= {id-at 19 1}
-var Id_at_collectivePhysicalDeliveryOfficeName asn1.ObjectIdentifier = []int{2, 5, 4, 19, 1} /* OBJECT_IDENTIFIER */
+//		OBJECT IDENTIFIER ::= {id-at 19 1}
+var Id_at_collectivePhysicalDeliveryOfficeName asn1.ObjectIdentifier = []int{2, 5, 4, 19, 1}
+
 // # ASN.1 Definition:
 //
-// id-at-telephoneNumber                     OBJECT IDENTIFIER ::= {id-at 20}
-var Id_at_telephoneNumber asn1.ObjectIdentifier = []int{2, 5, 4, 20} /* OBJECT_IDENTIFIER */
+//	id-at-telephoneNumber                     OBJECT IDENTIFIER ::= {id-at 20}
+var Id_at_telephoneNumber asn1.ObjectIdentifier = []int{2, 5, 4, 20}
+
 // # ASN.1 Definition:
 //
-// id-at-collectiveTelephoneNumber           OBJECT IDENTIFIER ::= {id-at 20 1}
-var Id_at_collectiveTelephoneNumber asn1.ObjectIdentifier = []int{2, 5, 4, 20, 1} /* OBJECT_IDENTIFIER */
+//	id-at-collectiveTelephoneNumber           OBJECT IDENTIFIER ::= {id-at 20 1}
+var Id_at_collectiveTelephoneNumber asn1.ObjectIdentifier = []int{2, 5, 4, 20, 1}
+
 // # ASN.1 Definition:
 //
-// id-at-telexNumber                         OBJECT IDENTIFIER ::= {id-at 21}
-var Id_at_telexNumber asn1.ObjectIdentifier = []int{2, 5, 4, 21} /* OBJECT_IDENTIFIER */
+//	id-at-telexNumber                         OBJECT IDENTIFIER ::= {id-at 21}
+var Id_at_telexNumber asn1.ObjectIdentifier = []int{2, 5, 4, 21}
+
 // # ASN.1 Definition:
 //
-// id-at-collectiveTelexNumber               OBJECT IDENTIFIER ::= {id-at 21 1}
-var Id_at_collectiveTelexNumber asn1.ObjectIdentifier = []int{2, 5, 4, 21, 1} /* OBJECT_IDENTIFIER */
+//	id-at-collectiveTelexNumber               OBJECT IDENTIFIER ::= {id-at 21 1}
+var Id_at_collectiveTelexNumber asn1.ObjectIdentifier = []int{2, 5, 4, 21, 1}
+
 // # ASN.1 Definition:
 //
-// id-at-facsimileTelephoneNumber            OBJECT IDENTIFIER ::= {id-at 23}
-var Id_at_facsimileTelephoneNumber asn1.ObjectIdentifier = []int{2, 5, 4, 23} /* OBJECT_IDENTIFIER */
+//	id-at-facsimileTelephoneNumber            OBJECT IDENTIFIER ::= {id-at 23}
+var Id_at_facsimileTelephoneNumber asn1.ObjectIdentifier = []int{2, 5, 4, 23}
+
 // # ASN.1 Definition:
 //
-// id-at-collectiveFacsimileTelephoneNumber  OBJECT IDENTIFIER ::= {id-at 23 1}
-var Id_at_collectiveFacsimileTelephoneNumber asn1.ObjectIdentifier = []int{2, 5, 4, 23, 1} /* OBJECT_IDENTIFIER */
+//	id-at-collectiveFacsimileTelephoneNumber  OBJECT IDENTIFIER ::= {id-at 23 1}
+var Id_at_collectiveFacsimileTelephoneNumber asn1.ObjectIdentifier = []int{2, 5, 4, 23, 1}
+
 // # ASN.1 Definition:
 //
-// id-at-x121Address                         OBJECT IDENTIFIER ::= {id-at 24}
-var Id_at_x121Address asn1.ObjectIdentifier = []int{2, 5, 4, 24} /* OBJECT_IDENTIFIER */
+//	id-at-x121Address                         OBJECT IDENTIFIER ::= {id-at 24}
+var Id_at_x121Address asn1.ObjectIdentifier = []int{2, 5, 4, 24}
+
 // # ASN.1 Definition:
 //
-// id-at-internationalISDNNumber             OBJECT IDENTIFIER ::= {id-at 25}
-var Id_at_internationalISDNNumber asn1.ObjectIdentifier = []int{2, 5, 4, 25} /* OBJECT_IDENTIFIER */
+//	id-at-internationalISDNNumber             OBJECT IDENTIFIER ::= {id-at 25}
+var Id_at_internationalISDNNumber asn1.ObjectIdentifier = []int{2, 5, 4, 25}
+
 // # ASN.1 Definition:
 //
-// id-at-collectiveInternationalISDNNumber   OBJECT IDENTIFIER ::= {id-at 25 1}
-var Id_at_collectiveInternationalISDNNumber asn1.ObjectIdentifier = []int{2, 5, 4, 25, 1} /* OBJECT_IDENTIFIER */
+//	id-at-collectiveInternationalISDNNumber   OBJECT IDENTIFIER ::= {id-at 25 1}
+var Id_at_collectiveInternationalISDNNumber asn1.ObjectIdentifier = []int{2, 5, 4, 25, 1}
+
 // # ASN.1 Definition:
 //
-// id-at-registeredAddress                   OBJECT IDENTIFIER ::= {id-at 26}
-var Id_at_registeredAddress asn1.ObjectIdentifier = []int{2, 5, 4, 26} /* OBJECT_IDENTIFIER */
+//	id-at-registeredAddress                   OBJECT IDENTIFIER ::= {id-at 26}
+var Id_at_registeredAddress asn1.ObjectIdentifier = []int{2, 5, 4, 26}
+
 // # ASN.1 Definition:
 //
-// id-at-destinationIndicator                OBJECT IDENTIFIER ::= {id-at 27}
-var Id_at_destinationIndicator asn1.ObjectIdentifier = []int{2, 5, 4, 27} /* OBJECT_IDENTIFIER */
+//	id-at-destinationIndicator                OBJECT IDENTIFIER ::= {id-at 27}
+var Id_at_destinationIndicator asn1.ObjectIdentifier = []int{2, 5, 4, 27}
+
 // # ASN.1 Definition:
 //
-// id-at-preferredDeliveryMethod             OBJECT IDENTIFIER ::= {id-at 28}
-var Id_at_preferredDeliveryMethod asn1.ObjectIdentifier = []int{2, 5, 4, 28} /* OBJECT_IDENTIFIER */
+//	id-at-preferredDeliveryMethod             OBJECT IDENTIFIER ::= {id-at 28}
+var Id_at_preferredDeliveryMethod asn1.ObjectIdentifier = []int{2, 5, 4, 28}
+
 // # ASN.1 Definition:
 //
-// id-at-presentationAddress                 OBJECT IDENTIFIER ::= {id-at 29}
-var Id_at_presentationAddress asn1.ObjectIdentifier = []int{2, 5, 4, 29} /* OBJECT_IDENTIFIER */
+//	id-at-presentationAddress                 OBJECT IDENTIFIER ::= {id-at 29}
+var Id_at_presentationAddress asn1.ObjectIdentifier = []int{2, 5, 4, 29}
+
 // # ASN.1 Definition:
 //
-// id-at-supportedApplicationContext         OBJECT IDENTIFIER ::= {id-at 30}
-var Id_at_supportedApplicationContext asn1.ObjectIdentifier = []int{2, 5, 4, 30} /* OBJECT_IDENTIFIER */
+//	id-at-supportedApplicationContext         OBJECT IDENTIFIER ::= {id-at 30}
+var Id_at_supportedApplicationContext asn1.ObjectIdentifier = []int{2, 5, 4, 30}
+
 // # ASN.1 Definition:
 //
-// id-at-member                              OBJECT IDENTIFIER ::= {id-at 31}
-var Id_at_member asn1.ObjectIdentifier = []int{2, 5, 4, 31} /* OBJECT_IDENTIFIER */
+//	id-at-member                              OBJECT IDENTIFIER ::= {id-at 31}
+var Id_at_member asn1.ObjectIdentifier = []int{2, 5, 4, 31}
+
 // # ASN.1 Definition:
 //
-// id-at-owner                               OBJECT IDENTIFIER ::= {id-at 32}
-var Id_at_owner asn1.ObjectIdentifier = []int{2, 5, 4, 32} /* OBJECT_IDENTIFIER */
+//	id-at-owner                               OBJECT IDENTIFIER ::= {id-at 32}
+var Id_at_owner asn1.ObjectIdentifier = []int{2, 5, 4, 32}
+
 // # ASN.1 Definition:
 //
-// id-at-roleOccupant                        OBJECT IDENTIFIER ::= {id-at 33}
-var Id_at_roleOccupant asn1.ObjectIdentifier = []int{2, 5, 4, 33} /* OBJECT_IDENTIFIER */
+//	id-at-roleOccupant                        OBJECT IDENTIFIER ::= {id-at 33}
+var Id_at_roleOccupant asn1.ObjectIdentifier = []int{2, 5, 4, 33}
+
 // # ASN.1 Definition:
 //
-// id-at-seeAlso                             OBJECT IDENTIFIER ::= {id-at 34}
-var Id_at_seeAlso asn1.ObjectIdentifier = []int{2, 5, 4, 34} /* OBJECT_IDENTIFIER */
+//	id-at-seeAlso                             OBJECT IDENTIFIER ::= {id-at 34}
+var Id_at_seeAlso asn1.ObjectIdentifier = []int{2, 5, 4, 34}
+
 // # ASN.1 Definition:
 //
-// id-at-name                                OBJECT IDENTIFIER ::= {id-at 41}
-var Id_at_name asn1.ObjectIdentifier = []int{2, 5, 4, 41} /* OBJECT_IDENTIFIER */
+//	id-at-name                                OBJECT IDENTIFIER ::= {id-at 41}
+var Id_at_name asn1.ObjectIdentifier = []int{2, 5, 4, 41}
+
 // # ASN.1 Definition:
 //
-// id-at-givenName                           OBJECT IDENTIFIER ::= {id-at 42}
-var Id_at_givenName asn1.ObjectIdentifier = []int{2, 5, 4, 42} /* OBJECT_IDENTIFIER */
+//	id-at-givenName                           OBJECT IDENTIFIER ::= {id-at 42}
+var Id_at_givenName asn1.ObjectIdentifier = []int{2, 5, 4, 42}
+
 // # ASN.1 Definition:
 //
-// id-at-initials                            OBJECT IDENTIFIER ::= {id-at 43}
-var Id_at_initials asn1.ObjectIdentifier = []int{2, 5, 4, 43} /* OBJECT_IDENTIFIER */
+//	id-at-initials                            OBJECT IDENTIFIER ::= {id-at 43}
+var Id_at_initials asn1.ObjectIdentifier = []int{2, 5, 4, 43}
+
 // # ASN.1 Definition:
 //
-// id-at-generationQualifier                 OBJECT IDENTIFIER ::= {id-at 44}
-var Id_at_generationQualifier asn1.ObjectIdentifier = []int{2, 5, 4, 44} /* OBJECT_IDENTIFIER */
+//	id-at-generationQualifier                 OBJECT IDENTIFIER ::= {id-at 44}
+var Id_at_generationQualifier asn1.ObjectIdentifier = []int{2, 5, 4, 44}
+
 // # ASN.1 Definition:
 //
-// id-at-uniqueIdentifier                    OBJECT IDENTIFIER ::= {id-at 45}
-var Id_at_uniqueIdentifier asn1.ObjectIdentifier = []int{2, 5, 4, 45} /* OBJECT_IDENTIFIER */
+//	id-at-uniqueIdentifier                    OBJECT IDENTIFIER ::= {id-at 45}
+var Id_at_uniqueIdentifier asn1.ObjectIdentifier = []int{2, 5, 4, 45}
+
 // # ASN.1 Definition:
 //
-// id-at-dnQualifier                         OBJECT IDENTIFIER ::= {id-at 46}
-var Id_at_dnQualifier asn1.ObjectIdentifier = []int{2, 5, 4, 46} /* OBJECT_IDENTIFIER */
+//	id-at-dnQualifier                         OBJECT IDENTIFIER ::= {id-at 46}
+var Id_at_dnQualifier asn1.ObjectIdentifier = []int{2, 5, 4, 46}
+
 // # ASN.1 Definition:
 //
-// id-at-enhancedSearchGuide                 OBJECT IDENTIFIER ::= {id-at 47}
-var Id_at_enhancedSearchGuide asn1.ObjectIdentifier = []int{2, 5, 4, 47} /* OBJECT_IDENTIFIER */
+//	id-at-enhancedSearchGuide                 OBJECT IDENTIFIER ::= {id-at 47}
+var Id_at_enhancedSearchGuide asn1.ObjectIdentifier = []int{2, 5, 4, 47}
+
 // # ASN.1 Definition:
 //
-// id-at-protocolInformation                 OBJECT IDENTIFIER ::= {id-at 48}
-var Id_at_protocolInformation asn1.ObjectIdentifier = []int{2, 5, 4, 48} /* OBJECT_IDENTIFIER */
+//	id-at-protocolInformation                 OBJECT IDENTIFIER ::= {id-at 48}
+var Id_at_protocolInformation asn1.ObjectIdentifier = []int{2, 5, 4, 48}
+
 // # ASN.1 Definition:
 //
-// id-at-distinguishedName                   OBJECT IDENTIFIER ::= {id-at 49}
-var Id_at_distinguishedName asn1.ObjectIdentifier = []int{2, 5, 4, 49} /* OBJECT_IDENTIFIER */
+//	id-at-distinguishedName                   OBJECT IDENTIFIER ::= {id-at 49}
+var Id_at_distinguishedName asn1.ObjectIdentifier = []int{2, 5, 4, 49}
+
 // # ASN.1 Definition:
 //
-// id-at-uniqueMember                        OBJECT IDENTIFIER ::= {id-at 50}
-var Id_at_uniqueMember asn1.ObjectIdentifier = []int{2, 5, 4, 50} /* OBJECT_IDENTIFIER */
+//	id-at-uniqueMember                        OBJECT IDENTIFIER ::= {id-at 50}
+var Id_at_uniqueMember asn1.ObjectIdentifier = []int{2, 5, 4, 50}
+
 // # ASN.1 Definition:
 //
-// id-at-houseIdentifier                     OBJECT IDENTIFIER ::= {id-at 51}
-var Id_at_houseIdentifier asn1.ObjectIdentifier = []int{2, 5, 4, 51} /* OBJECT_IDENTIFIER */
+//	id-at-houseIdentifier                     OBJECT IDENTIFIER ::= {id-at 51}
+var Id_at_houseIdentifier asn1.ObjectIdentifier = []int{2, 5, 4, 51}
+
 // # ASN.1 Definition:
 //
-// id-at-dmdName                             OBJECT IDENTIFIER ::= {id-at 54}
-var Id_at_dmdName asn1.ObjectIdentifier = []int{2, 5, 4, 54} /* OBJECT_IDENTIFIER */
+//	id-at-dmdName                             OBJECT IDENTIFIER ::= {id-at 54}
+var Id_at_dmdName asn1.ObjectIdentifier = []int{2, 5, 4, 54}
+
 // # ASN.1 Definition:
 //
-// id-at-pseudonym                           OBJECT IDENTIFIER ::= {id-at 65}
-var Id_at_pseudonym asn1.ObjectIdentifier = []int{2, 5, 4, 65} /* OBJECT_IDENTIFIER */
+//	id-at-pseudonym                           OBJECT IDENTIFIER ::= {id-at 65}
+var Id_at_pseudonym asn1.ObjectIdentifier = []int{2, 5, 4, 65}
+
 // # ASN.1 Definition:
 //
-// id-at-communicationsService               OBJECT IDENTIFIER ::= {id-at 66}
-var Id_at_communicationsService asn1.ObjectIdentifier = []int{2, 5, 4, 66} /* OBJECT_IDENTIFIER */
+//	id-at-communicationsService               OBJECT IDENTIFIER ::= {id-at 66}
+var Id_at_communicationsService asn1.ObjectIdentifier = []int{2, 5, 4, 66}
+
 // # ASN.1 Definition:
 //
-// id-at-communicationsNetwork               OBJECT IDENTIFIER ::= {id-at 67}
-var Id_at_communicationsNetwork asn1.ObjectIdentifier = []int{2, 5, 4, 67} /* OBJECT_IDENTIFIER */
+//	id-at-communicationsNetwork               OBJECT IDENTIFIER ::= {id-at 67}
+var Id_at_communicationsNetwork asn1.ObjectIdentifier = []int{2, 5, 4, 67}
+
 // # ASN.1 Definition:
 //
-// id-at-uuidpair                            OBJECT IDENTIFIER ::= {id-at 77}
-var Id_at_uuidpair asn1.ObjectIdentifier = []int{2, 5, 4, 77} /* OBJECT_IDENTIFIER */
+//	id-at-uuidpair                            OBJECT IDENTIFIER ::= {id-at 77}
+var Id_at_uuidpair asn1.ObjectIdentifier = []int{2, 5, 4, 77}
+
 // # ASN.1 Definition:
 //
-// id-at-tagOid                              OBJECT IDENTIFIER ::= {id-at 78}
-var Id_at_tagOid asn1.ObjectIdentifier = []int{2, 5, 4, 78} /* OBJECT_IDENTIFIER */
+//	id-at-tagOid                              OBJECT IDENTIFIER ::= {id-at 78}
+var Id_at_tagOid asn1.ObjectIdentifier = []int{2, 5, 4, 78}
+
 // # ASN.1 Definition:
 //
-// id-at-uiiFormat                           OBJECT IDENTIFIER ::= {id-at 79}
-var Id_at_uiiFormat asn1.ObjectIdentifier = []int{2, 5, 4, 79} /* OBJECT_IDENTIFIER */
+//	id-at-uiiFormat                           OBJECT IDENTIFIER ::= {id-at 79}
+var Id_at_uiiFormat asn1.ObjectIdentifier = []int{2, 5, 4, 79}
+
 // # ASN.1 Definition:
 //
-// id-at-uiiInUrn                            OBJECT IDENTIFIER ::= {id-at 80}
-var Id_at_uiiInUrn asn1.ObjectIdentifier = []int{2, 5, 4, 80} /* OBJECT_IDENTIFIER */
+//	id-at-uiiInUrn                            OBJECT IDENTIFIER ::= {id-at 80}
+var Id_at_uiiInUrn asn1.ObjectIdentifier = []int{2, 5, 4, 80}
+
 // # ASN.1 Definition:
 //
-// id-at-contentUrl                          OBJECT IDENTIFIER ::= {id-at 81}
-var Id_at_contentUrl asn1.ObjectIdentifier = []int{2, 5, 4, 81} /* OBJECT_IDENTIFIER */
+//	id-at-contentUrl                          OBJECT IDENTIFIER ::= {id-at 81}
+var Id_at_contentUrl asn1.ObjectIdentifier = []int{2, 5, 4, 81}
+
 // # ASN.1 Definition:
 //
-// id-at-uri                                 OBJECT IDENTIFIER ::= {id-at 83}
-var Id_at_uri asn1.ObjectIdentifier = []int{2, 5, 4, 83} /* OBJECT_IDENTIFIER */
+//	id-at-uri                                 OBJECT IDENTIFIER ::= {id-at 83}
+var Id_at_uri asn1.ObjectIdentifier = []int{2, 5, 4, 83}
+
 // # ASN.1 Definition:
 //
-// id-at-urn                                 OBJECT IDENTIFIER ::= {id-at 86}
-var Id_at_urn asn1.ObjectIdentifier = []int{2, 5, 4, 86} /* OBJECT_IDENTIFIER */
+//	id-at-urn                                 OBJECT IDENTIFIER ::= {id-at 86}
+var Id_at_urn asn1.ObjectIdentifier = []int{2, 5, 4, 86}
+
 // # ASN.1 Definition:
 //
-// id-at-url                                 OBJECT IDENTIFIER ::= {id-at 87}
-var Id_at_url asn1.ObjectIdentifier = []int{2, 5, 4, 87} /* OBJECT_IDENTIFIER */
+//	id-at-url                                 OBJECT IDENTIFIER ::= {id-at 87}
+var Id_at_url asn1.ObjectIdentifier = []int{2, 5, 4, 87}
+
 // # ASN.1 Definition:
 //
-// id-at-utmCoordinates                      OBJECT IDENTIFIER ::= {id-at 88}
-var Id_at_utmCoordinates asn1.ObjectIdentifier = []int{2, 5, 4, 88} /* OBJECT_IDENTIFIER */
+//	id-at-utmCoordinates                      OBJECT IDENTIFIER ::= {id-at 88}
+var Id_at_utmCoordinates asn1.ObjectIdentifier = []int{2, 5, 4, 88}
+
 // # ASN.1 Definition:
 //
-// id-at-urnC                                OBJECT IDENTIFIER ::= {id-at 89}
-var Id_at_urnC asn1.ObjectIdentifier = []int{2, 5, 4, 89} /* OBJECT_IDENTIFIER */
+//	id-at-urnC                                OBJECT IDENTIFIER ::= {id-at 89}
+var Id_at_urnC asn1.ObjectIdentifier = []int{2, 5, 4, 89}
+
 // # ASN.1 Definition:
 //
-// id-at-uii                                 OBJECT IDENTIFIER ::= {id-at 90}
-var Id_at_uii asn1.ObjectIdentifier = []int{2, 5, 4, 90} /* OBJECT_IDENTIFIER */
+//	id-at-uii                                 OBJECT IDENTIFIER ::= {id-at 90}
+var Id_at_uii asn1.ObjectIdentifier = []int{2, 5, 4, 90}
+
 // # ASN.1 Definition:
 //
-// id-at-epc                                 OBJECT IDENTIFIER ::= {id-at 91}
-var Id_at_epc asn1.ObjectIdentifier = []int{2, 5, 4, 91} /* OBJECT_IDENTIFIER */
+//	id-at-epc                                 OBJECT IDENTIFIER ::= {id-at 91}
+var Id_at_epc asn1.ObjectIdentifier = []int{2, 5, 4, 91}
+
 // # ASN.1 Definition:
 //
-// id-at-tagAfi                              OBJECT IDENTIFIER ::= {id-at 92}
-var Id_at_tagAfi asn1.ObjectIdentifier = []int{2, 5, 4, 92} /* OBJECT_IDENTIFIER */
+//	id-at-tagAfi                              OBJECT IDENTIFIER ::= {id-at 92}
+var Id_at_tagAfi asn1.ObjectIdentifier = []int{2, 5, 4, 92}
+
 // # ASN.1 Definition:
 //
-// id-at-epcFormat                           OBJECT IDENTIFIER ::= {id-at 93}
-var Id_at_epcFormat asn1.ObjectIdentifier = []int{2, 5, 4, 93} /* OBJECT_IDENTIFIER */
+//	id-at-epcFormat                           OBJECT IDENTIFIER ::= {id-at 93}
+var Id_at_epcFormat asn1.ObjectIdentifier = []int{2, 5, 4, 93}
+
 // # ASN.1 Definition:
 //
-// id-at-epcInUrn                            OBJECT IDENTIFIER ::= {id-at 94}
-var Id_at_epcInUrn asn1.ObjectIdentifier = []int{2, 5, 4, 94} /* OBJECT_IDENTIFIER */
+//	id-at-epcInUrn                            OBJECT IDENTIFIER ::= {id-at 94}
+var Id_at_epcInUrn asn1.ObjectIdentifier = []int{2, 5, 4, 94}
+
 // # ASN.1 Definition:
 //
-// id-at-ldapUrl                             OBJECT IDENTIFIER ::= {id-at 95}
-var Id_at_ldapUrl asn1.ObjectIdentifier = []int{2, 5, 4, 95} /* OBJECT_IDENTIFIER */
+//	id-at-ldapUrl                             OBJECT IDENTIFIER ::= {id-at 95}
+var Id_at_ldapUrl asn1.ObjectIdentifier = []int{2, 5, 4, 95}
+
 // # ASN.1 Definition:
 //
-// id-at-tagLocation                         OBJECT IDENTIFIER ::= {id-at 96}
-var Id_at_tagLocation asn1.ObjectIdentifier = []int{2, 5, 4, 96} /* OBJECT_IDENTIFIER */
+//	id-at-tagLocation                         OBJECT IDENTIFIER ::= {id-at 96}
+var Id_at_tagLocation asn1.ObjectIdentifier = []int{2, 5, 4, 96}
+
 // # ASN.1 Definition:
 //
-// id-at-organizationIdentifier              OBJECT IDENTIFIER ::= {id-at 97}
-var Id_at_organizationIdentifier asn1.ObjectIdentifier = []int{2, 5, 4, 97} /* OBJECT_IDENTIFIER */
+//	id-at-organizationIdentifier              OBJECT IDENTIFIER ::= {id-at 97}
+var Id_at_organizationIdentifier asn1.ObjectIdentifier = []int{2, 5, 4, 97}
+
 // # ASN.1 Definition:
 //
-// id-at-countryCode3c                       OBJECT IDENTIFIER ::= {id-at 98}
-var Id_at_countryCode3c asn1.ObjectIdentifier = []int{2, 5, 4, 98} /* OBJECT_IDENTIFIER */
+//	id-at-countryCode3c                       OBJECT IDENTIFIER ::= {id-at 98}
+var Id_at_countryCode3c asn1.ObjectIdentifier = []int{2, 5, 4, 98}
+
 // # ASN.1 Definition:
 //
-// id-at-countryCode3n                       OBJECT IDENTIFIER ::= {id-at 99}
-var Id_at_countryCode3n asn1.ObjectIdentifier = []int{2, 5, 4, 99} /* OBJECT_IDENTIFIER */
+//	id-at-countryCode3n                       OBJECT IDENTIFIER ::= {id-at 99}
+var Id_at_countryCode3n asn1.ObjectIdentifier = []int{2, 5, 4, 99}
+
 // # ASN.1 Definition:
 //
-// id-at-dnsName                             OBJECT IDENTIFIER ::= {id-at 100}
-var Id_at_dnsName asn1.ObjectIdentifier = []int{2, 5, 4, 100} /* OBJECT_IDENTIFIER */
+//	id-at-dnsName                             OBJECT IDENTIFIER ::= {id-at 100}
+var Id_at_dnsName asn1.ObjectIdentifier = []int{2, 5, 4, 100}
+
 // # ASN.1 Definition:
 //
-// id-at-intEmail                            OBJECT IDENTIFIER ::= {id-at 104}
-var Id_at_intEmail asn1.ObjectIdentifier = []int{2, 5, 4, 104} /* OBJECT_IDENTIFIER */
+//	id-at-intEmail                            OBJECT IDENTIFIER ::= {id-at 104}
+var Id_at_intEmail asn1.ObjectIdentifier = []int{2, 5, 4, 104}
+
 // # ASN.1 Definition:
 //
-// id-at-jid                                 OBJECT IDENTIFIER ::= {id-at 105}
-var Id_at_jid asn1.ObjectIdentifier = []int{2, 5, 4, 105} /* OBJECT_IDENTIFIER */
+//	id-at-jid                                 OBJECT IDENTIFIER ::= {id-at 105}
+var Id_at_jid asn1.ObjectIdentifier = []int{2, 5, 4, 105}
+
 // # ASN.1 Definition:
 //
-// id-at-objectIdentifier                    OBJECT IDENTIFIER ::= {id-at 106}
-var Id_at_objectIdentifier asn1.ObjectIdentifier = []int{2, 5, 4, 106} /* OBJECT_IDENTIFIER */
+//	id-at-objectIdentifier                    OBJECT IDENTIFIER ::= {id-at 106}
+var Id_at_objectIdentifier asn1.ObjectIdentifier = []int{2, 5, 4, 106}
+
 // # ASN.1 Definition:
 //
-// id-asx-utmCoords                          OBJECT IDENTIFIER ::= {id-asx 4}
-var Id_asx_utmCoords asn1.ObjectIdentifier = []int{2, 5, 40, 4} /* OBJECT_IDENTIFIER */
+//	id-asx-utmCoords                          OBJECT IDENTIFIER ::= {id-asx 4}
+var Id_asx_utmCoords asn1.ObjectIdentifier = []int{2, 5, 40, 4}
+
 // # ASN.1 Definition:
 //
-// id-asx-uiiForm                            OBJECT IDENTIFIER ::= {id-asx 5}
-var Id_asx_uiiForm asn1.ObjectIdentifier = []int{2, 5, 40, 5} /* OBJECT_IDENTIFIER */
+//	id-asx-uiiForm                            OBJECT IDENTIFIER ::= {id-asx 5}
+var Id_asx_uiiForm asn1.ObjectIdentifier = []int{2, 5, 40, 5}
+
 // # ASN.1 Definition:
 //
-// id-asx-epcForm                            OBJECT IDENTIFIER ::= {id-asx 6}
-var Id_asx_epcForm asn1.ObjectIdentifier = []int{2, 5, 40, 6} /* OBJECT_IDENTIFIER */
+//	id-asx-epcForm                            OBJECT IDENTIFIER ::= {id-asx 6}
+var Id_asx_epcForm asn1.ObjectIdentifier = []int{2, 5, 40, 6}
+
 // # ASN.1 Definition:
 //
-// id-asx-countryString3c                    OBJECT IDENTIFIER ::= {id-asx 7}
-var Id_asx_countryString3c asn1.ObjectIdentifier = []int{2, 5, 40, 7} /* OBJECT_IDENTIFIER */
+//	id-asx-countryString3c                    OBJECT IDENTIFIER ::= {id-asx 7}
+var Id_asx_countryString3c asn1.ObjectIdentifier = []int{2, 5, 40, 7}
+
 // # ASN.1 Definition:
 //
-// id-asx-countryString3n                    OBJECT IDENTIFIER ::= {id-asx 8}
-var Id_asx_countryString3n asn1.ObjectIdentifier = []int{2, 5, 40, 8} /* OBJECT_IDENTIFIER */
+//	id-asx-countryString3n                    OBJECT IDENTIFIER ::= {id-asx 8}
+var Id_asx_countryString3n asn1.ObjectIdentifier = []int{2, 5, 40, 8}
+
 // # ASN.1 Definition:
 //
-// id-asx-dnsString                          OBJECT IDENTIFIER ::= {id-asx 9}
-var Id_asx_dnsString asn1.ObjectIdentifier = []int{2, 5, 40, 9} /* OBJECT_IDENTIFIER */
+//	id-asx-dnsString                          OBJECT IDENTIFIER ::= {id-asx 9}
+var Id_asx_dnsString asn1.ObjectIdentifier = []int{2, 5, 40, 9}
+
 // # ASN.1 Definition:
 //
-// id-asx-intEmailString                     OBJECT IDENTIFIER ::= {id-asx 11}
-var Id_asx_intEmailString asn1.ObjectIdentifier = []int{2, 5, 40, 11} /* OBJECT_IDENTIFIER */
+//	id-asx-intEmailString                     OBJECT IDENTIFIER ::= {id-asx 11}
+var Id_asx_intEmailString asn1.ObjectIdentifier = []int{2, 5, 40, 11}
+
 // # ASN.1 Definition:
 //
-// id-asx-jidString                          OBJECT IDENTIFIER ::= {id-asx 12}
-var Id_asx_jidString asn1.ObjectIdentifier = []int{2, 5, 40, 12} /* OBJECT_IDENTIFIER */
+//	id-asx-jidString                          OBJECT IDENTIFIER ::= {id-asx 12}
+var Id_asx_jidString asn1.ObjectIdentifier = []int{2, 5, 40, 12}
+
 // # ASN.1 Definition:
 //
-// id-lsx-attributeTypeDescription           OBJECT IDENTIFIER ::= {id-lsx 3}
-var Id_lsx_attributeTypeDescription asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 3} /* OBJECT_IDENTIFIER */
+//	id-lsx-attributeTypeDescription           OBJECT IDENTIFIER ::= {id-lsx 3}
+var Id_lsx_attributeTypeDescription asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 3}
+
 // # ASN.1 Definition:
 //
-// id-lsx-bitString                          OBJECT IDENTIFIER ::= {id-lsx 6}
-var Id_lsx_bitString asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 6} /* OBJECT_IDENTIFIER */
+//	id-lsx-bitString                          OBJECT IDENTIFIER ::= {id-lsx 6}
+var Id_lsx_bitString asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 6}
+
 // # ASN.1 Definition:
 //
-// id-lsx-boolean                            OBJECT IDENTIFIER ::= {id-lsx 7}
-var Id_lsx_boolean asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 7} /* OBJECT_IDENTIFIER */
+//	id-lsx-boolean                            OBJECT IDENTIFIER ::= {id-lsx 7}
+var Id_lsx_boolean asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 7}
+
 // # ASN.1 Definition:
 //
-// id-lsx-countryString                      OBJECT IDENTIFIER ::= {id-lsx 11}
-var Id_lsx_countryString asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 11} /* OBJECT_IDENTIFIER */
+//	id-lsx-countryString                      OBJECT IDENTIFIER ::= {id-lsx 11}
+var Id_lsx_countryString asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 11}
+
 // # ASN.1 Definition:
 //
-// id-lsx-dn                                 OBJECT IDENTIFIER ::= {id-lsx 12}
-var Id_lsx_dn asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 12} /* OBJECT_IDENTIFIER */
+//	id-lsx-dn                                 OBJECT IDENTIFIER ::= {id-lsx 12}
+var Id_lsx_dn asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 12}
+
 // # ASN.1 Definition:
 //
-// id-lsx-deliveryMethod                     OBJECT IDENTIFIER ::= {id-lsx 14}
-var Id_lsx_deliveryMethod asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 14} /* OBJECT_IDENTIFIER */
+//	id-lsx-deliveryMethod                     OBJECT IDENTIFIER ::= {id-lsx 14}
+var Id_lsx_deliveryMethod asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 14}
+
 // # ASN.1 Definition:
 //
-// id-lsx-directoryString                    OBJECT IDENTIFIER ::= {id-lsx 15}
-var Id_lsx_directoryString asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 15} /* OBJECT_IDENTIFIER */
+//	id-lsx-directoryString                    OBJECT IDENTIFIER ::= {id-lsx 15}
+var Id_lsx_directoryString asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 15}
+
 // # ASN.1 Definition:
 //
-// id-lsx-dITContentRuleDescription          OBJECT IDENTIFIER ::= {id-lsx 16}
-var Id_lsx_dITContentRuleDescription asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 16} /* OBJECT_IDENTIFIER */
+//	id-lsx-dITContentRuleDescription          OBJECT IDENTIFIER ::= {id-lsx 16}
+var Id_lsx_dITContentRuleDescription asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 16}
+
 // # ASN.1 Definition:
 //
-// id-lsx-dITStructureRuleDescription        OBJECT IDENTIFIER ::= {id-lsx 17}
-var Id_lsx_dITStructureRuleDescription asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 17} /* OBJECT_IDENTIFIER */
+//	id-lsx-dITStructureRuleDescription        OBJECT IDENTIFIER ::= {id-lsx 17}
+var Id_lsx_dITStructureRuleDescription asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 17}
+
 // # ASN.1 Definition:
 //
-// id-lsx-enhancedGuide                      OBJECT IDENTIFIER ::= {id-lsx 21}
-var Id_lsx_enhancedGuide asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 21} /* OBJECT_IDENTIFIER */
+//	id-lsx-enhancedGuide                      OBJECT IDENTIFIER ::= {id-lsx 21}
+var Id_lsx_enhancedGuide asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 21}
+
 // # ASN.1 Definition:
 //
-// id-lsx-facsimileTelephoneNr               OBJECT IDENTIFIER ::= {id-lsx 22}
-var Id_lsx_facsimileTelephoneNr asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 22} /* OBJECT_IDENTIFIER */
+//	id-lsx-facsimileTelephoneNr               OBJECT IDENTIFIER ::= {id-lsx 22}
+var Id_lsx_facsimileTelephoneNr asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 22}
+
 // # ASN.1 Definition:
 //
-// id-lsx-fax                                OBJECT IDENTIFIER ::= {id-lsx 23}
-var Id_lsx_fax asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 23} /* OBJECT_IDENTIFIER */
+//	id-lsx-fax                                OBJECT IDENTIFIER ::= {id-lsx 23}
+var Id_lsx_fax asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 23}
+
 // # ASN.1 Definition:
 //
-// id-lsx-generalizedTime                    OBJECT IDENTIFIER ::= {id-lsx 24}
-var Id_lsx_generalizedTime asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 24} /* OBJECT_IDENTIFIER */
+//	id-lsx-generalizedTime                    OBJECT IDENTIFIER ::= {id-lsx 24}
+var Id_lsx_generalizedTime asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 24}
+
 // # ASN.1 Definition:
 //
-// id-lsx-guide                              OBJECT IDENTIFIER ::= {id-lsx 25}
-var Id_lsx_guide asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 25} /* OBJECT_IDENTIFIER */
+//	id-lsx-guide                              OBJECT IDENTIFIER ::= {id-lsx 25}
+var Id_lsx_guide asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 25}
+
 // # ASN.1 Definition:
 //
-// id-lsx-ia5String                          OBJECT IDENTIFIER ::= {id-lsx 26}
-var Id_lsx_ia5String asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 26} /* OBJECT_IDENTIFIER */
+//	id-lsx-ia5String                          OBJECT IDENTIFIER ::= {id-lsx 26}
+var Id_lsx_ia5String asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 26}
+
 // # ASN.1 Definition:
 //
-// id-lsx-integer                            OBJECT IDENTIFIER ::= {id-lsx 27}
-var Id_lsx_integer asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 27} /* OBJECT_IDENTIFIER */
+//	id-lsx-integer                            OBJECT IDENTIFIER ::= {id-lsx 27}
+var Id_lsx_integer asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 27}
+
 // # ASN.1 Definition:
 //
-// id-lsx-jpeg                               OBJECT IDENTIFIER ::= {id-lsx 28}
-var Id_lsx_jpeg asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 28} /* OBJECT_IDENTIFIER */
+//	id-lsx-jpeg                               OBJECT IDENTIFIER ::= {id-lsx 28}
+var Id_lsx_jpeg asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 28}
+
 // # ASN.1 Definition:
 //
-// id-lsx-matchingRuleDescription            OBJECT IDENTIFIER ::= {id-lsx 30}
-var Id_lsx_matchingRuleDescription asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 30} /* OBJECT_IDENTIFIER */
+//	id-lsx-matchingRuleDescription            OBJECT IDENTIFIER ::= {id-lsx 30}
+var Id_lsx_matchingRuleDescription asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 30}
+
 // # ASN.1 Definition:
 //
-// id-lsx-matchingRuleUseDescription         OBJECT IDENTIFIER ::= {id-lsx 31}
-var Id_lsx_matchingRuleUseDescription asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 31} /* OBJECT_IDENTIFIER */
+//	id-lsx-matchingRuleUseDescription         OBJECT IDENTIFIER ::= {id-lsx 31}
+var Id_lsx_matchingRuleUseDescription asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 31}
+
 // # ASN.1 Definition:
 //
-// id-lsx-nameAndOptionalUID                 OBJECT IDENTIFIER ::= {id-lsx 34}
-var Id_lsx_nameAndOptionalUID asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 34} /* OBJECT_IDENTIFIER */
+//	id-lsx-nameAndOptionalUID                 OBJECT IDENTIFIER ::= {id-lsx 34}
+var Id_lsx_nameAndOptionalUID asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 34}
+
 // # ASN.1 Definition:
 //
-// id-lsx-nameFormDescription                OBJECT IDENTIFIER ::= {id-lsx 35}
-var Id_lsx_nameFormDescription asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 35} /* OBJECT_IDENTIFIER */
+//	id-lsx-nameFormDescription                OBJECT IDENTIFIER ::= {id-lsx 35}
+var Id_lsx_nameFormDescription asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 35}
+
 // # ASN.1 Definition:
 //
-// id-lsx-numericString                      OBJECT IDENTIFIER ::= {id-lsx 36}
-var Id_lsx_numericString asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 36} /* OBJECT_IDENTIFIER */
+//	id-lsx-numericString                      OBJECT IDENTIFIER ::= {id-lsx 36}
+var Id_lsx_numericString asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 36}
+
 // # ASN.1 Definition:
 //
-// id-lsx-objectClassDescription             OBJECT IDENTIFIER ::= {id-lsx 37}
-var Id_lsx_objectClassDescription asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 37} /* OBJECT_IDENTIFIER */
+//	id-lsx-objectClassDescription             OBJECT IDENTIFIER ::= {id-lsx 37}
+var Id_lsx_objectClassDescription asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 37}
+
 // # ASN.1 Definition:
 //
-// id-lsx-oid                                OBJECT IDENTIFIER ::= {id-lsx 38}
-var Id_lsx_oid asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 38} /* OBJECT_IDENTIFIER */
+//	id-lsx-oid                                OBJECT IDENTIFIER ::= {id-lsx 38}
+var Id_lsx_oid asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 38}
+
 // # ASN.1 Definition:
 //
-// id-lsx-otherMailbox                       OBJECT IDENTIFIER ::= {id-lsx 39}
-var Id_lsx_otherMailbox asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 39} /* OBJECT_IDENTIFIER */
+//	id-lsx-otherMailbox                       OBJECT IDENTIFIER ::= {id-lsx 39}
+var Id_lsx_otherMailbox asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 39}
+
 // # ASN.1 Definition:
 //
-// id-lsx-octetString                        OBJECT IDENTIFIER ::= {id-lsx 40}
-var Id_lsx_octetString asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 40} /* OBJECT_IDENTIFIER */
+//	id-lsx-octetString                        OBJECT IDENTIFIER ::= {id-lsx 40}
+var Id_lsx_octetString asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 40}
+
 // # ASN.1 Definition:
 //
-// id-lsx-postalAddr                         OBJECT IDENTIFIER ::= {id-lsx 41}
-var Id_lsx_postalAddr asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 41} /* OBJECT_IDENTIFIER */
+//	id-lsx-postalAddr                         OBJECT IDENTIFIER ::= {id-lsx 41}
+var Id_lsx_postalAddr asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 41}
+
 // # ASN.1 Definition:
 //
-// id-lsx-presentationAddr                   OBJECT IDENTIFIER ::= {id-lsx 43}
-var Id_lsx_presentationAddr asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 43} /* OBJECT_IDENTIFIER */
+//	id-lsx-presentationAddr                   OBJECT IDENTIFIER ::= {id-lsx 43}
+var Id_lsx_presentationAddr asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 43}
+
 // # ASN.1 Definition:
 //
-// id-lsx-printableString                    OBJECT IDENTIFIER ::= {id-lsx 44}
-var Id_lsx_printableString asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 44} /* OBJECT_IDENTIFIER */
+//	id-lsx-printableString                    OBJECT IDENTIFIER ::= {id-lsx 44}
+var Id_lsx_printableString asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 44}
+
 // # ASN.1 Definition:
 //
-// id-lsx-subtreeSpec                        OBJECT IDENTIFIER ::= {id-lsx 45}
-var Id_lsx_subtreeSpec asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 45} /* OBJECT_IDENTIFIER */
+//	id-lsx-subtreeSpec                        OBJECT IDENTIFIER ::= {id-lsx 45}
+var Id_lsx_subtreeSpec asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 45}
+
 // # ASN.1 Definition:
 //
-// id-lsx-telephoneNr                        OBJECT IDENTIFIER ::= {id-lsx 50}
-var Id_lsx_telephoneNr asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 50} /* OBJECT_IDENTIFIER */
+//	id-lsx-telephoneNr                        OBJECT IDENTIFIER ::= {id-lsx 50}
+var Id_lsx_telephoneNr asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 50}
+
 // # ASN.1 Definition:
 //
-// id-lsx-telexNr                            OBJECT IDENTIFIER ::= {id-lsx 52}
-var Id_lsx_telexNr asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 52} /* OBJECT_IDENTIFIER */
+//	id-lsx-telexNr                            OBJECT IDENTIFIER ::= {id-lsx 52}
+var Id_lsx_telexNr asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 52}
+
 // # ASN.1 Definition:
 //
-// id-lsx-utcTime                            OBJECT IDENTIFIER ::= {id-lsx 53}
-var Id_lsx_utcTime asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 53} /* OBJECT_IDENTIFIER */
+//	id-lsx-utcTime                            OBJECT IDENTIFIER ::= {id-lsx 53}
+var Id_lsx_utcTime asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 53}
+
 // # ASN.1 Definition:
 //
-// id-lsx-ldapSyntaxDescription              OBJECT IDENTIFIER ::= {id-lsx 54}
-var Id_lsx_ldapSyntaxDescription asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 54} /* OBJECT_IDENTIFIER */
+//	id-lsx-ldapSyntaxDescription              OBJECT IDENTIFIER ::= {id-lsx 54}
+var Id_lsx_ldapSyntaxDescription asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 54}
+
 // # ASN.1 Definition:
 //
-// id-lsx-substringAssertion                 OBJECT IDENTIFIER ::= {id-lsx 58}
-var Id_lsx_substringAssertion asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 58} /* OBJECT_IDENTIFIER */
+//	id-lsx-substringAssertion                 OBJECT IDENTIFIER ::= {id-lsx 58}
+var Id_lsx_substringAssertion asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 58}
+
 // # ASN.1 Definition:
 //
-// id-oidC1                                  OBJECT IDENTIFIER ::= {id 0}
-var Id_oidC1 asn1.ObjectIdentifier = []int{2, 17, 1, 2, 0} /* OBJECT_IDENTIFIER */
+//	id-oidC1                                  OBJECT IDENTIFIER ::= {id 0}
+var Id_oidC1 asn1.ObjectIdentifier = []int{2, 17, 1, 2, 0}
+
 // # ASN.1 Definition:
 //
-// id-oidC2                                  OBJECT IDENTIFIER ::= {id 1}
-var Id_oidC2 asn1.ObjectIdentifier = []int{2, 17, 1, 2, 1} /* OBJECT_IDENTIFIER */
+//	id-oidC2                                  OBJECT IDENTIFIER ::= {id 1}
+var Id_oidC2 asn1.ObjectIdentifier = []int{2, 17, 1, 2, 1}
+
 // # ASN.1 Definition:
 //
-// id-oidC                                   OBJECT IDENTIFIER ::= {id 2}
-var Id_oidC asn1.ObjectIdentifier = []int{2, 17, 1, 2, 2} /* OBJECT_IDENTIFIER */
+//	id-oidC                                   OBJECT IDENTIFIER ::= {id 2}
+var Id_oidC asn1.ObjectIdentifier = []int{2, 17, 1, 2, 2}
+
 // # ASN.1 Definition:
 //
-// id-cat-sequenceMatchType                  OBJECT IDENTIFIER ::= {id-cat 1}
-var Id_cat_sequenceMatchType asn1.ObjectIdentifier = []int{2, 5, 37, 1} /* OBJECT_IDENTIFIER */
+//	id-cat-sequenceMatchType                  OBJECT IDENTIFIER ::= {id-cat 1}
+var Id_cat_sequenceMatchType asn1.ObjectIdentifier = []int{2, 5, 37, 1}
+
 // # ASN.1 Definition:
 //
-// id-cat-wordMatchType                      OBJECT IDENTIFIER ::= {id-cat 2}
-var Id_cat_wordMatchType asn1.ObjectIdentifier = []int{2, 5, 37, 2} /* OBJECT_IDENTIFIER */
+//	id-cat-wordMatchType                      OBJECT IDENTIFIER ::= {id-cat 2}
+var Id_cat_wordMatchType asn1.ObjectIdentifier = []int{2, 5, 37, 2}
+
 // # ASN.1 Definition:
 //
-// id-cat-characterMatchTypes                OBJECT IDENTIFIER ::= {id-cat 3}
-var Id_cat_characterMatchTypes asn1.ObjectIdentifier = []int{2, 5, 37, 3} /* OBJECT_IDENTIFIER */
+//	id-cat-characterMatchTypes                OBJECT IDENTIFIER ::= {id-cat 3}
+var Id_cat_characterMatchTypes asn1.ObjectIdentifier = []int{2, 5, 37, 3}
+
 // # ASN.1 Definition:
 //
-// id-cat-selectedContexts                   OBJECT IDENTIFIER ::= {id-cat 4}
-var Id_cat_selectedContexts asn1.ObjectIdentifier = []int{2, 5, 37, 4} /* OBJECT_IDENTIFIER */
+//	id-cat-selectedContexts                   OBJECT IDENTIFIER ::= {id-cat 4}
+var Id_cat_selectedContexts asn1.ObjectIdentifier = []int{2, 5, 37, 4}
+
 // # ASN.1 Definition:
 //
-// id-not-dSAProblem                         OBJECT IDENTIFIER ::= {id-not 0}
-var Id_not_dSAProblem asn1.ObjectIdentifier = []int{2, 5, 35, 0} /* OBJECT_IDENTIFIER */
+//	id-not-dSAProblem                         OBJECT IDENTIFIER ::= {id-not 0}
+var Id_not_dSAProblem asn1.ObjectIdentifier = []int{2, 5, 35, 0}
+
 // # ASN.1 Definition:
 //
-// id-not-searchServiceProblem               OBJECT IDENTIFIER ::= {id-not 1}
-var Id_not_searchServiceProblem asn1.ObjectIdentifier = []int{2, 5, 35, 1} /* OBJECT_IDENTIFIER */
+//	id-not-searchServiceProblem               OBJECT IDENTIFIER ::= {id-not 1}
+var Id_not_searchServiceProblem asn1.ObjectIdentifier = []int{2, 5, 35, 1}
+
 // # ASN.1 Definition:
 //
-// id-not-serviceType                        OBJECT IDENTIFIER ::= {id-not 2}
-var Id_not_serviceType asn1.ObjectIdentifier = []int{2, 5, 35, 2} /* OBJECT_IDENTIFIER */
+//	id-not-serviceType                        OBJECT IDENTIFIER ::= {id-not 2}
+var Id_not_serviceType asn1.ObjectIdentifier = []int{2, 5, 35, 2}
+
 // # ASN.1 Definition:
 //
-// id-not-attributeTypeList                  OBJECT IDENTIFIER ::= {id-not 3}
-var Id_not_attributeTypeList asn1.ObjectIdentifier = []int{2, 5, 35, 3} /* OBJECT_IDENTIFIER */
+//	id-not-attributeTypeList                  OBJECT IDENTIFIER ::= {id-not 3}
+var Id_not_attributeTypeList asn1.ObjectIdentifier = []int{2, 5, 35, 3}
+
 // # ASN.1 Definition:
 //
-// id-not-matchingRuleList                   OBJECT IDENTIFIER ::= {id-not 4}
-var Id_not_matchingRuleList asn1.ObjectIdentifier = []int{2, 5, 35, 4} /* OBJECT_IDENTIFIER */
+//	id-not-matchingRuleList                   OBJECT IDENTIFIER ::= {id-not 4}
+var Id_not_matchingRuleList asn1.ObjectIdentifier = []int{2, 5, 35, 4}
+
 // # ASN.1 Definition:
 //
-// id-not-filterItem                         OBJECT IDENTIFIER ::= {id-not 5}
-var Id_not_filterItem asn1.ObjectIdentifier = []int{2, 5, 35, 5} /* OBJECT_IDENTIFIER */
+//	id-not-filterItem                         OBJECT IDENTIFIER ::= {id-not 5}
+var Id_not_filterItem asn1.ObjectIdentifier = []int{2, 5, 35, 5}
+
 // # ASN.1 Definition:
 //
-// id-not-attributeCombinations              OBJECT IDENTIFIER ::= {id-not 6}
-var Id_not_attributeCombinations asn1.ObjectIdentifier = []int{2, 5, 35, 6} /* OBJECT_IDENTIFIER */
+//	id-not-attributeCombinations              OBJECT IDENTIFIER ::= {id-not 6}
+var Id_not_attributeCombinations asn1.ObjectIdentifier = []int{2, 5, 35, 6}
+
 // # ASN.1 Definition:
 //
-// id-not-contextTypeList                    OBJECT IDENTIFIER ::= {id-not 7}
-var Id_not_contextTypeList asn1.ObjectIdentifier = []int{2, 5, 35, 7} /* OBJECT_IDENTIFIER */
+//	id-not-contextTypeList                    OBJECT IDENTIFIER ::= {id-not 7}
+var Id_not_contextTypeList asn1.ObjectIdentifier = []int{2, 5, 35, 7}
+
 // # ASN.1 Definition:
 //
-// id-not-contextList                        OBJECT IDENTIFIER ::= {id-not 8}
-var Id_not_contextList asn1.ObjectIdentifier = []int{2, 5, 35, 8} /* OBJECT_IDENTIFIER */
+//	id-not-contextList                        OBJECT IDENTIFIER ::= {id-not 8}
+var Id_not_contextList asn1.ObjectIdentifier = []int{2, 5, 35, 8}
+
 // # ASN.1 Definition:
 //
-// id-not-contextCombinations                OBJECT IDENTIFIER ::= {id-not 9}
-var Id_not_contextCombinations asn1.ObjectIdentifier = []int{2, 5, 35, 9} /* OBJECT_IDENTIFIER */
+//	id-not-contextCombinations                OBJECT IDENTIFIER ::= {id-not 9}
+var Id_not_contextCombinations asn1.ObjectIdentifier = []int{2, 5, 35, 9}
+
 // # ASN.1 Definition:
 //
-// id-not-hierarchySelectList                OBJECT IDENTIFIER ::= {id-not 10}
-var Id_not_hierarchySelectList asn1.ObjectIdentifier = []int{2, 5, 35, 10} /* OBJECT_IDENTIFIER */
+//	id-not-hierarchySelectList                OBJECT IDENTIFIER ::= {id-not 10}
+var Id_not_hierarchySelectList asn1.ObjectIdentifier = []int{2, 5, 35, 10}
+
 // # ASN.1 Definition:
 //
-// id-not-searchControlOptionsList           OBJECT IDENTIFIER ::= {id-not 11}
-var Id_not_searchControlOptionsList asn1.ObjectIdentifier = []int{2, 5, 35, 11} /* OBJECT_IDENTIFIER */
+//	id-not-searchControlOptionsList           OBJECT IDENTIFIER ::= {id-not 11}
+var Id_not_searchControlOptionsList asn1.ObjectIdentifier = []int{2, 5, 35, 11}
+
 // # ASN.1 Definition:
 //
-// id-not-serviceControlOptionsList          OBJECT IDENTIFIER ::= {id-not 12}
-var Id_not_serviceControlOptionsList asn1.ObjectIdentifier = []int{2, 5, 35, 12} /* OBJECT_IDENTIFIER */
+//	id-not-serviceControlOptionsList          OBJECT IDENTIFIER ::= {id-not 12}
+var Id_not_serviceControlOptionsList asn1.ObjectIdentifier = []int{2, 5, 35, 12}
+
 // # ASN.1 Definition:
 //
-// id-not-multipleMatchingLocalities         OBJECT IDENTIFIER ::= {id-not 13}
-var Id_not_multipleMatchingLocalities asn1.ObjectIdentifier = []int{2, 5, 35, 13} /* OBJECT_IDENTIFIER */
+//	id-not-multipleMatchingLocalities         OBJECT IDENTIFIER ::= {id-not 13}
+var Id_not_multipleMatchingLocalities asn1.ObjectIdentifier = []int{2, 5, 35, 13}
+
 // # ASN.1 Definition:
 //
-// id-not-proposedRelaxation                 OBJECT IDENTIFIER ::= {id-not 14}
-var Id_not_proposedRelaxation asn1.ObjectIdentifier = []int{2, 5, 35, 14} /* OBJECT_IDENTIFIER */
+//	id-not-proposedRelaxation                 OBJECT IDENTIFIER ::= {id-not 14}
+var Id_not_proposedRelaxation asn1.ObjectIdentifier = []int{2, 5, 35, 14}
+
 // # ASN.1 Definition:
 //
-// id-not-appliedRelaxation                  OBJECT IDENTIFIER ::= {id-not 15}
-var Id_not_appliedRelaxation asn1.ObjectIdentifier = []int{2, 5, 35, 15} /* OBJECT_IDENTIFIER */
+//	id-not-appliedRelaxation                  OBJECT IDENTIFIER ::= {id-not 15}
+var Id_not_appliedRelaxation asn1.ObjectIdentifier = []int{2, 5, 35, 15}
+
 // # ASN.1 Definition:
 //
-// id-not-pwdResponse                        OBJECT IDENTIFIER ::= {id-not 16}
-var Id_not_pwdResponse asn1.ObjectIdentifier = []int{2, 5, 35, 16} /* OBJECT_IDENTIFIER */
+//	id-not-pwdResponse                        OBJECT IDENTIFIER ::= {id-not 16}
+var Id_not_pwdResponse asn1.ObjectIdentifier = []int{2, 5, 35, 16}
+
 // # ASN.1 Definition:
 //
-// id-not-ldapDiagnosticMsg                  OBJECT IDENTIFIER ::= {id-not 17}
-var Id_not_ldapDiagnosticMsg asn1.ObjectIdentifier = []int{2, 5, 35, 17} /* OBJECT_IDENTIFIER */
+//	id-not-ldapDiagnosticMsg                  OBJECT IDENTIFIER ::= {id-not 17}
+var Id_not_ldapDiagnosticMsg asn1.ObjectIdentifier = []int{2, 5, 35, 17}
+
 // # ASN.1 Definition:
 //
-// id-pr-targetDsaUnavailable                OBJECT IDENTIFIER ::= {id-pr 1}
-var Id_pr_targetDsaUnavailable asn1.ObjectIdentifier = []int{2, 5, 34, 1} /* OBJECT_IDENTIFIER */
+//	id-pr-targetDsaUnavailable                OBJECT IDENTIFIER ::= {id-pr 1}
+var Id_pr_targetDsaUnavailable asn1.ObjectIdentifier = []int{2, 5, 34, 1}
+
 // # ASN.1 Definition:
 //
-// id-pr-dataSourceUnavailable               OBJECT IDENTIFIER ::= {id-pr 2}
-var Id_pr_dataSourceUnavailable asn1.ObjectIdentifier = []int{2, 5, 34, 2} /* OBJECT_IDENTIFIER */
+//	id-pr-dataSourceUnavailable               OBJECT IDENTIFIER ::= {id-pr 2}
+var Id_pr_dataSourceUnavailable asn1.ObjectIdentifier = []int{2, 5, 34, 2}
+
 // # ASN.1 Definition:
 //
-// id-pr-unidentifiedOperation               OBJECT IDENTIFIER ::= {id-pr 3}
-var Id_pr_unidentifiedOperation asn1.ObjectIdentifier = []int{2, 5, 34, 3} /* OBJECT_IDENTIFIER */
+//	id-pr-unidentifiedOperation               OBJECT IDENTIFIER ::= {id-pr 3}
+var Id_pr_unidentifiedOperation asn1.ObjectIdentifier = []int{2, 5, 34, 3}
+
 // # ASN.1 Definition:
 //
-// id-pr-unavailableOperation                OBJECT IDENTIFIER ::= {id-pr 4}
-var Id_pr_unavailableOperation asn1.ObjectIdentifier = []int{2, 5, 34, 4} /* OBJECT_IDENTIFIER */
+//	id-pr-unavailableOperation                OBJECT IDENTIFIER ::= {id-pr 4}
+var Id_pr_unavailableOperation asn1.ObjectIdentifier = []int{2, 5, 34, 4}
+
 // # ASN.1 Definition:
 //
-// id-pr-searchAttributeViolation            OBJECT IDENTIFIER ::= {id-pr 5}
-var Id_pr_searchAttributeViolation asn1.ObjectIdentifier = []int{2, 5, 34, 5} /* OBJECT_IDENTIFIER */
+//	id-pr-searchAttributeViolation            OBJECT IDENTIFIER ::= {id-pr 5}
+var Id_pr_searchAttributeViolation asn1.ObjectIdentifier = []int{2, 5, 34, 5}
+
 // # ASN.1 Definition:
 //
-// id-pr-searchAttributeCombinationViolation OBJECT IDENTIFIER ::= {id-pr 6}
-var Id_pr_searchAttributeCombinationViolation asn1.ObjectIdentifier = []int{2, 5, 34, 6} /* OBJECT_IDENTIFIER */
+//	id-pr-searchAttributeCombinationViolation OBJECT IDENTIFIER ::= {id-pr 6}
+var Id_pr_searchAttributeCombinationViolation asn1.ObjectIdentifier = []int{2, 5, 34, 6}
+
 // # ASN.1 Definition:
 //
-// id-pr-searchValueNotAllowed               OBJECT IDENTIFIER ::= {id-pr 7}
-var Id_pr_searchValueNotAllowed asn1.ObjectIdentifier = []int{2, 5, 34, 7} /* OBJECT_IDENTIFIER */
+//	id-pr-searchValueNotAllowed               OBJECT IDENTIFIER ::= {id-pr 7}
+var Id_pr_searchValueNotAllowed asn1.ObjectIdentifier = []int{2, 5, 34, 7}
+
 // # ASN.1 Definition:
 //
-// id-pr-missingSearchAttribute              OBJECT IDENTIFIER ::= {id-pr 8}
-var Id_pr_missingSearchAttribute asn1.ObjectIdentifier = []int{2, 5, 34, 8} /* OBJECT_IDENTIFIER */
+//	id-pr-missingSearchAttribute              OBJECT IDENTIFIER ::= {id-pr 8}
+var Id_pr_missingSearchAttribute asn1.ObjectIdentifier = []int{2, 5, 34, 8}
+
 // # ASN.1 Definition:
 //
-// id-pr-searchValueViolation                OBJECT IDENTIFIER ::= {id-pr 9}
-var Id_pr_searchValueViolation asn1.ObjectIdentifier = []int{2, 5, 34, 9} /* OBJECT_IDENTIFIER */
+//	id-pr-searchValueViolation                OBJECT IDENTIFIER ::= {id-pr 9}
+var Id_pr_searchValueViolation asn1.ObjectIdentifier = []int{2, 5, 34, 9}
+
 // # ASN.1 Definition:
 //
-// id-pr-attributeNegationViolation          OBJECT IDENTIFIER ::= {id-pr 10}
-var Id_pr_attributeNegationViolation asn1.ObjectIdentifier = []int{2, 5, 34, 10} /* OBJECT_IDENTIFIER */
+//	id-pr-attributeNegationViolation          OBJECT IDENTIFIER ::= {id-pr 10}
+var Id_pr_attributeNegationViolation asn1.ObjectIdentifier = []int{2, 5, 34, 10}
+
 // # ASN.1 Definition:
 //
-// id-pr-searchValueRequired                 OBJECT IDENTIFIER ::= {id-pr 11}
-var Id_pr_searchValueRequired asn1.ObjectIdentifier = []int{2, 5, 34, 11} /* OBJECT_IDENTIFIER */
+//	id-pr-searchValueRequired                 OBJECT IDENTIFIER ::= {id-pr 11}
+var Id_pr_searchValueRequired asn1.ObjectIdentifier = []int{2, 5, 34, 11}
+
 // # ASN.1 Definition:
 //
-// id-pr-invalidSearchValue                  OBJECT IDENTIFIER ::= {id-pr 12}
-var Id_pr_invalidSearchValue asn1.ObjectIdentifier = []int{2, 5, 34, 12} /* OBJECT_IDENTIFIER */
+//	id-pr-invalidSearchValue                  OBJECT IDENTIFIER ::= {id-pr 12}
+var Id_pr_invalidSearchValue asn1.ObjectIdentifier = []int{2, 5, 34, 12}
+
 // # ASN.1 Definition:
 //
-// id-pr-searchContextViolation              OBJECT IDENTIFIER ::= {id-pr 13}
-var Id_pr_searchContextViolation asn1.ObjectIdentifier = []int{2, 5, 34, 13} /* OBJECT_IDENTIFIER */
+//	id-pr-searchContextViolation              OBJECT IDENTIFIER ::= {id-pr 13}
+var Id_pr_searchContextViolation asn1.ObjectIdentifier = []int{2, 5, 34, 13}
+
 // # ASN.1 Definition:
 //
-// id-pr-searchContextCombinationViolation   OBJECT IDENTIFIER ::= {id-pr 14}
-var Id_pr_searchContextCombinationViolation asn1.ObjectIdentifier = []int{2, 5, 34, 14} /* OBJECT_IDENTIFIER */
+//	id-pr-searchContextCombinationViolation   OBJECT IDENTIFIER ::= {id-pr 14}
+var Id_pr_searchContextCombinationViolation asn1.ObjectIdentifier = []int{2, 5, 34, 14}
+
 // # ASN.1 Definition:
 //
-// id-pr-missingSearchContext                OBJECT IDENTIFIER ::= {id-pr 15}
-var Id_pr_missingSearchContext asn1.ObjectIdentifier = []int{2, 5, 34, 15} /* OBJECT_IDENTIFIER */
+//	id-pr-missingSearchContext                OBJECT IDENTIFIER ::= {id-pr 15}
+var Id_pr_missingSearchContext asn1.ObjectIdentifier = []int{2, 5, 34, 15}
+
 // # ASN.1 Definition:
 //
-// id-pr-searchContextValueViolation         OBJECT IDENTIFIER ::= {id-pr 16}
-var Id_pr_searchContextValueViolation asn1.ObjectIdentifier = []int{2, 5, 34, 16} /* OBJECT_IDENTIFIER */
+//	id-pr-searchContextValueViolation         OBJECT IDENTIFIER ::= {id-pr 16}
+var Id_pr_searchContextValueViolation asn1.ObjectIdentifier = []int{2, 5, 34, 16}
+
 // # ASN.1 Definition:
 //
-// id-pr-searchContextValueRequired          OBJECT IDENTIFIER ::= {id-pr 17}
-var Id_pr_searchContextValueRequired asn1.ObjectIdentifier = []int{2, 5, 34, 17} /* OBJECT_IDENTIFIER */
+//	id-pr-searchContextValueRequired          OBJECT IDENTIFIER ::= {id-pr 17}
+var Id_pr_searchContextValueRequired asn1.ObjectIdentifier = []int{2, 5, 34, 17}
+
 // # ASN.1 Definition:
 //
-// id-pr-invalidContextSearchValue           OBJECT IDENTIFIER ::= {id-pr 18}
-var Id_pr_invalidContextSearchValue asn1.ObjectIdentifier = []int{2, 5, 34, 18} /* OBJECT_IDENTIFIER */
+//	id-pr-invalidContextSearchValue           OBJECT IDENTIFIER ::= {id-pr 18}
+var Id_pr_invalidContextSearchValue asn1.ObjectIdentifier = []int{2, 5, 34, 18}
+
 // # ASN.1 Definition:
 //
-// id-pr-unsupportedMatchingRule             OBJECT IDENTIFIER ::= {id-pr 19}
-var Id_pr_unsupportedMatchingRule asn1.ObjectIdentifier = []int{2, 5, 34, 19} /* OBJECT_IDENTIFIER */
+//	id-pr-unsupportedMatchingRule             OBJECT IDENTIFIER ::= {id-pr 19}
+var Id_pr_unsupportedMatchingRule asn1.ObjectIdentifier = []int{2, 5, 34, 19}
+
 // # ASN.1 Definition:
 //
-// id-pr-attributeMatchingViolation          OBJECT IDENTIFIER ::= {id-pr 20}
-var Id_pr_attributeMatchingViolation asn1.ObjectIdentifier = []int{2, 5, 34, 20} /* OBJECT_IDENTIFIER */
+//	id-pr-attributeMatchingViolation          OBJECT IDENTIFIER ::= {id-pr 20}
+var Id_pr_attributeMatchingViolation asn1.ObjectIdentifier = []int{2, 5, 34, 20}
+
 // # ASN.1 Definition:
 //
-// id-pr-unsupportedMatchingUse              OBJECT IDENTIFIER ::= {id-pr 21}
-var Id_pr_unsupportedMatchingUse asn1.ObjectIdentifier = []int{2, 5, 34, 21} /* OBJECT_IDENTIFIER */
+//	id-pr-unsupportedMatchingUse              OBJECT IDENTIFIER ::= {id-pr 21}
+var Id_pr_unsupportedMatchingUse asn1.ObjectIdentifier = []int{2, 5, 34, 21}
+
 // # ASN.1 Definition:
 //
-// id-pr-matchingUseViolation                OBJECT IDENTIFIER ::= {id-pr 22}
-var Id_pr_matchingUseViolation asn1.ObjectIdentifier = []int{2, 5, 34, 22} /* OBJECT_IDENTIFIER */
+//	id-pr-matchingUseViolation                OBJECT IDENTIFIER ::= {id-pr 22}
+var Id_pr_matchingUseViolation asn1.ObjectIdentifier = []int{2, 5, 34, 22}
+
 // # ASN.1 Definition:
 //
-// id-pr-hierarchySelectForbidden            OBJECT IDENTIFIER ::= {id-pr 23}
-var Id_pr_hierarchySelectForbidden asn1.ObjectIdentifier = []int{2, 5, 34, 23} /* OBJECT_IDENTIFIER */
+//	id-pr-hierarchySelectForbidden            OBJECT IDENTIFIER ::= {id-pr 23}
+var Id_pr_hierarchySelectForbidden asn1.ObjectIdentifier = []int{2, 5, 34, 23}
+
 // # ASN.1 Definition:
 //
-// id-pr-invalidHierarchySelect              OBJECT IDENTIFIER ::= {id-pr 24}
-var Id_pr_invalidHierarchySelect asn1.ObjectIdentifier = []int{2, 5, 34, 24} /* OBJECT_IDENTIFIER */
+//	id-pr-invalidHierarchySelect              OBJECT IDENTIFIER ::= {id-pr 24}
+var Id_pr_invalidHierarchySelect asn1.ObjectIdentifier = []int{2, 5, 34, 24}
+
 // # ASN.1 Definition:
 //
-// id-pr-unavailableHierarchySelect          OBJECT IDENTIFIER ::= {id-pr 25}
-var Id_pr_unavailableHierarchySelect asn1.ObjectIdentifier = []int{2, 5, 34, 25} /* OBJECT_IDENTIFIER */
+//	id-pr-unavailableHierarchySelect          OBJECT IDENTIFIER ::= {id-pr 25}
+var Id_pr_unavailableHierarchySelect asn1.ObjectIdentifier = []int{2, 5, 34, 25}
+
 // # ASN.1 Definition:
 //
-// id-pr-invalidSearchControlOptions         OBJECT IDENTIFIER ::= {id-pr 26}
-var Id_pr_invalidSearchControlOptions asn1.ObjectIdentifier = []int{2, 5, 34, 26} /* OBJECT_IDENTIFIER */
+//	id-pr-invalidSearchControlOptions         OBJECT IDENTIFIER ::= {id-pr 26}
+var Id_pr_invalidSearchControlOptions asn1.ObjectIdentifier = []int{2, 5, 34, 26}
+
 // # ASN.1 Definition:
 //
-// id-pr-invalidServiceControlOptions        OBJECT IDENTIFIER ::= {id-pr 27}
-var Id_pr_invalidServiceControlOptions asn1.ObjectIdentifier = []int{2, 5, 34, 27} /* OBJECT_IDENTIFIER */
+//	id-pr-invalidServiceControlOptions        OBJECT IDENTIFIER ::= {id-pr 27}
+var Id_pr_invalidServiceControlOptions asn1.ObjectIdentifier = []int{2, 5, 34, 27}
+
 // # ASN.1 Definition:
 //
-// id-pr-searchSubsetViolation               OBJECT IDENTIFIER ::= {id-pr 28}
-var Id_pr_searchSubsetViolation asn1.ObjectIdentifier = []int{2, 5, 34, 28} /* OBJECT_IDENTIFIER */
+//	id-pr-searchSubsetViolation               OBJECT IDENTIFIER ::= {id-pr 28}
+var Id_pr_searchSubsetViolation asn1.ObjectIdentifier = []int{2, 5, 34, 28}
+
 // # ASN.1 Definition:
 //
-// id-pr-unmatchedKeyAttributes              OBJECT IDENTIFIER ::= {id-pr 29}
-var Id_pr_unmatchedKeyAttributes asn1.ObjectIdentifier = []int{2, 5, 34, 29} /* OBJECT_IDENTIFIER */
+//	id-pr-unmatchedKeyAttributes              OBJECT IDENTIFIER ::= {id-pr 29}
+var Id_pr_unmatchedKeyAttributes asn1.ObjectIdentifier = []int{2, 5, 34, 29}
+
 // # ASN.1 Definition:
 //
-// id-pr-ambiguousKeyAttributes              OBJECT IDENTIFIER ::= {id-pr 30}
-var Id_pr_ambiguousKeyAttributes asn1.ObjectIdentifier = []int{2, 5, 34, 30} /* OBJECT_IDENTIFIER */
+//	id-pr-ambiguousKeyAttributes              OBJECT IDENTIFIER ::= {id-pr 30}
+var Id_pr_ambiguousKeyAttributes asn1.ObjectIdentifier = []int{2, 5, 34, 30}
+
 // # ASN.1 Definition:
 //
-// id-pr-unavailableRelaxationLevel          OBJECT IDENTIFIER ::= {id-pr 31}
-var Id_pr_unavailableRelaxationLevel asn1.ObjectIdentifier = []int{2, 5, 34, 31} /* OBJECT_IDENTIFIER */
+//	id-pr-unavailableRelaxationLevel          OBJECT IDENTIFIER ::= {id-pr 31}
+var Id_pr_unavailableRelaxationLevel asn1.ObjectIdentifier = []int{2, 5, 34, 31}
+
 // # ASN.1 Definition:
 //
-// id-pr-emptyHierarchySelection             OBJECT IDENTIFIER ::= {id-pr 32}
-var Id_pr_emptyHierarchySelection asn1.ObjectIdentifier = []int{2, 5, 34, 32} /* OBJECT_IDENTIFIER */
+//	id-pr-emptyHierarchySelection             OBJECT IDENTIFIER ::= {id-pr 32}
+var Id_pr_emptyHierarchySelection asn1.ObjectIdentifier = []int{2, 5, 34, 32}
+
 // # ASN.1 Definition:
 //
-// id-pr-administratorImposedLimit           OBJECT IDENTIFIER ::= {id-pr 33}
-var Id_pr_administratorImposedLimit asn1.ObjectIdentifier = []int{2, 5, 34, 33} /* OBJECT_IDENTIFIER */
+//	id-pr-administratorImposedLimit           OBJECT IDENTIFIER ::= {id-pr 33}
+var Id_pr_administratorImposedLimit asn1.ObjectIdentifier = []int{2, 5, 34, 33}
+
 // # ASN.1 Definition:
 //
-// id-pr-permanentRestriction                OBJECT IDENTIFIER ::= {id-pr 34}
-var Id_pr_permanentRestriction asn1.ObjectIdentifier = []int{2, 5, 34, 34} /* OBJECT_IDENTIFIER */
+//	id-pr-permanentRestriction                OBJECT IDENTIFIER ::= {id-pr 34}
+var Id_pr_permanentRestriction asn1.ObjectIdentifier = []int{2, 5, 34, 34}
+
 // # ASN.1 Definition:
 //
-// id-pr-temporaryRestriction                OBJECT IDENTIFIER ::= {id-pr 35}
-var Id_pr_temporaryRestriction asn1.ObjectIdentifier = []int{2, 5, 34, 35} /* OBJECT_IDENTIFIER */
+//	id-pr-temporaryRestriction                OBJECT IDENTIFIER ::= {id-pr 35}
+var Id_pr_temporaryRestriction asn1.ObjectIdentifier = []int{2, 5, 34, 35}
+
 // # ASN.1 Definition:
 //
-// id-pr-relaxationNotSupported              OBJECT IDENTIFIER ::= {id-pr 36}
-var Id_pr_relaxationNotSupported asn1.ObjectIdentifier = []int{2, 5, 34, 36} /* OBJECT_IDENTIFIER */
+//	id-pr-relaxationNotSupported              OBJECT IDENTIFIER ::= {id-pr 36}
+var Id_pr_relaxationNotSupported asn1.ObjectIdentifier = []int{2, 5, 34, 36}
+
 // # ASN.1 Definition:
 //
-// id-coat-uid                               OBJECT IDENTIFIER ::= {id-coat 1}
-var Id_coat_uid asn1.ObjectIdentifier = []int{0, 9, 2342, 19200300, 100, 1, 1} /* OBJECT_IDENTIFIER */
+//	id-coat-uid                               OBJECT IDENTIFIER ::= {id-coat 1}
+var Id_coat_uid asn1.ObjectIdentifier = []int{0, 9, 2342, 19200300, 100, 1, 1}
+
 // # ASN.1 Definition:
 //
-// id-coat-dc                                OBJECT IDENTIFIER ::= {id-coat 25}
-var Id_coat_dc asn1.ObjectIdentifier = []int{0, 9, 2342, 19200300, 100, 1, 25} /* OBJECT_IDENTIFIER */
+//	id-coat-dc                                OBJECT IDENTIFIER ::= {id-coat 25}
+var Id_coat_dc asn1.ObjectIdentifier = []int{0, 9, 2342, 19200300, 100, 1, 25}
+
 // # ASN.1 Definition:
 //
-// id-mr-caseIgnoreMatch                     OBJECT IDENTIFIER ::= {id-mr 2}
-var Id_mr_caseIgnoreMatch asn1.ObjectIdentifier = []int{2, 5, 13, 2} /* OBJECT_IDENTIFIER */
+//	id-mr-caseIgnoreMatch                     OBJECT IDENTIFIER ::= {id-mr 2}
+var Id_mr_caseIgnoreMatch asn1.ObjectIdentifier = []int{2, 5, 13, 2}
+
 // # ASN.1 Definition:
 //
-// id-mr-caseIgnoreOrderingMatch             OBJECT IDENTIFIER ::= {id-mr 3}
-var Id_mr_caseIgnoreOrderingMatch asn1.ObjectIdentifier = []int{2, 5, 13, 3} /* OBJECT_IDENTIFIER */
+//	id-mr-caseIgnoreOrderingMatch             OBJECT IDENTIFIER ::= {id-mr 3}
+var Id_mr_caseIgnoreOrderingMatch asn1.ObjectIdentifier = []int{2, 5, 13, 3}
+
 // # ASN.1 Definition:
 //
-// id-mr-caseIgnoreSubstringsMatch           OBJECT IDENTIFIER ::= {id-mr 4}
-var Id_mr_caseIgnoreSubstringsMatch asn1.ObjectIdentifier = []int{2, 5, 13, 4} /* OBJECT_IDENTIFIER */
+//	id-mr-caseIgnoreSubstringsMatch           OBJECT IDENTIFIER ::= {id-mr 4}
+var Id_mr_caseIgnoreSubstringsMatch asn1.ObjectIdentifier = []int{2, 5, 13, 4}
+
 // # ASN.1 Definition:
 //
-// id-mr-caseExactMatch                      OBJECT IDENTIFIER ::= {id-mr 5}
-var Id_mr_caseExactMatch asn1.ObjectIdentifier = []int{2, 5, 13, 5} /* OBJECT_IDENTIFIER */
+//	id-mr-caseExactMatch                      OBJECT IDENTIFIER ::= {id-mr 5}
+var Id_mr_caseExactMatch asn1.ObjectIdentifier = []int{2, 5, 13, 5}
+
 // # ASN.1 Definition:
 //
-// id-mr-caseExactOrderingMatch              OBJECT IDENTIFIER ::= {id-mr 6}
-var Id_mr_caseExactOrderingMatch asn1.ObjectIdentifier = []int{2, 5, 13, 6} /* OBJECT_IDENTIFIER */
+//	id-mr-caseExactOrderingMatch              OBJECT IDENTIFIER ::= {id-mr 6}
+var Id_mr_caseExactOrderingMatch asn1.ObjectIdentifier = []int{2, 5, 13, 6}
+
 // # ASN.1 Definition:
 //
-// id-mr-caseExactSubstringsMatch            OBJECT IDENTIFIER ::= {id-mr 7}
-var Id_mr_caseExactSubstringsMatch asn1.ObjectIdentifier = []int{2, 5, 13, 7} /* OBJECT_IDENTIFIER */
+//	id-mr-caseExactSubstringsMatch            OBJECT IDENTIFIER ::= {id-mr 7}
+var Id_mr_caseExactSubstringsMatch asn1.ObjectIdentifier = []int{2, 5, 13, 7}
+
 // # ASN.1 Definition:
 //
-// id-mr-numericStringMatch                  OBJECT IDENTIFIER ::= {id-mr 8}
-var Id_mr_numericStringMatch asn1.ObjectIdentifier = []int{2, 5, 13, 8} /* OBJECT_IDENTIFIER */
+//	id-mr-numericStringMatch                  OBJECT IDENTIFIER ::= {id-mr 8}
+var Id_mr_numericStringMatch asn1.ObjectIdentifier = []int{2, 5, 13, 8}
+
 // # ASN.1 Definition:
 //
-// id-mr-numericStringOrderingMatch          OBJECT IDENTIFIER ::= {id-mr 9}
-var Id_mr_numericStringOrderingMatch asn1.ObjectIdentifier = []int{2, 5, 13, 9} /* OBJECT_IDENTIFIER */
+//	id-mr-numericStringOrderingMatch          OBJECT IDENTIFIER ::= {id-mr 9}
+var Id_mr_numericStringOrderingMatch asn1.ObjectIdentifier = []int{2, 5, 13, 9}
+
 // # ASN.1 Definition:
 //
-// id-mr-numericStringSubstringsMatch        OBJECT IDENTIFIER ::= {id-mr 10}
-var Id_mr_numericStringSubstringsMatch asn1.ObjectIdentifier = []int{2, 5, 13, 10} /* OBJECT_IDENTIFIER */
+//	id-mr-numericStringSubstringsMatch        OBJECT IDENTIFIER ::= {id-mr 10}
+var Id_mr_numericStringSubstringsMatch asn1.ObjectIdentifier = []int{2, 5, 13, 10}
+
 // # ASN.1 Definition:
 //
-// id-mr-caseIgnoreListMatch                 OBJECT IDENTIFIER ::= {id-mr 11}
-var Id_mr_caseIgnoreListMatch asn1.ObjectIdentifier = []int{2, 5, 13, 11} /* OBJECT_IDENTIFIER */
+//	id-mr-caseIgnoreListMatch                 OBJECT IDENTIFIER ::= {id-mr 11}
+var Id_mr_caseIgnoreListMatch asn1.ObjectIdentifier = []int{2, 5, 13, 11}
+
 // # ASN.1 Definition:
 //
-// id-mr-caseIgnoreListSubstringsMatch       OBJECT IDENTIFIER ::= {id-mr 12}
-var Id_mr_caseIgnoreListSubstringsMatch asn1.ObjectIdentifier = []int{2, 5, 13, 12} /* OBJECT_IDENTIFIER */
+//	id-mr-caseIgnoreListSubstringsMatch       OBJECT IDENTIFIER ::= {id-mr 12}
+var Id_mr_caseIgnoreListSubstringsMatch asn1.ObjectIdentifier = []int{2, 5, 13, 12}
+
 // # ASN.1 Definition:
 //
-// id-mr-booleanMatch                        OBJECT IDENTIFIER ::= {id-mr 13}
-var Id_mr_booleanMatch asn1.ObjectIdentifier = []int{2, 5, 13, 13} /* OBJECT_IDENTIFIER */
+//	id-mr-booleanMatch                        OBJECT IDENTIFIER ::= {id-mr 13}
+var Id_mr_booleanMatch asn1.ObjectIdentifier = []int{2, 5, 13, 13}
+
 // # ASN.1 Definition:
 //
-// id-mr-integerMatch                        OBJECT IDENTIFIER ::= {id-mr 14}
-var Id_mr_integerMatch asn1.ObjectIdentifier = []int{2, 5, 13, 14} /* OBJECT_IDENTIFIER */
+//	id-mr-integerMatch                        OBJECT IDENTIFIER ::= {id-mr 14}
+var Id_mr_integerMatch asn1.ObjectIdentifier = []int{2, 5, 13, 14}
+
 // # ASN.1 Definition:
 //
-// id-mr-integerOrderingMatch                OBJECT IDENTIFIER ::= {id-mr 15}
-var Id_mr_integerOrderingMatch asn1.ObjectIdentifier = []int{2, 5, 13, 15} /* OBJECT_IDENTIFIER */
+//	id-mr-integerOrderingMatch                OBJECT IDENTIFIER ::= {id-mr 15}
+var Id_mr_integerOrderingMatch asn1.ObjectIdentifier = []int{2, 5, 13, 15}
+
 // # ASN.1 Definition:
 //
-// id-mr-bitStringMatch                      OBJECT IDENTIFIER ::= {id-mr 16}
-var Id_mr_bitStringMatch asn1.ObjectIdentifier = []int{2, 5, 13, 16} /* OBJECT_IDENTIFIER */
+//	id-mr-bitStringMatch                      OBJECT IDENTIFIER ::= {id-mr 16}
+var Id_mr_bitStringMatch asn1.ObjectIdentifier = []int{2, 5, 13, 16}
+
 // # ASN.1 Definition:
 //
-// id-mr-octetStringMatch                    OBJECT IDENTIFIER ::= {id-mr 17}
-var Id_mr_octetStringMatch asn1.ObjectIdentifier = []int{2, 5, 13, 17} /* OBJECT_IDENTIFIER */
+//	id-mr-octetStringMatch                    OBJECT IDENTIFIER ::= {id-mr 17}
+var Id_mr_octetStringMatch asn1.ObjectIdentifier = []int{2, 5, 13, 17}
+
 // # ASN.1 Definition:
 //
-// id-mr-octetStringOrderingMatch            OBJECT IDENTIFIER ::= {id-mr 18}
-var Id_mr_octetStringOrderingMatch asn1.ObjectIdentifier = []int{2, 5, 13, 18} /* OBJECT_IDENTIFIER */
+//	id-mr-octetStringOrderingMatch            OBJECT IDENTIFIER ::= {id-mr 18}
+var Id_mr_octetStringOrderingMatch asn1.ObjectIdentifier = []int{2, 5, 13, 18}
+
 // # ASN.1 Definition:
 //
-// id-mr-octetStringSubstringsMatch          OBJECT IDENTIFIER ::= {id-mr 19}
-var Id_mr_octetStringSubstringsMatch asn1.ObjectIdentifier = []int{2, 5, 13, 19} /* OBJECT_IDENTIFIER */
+//	id-mr-octetStringSubstringsMatch          OBJECT IDENTIFIER ::= {id-mr 19}
+var Id_mr_octetStringSubstringsMatch asn1.ObjectIdentifier = []int{2, 5, 13, 19}
+
 // # ASN.1 Definition:
 //
-// id-mr-telephoneNumberMatch                OBJECT IDENTIFIER ::= {id-mr 20}
-var Id_mr_telephoneNumberMatch asn1.ObjectIdentifier = []int{2, 5, 13, 20} /* OBJECT_IDENTIFIER */
+//	id-mr-telephoneNumberMatch                OBJECT IDENTIFIER ::= {id-mr 20}
+var Id_mr_telephoneNumberMatch asn1.ObjectIdentifier = []int{2, 5, 13, 20}
+
 // # ASN.1 Definition:
 //
-// id-mr-telephoneNumberSubstringsMatch      OBJECT IDENTIFIER ::= {id-mr 21}
-var Id_mr_telephoneNumberSubstringsMatch asn1.ObjectIdentifier = []int{2, 5, 13, 21} /* OBJECT_IDENTIFIER */
+//	id-mr-telephoneNumberSubstringsMatch      OBJECT IDENTIFIER ::= {id-mr 21}
+var Id_mr_telephoneNumberSubstringsMatch asn1.ObjectIdentifier = []int{2, 5, 13, 21}
+
 // # ASN.1 Definition:
 //
-// id-mr-presentationAddressMatch            OBJECT IDENTIFIER ::= {id-mr 22}
-var Id_mr_presentationAddressMatch asn1.ObjectIdentifier = []int{2, 5, 13, 22} /* OBJECT_IDENTIFIER */
+//	id-mr-presentationAddressMatch            OBJECT IDENTIFIER ::= {id-mr 22}
+var Id_mr_presentationAddressMatch asn1.ObjectIdentifier = []int{2, 5, 13, 22}
+
 // # ASN.1 Definition:
 //
-// id-mr-uniqueMemberMatch                   OBJECT IDENTIFIER ::= {id-mr 23}
-var Id_mr_uniqueMemberMatch asn1.ObjectIdentifier = []int{2, 5, 13, 23} /* OBJECT_IDENTIFIER */
+//	id-mr-uniqueMemberMatch                   OBJECT IDENTIFIER ::= {id-mr 23}
+var Id_mr_uniqueMemberMatch asn1.ObjectIdentifier = []int{2, 5, 13, 23}
+
 // # ASN.1 Definition:
 //
-// id-mr-protocolInformationMatch            OBJECT IDENTIFIER ::= {id-mr 24}
-var Id_mr_protocolInformationMatch asn1.ObjectIdentifier = []int{2, 5, 13, 24} /* OBJECT_IDENTIFIER */
+//	id-mr-protocolInformationMatch            OBJECT IDENTIFIER ::= {id-mr 24}
+var Id_mr_protocolInformationMatch asn1.ObjectIdentifier = []int{2, 5, 13, 24}
+
 // # ASN.1 Definition:
 //
-// id-mr-uTCTimeMatch                        OBJECT IDENTIFIER ::= {id-mr 25}
-var Id_mr_uTCTimeMatch asn1.ObjectIdentifier = []int{2, 5, 13, 25} /* OBJECT_IDENTIFIER */
+//	id-mr-uTCTimeMatch                        OBJECT IDENTIFIER ::= {id-mr 25}
+var Id_mr_uTCTimeMatch asn1.ObjectIdentifier = []int{2, 5, 13, 25}
+
 // # ASN.1 Definition:
 //
-// id-mr-uTCTimeOrderingMatch                OBJECT IDENTIFIER ::= {id-mr 26}
-var Id_mr_uTCTimeOrderingMatch asn1.ObjectIdentifier = []int{2, 5, 13, 26} /* OBJECT_IDENTIFIER */
+//	id-mr-uTCTimeOrderingMatch                OBJECT IDENTIFIER ::= {id-mr 26}
+var Id_mr_uTCTimeOrderingMatch asn1.ObjectIdentifier = []int{2, 5, 13, 26}
+
 // # ASN.1 Definition:
 //
-// id-mr-generalizedTimeMatch                OBJECT IDENTIFIER ::= {id-mr 27}
-var Id_mr_generalizedTimeMatch asn1.ObjectIdentifier = []int{2, 5, 13, 27} /* OBJECT_IDENTIFIER */
+//	id-mr-generalizedTimeMatch                OBJECT IDENTIFIER ::= {id-mr 27}
+var Id_mr_generalizedTimeMatch asn1.ObjectIdentifier = []int{2, 5, 13, 27}
+
 // # ASN.1 Definition:
 //
-// id-mr-generalizedTimeOrderingMatch        OBJECT IDENTIFIER ::= {id-mr 28}
-var Id_mr_generalizedTimeOrderingMatch asn1.ObjectIdentifier = []int{2, 5, 13, 28} /* OBJECT_IDENTIFIER */
+//	id-mr-generalizedTimeOrderingMatch        OBJECT IDENTIFIER ::= {id-mr 28}
+var Id_mr_generalizedTimeOrderingMatch asn1.ObjectIdentifier = []int{2, 5, 13, 28}
+
 // # ASN.1 Definition:
 //
-// id-mr-integerFirstComponentMatch          OBJECT IDENTIFIER ::= {id-mr 29}
-var Id_mr_integerFirstComponentMatch asn1.ObjectIdentifier = []int{2, 5, 13, 29} /* OBJECT_IDENTIFIER */
+//	id-mr-integerFirstComponentMatch          OBJECT IDENTIFIER ::= {id-mr 29}
+var Id_mr_integerFirstComponentMatch asn1.ObjectIdentifier = []int{2, 5, 13, 29}
+
 // # ASN.1 Definition:
 //
-// id-mr-objectIdentifierFirstComponentMatch OBJECT IDENTIFIER ::= {id-mr 30}
-var Id_mr_objectIdentifierFirstComponentMatch asn1.ObjectIdentifier = []int{2, 5, 13, 30} /* OBJECT_IDENTIFIER */
+//	id-mr-objectIdentifierFirstComponentMatch OBJECT IDENTIFIER ::= {id-mr 30}
+var Id_mr_objectIdentifierFirstComponentMatch asn1.ObjectIdentifier = []int{2, 5, 13, 30}
+
 // # ASN.1 Definition:
 //
-// id-mr-directoryStringFirstComponentMatch  OBJECT IDENTIFIER ::= {id-mr 31}
-var Id_mr_directoryStringFirstComponentMatch asn1.ObjectIdentifier = []int{2, 5, 13, 31} /* OBJECT_IDENTIFIER */
+//	id-mr-directoryStringFirstComponentMatch  OBJECT IDENTIFIER ::= {id-mr 31}
+var Id_mr_directoryStringFirstComponentMatch asn1.ObjectIdentifier = []int{2, 5, 13, 31}
+
 // # ASN.1 Definition:
 //
-// id-mr-wordMatch                           OBJECT IDENTIFIER ::= {id-mr 32}
-var Id_mr_wordMatch asn1.ObjectIdentifier = []int{2, 5, 13, 32} /* OBJECT_IDENTIFIER */
+//	id-mr-wordMatch                           OBJECT IDENTIFIER ::= {id-mr 32}
+var Id_mr_wordMatch asn1.ObjectIdentifier = []int{2, 5, 13, 32}
+
 // # ASN.1 Definition:
 //
-// id-mr-keywordMatch                        OBJECT IDENTIFIER ::= {id-mr 33}
-var Id_mr_keywordMatch asn1.ObjectIdentifier = []int{2, 5, 13, 33} /* OBJECT_IDENTIFIER */
+//	id-mr-keywordMatch                        OBJECT IDENTIFIER ::= {id-mr 33}
+var Id_mr_keywordMatch asn1.ObjectIdentifier = []int{2, 5, 13, 33}
+
 // # ASN.1 Definition:
 //
-// id-mr-storedPrefixMatch                   OBJECT IDENTIFIER ::= {id-mr 41}
-var Id_mr_storedPrefixMatch asn1.ObjectIdentifier = []int{2, 5, 13, 41} /* OBJECT_IDENTIFIER */
+//	id-mr-storedPrefixMatch                   OBJECT IDENTIFIER ::= {id-mr 41}
+var Id_mr_storedPrefixMatch asn1.ObjectIdentifier = []int{2, 5, 13, 41}
+
 // # ASN.1 Definition:
 //
-// id-mr-systemProposedMatch                 OBJECT IDENTIFIER ::= {id-mr 47}
-var Id_mr_systemProposedMatch asn1.ObjectIdentifier = []int{2, 5, 13, 47} /* OBJECT_IDENTIFIER */
+//	id-mr-systemProposedMatch                 OBJECT IDENTIFIER ::= {id-mr 47}
+var Id_mr_systemProposedMatch asn1.ObjectIdentifier = []int{2, 5, 13, 47}
+
 // # ASN.1 Definition:
 //
-// id-mr-generalWordMatch                    OBJECT IDENTIFIER ::= {id-mr 48}
-var Id_mr_generalWordMatch asn1.ObjectIdentifier = []int{2, 5, 13, 48} /* OBJECT_IDENTIFIER */
+//	id-mr-generalWordMatch                    OBJECT IDENTIFIER ::= {id-mr 48}
+var Id_mr_generalWordMatch asn1.ObjectIdentifier = []int{2, 5, 13, 48}
+
 // # ASN.1 Definition:
 //
-// id-mr-approximateStringMatch              OBJECT IDENTIFIER ::= {id-mr 49}
-var Id_mr_approximateStringMatch asn1.ObjectIdentifier = []int{2, 5, 13, 49} /* OBJECT_IDENTIFIER */
+//	id-mr-approximateStringMatch              OBJECT IDENTIFIER ::= {id-mr 49}
+var Id_mr_approximateStringMatch asn1.ObjectIdentifier = []int{2, 5, 13, 49}
+
 // # ASN.1 Definition:
 //
-// id-mr-ignoreIfAbsentMatch                 OBJECT IDENTIFIER ::= {id-mr 50}
-var Id_mr_ignoreIfAbsentMatch asn1.ObjectIdentifier = []int{2, 5, 13, 50} /* OBJECT_IDENTIFIER */
+//	id-mr-ignoreIfAbsentMatch                 OBJECT IDENTIFIER ::= {id-mr 50}
+var Id_mr_ignoreIfAbsentMatch asn1.ObjectIdentifier = []int{2, 5, 13, 50}
+
 // # ASN.1 Definition:
 //
-// id-mr-nullMatch                           OBJECT IDENTIFIER ::= {id-mr 51}
-var Id_mr_nullMatch asn1.ObjectIdentifier = []int{2, 5, 13, 51} /* OBJECT_IDENTIFIER */
+//	id-mr-nullMatch                           OBJECT IDENTIFIER ::= {id-mr 51}
+var Id_mr_nullMatch asn1.ObjectIdentifier = []int{2, 5, 13, 51}
+
 // # ASN.1 Definition:
 //
-// id-mr-zonalMatch                          OBJECT IDENTIFIER ::= {id-mr 52}
-var Id_mr_zonalMatch asn1.ObjectIdentifier = []int{2, 5, 13, 52} /* OBJECT_IDENTIFIER */
+//	id-mr-zonalMatch                          OBJECT IDENTIFIER ::= {id-mr 52}
+var Id_mr_zonalMatch asn1.ObjectIdentifier = []int{2, 5, 13, 52}
+
 // # ASN.1 Definition:
 //
-// id-mr-facsimileNumberMatch                OBJECT IDENTIFIER ::= {id-mr 63}
-var Id_mr_facsimileNumberMatch asn1.ObjectIdentifier = []int{2, 5, 13, 63} /* OBJECT_IDENTIFIER */
+//	id-mr-facsimileNumberMatch                OBJECT IDENTIFIER ::= {id-mr 63}
+var Id_mr_facsimileNumberMatch asn1.ObjectIdentifier = []int{2, 5, 13, 63}
+
 // # ASN.1 Definition:
 //
-// id-mr-facsimileNumberSubstringsMatch      OBJECT IDENTIFIER ::= {id-mr 64}
-var Id_mr_facsimileNumberSubstringsMatch asn1.ObjectIdentifier = []int{2, 5, 13, 64} /* OBJECT_IDENTIFIER */
+//	id-mr-facsimileNumberSubstringsMatch      OBJECT IDENTIFIER ::= {id-mr 64}
+var Id_mr_facsimileNumberSubstringsMatch asn1.ObjectIdentifier = []int{2, 5, 13, 64}
+
 // # ASN.1 Definition:
 //
-// id-mr-uuidpairmatch                       OBJECT IDENTIFIER ::= {id-mr 68}
-var Id_mr_uuidpairmatch asn1.ObjectIdentifier = []int{2, 5, 13, 68} /* OBJECT_IDENTIFIER */
+//	id-mr-uuidpairmatch                       OBJECT IDENTIFIER ::= {id-mr 68}
+var Id_mr_uuidpairmatch asn1.ObjectIdentifier = []int{2, 5, 13, 68}
+
 // # ASN.1 Definition:
 //
-// id-mr-uriMatch                            OBJECT IDENTIFIER ::= {id-mr 70}
-var Id_mr_uriMatch asn1.ObjectIdentifier = []int{2, 5, 13, 70} /* OBJECT_IDENTIFIER */
+//	id-mr-uriMatch                            OBJECT IDENTIFIER ::= {id-mr 70}
+var Id_mr_uriMatch asn1.ObjectIdentifier = []int{2, 5, 13, 70}
+
 // # ASN.1 Definition:
 //
-// id-mr-dnsNameMatch                        OBJECT IDENTIFIER ::= {id-mr 74}
-var Id_mr_dnsNameMatch asn1.ObjectIdentifier = []int{2, 5, 13, 74} /* OBJECT_IDENTIFIER */
+//	id-mr-dnsNameMatch                        OBJECT IDENTIFIER ::= {id-mr 74}
+var Id_mr_dnsNameMatch asn1.ObjectIdentifier = []int{2, 5, 13, 74}
+
 // # ASN.1 Definition:
 //
-// id-mr-intEmailMatch                       OBJECT IDENTIFIER ::= {id-mr 75}
-var Id_mr_intEmailMatch asn1.ObjectIdentifier = []int{2, 5, 13, 75} /* OBJECT_IDENTIFIER */
+//	id-mr-intEmailMatch                       OBJECT IDENTIFIER ::= {id-mr 75}
+var Id_mr_intEmailMatch asn1.ObjectIdentifier = []int{2, 5, 13, 75}
+
 // # ASN.1 Definition:
 //
-// id-mr-jidMatch                            OBJECT IDENTIFIER ::= {id-mr 76}
-var Id_mr_jidMatch asn1.ObjectIdentifier = []int{2, 5, 13, 76} /* OBJECT_IDENTIFIER */
+//	id-mr-jidMatch                            OBJECT IDENTIFIER ::= {id-mr 76}
+var Id_mr_jidMatch asn1.ObjectIdentifier = []int{2, 5, 13, 76}
+
 // # ASN.1 Definition:
 //
-// id-lmr-caseExactIA5Match                  OBJECT IDENTIFIER ::= {id-lmr 1}
-var Id_lmr_caseExactIA5Match asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 109, 114, 1} /* OBJECT_IDENTIFIER */
+//	id-lmr-caseExactIA5Match                  OBJECT IDENTIFIER ::= {id-lmr 1}
+var Id_lmr_caseExactIA5Match asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 109, 114, 1}
+
 // # ASN.1 Definition:
 //
-// id-lmr-caseIgnoreIA5Match                 OBJECT IDENTIFIER ::= {id-lmr 2}
-var Id_lmr_caseIgnoreIA5Match asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 109, 114, 2} /* OBJECT_IDENTIFIER */
+//	id-lmr-caseIgnoreIA5Match                 OBJECT IDENTIFIER ::= {id-lmr 2}
+var Id_lmr_caseIgnoreIA5Match asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 109, 114, 2}
+
 // # ASN.1 Definition:
 //
-// id-lmr-caseIgnoreIA5SubstringsMatch       OBJECT IDENTIFIER ::= {id-lmr 3}
-var Id_lmr_caseIgnoreIA5SubstringsMatch asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 109, 114, 3} /* OBJECT_IDENTIFIER */
+//	id-lmr-caseIgnoreIA5SubstringsMatch       OBJECT IDENTIFIER ::= {id-lmr 3}
+var Id_lmr_caseIgnoreIA5SubstringsMatch asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 109, 114, 3}
+
 // # ASN.1 Definition:
 //
-// id-avc-language                           OBJECT IDENTIFIER ::= {id-avc 0}
-var Id_avc_language asn1.ObjectIdentifier = []int{2, 5, 31, 0} /* OBJECT_IDENTIFIER */
+//	id-avc-language                           OBJECT IDENTIFIER ::= {id-avc 0}
+var Id_avc_language asn1.ObjectIdentifier = []int{2, 5, 31, 0}
+
 // # ASN.1 Definition:
 //
-// id-avc-temporal                           OBJECT IDENTIFIER ::= {id-avc 1}
-var Id_avc_temporal asn1.ObjectIdentifier = []int{2, 5, 31, 1} /* OBJECT_IDENTIFIER */
+//	id-avc-temporal                           OBJECT IDENTIFIER ::= {id-avc 1}
+var Id_avc_temporal asn1.ObjectIdentifier = []int{2, 5, 31, 1}
+
 // # ASN.1 Definition:
 //
-// id-avc-locale                             OBJECT IDENTIFIER ::= {id-avc 2}
-var Id_avc_locale asn1.ObjectIdentifier = []int{2, 5, 31, 2} /* OBJECT_IDENTIFIER */
+//	id-avc-locale                             OBJECT IDENTIFIER ::= {id-avc 2}
+var Id_avc_locale asn1.ObjectIdentifier = []int{2, 5, 31, 2}
+
 // # ASN.1 Definition:
 //
-// id-avc-ldapAttributeOption                OBJECT IDENTIFIER ::= {id-avc 5}
-var Id_avc_ldapAttributeOption asn1.ObjectIdentifier = []int{2, 5, 31, 5} /* OBJECT_IDENTIFIER */
+//	id-avc-ldapAttributeOption                OBJECT IDENTIFIER ::= {id-avc 5}
+var Id_avc_ldapAttributeOption asn1.ObjectIdentifier = []int{2, 5, 31, 5}
+
 // # ASN.1 Definition:
 //
-// EnhancedGuide-subset ::= INTEGER { -- REMOVED_FROM_UNNESTING -- }
+//	EnhancedGuide-subset ::= INTEGER { -- REMOVED_FROM_UNNESTING -- }
 type EnhancedGuide_subset = int64
 
 const EnhancedGuide_subset_BaseObject EnhancedGuide_subset = 0
@@ -1608,7 +1835,7 @@ const EnhancedGuide_subset_WholeSubtree EnhancedGuide_subset = 2
 
 // # ASN.1 Definition:
 //
-// PreferredDeliveryMethod-Item ::= INTEGER { -- REMOVED_FROM_UNNESTING -- }
+//	PreferredDeliveryMethod-Item ::= INTEGER { -- REMOVED_FROM_UNNESTING -- }
 type PreferredDeliveryMethod_Item = int64
 
 const PreferredDeliveryMethod_Item_Any_delivery_method PreferredDeliveryMethod_Item = 0
@@ -1633,7 +1860,7 @@ const PreferredDeliveryMethod_Item_Telephone_delivery PreferredDeliveryMethod_It
 
 // # ASN.1 Definition:
 //
-// UiiFormat-subset ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
+//	UiiFormat-subset ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 type UiiFormat_subset = asn1.Enumerated
 
 const (
@@ -1644,17 +1871,17 @@ const (
 
 // # ASN.1 Definition:
 //
-// UiiFormat-next ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	UiiFormat-next ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type UiiFormat_next = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// EpcFormat-fields-Item-charField ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	EpcFormat-fields-Item-charField ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type EpcFormat_fields_Item_charField = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// EpcFormat-fields-Item-result ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
+//	EpcFormat-fields-Item-result ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 type EpcFormat_fields_Item_result = asn1.Enumerated
 
 const (
@@ -1665,7 +1892,7 @@ const (
 
 // # ASN.1 Definition:
 //
-// EpcFormat-fields-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	EpcFormat-fields-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type EpcFormat_fields_Item struct {
 	Bits      int
 	CharField EpcFormat_fields_Item_charField
@@ -1674,12 +1901,12 @@ type EpcFormat_fields_Item struct {
 
 // # ASN.1 Definition:
 //
-// PwdResponse-warning ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	PwdResponse-warning ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type PwdResponse_warning = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// PwdResponse-error ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
+//	PwdResponse-error ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 type PwdResponse_error = asn1.Enumerated
 
 const (
@@ -1689,17 +1916,17 @@ const (
 
 // # ASN.1 Definition:
 //
-// SubstringAssertion-Item ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	SubstringAssertion-Item ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type SubstringAssertion_Item = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// OctetSubstringAssertion-Item ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	OctetSubstringAssertion-Item ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type OctetSubstringAssertion_Item = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// TimeSpecification-time-absolute ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	TimeSpecification-time-absolute ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type TimeSpecification_time_absolute struct {
 	StartTime time.Time `asn1:"optional,explicit,tag:0"`
 	EndTime   time.Time `asn1:"optional,explicit,tag:1"`
@@ -1707,12 +1934,12 @@ type TimeSpecification_time_absolute struct {
 
 // # ASN.1 Definition:
 //
-// TimeSpecification-time ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	TimeSpecification-time ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type TimeSpecification_time = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// Period-days-bitDay ::= BIT STRING { -- REMOVED_FROM_UNNESTING -- }
+//	Period-days-bitDay ::= BIT STRING { -- REMOVED_FROM_UNNESTING -- }
 type Period_days_bitDay = asn1.BitString
 
 const Period_days_bitDay_Sunday int32 = 0
@@ -1731,12 +1958,12 @@ const Period_days_bitDay_Saturday int32 = 6
 
 // # ASN.1 Definition:
 //
-// Period-days ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	Period-days ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type Period_days = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// Period-weeks-bitWeek ::= BIT STRING { -- REMOVED_FROM_UNNESTING -- }
+//	Period-weeks-bitWeek ::= BIT STRING { -- REMOVED_FROM_UNNESTING -- }
 type Period_weeks_bitWeek = asn1.BitString
 
 const Period_weeks_bitWeek_Week1 int32 = 0
@@ -1751,12 +1978,12 @@ const Period_weeks_bitWeek_Week5 int32 = 4
 
 // # ASN.1 Definition:
 //
-// Period-weeks ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	Period-weeks ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type Period_weeks = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// Period-months-bitMonth ::= BIT STRING { -- REMOVED_FROM_UNNESTING -- }
+//	Period-months-bitMonth ::= BIT STRING { -- REMOVED_FROM_UNNESTING -- }
 type Period_months_bitMonth = asn1.BitString
 
 const Period_months_bitMonth_January int32 = 0
@@ -1785,12 +2012,12 @@ const Period_months_bitMonth_December int32 = 11
 
 // # ASN.1 Definition:
 //
-// Period-months ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	Period-months ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type Period_months = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// NamedDay-intNamedDays ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
+//	NamedDay-intNamedDays ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 type NamedDay_intNamedDays = asn1.Enumerated
 
 const (
@@ -1805,7 +2032,7 @@ const (
 
 // # ASN.1 Definition:
 //
-// NamedDay-bitNamedDays ::= BIT STRING { -- REMOVED_FROM_UNNESTING -- }
+//	NamedDay-bitNamedDays ::= BIT STRING { -- REMOVED_FROM_UNNESTING -- }
 type NamedDay_bitNamedDays = asn1.BitString
 
 const NamedDay_bitNamedDays_Sunday int32 = 0
@@ -1824,7 +2051,7 @@ const NamedDay_bitNamedDays_Saturday int32 = 6
 
 // # ASN.1 Definition:
 //
-// TimeAssertion-between ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	TimeAssertion-between ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type TimeAssertion_between struct {
 	StartTime time.Time `asn1:"explicit,tag:0"`
 	EndTime   time.Time `asn1:"optional,explicit,tag:1"`

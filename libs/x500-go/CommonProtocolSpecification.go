@@ -6,7 +6,7 @@ import (
 
 // # ASN.1 Definition:
 //
-//	Code  ::=  CHOICE {
+//	Code ::= CHOICE {
 //	  local   INTEGER,
 //	  global  OBJECT IDENTIFIER,
 //	  ... }
@@ -14,7 +14,7 @@ type Code = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-//	InvokeId  ::=  CHOICE {
+//	InvokeId ::= CHOICE {
 //	  present  INTEGER,
 //	  absent   NULL,
 //	  ... }

@@ -53,14 +53,14 @@ type HASH struct {
 
 // # ASN.1 Definition:
 //
-//	ENCRYPTED{ToBeEnciphered}  ::=  BIT STRING (CONSTRAINED BY {
+//	ENCRYPTED{ToBeEnciphered} ::= BIT STRING (CONSTRAINED BY {
 //	   -- shall be the result of applying an encipherment procedure
 //	   -- to the BER-encoded octets of a value of -- ToBeEnciphered } )
 type ENCRYPTED = asn1.BitString
 
 // # ASN.1 Definition:
 //
-//	ENCRYPTED-HASH{ToBeSigned}  ::=  BIT STRING (CONSTRAINED BY {
+//	ENCRYPTED-HASH{ToBeSigned} ::= BIT STRING (CONSTRAINED BY {
 //	  -- shall be the result of applying a hashing procedure to the DER-encoded (see 6.2)
 //	  -- octets of a value of -- ToBeSigned -- and then applying an encipherment procedure
 //	  -- to those octets -- } )
@@ -79,23 +79,17 @@ type FingerPrint struct {
 
 // # ASN.1 Definition:
 //
-// id-ecPublicKey OBJECT IDENTIFIER ::= {iso(1) member-body(2) us(840) ansi-X9-62(10045)
-//
-//	keyType(2) 1 }
-//
-// var Id_ecPublicKey asn1.ObjectIdentifier = []int{ 1, 2, 840, 10045, 2, 1 } /* OBJECT_IDENTIFIER */
-// # ASN.1 Definition:
-//
-// SupportedCurves OBJECT IDENTIFIER ::= {dummyCurv, ...}
+//	SupportedCurves OBJECT IDENTIFIER ::= {dummyCurv, ...}
 type SupportedCurves = asn1.ObjectIdentifier
 
 // # ASN.1 Definition:
 //
-// dummyCurv OBJECT IDENTIFIER ::= {2 5 5}
-var DummyCurv asn1.ObjectIdentifier = []int{2, 5, 5} /* OBJECT_IDENTIFIER */
+//	dummyCurv OBJECT IDENTIFIER ::= {2 5 5}
+var DummyCurv asn1.ObjectIdentifier = []int{2, 5, 5}
+
 // # ASN.1 Definition:
 //
-// Version  ::=  INTEGER {v1(0), v2(1), v3(2)}
+//	Version ::= INTEGER {v1(0), v2(1), v3(2)}
 type Version = int64
 
 const Version_V1 Version = 0
@@ -106,7 +100,7 @@ const Version_V3 Version = 2
 
 // # ASN.1 Definition:
 //
-// CertificateSerialNumber  ::=  INTEGER
+//	CertificateSerialNumber ::= INTEGER
 type CertificateSerialNumber = *big.Int
 
 // # ASN.1 Definition:
@@ -133,25 +127,21 @@ type SubjectPublicKeyInfo struct {
 
 // # ASN.1 Definition:
 //
-// PublicKey  ::=  BIT STRING
+//	PublicKey ::= BIT STRING
 type PublicKey = asn1.BitString
 
 // # ASN.1 Definition:
 //
-//	Time  ::=  CHOICE {
+//	Time ::= CHOICE {
 //	  utcTime          UTCTime,
 //	  generalizedTime  GeneralizedTime }
 type X509Time = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// Extensions  ::=  SEQUENCE SIZE (1..MAX) OF Extension
-type Extensions = [](pkix.Extension) // SequenceOfType
-// # ASN.1 Definition:
-//
-// der OBJECT IDENTIFIER ::= {joint-iso-itu-t asn1(1) ber-derived(2) distinguished-encoding(1)}
-//
-// var Der asn1.ObjectIdentifier = []int{2, 1, 2, 1} /* OBJECT_IDENTIFIER */
+//	Extensions ::= SEQUENCE SIZE (1..MAX) OF Extension
+type Extensions = [](pkix.Extension)
+
 // # ASN.1 Definition:
 //
 //	Certificates ::= SEQUENCE {
@@ -165,12 +155,14 @@ type Certificates struct {
 
 // # ASN.1 Definition:
 //
-// ForwardCertificationPath  ::=  SEQUENCE SIZE (1..MAX) OF CrossCertificates
-type ForwardCertificationPath = [](CrossCertificates) // SequenceOfType
+//	ForwardCertificationPath ::= SEQUENCE SIZE (1..MAX) OF CrossCertificates
+type ForwardCertificationPath = [](CrossCertificates)
+
 // # ASN.1 Definition:
 //
-// CrossCertificates  ::=  SET SIZE (1..MAX) OF Certificate
-type CrossCertificates = [](x509.Certificate) // SetOfType
+//	CrossCertificates ::= SET SIZE (1..MAX) OF Certificate
+type CrossCertificates = [](x509.Certificate)
+
 // # ASN.1 Definition:
 //
 //	CertificationPath ::= SEQUENCE {
@@ -184,12 +176,14 @@ type CertificationPath struct {
 
 // # ASN.1 Definition:
 //
-// PkiPath  ::=  SEQUENCE SIZE (1..MAX) OF Certificate
-type PkiPath = [](x509.Certificate) // SequenceOfType
+//	PkiPath ::= SEQUENCE SIZE (1..MAX) OF Certificate
+type PkiPath = [](x509.Certificate)
+
 // # ASN.1 Definition:
 //
-// CertAVL  ::=  SIGNED {TBSCertAVL}
-type CertAVL = SIGNED // DefinedType
+//	CertAVL ::= SIGNED {TBSCertAVL}
+type CertAVL = SIGNED
+
 // # ASN.1 Definition:
 //
 //	TBSCertAVL ::= SEQUENCE {
@@ -221,12 +215,12 @@ type TBSCertAVL struct {
 
 // # ASN.1 Definition:
 //
-// AvlSerialNumber  ::=  INTEGER (0..MAX)
+//	AvlSerialNumber ::= INTEGER (0..MAX)
 type AvlSerialNumber = *big.Int
 
 // # ASN.1 Definition:
 //
-//	PKCertIdentifier  ::=  CHOICE {
+//	PKCertIdentifier ::= CHOICE {
 //	  issuerSerialNumber         IssuerSerialNumber,
 //	  fingerprintPKC        [0]  IMPLICIT FingerPrint {Certificate},
 //	  fingerprintPK         [1]  IMPLICIT FingerPrint {PublicKey},
@@ -246,8 +240,9 @@ type IssuerSerialNumber struct {
 
 // # ASN.1 Definition:
 //
-// ScopeRestrictions  ::=  SEQUENCE OF ScopeRestriction
-type ScopeRestrictions = [](ScopeRestriction) // SequenceOfType
+//	ScopeRestrictions ::= SEQUENCE OF ScopeRestriction
+type ScopeRestrictions = [](ScopeRestriction)
+
 // # ASN.1 Definition:
 //
 //	ScopeRestriction ::= SEQUENCE {
@@ -287,7 +282,7 @@ type SupportedAlgorithm struct {
 
 // # ASN.1 Definition:
 //
-//	InfoSyntax  ::=  CHOICE {
+//	InfoSyntax ::= CHOICE {
 //	  content  UnboundedDirectoryString,
 //	  pointer  SEQUENCE {
 //	    name     GeneralNames,
@@ -298,8 +293,9 @@ type InfoSyntax = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// HashedPolicyInfo  ::=  POLICY.&Type({Policies})
-type HashedPolicyInfo = asn1.RawValue // ObjectClassFieldType
+//	HashedPolicyInfo ::= POLICY.&Type({Policies})
+type HashedPolicyInfo = asn1.RawValue
+
 // # ASN.1 Definition:
 //
 //	PolicySyntax ::= SEQUENCE {
@@ -313,8 +309,9 @@ type PolicySyntax struct {
 
 // # ASN.1 Definition:
 //
-// PolicyID  ::=  CertPolicyId
-type PolicyID = CertPolicyId // DefinedType
+//	PolicyID ::= CertPolicyId
+type PolicyID = CertPolicyId
+
 // # ASN.1 Definition:
 //
 //	SupportedPublicKeyAlgorithms ::= SEQUENCE {
@@ -330,7 +327,7 @@ type SupportedPublicKeyAlgorithms struct {
 
 // # ASN.1 Definition:
 //
-//	OidOrAttr  ::=  CHOICE {
+//	OidOrAttr ::= CHOICE {
 //	  oid       ATTRIBUTE.&id ({ ExtAttributes }),
 //	  attribute Attribute {{ ExtAttributes }},
 //	  ... }
@@ -338,104 +335,129 @@ type OidOrAttr = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// id-oc-cRLDistributionPoint          OBJECT IDENTIFIER ::= {id-oc 19}
-var Id_oc_cRLDistributionPoint asn1.ObjectIdentifier = []int{2, 5, 6, 19} /* OBJECT_IDENTIFIER */
+//	id-oc-cRLDistributionPoint          OBJECT IDENTIFIER ::= {id-oc 19}
+var Id_oc_cRLDistributionPoint asn1.ObjectIdentifier = []int{2, 5, 6, 19}
+
 // # ASN.1 Definition:
 //
-// id-oc-pkiUser                       OBJECT IDENTIFIER ::= {id-oc 21}
-var Id_oc_pkiUser asn1.ObjectIdentifier = []int{2, 5, 6, 21} /* OBJECT_IDENTIFIER */
+//	id-oc-pkiUser                       OBJECT IDENTIFIER ::= {id-oc 21}
+var Id_oc_pkiUser asn1.ObjectIdentifier = []int{2, 5, 6, 21}
+
 // # ASN.1 Definition:
 //
-// id-oc-pkiCA                         OBJECT IDENTIFIER ::= {id-oc 22}
-var Id_oc_pkiCA asn1.ObjectIdentifier = []int{2, 5, 6, 22} /* OBJECT_IDENTIFIER */
+//	id-oc-pkiCA                         OBJECT IDENTIFIER ::= {id-oc 22}
+var Id_oc_pkiCA asn1.ObjectIdentifier = []int{2, 5, 6, 22}
+
 // # ASN.1 Definition:
 //
-// id-oc-deltaCRL                      OBJECT IDENTIFIER ::= {id-oc 23}
-var Id_oc_deltaCRL asn1.ObjectIdentifier = []int{2, 5, 6, 23} /* OBJECT_IDENTIFIER */
+//	id-oc-deltaCRL                      OBJECT IDENTIFIER ::= {id-oc 23}
+var Id_oc_deltaCRL asn1.ObjectIdentifier = []int{2, 5, 6, 23}
+
 // # ASN.1 Definition:
 //
-// id-oc-cpCps                         OBJECT IDENTIFIER ::= {id-oc 30}
-var Id_oc_cpCps asn1.ObjectIdentifier = []int{2, 5, 6, 30} /* OBJECT_IDENTIFIER */
+//	id-oc-cpCps                         OBJECT IDENTIFIER ::= {id-oc 30}
+var Id_oc_cpCps asn1.ObjectIdentifier = []int{2, 5, 6, 30}
+
 // # ASN.1 Definition:
 //
-// id-oc-pkiCertPath                   OBJECT IDENTIFIER ::= {id-oc 31}
-var Id_oc_pkiCertPath asn1.ObjectIdentifier = []int{2, 5, 6, 31} /* OBJECT_IDENTIFIER */
+//	id-oc-pkiCertPath                   OBJECT IDENTIFIER ::= {id-oc 31}
+var Id_oc_pkiCertPath asn1.ObjectIdentifier = []int{2, 5, 6, 31}
+
 // # ASN.1 Definition:
 //
-// id-nf-cRLDistPtNameForm             OBJECT IDENTIFIER ::= {id-nf 14}
-var Id_nf_cRLDistPtNameForm asn1.ObjectIdentifier = []int{2, 5, 15, 14} /* OBJECT_IDENTIFIER */
+//	id-nf-cRLDistPtNameForm             OBJECT IDENTIFIER ::= {id-nf 14}
+var Id_nf_cRLDistPtNameForm asn1.ObjectIdentifier = []int{2, 5, 15, 14}
+
 // # ASN.1 Definition:
 //
-// id-at-userPassword                  OBJECT IDENTIFIER ::= {id-at 35}
-var Id_at_userPassword asn1.ObjectIdentifier = []int{2, 5, 4, 35} /* OBJECT_IDENTIFIER */
+//	id-at-userPassword                  OBJECT IDENTIFIER ::= {id-at 35}
+var Id_at_userPassword asn1.ObjectIdentifier = []int{2, 5, 4, 35}
+
 // # ASN.1 Definition:
 //
-// id-at-userCertificate               OBJECT IDENTIFIER ::= {id-at 36}
-var Id_at_userCertificate asn1.ObjectIdentifier = []int{2, 5, 4, 36} /* OBJECT_IDENTIFIER */
+//	id-at-userCertificate               OBJECT IDENTIFIER ::= {id-at 36}
+var Id_at_userCertificate asn1.ObjectIdentifier = []int{2, 5, 4, 36}
+
 // # ASN.1 Definition:
 //
-// id-at-cAcertificate                 OBJECT IDENTIFIER ::= {id-at 37}
-var Id_at_cAcertificate asn1.ObjectIdentifier = []int{2, 5, 4, 37} /* OBJECT_IDENTIFIER */
+//	id-at-cAcertificate                 OBJECT IDENTIFIER ::= {id-at 37}
+var Id_at_cAcertificate asn1.ObjectIdentifier = []int{2, 5, 4, 37}
+
 // # ASN.1 Definition:
 //
-// id-at-authorityRevocationList       OBJECT IDENTIFIER ::= {id-at 38}
-var Id_at_authorityRevocationList asn1.ObjectIdentifier = []int{2, 5, 4, 38} /* OBJECT_IDENTIFIER */
+//	id-at-authorityRevocationList       OBJECT IDENTIFIER ::= {id-at 38}
+var Id_at_authorityRevocationList asn1.ObjectIdentifier = []int{2, 5, 4, 38}
+
 // # ASN.1 Definition:
 //
-// id-at-certificateRevocationList     OBJECT IDENTIFIER ::= {id-at 39}
-var Id_at_certificateRevocationList asn1.ObjectIdentifier = []int{2, 5, 4, 39} /* OBJECT_IDENTIFIER */
+//	id-at-certificateRevocationList     OBJECT IDENTIFIER ::= {id-at 39}
+var Id_at_certificateRevocationList asn1.ObjectIdentifier = []int{2, 5, 4, 39}
+
 // # ASN.1 Definition:
 //
-// id-at-crossCertificatePair          OBJECT IDENTIFIER ::= {id-at 40}
-var Id_at_crossCertificatePair asn1.ObjectIdentifier = []int{2, 5, 4, 40} /* OBJECT_IDENTIFIER */
+//	id-at-crossCertificatePair          OBJECT IDENTIFIER ::= {id-at 40}
+var Id_at_crossCertificatePair asn1.ObjectIdentifier = []int{2, 5, 4, 40}
+
 // # ASN.1 Definition:
 //
-// id-at-supportedAlgorithms           OBJECT IDENTIFIER ::= {id-at 52}
-var Id_at_supportedAlgorithms asn1.ObjectIdentifier = []int{2, 5, 4, 52} /* OBJECT_IDENTIFIER */
+//	id-at-supportedAlgorithms           OBJECT IDENTIFIER ::= {id-at 52}
+var Id_at_supportedAlgorithms asn1.ObjectIdentifier = []int{2, 5, 4, 52}
+
 // # ASN.1 Definition:
 //
-// id-at-deltaRevocationList           OBJECT IDENTIFIER ::= {id-at 53}
-var Id_at_deltaRevocationList asn1.ObjectIdentifier = []int{2, 5, 4, 53} /* OBJECT_IDENTIFIER */
+//	id-at-deltaRevocationList           OBJECT IDENTIFIER ::= {id-at 53}
+var Id_at_deltaRevocationList asn1.ObjectIdentifier = []int{2, 5, 4, 53}
+
 // # ASN.1 Definition:
 //
-// id-at-certificationPracticeStmt     OBJECT IDENTIFIER ::= {id-at 68}
-var Id_at_certificationPracticeStmt asn1.ObjectIdentifier = []int{2, 5, 4, 68} /* OBJECT_IDENTIFIER */
+//	id-at-certificationPracticeStmt     OBJECT IDENTIFIER ::= {id-at 68}
+var Id_at_certificationPracticeStmt asn1.ObjectIdentifier = []int{2, 5, 4, 68}
+
 // # ASN.1 Definition:
 //
-// id-at-certificatePolicy             OBJECT IDENTIFIER ::= {id-at 69}
-var Id_at_certificatePolicy asn1.ObjectIdentifier = []int{2, 5, 4, 69} /* OBJECT_IDENTIFIER */
+//	id-at-certificatePolicy             OBJECT IDENTIFIER ::= {id-at 69}
+var Id_at_certificatePolicy asn1.ObjectIdentifier = []int{2, 5, 4, 69}
+
 // # ASN.1 Definition:
 //
-// id-at-pkiPath                       OBJECT IDENTIFIER ::= {id-at 70}
-var Id_at_pkiPath asn1.ObjectIdentifier = []int{2, 5, 4, 70} /* OBJECT_IDENTIFIER */
+//	id-at-pkiPath                       OBJECT IDENTIFIER ::= {id-at 70}
+var Id_at_pkiPath asn1.ObjectIdentifier = []int{2, 5, 4, 70}
+
 // # ASN.1 Definition:
 //
-// id-at-eepkCertificateRevocationList OBJECT IDENTIFIER ::= {id-at 101}
-var Id_at_eepkCertificateRevocationList asn1.ObjectIdentifier = []int{2, 5, 4, 101} /* OBJECT_IDENTIFIER */
+//	id-at-eepkCertificateRevocationList OBJECT IDENTIFIER ::= {id-at 101}
+var Id_at_eepkCertificateRevocationList asn1.ObjectIdentifier = []int{2, 5, 4, 101}
+
 // # ASN.1 Definition:
 //
-// id-at-supportedPublicKeyAlgorithms  OBJECT IDENTIFIER ::= {id-at 103}
-var Id_at_supportedPublicKeyAlgorithms asn1.ObjectIdentifier = []int{2, 5, 4, 103} /* OBJECT_IDENTIFIER */
+//	id-at-supportedPublicKeyAlgorithms  OBJECT IDENTIFIER ::= {id-at 103}
+var Id_at_supportedPublicKeyAlgorithms asn1.ObjectIdentifier = []int{2, 5, 4, 103}
+
 // # ASN.1 Definition:
 //
-// id-asx-x509SupportedPublicKeyAlgos  OBJECT IDENTIFIER ::= {id-asx 10}
-var Id_asx_x509SupportedPublicKeyAlgos asn1.ObjectIdentifier = []int{2, 5, 40, 10} /* OBJECT_IDENTIFIER */
+//	id-asx-x509SupportedPublicKeyAlgos  OBJECT IDENTIFIER ::= {id-asx 10}
+var Id_asx_x509SupportedPublicKeyAlgos asn1.ObjectIdentifier = []int{2, 5, 40, 10}
+
 // # ASN.1 Definition:
 //
-// id-lsx-x509Certificate              OBJECT IDENTIFIER ::= {id-lsx 8}
-var Id_lsx_x509Certificate asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 8} /* OBJECT_IDENTIFIER */
+//	id-lsx-x509Certificate              OBJECT IDENTIFIER ::= {id-lsx 8}
+var Id_lsx_x509Certificate asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 8}
+
 // # ASN.1 Definition:
 //
-// id-lsx-x509CertificateList          OBJECT IDENTIFIER ::= {id-lsx 9}
-var Id_lsx_x509CertificateList asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 9} /* OBJECT_IDENTIFIER */
+//	id-lsx-x509CertificateList          OBJECT IDENTIFIER ::= {id-lsx 9}
+var Id_lsx_x509CertificateList asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 9}
+
 // # ASN.1 Definition:
 //
-// id-lsx-x509CertificatePair          OBJECT IDENTIFIER ::= {id-lsx 10}
-var Id_lsx_x509CertificatePair asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 10} /* OBJECT_IDENTIFIER */
+//	id-lsx-x509CertificatePair          OBJECT IDENTIFIER ::= {id-lsx 10}
+var Id_lsx_x509CertificatePair asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 10}
+
 // # ASN.1 Definition:
 //
-// id-lsx-x509SupportedAlgorithm       OBJECT IDENTIFIER ::= {id-lsx 49}
-var Id_lsx_x509SupportedAlgorithm asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 49} /* OBJECT_IDENTIFIER */
+//	id-lsx-x509SupportedAlgorithm       OBJECT IDENTIFIER ::= {id-lsx 49}
+var Id_lsx_x509SupportedAlgorithm asn1.ObjectIdentifier = []int{1, 3, 6, 1, 4, 1, 1466, 115, 121, 1, 49}
+
 // # ASN.1 Definition:
 //
 // TBSCertAVL-entries-Item-idType ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }

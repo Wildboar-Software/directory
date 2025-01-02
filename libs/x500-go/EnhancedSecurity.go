@@ -6,22 +6,23 @@ import (
 
 // # ASN.1 Definition:
 //
-//	OPTIONALLY-PROTECTED{Type}  ::=  CHOICE {
+//	OPTIONALLY-PROTECTED{Type} ::= CHOICE {
 //	  unsigned       Type,
 //	  signed         SIGNED{Type} }
 type OPTIONALLY_PROTECTED = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-//	OPTIONALLY-PROTECTED-SEQ{Type}  ::=  CHOICE {
+//	OPTIONALLY-PROTECTED-SEQ{Type} ::= CHOICE {
 //	  unsigned       Type,
 //	  signed    [0]  SIGNED{Type} }
 type OPTIONALLY_PROTECTED_SEQ = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// SignedSecurityLabel  ::=  SIGNED{SignedSecurityLabelContent}
-type SignedSecurityLabel = SIGNED // DefinedType
+//	SignedSecurityLabel ::= SIGNED{SignedSecurityLabelContent}
+type SignedSecurityLabel = SIGNED
+
 // # ASN.1 Definition:
 //
 //	SignedSecurityLabelContent ::= SEQUENCE {
@@ -55,11 +56,12 @@ type SecurityLabel struct {
 
 // # ASN.1 Definition:
 //
-// SecurityPolicyIdentifier  ::=  OBJECT IDENTIFIER
-type SecurityPolicyIdentifier = asn1.ObjectIdentifier // ObjectIdentifierType
+//	SecurityPolicyIdentifier ::= OBJECT IDENTIFIER
+type SecurityPolicyIdentifier = asn1.ObjectIdentifier
+
 // # ASN.1 Definition:
 //
-//	SecurityClassification  ::=  INTEGER {
+//	SecurityClassification ::= INTEGER {
 //	  unmarked      (0),
 //	  unclassified  (1),
 //	  restricted    (2),
@@ -82,12 +84,14 @@ const SecurityClassification_Top_secret SecurityClassification = 5
 
 // # ASN.1 Definition:
 //
-// PrivacyMark  ::=  PrintableString(SIZE (1..MAX))
-type PrivacyMark = string // PrintableString
+//	PrivacyMark ::= PrintableString(SIZE (1..MAX))
+type PrivacyMark = string
+
 // # ASN.1 Definition:
 //
-// SecurityCategories  ::=  SET SIZE (1..MAX) OF SecurityCategory
-type SecurityCategories = [](SecurityCategory) // SetOfType
+//	SecurityCategories ::= SET SIZE (1..MAX) OF SecurityCategory
+type SecurityCategories = [](SecurityCategory)
+
 // # ASN.1 Definition:
 //
 //	Clearance ::= SEQUENCE {
@@ -103,7 +107,7 @@ type Clearance struct {
 
 // # ASN.1 Definition:
 //
-//	ClassList  ::=  BIT STRING {
+//	ClassList ::= BIT STRING {
 //	  unmarked      (0),
 //	  unclassified  (1),
 //	  restricted    (2),
@@ -137,8 +141,9 @@ type SecurityCategory struct {
 
 // # ASN.1 Definition:
 //
-// AttributeIntegrityInfo  ::=  SIGNED{AttributeIntegrityInfoContent}
-type AttributeIntegrityInfo = SIGNED // DefinedType
+//	AttributeIntegrityInfo ::= SIGNED{AttributeIntegrityInfoContent}
+type AttributeIntegrityInfo = SIGNED
+
 // # ASN.1 Definition:
 //
 //	AttributeIntegrityInfoContent ::= SEQUENCE {
@@ -154,7 +159,7 @@ type AttributeIntegrityInfoContent struct {
 
 // # ASN.1 Definition:
 //
-//	Signer  ::=  CHOICE {
+//	Signer ::= CHOICE {
 //	  thisEntry   [0]  EXPLICIT ThisEntry,
 //	  thirdParty  [1]  SpecificallyIdentified,
 //	  ... }
@@ -162,7 +167,7 @@ type Signer = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-//	ThisEntry  ::=  CHOICE {
+//	ThisEntry ::= CHOICE {
 //	  onlyOne   NULL,
 //	  specific  IssuerAndSerialNumber,
 //	  ... }
@@ -195,7 +200,7 @@ type SpecificallyIdentified struct {
 
 // # ASN.1 Definition:
 //
-//	Scope  ::=  CHOICE {
+//	Scope ::= CHOICE {
 //	  wholeEntry     [0]  NULL, -- Signature protects all attribute values in this entry
 //	  selectedTypes  [1]  SelectedTypes,
 //	      -- Signature protects all attribute values of the selected attribute types
@@ -204,20 +209,24 @@ type Scope = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// SelectedTypes  ::=  SEQUENCE SIZE (1..MAX) OF AttributeType
-type SelectedTypes = [](AttributeType) // SequenceOfType
+//	SelectedTypes ::= SEQUENCE SIZE (1..MAX) OF AttributeType
+type SelectedTypes = [](AttributeType)
+
 // # ASN.1 Definition:
 //
-// AttribsHash  ::=  HASH{HashedAttributes}
-type AttribsHash = HASH // DefinedType
+//	AttribsHash ::= HASH{HashedAttributes}
+type AttribsHash = HASH
+
 // # ASN.1 Definition:
 //
-// HashedAttributes  ::=  SEQUENCE SIZE (1..MAX) OF Attribute{{SupportedAttributes}}
-type HashedAttributes = [](Attribute) // SequenceOfType
+//	HashedAttributes ::= SEQUENCE SIZE (1..MAX) OF Attribute{{SupportedAttributes}}
+type HashedAttributes = [](Attribute)
+
 // # ASN.1 Definition:
 //
-// AttributeValueIntegrityInfo  ::=  SIGNED{AttributeValueIntegrityInfoContent}
-type AttributeValueIntegrityInfo = SIGNED // DefinedType
+//	AttributeValueIntegrityInfo ::= SIGNED{AttributeValueIntegrityInfoContent}
+type AttributeValueIntegrityInfo = SIGNED
+
 // # ASN.1 Definition:
 //
 //	AttributeValueIntegrityInfoContent ::= SEQUENCE {
@@ -231,8 +240,9 @@ type AttributeValueIntegrityInfoContent struct {
 
 // # ASN.1 Definition:
 //
-// AVIHash  ::=  HASH{AttributeTypeValueContexts}
-type AVIHash = HASH // DefinedType
+//	AVIHash ::= HASH{AttributeTypeValueContexts}
+type AVIHash = HASH
+
 // # ASN.1 Definition:
 //
 //	AttributeTypeValueContexts ::= SEQUENCE {
@@ -248,21 +258,25 @@ type AttributeTypeValueContexts struct {
 
 // # ASN.1 Definition:
 //
-// id-oc-integrityInfo OBJECT IDENTIFIER ::= {id-oc 40}
-var Id_oc_integrityInfo asn1.ObjectIdentifier = []int{2, 5, 6, 40} /* OBJECT_IDENTIFIER */
+//	id-oc-integrityInfo OBJECT IDENTIFIER ::= {id-oc 40}
+var Id_oc_integrityInfo asn1.ObjectIdentifier = []int{2, 5, 6, 40}
+
 // # ASN.1 Definition:
 //
-// id-at-clearance                           OBJECT IDENTIFIER ::= {id-at 55}
-var Id_at_clearance asn1.ObjectIdentifier = []int{2, 5, 4, 55} /* OBJECT_IDENTIFIER */
+//	id-at-clearance                           OBJECT IDENTIFIER ::= {id-at 55}
+var Id_at_clearance asn1.ObjectIdentifier = []int{2, 5, 4, 55}
+
 // # ASN.1 Definition:
 //
-// id-at-attributeIntegrityInfo              OBJECT IDENTIFIER ::= {id-at 57}
-var Id_at_attributeIntegrityInfo asn1.ObjectIdentifier = []int{2, 5, 4, 57} /* OBJECT_IDENTIFIER */
+//	id-at-attributeIntegrityInfo              OBJECT IDENTIFIER ::= {id-at 57}
+var Id_at_attributeIntegrityInfo asn1.ObjectIdentifier = []int{2, 5, 4, 57}
+
 // # ASN.1 Definition:
 //
-// id-avc-attributeValueSecurityLabelContext OBJECT IDENTIFIER ::= {id-avc 3}
-var Id_avc_attributeValueSecurityLabelContext asn1.ObjectIdentifier = []int{2, 5, 31, 3} /* OBJECT_IDENTIFIER */
+//	id-avc-attributeValueSecurityLabelContext OBJECT IDENTIFIER ::= {id-avc 3}
+var Id_avc_attributeValueSecurityLabelContext asn1.ObjectIdentifier = []int{2, 5, 31, 3}
+
 // # ASN.1 Definition:
 //
-// id-avc-attributeValueIntegrityInfoContext OBJECT IDENTIFIER ::= {id-avc 4}
-var Id_avc_attributeValueIntegrityInfoContext asn1.ObjectIdentifier = []int{2, 5, 31, 4} /* OBJECT_IDENTIFIER */
+//	id-avc-attributeValueIntegrityInfoContext OBJECT IDENTIFIER ::= {id-avc 4}
+var Id_avc_attributeValueIntegrityInfoContext asn1.ObjectIdentifier = []int{2, 5, 31, 4}

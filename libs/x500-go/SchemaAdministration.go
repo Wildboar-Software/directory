@@ -254,53 +254,65 @@ type FriendsDescription struct {
 
 // # ASN.1 Definition:
 //
-// id-soc-subschema OBJECT IDENTIFIER ::= {id-soc 1}
-var Id_soc_subschema asn1.ObjectIdentifier = []int{2, 5, 20, 1} /* OBJECT_IDENTIFIER */
+//	id-soc-subschema OBJECT IDENTIFIER ::= {id-soc 1}
+var Id_soc_subschema asn1.ObjectIdentifier = []int{2, 5, 20, 1}
+
 // # ASN.1 Definition:
 //
-// id-soa-dITStructureRule       OBJECT IDENTIFIER ::= {id-soa 1}
-var Id_soa_dITStructureRule asn1.ObjectIdentifier = []int{2, 5, 21, 1} /* OBJECT_IDENTIFIER */
+//	id-soa-dITStructureRule       OBJECT IDENTIFIER ::= {id-soa 1}
+var Id_soa_dITStructureRule asn1.ObjectIdentifier = []int{2, 5, 21, 1}
+
 // # ASN.1 Definition:
 //
-// id-soa-dITContentRules        OBJECT IDENTIFIER ::= {id-soa 2}
-var Id_soa_dITContentRules asn1.ObjectIdentifier = []int{2, 5, 21, 2} /* OBJECT_IDENTIFIER */
+//	id-soa-dITContentRules        OBJECT IDENTIFIER ::= {id-soa 2}
+var Id_soa_dITContentRules asn1.ObjectIdentifier = []int{2, 5, 21, 2}
+
 // # ASN.1 Definition:
 //
-// id-soa-matchingRules          OBJECT IDENTIFIER ::= {id-soa 4}
-var Id_soa_matchingRules asn1.ObjectIdentifier = []int{2, 5, 21, 4} /* OBJECT_IDENTIFIER */
+//	id-soa-matchingRules          OBJECT IDENTIFIER ::= {id-soa 4}
+var Id_soa_matchingRules asn1.ObjectIdentifier = []int{2, 5, 21, 4}
+
 // # ASN.1 Definition:
 //
-// id-soa-attributeTypes         OBJECT IDENTIFIER ::= {id-soa 5}
-var Id_soa_attributeTypes asn1.ObjectIdentifier = []int{2, 5, 21, 5} /* OBJECT_IDENTIFIER */
+//	id-soa-attributeTypes         OBJECT IDENTIFIER ::= {id-soa 5}
+var Id_soa_attributeTypes asn1.ObjectIdentifier = []int{2, 5, 21, 5}
+
 // # ASN.1 Definition:
 //
-// id-soa-objectClasses          OBJECT IDENTIFIER ::= {id-soa 6}
-var Id_soa_objectClasses asn1.ObjectIdentifier = []int{2, 5, 21, 6} /* OBJECT_IDENTIFIER */
+//	id-soa-objectClasses          OBJECT IDENTIFIER ::= {id-soa 6}
+var Id_soa_objectClasses asn1.ObjectIdentifier = []int{2, 5, 21, 6}
+
 // # ASN.1 Definition:
 //
-// id-soa-nameForms              OBJECT IDENTIFIER ::= {id-soa 7}
-var Id_soa_nameForms asn1.ObjectIdentifier = []int{2, 5, 21, 7} /* OBJECT_IDENTIFIER */
+//	id-soa-nameForms              OBJECT IDENTIFIER ::= {id-soa 7}
+var Id_soa_nameForms asn1.ObjectIdentifier = []int{2, 5, 21, 7}
+
 // # ASN.1 Definition:
 //
-// id-soa-matchingRuleUse        OBJECT IDENTIFIER ::= {id-soa 8}
-var Id_soa_matchingRuleUse asn1.ObjectIdentifier = []int{2, 5, 21, 8} /* OBJECT_IDENTIFIER */
+//	id-soa-matchingRuleUse        OBJECT IDENTIFIER ::= {id-soa 8}
+var Id_soa_matchingRuleUse asn1.ObjectIdentifier = []int{2, 5, 21, 8}
+
 // # ASN.1 Definition:
 //
-// id-soa-structuralObjectClass  OBJECT IDENTIFIER ::= {id-soa 9}
-var Id_soa_structuralObjectClass asn1.ObjectIdentifier = []int{2, 5, 21, 9} /* OBJECT_IDENTIFIER */
+//	id-soa-structuralObjectClass  OBJECT IDENTIFIER ::= {id-soa 9}
+var Id_soa_structuralObjectClass asn1.ObjectIdentifier = []int{2, 5, 21, 9}
+
 // # ASN.1 Definition:
 //
-// id-soa-governingStructureRule OBJECT IDENTIFIER ::= {id-soa 10}
-var Id_soa_governingStructureRule asn1.ObjectIdentifier = []int{2, 5, 21, 10} /* OBJECT_IDENTIFIER */
+//	id-soa-governingStructureRule OBJECT IDENTIFIER ::= {id-soa 10}
+var Id_soa_governingStructureRule asn1.ObjectIdentifier = []int{2, 5, 21, 10}
+
 // # ASN.1 Definition:
 //
-// id-soa-contextTypes           OBJECT IDENTIFIER ::= {id-soa 11}
-var Id_soa_contextTypes asn1.ObjectIdentifier = []int{2, 5, 21, 11} /* OBJECT_IDENTIFIER */
+//	id-soa-contextTypes           OBJECT IDENTIFIER ::= {id-soa 11}
+var Id_soa_contextTypes asn1.ObjectIdentifier = []int{2, 5, 21, 11}
+
 // # ASN.1 Definition:
 //
-// id-soa-dITContextUse          OBJECT IDENTIFIER ::= {id-soa 12}
-var Id_soa_dITContextUse asn1.ObjectIdentifier = []int{2, 5, 21, 12} /* OBJECT_IDENTIFIER */
+//	id-soa-dITContextUse          OBJECT IDENTIFIER ::= {id-soa 12}
+var Id_soa_dITContextUse asn1.ObjectIdentifier = []int{2, 5, 21, 12}
+
 // # ASN.1 Definition:
 //
-// id-soa-friends                OBJECT IDENTIFIER ::= {id-soa 13}
-var Id_soa_friends asn1.ObjectIdentifier = []int{2, 5, 21, 13} /* OBJECT_IDENTIFIER */
+//	id-soa-friends                OBJECT IDENTIFIER ::= {id-soa 13}
+var Id_soa_friends asn1.ObjectIdentifier = []int{2, 5, 21, 13}

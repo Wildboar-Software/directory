@@ -9,8 +9,9 @@ import (
 
 // # ASN.1 Definition:
 //
-// AttributeCertificate  ::=  SIGNED{TBSAttributeCertificate}
-type AttributeCertificate = SIGNED // DefinedType
+// AttributeCertificate ::= SIGNED{TBSAttributeCertificate}
+type AttributeCertificate = SIGNED
+
 // # ASN.1 Definition:
 //
 //	TBSAttributeCertificate ::= SEQUENCE {
@@ -40,7 +41,7 @@ type TBSAttributeCertificate struct {
 
 // # ASN.1 Definition:
 //
-// AttCertVersion  ::=  INTEGER {v2(1)}
+//	AttCertVersion ::= INTEGER {v2(1)}
 type AttCertVersion = int64
 
 const AttCertVersion_V2 AttCertVersion = 1
@@ -142,8 +143,9 @@ type ACPathData struct {
 
 // # ASN.1 Definition:
 //
-// PrivilegePolicy  ::=  OBJECT IDENTIFIER
-type PrivilegePolicy = asn1.ObjectIdentifier // ObjectIdentifierType
+// PrivilegePolicy ::= OBJECT IDENTIFIER
+type PrivilegePolicy = asn1.ObjectIdentifier
+
 // # ASN.1 Definition:
 //
 //	RoleSyntax ::= SEQUENCE {
@@ -168,11 +170,12 @@ type DualStringSyntax struct {
 
 // # ASN.1 Definition:
 //
-// Targets  ::=  SEQUENCE SIZE (1..MAX) OF Target
-type Targets = [](Target) // SequenceOfType
+//	Targets ::= SEQUENCE SIZE (1..MAX) OF Target
+type Targets = [](Target)
+
 // # ASN.1 Definition:
 //
-//	Target  ::=  CHOICE {
+//	Target ::= CHOICE {
 //	  targetName   [0]  GeneralName,
 //	  targetGroup  [1]  GeneralName,
 //	  targetCert   [2]  TargetCert,
@@ -213,16 +216,9 @@ type NoticeReference struct {
 
 // # ASN.1 Definition:
 //
-// DisplayText  ::=  CHOICE {
-//   visibleString  VisibleString(SIZE (1..200)),
-//   bmpString      BMPString(SIZE (1..200)),
-//   utf8String     UTF8String(SIZE (1..200)) }
-// type DisplayText = asn1.RawValue
+//	AcceptablePrivilegePoliciesSyntax ::= SEQUENCE SIZE (1..MAX) OF PrivilegePolicy
+type AcceptablePrivilegePoliciesSyntax = [](PrivilegePolicy)
 
-// # ASN.1 Definition:
-//
-// AcceptablePrivilegePoliciesSyntax  ::=  SEQUENCE SIZE (1..MAX) OF PrivilegePolicy
-type AcceptablePrivilegePoliciesSyntax = [](PrivilegePolicy) // SequenceOfType
 // # ASN.1 Definition:
 //
 //	AttributeDescriptorSyntax ::= SEQUENCE {
@@ -242,15 +238,16 @@ type AttributeDescriptorSyntax struct {
 
 // # ASN.1 Definition:
 //
-// AttributeIdentifier  ::=  ATTRIBUTE.&id({AttributeIDs})
-type AttributeIdentifier = asn1.ObjectIdentifier // ObjectClassFieldType
+//	AttributeIdentifier ::= ATTRIBUTE.&id({AttributeIDs})
+type AttributeIdentifier = asn1.ObjectIdentifier
+
 // # ASN.1 Definition:
 //
-// AttributeName  ::=  UTF8String(SIZE (1..MAX))
+//	AttributeName ::= UTF8String(SIZE (1..MAX))
 type AttributeName = string // UTF8String
 // # ASN.1 Definition:
 //
-// AttributeDescription  ::=  UTF8String(SIZE (1..MAX))
+//	AttributeDescription ::= UTF8String(SIZE (1..MAX))
 type AttributeDescription = string // UTF8String
 // # ASN.1 Definition:
 //
@@ -265,10 +262,9 @@ type PrivilegePolicyIdentifier struct {
 
 // # ASN.1 Definition:
 //
-// RoleSpecCertIdentifierSyntax  ::=
-//
-//	SEQUENCE SIZE (1..MAX) OF RoleSpecCertIdentifier
-type RoleSpecCertIdentifierSyntax = [](RoleSpecCertIdentifier) // SequenceOfType
+//	RoleSpecCertIdentifierSyntax ::= SEQUENCE SIZE (1..MAX) OF RoleSpecCertIdentifier
+type RoleSpecCertIdentifierSyntax = [](RoleSpecCertIdentifier)
+
 // # ASN.1 Definition:
 //
 //	RoleSpecCertIdentifier ::= SEQUENCE {
@@ -297,33 +293,33 @@ type BasicAttConstraintsSyntax struct {
 
 // # ASN.1 Definition:
 //
-// AcceptableCertPoliciesSyntax  ::=  SEQUENCE SIZE (1..MAX) OF CertPolicyId
-type AcceptableCertPoliciesSyntax = [](CertPolicyId) // SequenceOfType
+//	AcceptableCertPoliciesSyntax ::= SEQUENCE SIZE (1..MAX) OF CertPolicyId
+type AcceptableCertPoliciesSyntax = [](CertPolicyId)
+
 // # ASN.1 Definition:
 //
-// CertPolicyId  ::=  OBJECT IDENTIFIER
-// type CertPolicyId = asn1.ObjectIdentifier // ObjectIdentifierType
+//	AuthorityAttributeIdentifierSyntax ::= SEQUENCE SIZE (1..MAX) OF AuthAttId
+type AuthorityAttributeIdentifierSyntax = [](AuthAttId)
+
 // # ASN.1 Definition:
 //
-// AuthorityAttributeIdentifierSyntax  ::=  SEQUENCE SIZE (1..MAX) OF AuthAttId
-type AuthorityAttributeIdentifierSyntax = [](AuthAttId) // SequenceOfType
+//	AuthAttId ::= IssuerSerial
+type AuthAttId = IssuerSerial
+
 // # ASN.1 Definition:
 //
-// AuthAttId  ::=  IssuerSerial
-type AuthAttId = IssuerSerial // DefinedType
-// # ASN.1 Definition:
-//
-//	AllowedAttributeAssignments  ::=  SET OF SEQUENCE {
+//	AllowedAttributeAssignments ::= SET OF SEQUENCE {
 //	  attributes              [0]  SET OF CHOICE {
 //	    attributeType           [0]  AttributeType,
 //	    attributeTypeandValues  [1]  Attribute{{SupportedAttributes}},
 //	    ... },
 //	  holderDomain            [1]  GeneralName,
 //	  ... }
-type AllowedAttributeAssignments = [](AllowedAttributeAssignments_Item) // SetOfType
+type AllowedAttributeAssignments = [](AllowedAttributeAssignments_Item)
+
 // # ASN.1 Definition:
 //
-//	AttributeMappings  ::=  SET OF CHOICE {
+//	AttributeMappings ::= SET OF CHOICE {
 //	  typeMappings      [0]  SEQUENCE {
 //	    local             [0]  AttributeType,
 //	    remote            [1]  AttributeType,
@@ -332,7 +328,8 @@ type AllowedAttributeAssignments = [](AllowedAttributeAssignments_Item) // SetOf
 //	    local             [0]  AttributeTypeAndValue,
 //	    remote            [1]  AttributeTypeAndValue,
 //	    ... } }
-type AttributeMappings = [](AttributeMappings_Item) // SetOfType
+type AttributeMappings = [](AttributeMappings_Item)
+
 // # ASN.1 Definition:
 //
 //	HolderNameConstraintsSyntax ::= SEQUENCE {
@@ -346,32 +343,9 @@ type HolderNameConstraintsSyntax struct {
 
 // # ASN.1 Definition:
 //
-// GeneralSubtrees  ::=  SEQUENCE SIZE (1..MAX) OF GeneralSubtree
-// type GeneralSubtrees = [](GeneralSubtree) // SequenceOfType
-// # ASN.1 Definition:
-//
-// GeneralSubtree ::= SEQUENCE {
-//   base          GeneralName,
-//   minimum  [0]  BaseDistance DEFAULT 0,
-//   maximum  [1]  BaseDistance OPTIONAL,
-//   ... }
-//
-//
-// type GeneralSubtree struct {
-// 	Base    GeneralName
-// 	Minimum BaseDistance `asn1:"optional,tag:0"`
-// 	Maximum BaseDistance `asn1:"optional,tag:1"`
-// }
+//	AttCertPath ::= SEQUENCE OF AttributeCertificate
+type AttCertPath = [](AttributeCertificate)
 
-// # ASN.1 Definition:
-//
-// BaseDistance  ::=  INTEGER(0..MAX)
-// type BaseDistance = int64
-
-// # ASN.1 Definition:
-//
-// AttCertPath  ::=  SEQUENCE OF AttributeCertificate
-type AttCertPath = [](AttributeCertificate) // SequenceOfType
 // # ASN.1 Definition:
 //
 //	AttributeCertificateExactAssertion ::= SEQUENCE {
@@ -425,223 +399,277 @@ type DelMatchSyntax struct {
 
 // # ASN.1 Definition:
 //
-// id-oc-pmiUser                            OBJECT IDENTIFIER ::= {id-oc 24}
-var Id_oc_pmiUser asn1.ObjectIdentifier = []int{2, 5, 6, 24} /* OBJECT_IDENTIFIER */
+//	id-oc-pmiUser                            OBJECT IDENTIFIER ::= {id-oc 24}
+var Id_oc_pmiUser asn1.ObjectIdentifier = []int{2, 5, 6, 24}
+
 // # ASN.1 Definition:
 //
-// id-oc-pmiAA                              OBJECT IDENTIFIER ::= {id-oc 25}
-var Id_oc_pmiAA asn1.ObjectIdentifier = []int{2, 5, 6, 25} /* OBJECT_IDENTIFIER */
+//	id-oc-pmiAA                              OBJECT IDENTIFIER ::= {id-oc 25}
+var Id_oc_pmiAA asn1.ObjectIdentifier = []int{2, 5, 6, 25}
+
 // # ASN.1 Definition:
 //
-// id-oc-pmiSOA                             OBJECT IDENTIFIER ::= {id-oc 26}
-var Id_oc_pmiSOA asn1.ObjectIdentifier = []int{2, 5, 6, 26} /* OBJECT_IDENTIFIER */
+//	id-oc-pmiSOA                             OBJECT IDENTIFIER ::= {id-oc 26}
+var Id_oc_pmiSOA asn1.ObjectIdentifier = []int{2, 5, 6, 26}
+
 // # ASN.1 Definition:
 //
-// id-oc-attCertCRLDistributionPts          OBJECT IDENTIFIER ::= {id-oc 27}
-var Id_oc_attCertCRLDistributionPts asn1.ObjectIdentifier = []int{2, 5, 6, 27} /* OBJECT_IDENTIFIER */
+//	id-oc-attCertCRLDistributionPts          OBJECT IDENTIFIER ::= {id-oc 27}
+var Id_oc_attCertCRLDistributionPts asn1.ObjectIdentifier = []int{2, 5, 6, 27}
+
 // # ASN.1 Definition:
 //
-// id-oc-privilegePolicy                    OBJECT IDENTIFIER ::= {id-oc 32}
-var Id_oc_privilegePolicy asn1.ObjectIdentifier = []int{2, 5, 6, 32} /* OBJECT_IDENTIFIER */
+//	id-oc-privilegePolicy                    OBJECT IDENTIFIER ::= {id-oc 32}
+var Id_oc_privilegePolicy asn1.ObjectIdentifier = []int{2, 5, 6, 32}
+
 // # ASN.1 Definition:
 //
-// id-oc-pmiDelegationPath                  OBJECT IDENTIFIER ::= {id-oc 33}
-var Id_oc_pmiDelegationPath asn1.ObjectIdentifier = []int{2, 5, 6, 33} /* OBJECT_IDENTIFIER */
+//	id-oc-pmiDelegationPath                  OBJECT IDENTIFIER ::= {id-oc 33}
+var Id_oc_pmiDelegationPath asn1.ObjectIdentifier = []int{2, 5, 6, 33}
+
 // # ASN.1 Definition:
 //
-// id-oc-protectedPrivilegePolicy           OBJECT IDENTIFIER ::= {id-oc 34}
-var Id_oc_protectedPrivilegePolicy asn1.ObjectIdentifier = []int{2, 5, 6, 34} /* OBJECT_IDENTIFIER */
+//	id-oc-protectedPrivilegePolicy           OBJECT IDENTIFIER ::= {id-oc 34}
+var Id_oc_protectedPrivilegePolicy asn1.ObjectIdentifier = []int{2, 5, 6, 34}
+
 // # ASN.1 Definition:
 //
-// id-at-attributeCertificate               OBJECT IDENTIFIER ::= {id-at 58}
-var Id_at_attributeCertificate asn1.ObjectIdentifier = []int{2, 5, 4, 58} /* OBJECT_IDENTIFIER */
+//	id-at-attributeCertificate               OBJECT IDENTIFIER ::= {id-at 58}
+var Id_at_attributeCertificate asn1.ObjectIdentifier = []int{2, 5, 4, 58}
+
 // # ASN.1 Definition:
 //
-// id-at-attributeCertificateRevocationList OBJECT IDENTIFIER ::= {id-at 59}
-var Id_at_attributeCertificateRevocationList asn1.ObjectIdentifier = []int{2, 5, 4, 59} /* OBJECT_IDENTIFIER */
+//	id-at-attributeCertificateRevocationList OBJECT IDENTIFIER ::= {id-at 59}
+var Id_at_attributeCertificateRevocationList asn1.ObjectIdentifier = []int{2, 5, 4, 59}
+
 // # ASN.1 Definition:
 //
-// id-at-aACertificate                      OBJECT IDENTIFIER ::= {id-at 61}
-var Id_at_aACertificate asn1.ObjectIdentifier = []int{2, 5, 4, 61} /* OBJECT_IDENTIFIER */
+//	id-at-aACertificate                      OBJECT IDENTIFIER ::= {id-at 61}
+var Id_at_aACertificate asn1.ObjectIdentifier = []int{2, 5, 4, 61}
+
 // # ASN.1 Definition:
 //
-// id-at-attributeDescriptorCertificate     OBJECT IDENTIFIER ::= {id-at 62}
-var Id_at_attributeDescriptorCertificate asn1.ObjectIdentifier = []int{2, 5, 4, 62} /* OBJECT_IDENTIFIER */
+//	id-at-attributeDescriptorCertificate     OBJECT IDENTIFIER ::= {id-at 62}
+var Id_at_attributeDescriptorCertificate asn1.ObjectIdentifier = []int{2, 5, 4, 62}
+
 // # ASN.1 Definition:
 //
-// id-at-attributeAuthorityRevocationList   OBJECT IDENTIFIER ::= {id-at 63}
-var Id_at_attributeAuthorityRevocationList asn1.ObjectIdentifier = []int{2, 5, 4, 63} /* OBJECT_IDENTIFIER */
+//	id-at-attributeAuthorityRevocationList   OBJECT IDENTIFIER ::= {id-at 63}
+var Id_at_attributeAuthorityRevocationList asn1.ObjectIdentifier = []int{2, 5, 4, 63}
+
 // # ASN.1 Definition:
 //
-// id-at-privPolicy                         OBJECT IDENTIFIER ::= {id-at 71}
-var Id_at_privPolicy asn1.ObjectIdentifier = []int{2, 5, 4, 71} /* OBJECT_IDENTIFIER */
+//	id-at-privPolicy                         OBJECT IDENTIFIER ::= {id-at 71}
+var Id_at_privPolicy asn1.ObjectIdentifier = []int{2, 5, 4, 71}
+
 // # ASN.1 Definition:
 //
-// id-at-role                               OBJECT IDENTIFIER ::= {id-at 72}
-var Id_at_role asn1.ObjectIdentifier = []int{2, 5, 4, 72} /* OBJECT_IDENTIFIER */
+//	id-at-role                               OBJECT IDENTIFIER ::= {id-at 72}
+var Id_at_role asn1.ObjectIdentifier = []int{2, 5, 4, 72}
+
 // # ASN.1 Definition:
 //
-// id-at-delegationPath                     OBJECT IDENTIFIER ::= {id-at 73}
-var Id_at_delegationPath asn1.ObjectIdentifier = []int{2, 5, 4, 73} /* OBJECT_IDENTIFIER */
+//	id-at-delegationPath                     OBJECT IDENTIFIER ::= {id-at 73}
+var Id_at_delegationPath asn1.ObjectIdentifier = []int{2, 5, 4, 73}
+
 // # ASN.1 Definition:
 //
-// id-at-protPrivPolicy                     OBJECT IDENTIFIER ::= {id-at 74}
-var Id_at_protPrivPolicy asn1.ObjectIdentifier = []int{2, 5, 4, 74} /* OBJECT_IDENTIFIER */
+//	id-at-protPrivPolicy                     OBJECT IDENTIFIER ::= {id-at 74}
+var Id_at_protPrivPolicy asn1.ObjectIdentifier = []int{2, 5, 4, 74}
+
 // # ASN.1 Definition:
 //
-// id-at-xMLPrivilegeInfo                   OBJECT IDENTIFIER ::= {id-at 75}
-var Id_at_xMLPrivilegeInfo asn1.ObjectIdentifier = []int{2, 5, 4, 75} /* OBJECT_IDENTIFIER */
+//	id-at-xMLPrivilegeInfo                   OBJECT IDENTIFIER ::= {id-at 75}
+var Id_at_xMLPrivilegeInfo asn1.ObjectIdentifier = []int{2, 5, 4, 75}
+
 // # ASN.1 Definition:
 //
-// id-at-xmlPrivPolicy                      OBJECT IDENTIFIER ::= {id-at 76}
-var Id_at_xmlPrivPolicy asn1.ObjectIdentifier = []int{2, 5, 4, 76} /* OBJECT_IDENTIFIER */
+//	id-at-xmlPrivPolicy                      OBJECT IDENTIFIER ::= {id-at 76}
+var Id_at_xmlPrivPolicy asn1.ObjectIdentifier = []int{2, 5, 4, 76}
+
 // # ASN.1 Definition:
 //
-// id-at-permission                         OBJECT IDENTIFIER ::= {id-at 82}
-var Id_at_permission asn1.ObjectIdentifier = []int{2, 5, 4, 82} /* OBJECT_IDENTIFIER */
+//	id-at-permission                         OBJECT IDENTIFIER ::= {id-at 82}
+var Id_at_permission asn1.ObjectIdentifier = []int{2, 5, 4, 82}
+
 // # ASN.1 Definition:
 //
-// id-at-eeAttrCertificateRevocationList    OBJECT IDENTIFIER ::= {id-at 102}
-var Id_at_eeAttrCertificateRevocationList asn1.ObjectIdentifier = []int{2, 5, 4, 102} /* OBJECT_IDENTIFIER */
+//	id-at-eeAttrCertificateRevocationList    OBJECT IDENTIFIER ::= {id-at 102}
+var Id_at_eeAttrCertificateRevocationList asn1.ObjectIdentifier = []int{2, 5, 4, 102}
+
 // # ASN.1 Definition:
 //
-// id-ce-authorityAttributeIdentifier       OBJECT IDENTIFIER ::= {id-ce 38}
-var Id_ce_authorityAttributeIdentifier asn1.ObjectIdentifier = []int{2, 5, 29, 38} /* OBJECT_IDENTIFIER */
+//	id-ce-authorityAttributeIdentifier       OBJECT IDENTIFIER ::= {id-ce 38}
+var Id_ce_authorityAttributeIdentifier asn1.ObjectIdentifier = []int{2, 5, 29, 38}
+
 // # ASN.1 Definition:
 //
-// id-ce-roleSpecCertIdentifier             OBJECT IDENTIFIER ::= {id-ce 39}
-var Id_ce_roleSpecCertIdentifier asn1.ObjectIdentifier = []int{2, 5, 29, 39} /* OBJECT_IDENTIFIER */
+//	id-ce-roleSpecCertIdentifier             OBJECT IDENTIFIER ::= {id-ce 39}
+var Id_ce_roleSpecCertIdentifier asn1.ObjectIdentifier = []int{2, 5, 29, 39}
+
 // # ASN.1 Definition:
 //
-// id-ce-basicAttConstraints                OBJECT IDENTIFIER ::= {id-ce 41}
-var Id_ce_basicAttConstraints asn1.ObjectIdentifier = []int{2, 5, 29, 41} /* OBJECT_IDENTIFIER */
+//	id-ce-basicAttConstraints                OBJECT IDENTIFIER ::= {id-ce 41}
+var Id_ce_basicAttConstraints asn1.ObjectIdentifier = []int{2, 5, 29, 41}
+
 // # ASN.1 Definition:
 //
-// id-ce-delegatedNameConstraints           OBJECT IDENTIFIER ::= {id-ce 42}
-var Id_ce_delegatedNameConstraints asn1.ObjectIdentifier = []int{2, 5, 29, 42} /* OBJECT_IDENTIFIER */
+//	id-ce-delegatedNameConstraints           OBJECT IDENTIFIER ::= {id-ce 42}
+var Id_ce_delegatedNameConstraints asn1.ObjectIdentifier = []int{2, 5, 29, 42}
+
 // # ASN.1 Definition:
 //
-// id-ce-timeSpecification                  OBJECT IDENTIFIER ::= {id-ce 43}
-var Id_ce_timeSpecification asn1.ObjectIdentifier = []int{2, 5, 29, 43} /* OBJECT_IDENTIFIER */
+//	id-ce-timeSpecification                  OBJECT IDENTIFIER ::= {id-ce 43}
+var Id_ce_timeSpecification asn1.ObjectIdentifier = []int{2, 5, 29, 43}
+
 // # ASN.1 Definition:
 //
-// id-ce-attributeDescriptor                OBJECT IDENTIFIER ::= {id-ce 48}
-var Id_ce_attributeDescriptor asn1.ObjectIdentifier = []int{2, 5, 29, 48} /* OBJECT_IDENTIFIER */
+//	id-ce-attributeDescriptor                OBJECT IDENTIFIER ::= {id-ce 48}
+var Id_ce_attributeDescriptor asn1.ObjectIdentifier = []int{2, 5, 29, 48}
+
 // # ASN.1 Definition:
 //
-// id-ce-userNotice                         OBJECT IDENTIFIER ::= {id-ce 49}
-var Id_ce_userNotice asn1.ObjectIdentifier = []int{2, 5, 29, 49} /* OBJECT_IDENTIFIER */
+//	id-ce-userNotice                         OBJECT IDENTIFIER ::= {id-ce 49}
+var Id_ce_userNotice asn1.ObjectIdentifier = []int{2, 5, 29, 49}
+
 // # ASN.1 Definition:
 //
-// id-ce-sOAIdentifier                      OBJECT IDENTIFIER ::= {id-ce 50}
-var Id_ce_sOAIdentifier asn1.ObjectIdentifier = []int{2, 5, 29, 50} /* OBJECT_IDENTIFIER */
+//	id-ce-sOAIdentifier                      OBJECT IDENTIFIER ::= {id-ce 50}
+var Id_ce_sOAIdentifier asn1.ObjectIdentifier = []int{2, 5, 29, 50}
+
 // # ASN.1 Definition:
 //
-// id-ce-acceptableCertPolicies             OBJECT IDENTIFIER ::= {id-ce 52}
-var Id_ce_acceptableCertPolicies asn1.ObjectIdentifier = []int{2, 5, 29, 52} /* OBJECT_IDENTIFIER */
+//	id-ce-acceptableCertPolicies             OBJECT IDENTIFIER ::= {id-ce 52}
+var Id_ce_acceptableCertPolicies asn1.ObjectIdentifier = []int{2, 5, 29, 52}
+
 // # ASN.1 Definition:
 //
-// id-ce-targetingInformation               OBJECT IDENTIFIER ::= {id-ce 55}
-var Id_ce_targetingInformation asn1.ObjectIdentifier = []int{2, 5, 29, 55} /* OBJECT_IDENTIFIER */
+//	id-ce-targetingInformation               OBJECT IDENTIFIER ::= {id-ce 55}
+var Id_ce_targetingInformation asn1.ObjectIdentifier = []int{2, 5, 29, 55}
+
 // # ASN.1 Definition:
 //
-// id-ce-noRevAvail                         OBJECT IDENTIFIER ::= {id-ce 56}
-var Id_ce_noRevAvail asn1.ObjectIdentifier = []int{2, 5, 29, 56} /* OBJECT_IDENTIFIER */
+//	id-ce-noRevAvail                         OBJECT IDENTIFIER ::= {id-ce 56}
+var Id_ce_noRevAvail asn1.ObjectIdentifier = []int{2, 5, 29, 56}
+
 // # ASN.1 Definition:
 //
-// id-ce-acceptablePrivilegePolicies        OBJECT IDENTIFIER ::= {id-ce 57}
-var Id_ce_acceptablePrivilegePolicies asn1.ObjectIdentifier = []int{2, 5, 29, 57} /* OBJECT_IDENTIFIER */
+//	id-ce-acceptablePrivilegePolicies        OBJECT IDENTIFIER ::= {id-ce 57}
+var Id_ce_acceptablePrivilegePolicies asn1.ObjectIdentifier = []int{2, 5, 29, 57}
+
 // # ASN.1 Definition:
 //
-// id-ce-indirectIssuer                     OBJECT IDENTIFIER ::= {id-ce 61}
-var Id_ce_indirectIssuer asn1.ObjectIdentifier = []int{2, 5, 29, 61} /* OBJECT_IDENTIFIER */
+//	id-ce-indirectIssuer                     OBJECT IDENTIFIER ::= {id-ce 61}
+var Id_ce_indirectIssuer asn1.ObjectIdentifier = []int{2, 5, 29, 61}
+
 // # ASN.1 Definition:
 //
-// id-ce-noAssertion                        OBJECT IDENTIFIER ::= {id-ce 62}
-var Id_ce_noAssertion asn1.ObjectIdentifier = []int{2, 5, 29, 62} /* OBJECT_IDENTIFIER */
+//	id-ce-noAssertion                        OBJECT IDENTIFIER ::= {id-ce 62}
+var Id_ce_noAssertion asn1.ObjectIdentifier = []int{2, 5, 29, 62}
+
 // # ASN.1 Definition:
 //
-// id-ce-issuedOnBehalfOf                   OBJECT IDENTIFIER ::= {id-ce 64}
-var Id_ce_issuedOnBehalfOf asn1.ObjectIdentifier = []int{2, 5, 29, 64} /* OBJECT_IDENTIFIER */
+//	id-ce-issuedOnBehalfOf                   OBJECT IDENTIFIER ::= {id-ce 64}
+var Id_ce_issuedOnBehalfOf asn1.ObjectIdentifier = []int{2, 5, 29, 64}
+
 // # ASN.1 Definition:
 //
-// id-ce-singleUse                          OBJECT IDENTIFIER ::= {id-ce 65}
-var Id_ce_singleUse asn1.ObjectIdentifier = []int{2, 5, 29, 65} /* OBJECT_IDENTIFIER */
+//	id-ce-singleUse                          OBJECT IDENTIFIER ::= {id-ce 65}
+var Id_ce_singleUse asn1.ObjectIdentifier = []int{2, 5, 29, 65}
+
 // # ASN.1 Definition:
 //
-// id-ce-groupAC                            OBJECT IDENTIFIER ::= {id-ce 66}
-var Id_ce_groupAC asn1.ObjectIdentifier = []int{2, 5, 29, 66} /* OBJECT_IDENTIFIER */
+//	id-ce-groupAC                            OBJECT IDENTIFIER ::= {id-ce 66}
+var Id_ce_groupAC asn1.ObjectIdentifier = []int{2, 5, 29, 66}
+
 // # ASN.1 Definition:
 //
-// id-ce-allowedAttributeAssignments        OBJECT IDENTIFIER ::= {id-ce 67}
-var Id_ce_allowedAttributeAssignments asn1.ObjectIdentifier = []int{2, 5, 29, 67} /* OBJECT_IDENTIFIER */
+//	id-ce-allowedAttributeAssignments        OBJECT IDENTIFIER ::= {id-ce 67}
+var Id_ce_allowedAttributeAssignments asn1.ObjectIdentifier = []int{2, 5, 29, 67}
+
 // # ASN.1 Definition:
 //
-// id-ce-attributeMappings                  OBJECT IDENTIFIER ::= {id-ce 68}
-var Id_ce_attributeMappings asn1.ObjectIdentifier = []int{2, 5, 29, 68} /* OBJECT_IDENTIFIER */
+//	id-ce-attributeMappings                  OBJECT IDENTIFIER ::= {id-ce 68}
+var Id_ce_attributeMappings asn1.ObjectIdentifier = []int{2, 5, 29, 68}
+
 // # ASN.1 Definition:
 //
-// id-ce-holderNameConstraints              OBJECT IDENTIFIER ::= {id-ce 69}
-var Id_ce_holderNameConstraints asn1.ObjectIdentifier = []int{2, 5, 29, 69} /* OBJECT_IDENTIFIER */
+//	id-ce-holderNameConstraints              OBJECT IDENTIFIER ::= {id-ce 69}
+var Id_ce_holderNameConstraints asn1.ObjectIdentifier = []int{2, 5, 29, 69}
+
 // # ASN.1 Definition:
 //
-// id-mr-attributeCertificateMatch          OBJECT IDENTIFIER ::= {id-mr 42}
-var Id_mr_attributeCertificateMatch asn1.ObjectIdentifier = []int{2, 5, 13, 42} /* OBJECT_IDENTIFIER */
+//	id-mr-attributeCertificateMatch          OBJECT IDENTIFIER ::= {id-mr 42}
+var Id_mr_attributeCertificateMatch asn1.ObjectIdentifier = []int{2, 5, 13, 42}
+
 // # ASN.1 Definition:
 //
-// id-mr-attributeCertificateExactMatch     OBJECT IDENTIFIER ::= {id-mr 45}
-var Id_mr_attributeCertificateExactMatch asn1.ObjectIdentifier = []int{2, 5, 13, 45} /* OBJECT_IDENTIFIER */
+//	id-mr-attributeCertificateExactMatch     OBJECT IDENTIFIER ::= {id-mr 45}
+var Id_mr_attributeCertificateExactMatch asn1.ObjectIdentifier = []int{2, 5, 13, 45}
+
 // # ASN.1 Definition:
 //
-// id-mr-holderIssuerMatch                  OBJECT IDENTIFIER ::= {id-mr 46}
-var Id_mr_holderIssuerMatch asn1.ObjectIdentifier = []int{2, 5, 13, 46} /* OBJECT_IDENTIFIER */
+//	id-mr-holderIssuerMatch                  OBJECT IDENTIFIER ::= {id-mr 46}
+var Id_mr_holderIssuerMatch asn1.ObjectIdentifier = []int{2, 5, 13, 46}
+
 // # ASN.1 Definition:
 //
-// id-mr-authAttIdMatch                     OBJECT IDENTIFIER ::= {id-mr 53}
-var Id_mr_authAttIdMatch asn1.ObjectIdentifier = []int{2, 5, 13, 53} /* OBJECT_IDENTIFIER */
+//	id-mr-authAttIdMatch                     OBJECT IDENTIFIER ::= {id-mr 53}
+var Id_mr_authAttIdMatch asn1.ObjectIdentifier = []int{2, 5, 13, 53}
+
 // # ASN.1 Definition:
 //
-// id-mr-roleSpecCertIdMatch                OBJECT IDENTIFIER ::= {id-mr 54}
-var Id_mr_roleSpecCertIdMatch asn1.ObjectIdentifier = []int{2, 5, 13, 54} /* OBJECT_IDENTIFIER */
+//	id-mr-roleSpecCertIdMatch                OBJECT IDENTIFIER ::= {id-mr 54}
+var Id_mr_roleSpecCertIdMatch asn1.ObjectIdentifier = []int{2, 5, 13, 54}
+
 // # ASN.1 Definition:
 //
-// id-mr-basicAttConstraintsMatch           OBJECT IDENTIFIER ::= {id-mr 55}
-var Id_mr_basicAttConstraintsMatch asn1.ObjectIdentifier = []int{2, 5, 13, 55} /* OBJECT_IDENTIFIER */
+//	id-mr-basicAttConstraintsMatch           OBJECT IDENTIFIER ::= {id-mr 55}
+var Id_mr_basicAttConstraintsMatch asn1.ObjectIdentifier = []int{2, 5, 13, 55}
+
 // # ASN.1 Definition:
 //
-// id-mr-delegatedNameConstraintsMatch      OBJECT IDENTIFIER ::= {id-mr 56}
-var Id_mr_delegatedNameConstraintsMatch asn1.ObjectIdentifier = []int{2, 5, 13, 56} /* OBJECT_IDENTIFIER */
+//	id-mr-delegatedNameConstraintsMatch      OBJECT IDENTIFIER ::= {id-mr 56}
+var Id_mr_delegatedNameConstraintsMatch asn1.ObjectIdentifier = []int{2, 5, 13, 56}
+
 // # ASN.1 Definition:
 //
-// id-mr-timeSpecMatch                      OBJECT IDENTIFIER ::= {id-mr 57}
-var Id_mr_timeSpecMatch asn1.ObjectIdentifier = []int{2, 5, 13, 57} /* OBJECT_IDENTIFIER */
+//	id-mr-timeSpecMatch                      OBJECT IDENTIFIER ::= {id-mr 57}
+var Id_mr_timeSpecMatch asn1.ObjectIdentifier = []int{2, 5, 13, 57}
+
 // # ASN.1 Definition:
 //
-// id-mr-attDescriptorMatch                 OBJECT IDENTIFIER ::= {id-mr 58}
-var Id_mr_attDescriptorMatch asn1.ObjectIdentifier = []int{2, 5, 13, 58} /* OBJECT_IDENTIFIER */
+//	id-mr-attDescriptorMatch                 OBJECT IDENTIFIER ::= {id-mr 58}
+var Id_mr_attDescriptorMatch asn1.ObjectIdentifier = []int{2, 5, 13, 58}
+
 // # ASN.1 Definition:
 //
-// id-mr-acceptableCertPoliciesMatch        OBJECT IDENTIFIER ::= {id-mr 59}
-var Id_mr_acceptableCertPoliciesMatch asn1.ObjectIdentifier = []int{2, 5, 13, 59} /* OBJECT_IDENTIFIER */
+//	id-mr-acceptableCertPoliciesMatch        OBJECT IDENTIFIER ::= {id-mr 59}
+var Id_mr_acceptableCertPoliciesMatch asn1.ObjectIdentifier = []int{2, 5, 13, 59}
+
 // # ASN.1 Definition:
 //
-// id-mr-delegationPathMatch                OBJECT IDENTIFIER ::= {id-mr 61}
-var Id_mr_delegationPathMatch asn1.ObjectIdentifier = []int{2, 5, 13, 61} /* OBJECT_IDENTIFIER */
+//	id-mr-delegationPathMatch                OBJECT IDENTIFIER ::= {id-mr 61}
+var Id_mr_delegationPathMatch asn1.ObjectIdentifier = []int{2, 5, 13, 61}
+
 // # ASN.1 Definition:
 //
-// id-mr-sOAIdentifierMatch                 OBJECT IDENTIFIER ::= {id-mr 66}
-var Id_mr_sOAIdentifierMatch asn1.ObjectIdentifier = []int{2, 5, 13, 66} /* OBJECT_IDENTIFIER */
+//	id-mr-sOAIdentifierMatch                 OBJECT IDENTIFIER ::= {id-mr 66}
+var Id_mr_sOAIdentifierMatch asn1.ObjectIdentifier = []int{2, 5, 13, 66}
+
 // # ASN.1 Definition:
 //
-// id-mr-extensionPresenceMatch             OBJECT IDENTIFIER ::= {id-mr 67}
-var Id_mr_extensionPresenceMatch asn1.ObjectIdentifier = []int{2, 5, 13, 67} /* OBJECT_IDENTIFIER */
+//	id-mr-extensionPresenceMatch             OBJECT IDENTIFIER ::= {id-mr 67}
+var Id_mr_extensionPresenceMatch asn1.ObjectIdentifier = []int{2, 5, 13, 67}
+
 // # ASN.1 Definition:
 //
-// id-mr-dualStringMatch                    OBJECT IDENTIFIER ::= {id-mr 69}
-var Id_mr_dualStringMatch asn1.ObjectIdentifier = []int{2, 5, 13, 69} /* OBJECT_IDENTIFIER */
+//	id-mr-dualStringMatch                    OBJECT IDENTIFIER ::= {id-mr 69}
+var Id_mr_dualStringMatch asn1.ObjectIdentifier = []int{2, 5, 13, 69}
+
 // # ASN.1 Definition:
 //
-// ObjectDigestInfo-digestedObjectType ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
+//	ObjectDigestInfo-digestedObjectType ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 type ObjectDigestInfo_digestedObjectType = asn1.Enumerated
 
 const (
@@ -652,12 +680,12 @@ const (
 
 // # ASN.1 Definition:
 //
-// AllowedAttributeAssignments-Item-attributes-Item ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	AllowedAttributeAssignments-Item-attributes-Item ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type AllowedAttributeAssignments_Item_attributes_Item = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// AllowedAttributeAssignments-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	AllowedAttributeAssignments-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type AllowedAttributeAssignments_Item struct {
 	Attributes   [](AllowedAttributeAssignments_Item_attributes_Item) `asn1:"tag:0,set"`
 	HolderDomain GeneralName                                          `asn1:"tag:1"`
@@ -665,7 +693,7 @@ type AllowedAttributeAssignments_Item struct {
 
 // # ASN.1 Definition:
 //
-// AttributeMappings-Item-typeMappings ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	AttributeMappings-Item-typeMappings ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type AttributeMappings_Item_typeMappings struct {
 	Local  AttributeType `asn1:"tag:0"`
 	Remote AttributeType `asn1:"tag:1"`
@@ -673,7 +701,7 @@ type AttributeMappings_Item_typeMappings struct {
 
 // # ASN.1 Definition:
 //
-// AttributeMappings-Item-typeValueMappings ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	AttributeMappings-Item-typeValueMappings ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type AttributeMappings_Item_typeValueMappings struct {
 	Local  pkix.AttributeTypeAndValue `asn1:"tag:0"`
 	Remote pkix.AttributeTypeAndValue `asn1:"tag:1"`
@@ -681,10 +709,10 @@ type AttributeMappings_Item_typeValueMappings struct {
 
 // # ASN.1 Definition:
 //
-// AttributeMappings-Item ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	AttributeMappings-Item ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type AttributeMappings_Item = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// AttributeCertificateAssertion-holder ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	AttributeCertificateAssertion-holder ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type AttributeCertificateAssertion_holder = asn1.RawValue

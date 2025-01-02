@@ -63,7 +63,7 @@ type REQ_TOKEN struct {
 
 // # ASN.1 Definition:
 //
-// Integrity  ::=  BIT STRING
+//	Integrity ::= BIT STRING
 type Integrity = asn1.BitString
 
 // # ASN.1 Definition:
@@ -109,7 +109,7 @@ type Req_contents struct {
 
 // # ASN.1 Definition:
 //
-// Random-Integer  ::=  BIT STRING
+//	Random-Integer ::= BIT STRING
 type Random_Integer = asn1.BitString
 
 // # ASN.1 Definition:
@@ -133,11 +133,12 @@ type Context_Data struct {
 
 // # ASN.1 Definition:
 //
-// ChannelId  ::=  OCTET STRING
-type ChannelId = []byte // OctetStringType
+//	ChannelId ::= OCTET STRING
+type ChannelId = []byte
+
 // # ASN.1 Definition:
 //
-//	Options  ::=  BIT STRING {
+//	Options ::= BIT STRING {
 //	  delegation-state(0), mutual-state(1), replay-det-state(2), sequence-state(3),
 //	  conf-avail(4), integ-avail(5), target-certif-data-required(6)}
 type Options = asn1.BitString
@@ -158,7 +159,7 @@ const Options_Target_certif_data_required int32 = 6
 
 // # ASN.1 Definition:
 //
-//	Conf-Algs  ::=  CHOICE {
+//	Conf-Algs ::= CHOICE {
 //	  algs  [0]  SEQUENCE OF AlgorithmIdentifier{{SupportedAlgorithms}},
 //	  null  [1]  NULL
 //	}
@@ -166,16 +167,19 @@ type Conf_Algs = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// Intg-Algs  ::=  SEQUENCE OF AlgorithmIdentifier{{SupportedAlgorithms}}
-type Intg_Algs = [](pkix.AlgorithmIdentifier) // SequenceOfType
+//	Intg-Algs ::= SEQUENCE OF AlgorithmIdentifier{{SupportedAlgorithms}}
+type Intg_Algs = [](pkix.AlgorithmIdentifier)
+
 // # ASN.1 Definition:
 //
-// OWF-Algs  ::=  SEQUENCE OF AlgorithmIdentifier{{SupportedAlgorithms}}
-type OWF_Algs = [](pkix.AlgorithmIdentifier) // SequenceOfType
+//	OWF-Algs ::= SEQUENCE OF AlgorithmIdentifier{{SupportedAlgorithms}}
+type OWF_Algs = [](pkix.AlgorithmIdentifier)
+
 // # ASN.1 Definition:
 //
-// Key-Estb-Algs  ::=  SEQUENCE OF AlgorithmIdentifier{{SupportedAlgorithms}}
-type Key_Estb_Algs = [](pkix.AlgorithmIdentifier) // SequenceOfType
+//	Key-Estb-Algs ::= SEQUENCE OF AlgorithmIdentifier{{SupportedAlgorithms}}
+type Key_Estb_Algs = [](pkix.AlgorithmIdentifier)
+
 // # ASN.1 Definition:
 //
 //	SPKM-REP-TI ::= SEQUENCE {
@@ -292,10 +296,9 @@ type ERROR_TOKEN struct {
 
 // # ASN.1 Definition:
 //
-// SPKM-MIC ::= SEQUENCE {mic-header  Mic-Header,
-//
-//	                       int-cksum   BIT STRING
-//	}
+//	SPKM-MIC ::= SEQUENCE {
+//	     mic-header  Mic-Header,
+//		 int-cksum   BIT STRING }
 type SPKM_MIC struct {
 	Mic_header Mic_Header
 	Int_cksum  asn1.BitString
@@ -318,10 +321,9 @@ type Mic_Header struct {
 
 // # ASN.1 Definition:
 //
-// SeqNum ::= SEQUENCE {num      INTEGER,
-//
-//	                     dir-ind  BOOLEAN
-//	}
+//	SeqNum ::= SEQUENCE {
+//	   num      INTEGER,
+//	   dir-ind  BOOLEAN }
 type SeqNum struct {
 	Num     int
 	Dir_ind bool
@@ -329,10 +331,9 @@ type SeqNum struct {
 
 // # ASN.1 Definition:
 //
-// SPKM-WRAP ::= SEQUENCE {wrap-header  Wrap-Header,
-//
-//	                        wrap-body    Wrap-Body
-//	}
+//	SPKM-WRAP ::= SEQUENCE {
+//	    wrap-header  Wrap-Header,
+//	    wrap-body    Wrap-Body }
 type SPKM_WRAP struct {
 	Wrap_header Wrap_Header
 	Wrap_body   Wrap_Body
@@ -357,10 +358,9 @@ type Wrap_Header struct {
 
 // # ASN.1 Definition:
 //
-// Wrap-Body ::= SEQUENCE {int-cksum  BIT STRING,
-//
-//	                        data       BIT STRING
-//	}
+//	Wrap-Body ::= SEQUENCE {
+//	     int-cksum  BIT STRING,
+//	     data       BIT STRING }
 type Wrap_Body struct {
 	Int_cksum asn1.BitString
 	Data      asn1.BitString
@@ -368,7 +368,7 @@ type Wrap_Body struct {
 
 // # ASN.1 Definition:
 //
-//	Conf-Alg  ::=  CHOICE {
+//	Conf-Alg ::= CHOICE {
 //	  algId  [0]  AlgorithmIdentifier{{SupportedAlgorithms}},
 //	  null   [1]  NULL
 //	}
@@ -376,10 +376,9 @@ type Conf_Alg = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// SPKM-DEL ::= SEQUENCE {del-header  Del-Header,
-//
-//	                       int-cksum   BIT STRING
-//	}
+//	SPKM-DEL ::= SEQUENCE {
+//	     del-header  Del-Header,
+//	     int-cksum   BIT STRING }
 type SPKM_DEL struct {
 	Del_header Del_Header
 	Int_cksum  asn1.BitString
@@ -402,8 +401,9 @@ type Del_Header struct {
 
 // # ASN.1 Definition:
 //
-// MechType  ::=  OBJECT IDENTIFIER
-type MechType = asn1.ObjectIdentifier // ObjectIdentifierType
+//	MechType ::= OBJECT IDENTIFIER
+type MechType = asn1.ObjectIdentifier
+
 // # ASN.1 Definition:
 //
 //	InitialContextToken ::= [APPLICATION 0] IMPLICIT SEQUENCE {
@@ -417,7 +417,7 @@ type InitialContextToken struct {
 
 // # ASN.1 Definition:
 //
-//	SPKMInnerContextToken  ::=  CHOICE {
+//	SPKMInnerContextToken ::= CHOICE {
 //	  req     [0]  SPKM-REQ,
 //	  rep-ti  [1]  SPKM-REP-TI,
 //	  rep-it  [2]  SPKM-REP-IT,
@@ -430,38 +430,33 @@ type SPKMInnerContextToken = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// AuthorizationData  ::=
-//
-//	SEQUENCE OF SEQUENCE {ad-type  INTEGER,
-//	                      ad-data  OCTET STRING}
-type AuthorizationData = [](AuthorizationData_Item) // SequenceOfType
+//	  AuthorizationData ::= SEQUENCE OF SEQUENCE {ad-type  INTEGER,
+//		                      ad-data  OCTET STRING}
+type AuthorizationData = [](AuthorizationData_Item)
+
 // # ASN.1 Definition:
 //
-// md5-DES-CBC OBJECT IDENTIFIER ::= {iso(1) identified-organization(3) dod(6) internet(1) security(5)
-//
-//	integrity(3) md5-DES-CBC(1)}
-var Md5_DES_CBC asn1.ObjectIdentifier = []int{1, 3, 6, 1, 5, 3, 1} /* OBJECT_IDENTIFIER */
+//	md5-DES-CBC OBJECT IDENTIFIER ::= {iso(1) identified-organization(3) dod(6) internet(1) security(5) integrity(3) md5-DES-CBC(1)}
+var Md5_DES_CBC asn1.ObjectIdentifier = []int{1, 3, 6, 1, 5, 3, 1}
+
 // # ASN.1 Definition:
 //
-// sum64-DES-CBC OBJECT IDENTIFIER ::= {iso(1) identified-organization(3) dod(6) internet(1) security(5)
-//
-//	integrity(3) sum64-DES-CBC(2)}
-var Sum64_DES_CBC asn1.ObjectIdentifier = []int{1, 3, 6, 1, 5, 3, 2} /* OBJECT_IDENTIFIER */
+//	sum64-DES-CBC OBJECT IDENTIFIER ::= {iso(1) identified-organization(3) dod(6) internet(1) security(5) integrity(3) sum64-DES-CBC(2)}
+var Sum64_DES_CBC asn1.ObjectIdentifier = []int{1, 3, 6, 1, 5, 3, 2}
+
 // # ASN.1 Definition:
 //
-// spkm-1 OBJECT IDENTIFIER ::= {iso(1) identified-organization(3) dod(6) internet(1) security(5)
-//
-//	mechanisms(5) spkm(1) spkm-1(1)}
-var Spkm_1 asn1.ObjectIdentifier = []int{1, 3, 6, 1, 5, 5, 1, 1} /* OBJECT_IDENTIFIER */
+//	spkm-1 OBJECT IDENTIFIER ::= {iso(1) identified-organization(3) dod(6) internet(1) security(5) mechanisms(5) spkm(1) spkm-1(1)}
+var Spkm_1 asn1.ObjectIdentifier = []int{1, 3, 6, 1, 5, 5, 1, 1}
+
 // # ASN.1 Definition:
 //
-// spkm-2 OBJECT IDENTIFIER ::= {iso(1) identified-organization(3) dod(6) internet(1) security(5)
-//
-//	mechanisms(5) spkm(1) spkm-2(2)}
-var Spkm_2 asn1.ObjectIdentifier = []int{1, 3, 6, 1, 5, 5, 1, 2} /* OBJECT_IDENTIFIER */
+//	spkm-2 OBJECT IDENTIFIER ::= {iso(1) identified-organization(3) dod(6) internet(1) security(5) mechanisms(5) spkm(1) spkm-2(2)}
+var Spkm_2 asn1.ObjectIdentifier = []int{1, 3, 6, 1, 5, 5, 1, 2}
+
 // # ASN.1 Definition:
 //
-// AuthorizationData-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	AuthorizationData-Item ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type AuthorizationData_Item struct {
 	Ad_type int
 	Ad_data []byte

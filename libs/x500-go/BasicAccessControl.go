@@ -31,7 +31,7 @@ type ACIItem struct {
 
 // # ASN.1 Definition:
 //
-// Precedence  ::=  INTEGER(0..255,...)
+//	Precedence ::= INTEGER(0..255,...)
 type Precedence = int64
 
 // # ASN.1 Definition:
@@ -145,7 +145,7 @@ type UserPermission struct {
 
 // # ASN.1 Definition:
 //
-//	AuthenticationLevel  ::=  CHOICE {
+//	AuthenticationLevel ::= CHOICE {
 //	  basicLevels     SEQUENCE {
 //	    level           ENUMERATED {none(0), simple(1), strong(2),...},
 //	    localQualifier  INTEGER OPTIONAL,
@@ -157,7 +157,7 @@ type AuthenticationLevel = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-//	GrantsAndDenials  ::=  BIT STRING {
+//	GrantsAndDenials ::= BIT STRING {
 //	  -- permissions that may be used in conjunction
 //	  -- with any component of ProtectedItems
 //	  grantAdd             (0),
@@ -246,40 +246,49 @@ const GrantsAndDenials_DenyInvoke int32 = 25
 
 // # ASN.1 Definition:
 //
-// id-aca-accessControlScheme     OBJECT IDENTIFIER ::= {id-aca 1}
-var Id_aca_accessControlScheme asn1.ObjectIdentifier = []int{2, 5, 24, 1} /* OBJECT_IDENTIFIER */
+//	id-aca-accessControlScheme     OBJECT IDENTIFIER ::= {id-aca 1}
+var Id_aca_accessControlScheme asn1.ObjectIdentifier = []int{2, 5, 24, 1}
+
 // # ASN.1 Definition:
 //
-// id-aca-prescriptiveACI         OBJECT IDENTIFIER ::= {id-aca 4}
-var Id_aca_prescriptiveACI asn1.ObjectIdentifier = []int{2, 5, 24, 4} /* OBJECT_IDENTIFIER */
+//	id-aca-prescriptiveACI         OBJECT IDENTIFIER ::= {id-aca 4}
+var Id_aca_prescriptiveACI asn1.ObjectIdentifier = []int{2, 5, 24, 4}
+
 // # ASN.1 Definition:
 //
-// id-aca-entryACI                OBJECT IDENTIFIER ::= {id-aca 5}
-var Id_aca_entryACI asn1.ObjectIdentifier = []int{2, 5, 24, 5} /* OBJECT_IDENTIFIER */
+//	id-aca-entryACI                OBJECT IDENTIFIER ::= {id-aca 5}
+var Id_aca_entryACI asn1.ObjectIdentifier = []int{2, 5, 24, 5}
+
 // # ASN.1 Definition:
 //
-// id-aca-subentryACI             OBJECT IDENTIFIER ::= {id-aca 6}
-var Id_aca_subentryACI asn1.ObjectIdentifier = []int{2, 5, 24, 6} /* OBJECT_IDENTIFIER */
+//	id-aca-subentryACI             OBJECT IDENTIFIER ::= {id-aca 6}
+var Id_aca_subentryACI asn1.ObjectIdentifier = []int{2, 5, 24, 6}
+
 // # ASN.1 Definition:
 //
 // basicAccessControlScheme       OBJECT IDENTIFIER ::= {id-acScheme 1}
-var BasicAccessControlScheme asn1.ObjectIdentifier = []int{2, 5, 28, 1} /* OBJECT_IDENTIFIER */
+var BasicAccessControlScheme asn1.ObjectIdentifier = []int{2, 5, 28, 1}
+
 // # ASN.1 Definition:
 //
 // simplifiedAccessControlScheme  OBJECT IDENTIFIER ::= {id-acScheme 2}
-var SimplifiedAccessControlScheme asn1.ObjectIdentifier = []int{2, 5, 28, 2} /* OBJECT_IDENTIFIER */
+var SimplifiedAccessControlScheme asn1.ObjectIdentifier = []int{2, 5, 28, 2}
+
 // # ASN.1 Definition:
 //
 // rule-based-access-control      OBJECT IDENTIFIER ::= {id-acScheme 3}
-var Rule_based_access_control asn1.ObjectIdentifier = []int{2, 5, 28, 3} /* OBJECT_IDENTIFIER */
+var Rule_based_access_control asn1.ObjectIdentifier = []int{2, 5, 28, 3}
+
 // # ASN.1 Definition:
 //
 // rule-and-basic-access-control  OBJECT IDENTIFIER ::= {id-acScheme 4}
-var Rule_and_basic_access_control asn1.ObjectIdentifier = []int{2, 5, 28, 4} /* OBJECT_IDENTIFIER */
+var Rule_and_basic_access_control asn1.ObjectIdentifier = []int{2, 5, 28, 4}
+
 // # ASN.1 Definition:
 //
 // rule-and-simple-access-control OBJECT IDENTIFIER ::= {id-acScheme 5}
-var Rule_and_simple_access_control asn1.ObjectIdentifier = []int{2, 5, 28, 5} /* OBJECT_IDENTIFIER */
+var Rule_and_simple_access_control asn1.ObjectIdentifier = []int{2, 5, 28, 5}
+
 // # ASN.1 Definition:
 //
 // ACIItem-itemOrUserFirst-itemFirst ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
@@ -298,12 +307,12 @@ type ACIItem_itemOrUserFirst_userFirst struct {
 
 // # ASN.1 Definition:
 //
-// ACIItem-itemOrUserFirst ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	ACIItem-itemOrUserFirst ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type ACIItem_itemOrUserFirst = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// AuthenticationLevel-basicLevels-level ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
+//	AuthenticationLevel-basicLevels-level ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 type AuthenticationLevel_basicLevels_level = asn1.Enumerated
 
 const (
@@ -314,7 +323,7 @@ const (
 
 // # ASN.1 Definition:
 //
-// AuthenticationLevel-basicLevels ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	AuthenticationLevel-basicLevels ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type AuthenticationLevel_basicLevels struct {
 	Level          AuthenticationLevel_basicLevels_level
 	LocalQualifier int  `asn1:"optional"`

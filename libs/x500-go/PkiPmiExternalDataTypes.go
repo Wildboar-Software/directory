@@ -6,31 +6,7 @@ import (
 
 // # ASN.1 Definition:
 //
-// UserNotice ::= SEQUENCE {
-//   noticeRef     NoticeReference OPTIONAL,
-//   explicitText  DisplayText OPTIONAL }
-//
-//
-// type UserNotice struct {
-// 	NoticeRef    NoticeReference `asn1:"optional"`
-// 	ExplicitText DisplayText     `asn1:"optional"`
-// }
-
-// # ASN.1 Definition:
-//
-//	NoticeReference ::= SEQUENCE {
-//	  organization   DisplayText,
-//	  noticeNumbers  SEQUENCE OF INTEGER }
-//
-//
-//	type NoticeReference struct {
-//	    Organization DisplayText
-//	    NoticeNumbers [](int)
-//	}
-//
-// # ASN.1 Definition:
-//
-//	DisplayText  ::=  CHOICE {
+//	DisplayText ::= CHOICE {
 //	  visibleString  VisibleString(SIZE (1..200)),
 //	  bmpString      BMPString(SIZE (1..200)),
 //	  utf8String     UTF8String(SIZE (1..200)) }
@@ -38,8 +14,9 @@ type DisplayText = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// AuthorityInfoAccessSyntax  ::=  SEQUENCE SIZE (1..MAX) OF AccessDescription
-type AuthorityInfoAccessSyntax = [](AccessDescription) // SequenceOfType
+//	AuthorityInfoAccessSyntax ::= SEQUENCE SIZE (1..MAX) OF AccessDescription
+type AuthorityInfoAccessSyntax = [](AccessDescription)
+
 // # ASN.1 Definition:
 //
 //	AccessDescription ::= SEQUENCE {
@@ -52,39 +29,47 @@ type AccessDescription struct {
 
 // # ASN.1 Definition:
 //
-// SubjectInfoAccessSyntax  ::=  SEQUENCE SIZE (1..MAX) OF AccessDescription
-type SubjectInfoAccessSyntax = [](AccessDescription) // SequenceOfType
+// SubjectInfoAccessSyntax ::= SEQUENCE SIZE (1..MAX) OF AccessDescription
+type SubjectInfoAccessSyntax = [](AccessDescription)
+
 // # ASN.1 Definition:
 //
-// id-pkix                   OBJECT IDENTIFIER ::= { intSecurity mechanisms(5) pkix(7) }
-var Id_pkix asn1.ObjectIdentifier = []int{1, 3, 6, 1, 5, 5, 7} /* OBJECT_IDENTIFIER */
+//	id-pkix                   OBJECT IDENTIFIER ::= { intSecurity mechanisms(5) pkix(7) }
+var Id_pkix asn1.ObjectIdentifier = []int{1, 3, 6, 1, 5, 5, 7}
+
 // # ASN.1 Definition:
 //
-// id-pe                     OBJECT IDENTIFIER ::= { id-pkix 1 }
-var Id_pe asn1.ObjectIdentifier = []int{1, 3, 6, 1, 5, 5, 7, 1} /* OBJECT_IDENTIFIER */
+//	id-pe                     OBJECT IDENTIFIER ::= { id-pkix 1 }
+var Id_pe asn1.ObjectIdentifier = []int{1, 3, 6, 1, 5, 5, 7, 1}
+
 // # ASN.1 Definition:
 //
-// id-ad                     OBJECT IDENTIFIER ::= { id-pkix 48 }
-var Id_ad asn1.ObjectIdentifier = []int{1, 3, 6, 1, 5, 5, 7, 48} /* OBJECT_IDENTIFIER */
+//	id-ad                     OBJECT IDENTIFIER ::= { id-pkix 48 }
+var Id_ad asn1.ObjectIdentifier = []int{1, 3, 6, 1, 5, 5, 7, 48}
+
 // # ASN.1 Definition:
 //
-// id-pe-authorityInfoAccess OBJECT IDENTIFIER ::= { id-pe 1 }
-var Id_pe_authorityInfoAccess asn1.ObjectIdentifier = []int{1, 3, 6, 1, 5, 5, 7, 1, 1} /* OBJECT_IDENTIFIER */
+//	id-pe-authorityInfoAccess OBJECT IDENTIFIER ::= { id-pe 1 }
+var Id_pe_authorityInfoAccess asn1.ObjectIdentifier = []int{1, 3, 6, 1, 5, 5, 7, 1, 1}
+
 // # ASN.1 Definition:
 //
-// id-pe-subjectInfoAccess   OBJECT IDENTIFIER ::= { id-pe 11 }
-var Id_pe_subjectInfoAccess asn1.ObjectIdentifier = []int{1, 3, 6, 1, 5, 5, 7, 1, 11} /* OBJECT_IDENTIFIER */
+//	id-pe-subjectInfoAccess   OBJECT IDENTIFIER ::= { id-pe 11 }
+var Id_pe_subjectInfoAccess asn1.ObjectIdentifier = []int{1, 3, 6, 1, 5, 5, 7, 1, 11}
+
 // # ASN.1 Definition:
 //
-// id-ad-caIssuers           OBJECT IDENTIFIER ::= { id-ad 2 }
-var Id_ad_caIssuers asn1.ObjectIdentifier = []int{1, 3, 6, 1, 5, 5, 7, 48, 2} /* OBJECT_IDENTIFIER */
+//	id-ad-caIssuers           OBJECT IDENTIFIER ::= { id-ad 2 }
+var Id_ad_caIssuers asn1.ObjectIdentifier = []int{1, 3, 6, 1, 5, 5, 7, 48, 2}
+
 // # ASN.1 Definition:
 //
-// id-ad-ocsp                OBJECT IDENTIFIER ::= { id-ad 1 }
-var Id_ad_ocsp asn1.ObjectIdentifier = []int{1, 3, 6, 1, 5, 5, 7, 48, 1} /* OBJECT_IDENTIFIER */
+//	id-ad-ocsp                OBJECT IDENTIFIER ::= { id-ad 1 }
+var Id_ad_ocsp asn1.ObjectIdentifier = []int{1, 3, 6, 1, 5, 5, 7, 48, 1}
+
 // # ASN.1 Definition:
 //
-//	G3FacsimileNonBasicParameters  ::=  BIT STRING {
+//	G3FacsimileNonBasicParameters ::= BIT STRING {
 //	  two-dimensional(8), -- As defined in ITU-T Recommendation T.30
 //	  fine-resolution(9),
 //	  unlimited-length(20), -- These bit values are chosen such that when
@@ -193,45 +178,45 @@ type BuiltInStandardAttributes struct {
 
 // # ASN.1 Definition:
 //
-//	CountryName  ::=  [APPLICATION 1]  CHOICE {
+//	CountryName ::= [APPLICATION 1]  CHOICE {
 //	  x121-dcc-code         NumericString(SIZE (ub-country-name-numeric-length)),
 //	  iso-3166-alpha2-code  PrintableString(SIZE (ub-country-name-alpha-length)) }
 type X400CountryName = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-//	AdministrationDomainName  ::=  [APPLICATION 2]  CHOICE {
+//	AdministrationDomainName ::= [APPLICATION 2]  CHOICE {
 //	  numeric    NumericString(SIZE (0..ub-domain-name-length)),
 //	  printable  PrintableString(SIZE (0..ub-domain-name-length)) }
 type AdministrationDomainName = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// NetworkAddress  ::=  X121Address
-type NetworkAddress = X121Address // DefinedType
+//	NetworkAddress ::= X121Address
+type NetworkAddress = X121Address
+
 // # ASN.1 Definition:
 //
-// X121Address  ::=  NumericString(SIZE (1..ub-x121-address-length))
-// type X121Address = string // NumericString
+//	TerminalIdentifier ::= PrintableString(SIZE (1..ub-terminal-id-length))
+type TerminalIdentifier = string
+
 // # ASN.1 Definition:
 //
-// TerminalIdentifier  ::=  PrintableString(SIZE (1..ub-terminal-id-length))
-type TerminalIdentifier = string // PrintableString
-// # ASN.1 Definition:
-//
-//	PrivateDomainName  ::=  CHOICE {
+//	PrivateDomainName ::= CHOICE {
 //	  numeric    NumericString(SIZE (1..ub-domain-name-length)),
 //	  printable  PrintableString(SIZE (1..ub-domain-name-length)) }
 type PrivateDomainName = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// OrganizationName  ::=  PrintableString(SIZE (1..ub-organization-name-length))
-type OrganizationName = string // PrintableString
+//	OrganizationName ::= PrintableString(SIZE (1..ub-organization-name-length))
+type OrganizationName = string
+
 // # ASN.1 Definition:
 //
-// NumericUserIdentifier  ::=  NumericString(SIZE (1..ub-numeric-user-id-length))
-type NumericUserIdentifier = string // NumericString
+//	NumericUserIdentifier ::= NumericString(SIZE (1..ub-numeric-user-id-length))
+type NumericUserIdentifier = string
+
 // # ASN.1 Definition:
 //
 //	PersonalName ::= SET {
@@ -251,23 +236,23 @@ type PersonalName struct {
 
 // # ASN.1 Definition:
 //
-// OrganizationalUnitNames  ::=
-//
-//	SEQUENCE SIZE (1..ub-organizational-units) OF OrganizationalUnitName
-type OrganizationalUnitNames = [](OrganizationalUnitName) // SequenceOfType
+//	OrganizationalUnitNames ::= SEQUENCE SIZE (1..ub-organizational-units) OF OrganizationalUnitName
+type OrganizationalUnitNames = [](OrganizationalUnitName)
+
 // # ASN.1 Definition:
 //
 // OrganizationalUnitName  ::=
 //
 //	PrintableString(SIZE (1..ub-organizational-unit-name-length))
-type OrganizationalUnitName = string // PrintableString
+type OrganizationalUnitName = string
+
 // # ASN.1 Definition:
 //
-// BuiltInDomainDefinedAttributes  ::=
-//
-//	SEQUENCE SIZE (1..ub-domain-defined-attributes) OF
-//	  BuiltInDomainDefinedAttribute
-type BuiltInDomainDefinedAttributes = [](BuiltInDomainDefinedAttribute) // SequenceOfType
+//	BuiltInDomainDefinedAttributes  ::=
+//		SEQUENCE SIZE (1..ub-domain-defined-attributes) OF
+//		  BuiltInDomainDefinedAttribute
+type BuiltInDomainDefinedAttributes = [](BuiltInDomainDefinedAttribute)
+
 // # ASN.1 Definition:
 //
 //	BuiltInDomainDefinedAttribute ::= SEQUENCE {
@@ -280,10 +265,9 @@ type BuiltInDomainDefinedAttribute struct {
 
 // # ASN.1 Definition:
 //
-// ExtensionAttributes  ::=
-//
-//	SET SIZE (1..ub-extension-attributes) OF ExtensionAttribute
-type ExtensionAttributesSet = [](X400ExtensionAttribute) // SetOfType
+//	ExtensionAttributes ::= SET SIZE (1..ub-extension-attributes) OF ExtensionAttribute
+type ExtensionAttributesSet = [](X400ExtensionAttribute)
+
 // # ASN.1 Definition:
 //
 //	ExtensionAttribute ::= SEQUENCE {
@@ -299,26 +283,29 @@ type X400ExtensionAttribute struct {
 
 // # ASN.1 Definition:
 //
-// CommonName  ::=  PrintableString(SIZE (1..ub-common-name-length))
-type CommonName = string // PrintableString
+//	CommonName ::= PrintableString(SIZE (1..ub-common-name-length))
+type CommonName = string
+
 // # ASN.1 Definition:
 //
-// TeletexCommonName  ::=  TeletexString(SIZE (1..ub-common-name-length))
-type TeletexCommonName = string // TeletexString
+//	TeletexCommonName ::= TeletexString(SIZE (1..ub-common-name-length))
+type TeletexCommonName = string
+
 // # ASN.1 Definition:
 //
-// UniversalCommonName  ::=  UniversalOrBMPString{ub-common-name-length}
-type UniversalCommonName = UniversalOrBMPString // DefinedType
+//	UniversalCommonName ::= UniversalOrBMPString{ub-common-name-length}
+type UniversalCommonName = UniversalOrBMPString
+
 // # ASN.1 Definition:
 //
-// TeletexOrganizationName  ::=
-//
-//	TeletexString(SIZE (1..ub-organization-name-length))
-type TeletexOrganizationName = string // TeletexString
+//	TeletexOrganizationName ::= TeletexString(SIZE (1..ub-organization-name-length))
+type TeletexOrganizationName = string
+
 // # ASN.1 Definition:
 //
-// UniversalOrganizationName  ::=  UniversalOrBMPString{ub-organization-name-length}
-type UniversalOrganizationName = UniversalOrBMPString // DefinedType
+// UniversalOrganizationName ::= UniversalOrBMPString{ub-organization-name-length}
+type UniversalOrganizationName = UniversalOrBMPString
+
 // # ASN.1 Definition:
 //
 //	TeletexPersonalName ::= SET {
@@ -358,28 +345,24 @@ type UniversalPersonalName struct {
 
 // # ASN.1 Definition:
 //
-// TeletexOrganizationalUnitNames  ::=
-//
-//	SEQUENCE SIZE (1..ub-organizational-units) OF TeletexOrganizationalUnitName
-type TeletexOrganizationalUnitNames = [](TeletexOrganizationalUnitName) // SequenceOfType
+//	TeletexOrganizationalUnitNames ::= SEQUENCE SIZE (1..ub-organizational-units) OF TeletexOrganizationalUnitName
+type TeletexOrganizationalUnitNames = [](TeletexOrganizationalUnitName)
+
 // # ASN.1 Definition:
 //
-// TeletexOrganizationalUnitName  ::=
-//
-//	TeletexString(SIZE (1..ub-organizational-unit-name-length))
-type TeletexOrganizationalUnitName = string // TeletexString
+//	TeletexOrganizationalUnitName ::= TeletexString(SIZE (1..ub-organizational-unit-name-length))
+type TeletexOrganizationalUnitName = string
+
 // # ASN.1 Definition:
 //
-// UniversalOrganizationalUnitNames  ::=
-//
-//	SEQUENCE SIZE (1..ub-organizational-units) OF UniversalOrganizationalUnitName
-type UniversalOrganizationalUnitNames = [](UniversalOrganizationalUnitName) // SequenceOfType
+//	UniversalOrganizationalUnitNames ::= SEQUENCE SIZE (1..ub-organizational-units) OF UniversalOrganizationalUnitName
+type UniversalOrganizationalUnitNames = [](UniversalOrganizationalUnitName)
+
 // # ASN.1 Definition:
 //
-// UniversalOrganizationalUnitName  ::=
-//
-//	UniversalOrBMPString{ub-organizational-unit-name-length}
-type UniversalOrganizationalUnitName = UniversalOrBMPString // DefinedType
+//	UniversalOrganizationalUnitName ::= UniversalOrBMPString{ub-organizational-unit-name-length}
+type UniversalOrganizationalUnitName = UniversalOrBMPString
+
 // # ASN.1 Definition:
 //
 //	UniversalOrBMPString{INTEGER:ub-string-length} ::= SET {
@@ -394,18 +377,19 @@ type UniversalOrBMPString struct {
 
 // # ASN.1 Definition:
 //
-// PDSName  ::=  PrintableString(SIZE (1..ub-pds-name-length))
-type PDSName = string // PrintableString
+//	PDSName ::= PrintableString(SIZE (1..ub-pds-name-length))
+type PDSName = string
+
 // # ASN.1 Definition:
 //
-//	PhysicalDeliveryCountryName  ::=  CHOICE {
+//	PhysicalDeliveryCountryName ::= CHOICE {
 //	  x121-dcc-code         NumericString(SIZE (ub-country-name-numeric-length)),
 //	  iso-3166-alpha2-code  PrintableString(SIZE (ub-country-name-alpha-length)) }
 type PhysicalDeliveryCountryName = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-//	PostalCode  ::=  CHOICE {
+//	PostalCode ::= CHOICE {
 //	  numeric-code    NumericString(SIZE (1..ub-postal-code-length)),
 //	  printable-code  PrintableString(SIZE (1..ub-postal-code-length))
 //	}
@@ -413,52 +397,64 @@ type PostalCode = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// PhysicalDeliveryOfficeName  ::=  PDSParameter
-type PhysicalDeliveryOfficeName = PDSParameter // DefinedType
+//	PhysicalDeliveryOfficeName ::= PDSParameter
+type PhysicalDeliveryOfficeName = PDSParameter
+
 // # ASN.1 Definition:
 //
-// UniversalPhysicalDeliveryOfficeName  ::=  UniversalPDSParameter
-type UniversalPhysicalDeliveryOfficeName = UniversalPDSParameter // DefinedType
+//	UniversalPhysicalDeliveryOfficeName ::= UniversalPDSParameter
+type UniversalPhysicalDeliveryOfficeName = UniversalPDSParameter
+
 // # ASN.1 Definition:
 //
-// PhysicalDeliveryOfficeNumber  ::=  PDSParameter
-type PhysicalDeliveryOfficeNumber = PDSParameter // DefinedType
+//	PhysicalDeliveryOfficeNumber ::= PDSParameter
+type PhysicalDeliveryOfficeNumber = PDSParameter
+
 // # ASN.1 Definition:
 //
-// UniversalPhysicalDeliveryOfficeNumber  ::=  UniversalPDSParameter
-type UniversalPhysicalDeliveryOfficeNumber = UniversalPDSParameter // DefinedType
+//	UniversalPhysicalDeliveryOfficeNumber ::= UniversalPDSParameter
+type UniversalPhysicalDeliveryOfficeNumber = UniversalPDSParameter
+
 // # ASN.1 Definition:
 //
-// ExtensionORAddressComponents  ::=  PDSParameter
-type ExtensionORAddressComponents = PDSParameter // DefinedType
+//	ExtensionORAddressComponents ::= PDSParameter
+type ExtensionORAddressComponents = PDSParameter
+
 // # ASN.1 Definition:
 //
-// UniversalExtensionORAddressComponents  ::=  UniversalPDSParameter
-type UniversalExtensionORAddressComponents = UniversalPDSParameter // DefinedType
+//	UniversalExtensionORAddressComponents ::= UniversalPDSParameter
+type UniversalExtensionORAddressComponents = UniversalPDSParameter
+
 // # ASN.1 Definition:
 //
-// PhysicalDeliveryPersonalName  ::=  PDSParameter
-type PhysicalDeliveryPersonalName = PDSParameter // DefinedType
+//	PhysicalDeliveryPersonalName ::= PDSParameter
+type PhysicalDeliveryPersonalName = PDSParameter
+
 // # ASN.1 Definition:
 //
-// UniversalPhysicalDeliveryPersonalName  ::=  UniversalPDSParameter
-type UniversalPhysicalDeliveryPersonalName = UniversalPDSParameter // DefinedType
+//	UniversalPhysicalDeliveryPersonalName ::= UniversalPDSParameter
+type UniversalPhysicalDeliveryPersonalName = UniversalPDSParameter
+
 // # ASN.1 Definition:
 //
-// PhysicalDeliveryOrganizationName  ::=  PDSParameter
-type PhysicalDeliveryOrganizationName = PDSParameter // DefinedType
+//	PhysicalDeliveryOrganizationName ::= PDSParameter
+type PhysicalDeliveryOrganizationName = PDSParameter
+
 // # ASN.1 Definition:
 //
-// UniversalPhysicalDeliveryOrganizationName  ::=  UniversalPDSParameter
-type UniversalPhysicalDeliveryOrganizationName = UniversalPDSParameter // DefinedType
+//	UniversalPhysicalDeliveryOrganizationName ::= UniversalPDSParameter
+type UniversalPhysicalDeliveryOrganizationName = UniversalPDSParameter
+
 // # ASN.1 Definition:
 //
-// ExtensionPhysicalDeliveryAddressComponents  ::=  PDSParameter
-type ExtensionPhysicalDeliveryAddressComponents = PDSParameter // DefinedType
+//	ExtensionPhysicalDeliveryAddressComponents ::= PDSParameter
+type ExtensionPhysicalDeliveryAddressComponents = PDSParameter
+
 // # ASN.1 Definition:
 //
-// UniversalExtensionPhysicalDeliveryAddressComponents  ::=  UniversalPDSParameter
-type UniversalExtensionPhysicalDeliveryAddressComponents = UniversalPDSParameter // DefinedType
+//	UniversalExtensionPhysicalDeliveryAddressComponents ::= UniversalPDSParameter
+type UniversalExtensionPhysicalDeliveryAddressComponents = UniversalPDSParameter
+
 // # ASN.1 Definition:
 //
 //	UnformattedPostalAddress ::= SET {
@@ -472,50 +468,59 @@ type UnformattedPostalAddress struct {
 
 // # ASN.1 Definition:
 //
-// UniversalUnformattedPostalAddress  ::=
-//
-//	UniversalOrBMPString{ub-unformatted-address-length}
-type UniversalUnformattedPostalAddress = UniversalOrBMPString // DefinedType
+//	UniversalUnformattedPostalAddress ::= UniversalOrBMPString{ub-unformatted-address-length}
+type UniversalUnformattedPostalAddress = UniversalOrBMPString
+
 // # ASN.1 Definition:
 //
-// StreetAddress  ::=  PDSParameter
-type StreetAddress = PDSParameter // DefinedType
+//	StreetAddress ::= PDSParameter
+type StreetAddress = PDSParameter
+
 // # ASN.1 Definition:
 //
-// UniversalStreetAddress  ::=  UniversalPDSParameter
-type UniversalStreetAddress = UniversalPDSParameter // DefinedType
+//	UniversalStreetAddress ::= UniversalPDSParameter
+type UniversalStreetAddress = UniversalPDSParameter
+
 // # ASN.1 Definition:
 //
-// PostOfficeBoxAddress  ::=  PDSParameter
-type PostOfficeBoxAddress = PDSParameter // DefinedType
+//	PostOfficeBoxAddress ::= PDSParameter
+type PostOfficeBoxAddress = PDSParameter
+
 // # ASN.1 Definition:
 //
-// UniversalPostOfficeBoxAddress  ::=  UniversalPDSParameter
-type UniversalPostOfficeBoxAddress = UniversalPDSParameter // DefinedType
+//	UniversalPostOfficeBoxAddress ::= UniversalPDSParameter
+type UniversalPostOfficeBoxAddress = UniversalPDSParameter
+
 // # ASN.1 Definition:
 //
-// PosteRestanteAddress  ::=  PDSParameter
-type PosteRestanteAddress = PDSParameter // DefinedType
+//	PosteRestanteAddress ::= PDSParameter
+type PosteRestanteAddress = PDSParameter
+
 // # ASN.1 Definition:
 //
-// UniversalPosteRestanteAddress  ::=  UniversalPDSParameter
-type UniversalPosteRestanteAddress = UniversalPDSParameter // DefinedType
+//	UniversalPosteRestanteAddress ::= UniversalPDSParameter
+type UniversalPosteRestanteAddress = UniversalPDSParameter
+
 // # ASN.1 Definition:
 //
-// UniquePostalName  ::=  PDSParameter
-type UniquePostalName = PDSParameter // DefinedType
+//	UniquePostalName ::= PDSParameter
+type UniquePostalName = PDSParameter
+
 // # ASN.1 Definition:
 //
-// UniversalUniquePostalName  ::=  UniversalPDSParameter
-type UniversalUniquePostalName = UniversalPDSParameter // DefinedType
+//	UniversalUniquePostalName ::= UniversalPDSParameter
+type UniversalUniquePostalName = UniversalPDSParameter
+
 // # ASN.1 Definition:
 //
-// LocalPostalAttributes  ::=  PDSParameter
-type LocalPostalAttributes = PDSParameter // DefinedType
+//	LocalPostalAttributes ::= PDSParameter
+type LocalPostalAttributes = PDSParameter
+
 // # ASN.1 Definition:
 //
-// UniversalLocalPostalAttributes  ::=  UniversalPDSParameter
-type UniversalLocalPostalAttributes = UniversalPDSParameter // DefinedType
+//	UniversalLocalPostalAttributes ::= UniversalPDSParameter
+type UniversalLocalPostalAttributes = UniversalPDSParameter
+
 // # ASN.1 Definition:
 //
 //	PDSParameter ::= SET {
@@ -528,11 +533,12 @@ type PDSParameter struct {
 
 // # ASN.1 Definition:
 //
-// UniversalPDSParameter  ::=  UniversalOrBMPString{ub-pds-parameter-length}
-type UniversalPDSParameter = UniversalOrBMPString // DefinedType
+//	UniversalPDSParameter ::= UniversalOrBMPString{ub-pds-parameter-length}
+type UniversalPDSParameter = UniversalOrBMPString
+
 // # ASN.1 Definition:
 //
-//	ExtendedNetworkAddress  ::=  CHOICE {
+//	ExtendedNetworkAddress ::= CHOICE {
 //	  e163-4-address    SEQUENCE {
 //	    number       [0]  NumericString(SIZE (1..ub-e163-4-number-length)),
 //	    sub-address  [1]  NumericString(SIZE (1..ub-e163-4-sub-address-length))
@@ -542,7 +548,7 @@ type ExtendedNetworkAddress = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-//	TerminalType  ::=  INTEGER {
+//	TerminalType ::= INTEGER {
 //	  telex(3), teletex(4), g3-facsimile(5), g4-facsimile(6), ia5-terminal(7),
 //	  videotex(8)}(0..ub-integer-options)
 type TerminalType = int64
@@ -561,11 +567,9 @@ const TerminalType_Videotex TerminalType = 8
 
 // # ASN.1 Definition:
 //
-// TeletexDomainDefinedAttributes  ::=
-//
-//	SEQUENCE SIZE (1..ub-domain-defined-attributes) OF
-//	  TeletexDomainDefinedAttribute
-type TeletexDomainDefinedAttributes = [](TeletexDomainDefinedAttribute) // SequenceOfType
+//	TeletexDomainDefinedAttributes ::= SEQUENCE SIZE (1..ub-domain-defined-attributes) OF TeletexDomainDefinedAttribute
+type TeletexDomainDefinedAttributes = [](TeletexDomainDefinedAttribute)
+
 // # ASN.1 Definition:
 //
 //	TeletexDomainDefinedAttribute ::= SEQUENCE {
@@ -578,11 +582,9 @@ type TeletexDomainDefinedAttribute struct {
 
 // # ASN.1 Definition:
 //
-// UniversalDomainDefinedAttributes  ::=
-//
-//	SEQUENCE SIZE (1..ub-domain-defined-attributes) OF
-//	  UniversalDomainDefinedAttribute
-type UniversalDomainDefinedAttributes = [](UniversalDomainDefinedAttribute) // SequenceOfType
+//	UniversalDomainDefinedAttributes ::= SEQUENCE SIZE (1..ub-domain-defined-attributes) OF UniversalDomainDefinedAttribute
+type UniversalDomainDefinedAttributes = [](UniversalDomainDefinedAttribute)
+
 // # ASN.1 Definition:
 //
 //	UniversalDomainDefinedAttribute ::= SEQUENCE {
@@ -595,162 +597,162 @@ type UniversalDomainDefinedAttribute struct {
 
 // # ASN.1 Definition:
 //
-// ub-integer-options                        INTEGER ::= 256
+//	ub-integer-options                        INTEGER ::= 256
 const Ub_integer_options int = 256
 
 // # ASN.1 Definition:
 //
-// ub-e163-4-number-length                   INTEGER ::= 15
+//	ub-e163-4-number-length                   INTEGER ::= 15
 const Ub_e163_4_number_length int = 15
 
 // # ASN.1 Definition:
 //
-// ub-e163-4-sub-address-length              INTEGER ::= 40
+//	ub-e163-4-sub-address-length              INTEGER ::= 40
 const Ub_e163_4_sub_address_length int = 40
 
 // # ASN.1 Definition:
 //
-// ub-unformatted-address-length             INTEGER ::= 180
+//	ub-unformatted-address-length             INTEGER ::= 180
 const Ub_unformatted_address_length int = 180
 
 // # ASN.1 Definition:
 //
-// ub-pds-parameter-length                   INTEGER ::= 30
+//	ub-pds-parameter-length                   INTEGER ::= 30
 const Ub_pds_parameter_length int = 30
 
 // # ASN.1 Definition:
 //
-// ub-pds-physical-address-lines             INTEGER ::= 6
+//	ub-pds-physical-address-lines             INTEGER ::= 6
 const Ub_pds_physical_address_lines int = 6
 
 // # ASN.1 Definition:
 //
-// ub-postal-code-length                     INTEGER ::= 16
+//	ub-postal-code-length                     INTEGER ::= 16
 const Ub_postal_code_length int = 16
 
 // # ASN.1 Definition:
 //
-// ub-pds-name-length                        INTEGER ::= 16
+//	ub-pds-name-length                        INTEGER ::= 16
 const Ub_pds_name_length int = 16
 
 // # ASN.1 Definition:
 //
-// ub-universal-surname-length               INTEGER ::= 64
+//	ub-universal-surname-length               INTEGER ::= 64
 const Ub_universal_surname_length int = 64
 
 // # ASN.1 Definition:
 //
-// ub-universal-given-name-length            INTEGER ::= 40
+//	ub-universal-given-name-length            INTEGER ::= 40
 const Ub_universal_given_name_length int = 40
 
 // # ASN.1 Definition:
 //
-// ub-universal-initials-length              INTEGER ::= 16
+//	ub-universal-initials-length              INTEGER ::= 16
 const Ub_universal_initials_length int = 16
 
 // # ASN.1 Definition:
 //
-// ub-universal-generation-qualifier-length  INTEGER ::= 16
+//	ub-universal-generation-qualifier-length  INTEGER ::= 16
 const Ub_universal_generation_qualifier_length int = 16
 
 // # ASN.1 Definition:
 //
-// ub-common-name-length                     INTEGER ::= 64
+//	ub-common-name-length                     INTEGER ::= 64
 const Ub_common_name_length int = 64
 
 // # ASN.1 Definition:
 //
-// ub-extension-attributes                   INTEGER ::= 256
+//	ub-extension-attributes                   INTEGER ::= 256
 const Ub_extension_attributes int = 256
 
 // # ASN.1 Definition:
 //
-// ub-domain-defined-attribute-type-length   INTEGER ::= 8
+//	ub-domain-defined-attribute-type-length   INTEGER ::= 8
 const Ub_domain_defined_attribute_type_length int = 8
 
 // # ASN.1 Definition:
 //
-// ub-domain-defined-attribute-value-length  INTEGER ::= 128
+//	ub-domain-defined-attribute-value-length  INTEGER ::= 128
 const Ub_domain_defined_attribute_value_length int = 128
 
 // # ASN.1 Definition:
 //
-// ub-domain-defined-attributes              INTEGER ::= 4
+//	ub-domain-defined-attributes              INTEGER ::= 4
 const Ub_domain_defined_attributes int = 4
 
 // # ASN.1 Definition:
 //
-// ub-organizational-unit-name-length        INTEGER ::= 32
+//	ub-organizational-unit-name-length        INTEGER ::= 32
 const Ub_organizational_unit_name_length int = 32
 
 // # ASN.1 Definition:
 //
-// ub-organizational-units                   INTEGER ::= 4
+//	ub-organizational-units                   INTEGER ::= 4
 const Ub_organizational_units int = 4
 
 // # ASN.1 Definition:
 //
-// ub-generation-qualifier-length            INTEGER ::= 3
+//	ub-generation-qualifier-length            INTEGER ::= 3
 const Ub_generation_qualifier_length int = 3
 
 // # ASN.1 Definition:
 //
-// ub-initials-length                        INTEGER ::= 5
+//	ub-initials-length                        INTEGER ::= 5
 const Ub_initials_length int = 5
 
 // # ASN.1 Definition:
 //
-// ub-given-name-length                      INTEGER ::= 16
+//	ub-given-name-length                      INTEGER ::= 16
 const Ub_given_name_length int = 16
 
 // # ASN.1 Definition:
 //
-// ub-surname-length                         INTEGER ::= 40
+//	ub-surname-length                         INTEGER ::= 40
 const Ub_surname_length int = 40
 
 // # ASN.1 Definition:
 //
-// ub-numeric-user-id-length                 INTEGER ::= 32
+//	ub-numeric-user-id-length                 INTEGER ::= 32
 const Ub_numeric_user_id_length int = 32
 
 // # ASN.1 Definition:
 //
-// ub-organization-name-length               INTEGER ::= 64
+//	ub-organization-name-length               INTEGER ::= 64
 const Ub_organization_name_length int = 64
 
 // # ASN.1 Definition:
 //
-// ub-terminal-id-length                     INTEGER ::= 24
+//	ub-terminal-id-length                     INTEGER ::= 24
 const Ub_terminal_id_length int = 24
 
 // # ASN.1 Definition:
 //
-// ub-x121-address-length                    INTEGER ::= 16
+//	ub-x121-address-length                    INTEGER ::= 16
 const Ub_x121_address_length int = 16
 
 // # ASN.1 Definition:
 //
-// ub-domain-name-length                     INTEGER ::= 16
+//	ub-domain-name-length                     INTEGER ::= 16
 const Ub_domain_name_length int = 16
 
 // # ASN.1 Definition:
 //
-// ub-country-name-alpha-length              INTEGER ::= 2
+//	ub-country-name-alpha-length              INTEGER ::= 2
 const Ub_country_name_alpha_length int = 2
 
 // # ASN.1 Definition:
 //
-// ub-country-name-numeric-length            INTEGER ::= 3
+//	ub-country-name-numeric-length            INTEGER ::= 3
 const Ub_country_name_numeric_length int = 3
 
 // # ASN.1 Definition:
 //
-// UniversalOrBMPString-character-encoding ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	UniversalOrBMPString-character-encoding ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type UniversalOrBMPString_character_encoding = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// ExtendedNetworkAddress-e163-4-address ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
+//	ExtendedNetworkAddress-e163-4-address ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type ExtendedNetworkAddress_e163_4_address struct {
 	Number      string `asn1:"explicit,tag:0"`
 	Sub_address string `asn1:"optional,explicit,tag:1"`

@@ -27,3 +27,4 @@
 - [ ] Test Bind Errors
 - [ ] Test socket closures
 - [ ] List and Search Result Iterator
+- [ ] Break this library up into `x500` and `x500-client`

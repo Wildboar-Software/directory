@@ -10,7 +10,8 @@ import (
 // EstablishOperationalBindingArgument  ::=
 //
 //	OPTIONALLY-PROTECTED-SEQ { EstablishOperationalBindingArgumentData }
-type EstablishOperationalBindingArgument = OPTIONALLY_PROTECTED_SEQ // DefinedType
+type EstablishOperationalBindingArgument = OPTIONALLY_PROTECTED_SEQ
+
 // # ASN.1 Definition:
 //
 //	EstablishOperationalBindingArgumentData ::= SEQUENCE {
@@ -70,16 +71,9 @@ type OBValidity struct {
 
 // # ASN.1 Definition:
 //
-//	Time  ::=  CHOICE {
-//	  utcTime          UTCTime,
-//	  generalizedTime  GeneralizedTime,
-//	  ... }
-//
-// type Time = asn1.RawValue
-// # ASN.1 Definition:
-//
-// EstablishOperationalBindingResult  ::=  OPTIONALLY-PROTECTED-SEQ { EstablishOperationalBindingResultData }
-type EstablishOperationalBindingResult = OPTIONALLY_PROTECTED_SEQ // DefinedType
+//	EstablishOperationalBindingResult ::= OPTIONALLY-PROTECTED-SEQ { EstablishOperationalBindingResultData }
+type EstablishOperationalBindingResult = OPTIONALLY_PROTECTED_SEQ
+
 // # ASN.1 Definition:
 //
 //	EstablishOperationalBindingResultData ::= SEQUENCE {
@@ -110,10 +104,9 @@ type EstablishOperationalBindingResultData struct {
 
 // # ASN.1 Definition:
 //
-// ModifyOperationalBindingArgument  ::=
-//
-//	OPTIONALLY-PROTECTED-SEQ { ModifyOperationalBindingArgumentData }
-type ModifyOperationalBindingArgument = OPTIONALLY_PROTECTED_SEQ // DefinedType
+//	ModifyOperationalBindingArgument ::= OPTIONALLY-PROTECTED-SEQ { ModifyOperationalBindingArgumentData }
+type ModifyOperationalBindingArgument = OPTIONALLY_PROTECTED_SEQ
+
 // # ASN.1 Definition:
 //
 //	ModifyOperationalBindingArgumentData ::= SEQUENCE {
@@ -165,7 +158,7 @@ type ModifiedValidity struct {
 
 // # ASN.1 Definition:
 //
-//	ModifyOperationalBindingResult  ::=  CHOICE {
+//	ModifyOperationalBindingResult ::= CHOICE {
 //	  null            NULL,
 //	  protected  [1]  OPTIONALLY-PROTECTED-SEQ{ ModifyOperationalBindingResultData },
 //	  ... }
@@ -195,10 +188,9 @@ type ModifyOperationalBindingResultData struct {
 
 // # ASN.1 Definition:
 //
-// TerminateOperationalBindingArgument  ::=
-//
-//	OPTIONALLY-PROTECTED-SEQ { TerminateOperationalBindingArgumentData }
-type TerminateOperationalBindingArgument = OPTIONALLY_PROTECTED_SEQ // DefinedType
+//	TerminateOperationalBindingArgument ::= OPTIONALLY-PROTECTED-SEQ { TerminateOperationalBindingArgumentData }
+type TerminateOperationalBindingArgument = OPTIONALLY_PROTECTED_SEQ
+
 // # ASN.1 Definition:
 //
 //	TerminateOperationalBindingArgumentData ::= SEQUENCE {
@@ -225,7 +217,7 @@ type TerminateOperationalBindingArgumentData struct {
 
 // # ASN.1 Definition:
 //
-//	TerminateOperationalBindingResult  ::=  CHOICE {
+//	TerminateOperationalBindingResult ::= CHOICE {
 //	  null            NULL,
 //	  protected  [1]  OPTIONALLY-PROTECTED-SEQ{ TerminateOperationalBindingResultData },
 //	  ... }
@@ -288,47 +280,47 @@ type OpBindingErrorParam struct {
 
 // # ASN.1 Definition:
 //
-// EstablishOperationalBindingArgumentData-initiator ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	EstablishOperationalBindingArgumentData-initiator ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type EstablishOperationalBindingArgumentData_initiator = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// Validity-validFrom ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	Validity-validFrom ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type Validity_validFrom = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// Validity-validUntil ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	Validity-validUntil ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type Validity_validUntil = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// EstablishOperationalBindingResultData-initiator ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	EstablishOperationalBindingResultData-initiator ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type EstablishOperationalBindingResultData_initiator = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// ModifyOperationalBindingArgumentData-initiator ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	ModifyOperationalBindingArgumentData-initiator ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type ModifyOperationalBindingArgumentData_initiator = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// ModifiedValidity-validFrom ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	ModifiedValidity-validFrom ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type ModifiedValidity_validFrom = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// ModifiedValidity-validUntil ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	ModifiedValidity-validUntil ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type ModifiedValidity_validUntil = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// TerminateOperationalBindingArgumentData-initiator ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	TerminateOperationalBindingArgumentData-initiator ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type TerminateOperationalBindingArgumentData_initiator = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// OpBindingErrorParam-problem ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
+//	OpBindingErrorParam-problem ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 type OpBindingErrorParam_problem = asn1.Enumerated
 
 const (

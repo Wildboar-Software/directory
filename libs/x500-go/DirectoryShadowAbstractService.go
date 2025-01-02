@@ -16,8 +16,9 @@ type ModificationParameter struct {
 
 // # ASN.1 Definition:
 //
-// AgreementID  ::=  OperationalBindingID
-type AgreementID = OperationalBindingID // DefinedType
+//	AgreementID ::= OperationalBindingID
+type AgreementID = OperationalBindingID
+
 // # ASN.1 Definition:
 //
 //	ShadowingAgreementInfo ::= SEQUENCE {
@@ -80,8 +81,9 @@ type Knowledge struct {
 
 // # ASN.1 Definition:
 //
-// AttributeSelection  ::=  SET OF ClassAttributeSelection
-type AttributeSelection = [](ClassAttributeSelection) // SetOfType
+//	AttributeSelection ::= SET OF ClassAttributeSelection
+type AttributeSelection = [](ClassAttributeSelection)
+
 // # ASN.1 Definition:
 //
 //	ClassAttributeSelection ::= SEQUENCE {
@@ -94,7 +96,7 @@ type ClassAttributeSelection struct {
 
 // # ASN.1 Definition:
 //
-//	ClassAttributes  ::=  CHOICE {
+//	ClassAttributes ::= CHOICE {
 //	  allAttributes  NULL,
 //	  include        [0]  AttributeTypes,
 //	  exclude        [1]  AttributeTypes,
@@ -103,11 +105,12 @@ type ClassAttributes = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// AttributeTypes  ::=  SET OF AttributeType
-type AttributeTypes = [](AttributeType) // SetOfType
+//	AttributeTypes ::= SET OF AttributeType
+type AttributeTypes = [](AttributeType)
+
 // # ASN.1 Definition:
 //
-//	UpdateMode  ::=  CHOICE {
+//	UpdateMode ::= CHOICE {
 //	  supplierInitiated  [0]  SupplierUpdateMode,
 //	  consumerInitiated  [1]  ConsumerUpdateMode,
 //	  ... }
@@ -115,7 +118,7 @@ type UpdateMode = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-//	SupplierUpdateMode  ::=  CHOICE {
+//	SupplierUpdateMode ::= CHOICE {
 //	  onChange   BOOLEAN,
 //	  scheduled  SchedulingParameters,
 //	  ... }
@@ -123,8 +126,9 @@ type SupplierUpdateMode = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// ConsumerUpdateMode  ::=  SchedulingParameters
-type ConsumerUpdateMode = SchedulingParameters // DefinedType
+//	ConsumerUpdateMode ::= SchedulingParameters
+type ConsumerUpdateMode = SchedulingParameters
+
 // # ASN.1 Definition:
 //
 //	SchedulingParameters ::= SEQUENCE {
@@ -152,14 +156,16 @@ type PeriodicStrategy struct {
 
 // # ASN.1 Definition:
 //
-// Time  ::=  GeneralizedTime
-type ShadowingTime = time.Time // GeneralizedTime
+//	Time ::= GeneralizedTime
+type ShadowingTime = time.Time
+
 // # ASN.1 Definition:
 //
 // CoordinateShadowUpdateArgument  ::=
 //
 //	OPTIONALLY-PROTECTED { CoordinateShadowUpdateArgumentData }
-type CoordinateShadowUpdateArgument = OPTIONALLY_PROTECTED // DefinedType
+type CoordinateShadowUpdateArgument = OPTIONALLY_PROTECTED
+
 // # ASN.1 Definition:
 //
 //	CoordinateShadowUpdateArgumentData ::= [0]  SEQUENCE {
@@ -184,7 +190,7 @@ type CoordinateShadowUpdateArgumentData struct {
 
 // # ASN.1 Definition:
 //
-//	CoordinateShadowUpdateResult  ::=  CHOICE {
+//	CoordinateShadowUpdateResult ::= CHOICE {
 //	  null         NULL,
 //	  information  OPTIONALLY-PROTECTED{ CoordinateShadowUpdateResultData },
 //	  ...}
@@ -209,8 +215,9 @@ type CoordinateShadowUpdateResultData struct {
 
 // # ASN.1 Definition:
 //
-// RequestShadowUpdateArgument  ::=  OPTIONALLY-PROTECTED { RequestShadowUpdateArgumentData }
-type RequestShadowUpdateArgument = OPTIONALLY_PROTECTED // DefinedType
+//	RequestShadowUpdateArgument ::= OPTIONALLY-PROTECTED { RequestShadowUpdateArgumentData }
+type RequestShadowUpdateArgument = OPTIONALLY_PROTECTED
+
 // # ASN.1 Definition:
 //
 //	RequestShadowUpdateArgumentData ::= [0]  SEQUENCE {
@@ -234,7 +241,7 @@ type RequestShadowUpdateArgumentData struct {
 
 // # ASN.1 Definition:
 //
-//	RequestShadowUpdateResult  ::=  CHOICE {
+//	RequestShadowUpdateResult ::= CHOICE {
 //	  null         NULL,
 //	  information OPTIONALLY-PROTECTED{ RequestShadowUpdateResultData },
 //	  ...
@@ -260,8 +267,9 @@ type RequestShadowUpdateResultData struct {
 
 // # ASN.1 Definition:
 //
-// UpdateShadowArgument  ::=  OPTIONALLY-PROTECTED {UpdateShadowArgumentData }
-type UpdateShadowArgument = OPTIONALLY_PROTECTED // DefinedType
+//	UpdateShadowArgument ::= OPTIONALLY-PROTECTED {UpdateShadowArgumentData }
+type UpdateShadowArgument = OPTIONALLY_PROTECTED
+
 // # ASN.1 Definition:
 //
 //	UpdateShadowArgumentData ::= [0]  SEQUENCE {
@@ -281,7 +289,7 @@ type UpdateShadowArgumentData struct {
 
 // # ASN.1 Definition:
 //
-//	UpdateShadowResult  ::=  CHOICE {
+//	UpdateShadowResult ::= CHOICE {
 //	  null         NULL,
 //	  information OPTIONALLY-PROTECTED{ UpdateShadowResultData },
 //	  ...}
@@ -317,7 +325,7 @@ type UpdateWindow struct {
 
 // # ASN.1 Definition:
 //
-//	RefreshInformation  ::=  CHOICE {
+//	RefreshInformation ::= CHOICE {
 //	  noRefresh      NULL,
 //	  total          [0]  TotalRefresh,
 //	  incremental    [1]  IncrementalRefresh,
@@ -358,8 +366,9 @@ type SDSEContent struct {
 
 // # ASN.1 Definition:
 //
-// SDSEType  ::=  DSEType
-type SDSEType = DSEType // DefinedType
+//	SDSEType ::= DSEType
+type SDSEType = DSEType
+
 // # ASN.1 Definition:
 //
 //	Subtree ::= SEQUENCE {
@@ -374,8 +383,9 @@ type Subtree struct {
 
 // # ASN.1 Definition:
 //
-// IncrementalRefresh  ::=  SEQUENCE OF IncrementalStepRefresh
-type IncrementalRefresh = [](IncrementalStepRefresh) // SequenceOfType
+//	IncrementalRefresh ::= SEQUENCE OF IncrementalStepRefresh
+type IncrementalRefresh = [](IncrementalStepRefresh)
+
 // # ASN.1 Definition:
 //
 //	IncrementalStepRefresh ::= SEQUENCE {
@@ -445,7 +455,7 @@ type ShadowErrorData struct {
 
 // # ASN.1 Definition:
 //
-//	ShadowProblem  ::=  INTEGER {
+//	ShadowProblem ::= INTEGER {
 //	  invalidAgreementID         (1),
 //	  inactiveAgreement          (2),
 //	  invalidInformationReceived (3),
@@ -483,12 +493,12 @@ const ShadowProblem_InsufficientResources ShadowProblem = 11
 
 // # ASN.1 Definition:
 //
-// UnitOfReplication-supplyContexts ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	UnitOfReplication-supplyContexts ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type UnitOfReplication_supplyContexts = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// Knowledge-knowledgeType ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
+//	Knowledge-knowledgeType ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 type Knowledge_knowledgeType = asn1.Enumerated
 
 const (
@@ -499,7 +509,7 @@ const (
 
 // # ASN.1 Definition:
 //
-// CoordinateShadowUpdateArgumentData-updateStrategy-standard ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
+//	CoordinateShadowUpdateArgumentData-updateStrategy-standard ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 type CoordinateShadowUpdateArgumentData_updateStrategy_standard = asn1.Enumerated
 
 const (
@@ -510,12 +520,12 @@ const (
 
 // # ASN.1 Definition:
 //
-// CoordinateShadowUpdateArgumentData-updateStrategy ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	CoordinateShadowUpdateArgumentData-updateStrategy ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type CoordinateShadowUpdateArgumentData_updateStrategy = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// RequestShadowUpdateArgumentData-requestedStrategy-standard ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
+//	RequestShadowUpdateArgumentData-requestedStrategy-standard ::= ENUMERATED { -- REMOVED_FROM_UNNESTING -- }
 type RequestShadowUpdateArgumentData_requestedStrategy_standard = asn1.Enumerated
 
 const (
@@ -525,20 +535,20 @@ const (
 
 // # ASN.1 Definition:
 //
-// RequestShadowUpdateArgumentData-requestedStrategy ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	RequestShadowUpdateArgumentData-requestedStrategy ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type RequestShadowUpdateArgumentData_requestedStrategy = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// IncrementalStepRefresh-sDSEChanges ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	IncrementalStepRefresh-sDSEChanges ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type IncrementalStepRefresh_sDSEChanges = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// ContentChange-rename ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	ContentChange-rename ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type ContentChange_rename = asn1.RawValue
 
 // # ASN.1 Definition:
 //
-// ContentChange-attributeChanges ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
+//	ContentChange-attributeChanges ::= CHOICE { -- REMOVED_FROM_UNNESTING -- }
 type ContentChange_attributeChanges = asn1.RawValue

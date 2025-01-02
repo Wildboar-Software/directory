@@ -32,8 +32,9 @@ type SuperiorToSubordinate struct {
 
 // # ASN.1 Definition:
 //
-// DITcontext  ::=  SEQUENCE OF Vertex
-type DITcontext = [](Vertex) // SequenceOfType
+//   DITcontext ::= SEQUENCE OF Vertex
+type DITcontext = [](Vertex)
+
 // # ASN.1 Definition:
 //
 // Vertex ::= SEQUENCE {
@@ -86,9 +87,10 @@ type SubordinateToSuperior struct {
 
 // # ASN.1 Definition:
 //
-// SuperiorToSubordinateModification  ::=  SuperiorToSubordinate (
+//  SuperiorToSubordinateModification ::= SuperiorToSubordinate (
 //   WITH COMPONENTS {..., entryInfo  ABSENT } )
-type SuperiorToSubordinateModification = SuperiorToSubordinate // DefinedType
+type SuperiorToSubordinateModification = SuperiorToSubordinate
+
 // # ASN.1 Definition:
 //
 // NonSpecificHierarchicalAgreement ::= SEQUENCE {
@@ -102,9 +104,10 @@ type NonSpecificHierarchicalAgreement struct {
 
 // # ASN.1 Definition:
 //
-// NHOBSuperiorToSubordinate  ::=  SuperiorToSubordinate (
+// NHOBSuperiorToSubordinate ::= SuperiorToSubordinate (
 //   WITH COMPONENTS {..., entryInfo  ABSENT } )
-type NHOBSuperiorToSubordinate = SuperiorToSubordinate // DefinedType
+type NHOBSuperiorToSubordinate = SuperiorToSubordinate
+
 // # ASN.1 Definition:
 //
 // NHOBSubordinateToSuperior ::= SEQUENCE {
