@@ -26,4 +26,4 @@
 - [ ] Race condition checks
 - [ ] Test Bind Errors
 - [ ] Test socket closures
-
+- [ ] List and Search Result Iterator
