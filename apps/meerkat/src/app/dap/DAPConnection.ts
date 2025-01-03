@@ -466,7 +466,8 @@ async function handleRequestAndErrors (
             });
             stats.outcome.error.problem = Number(e.data.problem);
             if (e.unbind) {
-                assn.rose.write_unbind();
+                // For DAP over both IDM and OSI, only the initiator may unbind.
+                // assn.rose.write_unbind();
                 assn.reset();
                 assn.socket.destroy();
             }
@@ -667,7 +668,8 @@ class DAPAssociation extends ClientAssociation {
                     parameter: error,
                 });
                 if (e.unbind) {
-                    this.rose.write_unbind();
+                    // For DAP over both IDM and OSI, only the initiator may unbind.
+                    // this.rose.write_unbind();
                     this.reset();
                     this.socket.destroy();
                 }
