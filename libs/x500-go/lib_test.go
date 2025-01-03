@@ -767,20 +767,29 @@ func TestBindTimeout(t *testing.T) {
 }
 
 func TestRequestTimeout(t *testing.T) {
+	errchan := make(chan error)
+	stop := make(chan int)
+	t.Cleanup(func() {
+		stop <- 1
+	})
+	go func() {
+		// We need to clean up because it will still receive the abandoned operation.
+		select {
+		case e := <-errchan:
+			fmt.Printf("Error: %v\n", e)
+			os.Exit(40)
+		case <-stop:
+			return
+		}
+	}()
 	conn, err := net.Dial("tcp", "localhost:4632")
 	if err != nil {
 		os.Exit(53)
 	}
-	errchan := make(chan error)
 	idm := IDMClient(conn, &IDMClientConfig{
 		StartTLSPolicy: StartTLSNever,
 		Errchan:        errchan,
 	})
-	go func() {
-		e := <-errchan
-		fmt.Printf("Error: %v\n", e)
-		os.Exit(40)
-	}()
 	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
 	defer cancel()
 	_, err = idm.BindAnonymously(ctx)
@@ -837,10 +846,18 @@ func TestUnbind(t *testing.T) {
 		StartTLSPolicy: StartTLSNever,
 		Errchan:        errchan,
 	})
+	stop := make(chan int)
+	t.Cleanup(func() {
+		stop <- 1
+	})
 	go func() {
-		e := <-errchan
-		fmt.Printf("Error: %v\n", e)
-		os.Exit(40)
+		select {
+		case e := <-errchan:
+			fmt.Printf("Error: %v\n", e)
+			os.Exit(40)
+		case <-stop:
+			return
+		}
 	}()
 	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
 	defer cancel()
@@ -854,6 +871,76 @@ func TestUnbind(t *testing.T) {
 	defer cancel()
 	_, err = idm.Unbind(ctx, req)
 	if err != nil {
+		t.Fail()
+	}
+}
+
+func TestBindError(t *testing.T) {
+	conn, err := net.Dial("tcp", "localhost:4632")
+	if err != nil {
+		os.Exit(53)
+	}
+	errchan := make(chan error)
+	idm := IDMClient(conn, &IDMClientConfig{
+		StartTLSPolicy: StartTLSNever,
+		Errchan:        errchan,
+	})
+	go func() {
+		e := <-errchan
+		fmt.Printf("Error: %v\n", e)
+		os.Exit(40)
+	}()
+	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+
+	dn := DistinguishedName{
+		[]pkix.AttributeTypeAndValue{
+			{
+				Type: Id_at_countryName,
+				Value: asn1.RawValue{
+					Tag:        asn1.TagPrintableString,
+					Class:      asn1.ClassUniversal,
+					IsCompound: false,
+					Bytes:      []byte("US"),
+				},
+			},
+		},
+	}
+
+	simpleCreds := SimpleCredentials{
+		Name: dn,
+		Password: asn1.RawValue{
+			Class:      asn1.ClassContextSpecific,
+			Tag:        2,
+			IsCompound: true,
+			Bytes:      []byte{4, 1, 'a'},
+		},
+	}
+
+	credsEncoded, err := asn1.Marshal(simpleCreds)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		t.Fail()
+	}
+
+	arg := X500AssociateArgument{
+		V1: true,
+		V2: true,
+		Credentials: &asn1.RawValue{
+			Class:      asn1.ClassContextSpecific,
+			Tag:        0,
+			IsCompound: true,
+			Bytes:      credsEncoded,
+		},
+	}
+
+	response, err := idm.Bind(ctx, arg)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(2)
+	}
+	if response.OutcomeType != OPERATION_OUTCOME_TYPE_ERROR {
+		fmt.Printf("Outcome type: %v\n", response.OutcomeType)
 		t.Fail()
 	}
 }

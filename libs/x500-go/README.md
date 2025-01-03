@@ -3,28 +3,21 @@
 
 ## TODO
 
-- [x] Fix operations other than `read`
-- [x] IDMv2
-- [x] TLS
-- [x] StartTLS
-- [x] Use `asn1.Enumerated`
-- [x] Use `big.Int`
-- [x] Configurable Timeouts
-- [x] Context object
-- [x] Make some functions private
-- [x] Handle bind errors correctly
 - [ ] Documentation
-- [x] Simpler way to create an IDM connection (`New()` function)
-- [x] Test operation abandonment
-- [x] Update `DirectoryAccessStack` interface to match implementations
-- [x] Test list operation
-- [x] Replace with types from `crypto/x509/pkix`
 - [ ] Implement `String()` for `DistinguishedName` et al?
-- [x] Error when requests are sent unbound.
-- [ ] Format generated ASN.1 comments
 - [ ] Check that channels cannot get stuck
 - [ ] Race condition checks
-- [ ] Test Bind Errors
+- [x] Test Bind Errors
 - [ ] Test socket closures
 - [ ] List and Search Result Iterator
 - [ ] Break this library up into `x500` and `x500-client`
+- [ ] Any time an `asn1.RawValue` is taken from a user as a parameter, it needs
+      to be marshalled so that `FullBytes` is populated.
+- [ ] `.BindSimply()`
+- [ ] `.BindStrongly()`
+- [ ] `.BindPlainly()`
+- [ ] Test signing
+- [ ] Implementation data
+- [ ] Request attribute certificate
+- [ ] Use `asn1.RawContent`
+- [ ] Failed logins just hang

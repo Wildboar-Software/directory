@@ -157,19 +157,35 @@ func ConvertX500AssociateToIdmBind(arg X500AssociateArgument) (req IdmBind, err 
 		bitLength = 1
 		versions_byte = 0b1000_0000
 	}
+	var creds asn1.RawValue = asn1.RawValue{}
+	if arg.Credentials != nil {
+		credbytes, err := asn1.Marshal(*arg.Credentials)
+		if err != nil {
+			return IdmBind{}, err
+		}
+		creds = asn1.RawValue{
+			Class:      asn1.ClassContextSpecific,
+			Tag:        0,
+			IsCompound: true,
+			Bytes:      credbytes,
+		}
+	}
+
 	bind_req := DirectoryBindArgument{
 		Versions: asn1.BitString{
 			BitLength: bitLength,
 			Bytes:     []byte{versions_byte},
 		},
-		Credentials: arg.Credentials,
+		Credentials: creds,
 	}
 	bind_req_bytes, err := asn1.MarshalWithParams(bind_req, "set")
 	if err != nil {
 		return IdmBind{}, err
 	}
 	req = IdmBind{
-		ProtocolID: Id_idm_dap,
+		ProtocolID:     Id_idm_dap,
+		CallingAETitle: arg.CallingAETitle,
+		CalledAETitle:  arg.CalledAETitle,
 		Argument: asn1.RawValue{
 			Tag:        2,
 			Class:      asn1.ClassContextSpecific,
@@ -360,15 +376,23 @@ func (stack *IDMProtocolStack) handleBindResultPDU(pdu IdmBindResult) {
 }
 
 func (stack *IDMProtocolStack) handleBindErrorPDU(pdu IdmBindError) {
-	// FIXME: This is not correct. Unmarshal the signed structure.
 	var dirBindErr DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1
-	optProtDirBindErr := asn1.RawValue{FullBytes: pdu.Error.Bytes}
+	optProtDirBindErr := asn1.RawValue{}
+	var rest []byte
+	var err error
+	rest, err = asn1.Unmarshal(pdu.Error.Bytes, &optProtDirBindErr)
+	if err != nil {
+		stack.dispatchError(err)
+		return
+	}
+	if len(rest) > 0 {
+		stack.dispatchError(errors.New("trailing bytes in bind error"))
+		return
+	}
 	if optProtDirBindErr.Class != asn1.ClassUniversal {
 		stack.dispatchError(errors.New("unrecognized bind error syntax (1)"))
 		return
 	}
-	var rest []byte
-	var err error
 	var unsignedBindErr asn1.RawValue
 	if optProtDirBindErr.Tag == asn1.TagSequence {
 		// This is the signed variant.
@@ -389,7 +413,7 @@ func (stack *IDMProtocolStack) handleBindErrorPDU(pdu IdmBindError) {
 		stack.dispatchError(errors.New("unrecognized bind error syntax (2)"))
 		return
 	}
-	rest, err = asn1.Unmarshal(unsignedBindErr.FullBytes, &dirBindErr)
+	rest, err = asn1.UnmarshalWithParams(unsignedBindErr.FullBytes, &dirBindErr, "set")
 	if err != nil {
 		stack.dispatchError(err)
 		return
@@ -829,30 +853,13 @@ func (stack *IDMProtocolStack) Bind(ctx context.Context, arg X500AssociateArgume
 		}
 	}
 	// TODO: Make idempotent
+	// TODO: Stop on cancellation
 	go stack.processReceivedPDUs()
 	bind_arg, err := ConvertX500AssociateToIdmBind(arg)
 	if err != nil {
 		return X500AssociateOutcome{}, err
 	}
-	bind_arg_bytes, err := asn1.MarshalWithParams(bind_arg, "set")
-	if err != nil {
-		return X500AssociateOutcome{}, err
-	}
-	// I don't know why Marshal() does not handle this, but apparently, I have
-	// to manually apply the outer [2] tag.
-	bind_arg_el := asn1.RawValue{
-		Tag:        2,
-		Class:      asn1.ClassContextSpecific,
-		IsCompound: true,
-		Bytes:      bind_arg_bytes,
-	}
-	bind := IdmBind{
-		ProtocolID:     Id_idm_dap,
-		Argument:       bind_arg_el,
-		CallingAETitle: arg.CallingAETitle,
-		CalledAETitle:  arg.CalledAETitle,
-	}
-	bind_bytes, err := asn1.Marshal(bind)
+	bind_bytes, err := asn1.Marshal(bind_arg)
 	if err != nil {
 		return X500AssociateOutcome{}, err
 	}

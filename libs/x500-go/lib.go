@@ -87,7 +87,7 @@ type X500AssociateArgument struct {
 	// Fields from DirectoryBindArgument
 	V1          bool
 	V2          bool
-	Credentials Credentials
+	Credentials *Credentials
 }
 
 // Describes the result of a directory bind, using either IDM or OSI protocols,
