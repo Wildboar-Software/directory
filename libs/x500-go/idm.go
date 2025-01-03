@@ -821,7 +821,6 @@ func (stack *IDMProtocolStack) startTLS(ctx context.Context) (response TLSRespon
 }
 
 func (stack *IDMProtocolStack) Bind(ctx context.Context, arg X500AssociateArgument) (response X500AssociateOutcome, err error) {
-	// TODO: Return if already bound?
 	_, tls_not_in_use := stack.socket.(net.Conn)
 	if tls_not_in_use && stack.StartTLSPolicy != StartTLSNever {
 		_, err = stack.startTLS(ctx)
@@ -879,6 +878,10 @@ func (stack *IDMProtocolStack) Bind(ctx context.Context, arg X500AssociateArgume
 		frame[2] = 0b1000_0000
 	}
 	stack.mutex.Lock()
+	if stack.bound == true {
+		stack.mutex.Unlock()
+		return X500AssociateOutcome{}, errors.New("already bound")
+	}
 	_, err = stack.socket.Write(frame)
 	if err != nil {
 		stack.mutex.Unlock()
@@ -892,6 +895,13 @@ func (stack *IDMProtocolStack) Bind(ctx context.Context, arg X500AssociateArgume
 	stack.mutex.Unlock()
 	select {
 	case response = <-stack.bindOutcome:
+		stack.mutex.Lock()
+		defer stack.mutex.Unlock()
+		if response.OutcomeType == OPERATION_OUTCOME_TYPE_RESULT {
+			stack.bound = true
+		} else {
+			stack.bound = false
+		}
 		return response, nil
 	case <-ctx.Done():
 		return response, ctx.Err()
@@ -929,6 +939,10 @@ func (stack *IDMProtocolStack) Request(ctx context.Context, req X500Request) (re
 	op := make(chan X500OpOutcome)
 	frame := GetIdmFrame(pduBytes, stack.idmVersion)
 	stack.mutex.Lock()
+	if stack.bound == false {
+		stack.mutex.Unlock()
+		return X500OpOutcome{}, errors.New("request sent while not bound")
+	}
 	stack.pendingOperations[invokeId] = op
 	_, err = stack.socket.Write(frame)
 	if err != nil {
@@ -973,6 +987,11 @@ func (stack *IDMProtocolStack) Unbind(_ context.Context, req X500UnbindRequest) 
 	}
 	frame := GetIdmFrame(idm_payload, stack.idmVersion)
 	stack.mutex.Lock()
+	defer stack.mutex.Unlock()
+	if stack.bound == false {
+		return X500UnbindOutcome{}, nil
+	}
+	stack.bound = false
 	_, err = stack.socket.Write(frame)
 	if err != nil {
 		return X500UnbindOutcome{}, err
@@ -981,7 +1000,6 @@ func (stack *IDMProtocolStack) Unbind(_ context.Context, req X500UnbindRequest) 
 	if err != nil {
 		return X500UnbindOutcome{}, err
 	}
-	stack.mutex.Unlock()
 	return X500UnbindOutcome{}, nil
 }
 
