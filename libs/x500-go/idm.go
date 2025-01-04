@@ -363,7 +363,7 @@ func (stack *IDMProtocolStack) handleBindResultPDU(pdu IdmBindResult) {
 	// We return this value regardless of what the server responded, since we
 	// still send DER exclusively.
 	transferSyntax := asn1.ObjectIdentifier{2, 1, 2, 1} // Distinguished Encoding Rules
-	stack.bindOutcome <- X500AssociateOutcome{
+	outcome := X500AssociateOutcome{
 		OutcomeType:                OPERATION_OUTCOME_TYPE_RESULT,
 		ACSEResult:                 Associate_result_Accepted,
 		ApplicationContext:         pdu.ProtocolID, // Technically not an application context
@@ -376,6 +376,11 @@ func (stack *IDMProtocolStack) handleBindResultPDU(pdu IdmBindResult) {
 		PwdResponseTimeLeft:        timeLeft,
 		PwdResponseGracesRemaining: gracesRemaining,
 		PwdResponseError:           pwdError,
+	}
+	select {
+	case stack.bindOutcome <- outcome:
+	default:
+		stack.dispatchError(errors.New("bind outcome channel closed prematurely (bind result)"))
 	}
 }
 
@@ -472,7 +477,7 @@ func (stack *IDMProtocolStack) handleBindErrorPDU(pdu IdmBindError) {
 	// We return this value regardless of what the server responded, since we
 	// still send DER exclusively.
 	transferSyntax := asn1.ObjectIdentifier{2, 1, 2, 1} // Distinguished Encoding Rules
-	stack.bindOutcome <- X500AssociateOutcome{
+	outcome := X500AssociateOutcome{
 		OutcomeType:        OPERATION_OUTCOME_TYPE_ERROR,
 		ACSEResult:         acseResult,
 		ApplicationContext: pdu.ProtocolID, // Technically not an application context
@@ -484,6 +489,11 @@ func (stack *IDMProtocolStack) handleBindErrorPDU(pdu IdmBindError) {
 		SecurityParameters: dirBindErr.SecurityParameters,
 		ServiceError:       serviceError,
 		SecurityError:      securityError,
+	}
+	select {
+	case stack.bindOutcome <- outcome:
+	default:
+		stack.dispatchError(errors.New("bind outcome channel closed prematurely (bind error)"))
 	}
 }
 
@@ -510,7 +520,13 @@ func (stack *IDMProtocolStack) handleResultPDU(pdu IdmResult) {
 		OpCode:      pdu.Opcode,
 		Parameter:   pdu.Result,
 	}
-	op <- res
+	// If the channel was closed (which shouldn't happen until the operation is
+	// done), we don't want this goroutine hanging indefinitely.
+	select {
+	case op <- res:
+	default:
+		stack.dispatchError(errors.New("operation outcome channel closed prematurely"))
+	}
 }
 
 func (stack *IDMProtocolStack) handleErrorPDU(pdu IdmError) {
@@ -530,7 +546,13 @@ func (stack *IDMProtocolStack) handleErrorPDU(pdu IdmError) {
 		ErrCode:     pdu.Errcode,
 		Parameter:   pdu.Error,
 	}
-	op <- res
+	// If the channel was closed (which shouldn't happen until the operation is
+	// done), we don't want this goroutine hanging indefinitely.
+	select {
+	case op <- res:
+	default:
+		stack.dispatchError(errors.New("operation outcome channel closed prematurely"))
+	}
 }
 
 func (stack *IDMProtocolStack) handleRejectPDU(pdu IdmReject) {
@@ -549,30 +571,55 @@ func (stack *IDMProtocolStack) handleRejectPDU(pdu IdmReject) {
 		InvokeId:      asn1.RawValue{FullBytes: iidBytes},
 		RejectProblem: pdu.Reason,
 	}
-	op <- res
+	// If the channel was closed (which shouldn't happen until the operation is
+	// done), we don't want this goroutine hanging indefinitely.
+	select {
+	case op <- res:
+	default:
+		stack.dispatchError(errors.New("operation outcome channel closed prematurely"))
+	}
 }
 
 func (stack *IDMProtocolStack) handleUnbindPDU(pdu Unbind) {
-	stack.ErrorChannel <- errors.New("server sent unbind message, which is not allowed")
+	stack.dispatchError(errors.New("server sent unbind message, which is not allowed"))
 }
 
 func (stack *IDMProtocolStack) handleAbortPDU(pdu Abort) {
 	stack.mutex.Lock()
 	defer stack.mutex.Unlock()
-	stack.socket.Close()
 	stack.bound = false
+
+	bindOutcome := X500AssociateOutcome{
+		OutcomeType: OPERATION_OUTCOME_TYPE_ABORT,
+		ACSEResult:  Associate_result_Rejected_permanent,
+		Abort: X500Abort{
+			UserReason: pdu,
+		},
+	}
+	select {
+	case stack.bindOutcome <- bindOutcome:
+	default: // Just ignore it: we might not be waiting on a bind result.
+	}
+
 	for iid, op := range stack.pendingOperations {
 		iidBytes, err := asn1.Marshal(iid)
 		if err != nil {
 			stack.dispatchError(err)
 			return
 		}
-		op <- X500OpOutcome{
+		outcome := X500OpOutcome{
 			OutcomeType: OPERATION_OUTCOME_TYPE_ABORT,
 			InvokeId:    asn1.RawValue{FullBytes: iidBytes},
 			Abort: X500Abort{
 				UserReason: pdu,
 			},
+		}
+		// If the channel was closed (which shouldn't happen until the operation is
+		// done), we don't want this goroutine hanging indefinitely.
+		select {
+		case op <- outcome:
+		default:
+			stack.dispatchError(errors.New("operation outcome channel closed prematurely"))
 		}
 	}
 	stack.nextInvokeId = 1
@@ -580,11 +627,15 @@ func (stack *IDMProtocolStack) handleAbortPDU(pdu Abort) {
 }
 
 func (stack *IDMProtocolStack) handleStartTLSPDU(pdu StartTLS) {
-	stack.ErrorChannel <- errors.New("server sent starttls message, which is not allowed")
+	stack.dispatchError(errors.New("server sent starttls message, which is not allowed"))
 }
 
 func (stack *IDMProtocolStack) handleTLSResponsePDU(pdu TLSResponse) {
-	stack.startTLSResponse <- pdu
+	select {
+	case stack.startTLSResponse <- pdu:
+	default:
+		stack.dispatchError(errors.New("tls response channel closed prematurely"))
+	}
 }
 
 //	IDM-PDU{IDM-PROTOCOL:protocol} ::= CHOICE {
@@ -610,11 +661,11 @@ func (stack *IDMProtocolStack) handlePDU(pdu IDM_PDU) {
 			payload := IdmBind{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
-				stack.ErrorChannel <- err
+				stack.dispatchError(err)
 				return
 			}
 			if len(rest) > 0 {
-				stack.ErrorChannel <- errors.New("trailing bytes after idm pdu")
+				stack.dispatchError(errors.New("trailing bytes after idm pdu"))
 				return
 			}
 			stack.handleBindPDU(payload)
@@ -624,11 +675,11 @@ func (stack *IDMProtocolStack) handlePDU(pdu IDM_PDU) {
 			payload := IdmBindResult{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
-				stack.ErrorChannel <- err
+				stack.dispatchError(err)
 				return
 			}
 			if len(rest) > 0 {
-				stack.ErrorChannel <- errors.New("trailing bytes after idm pdu")
+				stack.dispatchError(errors.New("trailing bytes after idm pdu"))
 				return
 			}
 			stack.handleBindResultPDU(payload)
@@ -638,11 +689,11 @@ func (stack *IDMProtocolStack) handlePDU(pdu IDM_PDU) {
 			payload := IdmBindError{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
-				stack.ErrorChannel <- err
+				stack.dispatchError(err)
 				return
 			}
 			if len(rest) > 0 {
-				stack.ErrorChannel <- errors.New("trailing bytes after idm pdu")
+				stack.dispatchError(errors.New("trailing bytes after idm pdu"))
 				return
 			}
 			stack.handleBindErrorPDU(payload)
@@ -652,11 +703,11 @@ func (stack *IDMProtocolStack) handlePDU(pdu IDM_PDU) {
 			payload := Request{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
-				stack.ErrorChannel <- err
+				stack.dispatchError(err)
 				return
 			}
 			if len(rest) > 0 {
-				stack.ErrorChannel <- errors.New("trailing bytes after idm pdu")
+				stack.dispatchError(errors.New("trailing bytes after idm pdu"))
 				return
 			}
 			stack.handleRequestPDU(payload)
@@ -666,11 +717,11 @@ func (stack *IDMProtocolStack) handlePDU(pdu IDM_PDU) {
 			payload := IdmResult{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
-				stack.ErrorChannel <- err
+				stack.dispatchError(err)
 				return
 			}
 			if len(rest) > 0 {
-				stack.ErrorChannel <- errors.New("trailing bytes after idm pdu")
+				stack.dispatchError(errors.New("trailing bytes after idm pdu"))
 				return
 			}
 			stack.handleResultPDU(payload)
@@ -680,11 +731,11 @@ func (stack *IDMProtocolStack) handlePDU(pdu IDM_PDU) {
 			payload := IdmError{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
-				stack.ErrorChannel <- err
+				stack.dispatchError(err)
 				return
 			}
 			if len(rest) > 0 {
-				stack.ErrorChannel <- errors.New("trailing bytes after idm pdu")
+				stack.dispatchError(errors.New("trailing bytes after idm pdu"))
 				return
 			}
 			stack.handleErrorPDU(payload)
@@ -694,11 +745,11 @@ func (stack *IDMProtocolStack) handlePDU(pdu IDM_PDU) {
 			payload := IdmReject{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
-				stack.ErrorChannel <- err
+				stack.dispatchError(err)
 				return
 			}
 			if len(rest) > 0 {
-				stack.ErrorChannel <- errors.New("trailing bytes after idm pdu")
+				stack.dispatchError(errors.New("trailing bytes after idm pdu"))
 				return
 			}
 			stack.handleRejectPDU(payload)
@@ -708,11 +759,11 @@ func (stack *IDMProtocolStack) handlePDU(pdu IDM_PDU) {
 			payload := Unbind{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
-				stack.ErrorChannel <- err
+				stack.dispatchError(err)
 				return
 			}
 			if len(rest) > 0 {
-				stack.ErrorChannel <- errors.New("trailing bytes after idm pdu")
+				stack.dispatchError(errors.New("trailing bytes after idm pdu"))
 				return
 			}
 			stack.handleUnbindPDU(payload)
@@ -722,11 +773,11 @@ func (stack *IDMProtocolStack) handlePDU(pdu IDM_PDU) {
 			var abortReason asn1.Enumerated = 0
 			rest, err := asn1.Unmarshal(pdu.Bytes, &abortReason)
 			if err != nil {
-				stack.ErrorChannel <- err
+				stack.dispatchError(err)
 				return
 			}
 			if len(rest) > 0 {
-				stack.ErrorChannel <- errors.New("trailing bytes after idm pdu")
+				stack.dispatchError(errors.New("trailing bytes after idm pdu"))
 				return
 			}
 			stack.handleAbortPDU(abortReason)
@@ -736,11 +787,11 @@ func (stack *IDMProtocolStack) handlePDU(pdu IDM_PDU) {
 			payload := StartTLS{}
 			rest, err := asn1.Unmarshal(pdu.Bytes, &payload)
 			if err != nil {
-				stack.ErrorChannel <- err
+				stack.dispatchError(err)
 				return
 			}
 			if len(rest) > 0 {
-				stack.ErrorChannel <- errors.New("trailing bytes after idm pdu")
+				stack.dispatchError(errors.New("trailing bytes after idm pdu"))
 				return
 			}
 			stack.handleStartTLSPDU(payload)
@@ -750,18 +801,18 @@ func (stack *IDMProtocolStack) handlePDU(pdu IDM_PDU) {
 			var tlsResponse asn1.Enumerated = 0
 			rest, err := asn1.Unmarshal(pdu.Bytes, &tlsResponse)
 			if err != nil {
-				stack.ErrorChannel <- err
+				stack.dispatchError(err)
 				return
 			}
 			if len(rest) > 0 {
-				stack.ErrorChannel <- errors.New("trailing bytes after idm pdu")
+				stack.dispatchError(errors.New("trailing bytes after idm pdu"))
 				return
 			}
 			stack.handleTLSResponsePDU(tlsResponse)
 		}
 	default:
 		{
-			stack.ErrorChannel <- errors.New("unrecognized idm pdu")
+			stack.dispatchError(errors.New("unrecognized idm pdu"))
 			return
 		}
 	}
@@ -785,7 +836,7 @@ func (stack *IDMProtocolStack) processReceivedPDUs() (err error) {
 	for err == nil {
 		_, err := stack.processNextPDU()
 		if err != nil {
-			stack.ErrorChannel <- err
+			stack.dispatchError(err)
 			return err
 		}
 	}

@@ -5,9 +5,8 @@ import (
 	"crypto/tls"
 	"crypto/x509/pkix"
 	"encoding/asn1"
-	"fmt"
+	"errors"
 	"net"
-	"os"
 	"sync"
 	"testing"
 	"time"
@@ -18,7 +17,8 @@ var sensibleTimeout = time.Duration(5) * time.Second
 func TestReadAnEntry(t *testing.T) {
 	conn, err := net.Dial("tcp", "localhost:4632")
 	if err != nil {
-		os.Exit(53)
+		t.Error(err.Error())
+		return
 	}
 	errchan := make(chan error)
 	idm := IDMClient(conn, &IDMClientConfig{
@@ -27,14 +27,14 @@ func TestReadAnEntry(t *testing.T) {
 	})
 	go func() {
 		e := <-errchan
-		fmt.Printf("Error: %v\n", e)
+		t.Error(e)
 	}()
 	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
 	defer cancel()
 	_, err = idm.BindAnonymously(ctx)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(2)
+		t.Error(err.Error())
+		return
 	}
 	invokeId := idm.GetNextInvokeId()
 	dn := DistinguishedName{
@@ -52,7 +52,8 @@ func TestReadAnEntry(t *testing.T) {
 	}
 	name_bytes, err := asn1.Marshal(dn)
 	if err != nil {
-		os.Exit(6)
+		t.Error(err.Error())
+		return
 	}
 	name := asn1.RawValue{FullBytes: name_bytes}
 	arg_data := ReadArgumentData{
@@ -65,12 +66,12 @@ func TestReadAnEntry(t *testing.T) {
 	}
 	arg_bytes, err := asn1.MarshalWithParams(arg_data, "set")
 	if err != nil {
-		os.Exit(7)
+		t.Error(err.Error())
 		return
 	}
 	iidBytes, err := asn1.Marshal(invokeId)
 	if err != nil {
-		os.Exit(8)
+		t.Error(err.Error())
 		return
 	}
 	req := X500Request{
@@ -89,18 +90,17 @@ func TestReadAnEntry(t *testing.T) {
 	defer cancel()
 	outcome, err := idm.Request(ctx, req)
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(9)
+		t.Error(err.Error())
 		return
 	}
 	result := ReadResultData{}
 	rest, err := asn1.UnmarshalWithParams(outcome.Parameter.FullBytes, &result, "set")
 	if err != nil {
-		os.Exit(11)
+		t.Error(err.Error())
 		return
 	}
 	if len(rest) > 0 {
-		os.Exit(12)
+		t.Error(err.Error())
 		return
 	}
 	for _, info := range result.Entry.Information {
@@ -113,7 +113,7 @@ func TestReadAnEntry(t *testing.T) {
 			if len(rest) > 0 {
 				continue
 			}
-			fmt.Printf("Attribute Type: %s\n", oid.String())
+			t.Logf("Attribute Type: %s\n", oid.String())
 		} else if info.Tag == asn1.TagSequence { // Attribute
 			attr := Attribute{}
 			rest, err := asn1.Unmarshal(info.FullBytes, &attr)
@@ -123,26 +123,26 @@ func TestReadAnEntry(t *testing.T) {
 			if len(rest) > 0 {
 				continue
 			}
-			fmt.Printf("Attribute Type: %s\n", attr.Type.String())
+			t.Logf("Attribute Type: %s\n", attr.Type.String())
 			for _, value := range attr.Values {
 				str, err := ASN1RawValueToStr(value)
 				if err != nil {
-					fmt.Println(err.Error())
+					t.Log(err.Error())
 					continue
 				}
 				if len(str) == 0 {
-					fmt.Println("  <empty>")
+					t.Log("  <empty>")
 				} else {
-					fmt.Printf("  %s\n", str)
+					t.Logf("  %s\n", str)
 				}
 			}
 			for _, vwc := range attr.ValuesWithContext {
 				str, err := ASN1RawValueToStr(vwc.Value)
 				if err != nil {
-					fmt.Println(err.Error())
+					t.Log(err.Error())
 					continue
 				}
-				fmt.Printf("  %s (Has Contexts)\n", str)
+				t.Logf("  %s (Has Contexts)\n", str)
 			}
 		} else { // Something else
 			continue
@@ -153,7 +153,8 @@ func TestReadAnEntry(t *testing.T) {
 func TestReadAnEntry2(t *testing.T) {
 	conn, err := net.Dial("tcp", "localhost:4632")
 	if err != nil {
-		os.Exit(53)
+		t.Error(err.Error())
+		return
 	}
 	errchan := make(chan error)
 	idm := IDMClient(conn, &IDMClientConfig{
@@ -162,15 +163,14 @@ func TestReadAnEntry2(t *testing.T) {
 	})
 	go func() {
 		e := <-errchan
-		fmt.Printf("Error: %v\n", e)
-		os.Exit(40)
+		t.Error(e)
 	}()
 	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
 	defer cancel()
 	_, err = idm.BindAnonymously(ctx)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(2)
+		t.Error(err.Error())
+		return
 	}
 	dn := DistinguishedName{
 		[]pkix.AttributeTypeAndValue{
@@ -187,7 +187,8 @@ func TestReadAnEntry2(t *testing.T) {
 	}
 	name_bytes, err := asn1.Marshal(dn)
 	if err != nil {
-		os.Exit(6)
+		t.Error(err.Error())
+		return
 	}
 	name := asn1.RawValue{FullBytes: name_bytes}
 	arg_data := ReadArgumentData{
@@ -206,8 +207,7 @@ func TestReadAnEntry2(t *testing.T) {
 	defer cancel()
 	_, res, err := idm.Read(ctx, arg_data)
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(9)
+		t.Error(err.Error())
 		return
 	}
 	for _, info := range res.Entry.Information {
@@ -220,7 +220,7 @@ func TestReadAnEntry2(t *testing.T) {
 			if len(rest) > 0 {
 				continue
 			}
-			fmt.Printf("Attribute Type: %s\n", oid.String())
+			t.Logf("Attribute Type: %s\n", oid.String())
 		} else if info.Tag == asn1.TagSequence { // Attribute
 			attr := Attribute{}
 			rest, err := asn1.Unmarshal(info.FullBytes, &attr)
@@ -230,26 +230,26 @@ func TestReadAnEntry2(t *testing.T) {
 			if len(rest) > 0 {
 				continue
 			}
-			fmt.Printf("Attribute Type: %s\n", attr.Type.String())
+			t.Logf("Attribute Type: %s\n", attr.Type.String())
 			for _, value := range attr.Values {
 				str, err := ASN1RawValueToStr(value)
 				if err != nil {
-					fmt.Println(err.Error())
+					t.Log(err.Error())
 					continue
 				}
 				if len(str) == 0 {
-					fmt.Println("  <empty>")
+					t.Log("  <empty>")
 				} else {
-					fmt.Printf("  %s\n", str)
+					t.Logf("  %s\n", str)
 				}
 			}
 			for _, vwc := range attr.ValuesWithContext {
 				str, err := ASN1RawValueToStr(vwc.Value)
 				if err != nil {
-					fmt.Println(err.Error())
+					t.Log(err.Error())
 					continue
 				}
-				fmt.Printf("  %s (Has Contexts)\n", str)
+				t.Logf("  %s (Has Contexts)\n", str)
 			}
 		} else { // Something else
 			continue
@@ -260,7 +260,8 @@ func TestReadAnEntry2(t *testing.T) {
 func TestManySimultaneousReads(t *testing.T) {
 	conn, err := net.Dial("tcp", "localhost:4632")
 	if err != nil {
-		os.Exit(53)
+		t.Error(err.Error())
+		return
 	}
 	errchan := make(chan error)
 	idm := IDMClient(conn, &IDMClientConfig{
@@ -269,15 +270,14 @@ func TestManySimultaneousReads(t *testing.T) {
 	})
 	go func() {
 		e := <-errchan
-		fmt.Printf("Error: %v\n", e)
-		os.Exit(40)
+		t.Error(e)
 	}()
 	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
 	defer cancel()
 	_, err = idm.BindAnonymously(ctx)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(2)
+		t.Error(err.Error())
+		return
 	}
 	dn := DistinguishedName{
 		[]pkix.AttributeTypeAndValue{
@@ -294,7 +294,8 @@ func TestManySimultaneousReads(t *testing.T) {
 	}
 	name_bytes, err := asn1.Marshal(dn)
 	if err != nil {
-		os.Exit(6)
+		t.Error(err.Error())
+		return
 	}
 	name := asn1.RawValue{FullBytes: name_bytes}
 	arg_data := ReadArgumentData{
@@ -319,12 +320,11 @@ func TestManySimultaneousReads(t *testing.T) {
 			defer cancel()
 			outcome, _, err := idm.Read(ctx, arg_data)
 			if err != nil {
-				fmt.Println(err.Error())
-				os.Exit(9)
+				t.Error(err.Error())
 				return
 			}
 			if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
-				os.Exit(41)
+				t.Error(errors.New("non-result-received"))
 			}
 		}()
 	}
@@ -334,7 +334,8 @@ func TestManySimultaneousReads(t *testing.T) {
 func TestListAnEntry(t *testing.T) {
 	conn, err := net.Dial("tcp", "localhost:4632")
 	if err != nil {
-		os.Exit(53)
+		t.Error(err.Error())
+		return
 	}
 	errchan := make(chan error)
 	idm := IDMClient(conn, &IDMClientConfig{
@@ -343,15 +344,14 @@ func TestListAnEntry(t *testing.T) {
 	})
 	go func() {
 		e := <-errchan
-		fmt.Printf("Error: %v\n", e)
-		os.Exit(40)
+		t.Error(e)
 	}()
 	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
 	defer cancel()
 	_, err = idm.BindAnonymously(ctx)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(2)
+		t.Error(err.Error())
+		return
 	}
 	dn := DistinguishedName{
 		[]pkix.AttributeTypeAndValue{
@@ -368,7 +368,8 @@ func TestListAnEntry(t *testing.T) {
 	}
 	name_bytes, err := asn1.Marshal(dn)
 	if err != nil {
-		os.Exit(6)
+		t.Error(err.Error())
+		return
 	}
 	name := asn1.RawValue{FullBytes: name_bytes}
 	arg_data := ListArgumentData{
@@ -388,38 +389,46 @@ func TestListAnEntry(t *testing.T) {
 	defer cancel()
 	_, res, err := idm.List(ctx, arg_data)
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(9)
+		t.Error(err.Error())
 		return
 	}
 	for _, sub := range res.Subordinates {
-		fmt.Printf("%v\n", sub.Rdn)
+		t.Logf("%v\n", sub.Rdn)
 	}
 }
 
 func TestTLS(t *testing.T) {
+	errchan := make(chan error)
+	stop := make(chan int)
+	t.Cleanup(func() {
+		stop <- 1
+	})
+	go func() {
+		// We need to clean up because it will still receive the abandoned operation.
+		select {
+		case e := <-errchan:
+			t.Error(e)
+		case <-stop:
+			return
+		}
+	}()
 	conn, err := tls.Dial("tcp", "localhost:44632", &tls.Config{
 		InsecureSkipVerify: true,
 	})
 	if err != nil {
-		os.Exit(53)
+		t.Error(err.Error())
+		return
 	}
-	errchan := make(chan error)
 	idm := IDMClient(conn, &IDMClientConfig{
 		StartTLSPolicy: StartTLSNever,
 		Errchan:        errchan,
 	})
-	go func() {
-		e := <-errchan
-		fmt.Printf("Error: %v\n", e)
-		os.Exit(40)
-	}()
 	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
 	defer cancel()
 	_, err = idm.BindAnonymously(ctx)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(2)
+		t.Error(err.Error())
+		return
 	}
 	dn := DistinguishedName{
 		[]pkix.AttributeTypeAndValue{
@@ -436,7 +445,8 @@ func TestTLS(t *testing.T) {
 	}
 	name_bytes, err := asn1.Marshal(dn)
 	if err != nil {
-		os.Exit(6)
+		t.Error(err.Error())
+		return
 	}
 	name := asn1.RawValue{FullBytes: name_bytes}
 	arg_data := ListArgumentData{
@@ -456,36 +466,44 @@ func TestTLS(t *testing.T) {
 	defer cancel()
 	_, res, err := idm.List(ctx, arg_data)
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(9)
+		t.Error(err.Error())
 		return
 	}
 	for _, sub := range res.Subordinates {
-		fmt.Printf("%v\n", sub.Rdn)
+		t.Logf("%v\n", sub.Rdn)
 	}
 }
 
 func TestAbandon(t *testing.T) {
+	errchan := make(chan error)
+	stop := make(chan int)
+	t.Cleanup(func() {
+		stop <- 1
+	})
+	go func() {
+		// We need to clean up because it will still receive the abandoned operation.
+		select {
+		case e := <-errchan:
+			t.Error(e)
+		case <-stop:
+			return
+		}
+	}()
 	conn, err := net.Dial("tcp", "localhost:4632")
 	if err != nil {
-		os.Exit(53)
+		t.Error(err.Error())
+		return
 	}
-	errchan := make(chan error)
 	idm := IDMClient(conn, &IDMClientConfig{
 		StartTLSPolicy: StartTLSNever,
 		Errchan:        errchan,
 	})
-	go func() {
-		e := <-errchan
-		fmt.Printf("Error: %v\n", e)
-		os.Exit(40)
-	}()
 	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
 	defer cancel()
 	_, err = idm.BindAnonymously(ctx)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(2)
+		t.Error(err.Error())
+		return
 	}
 	dn := DistinguishedName{
 		[]pkix.AttributeTypeAndValue{
@@ -547,7 +565,8 @@ func TestAbandon(t *testing.T) {
 	}
 	name_bytes, err := asn1.Marshal(dn)
 	if err != nil {
-		os.Exit(6)
+		t.Error(err.Error())
+		return
 	}
 	name := asn1.RawValue{FullBytes: name_bytes}
 	arg_data := ListArgumentData{
@@ -578,13 +597,12 @@ func TestAbandon(t *testing.T) {
 		defer cancel()
 		outcome, _, err := idm.List(ctx, arg_data)
 		if err != nil {
-			fmt.Println(err.Error())
-			os.Exit(9)
+			t.Error(err.Error())
 			return
 		}
 		if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_ERROR {
-			t.Logf("Did not receive error. Outcome type=%d", outcome.OutcomeType)
-			os.Exit(11)
+			t.Errorf("Did not receive error. Outcome type=%d", outcome.OutcomeType)
+			return
 		}
 		wg.Done()
 	}()
@@ -598,8 +616,7 @@ func TestAbandon(t *testing.T) {
 			panic(err)
 		}
 		if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
-			t.Logf("Did not receive abort result. Outcome type=%d", outcome.OutcomeType)
-			os.Exit(13)
+			t.Errorf("Did not receive abort result. Outcome type=%d", outcome.OutcomeType)
 		}
 		wg.Done()
 	}()
@@ -607,11 +624,25 @@ func TestAbandon(t *testing.T) {
 }
 
 func TestStartTLS(t *testing.T) {
+	errchan := make(chan error)
+	stop := make(chan int)
+	t.Cleanup(func() {
+		stop <- 1
+	})
+	go func() {
+		// We need to clean up because it will still receive the abandoned operation.
+		select {
+		case e := <-errchan:
+			t.Error(e)
+		case <-stop:
+			return
+		}
+	}()
 	conn, err := net.Dial("tcp", "localhost:4632")
 	if err != nil {
-		os.Exit(53)
+		t.Error(err.Error())
+		return
 	}
-	errchan := make(chan error)
 	idm := IDMClient(conn, &IDMClientConfig{
 		StartTLSPolicy: StartTLSDemand,
 		TlsConfig: &tls.Config{
@@ -619,17 +650,12 @@ func TestStartTLS(t *testing.T) {
 		},
 		Errchan: errchan,
 	})
-	go func() {
-		e := <-errchan
-		fmt.Printf("Error: %v\n", e)
-		os.Exit(40)
-	}()
 	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
 	defer cancel()
 	_, err = idm.BindAnonymously(ctx)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(2)
+		t.Error(err.Error())
+		return
 	}
 	dn := DistinguishedName{
 		[]pkix.AttributeTypeAndValue{
@@ -646,7 +672,8 @@ func TestStartTLS(t *testing.T) {
 	}
 	name_bytes, err := asn1.Marshal(dn)
 	if err != nil {
-		os.Exit(6)
+		t.Error(err.Error())
+		return
 	}
 	name := asn1.RawValue{FullBytes: name_bytes}
 	arg_data := ListArgumentData{
@@ -666,37 +693,45 @@ func TestStartTLS(t *testing.T) {
 	defer cancel()
 	_, res, err := idm.List(ctx, arg_data)
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(9)
+		t.Error(err.Error())
 		return
 	}
 	for _, sub := range res.Subordinates {
-		fmt.Printf("%v\n", sub.Rdn)
+		t.Logf("%v\n", sub.Rdn)
 	}
 }
 
 func TestIDMv1(t *testing.T) {
+	errchan := make(chan error)
+	stop := make(chan int)
+	t.Cleanup(func() {
+		stop <- 1
+	})
+	go func() {
+		// We need to clean up because it will still receive the abandoned operation.
+		select {
+		case e := <-errchan:
+			t.Error(e)
+		case <-stop:
+			return
+		}
+	}()
 	conn, err := net.Dial("tcp", "localhost:4632")
 	if err != nil {
-		os.Exit(53)
+		t.Error(err.Error())
+		return
 	}
-	errchan := make(chan error)
 	idm := IDMClient(conn, &IDMClientConfig{
 		StartTLSPolicy: StartTLSNever,
 		Errchan:        errchan,
 		UseIDMv1:       true,
 	})
-	go func() {
-		e := <-errchan
-		fmt.Printf("Error: %v\n", e)
-		os.Exit(40)
-	}()
 	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
 	defer cancel()
 	_, err = idm.BindAnonymously(ctx)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(2)
+		t.Error(err.Error())
+		return
 	}
 	dn := DistinguishedName{
 		[]pkix.AttributeTypeAndValue{
@@ -713,7 +748,8 @@ func TestIDMv1(t *testing.T) {
 	}
 	name_bytes, err := asn1.Marshal(dn)
 	if err != nil {
-		os.Exit(6)
+		t.Error(err.Error())
+		return
 	}
 	name := asn1.RawValue{FullBytes: name_bytes}
 	arg_data := ListArgumentData{
@@ -733,36 +769,44 @@ func TestIDMv1(t *testing.T) {
 	defer cancel()
 	_, res, err := idm.List(ctx, arg_data)
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(9)
+		t.Error(err.Error())
 		return
 	}
 	for _, sub := range res.Subordinates {
-		fmt.Printf("%v\n", sub.Rdn)
+		t.Logf("%v\n", sub.Rdn)
 	}
 }
 
 func TestBindTimeout(t *testing.T) {
+	errchan := make(chan error)
+	stop := make(chan int)
+	t.Cleanup(func() {
+		stop <- 1
+	})
+	go func() {
+		// We need to clean up because it will still receive the abandoned operation.
+		select {
+		case e := <-errchan:
+			t.Error(e)
+		case <-stop:
+			return
+		}
+	}()
 	conn, err := net.Dial("tcp", "localhost:4632")
 	if err != nil {
-		os.Exit(53)
+		t.Error(err.Error())
+		return
 	}
-	errchan := make(chan error)
 	idm := IDMClient(conn, &IDMClientConfig{
 		StartTLSPolicy: StartTLSNever,
 		Errchan:        errchan,
 	})
-	go func() {
-		e := <-errchan
-		fmt.Printf("Error: %v\n", e)
-		os.Exit(40)
-	}()
 	impossibleTimeout := time.Duration(1) * time.Microsecond
 	ctx, cancel := context.WithTimeout(context.Background(), impossibleTimeout)
 	defer cancel()
 	_, err = idm.BindAnonymously(ctx)
 	if err == nil {
-		t.Fail()
+		t.FailNow()
 	}
 }
 
@@ -776,15 +820,15 @@ func TestRequestTimeout(t *testing.T) {
 		// We need to clean up because it will still receive the abandoned operation.
 		select {
 		case e := <-errchan:
-			fmt.Printf("Error: %v\n", e)
-			os.Exit(40)
+			t.Error(e)
 		case <-stop:
 			return
 		}
 	}()
 	conn, err := net.Dial("tcp", "localhost:4632")
 	if err != nil {
-		os.Exit(53)
+		t.Error(err.Error())
+		return
 	}
 	idm := IDMClient(conn, &IDMClientConfig{
 		StartTLSPolicy: StartTLSNever,
@@ -794,8 +838,8 @@ func TestRequestTimeout(t *testing.T) {
 	defer cancel()
 	_, err = idm.BindAnonymously(ctx)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(2)
+		t.Error(err.Error())
+		return
 	}
 	dn := DistinguishedName{
 		[]pkix.AttributeTypeAndValue{
@@ -812,7 +856,8 @@ func TestRequestTimeout(t *testing.T) {
 	}
 	name_bytes, err := asn1.Marshal(dn)
 	if err != nil {
-		os.Exit(6)
+		t.Error(err.Error())
+		return
 	}
 	name := asn1.RawValue{FullBytes: name_bytes}
 	arg_data := ReadArgumentData{
@@ -832,14 +877,15 @@ func TestRequestTimeout(t *testing.T) {
 	defer cancel()
 	_, _, err = idm.Read(ctx, arg_data)
 	if err == nil {
-		t.Fail()
+		t.FailNow()
 	}
 }
 
 func TestUnbind(t *testing.T) {
 	conn, err := net.Dial("tcp", "localhost:4632")
 	if err != nil {
-		os.Exit(53)
+		t.Error(err.Error())
+		return
 	}
 	errchan := make(chan error)
 	idm := IDMClient(conn, &IDMClientConfig{
@@ -853,8 +899,7 @@ func TestUnbind(t *testing.T) {
 	go func() {
 		select {
 		case e := <-errchan:
-			fmt.Printf("Error: %v\n", e)
-			os.Exit(40)
+			t.Error(e)
 		case <-stop:
 			return
 		}
@@ -863,22 +908,23 @@ func TestUnbind(t *testing.T) {
 	defer cancel()
 	_, err = idm.BindAnonymously(ctx)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(2)
+		t.Error(err.Error())
+		return
 	}
 	ctx, cancel = context.WithTimeout(context.Background(), sensibleTimeout)
 	req := X500UnbindRequest{}
 	defer cancel()
 	_, err = idm.Unbind(ctx, req)
 	if err != nil {
-		t.Fail()
+		t.FailNow()
 	}
 }
 
 func TestBindError(t *testing.T) {
 	conn, err := net.Dial("tcp", "localhost:4632")
 	if err != nil {
-		os.Exit(53)
+		t.Error(err.Error())
+		return
 	}
 	errchan := make(chan error)
 	idm := IDMClient(conn, &IDMClientConfig{
@@ -887,8 +933,7 @@ func TestBindError(t *testing.T) {
 	})
 	go func() {
 		e := <-errchan
-		fmt.Printf("Error: %v\n", e)
-		os.Exit(40)
+		t.Error(e)
 	}()
 	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
 	defer cancel()
@@ -919,8 +964,8 @@ func TestBindError(t *testing.T) {
 
 	credsEncoded, err := asn1.Marshal(simpleCreds)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		t.Fail()
+		t.Error(err)
+		return
 	}
 
 	arg := X500AssociateArgument{
@@ -936,11 +981,11 @@ func TestBindError(t *testing.T) {
 
 	response, err := idm.Bind(ctx, arg)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(2)
+		t.Error(err.Error())
+		return
 	}
 	if response.OutcomeType != OPERATION_OUTCOME_TYPE_ERROR {
-		fmt.Printf("Outcome type: %v\n", response.OutcomeType)
-		t.Fail()
+		t.Logf("Outcome type: %v\n", response.OutcomeType)
+		t.FailNow()
 	}
 }

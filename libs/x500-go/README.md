@@ -5,8 +5,9 @@
 
 - [ ] Documentation
 - [ ] Implement `String()` for `DistinguishedName` et al?
-- [ ] Check that channels cannot get stuck
-- [ ] Race condition checks
+- [x] Check that channels cannot get stuck
+- [x] Replace `os.Exit()` and printing in tests
+- [x] Race condition checks
 - [x] Test Bind Errors
 - [ ] Test socket closures
 - [ ] List and Search Result Iterator
@@ -16,6 +17,7 @@
 - [ ] `.BindSimply()`
 - [ ] `.BindStrongly()`
 - [ ] `.BindPlainly()`
+- [ ] `.CloseTransport()`
 - [ ] Test signing
 - [ ] Implementation data
 - [ ] Request attribute certificate
