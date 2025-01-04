@@ -9,7 +9,8 @@
 - [x] Replace `os.Exit()` and printing in tests
 - [x] Race condition checks
 - [x] Test Bind Errors
-- [ ] Test socket closures
+- [x] Test socket closures
+- [ ] Fix encoding of `asn1.RawValue`-typed fields to include tag
 - [ ] List and Search Result Iterator
 - [ ] Break this library up into `x500` and `x500-client`
 - [ ] Any time an `asn1.RawValue` is taken from a user as a parameter, it needs

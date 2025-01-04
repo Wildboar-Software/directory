@@ -96,6 +96,7 @@ type X500AssociateArgument struct {
 // To determine success, just check that OutcomeType == OPERATION_OUTCOME_TYPE_RESULT.
 type X500AssociateOutcome struct {
 	OutcomeType OutcomeType
+	err         error         // Only set if OutcomeType == OPERATION_OUTCOME_TYPE_FAILURE
 	Parameter   asn1.RawValue // Only set if OutcomeType != OPERATION_OUTCOME_TYPE_ABORT
 	Abort       X500Abort     // Only set if OutcomeType == OPERATION_OUTCOME_TYPE_ABORT
 
@@ -164,6 +165,7 @@ type X500OpOutcome struct {
 	Parameter     asn1.RawValue // The result or error.
 	RejectProblem RejectProblem // Only set if OutcomeType == OPERATION_OUTCOME_TYPE_REJECT
 	Abort         X500Abort     // Only set if OutcomeType == OPERATION_OUTCOME_TYPE_ABORT
+	err           error         // Only set if OutcomeType == OPERATION_OUTCOME_TYPE_FAILURE
 }
 
 type X500UnbindRequest struct {
@@ -174,6 +176,11 @@ type X500UnbindRequest struct {
 type X500UnbindOutcome struct {
 	PresentationContextIdentifier Presentation_context_identifier
 	Reason                        Release_response_reason
+}
+
+type StartTLSOutcome struct {
+	err      error
+	response TLSResponse
 }
 
 // Examples: IDMStack, ITOTStack, LPPStack (IETF RFC 1085), DIXIEStack (IETF RFC 1249)

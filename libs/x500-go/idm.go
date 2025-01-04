@@ -67,7 +67,7 @@ const (
 type IDMProtocolStack struct {
 	socket            Socket
 	idmVersion        int
-	startTLSResponse  chan TLSResponse
+	startTLSResponse  chan StartTLSOutcome
 	pendingOperations map[int]chan X500OpOutcome
 	mutex             sync.Mutex
 	nextInvokeId      int
@@ -116,7 +116,7 @@ func IDMClient(socket Socket, options *IDMClientConfig) *IDMProtocolStack {
 		socket:            socket,
 		receivedData:      make([]byte, 0),
 		nextInvokeId:      1,
-		startTLSResponse:  make(chan asn1.Enumerated, 1),
+		startTLSResponse:  make(chan StartTLSOutcome),
 		pendingOperations: make(map[int]chan X500OpOutcome),
 		bound:             false,
 		bindOutcome:       make(chan X500AssociateOutcome),
@@ -632,7 +632,7 @@ func (stack *IDMProtocolStack) handleStartTLSPDU(pdu StartTLS) {
 
 func (stack *IDMProtocolStack) handleTLSResponsePDU(pdu TLSResponse) {
 	select {
-	case stack.startTLSResponse <- pdu:
+	case stack.startTLSResponse <- StartTLSOutcome{response: pdu}:
 	default:
 		stack.dispatchError(errors.New("tls response channel closed prematurely"))
 	}
@@ -822,8 +822,44 @@ func (stack *IDMProtocolStack) processNextPDU() (bytesRead uint32, err error) {
 	pdu := IDM_PDU{}
 	bytesRead, err = stack.readPDU(&pdu)
 	if err != nil {
+		if errors.Is(err, net.ErrClosed) {
+			// If the socket is closed, we have to cancel all outstanding
+			// operations.
+			stack.mutex.Lock()
+			bindOutcome := X500AssociateOutcome{
+				OutcomeType: OPERATION_OUTCOME_TYPE_FAILURE,
+				ACSEResult:  Associate_result_Rejected_transient,
+				err:         err,
+			}
+			select {
+			case stack.bindOutcome <- bindOutcome:
+			default: // We might not be listening for a bind.
+			}
+			starttlsOutcome := StartTLSOutcome{err: err}
+			select {
+			case stack.startTLSResponse <- starttlsOutcome:
+			default: // We might not be listening for a StartTLS response.
+			}
+			for _, op := range stack.pendingOperations {
+				outcome := X500OpOutcome{
+					OutcomeType: OPERATION_OUTCOME_TYPE_FAILURE,
+					err:         err,
+				}
+				select {
+				case op <- outcome:
+				default:
+					stack.dispatchError(errors.New("operation outcome channel closed prematurely"))
+				}
+			}
+			stack.mutex.Unlock()
+		} else {
+			// For all errors other than socket closure, we dispatch the
+			// error to the error channel as usual.
+			stack.dispatchError(err)
+		}
 		return bytesRead, err
 	}
+	// TODO: Under what circumstances will this happen?
 	if bytesRead == 0 {
 		return bytesRead, err
 	}
@@ -836,8 +872,7 @@ func (stack *IDMProtocolStack) processReceivedPDUs() (err error) {
 	for err == nil {
 		_, err := stack.processNextPDU()
 		if err != nil {
-			stack.dispatchError(err)
-			return err
+			break
 		}
 	}
 	return err
@@ -851,7 +886,7 @@ func (stack *IDMProtocolStack) BindAnonymously(ctx context.Context) (response X5
 	return stack.Bind(ctx, arg)
 }
 
-func (stack *IDMProtocolStack) startTLS(ctx context.Context) (response TLSResponse, err error) {
+func (stack *IDMProtocolStack) startTLS(ctx context.Context) (response StartTLSOutcome, err error) {
 	go stack.processNextPDU() // Listen for a single StartTLS response PDU.
 	// TODO: This entire PDU has predictable form. Just use one write.
 	idm_payload := []byte{0xA9, 2, 5, 0} // This is the entire startTLS [9] EXPLICIT NULL
@@ -859,11 +894,11 @@ func (stack *IDMProtocolStack) startTLS(ctx context.Context) (response TLSRespon
 	stack.mutex.Lock()
 	_, err = stack.socket.Write(frame)
 	if err != nil {
-		return TLSResponse_ProtocolError, err
+		return StartTLSOutcome{}, err
 	}
 	_, err = stack.socket.Write(idm_payload)
 	if err != nil {
-		return TLSResponse_ProtocolError, err
+		return StartTLSOutcome{}, err
 	}
 	stack.mutex.Unlock()
 
@@ -871,9 +906,12 @@ func (stack *IDMProtocolStack) startTLS(ctx context.Context) (response TLSRespon
 	case response = <-stack.startTLSResponse:
 		break
 	case <-ctx.Done():
-		return TLSResponse_OperationsError, ctx.Err()
+		return StartTLSOutcome{}, ctx.Err()
 	}
-	switch response {
+	if response.err != nil {
+		return StartTLSOutcome{}, response.err
+	}
+	switch response.response {
 	case TLSResponse_Success:
 		netconn, is_tcp := stack.socket.(net.Conn)
 		if !is_tcp {
@@ -948,6 +986,7 @@ func (stack *IDMProtocolStack) Bind(ctx context.Context, arg X500AssociateArgume
 		stack.mutex.Unlock()
 		return X500AssociateOutcome{}, errors.New("already bound")
 	}
+	// TODO: If bind is anonymous, send a single write.
 	_, err = stack.socket.Write(frame)
 	if err != nil {
 		stack.mutex.Unlock()
@@ -967,6 +1006,9 @@ func (stack *IDMProtocolStack) Bind(ctx context.Context, arg X500AssociateArgume
 			stack.bound = true
 		} else {
 			stack.bound = false
+		}
+		if response.OutcomeType == OPERATION_OUTCOME_TYPE_FAILURE {
+			return response, response.err
 		}
 		return response, nil
 	case <-ctx.Done():
@@ -1035,6 +1077,9 @@ func (stack *IDMProtocolStack) Request(ctx context.Context, req X500Request) (re
 	stack.mutex.Unlock()
 	if err != nil {
 		return X500OpOutcome{}, err
+	}
+	if response.OutcomeType == OPERATION_OUTCOME_TYPE_FAILURE {
+		return response, response.err
 	}
 	return response, nil
 }
