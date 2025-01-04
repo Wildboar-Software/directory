@@ -81,6 +81,7 @@ type IDMProtocolStack struct {
 	TlsConfig         *tls.Config
 	StartTLSPolicy    StartTLSChoice
 	derAccepted       bool // TODO: Remove?
+	readerSpawned     bool
 
 	// Channel where errors can be returned to the main thread.
 	ErrorChannel chan error
@@ -99,7 +100,7 @@ type IDMClientConfig struct {
 
 func IDMClient(socket Socket, options *IDMClientConfig) *IDMProtocolStack {
 	if options == nil {
-		errchan := make(chan error, 1)
+		errchan := make(chan error)
 		options = &IDMClientConfig{
 			ResultSigning:  ProtectionRequest_None,
 			ErrorSigning:   ProtectionRequest_None,
@@ -110,11 +111,6 @@ func IDMClient(socket Socket, options *IDMClientConfig) *IDMProtocolStack {
 			UseIDMv1:       false, // Prefer IDMv2: we can request DER encoding.
 			Errchan:        errchan,
 		}
-		// If the user isn't handling errors, we will.
-		go func() {
-			e := <-errchan
-			fmt.Fprintf(os.Stderr, "x.500/idm client error: %v\n", e)
-		}()
 	}
 	return &IDMProtocolStack{
 		socket:            socket,
@@ -136,7 +132,15 @@ func IDMClient(socket Socket, options *IDMClientConfig) *IDMProtocolStack {
 }
 
 func (stack *IDMProtocolStack) dispatchError(err error) {
-	stack.ErrorChannel <- err
+	// Write to the error channel if the user is listening, otherwise, just
+	// print the error to stderr.
+	select {
+	case stack.ErrorChannel <- err:
+		break
+	default:
+		// We intentionally ignore errors from this Fprintf() call.
+		fmt.Fprintf(os.Stderr, "x.500/idm client error: %v\n", err)
+	}
 }
 
 func (stack *IDMProtocolStack) GetNextInvokeId() int {
@@ -772,6 +776,7 @@ func (stack *IDMProtocolStack) processNextPDU() (bytesRead uint32, err error) {
 	if bytesRead == 0 {
 		return bytesRead, err
 	}
+	// This will get freed once the socket is closed.
 	go stack.handlePDU(pdu)
 	return
 }
@@ -852,9 +857,12 @@ func (stack *IDMProtocolStack) Bind(ctx context.Context, arg X500AssociateArgume
 			return X500AssociateOutcome{}, err
 		}
 	}
-	// TODO: Make idempotent
-	// TODO: Stop on cancellation
-	go stack.processReceivedPDUs()
+	// There should only ever be one of these goroutines spawned per client.
+	// These are terminated when the socket is closed.
+	if stack.readerSpawned == false {
+		stack.readerSpawned = true
+		go stack.processReceivedPDUs()
+	}
 	bind_arg, err := ConvertX500AssociateToIdmBind(arg)
 	if err != nil {
 		return X500AssociateOutcome{}, err
