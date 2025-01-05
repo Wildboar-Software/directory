@@ -134,7 +134,7 @@ type CriteriaItem = asn1.RawValue
 type EnhancedGuide struct {
 	ObjectClass asn1.ObjectIdentifier `asn1:"explicit,tag:0"`
 	Criteria    Criteria              `asn1:"explicit,tag:1"`
-	Subset      EnhancedGuide_subset  `asn1:"optional,explicit,tag:2"`
+	Subset      EnhancedGuide_subset  `asn1:"optional,explicit,tag:2,default:1"`
 }
 
 // # ASN.1 Definition:
@@ -267,7 +267,7 @@ type NameAndOptionalUID struct {
 //	    filter      UiiFilter } }
 type UiiFormat struct {
 	BaseObject URI              `asn1:"optional"`
-	Subset     UiiFormat_subset `asn1:"optional"`
+	Subset     UiiFormat_subset `asn1:"optional,default:0"`
 	Next       UiiFormat_next
 }
 
@@ -1896,7 +1896,7 @@ const (
 type EpcFormat_fields_Item struct {
 	Bits      int
 	CharField EpcFormat_fields_Item_charField
-	Result    EpcFormat_fields_Item_result `asn1:"optional"`
+	Result    EpcFormat_fields_Item_result `asn1:"optional,default:0"`
 }
 
 // # ASN.1 Definition:

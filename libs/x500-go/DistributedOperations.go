@@ -206,7 +206,7 @@ type MasterOrShadowAccessPoint struct {
 	Ae_title            Name                               `asn1:"explicit,tag:0"`
 	Address             PresentationAddress                `asn1:"explicit,tag:1"`
 	ProtocolInformation [](ProtocolInformation)            `asn1:"optional,explicit,tag:2,set"`
-	Category            MasterOrShadowAccessPoint_category `asn1:"optional,explicit,tag:3"`
+	Category            MasterOrShadowAccessPoint_category `asn1:"optional,explicit,tag:3,default:0"`
 	ChainingRequired    bool                               `asn1:"optional,explicit,tag:5"`
 }
 

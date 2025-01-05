@@ -136,7 +136,7 @@ type CommonResultsSeq struct {
 //	  ... }
 type ServiceControls struct {
 	Options             ServiceControlOptions               `asn1:"optional,explicit,tag:0"`
-	Priority            ServiceControls_priority            `asn1:"optional,explicit,tag:1"`
+	Priority            ServiceControls_priority            `asn1:"optional,explicit,tag:1,default:1"`
 	TimeLimit           int                                 `asn1:"optional,explicit,tag:2"`
 	SizeLimit           int                                 `asn1:"optional,explicit,tag:3"`
 	ScopeOfReferral     ServiceControls_scopeOfReferral     `asn1:"optional,explicit,tag:4"`
@@ -903,7 +903,7 @@ type SearchArgument = OPTIONALLY_PROTECTED
 //	  COMPONENTS OF              CommonArguments }
 type SearchArgumentData struct {
 	BaseObject           Name                        `asn1:"explicit,tag:0"`
-	Subset               SearchArgumentData_subset   `asn1:"optional,explicit,tag:1"`
+	Subset               SearchArgumentData_subset   `asn1:"optional,explicit,tag:1,default:0"`
 	Filter               Filter                      `asn1:"optional,explicit,tag:2"`
 	SearchAliases        bool                        `asn1:"optional,explicit,tag:3"`
 	Selection            EntryInformationSelection   `asn1:"optional,explicit,tag:4"`
@@ -916,7 +916,7 @@ type SearchArgumentData struct {
 	HierarchySelections  HierarchySelections         `asn1:"optional,explicit,tag:11"`
 	SearchControlOptions SearchControlOptions        `asn1:"optional,explicit,tag:12"`
 	JoinArguments        [](JoinArgument)            `asn1:"optional,explicit,tag:13"`
-	JoinType             SearchArgumentData_joinType `asn1:"optional,explicit,tag:14"`
+	JoinType             SearchArgumentData_joinType `asn1:"optional,explicit,tag:14,default:1"`
 	ServiceControls      ServiceControls             `asn1:"optional,explicit,tag:30"`
 	SecurityParameters   SecurityParameters          `asn1:"optional,explicit,tag:29"`
 	Requestor            DistinguishedName           `asn1:"optional,explicit,tag:28"`
@@ -1024,7 +1024,7 @@ const SearchControlOptions_SearchFamily int32 = 11
 type JoinArgument struct {
 	JoinBaseObject Name                      `asn1:"explicit,tag:0"`
 	DomainLocalID  DomainLocalID             `asn1:"optional,explicit,tag:1"`
-	JoinSubset     JoinArgument_joinSubset   `asn1:"optional,explicit,tag:2"`
+	JoinSubset     JoinArgument_joinSubset   `asn1:"optional,explicit,tag:2,default:0"`
 	JoinFilter     Filter                    `asn1:"optional,explicit,tag:3"`
 	JoinAttributes [](JoinAttPair)           `asn1:"optional,explicit,tag:4"`
 	JoinSelection  EntryInformationSelection `asn1:"explicit,tag:5"`
