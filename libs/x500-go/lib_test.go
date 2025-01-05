@@ -1290,3 +1290,67 @@ func TestSocketClosure6(t *testing.T) {
 		t.FailNow()
 	}
 }
+
+// If the library user makes a mistake in tagging an asn1.RawValue-typed field,
+// does this library automatically correct that mistake correctly?
+// Search for "This is the mistake" to find the mistake.
+func TestTagCorrection(t *testing.T) {
+	conn, err := net.Dial("tcp", "localhost:4632")
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	errchan := make(chan error)
+	idm := IDMClient(conn, &IDMClientConfig{
+		StartTLSPolicy: StartTLSNever,
+		Errchan:        errchan,
+	})
+	go func() {
+		e := <-errchan
+		t.Error(e)
+	}()
+	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	_, err = idm.BindAnonymously(ctx)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	dn := DistinguishedName{
+		[]pkix.AttributeTypeAndValue{
+			{
+				Type: Id_at_countryName,
+				Value: asn1.RawValue{
+					Tag:        asn1.TagPrintableString,
+					Class:      asn1.ClassUniversal,
+					IsCompound: false,
+					Bytes:      []byte("US"),
+				},
+			},
+		},
+	}
+	name_bytes, err := asn1.Marshal(dn)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	name := asn1.RawValue{FullBytes: name_bytes}
+	arg_data := ReadArgumentData{
+		Object: name, // This is the mistake.
+		SecurityParameters: SecurityParameters{
+			Target:          idm.ResultsSigning,
+			ErrorProtection: idm.ErrorSigning,
+		},
+	}
+	ctx, cancel = context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	outcome, _, err := idm.Read(ctx, arg_data)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
+		t.Error("Non-result received")
+		t.FailNow()
+	}
+}

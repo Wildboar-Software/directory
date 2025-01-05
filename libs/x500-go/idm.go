@@ -15,8 +15,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net"
 	"os"
+	"runtime"
 	"sync"
 	"time"
 )
@@ -1369,6 +1371,47 @@ func wrapWithTag(v asn1.RawValue, tag int) asn1.RawValue {
 	}
 }
 
+const NORMAL_ATTR_SIZE_LIMIT = 1_000_000
+const NORMAL_SIZE_LIMIT = 100_000
+
+const SMALL_ATTR_SIZE_LIMIT = 65535
+const SMALL_SIZE_LIMIT = 10_000
+
+func configureServiceControls(ctx context.Context, sc *ServiceControls) {
+	// If the user didn't specify a time limit for the request, we set one based
+	// on the timeout of the context object. We round down the seconds to
+	// accommodate for network latency and processing time.
+	if sc.TimeLimit == 0 {
+		deadline, has_deadline := ctx.Deadline()
+		if has_deadline {
+			timeLeft := int(math.Floor(deadline.Sub(time.Now()).Seconds()))
+			sc.TimeLimit = timeLeft
+		}
+	}
+	/* We want to set size default size limits so the directory does not hose
+	   this computer by sending it a gigabyte-sized result. I use a simple
+	   heuristic: number of CPUs. I use this heuristic because the number of CPUs
+	   is just a static variable, so it requires virtually no computational
+	   expense to use it with each request, in contrast to something like memory
+	   usage, which is not cross-platform and more expensive to figure out. */
+	numCpus := runtime.NumCPU()
+	isSmallHost := numCpus <= 2
+	if sc.AttributeSizeLimit == 0 {
+		if isSmallHost {
+			sc.AttributeSizeLimit = SMALL_ATTR_SIZE_LIMIT
+		} else {
+			sc.AttributeSizeLimit = NORMAL_ATTR_SIZE_LIMIT
+		}
+	}
+	if sc.SizeLimit == 0 {
+		if isSmallHost {
+			sc.SizeLimit = SMALL_SIZE_LIMIT
+		} else {
+			sc.SizeLimit = NORMAL_SIZE_LIMIT
+		}
+	}
+}
+
 func (stack *IDMProtocolStack) Read(ctx context.Context, arg_data ReadArgumentData) (response X500OpOutcome, result *ReadResultData, err error) {
 	opCode := localOpCode(1) // Read operation
 	invokeId := stack.GetNextInvokeId()
@@ -1381,6 +1424,7 @@ func (stack *IDMProtocolStack) Read(ctx context.Context, arg_data ReadArgumentDa
 	if arg_data.OperationContexts.Tag != 0 {
 		arg_data.OperationContexts = wrapWithTag(arg_data.OperationContexts, 20)
 	}
+	configureServiceControls(ctx, &arg_data.ServiceControls)
 	var arg_bytes []byte
 	if stack.SigningKey != nil && stack.SigningCert != nil {
 		sp, err := createSecurityParameters(
@@ -1467,6 +1511,7 @@ func (stack *IDMProtocolStack) Compare(ctx context.Context, arg_data CompareArgu
 	if arg_data.OperationContexts.Tag != 0 {
 		arg_data.OperationContexts = wrapWithTag(arg_data.OperationContexts, 20)
 	}
+	configureServiceControls(ctx, &arg_data.ServiceControls)
 	var arg_bytes []byte
 	if stack.SigningKey != nil && stack.SigningCert != nil {
 		sp, err := createSecurityParameters(
@@ -1602,6 +1647,7 @@ func (stack *IDMProtocolStack) List(ctx context.Context, arg_data ListArgumentDa
 	if arg_data.PagedResults.Tag != 0 {
 		arg_data.PagedResults = wrapWithTag(arg_data.PagedResults, 1)
 	}
+	configureServiceControls(ctx, &arg_data.ServiceControls)
 	var arg_bytes []byte
 	if stack.SigningKey != nil && stack.SigningCert != nil {
 		sp, err := createSecurityParameters(
@@ -1702,6 +1748,7 @@ func (stack *IDMProtocolStack) Search(ctx context.Context, arg_data SearchArgume
 	if arg_data.ExtendedFilter.Tag != 0 {
 		arg_data.ExtendedFilter = wrapWithTag(arg_data.ExtendedFilter, 7)
 	}
+	configureServiceControls(ctx, &arg_data.ServiceControls)
 	var arg_bytes []byte
 	if stack.SigningKey != nil && stack.SigningCert != nil {
 		sp, err := createSecurityParameters(
@@ -1793,6 +1840,7 @@ func (stack *IDMProtocolStack) AddEntry(ctx context.Context, arg_data AddEntryAr
 	if arg_data.OperationContexts.Tag != 0 {
 		arg_data.OperationContexts = wrapWithTag(arg_data.OperationContexts, 20)
 	}
+	configureServiceControls(ctx, &arg_data.ServiceControls)
 	var arg_bytes []byte
 	if stack.SigningKey != nil && stack.SigningCert != nil {
 		sp, err := createSecurityParameters(
@@ -1853,6 +1901,7 @@ func (stack *IDMProtocolStack) RemoveEntry(ctx context.Context, arg_data RemoveE
 	if arg_data.OperationContexts.Tag != 0 {
 		arg_data.OperationContexts = wrapWithTag(arg_data.OperationContexts, 20)
 	}
+	configureServiceControls(ctx, &arg_data.ServiceControls)
 	var arg_bytes []byte
 	if stack.SigningKey != nil && stack.SigningCert != nil {
 		sp, err := createSecurityParameters(
@@ -1913,6 +1962,7 @@ func (stack *IDMProtocolStack) ModifyEntry(ctx context.Context, arg_data ModifyE
 	if arg_data.OperationContexts.Tag != 0 {
 		arg_data.OperationContexts = wrapWithTag(arg_data.OperationContexts, 20)
 	}
+	configureServiceControls(ctx, &arg_data.ServiceControls)
 	var arg_bytes []byte
 	if stack.SigningKey != nil && stack.SigningCert != nil {
 		sp, err := createSecurityParameters(
@@ -1968,6 +2018,7 @@ func (stack *IDMProtocolStack) ModifyDN(ctx context.Context, arg_data ModifyDNAr
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
+	configureServiceControls(ctx, &arg_data.ServiceControls)
 	var arg_bytes []byte
 	if stack.SigningKey != nil && stack.SigningCert != nil {
 		sp, err := createSecurityParameters(
