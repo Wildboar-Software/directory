@@ -2,17 +2,159 @@ package x500_go
 
 import (
 	"context"
+	"crypto"
 	"crypto/tls"
+	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
+	"encoding/pem"
 	"errors"
 	"net"
+	"os"
 	"sync"
 	"testing"
 	"time"
 )
 
 var sensibleTimeout = time.Duration(5) * time.Second
+
+func getDN() DistinguishedName {
+	return DistinguishedName{
+		[]pkix.AttributeTypeAndValue{
+			{
+				Type: Id_at_countryName,
+				Value: asn1.RawValue{
+					Tag:        asn1.TagPrintableString,
+					Class:      asn1.ClassUniversal,
+					IsCompound: false,
+					Bytes:      []byte("US"),
+				},
+			},
+		},
+	}
+}
+
+func getDNWithManySubs() DistinguishedName {
+	return DistinguishedName{
+		[]pkix.AttributeTypeAndValue{
+			{
+				Type: Id_at_countryName,
+				Value: asn1.RawValue{
+					Tag:        asn1.TagPrintableString,
+					Class:      asn1.ClassUniversal,
+					IsCompound: false,
+					Bytes:      []byte("US"),
+				},
+			},
+		},
+		// c=US,st=FL,l=HIL,l=Tampa,l=Westchase
+		[]pkix.AttributeTypeAndValue{
+			{
+				Type: Id_at_stateOrProvinceName,
+				Value: asn1.RawValue{
+					Tag:        asn1.TagPrintableString,
+					Class:      asn1.ClassUniversal,
+					IsCompound: false,
+					Bytes:      []byte("FL"),
+				},
+			},
+		},
+		[]pkix.AttributeTypeAndValue{
+			{
+				Type: Id_at_localityName,
+				Value: asn1.RawValue{
+					Tag:        asn1.TagPrintableString,
+					Class:      asn1.ClassUniversal,
+					IsCompound: false,
+					Bytes:      []byte("HIL"),
+				},
+			},
+		},
+		[]pkix.AttributeTypeAndValue{
+			{
+				Type: Id_at_localityName,
+				Value: asn1.RawValue{
+					Tag:        asn1.TagPrintableString,
+					Class:      asn1.ClassUniversal,
+					IsCompound: false,
+					Bytes:      []byte("Tampa"),
+				},
+			},
+		},
+		[]pkix.AttributeTypeAndValue{
+			{
+				Type: Id_at_localityName,
+				Value: asn1.RawValue{
+					Tag:        asn1.TagPrintableString,
+					Class:      asn1.ClassUniversal,
+					IsCompound: false,
+					Bytes:      []byte("Westchase"),
+				},
+			},
+		},
+	}
+}
+
+func getMeerkatDN() DistinguishedName {
+	return DistinguishedName{
+		[]pkix.AttributeTypeAndValue{
+			{
+				Type: Id_at_countryName,
+				Value: asn1.RawValue{
+					Tag:        asn1.TagPrintableString,
+					Class:      asn1.ClassUniversal,
+					IsCompound: false,
+					Bytes:      []byte("US"),
+				},
+			},
+		},
+		// c=US,st=FL,l=HIL,l=Tampa,l=Westchase
+		[]pkix.AttributeTypeAndValue{
+			{
+				Type: Id_at_stateOrProvinceName,
+				Value: asn1.RawValue{
+					Tag:        asn1.TagPrintableString,
+					Class:      asn1.ClassUniversal,
+					IsCompound: false,
+					Bytes:      []byte("FL"),
+				},
+			},
+		},
+		[]pkix.AttributeTypeAndValue{
+			{
+				Type: Id_at_localityName,
+				Value: asn1.RawValue{
+					Tag:        asn1.TagPrintableString,
+					Class:      asn1.ClassUniversal,
+					IsCompound: false,
+					Bytes:      []byte("Tampa"),
+				},
+			},
+		},
+		[]pkix.AttributeTypeAndValue{
+			{
+				Type: Id_at_organizationName,
+				Value: asn1.RawValue{
+					Tag:        asn1.TagPrintableString,
+					Class:      asn1.ClassUniversal,
+					IsCompound: false,
+					Bytes:      []byte("Wildboar"),
+				},
+			},
+		},
+		[]pkix.AttributeTypeAndValue{
+			{
+				Type: Id_at_commonName,
+				Value: asn1.RawValue{
+					Tag:        asn1.TagPrintableString,
+					Class:      asn1.ClassUniversal,
+					IsCompound: false,
+					Bytes:      []byte("meerkat"),
+				},
+			},
+		},
+	}
+}
 
 func TestReadAnEntry(t *testing.T) {
 	conn, err := net.Dial("tcp", "localhost:4632")
@@ -37,19 +179,7 @@ func TestReadAnEntry(t *testing.T) {
 		return
 	}
 	invokeId := idm.GetNextInvokeId()
-	dn := DistinguishedName{
-		[]pkix.AttributeTypeAndValue{
-			{
-				Type: Id_at_countryName,
-				Value: asn1.RawValue{
-					Tag:        asn1.TagPrintableString,
-					Class:      asn1.ClassUniversal,
-					IsCompound: false,
-					Bytes:      []byte("US"),
-				},
-			},
-		},
-	}
+	dn := getDN()
 	name_bytes, err := asn1.Marshal(dn)
 	if err != nil {
 		t.Error(err.Error())
@@ -172,19 +302,7 @@ func TestReadAnEntry2(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	dn := DistinguishedName{
-		[]pkix.AttributeTypeAndValue{
-			{
-				Type: Id_at_countryName,
-				Value: asn1.RawValue{
-					Tag:        asn1.TagPrintableString,
-					Class:      asn1.ClassUniversal,
-					IsCompound: false,
-					Bytes:      []byte("US"),
-				},
-			},
-		},
-	}
+	dn := getDN()
 	name_bytes, err := asn1.Marshal(dn)
 	if err != nil {
 		t.Error(err.Error())
@@ -279,19 +397,7 @@ func TestManySimultaneousReads(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	dn := DistinguishedName{
-		[]pkix.AttributeTypeAndValue{
-			{
-				Type: Id_at_countryName,
-				Value: asn1.RawValue{
-					Tag:        asn1.TagPrintableString,
-					Class:      asn1.ClassUniversal,
-					IsCompound: false,
-					Bytes:      []byte("US"),
-				},
-			},
-		},
-	}
+	dn := getDN()
 	name_bytes, err := asn1.Marshal(dn)
 	if err != nil {
 		t.Error(err.Error())
@@ -353,19 +459,7 @@ func TestListAnEntry(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	dn := DistinguishedName{
-		[]pkix.AttributeTypeAndValue{
-			{
-				Type: Id_at_countryName,
-				Value: asn1.RawValue{
-					Tag:        asn1.TagPrintableString,
-					Class:      asn1.ClassUniversal,
-					IsCompound: false,
-					Bytes:      []byte("US"),
-				},
-			},
-		},
-	}
+	dn := getDN()
 	name_bytes, err := asn1.Marshal(dn)
 	if err != nil {
 		t.Error(err.Error())
@@ -430,19 +524,7 @@ func TestTLS(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	dn := DistinguishedName{
-		[]pkix.AttributeTypeAndValue{
-			{
-				Type: Id_at_countryName,
-				Value: asn1.RawValue{
-					Tag:        asn1.TagPrintableString,
-					Class:      asn1.ClassUniversal,
-					IsCompound: false,
-					Bytes:      []byte("US"),
-				},
-			},
-		},
-	}
+	dn := getDN()
 	name_bytes, err := asn1.Marshal(dn)
 	if err != nil {
 		t.Error(err.Error())
@@ -505,64 +587,7 @@ func TestAbandon(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	dn := DistinguishedName{
-		[]pkix.AttributeTypeAndValue{
-			{
-				Type: Id_at_countryName,
-				Value: asn1.RawValue{
-					Tag:        asn1.TagPrintableString,
-					Class:      asn1.ClassUniversal,
-					IsCompound: false,
-					Bytes:      []byte("US"),
-				},
-			},
-		},
-		// c=US,st=FL,l=HIL,l=Tampa,l=Westchase
-		[]pkix.AttributeTypeAndValue{
-			{
-				Type: Id_at_stateOrProvinceName,
-				Value: asn1.RawValue{
-					Tag:        asn1.TagPrintableString,
-					Class:      asn1.ClassUniversal,
-					IsCompound: false,
-					Bytes:      []byte("FL"),
-				},
-			},
-		},
-		[]pkix.AttributeTypeAndValue{
-			{
-				Type: Id_at_localityName,
-				Value: asn1.RawValue{
-					Tag:        asn1.TagPrintableString,
-					Class:      asn1.ClassUniversal,
-					IsCompound: false,
-					Bytes:      []byte("HIL"),
-				},
-			},
-		},
-		[]pkix.AttributeTypeAndValue{
-			{
-				Type: Id_at_localityName,
-				Value: asn1.RawValue{
-					Tag:        asn1.TagPrintableString,
-					Class:      asn1.ClassUniversal,
-					IsCompound: false,
-					Bytes:      []byte("Tampa"),
-				},
-			},
-		},
-		[]pkix.AttributeTypeAndValue{
-			{
-				Type: Id_at_localityName,
-				Value: asn1.RawValue{
-					Tag:        asn1.TagPrintableString,
-					Class:      asn1.ClassUniversal,
-					IsCompound: false,
-					Bytes:      []byte("Westchase"),
-				},
-			},
-		},
-	}
+	dn := getDNWithManySubs()
 	name_bytes, err := asn1.Marshal(dn)
 	if err != nil {
 		t.Error(err.Error())
@@ -657,19 +682,7 @@ func TestStartTLS(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	dn := DistinguishedName{
-		[]pkix.AttributeTypeAndValue{
-			{
-				Type: Id_at_countryName,
-				Value: asn1.RawValue{
-					Tag:        asn1.TagPrintableString,
-					Class:      asn1.ClassUniversal,
-					IsCompound: false,
-					Bytes:      []byte("US"),
-				},
-			},
-		},
-	}
+	dn := getDN()
 	name_bytes, err := asn1.Marshal(dn)
 	if err != nil {
 		t.Error(err.Error())
@@ -733,19 +746,7 @@ func TestIDMv1(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	dn := DistinguishedName{
-		[]pkix.AttributeTypeAndValue{
-			{
-				Type: Id_at_countryName,
-				Value: asn1.RawValue{
-					Tag:        asn1.TagPrintableString,
-					Class:      asn1.ClassUniversal,
-					IsCompound: false,
-					Bytes:      []byte("US"),
-				},
-			},
-		},
-	}
+	dn := getDN()
 	name_bytes, err := asn1.Marshal(dn)
 	if err != nil {
 		t.Error(err.Error())
@@ -841,19 +842,7 @@ func TestRequestTimeout(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	dn := DistinguishedName{
-		[]pkix.AttributeTypeAndValue{
-			{
-				Type: Id_at_countryName,
-				Value: asn1.RawValue{
-					Tag:        asn1.TagPrintableString,
-					Class:      asn1.ClassUniversal,
-					IsCompound: false,
-					Bytes:      []byte("US"),
-				},
-			},
-		},
-	}
+	dn := getDN()
 	name_bytes, err := asn1.Marshal(dn)
 	if err != nil {
 		t.Error(err.Error())
@@ -932,19 +921,7 @@ func TestBindError(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
 	defer cancel()
 
-	dn := DistinguishedName{
-		[]pkix.AttributeTypeAndValue{
-			{
-				Type: Id_at_countryName,
-				Value: asn1.RawValue{
-					Tag:        asn1.TagPrintableString,
-					Class:      asn1.ClassUniversal,
-					IsCompound: false,
-					Bytes:      []byte("US"),
-				},
-			},
-		},
-	}
+	dn := getDN()
 
 	simpleCreds := SimpleCredentials{
 		Name: dn,
@@ -1011,19 +988,7 @@ func TestSocketClosure1(t *testing.T) {
 		t.Logf("Outcome type: %v\n", response.OutcomeType)
 		t.FailNow()
 	}
-	dn := DistinguishedName{
-		[]pkix.AttributeTypeAndValue{
-			{
-				Type: Id_at_countryName,
-				Value: asn1.RawValue{
-					Tag:        asn1.TagPrintableString,
-					Class:      asn1.ClassUniversal,
-					IsCompound: false,
-					Bytes:      []byte("US"),
-				},
-			},
-		},
-	}
+	dn := getDN()
 	name_bytes, err := asn1.Marshal(dn)
 	if err != nil {
 		t.Error(err.Error())
@@ -1079,19 +1044,7 @@ func TestSocketClosure2(t *testing.T) {
 		t.Logf("Outcome type: %v\n", response.OutcomeType)
 		t.FailNow()
 	}
-	dn := DistinguishedName{
-		[]pkix.AttributeTypeAndValue{
-			{
-				Type: Id_at_countryName,
-				Value: asn1.RawValue{
-					Tag:        asn1.TagPrintableString,
-					Class:      asn1.ClassUniversal,
-					IsCompound: false,
-					Bytes:      []byte("US"),
-				},
-			},
-		},
-	}
+	dn := getDN()
 	name_bytes, err := asn1.Marshal(dn)
 	if err != nil {
 		t.Error(err.Error())
@@ -1316,19 +1269,7 @@ func TestTagCorrection(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	dn := DistinguishedName{
-		[]pkix.AttributeTypeAndValue{
-			{
-				Type: Id_at_countryName,
-				Value: asn1.RawValue{
-					Tag:        asn1.TagPrintableString,
-					Class:      asn1.ClassUniversal,
-					IsCompound: false,
-					Bytes:      []byte("US"),
-				},
-			},
-		},
-	}
+	dn := getDN()
 	name_bytes, err := asn1.Marshal(dn)
 	if err != nil {
 		t.Error(err.Error())
@@ -1352,5 +1293,409 @@ func TestTagCorrection(t *testing.T) {
 	if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
 		t.Error("Non-result received")
 		t.FailNow()
+	}
+}
+
+func TestReadSimple(t *testing.T) {
+	conn, err := net.Dial("tcp", "localhost:4632")
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	errchan := make(chan error)
+	idm := IDMClient(conn, &IDMClientConfig{
+		StartTLSPolicy: StartTLSNever,
+		Errchan:        errchan,
+	})
+	go func() {
+		e := <-errchan
+		t.Error(e)
+	}()
+	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	_, err = idm.BindAnonymously(ctx)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	dn := getDN()
+
+	attrs := make([]asn1.ObjectIdentifier, 1)
+	attrs[0] = Id_at_countryName
+
+	ctx, cancel = context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	_, res, err := idm.ReadSimple(ctx, dn, attrs)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	for _, info := range res.Entry.Information {
+		if info.Tag == asn1.TagSequence { // Attribute
+			attr := Attribute{}
+			rest, err := asn1.Unmarshal(info.FullBytes, &attr)
+			if err != nil {
+				continue
+			}
+			if len(rest) > 0 {
+				continue
+			}
+			if !attr.Type.Equal(Id_at_countryName) {
+				t.FailNow()
+			}
+			t.Logf("Attribute Type: %s\n", attr.Type.String())
+			for _, value := range attr.Values {
+				str, err := ASN1RawValueToStr(value)
+				if err != nil {
+					t.Log(err.Error())
+					continue
+				}
+				if len(str) == 0 {
+					t.Log("  <empty>")
+				} else {
+					t.Logf("  %s\n", str)
+				}
+			}
+			for _, vwc := range attr.ValuesWithContext {
+				str, err := ASN1RawValueToStr(vwc.Value)
+				if err != nil {
+					t.Log(err.Error())
+					continue
+				}
+				t.Logf("  %s (Has Contexts)\n", str)
+			}
+		} else { // Something else
+			t.FailNow()
+		}
+	}
+}
+
+func TestListSimple(t *testing.T) {
+	conn, err := net.Dial("tcp", "localhost:4632")
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	errchan := make(chan error)
+	idm := IDMClient(conn, &IDMClientConfig{
+		StartTLSPolicy: StartTLSNever,
+		Errchan:        errchan,
+	})
+	go func() {
+		e := <-errchan
+		t.Error(e)
+	}()
+	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	_, err = idm.BindAnonymously(ctx)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	dn := getDN()
+	ctx, cancel = context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	outcome, _, err := idm.ListByDN(ctx, dn, 0)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
+		t.FailNow()
+	}
+}
+
+func TestAddEntrySimple(t *testing.T) {
+	conn, err := net.Dial("tcp", "localhost:4632")
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	errchan := make(chan error)
+	idm := IDMClient(conn, &IDMClientConfig{
+		StartTLSPolicy: StartTLSNever,
+		Errchan:        errchan,
+	})
+	go func() {
+		e := <-errchan
+		t.Error(e)
+	}()
+	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	_, err = idm.BindAnonymously(ctx)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	dn := getDNWithManySubs()
+	rdn := []pkix.AttributeTypeAndValue{
+		{
+			Type: Id_at_commonName,
+			Value: asn1.RawValue{
+				Class:      asn1.ClassUniversal,
+				Tag:        asn1.TagPrintableString,
+				IsCompound: false,
+				Bytes:      []byte("sillybilly"),
+			},
+		},
+	}
+	dn = append(dn, rdn)
+	ctx, cancel = context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+
+	attrs := make([]Attribute, 0)
+	objectClassAttr := Attribute{
+		Type: Id_at_objectClass,
+		Values: []asn1.RawValue{
+			{
+				Class:      asn1.ClassUniversal,
+				Tag:        asn1.TagOID,
+				IsCompound: false,
+				Bytes:      []byte{0x55, 6, 6}, // (id-oc-person / 2.5.6.6)
+			},
+		},
+	}
+	commonNameAttr := Attribute{
+		Type: Id_at_commonName,
+		Values: []asn1.RawValue{
+			{
+				Class:      asn1.ClassUniversal,
+				Tag:        asn1.TagPrintableString,
+				IsCompound: false,
+				Bytes:      []byte("sillybilly"),
+			},
+		},
+	}
+	surnameAttr := Attribute{
+		Type: Id_at_surname,
+		Values: []asn1.RawValue{
+			{
+				Class:      asn1.ClassUniversal,
+				Tag:        asn1.TagPrintableString,
+				IsCompound: false,
+				Bytes:      []byte("billy"),
+			},
+		},
+	}
+	attrs = append(attrs, objectClassAttr)
+	attrs = append(attrs, commonNameAttr)
+	attrs = append(attrs, surnameAttr)
+
+	outcome, _, err := idm.AddEntrySimple(ctx, dn, attrs)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	// We probably don't have permission to do this. I just want to make
+	// sure the request is well-formed.
+	if outcome.OutcomeType == OPERATION_OUTCOME_TYPE_ABORT || outcome.OutcomeType == OPERATION_OUTCOME_TYPE_FAILURE || outcome.OutcomeType == OPERATION_OUTCOME_TYPE_REJECT {
+		t.FailNow()
+	}
+}
+
+// This test will delete the entry created from the prior test, if it succeeded.
+func TestRemoveEntrySimple(t *testing.T) {
+	conn, err := net.Dial("tcp", "localhost:4632")
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	errchan := make(chan error)
+	idm := IDMClient(conn, &IDMClientConfig{
+		StartTLSPolicy: StartTLSNever,
+		Errchan:        errchan,
+	})
+	go func() {
+		e := <-errchan
+		t.Error(e)
+	}()
+	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	_, err = idm.BindAnonymously(ctx)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	dn := getDNWithManySubs()
+	rdn := []pkix.AttributeTypeAndValue{
+		{
+			Type: Id_at_commonName,
+			Value: asn1.RawValue{
+				Class:      asn1.ClassUniversal,
+				Tag:        asn1.TagPrintableString,
+				IsCompound: false,
+				Bytes:      []byte("sillybilly"),
+			},
+		},
+	}
+	dn = append(dn, rdn)
+	ctx, cancel = context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	outcome, _, err := idm.RemoveEntryByDN(ctx, dn)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	// We probably don't have permission to do this. I just want to make
+	// sure the request is well-formed.
+	if outcome.OutcomeType == OPERATION_OUTCOME_TYPE_ABORT || outcome.OutcomeType == OPERATION_OUTCOME_TYPE_FAILURE || outcome.OutcomeType == OPERATION_OUTCOME_TYPE_REJECT {
+		t.FailNow()
+	}
+}
+
+func TestChangePasswordSimple(t *testing.T) {
+	conn, err := net.Dial("tcp", "localhost:4632")
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	errchan := make(chan error)
+	idm := IDMClient(conn, &IDMClientConfig{
+		StartTLSPolicy: StartTLSNever,
+		Errchan:        errchan,
+	})
+	go func() {
+		e := <-errchan
+		t.Error(e)
+	}()
+	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	_, err = idm.BindAnonymously(ctx)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	dn := getDN()
+	ctx, cancel = context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	outcome, _, err := idm.ChangePasswordSimple(ctx, dn, "asdf", "zxcv")
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	// We probably don't have permission to do this. I just want to make
+	// sure the request is well-formed.
+	if outcome.OutcomeType == OPERATION_OUTCOME_TYPE_ABORT || outcome.OutcomeType == OPERATION_OUTCOME_TYPE_FAILURE || outcome.OutcomeType == OPERATION_OUTCOME_TYPE_REJECT {
+		t.FailNow()
+	}
+}
+
+func TestAdministerPasswordSimple(t *testing.T) {
+	conn, err := net.Dial("tcp", "localhost:4632")
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	errchan := make(chan error)
+	idm := IDMClient(conn, &IDMClientConfig{
+		StartTLSPolicy: StartTLSNever,
+		Errchan:        errchan,
+	})
+	go func() {
+		e := <-errchan
+		t.Error(e)
+	}()
+	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	_, err = idm.BindAnonymously(ctx)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	dn := getDN()
+	ctx, cancel = context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+	outcome, _, err := idm.AdministerPasswordSimple(ctx, dn, "qwer")
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	// We probably don't have permission to do this. I just want to make
+	// sure the request is well-formed.
+	if outcome.OutcomeType == OPERATION_OUTCOME_TYPE_ABORT || outcome.OutcomeType == OPERATION_OUTCOME_TYPE_FAILURE || outcome.OutcomeType == OPERATION_OUTCOME_TYPE_REJECT {
+		t.FailNow()
+	}
+}
+
+func TestStrongAuth(t *testing.T) {
+	conn, err := net.Dial("tcp", "localhost:4632")
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	errchan := make(chan error)
+
+	go func() {
+		e := <-errchan
+		t.Error(e)
+	}()
+	ctx, cancel := context.WithTimeout(context.Background(), sensibleTimeout)
+	defer cancel()
+
+	// Open the PEM-encoded certificate file
+	certFile, err := os.ReadFile("../../data/keypair/cert.pem")
+	if err != nil {
+		t.Errorf("Error reading certificate file: %v\n", err)
+		return
+	}
+
+	// Decode the PEM block
+	block, _ := pem.Decode(certFile)
+	if block == nil || block.Type != "CERTIFICATE" {
+		t.Error("Failed to decode PEM block containing the certificate")
+		return
+	}
+
+	// Parse the certificate
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		t.Errorf("Error parsing certificate: %v\n", err)
+		return
+	}
+
+	// Open the PEM-encoded certificate file
+	keyFile, err := os.ReadFile("../../data/keypair/key.pem")
+	if err != nil {
+		t.Errorf("Error reading certificate file: %v\n", err)
+		return
+	}
+
+	// Decode the PEM block
+	keyBlock, _ := pem.Decode(keyFile)
+	if keyBlock == nil || keyBlock.Type != "PRIVATE KEY" {
+		t.Error("Failed to decode PEM block containing the private key")
+		return
+	}
+
+	// Parse the certificate
+	privKey, err := x509.ParsePKCS8PrivateKey(keyBlock.Bytes)
+	if err != nil {
+		t.Errorf("Error parsing certificate: %v\n", err)
+		return
+	}
+
+	signer, is_signer := privKey.(crypto.Signer)
+	if !is_signer {
+		t.Errorf("not an signing key")
+		return
+	}
+
+	idm := IDMClient(conn, &IDMClientConfig{
+		StartTLSPolicy: StartTLSNever,
+		Errchan:        errchan,
+		SigningCert: &CertificationPath{
+			UserCertificate:   *cert,
+			TheCACertificates: make([]CertificatePair, 0),
+		},
+		SigningKey: &signer,
+	})
+
+	// C = US, ST = FL, L = Tampa, O = Wildboar, CN = meerkat
+	dn := getMeerkatDN()
+	_, err = idm.BindStrongly(ctx, dn, dn, nil)
+
+	if err != nil {
+		t.Error(err.Error())
+		return
 	}
 }

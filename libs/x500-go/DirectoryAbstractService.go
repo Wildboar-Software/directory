@@ -484,6 +484,8 @@ type SimpleCredentials struct {
 	Password SimpleCredentials_password `asn1:"optional,explicit,tag:2"`
 }
 
+// `name` is the sender, not the intended recipient.
+//
 // # ASN.1 Definition:
 //
 //	StrongCredentials ::= SET {
@@ -493,7 +495,7 @@ type SimpleCredentials struct {
 //	  attributeCertificationPath  [3]  AttributeCertificationPath OPTIONAL,
 //	  ... }
 type StrongCredentials struct {
-	Certification_path         CertificationPath          `asn1:"optional,explicit,tag:0"`
+	Certification_path         CertificationPathRaw       `asn1:"optional,explicit,tag:0"`
 	Bind_token                 Token                      `asn1:"explicit,tag:1"`
 	Name                       DistinguishedName          `asn1:"optional,explicit,tag:2"`
 	AttributeCertificationPath AttributeCertificationPath `asn1:"optional,explicit,tag:3"`
@@ -532,6 +534,8 @@ type SaslCredentials struct {
 //	Token ::= SIGNED{TokenContent}
 type Token = SIGNED
 
+// `name` is the intended recipient, not the sender.
+//
 // # ASN.1 Definition:
 //
 //	TokenContent ::= SEQUENCE {

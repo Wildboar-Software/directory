@@ -188,10 +188,14 @@ type DirectoryProtocolStack interface {
 	Bind(ctx context.Context, arg X500AssociateArgument) (response X500AssociateOutcome, err error)
 	Request(ctx context.Context, req X500Request) (response X500OpOutcome, err error)
 	Unbind(_ context.Context, req X500UnbindRequest) (response X500UnbindOutcome, err error)
+	CloseTransport() (err error)
 }
 
 type DirectoryAccessClient interface {
 	DirectoryProtocolStack
+
+	// DAP Operations
+
 	Read(ctx context.Context, arg_data ReadArgumentData) (response X500OpOutcome, result *ReadResultData, err error)
 	Compare(ctx context.Context, arg_data CompareArgumentData) (resp X500OpOutcome, result *CompareResultData, err error)
 	Abandon(ctx context.Context, arg_data AbandonArgumentData) (resp X500OpOutcome, result *AbandonResultData, err error)
@@ -203,4 +207,18 @@ type DirectoryAccessClient interface {
 	ModifyDN(ctx context.Context, arg_data ModifyDNArgumentData) (resp X500OpOutcome, result *ModifyDNResultData, err error)
 	ChangePassword(ctx context.Context, arg_data ChangePasswordArgumentData) (resp X500OpOutcome, result *ChangePasswordResultData, err error)
 	AdministerPassword(ctx context.Context, arg_data AdministerPasswordArgumentData) (resp X500OpOutcome, result *AdministerPasswordResultData, err error)
+
+	// Higher-Level DAP API
+
+	BindSimply(ctx context.Context, dn DistinguishedName, password string) (resp X500AssociateOutcome, err error)
+	BindStrongly(ctx context.Context, dn DistinguishedName, acPath *AttributeCertificationPath) (resp X500AssociateOutcome, err error)
+	BindPlainly(ctx context.Context, username string, password string) (resp X500AssociateOutcome, err error)
+	ReadSimple(ctx context.Context, dn DistinguishedName, userAttributes []asn1.ObjectIdentifier) (response X500OpOutcome, result *ReadResultData, err error)
+	RemoveEntryByDN(ctx context.Context, dn DistinguishedName) (resp X500OpOutcome, result *RemoveEntryResultData, err error)
+	AbandonById(ctx context.Context, invokeId int) (resp X500OpOutcome, result *AbandonResultData, err error)
+	ListByDN(ctx context.Context, dn DistinguishedName, limit int) (resp X500OpOutcome, info *ListResultData_listInfo, err error)
+	AddEntrySimple(ctx context.Context, dn DistinguishedName, attrs []Attribute) (resp X500OpOutcome, result *AddEntryResultData, err error)
+	Move(ctx context.Context, old DistinguishedName, new DistinguishedName) (resp X500OpOutcome, result *ModifyDNResultData, err error)
+	ChangePasswordSimple(ctx context.Context, dn DistinguishedName, old string, new string) (resp X500OpOutcome, result *ChangePasswordResultData, err error)
+	AdministerPasswordSimple(ctx context.Context, dn DistinguishedName, new string) (resp X500OpOutcome, result *AdministerPasswordResultData, err error)
 }

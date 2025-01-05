@@ -1234,6 +1234,44 @@ func sign(signer crypto.Signer, data []byte) (sig SIGNATURE, err error) {
 	return sig, nil
 }
 
+func getSigAlg(signer crypto.Signer) (sig_alg pkix.AlgorithmIdentifier, err error) {
+	_, is_ed25519 := signer.(ed25519.PrivateKey)
+	if is_ed25519 {
+		sig_alg = pkix.AlgorithmIdentifier{
+			Algorithm: asn1.ObjectIdentifier{1, 3, 101, 113}, // Not defined in the X.500 standards.
+			// Will this handle the undefined value correctly?
+		}
+		return sig_alg, nil
+	}
+	_, is_ecdsa := signer.(*ecdsa.PrivateKey)
+	if is_ecdsa {
+		sig_alg = pkix.AlgorithmIdentifier{
+			Algorithm: Ecdsa_with_SHA256,
+		}
+		return sig_alg, nil
+	}
+	_, is_rsa := signer.(*rsa.PrivateKey)
+	if is_rsa {
+		pss_params := RSASSA_PSS_Type{
+			HashAlgorithm: pkix.AlgorithmIdentifier{
+				Algorithm: Id_sha256,
+			},
+			SaltLength:   32, // Recommended to be size of hash output.
+			TrailerField: 1,  // This is always supposed to be 1, apparently.
+		}
+		pss_params_bytes, err := asn1.Marshal(pss_params)
+		if err != nil {
+			return pkix.AlgorithmIdentifier{}, err
+		}
+		sig_alg = pkix.AlgorithmIdentifier{
+			Algorithm:  Id_RSASSA_PSS,
+			Parameters: asn1.RawValue{FullBytes: pss_params_bytes},
+		}
+		return sig_alg, nil
+	}
+	return pkix.AlgorithmIdentifier{}, errors.New("unsupported signing key algorithm")
+}
+
 func createSecurityParameters(
 	opCode asn1.RawValue,
 	certPath *CertificationPath,
@@ -2160,4 +2198,342 @@ func (stack *IDMProtocolStack) AdministerPassword(ctx context.Context, arg_data 
 		return X500OpOutcome{}, nil, err
 	}
 	return getDataFromNullOrOptProtSeq[AdministerPasswordResultData](outcome)
+}
+
+func (stack *IDMProtocolStack) BindSimply(ctx context.Context, dn DistinguishedName, password string) (resp X500AssociateOutcome, err error) {
+	unprotected := asn1.RawValue{
+		Class:      asn1.ClassUniversal,
+		Tag:        asn1.TagOctetString,
+		IsCompound: false,
+		Bytes:      []byte(password),
+	}
+	unprotectedBytes, err := asn1.Marshal(unprotected)
+	if err != nil {
+		return X500AssociateOutcome{}, err
+	}
+	simpleCreds := SimpleCredentials{
+		Name:     dn,
+		Validity: SimpleCredentials_validity{
+			// TODO:
+		},
+		Password: asn1.RawValue{
+			Class:      asn1.ClassContextSpecific,
+			Tag:        2,
+			IsCompound: true,
+			Bytes:      unprotectedBytes,
+		},
+	}
+	simpleCredsBytes, err := asn1.Marshal(simpleCreds)
+	if err != nil {
+		return X500AssociateOutcome{}, err
+	}
+	creds := asn1.RawValue{
+		Class:      asn1.ClassContextSpecific,
+		Tag:        0,
+		IsCompound: true,
+		Bytes:      simpleCredsBytes,
+	}
+	credsBytes, err := asn1.Marshal(creds)
+	if err != nil {
+		return X500AssociateOutcome{}, err
+	}
+	arg := X500AssociateArgument{
+		V1: true,
+		V2: true,
+		Credentials: &asn1.RawValue{
+			Class:      asn1.ClassContextSpecific,
+			Tag:        0,
+			IsCompound: true,
+			Bytes:      credsBytes,
+		},
+	}
+	return stack.Bind(ctx, arg)
+}
+
+func (stack *IDMProtocolStack) BindStrongly(ctx context.Context, requesterDN DistinguishedName, recipientDN DistinguishedName, acPath *AttributeCertificationPath) (resp X500AssociateOutcome, err error) {
+	if stack.SigningKey == nil {
+		return X500AssociateOutcome{}, errors.New("no signing key configured")
+	}
+	if stack.SigningCert == nil {
+		return X500AssociateOutcome{}, errors.New("no signing cert configured")
+	}
+	sig_alg, err := getSigAlg(*stack.SigningKey)
+	if err != nil {
+		return X500AssociateOutcome{}, err
+	}
+	// Twelve-hour time limit for this token, just to mitigate any problems with
+	// timezones differences.
+	timeBytes, err := asn1.Marshal(time.Now().Add(time.Duration(12) * time.Hour))
+	if err != nil {
+		return X500AssociateOutcome{}, err
+	}
+	random := make([]byte, 32)
+	randlen, err := rand.Read(random)
+	if err != nil {
+		return X500AssociateOutcome{}, err
+	}
+
+	tokenContent := TokenContent{
+		Algorithm: sig_alg,
+		Name:      recipientDN,
+		Time: asn1.RawValue{
+			Class:      asn1.ClassContextSpecific,
+			Tag:        2,
+			IsCompound: true,
+			Bytes:      timeBytes,
+		},
+		Random: asn1.BitString{
+			Bytes:     random[:randlen],
+			BitLength: randlen * 8,
+		},
+	}
+	tokenContentBytes, err := asn1.Marshal(tokenContent)
+	if err != nil {
+		return X500AssociateOutcome{}, err
+	}
+	sig, err := sign(*stack.SigningKey, tokenContentBytes)
+	if err != nil {
+		return X500AssociateOutcome{}, err
+	}
+	token := Token{
+		ToBeSigned:          asn1.RawValue{FullBytes: tokenContentBytes},
+		AlgorithmIdentifier: sig.AlgorithmIdentifier,
+		Signature:           sig.Signature,
+	}
+	certPathRaw := CertificationPathRaw{
+		UserCertificate:   asn1.RawValue{FullBytes: stack.SigningCert.UserCertificate.Raw},
+		TheCACertificates: make([]CertificatePairRaw, 0), // I already know this is empty.
+	}
+	strongCreds := StrongCredentials{
+		Certification_path: certPathRaw,
+		Bind_token:         token,
+		Name:               requesterDN,
+	}
+	if acPath != nil {
+		strongCreds.AttributeCertificationPath = *acPath
+	}
+	strongCredsBytes, err := asn1.MarshalWithParams(strongCreds, "set")
+	if err != nil {
+		return X500AssociateOutcome{}, err
+	}
+	// creds := asn1.RawValue{
+	// 	Class:      asn1.ClassContextSpecific,
+	// 	Tag:        1,
+	// 	IsCompound: true,
+	// 	Bytes:      strongCredsBytes,
+	// }
+	// credsBytes, err := asn1.Marshal(creds)
+	// if err != nil {
+	// 	return X500AssociateOutcome{}, err
+	// }
+	arg := X500AssociateArgument{
+		V1: true,
+		V2: true,
+		Credentials: &asn1.RawValue{
+			Class:      asn1.ClassContextSpecific,
+			Tag:        1,
+			IsCompound: true,
+			Bytes:      strongCredsBytes,
+		},
+	}
+	return stack.Bind(ctx, arg)
+}
+
+func containsNullChar(s string) bool {
+	for _, c := range s {
+		if c == 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func (stack *IDMProtocolStack) BindPlainly(ctx context.Context, username string, password string) (resp X500AssociateOutcome, err error) {
+	if containsNullChar(username) {
+		return X500AssociateOutcome{}, errors.New("username contains null character")
+	}
+	if containsNullChar(password) {
+		return X500AssociateOutcome{}, errors.New("password contains null character")
+	}
+	saslPayload := []byte{'\x00'}
+	saslPayload = append(saslPayload, []byte(username)...)
+	saslPayload = append(saslPayload, '\x00')
+	saslPayload = append(saslPayload, []byte(password)...)
+	saslCreds := SaslCredentials{
+		Mechanism: asn1.RawValue{
+			Class:      asn1.ClassContextSpecific,
+			Tag:        0,
+			IsCompound: true,
+			Bytes:      []byte{asn1.TagPrintableString, 5, 'P', 'L', 'A', 'I', 'N'},
+		},
+		Credentials: saslPayload,
+	}
+	saslCredsBytes, err := asn1.Marshal(saslCreds)
+	if err != nil {
+		return X500AssociateOutcome{}, err
+	}
+	creds := asn1.RawValue{
+		Class:      asn1.ClassContextSpecific,
+		Tag:        4,
+		IsCompound: true,
+		Bytes:      saslCredsBytes,
+	}
+	credsBytes, err := asn1.Marshal(creds)
+	if err != nil {
+		return X500AssociateOutcome{}, err
+	}
+	arg := X500AssociateArgument{
+		V1: true,
+		V2: true,
+		Credentials: &asn1.RawValue{
+			Class:      asn1.ClassContextSpecific,
+			Tag:        0,
+			IsCompound: true,
+			Bytes:      credsBytes,
+		},
+	}
+	return stack.Bind(ctx, arg)
+}
+
+func (stack *IDMProtocolStack) ReadSimple(ctx context.Context, dn DistinguishedName, userAttributes []asn1.ObjectIdentifier) (response X500OpOutcome, result *ReadResultData, err error) {
+	name_bytes, err := asn1.Marshal(dn)
+	if err != nil {
+		return X500OpOutcome{}, nil, err
+	}
+	read_arg := ReadArgumentData{
+		Object: asn1.RawValue{
+			Tag:        0,
+			Class:      asn1.ClassContextSpecific,
+			IsCompound: true,
+			Bytes:      name_bytes,
+		},
+	}
+	if len(userAttributes) > 0 {
+		attrBytes, err := asn1.MarshalWithParams(userAttributes, "set")
+		if err != nil {
+			return X500OpOutcome{}, nil, err
+		}
+		read_arg.Selection.Attributes = asn1.RawValue{
+			Class:      asn1.ClassContextSpecific,
+			Tag:        1,
+			IsCompound: true,
+			Bytes:      attrBytes,
+		}
+	}
+	return stack.Read(ctx, read_arg)
+}
+
+func (stack *IDMProtocolStack) RemoveEntryByDN(ctx context.Context, dn DistinguishedName) (resp X500OpOutcome, result *RemoveEntryResultData, err error) {
+	name_bytes, err := asn1.Marshal(dn)
+	if err != nil {
+		return X500OpOutcome{}, nil, err
+	}
+	arg := RemoveEntryArgumentData{
+		Object: asn1.RawValue{
+			Tag:        0,
+			Class:      asn1.ClassContextSpecific,
+			IsCompound: true,
+			Bytes:      name_bytes,
+		},
+	}
+	return stack.RemoveEntry(ctx, arg)
+}
+
+func (stack *IDMProtocolStack) AbandonById(ctx context.Context, invokeId int) (resp X500OpOutcome, result *AbandonResultData, err error) {
+	iidBytes, err := asn1.Marshal(invokeId)
+	if err != nil {
+		return X500OpOutcome{}, nil, err
+	}
+	arg := AbandonArgumentData{
+		InvokeID: asn1.RawValue{
+			Class:      asn1.ClassContextSpecific,
+			Tag:        0,
+			IsCompound: true,
+			Bytes:      iidBytes,
+		},
+	}
+	return stack.Abandon(ctx, arg)
+}
+
+func (stack *IDMProtocolStack) ListByDN(ctx context.Context, dn DistinguishedName, limit int) (resp X500OpOutcome, info *ListResultData_listInfo, err error) {
+	name_bytes, err := asn1.Marshal(dn)
+	if err != nil {
+		return X500OpOutcome{}, nil, err
+	}
+	arg := ListArgumentData{
+		Object: asn1.RawValue{
+			Tag:        0,
+			Class:      asn1.ClassContextSpecific,
+			IsCompound: true,
+			Bytes:      name_bytes,
+		},
+	}
+	if limit > 0 {
+		arg.ServiceControls.SizeLimit = limit
+	}
+	return stack.List(ctx, arg)
+}
+
+func (stack *IDMProtocolStack) AddEntrySimple(ctx context.Context, dn DistinguishedName, attrs []Attribute) (resp X500OpOutcome, result *AddEntryResultData, err error) {
+	name_bytes, err := asn1.Marshal(dn)
+	if err != nil {
+		return X500OpOutcome{}, nil, err
+	}
+	arg := AddEntryArgumentData{
+		Object: asn1.RawValue{
+			Tag:        0,
+			Class:      asn1.ClassContextSpecific,
+			IsCompound: true,
+			Bytes:      name_bytes,
+		},
+		Entry: attrs,
+	}
+	return stack.AddEntry(ctx, arg)
+}
+
+func (stack *IDMProtocolStack) ChangePasswordSimple(ctx context.Context, dn DistinguishedName, old string, new string) (resp X500OpOutcome, result *ChangePasswordResultData, err error) {
+	oldstr, err := asn1.MarshalWithParams(old, "utf8")
+	if err != nil {
+		return X500OpOutcome{}, nil, err
+	}
+	newstr, err := asn1.MarshalWithParams(new, "utf8")
+	if err != nil {
+		return X500OpOutcome{}, nil, err
+	}
+	oldPwd := asn1.RawValue{
+		Class:      asn1.ClassContextSpecific,
+		Tag:        1,
+		IsCompound: true,
+		Bytes:      oldstr,
+	}
+	newPwd := asn1.RawValue{
+		Class:      asn1.ClassContextSpecific,
+		Tag:        2,
+		IsCompound: true,
+		Bytes:      newstr,
+	}
+	arg := ChangePasswordArgumentData{
+		Object: dn,
+		OldPwd: oldPwd,
+		NewPwd: newPwd,
+	}
+	return stack.ChangePassword(ctx, arg)
+}
+
+func (stack *IDMProtocolStack) AdministerPasswordSimple(ctx context.Context, dn DistinguishedName, new string) (resp X500OpOutcome, result *AdministerPasswordResultData, err error) {
+	newstr, err := asn1.MarshalWithParams(new, "utf8")
+	if err != nil {
+		return X500OpOutcome{}, nil, err
+	}
+	newPwd := asn1.RawValue{
+		Class:      asn1.ClassContextSpecific,
+		Tag:        2,
+		IsCompound: true,
+		Bytes:      newstr,
+	}
+	arg := AdministerPasswordArgumentData{
+		Object: dn,
+		NewPwd: newPwd,
+	}
+	return stack.AdministerPassword(ctx, arg)
 }

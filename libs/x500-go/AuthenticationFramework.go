@@ -163,6 +163,9 @@ type ForwardCertificationPath = [](CrossCertificates)
 //	CrossCertificates ::= SET SIZE (1..MAX) OF Certificate
 type CrossCertificates = [](x509.Certificate)
 
+// NOTE: `encoding/asn1` fails to re-encode Certificate fields.
+// Use `CertificationPathRaw` instead.
+//
 // # ASN.1 Definition:
 //
 //	CertificationPath ::= SEQUENCE {
@@ -172,6 +175,17 @@ type CrossCertificates = [](x509.Certificate)
 type CertificationPath struct {
 	UserCertificate   x509.Certificate
 	TheCACertificates [](CertificatePair) `asn1:"optional"`
+}
+
+// # ASN.1 Definition:
+//
+//	CertificationPath ::= SEQUENCE {
+//	  userCertificate    Certificate,
+//	  theCACertificates  SEQUENCE SIZE (1..MAX) OF CertificatePair OPTIONAL,
+//	  ... }
+type CertificationPathRaw struct {
+	UserCertificate   asn1.RawValue
+	TheCACertificates [](CertificatePairRaw) `asn1:"optional"`
 }
 
 // # ASN.1 Definition:
@@ -254,6 +268,9 @@ type ScopeRestriction struct {
 	Restriction asn1.RawValue
 }
 
+// NOTE: `encoding/asn1` fails to re-encode Certificate fields.
+// Use `CertificatePairRaw` instead.
+//
 // # ASN.1 Definition:
 //
 //	CertificatePair ::= SEQUENCE {
@@ -265,6 +282,11 @@ type ScopeRestriction struct {
 type CertificatePair struct {
 	IssuedToThisCA x509.Certificate `asn1:"optional,explicit,tag:0"`
 	IssuedByThisCA x509.Certificate `asn1:"optional,explicit,tag:1"`
+}
+
+type CertificatePairRaw struct {
+	IssuedToThisCA asn1.RawValue `asn1:"optional,explicit,tag:0"`
+	IssuedByThisCA asn1.RawValue `asn1:"optional,explicit,tag:1"`
 }
 
 // # ASN.1 Definition:
