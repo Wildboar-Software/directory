@@ -34,11 +34,11 @@ type EstablishOperationalBindingArgument = OPTIONALLY_PROTECTED_SEQ
 type EstablishOperationalBindingArgumentData struct {
 	BindingType        asn1.ObjectIdentifier `asn1:"explicit,tag:0"`
 	BindingID          OperationalBindingID  `asn1:"optional,explicit,tag:1"`
-	AccessPoint        AccessPoint           `asn1:"explicit,tag:2"`
+	AccessPoint        AccessPoint           `asn1:"explicit,tag:2,set"`
 	Initiator          EstablishOperationalBindingArgumentData_initiator
 	Agreement          asn1.RawValue      `asn1:"explicit,tag:6"`
 	Valid              OBValidity         `asn1:"optional,explicit,tag:7"`
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:8"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:8,set"`
 }
 
 // # ASN.1 Definition:
@@ -94,9 +94,9 @@ type EstablishOperationalBindingResult = OPTIONALLY_PROTECTED_SEQ
 type EstablishOperationalBindingResultData struct {
 	BindingType        asn1.ObjectIdentifier `asn1:"explicit,tag:0"`
 	BindingID          OperationalBindingID  `asn1:"optional,explicit,tag:1"`
-	AccessPoint        AccessPoint           `asn1:"explicit,tag:2"`
+	AccessPoint        AccessPoint           `asn1:"explicit,tag:2,set"`
 	Initiator          EstablishOperationalBindingResultData_initiator
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName  `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool               `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)      `asn1:"optional,explicit,tag:27"`
@@ -130,12 +130,12 @@ type ModifyOperationalBindingArgument = OPTIONALLY_PROTECTED_SEQ
 type ModifyOperationalBindingArgumentData struct {
 	BindingType        asn1.ObjectIdentifier                          `asn1:"explicit,tag:0"`
 	BindingID          OperationalBindingID                           `asn1:"explicit,tag:1"`
-	AccessPoint        AccessPoint                                    `asn1:"optional,explicit,tag:2"`
+	AccessPoint        AccessPoint                                    `asn1:"optional,explicit,tag:2,set"`
 	Initiator          ModifyOperationalBindingArgumentData_initiator `asn1:"optional"`
 	NewBindingID       OperationalBindingID                           `asn1:"explicit,tag:6"`
 	NewAgreement       asn1.RawValue                                  `asn1:"optional,explicit,tag:7"`
 	Valid              ModifiedValidity                               `asn1:"optional,explicit,tag:8"`
-	SecurityParameters SecurityParameters                             `asn1:"optional,explicit,tag:9"`
+	SecurityParameters SecurityParameters                             `asn1:"optional,explicit,tag:9,set"`
 }
 
 // # ASN.1 Definition:
@@ -180,7 +180,7 @@ type ModifyOperationalBindingResultData struct {
 	BindingType        asn1.ObjectIdentifier
 	NewAgreement       asn1.RawValue
 	Valid              OBValidity         `asn1:"optional"`
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName  `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool               `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)      `asn1:"optional,explicit,tag:27"`
@@ -212,7 +212,7 @@ type TerminateOperationalBindingArgumentData struct {
 	BindingID          OperationalBindingID                              `asn1:"explicit,tag:1"`
 	Initiator          TerminateOperationalBindingArgumentData_initiator `asn1:"optional"`
 	TerminateAt        Time                                              `asn1:"optional,explicit,tag:5"`
-	SecurityParameters SecurityParameters                                `asn1:"optional,explicit,tag:6"`
+	SecurityParameters SecurityParameters                                `asn1:"optional,explicit,tag:6,set"`
 }
 
 // # ASN.1 Definition:
@@ -236,7 +236,7 @@ type TerminateOperationalBindingResultData struct {
 	BindingID          OperationalBindingID
 	BindingType        asn1.ObjectIdentifier
 	TerminateAt        time.Time          `asn1:"optional"`
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName  `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool               `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)      `asn1:"optional,explicit,tag:27"`
@@ -272,7 +272,7 @@ type OpBindingErrorParam struct {
 	BindingType        asn1.ObjectIdentifier       `asn1:"optional,explicit,tag:1"`
 	AgreementProposal  asn1.RawValue               `asn1:"optional,explicit,tag:2"`
 	RetryAt            Time                        `asn1:"optional,explicit,tag:3"`
-	SecurityParameters SecurityParameters          `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters          `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName           `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool                        `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)               `asn1:"optional,explicit,tag:27"`

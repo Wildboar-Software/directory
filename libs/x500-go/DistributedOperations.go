@@ -14,9 +14,9 @@ import (
 //	  ...,
 //	  COMPONENTS OF       CommonResults }
 type DsaReferralData struct {
-	Reference          ContinuationReference `asn1:"explicit,tag:0"`
+	Reference          ContinuationReference `asn1:"explicit,tag:0,set"`
 	ContextPrefix      DistinguishedName     `asn1:"optional,explicit,tag:1"`
-	SecurityParameters SecurityParameters    `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters    `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName     `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool                  `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)         `asn1:"optional,explicit,tag:27"`
@@ -55,7 +55,7 @@ type DsaReferralData struct {
 type ChainingArguments struct {
 	Originator             DistinguishedName   `asn1:"optional,explicit,tag:0"`
 	TargetObject           DistinguishedName   `asn1:"optional,explicit,tag:1"`
-	OperationProgress      OperationProgress   `asn1:"optional,explicit,tag:2"`
+	OperationProgress      OperationProgress   `asn1:"optional,explicit,tag:2,set"`
 	TraceInformation       TraceInformation    `asn1:"explicit,tag:3"`
 	AliasDereferenced      bool                `asn1:"optional,explicit,tag:4"`
 	AliasedRDNs            int                 `asn1:"optional,explicit,tag:5"`
@@ -63,7 +63,7 @@ type ChainingArguments struct {
 	ReferenceType          ReferenceType       `asn1:"optional,explicit,tag:7"`
 	Info                   DomainInfo          `asn1:"optional,explicit,tag:8"`
 	TimeLimit              Time                `asn1:"optional,explicit,tag:9"`
-	SecurityParameters     SecurityParameters  `asn1:"optional,explicit,tag:10"`
+	SecurityParameters     SecurityParameters  `asn1:"optional,explicit,tag:10,set"`
 	EntryOnly              bool                `asn1:"optional,explicit,tag:11"`
 	UniqueIdentifier       UniqueIdentifier    `asn1:"optional,explicit,tag:12"`
 	AuthenticationLevel    AuthenticationLevel `asn1:"optional,explicit,tag:13"`
@@ -91,6 +91,9 @@ type Time = asn1.RawValue
 //	DomainInfo ::= ABSTRACT-SYNTAX.&Type
 type DomainInfo = asn1.RawValue
 
+// CrossReferences type changed to `[](asn1.RawValue)` becaues of
+// https://github.com/golang/go/issues/27426
+//
 // # ASN.1 Definition:
 //
 //	ChainingResults ::= SET {
@@ -101,8 +104,8 @@ type DomainInfo = asn1.RawValue
 //	  ... }
 type ChainingResults struct {
 	Info               DomainInfo         `asn1:"optional,explicit,tag:0"`
-	CrossReferences    [](CrossReference) `asn1:"optional,explicit,tag:1"`
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:2"`
+	CrossReferences    [](asn1.RawValue)  `asn1:"optional,explicit,tag:1"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:2,set"`
 	AlreadySearched    Exclusions         `asn1:"optional,explicit,tag:3"`
 }
 
@@ -114,7 +117,7 @@ type ChainingResults struct {
 //	  ... }
 type CrossReference struct {
 	ContextPrefix DistinguishedName      `asn1:"explicit,tag:0"`
-	AccessPoint   AccessPointInformation `asn1:"explicit,tag:1"`
+	AccessPoint   AccessPointInformation `asn1:"explicit,tag:1,set"`
 }
 
 // # ASN.1 Definition:
@@ -132,10 +135,12 @@ type OperationProgress struct {
 	NextRDNToBeResolved int                                   `asn1:"optional,explicit,tag:1"`
 }
 
+// Changed to `[](asn1.RawValue)` becaues of https://github.com/golang/go/issues/27426
+//
 // # ASN.1 Definition:
 //
 //	TraceInformation ::= SEQUENCE OF TraceItem
-type TraceInformation = [](TraceItem)
+type TraceInformation = [](asn1.RawValue)
 
 // # ASN.1 Definition:
 //
@@ -147,7 +152,7 @@ type TraceInformation = [](TraceItem)
 type TraceItem struct {
 	Dsa               Name              `asn1:"explicit,tag:0"`
 	TargetObject      Name              `asn1:"optional,explicit,tag:1"`
-	OperationProgress OperationProgress `asn1:"explicit,tag:2"`
+	OperationProgress OperationProgress `asn1:"explicit,tag:2,set"`
 }
 
 // # ASN.1 Definition:
@@ -210,10 +215,12 @@ type MasterOrShadowAccessPoint struct {
 	ChainingRequired    bool                               `asn1:"optional,explicit,tag:5"`
 }
 
+// Changed to `[](asn1.RawValue)` becaues of https://github.com/golang/go/issues/27426
+//
 // # ASN.1 Definition:
 //
 //	MasterAndShadowAccessPoints ::= SET SIZE (1..MAX) OF MasterOrShadowAccessPoint
-type MasterAndShadowAccessPoints = [](MasterOrShadowAccessPoint)
+type MasterAndShadowAccessPoints = [](asn1.RawValue)
 
 // # ASN.1 Definition:
 //
@@ -237,8 +244,8 @@ type AccessPointInformation struct {
 //	  accessPoints   MasterAndShadowAccessPoints,
 //	  ... }
 type DitBridgeKnowledge struct {
-	DomainLocalID UnboundedDirectoryString `asn1:"optional"`
-	AccessPoints  MasterAndShadowAccessPoints
+	DomainLocalID UnboundedDirectoryString    `asn1:"optional"`
+	AccessPoints  MasterAndShadowAccessPoints `asn1:"set"`
 }
 
 // # ASN.1 Definition:
@@ -263,7 +270,7 @@ type Exclusions = [](pkix.RDNSequence)
 type ContinuationReference struct {
 	TargetObject        Name                       `asn1:"explicit,tag:0"`
 	AliasedRDNs         int                        `asn1:"optional,explicit,tag:1"`
-	OperationProgress   OperationProgress          `asn1:"explicit,tag:2"`
+	OperationProgress   OperationProgress          `asn1:"explicit,tag:2,set"`
 	RdnsResolved        int                        `asn1:"optional,explicit,tag:3"`
 	ReferenceType       ReferenceType              `asn1:"explicit,tag:4"`
 	AccessPoints        [](AccessPointInformation) `asn1:"explicit,tag:5,set"`

@@ -49,7 +49,7 @@ type Vertex struct {
 	Rdn          RelativeDistinguishedName   `asn1:"explicit,tag:0"`
 	AdmPointInfo [](Attribute)               `asn1:"optional,explicit,tag:1,set"`
 	Subentries   [](SubentryInfo)            `asn1:"optional,explicit,tag:2,set"`
-	AccessPoints MasterAndShadowAccessPoints `asn1:"optional,explicit,tag:3"`
+	AccessPoints MasterAndShadowAccessPoints `asn1:"optional,explicit,tag:3,set"`
 }
 
 // WARNING: If you encounter a bug encoding or decoding, it is probably the
@@ -79,7 +79,7 @@ type SubentryInfo struct {
 //
 //
 type SubordinateToSuperior struct {
-	AccessPoints MasterAndShadowAccessPoints `asn1:"optional,explicit,tag:0"`
+	AccessPoints MasterAndShadowAccessPoints `asn1:"optional,explicit,tag:0,set"`
 	Alias        bool                        `asn1:"optional,explicit,tag:1"`
 	EntryInfo    [](Attribute)               `asn1:"optional,explicit,tag:2,set"`
 	Subentries   [](SubentryInfo)            `asn1:"optional,explicit,tag:3,set"`
@@ -117,6 +117,6 @@ type NHOBSuperiorToSubordinate = SuperiorToSubordinate
 //
 //
 type NHOBSubordinateToSuperior struct {
-	AccessPoints MasterAndShadowAccessPoints `asn1:"optional,explicit,tag:0"`
+	AccessPoints MasterAndShadowAccessPoints `asn1:"optional,explicit,tag:0,set"`
 	Subentries   [](SubentryInfo)            `asn1:"optional,explicit,tag:3,set"`
 }

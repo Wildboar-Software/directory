@@ -29,7 +29,7 @@ type AgreementID = OperationalBindingID
 type ShadowingAgreementInfo struct {
 	ShadowSubject    UnitOfReplication
 	UpdateMode       UpdateMode  `asn1:"optional"`
-	Master           AccessPoint `asn1:"optional"`
+	Master           AccessPoint `asn1:"optional,set"`
 	SecondaryShadows bool        `asn1:"optional,tag:2"`
 }
 
@@ -185,7 +185,7 @@ type CoordinateShadowUpdateArgumentData struct {
 	AgreementID        AgreementID
 	LastUpdate         ShadowingTime `asn1:"optional"`
 	UpdateStrategy     CoordinateShadowUpdateArgumentData_updateStrategy
-	SecurityParameters SecurityParameters `asn1:"optional"`
+	SecurityParameters SecurityParameters `asn1:"optional,set"`
 }
 
 // # ASN.1 Definition:
@@ -207,7 +207,7 @@ type CoordinateShadowUpdateResult = asn1.RawValue
 type CoordinateShadowUpdateResultData struct {
 	AgreementID        AgreementID
 	LastUpdate         ShadowingTime      `asn1:"optional"`
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName  `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool               `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)      `asn1:"optional,explicit,tag:27"`
@@ -236,7 +236,7 @@ type RequestShadowUpdateArgumentData struct {
 	AgreementID        AgreementID
 	LastUpdate         ShadowingTime `asn1:"optional"`
 	RequestedStrategy  RequestShadowUpdateArgumentData_requestedStrategy
-	SecurityParameters SecurityParameters `asn1:"optional"`
+	SecurityParameters SecurityParameters `asn1:"optional,set"`
 }
 
 // # ASN.1 Definition:
@@ -259,7 +259,7 @@ type RequestShadowUpdateResult = asn1.RawValue
 type RequestShadowUpdateResultData struct {
 	AgreementID        AgreementID
 	LastUpdate         ShadowingTime      `asn1:"optional"`
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName  `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool               `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)      `asn1:"optional,explicit,tag:27"`
@@ -284,7 +284,7 @@ type UpdateShadowArgumentData struct {
 	UpdateTime         ShadowingTime
 	UpdateWindow       UpdateWindow `asn1:"optional"`
 	UpdatedInfo        RefreshInformation
-	SecurityParameters SecurityParameters `asn1:"optional"`
+	SecurityParameters SecurityParameters `asn1:"optional,set"`
 }
 
 // # ASN.1 Definition:
@@ -306,7 +306,7 @@ type UpdateShadowResult = asn1.RawValue
 type UpdateShadowResultData struct {
 	AgreementID        AgreementID
 	LastUpdate         ShadowingTime      `asn1:"optional"`
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName  `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool               `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)      `asn1:"optional,explicit,tag:27"`
@@ -447,7 +447,7 @@ type ShadowErrorData struct {
 	Problem            ShadowProblem
 	LastUpdate         ShadowingTime      `asn1:"optional"`
 	UpdateWindow       UpdateWindow       `asn1:"optional"`
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName  `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool               `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)      `asn1:"optional,explicit,tag:27"`

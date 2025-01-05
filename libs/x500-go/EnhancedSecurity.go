@@ -35,7 +35,7 @@ type SignedSecurityLabelContent struct {
 	AttHash       HASH
 	Issuer        Name          `asn1:"optional"`
 	KeyIdentifier KeyIdentifier `asn1:"optional"`
-	SecurityLabel SecurityLabel
+	SecurityLabel SecurityLabel `asn1:"set"`
 }
 
 // # ASN.1 Definition:

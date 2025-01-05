@@ -193,10 +193,12 @@ const ResourceSyntax_MiscellaneousResourceExhausted ResourceSyntax = 4
 //	ResultAuthenticationPolicy ::= RequestAuthenticationPolicy
 type ResultAuthenticationPolicy = RequestAuthenticationPolicy
 
+// Changed to `[](asn1.RawValue)` becaues of https://github.com/golang/go/issues/27426
+//
 // # ASN.1 Definition:
 //
 //	SecondaryShadows ::= SET OF SupplierAndConsumers
-type SecondaryShadows = [](SupplierAndConsumers)
+type SecondaryShadows = [](asn1.RawValue)
 
 // # ASN.1 Definition:
 //

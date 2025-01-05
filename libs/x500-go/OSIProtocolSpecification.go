@@ -35,7 +35,7 @@ type OSI_PDU = asn1.RawValue
 //	          single-ASN1-type             [0]  ABSTRACT-SYNTAX.&Type
 //	                                             (AARQ-apdu{{Protocols}})}}}}}
 type OsiBind struct {
-	Mode_selector          OsiBind_mode_selector          `asn1:"tag:0"`
+	Mode_selector          OsiBind_mode_selector          `asn1:"tag:0,set"`
 	Normal_mode_parameters OsiBind_normal_mode_parameters `asn1:"tag:2"`
 }
 
@@ -153,7 +153,7 @@ type TheOsiBind = asn1.RawValue
 //	          single-ASN1-type              [0]  ABSTRACT-SYNTAX.&Type(AARE-apdu{{Protocols}}
 //	  )}}}}}
 type OsiBindResult struct {
-	Mode_selector          OsiBindResult_mode_selector          `asn1:"tag:0"`
+	Mode_selector          OsiBindResult_mode_selector          `asn1:"tag:0,set"`
 	Normal_mode_parameters OsiBindResult_normal_mode_parameters `asn1:"tag:2"`
 }
 

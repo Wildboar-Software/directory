@@ -61,16 +61,16 @@ type Precedence = int64
 type ProtectedItems struct {
 	Entry                          asn1.RawValue                `asn1:"optional,explicit,tag:0"`
 	AllUserAttributeTypes          asn1.RawValue                `asn1:"optional,explicit,tag:1"`
-	AttributeType                  [](AttributeType)            `asn1:"optional,explicit,tag:2,set"`
-	AllAttributeValues             [](AttributeType)            `asn1:"optional,explicit,tag:3,set"`
+	AttributeType                  [](AttributeType)            `asn1:"optional,explicit,tag:2"`
+	AllAttributeValues             [](AttributeType)            `asn1:"optional,explicit,tag:3"`
 	AllUserAttributeTypesAndValues asn1.RawValue                `asn1:"optional,explicit,tag:4"`
-	AttributeValue                 []pkix.AttributeTypeAndValue `asn1:"optional,explicit,tag:5,set"`
-	SelfValue                      [](AttributeType)            `asn1:"optional,explicit,tag:6,set"`
+	AttributeValue                 []pkix.AttributeTypeAndValue `asn1:"optional,explicit,tag:5"`
+	SelfValue                      [](AttributeType)            `asn1:"optional,explicit,tag:6"`
 	RangeOfValues                  Filter                       `asn1:"optional,explicit,tag:7"`
-	MaxValueCount                  [](MaxValueCount)            `asn1:"optional,explicit,tag:8,set"`
+	MaxValueCount                  [](MaxValueCount)            `asn1:"optional,explicit,tag:8"`
 	MaxImmSub                      int                          `asn1:"optional,explicit,tag:9"`
-	RestrictedBy                   [](RestrictedValue)          `asn1:"optional,explicit,tag:10,set"`
-	Contexts                       [](ContextAssertion)         `asn1:"optional,explicit,tag:11,set"`
+	RestrictedBy                   [](RestrictedValue)          `asn1:"optional,explicit,tag:10"`
+	Contexts                       [](ContextAssertion)         `asn1:"optional,explicit,tag:11"`
 	Classes                        Refinement                   `asn1:"optional,explicit,tag:12"`
 }
 
@@ -110,9 +110,9 @@ type RestrictedValue struct {
 type UserClasses struct {
 	AllUsers  asn1.RawValue            `asn1:"optional,explicit,tag:0"`
 	ThisEntry asn1.RawValue            `asn1:"optional,explicit,tag:1"`
-	Name      [](NameAndOptionalUID)   `asn1:"optional,explicit,tag:2,set"`
-	UserGroup [](NameAndOptionalUID)   `asn1:"optional,explicit,tag:3,set"`
-	Subtree   [](SubtreeSpecification) `asn1:"optional,explicit,tag:4,set"`
+	Name      [](NameAndOptionalUID)   `asn1:"optional,explicit,tag:2"`
+	UserGroup [](NameAndOptionalUID)   `asn1:"optional,explicit,tag:3"`
+	Subtree   [](SubtreeSpecification) `asn1:"optional,explicit,tag:4"`
 }
 
 // # ASN.1 Definition:
@@ -294,7 +294,7 @@ var Rule_and_simple_access_control asn1.ObjectIdentifier = []int{2, 5, 28, 5}
 // ACIItem-itemOrUserFirst-itemFirst ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type ACIItem_itemOrUserFirst_itemFirst struct {
 	ProtectedItems  ProtectedItems
-	ItemPermissions [](ItemPermission) `asn1:"set"`
+	ItemPermissions [](ItemPermission)
 }
 
 // # ASN.1 Definition:
@@ -302,7 +302,7 @@ type ACIItem_itemOrUserFirst_itemFirst struct {
 // ACIItem-itemOrUserFirst-userFirst ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
 type ACIItem_itemOrUserFirst_userFirst struct {
 	UserClasses     UserClasses
-	UserPermissions [](UserPermission) `asn1:"set"`
+	UserPermissions [](UserPermission)
 }
 
 // # ASN.1 Definition:

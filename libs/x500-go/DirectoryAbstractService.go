@@ -23,10 +23,10 @@ import (
 //	  familyGrouping       [19]  FamilyGrouping     DEFAULT entryOnly,
 //	  ... }
 type CommonArguments struct {
-	ServiceControls     ServiceControls    `asn1:"optional,explicit,tag:30"`
-	SecurityParameters  SecurityParameters `asn1:"optional,explicit,tag:29"`
+	ServiceControls     ServiceControls    `asn1:"optional,explicit,tag:30,set"`
+	SecurityParameters  SecurityParameters `asn1:"optional,explicit,tag:29,set"`
 	Requestor           DistinguishedName  `asn1:"optional,explicit,tag:28"`
-	OperationProgress   OperationProgress  `asn1:"optional,explicit,tag:27"`
+	OperationProgress   OperationProgress  `asn1:"optional,explicit,tag:27,set"`
 	AliasedRDNs         int                `asn1:"optional,explicit,tag:26"`
 	CriticalExtensions  asn1.BitString     `asn1:"optional,explicit,tag:25"`
 	ReferenceType       ReferenceType      `asn1:"optional,explicit,tag:24"`
@@ -55,10 +55,10 @@ type CommonArguments struct {
 //	  familyGrouping       [19]  FamilyGrouping     DEFAULT entryOnly,
 //	  ... }
 type CommonArgumentsSeq struct {
-	ServiceControls     ServiceControls    `asn1:"optional,explicit,tag:30"`
-	SecurityParameters  SecurityParameters `asn1:"optional,explicit,tag:29"`
+	ServiceControls     ServiceControls    `asn1:"optional,explicit,tag:30,set"`
+	SecurityParameters  SecurityParameters `asn1:"optional,explicit,tag:29,set"`
 	Requestor           DistinguishedName  `asn1:"optional,explicit,tag:28"`
-	OperationProgress   OperationProgress  `asn1:"optional,explicit,tag:27"`
+	OperationProgress   OperationProgress  `asn1:"optional,explicit,tag:27,set"`
 	AliasedRDNs         int                `asn1:"optional,explicit,tag:26"`
 	CriticalExtensions  asn1.BitString     `asn1:"optional,explicit,tag:25"`
 	ReferenceType       ReferenceType      `asn1:"optional,explicit,tag:24"`
@@ -96,7 +96,7 @@ const (
 //	                            {{SupportedAttributes}} OPTIONAL,
 //	  ... }
 type CommonResults struct {
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName  `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool               `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)      `asn1:"optional,explicit,tag:27"`
@@ -112,7 +112,7 @@ type CommonResults struct {
 //	                            {{SupportedAttributes}} OPTIONAL,
 //	  ... }
 type CommonResultsSeq struct {
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName  `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool               `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)      `asn1:"optional,explicit,tag:27"`
@@ -599,7 +599,7 @@ type PwdResponseValue struct {
 type DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 struct {
 	Versions           Versions `asn1:"optional,explicit,tag:0"`
 	Error              DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1_error
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30,set"`
 }
 
 // # ASN.1 Definition:
@@ -623,12 +623,12 @@ type ReadArgument = OPTIONALLY_PROTECTED
 //	  COMPONENTS OF             CommonArguments }
 type ReadArgumentData struct {
 	Object              Name                      `asn1:"explicit,tag:0"`
-	Selection           EntryInformationSelection `asn1:"optional,explicit,tag:1"`
+	Selection           EntryInformationSelection `asn1:"optional,explicit,tag:1,set"`
 	ModifyRightsRequest bool                      `asn1:"optional,explicit,tag:2"`
-	ServiceControls     ServiceControls           `asn1:"optional,explicit,tag:30"`
-	SecurityParameters  SecurityParameters        `asn1:"optional,explicit,tag:29"`
+	ServiceControls     ServiceControls           `asn1:"optional,explicit,tag:30,set"`
+	SecurityParameters  SecurityParameters        `asn1:"optional,explicit,tag:29,set"`
 	Requestor           DistinguishedName         `asn1:"optional,explicit,tag:28"`
-	OperationProgress   OperationProgress         `asn1:"optional,explicit,tag:27"`
+	OperationProgress   OperationProgress         `asn1:"optional,explicit,tag:27,set"`
 	AliasedRDNs         int                       `asn1:"optional,explicit,tag:26"`
 	CriticalExtensions  asn1.BitString            `asn1:"optional,explicit,tag:25"`
 	ReferenceType       ReferenceType             `asn1:"optional,explicit,tag:24"`
@@ -655,7 +655,7 @@ type ReadResult = OPTIONALLY_PROTECTED
 type ReadResultData struct {
 	Entry              EntryInformation   `asn1:"explicit,tag:0"`
 	ModifyRights       ModifyRights       `asn1:"optional,explicit,tag:1"`
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName  `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool               `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)      `asn1:"optional,explicit,tag:27"`
@@ -693,10 +693,10 @@ type CompareArgument = OPTIONALLY_PROTECTED
 type CompareArgumentData struct {
 	Object              Name                    `asn1:"explicit,tag:0"`
 	Purported           AttributeValueAssertion `asn1:"explicit,tag:1"`
-	ServiceControls     ServiceControls         `asn1:"optional,explicit,tag:30"`
-	SecurityParameters  SecurityParameters      `asn1:"optional,explicit,tag:29"`
+	ServiceControls     ServiceControls         `asn1:"optional,explicit,tag:30,set"`
+	SecurityParameters  SecurityParameters      `asn1:"optional,explicit,tag:29,set"`
 	Requestor           DistinguishedName       `asn1:"optional,explicit,tag:28"`
-	OperationProgress   OperationProgress       `asn1:"optional,explicit,tag:27"`
+	OperationProgress   OperationProgress       `asn1:"optional,explicit,tag:27,set"`
 	AliasedRDNs         int                     `asn1:"optional,explicit,tag:26"`
 	CriticalExtensions  asn1.BitString          `asn1:"optional,explicit,tag:25"`
 	ReferenceType       ReferenceType           `asn1:"optional,explicit,tag:24"`
@@ -727,7 +727,7 @@ type CompareResultData struct {
 	Matched            bool               `asn1:"explicit,tag:0"`
 	FromEntry          bool               `asn1:"optional,explicit,tag:1"`
 	MatchedSubtype     AttributeType      `asn1:"optional,explicit,tag:2"`
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName  `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool               `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)      `asn1:"optional,explicit,tag:27"`
@@ -764,7 +764,7 @@ type AbandonResult = asn1.RawValue
 //	  COMPONENTS OF CommonResultsSeq }
 type AbandonResultData struct {
 	InvokeID           InvokeId
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName  `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool               `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)      `asn1:"optional,explicit,tag:27"`
@@ -789,10 +789,10 @@ type ListArgumentData struct {
 	Object              Name                `asn1:"explicit,tag:0"`
 	PagedResults        PagedResultsRequest `asn1:"optional,explicit,tag:1"`
 	ListFamily          bool                `asn1:"optional,explicit,tag:2"`
-	ServiceControls     ServiceControls     `asn1:"optional,explicit,tag:30"`
-	SecurityParameters  SecurityParameters  `asn1:"optional,explicit,tag:29"`
+	ServiceControls     ServiceControls     `asn1:"optional,explicit,tag:30,set"`
+	SecurityParameters  SecurityParameters  `asn1:"optional,explicit,tag:29,set"`
 	Requestor           DistinguishedName   `asn1:"optional,explicit,tag:28"`
-	OperationProgress   OperationProgress   `asn1:"optional,explicit,tag:27"`
+	OperationProgress   OperationProgress   `asn1:"optional,explicit,tag:27,set"`
 	AliasedRDNs         int                 `asn1:"optional,explicit,tag:26"`
 	CriticalExtensions  asn1.BitString      `asn1:"optional,explicit,tag:25"`
 	ReferenceType       ReferenceType       `asn1:"optional,explicit,tag:24"`
@@ -846,12 +846,12 @@ type ListResultData = asn1.RawValue
 //	  --                            [10] Not to be used -- }
 type PartialOutcomeQualifier struct {
 	LimitProblem                  LimitProblem                       `asn1:"optional,explicit,tag:0"`
-	Unexplored                    [](ContinuationReference)          `asn1:"optional,explicit,tag:1,set"`
+	Unexplored                    [](ContinuationReference)          `asn1:"optional,explicit,tag:1"`
 	UnavailableCriticalExtensions bool                               `asn1:"optional,explicit,tag:2"`
 	UnknownErrors                 [](asn1.RawValue)                  `asn1:"optional,explicit,tag:3,set"`
 	QueryReference                []byte                             `asn1:"optional,explicit,tag:4"`
 	OverspecFilter                Filter                             `asn1:"optional,explicit,tag:5"`
-	Notification                  [](Attribute)                      `asn1:"optional,explicit,tag:6"`
+	Notification                  [](Attribute)                      `asn1:"optional,explicit,tag:6,set"`
 	EntryCount                    PartialOutcomeQualifier_entryCount `asn1:"optional"`
 }
 
@@ -906,7 +906,7 @@ type SearchArgumentData struct {
 	Subset               SearchArgumentData_subset   `asn1:"optional,explicit,tag:1,default:0"`
 	Filter               Filter                      `asn1:"optional,explicit,tag:2"`
 	SearchAliases        bool                        `asn1:"optional,explicit,tag:3"`
-	Selection            EntryInformationSelection   `asn1:"optional,explicit,tag:4"`
+	Selection            EntryInformationSelection   `asn1:"optional,explicit,tag:4,set"`
 	PagedResults         PagedResultsRequest         `asn1:"optional,explicit,tag:5"`
 	MatchedValuesOnly    bool                        `asn1:"optional,explicit,tag:6"`
 	ExtendedFilter       Filter                      `asn1:"optional,explicit,tag:7"`
@@ -917,10 +917,10 @@ type SearchArgumentData struct {
 	SearchControlOptions SearchControlOptions        `asn1:"optional,explicit,tag:12"`
 	JoinArguments        [](JoinArgument)            `asn1:"optional,explicit,tag:13"`
 	JoinType             SearchArgumentData_joinType `asn1:"optional,explicit,tag:14,default:1"`
-	ServiceControls      ServiceControls             `asn1:"optional,explicit,tag:30"`
-	SecurityParameters   SecurityParameters          `asn1:"optional,explicit,tag:29"`
+	ServiceControls      ServiceControls             `asn1:"optional,explicit,tag:30,set"`
+	SecurityParameters   SecurityParameters          `asn1:"optional,explicit,tag:29,set"`
 	Requestor            DistinguishedName           `asn1:"optional,explicit,tag:28"`
-	OperationProgress    OperationProgress           `asn1:"optional,explicit,tag:27"`
+	OperationProgress    OperationProgress           `asn1:"optional,explicit,tag:27,set"`
 	AliasedRDNs          int                         `asn1:"optional,explicit,tag:26"`
 	CriticalExtensions   asn1.BitString              `asn1:"optional,explicit,tag:25"`
 	ReferenceType        ReferenceType               `asn1:"optional,explicit,tag:24"`
@@ -1027,7 +1027,7 @@ type JoinArgument struct {
 	JoinSubset     JoinArgument_joinSubset   `asn1:"optional,explicit,tag:2,default:0"`
 	JoinFilter     Filter                    `asn1:"optional,explicit,tag:3"`
 	JoinAttributes [](JoinAttPair)           `asn1:"optional,explicit,tag:4"`
-	JoinSelection  EntryInformationSelection `asn1:"explicit,tag:5"`
+	JoinSelection  EntryInformationSelection `asn1:"explicit,tag:5,set"`
 }
 
 // # ASN.1 Definition:
@@ -1094,11 +1094,11 @@ type AddEntryArgument = OPTIONALLY_PROTECTED
 type AddEntryArgumentData struct {
 	Object              Name               `asn1:"explicit,tag:0"`
 	Entry               [](Attribute)      `asn1:"explicit,tag:1,set"`
-	TargetSystem        AccessPoint        `asn1:"optional,explicit,tag:2"`
-	ServiceControls     ServiceControls    `asn1:"optional,explicit,tag:30"`
-	SecurityParameters  SecurityParameters `asn1:"optional,explicit,tag:29"`
+	TargetSystem        AccessPoint        `asn1:"optional,explicit,tag:2,set"`
+	ServiceControls     ServiceControls    `asn1:"optional,explicit,tag:30,set"`
+	SecurityParameters  SecurityParameters `asn1:"optional,explicit,tag:29,set"`
 	Requestor           DistinguishedName  `asn1:"optional,explicit,tag:28"`
-	OperationProgress   OperationProgress  `asn1:"optional,explicit,tag:27"`
+	OperationProgress   OperationProgress  `asn1:"optional,explicit,tag:27,set"`
 	AliasedRDNs         int                `asn1:"optional,explicit,tag:26"`
 	CriticalExtensions  asn1.BitString     `asn1:"optional,explicit,tag:25"`
 	ReferenceType       ReferenceType      `asn1:"optional,explicit,tag:24"`
@@ -1124,7 +1124,7 @@ type AddEntryResult = asn1.RawValue
 //	  ...,
 //	  COMPONENTS OF CommonResultsSeq }
 type AddEntryResultData struct {
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName  `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool               `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)      `asn1:"optional,explicit,tag:27"`
@@ -1145,10 +1145,10 @@ type RemoveEntryArgument = OPTIONALLY_PROTECTED
 //	  }
 type RemoveEntryArgumentData struct {
 	Object              Name               `asn1:"explicit,tag:0"`
-	ServiceControls     ServiceControls    `asn1:"optional,explicit,tag:30"`
-	SecurityParameters  SecurityParameters `asn1:"optional,explicit,tag:29"`
+	ServiceControls     ServiceControls    `asn1:"optional,explicit,tag:30,set"`
+	SecurityParameters  SecurityParameters `asn1:"optional,explicit,tag:29,set"`
 	Requestor           DistinguishedName  `asn1:"optional,explicit,tag:28"`
-	OperationProgress   OperationProgress  `asn1:"optional,explicit,tag:27"`
+	OperationProgress   OperationProgress  `asn1:"optional,explicit,tag:27,set"`
 	AliasedRDNs         int                `asn1:"optional,explicit,tag:26"`
 	CriticalExtensions  asn1.BitString     `asn1:"optional,explicit,tag:25"`
 	ReferenceType       ReferenceType      `asn1:"optional,explicit,tag:24"`
@@ -1174,7 +1174,7 @@ type RemoveEntryResult = asn1.RawValue
 //	  ...,
 //	  COMPONENTS OF CommonResultsSeq }
 type RemoveEntryResultData struct {
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName  `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool               `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)      `asn1:"optional,explicit,tag:27"`
@@ -1197,11 +1197,11 @@ type ModifyEntryArgument = OPTIONALLY_PROTECTED
 type ModifyEntryArgumentData struct {
 	Object              Name                      `asn1:"explicit,tag:0"`
 	Changes             [](EntryModification)     `asn1:"explicit,tag:1"`
-	Selection           EntryInformationSelection `asn1:"optional,explicit,tag:2"`
-	ServiceControls     ServiceControls           `asn1:"optional,explicit,tag:30"`
-	SecurityParameters  SecurityParameters        `asn1:"optional,explicit,tag:29"`
+	Selection           EntryInformationSelection `asn1:"optional,explicit,tag:2,set"`
+	ServiceControls     ServiceControls           `asn1:"optional,explicit,tag:30,set"`
+	SecurityParameters  SecurityParameters        `asn1:"optional,explicit,tag:29,set"`
 	Requestor           DistinguishedName         `asn1:"optional,explicit,tag:28"`
-	OperationProgress   OperationProgress         `asn1:"optional,explicit,tag:27"`
+	OperationProgress   OperationProgress         `asn1:"optional,explicit,tag:27,set"`
 	AliasedRDNs         int                       `asn1:"optional,explicit,tag:26"`
 	CriticalExtensions  asn1.BitString            `asn1:"optional,explicit,tag:25"`
 	ReferenceType       ReferenceType             `asn1:"optional,explicit,tag:24"`
@@ -1229,7 +1229,7 @@ type ModifyEntryResult = asn1.RawValue
 //	  COMPONENTS OF CommonResultsSeq }
 type ModifyEntryResultData struct {
 	Entry              EntryInformation   `asn1:"optional,explicit,tag:0"`
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName  `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool               `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)      `asn1:"optional,explicit,tag:27"`
@@ -1268,10 +1268,10 @@ type ModifyDNArgumentData struct {
 	NewRDN              RelativeDistinguishedName `asn1:"explicit,tag:1"`
 	DeleteOldRDN        bool                      `asn1:"optional,explicit,tag:2"`
 	NewSuperior         DistinguishedName         `asn1:"optional,explicit,tag:3"`
-	ServiceControls     ServiceControls           `asn1:"optional,explicit,tag:30"`
-	SecurityParameters  SecurityParameters        `asn1:"optional,explicit,tag:29"`
+	ServiceControls     ServiceControls           `asn1:"optional,explicit,tag:30,set"`
+	SecurityParameters  SecurityParameters        `asn1:"optional,explicit,tag:29,set"`
 	Requestor           DistinguishedName         `asn1:"optional,explicit,tag:28"`
-	OperationProgress   OperationProgress         `asn1:"optional,explicit,tag:27"`
+	OperationProgress   OperationProgress         `asn1:"optional,explicit,tag:27,set"`
 	AliasedRDNs         int                       `asn1:"optional,explicit,tag:26"`
 	CriticalExtensions  asn1.BitString            `asn1:"optional,explicit,tag:25"`
 	ReferenceType       ReferenceType             `asn1:"optional,explicit,tag:24"`
@@ -1299,7 +1299,7 @@ type ModifyDNResult = asn1.RawValue
 //	  COMPONENTS OF CommonResultsSeq }
 type ModifyDNResultData struct {
 	NewRDN             RelativeDistinguishedName
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName  `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool               `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)      `asn1:"optional,explicit,tag:27"`
@@ -1338,7 +1338,7 @@ type ChangePasswordResult = asn1.RawValue
 //	  ...,
 //	  COMPONENTS OF CommonResultsSeq }
 type ChangePasswordResultData struct {
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName  `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool               `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)      `asn1:"optional,explicit,tag:27"`
@@ -1375,7 +1375,7 @@ type AdministerPasswordResult = asn1.RawValue
 //	  ...,
 //	  COMPONENTS OF CommonResultsSeq }
 type AdministerPasswordResultData struct {
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName  `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool               `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)      `asn1:"optional,explicit,tag:27"`
@@ -1399,10 +1399,10 @@ type LdapArgumentData struct {
 	Object              DistinguishedName
 	LdapMessage         asn1.RawValue
 	LinkId              LinkId             `asn1:"optional"`
-	ServiceControls     ServiceControls    `asn1:"optional,explicit,tag:30"`
-	SecurityParameters  SecurityParameters `asn1:"optional,explicit,tag:29"`
+	ServiceControls     ServiceControls    `asn1:"optional,explicit,tag:30,set"`
+	SecurityParameters  SecurityParameters `asn1:"optional,explicit,tag:29,set"`
 	Requestor           DistinguishedName  `asn1:"optional,explicit,tag:28"`
-	OperationProgress   OperationProgress  `asn1:"optional,explicit,tag:27"`
+	OperationProgress   OperationProgress  `asn1:"optional,explicit,tag:27,set"`
 	AliasedRDNs         int                `asn1:"optional,explicit,tag:26"`
 	CriticalExtensions  asn1.BitString     `asn1:"optional,explicit,tag:25"`
 	ReferenceType       ReferenceType      `asn1:"optional,explicit,tag:24"`
@@ -1434,7 +1434,7 @@ type LdapResult = OPTIONALLY_PROTECTED_SEQ
 type LdapResultData struct {
 	LdapMessages       [](asn1.RawValue)  `asn1:"optional"`
 	ReturnToClient     bool               `asn1:"optional"`
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName  `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool               `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)      `asn1:"optional,explicit,tag:27"`
@@ -1460,10 +1460,10 @@ type LinkedArgumentData struct {
 	LdapMessage         asn1.RawValue
 	LinkId              LinkId
 	ReturnToClient      bool               `asn1:"optional"`
-	ServiceControls     ServiceControls    `asn1:"optional,explicit,tag:30"`
-	SecurityParameters  SecurityParameters `asn1:"optional,explicit,tag:29"`
+	ServiceControls     ServiceControls    `asn1:"optional,explicit,tag:30,set"`
+	SecurityParameters  SecurityParameters `asn1:"optional,explicit,tag:29,set"`
 	Requestor           DistinguishedName  `asn1:"optional,explicit,tag:28"`
-	OperationProgress   OperationProgress  `asn1:"optional,explicit,tag:27"`
+	OperationProgress   OperationProgress  `asn1:"optional,explicit,tag:27,set"`
 	AliasedRDNs         int                `asn1:"optional,explicit,tag:26"`
 	CriticalExtensions  asn1.BitString     `asn1:"optional,explicit,tag:25"`
 	ReferenceType       ReferenceType      `asn1:"optional,explicit,tag:24"`
@@ -1488,7 +1488,7 @@ type LinkedResult = asn1.RawValue
 //	    COMPONENTS OF CommonResults }
 type AbandonedData struct {
 	Problem            AbandonedProblem   `asn1:"optional"`
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName  `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool               `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)      `asn1:"optional,explicit,tag:27"`
@@ -1515,7 +1515,7 @@ const (
 type AbandonFailedData struct {
 	Problem            AbandonProblem     `asn1:"explicit,tag:0"`
 	Operation          InvokeId           `asn1:"explicit,tag:1"`
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName  `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool               `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)      `asn1:"optional,explicit,tag:27"`
@@ -1550,7 +1550,7 @@ const AbandonProblem_CannotAbandon AbandonProblem = 3
 type AttributeErrorData struct {
 	Object             Name                                 `asn1:"explicit,tag:0"`
 	Problems           [](AttributeErrorData_problems_Item) `asn1:"explicit,tag:1,set"`
-	SecurityParameters SecurityParameters                   `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters                   `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName                    `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool                                 `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)                        `asn1:"optional,explicit,tag:27"`
@@ -1593,7 +1593,7 @@ const AttributeProblem_ContextViolation AttributeProblem = 7
 type NameErrorData struct {
 	Problem            NameProblem        `asn1:"explicit,tag:0"`
 	Matched            Name               `asn1:"explicit,tag:1"`
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName  `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool               `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)      `asn1:"optional,explicit,tag:27"`
@@ -1626,7 +1626,7 @@ const NameProblem_AliasDereferencingProblem NameProblem = 4
 //	  COMPONENTS OF  CommonResults }
 type ReferralData struct {
 	Candidate          ContinuationReference `asn1:"explicit,tag:0"`
-	SecurityParameters SecurityParameters    `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters    `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName     `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool                  `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)         `asn1:"optional,explicit,tag:27"`
@@ -1645,7 +1645,7 @@ type SecurityErrorData struct {
 	Problem            SecurityProblem    `asn1:"explicit,tag:0"`
 	SpkmInfo           SPKM_ERROR         `asn1:"optional,explicit,tag:1"`
 	EncPwdInfo         EncPwdInfo         `asn1:"optional,explicit,tag:2"`
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName  `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool               `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)      `asn1:"optional,explicit,tag:27"`
@@ -1711,7 +1711,7 @@ type EncPwdInfo struct {
 //	  COMPONENTS OF  CommonResults }
 type ServiceErrorData struct {
 	Problem            ServiceProblem     `asn1:"explicit,tag:0"`
-	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName  `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool               `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)      `asn1:"optional,explicit,tag:27"`
@@ -1790,7 +1790,7 @@ const ServiceProblem_NotSupportedByLDAP ServiceProblem = 18
 type UpdateErrorData struct {
 	Problem            UpdateProblem                          `asn1:"explicit,tag:0"`
 	AttributeInfo      [](UpdateErrorData_attributeInfo_Item) `asn1:"optional,explicit,tag:1,set"`
-	SecurityParameters SecurityParameters                     `asn1:"optional,explicit,tag:30"`
+	SecurityParameters SecurityParameters                     `asn1:"optional,explicit,tag:30,set"`
 	Performer          DistinguishedName                      `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool                                   `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)                          `asn1:"optional,explicit,tag:27"`
@@ -2034,8 +2034,8 @@ type ListResultData_listInfo_subordinates_Item struct {
 type ListResultData_listInfo struct {
 	Name                    Name                                          `asn1:"optional"`
 	Subordinates            [](ListResultData_listInfo_subordinates_Item) `asn1:"explicit,tag:1,set"`
-	PartialOutcomeQualifier PartialOutcomeQualifier                       `asn1:"optional,explicit,tag:2"`
-	SecurityParameters      SecurityParameters                            `asn1:"optional,explicit,tag:30"`
+	PartialOutcomeQualifier PartialOutcomeQualifier                       `asn1:"optional,explicit,tag:2,set"`
+	SecurityParameters      SecurityParameters                            `asn1:"optional,explicit,tag:30,set"`
 	Performer               DistinguishedName                             `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced       bool                                          `asn1:"optional,explicit,tag:28"`
 	Notification            [](Attribute)                                 `asn1:"optional,explicit,tag:27"`
@@ -2085,9 +2085,9 @@ const (
 type SearchResultData_searchInfo struct {
 	Name                    Name                    `asn1:"optional"`
 	Entries                 [](EntryInformation)    `asn1:"explicit,tag:0,set"`
-	PartialOutcomeQualifier PartialOutcomeQualifier `asn1:"optional,explicit,tag:2"`
+	PartialOutcomeQualifier PartialOutcomeQualifier `asn1:"optional,explicit,tag:2,set"`
 	AltMatching             bool                    `asn1:"optional,explicit,tag:3"`
-	SecurityParameters      SecurityParameters      `asn1:"optional,explicit,tag:30"`
+	SecurityParameters      SecurityParameters      `asn1:"optional,explicit,tag:30,set"`
 	Performer               DistinguishedName       `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced       bool                    `asn1:"optional,explicit,tag:28"`
 	Notification            [](Attribute)           `asn1:"optional,explicit,tag:27"`

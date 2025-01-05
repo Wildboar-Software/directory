@@ -172,7 +172,7 @@ type BuiltInStandardAttributes struct {
 	Private_domain_name        PrivateDomainName        `asn1:"optional,explicit,tag:2"`
 	Organization_name          OrganizationName         `asn1:"optional,explicit,tag:3"`
 	Numeric_user_identifier    NumericUserIdentifier    `asn1:"optional,explicit,tag:4"`
-	Personal_name              PersonalName             `asn1:"optional,explicit,tag:5"`
+	Personal_name              PersonalName             `asn1:"optional,explicit,tag:5,set"`
 	Organizational_unit_names  OrganizationalUnitNames  `asn1:"optional,explicit,tag:6"`
 }
 
@@ -591,8 +591,8 @@ type UniversalDomainDefinedAttributes = [](UniversalDomainDefinedAttribute)
 //	  type   UniversalOrBMPString{ub-domain-defined-attribute-type-length},
 //	  value  UniversalOrBMPString{ub-domain-defined-attribute-value-length} }
 type UniversalDomainDefinedAttribute struct {
-	Type  UniversalOrBMPString
-	Value UniversalOrBMPString
+	Type  UniversalOrBMPString `asn1:"set"`
+	Value UniversalOrBMPString `asn1:"set"`
 }
 
 // # ASN.1 Definition:

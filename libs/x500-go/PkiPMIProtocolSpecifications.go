@@ -802,7 +802,7 @@ type TBOK struct {
 //	  ... }
 type TBerror struct {
 	Code       TBerror_code
-	Diagnostic string `asn1:"optional"`
+	Diagnostic string `asn1:"optional,utf8"`
 }
 
 // # ASN.1 Definition:
