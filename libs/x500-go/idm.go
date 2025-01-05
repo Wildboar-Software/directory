@@ -153,6 +153,17 @@ func (stack *IDMProtocolStack) GetNextInvokeId() int {
 	return ret
 }
 
+func (stack *IDMProtocolStack) CloseTransport() error {
+	stack.mutex.Lock()
+	defer stack.mutex.Unlock()
+	err := stack.socket.Close()
+	stack.bound = false
+	stack.readerSpawned = false
+	stack.receivedData = make([]byte, 0)
+	stack.nextInvokeId = 0
+	return err
+}
+
 func ConvertX500AssociateToIdmBind(arg X500AssociateArgument) (req IdmBind, err error) {
 	bitLength := 0
 	var versions_byte byte = 0
