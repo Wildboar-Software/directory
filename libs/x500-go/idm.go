@@ -1252,8 +1252,18 @@ func createSecurityParameters(
 	}
 	sp = SecurityParameters{
 		Certification_path: *certPath,
-		OperationCode:      opCode,
-		Time:               asn1.RawValue{FullBytes: time_bytes},
+		OperationCode: asn1.RawValue{
+			Class:      asn1.ClassContextSpecific,
+			Tag:        6,
+			IsCompound: true,
+			Bytes:      opCode.FullBytes,
+		},
+		Time: asn1.RawValue{
+			Class:      asn1.ClassContextSpecific,
+			Tag:        2,
+			IsCompound: true,
+			Bytes:      time_bytes,
+		},
 		Random: asn1.BitString{
 			Bytes:     random[:randlen],
 			BitLength: randlen * 8,
@@ -1271,6 +1281,7 @@ func localOpCode(opcode byte) asn1.RawValue {
 		Class:      asn1.ClassUniversal,
 		IsCompound: false,
 		Bytes:      []byte{opcode},
+		FullBytes:  []byte{byte(asn1.ClassUniversal) | byte(asn1.TagInteger), 1, opcode},
 	}
 }
 
@@ -1340,12 +1351,35 @@ func getDataFromNullOrOptProtSeq[T any](outcome X500OpOutcome) (response X500OpO
 	}
 }
 
+// In case the user submits a value of a CHOICE field that does not have the
+// correct tag, this function applies it.
+func wrapWithTag(v asn1.RawValue, tag int) asn1.RawValue {
+	if v.Class == asn1.ClassContextSpecific && v.Tag == tag {
+		return v
+	}
+	innerBytes, err := asn1.Marshal(v)
+	if err != nil {
+		panic(err)
+	}
+	return asn1.RawValue{
+		Class:      asn1.ClassContextSpecific,
+		Tag:        tag,
+		IsCompound: true,
+		Bytes:      innerBytes,
+	}
+}
+
 func (stack *IDMProtocolStack) Read(ctx context.Context, arg_data ReadArgumentData) (response X500OpOutcome, result *ReadResultData, err error) {
 	opCode := localOpCode(1) // Read operation
 	invokeId := stack.GetNextInvokeId()
 	iidBytes, err := asn1.Marshal(invokeId)
 	if err != nil {
 		return X500OpOutcome{}, nil, err
+	}
+	// Just to make sure the library user got it correct.
+	arg_data.Object = wrapWithTag(arg_data.Object, 0)
+	if arg_data.OperationContexts.Tag != 0 {
+		arg_data.OperationContexts = wrapWithTag(arg_data.OperationContexts, 20)
 	}
 	var arg_bytes []byte
 	if stack.SigningKey != nil && stack.SigningCert != nil {
@@ -1428,6 +1462,11 @@ func (stack *IDMProtocolStack) Compare(ctx context.Context, arg_data CompareArgu
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
+	// Just to make sure the library user got it correct.
+	arg_data.Object = wrapWithTag(arg_data.Object, 0)
+	if arg_data.OperationContexts.Tag != 0 {
+		arg_data.OperationContexts = wrapWithTag(arg_data.OperationContexts, 20)
+	}
 	var arg_bytes []byte
 	if stack.SigningKey != nil && stack.SigningCert != nil {
 		sp, err := createSecurityParameters(
@@ -1509,6 +1548,7 @@ func (stack *IDMProtocolStack) Abandon(ctx context.Context, arg_data AbandonArgu
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
+	arg_data.InvokeID = wrapWithTag(arg_data.InvokeID, 0)
 	var arg_bytes []byte
 	if stack.SigningKey != nil && stack.SigningCert != nil {
 		arg_bytes, err = asn1.Marshal(arg_data)
@@ -1553,6 +1593,14 @@ func (stack *IDMProtocolStack) List(ctx context.Context, arg_data ListArgumentDa
 	iidBytes, err := asn1.Marshal(invokeId)
 	if err != nil {
 		return X500OpOutcome{}, nil, err
+	}
+	// Just to make sure the library user got it correct.
+	arg_data.Object = wrapWithTag(arg_data.Object, 0)
+	if arg_data.OperationContexts.Tag != 0 {
+		arg_data.OperationContexts = wrapWithTag(arg_data.OperationContexts, 20)
+	}
+	if arg_data.PagedResults.Tag != 0 {
+		arg_data.PagedResults = wrapWithTag(arg_data.PagedResults, 1)
 	}
 	var arg_bytes []byte
 	if stack.SigningKey != nil && stack.SigningCert != nil {
@@ -1640,6 +1688,20 @@ func (stack *IDMProtocolStack) Search(ctx context.Context, arg_data SearchArgume
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
+	// Just to make sure the library user got it correct.
+	arg_data.BaseObject = wrapWithTag(arg_data.BaseObject, 0)
+	if arg_data.OperationContexts.Tag != 0 {
+		arg_data.OperationContexts = wrapWithTag(arg_data.OperationContexts, 20)
+	}
+	if arg_data.PagedResults.Tag != 0 {
+		arg_data.PagedResults = wrapWithTag(arg_data.PagedResults, 5)
+	}
+	if arg_data.Filter.Tag != 0 {
+		arg_data.Filter = wrapWithTag(arg_data.Filter, 2)
+	}
+	if arg_data.ExtendedFilter.Tag != 0 {
+		arg_data.ExtendedFilter = wrapWithTag(arg_data.ExtendedFilter, 7)
+	}
 	var arg_bytes []byte
 	if stack.SigningKey != nil && stack.SigningCert != nil {
 		sp, err := createSecurityParameters(
@@ -1726,6 +1788,11 @@ func (stack *IDMProtocolStack) AddEntry(ctx context.Context, arg_data AddEntryAr
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
+	// Just to make sure the library user got it correct.
+	arg_data.Object = wrapWithTag(arg_data.Object, 0)
+	if arg_data.OperationContexts.Tag != 0 {
+		arg_data.OperationContexts = wrapWithTag(arg_data.OperationContexts, 20)
+	}
 	var arg_bytes []byte
 	if stack.SigningKey != nil && stack.SigningCert != nil {
 		sp, err := createSecurityParameters(
@@ -1781,6 +1848,11 @@ func (stack *IDMProtocolStack) RemoveEntry(ctx context.Context, arg_data RemoveE
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
+	// Just to make sure the library user got it correct.
+	arg_data.Object = wrapWithTag(arg_data.Object, 0)
+	if arg_data.OperationContexts.Tag != 0 {
+		arg_data.OperationContexts = wrapWithTag(arg_data.OperationContexts, 20)
+	}
 	var arg_bytes []byte
 	if stack.SigningKey != nil && stack.SigningCert != nil {
 		sp, err := createSecurityParameters(
@@ -1835,6 +1907,11 @@ func (stack *IDMProtocolStack) ModifyEntry(ctx context.Context, arg_data ModifyE
 	iidBytes, err := asn1.Marshal(invokeId)
 	if err != nil {
 		return X500OpOutcome{}, nil, err
+	}
+	// Just to make sure the library user got it correct.
+	arg_data.Object = wrapWithTag(arg_data.Object, 0)
+	if arg_data.OperationContexts.Tag != 0 {
+		arg_data.OperationContexts = wrapWithTag(arg_data.OperationContexts, 20)
 	}
 	var arg_bytes []byte
 	if stack.SigningKey != nil && stack.SigningCert != nil {
@@ -1946,6 +2023,9 @@ func (stack *IDMProtocolStack) ChangePassword(ctx context.Context, arg_data Chan
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
+	// Just to make sure the library user got it correct.
+	arg_data.OldPwd = wrapWithTag(arg_data.OldPwd, 1)
+	arg_data.NewPwd = wrapWithTag(arg_data.NewPwd, 2)
 	var arg_bytes []byte
 	if stack.SigningKey != nil && stack.SigningCert != nil {
 		arg_bytes, err = asn1.Marshal(arg_data)
@@ -1991,6 +2071,8 @@ func (stack *IDMProtocolStack) AdministerPassword(ctx context.Context, arg_data 
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
+	// Just to make sure the library user got it correct.
+	arg_data.NewPwd = wrapWithTag(arg_data.NewPwd, 1)
 	var arg_bytes []byte
 	if stack.SigningKey != nil && stack.SigningCert != nil {
 		arg_bytes, err = asn1.Marshal(arg_data)
