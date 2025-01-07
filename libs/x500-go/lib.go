@@ -211,14 +211,13 @@ type DirectoryAccessClient interface {
 	// Higher-Level DAP API
 
 	BindSimply(ctx context.Context, dn DistinguishedName, password string) (resp X500AssociateOutcome, err error)
-	BindStrongly(ctx context.Context, dn DistinguishedName, acPath *AttributeCertificationPath) (resp X500AssociateOutcome, err error)
+	BindStrongly(ctx context.Context, requesterDN DistinguishedName, recipientDN DistinguishedName, acPath *AttributeCertificationPath) (resp X500AssociateOutcome, err error)
 	BindPlainly(ctx context.Context, username string, password string) (resp X500AssociateOutcome, err error)
 	ReadSimple(ctx context.Context, dn DistinguishedName, userAttributes []asn1.ObjectIdentifier) (response X500OpOutcome, result *ReadResultData, err error)
 	RemoveEntryByDN(ctx context.Context, dn DistinguishedName) (resp X500OpOutcome, result *RemoveEntryResultData, err error)
 	AbandonById(ctx context.Context, invokeId int) (resp X500OpOutcome, result *AbandonResultData, err error)
 	ListByDN(ctx context.Context, dn DistinguishedName, limit int) (resp X500OpOutcome, info *ListResultData_listInfo, err error)
 	AddEntrySimple(ctx context.Context, dn DistinguishedName, attrs []Attribute) (resp X500OpOutcome, result *AddEntryResultData, err error)
-	Move(ctx context.Context, old DistinguishedName, new DistinguishedName) (resp X500OpOutcome, result *ModifyDNResultData, err error)
 	ChangePasswordSimple(ctx context.Context, dn DistinguishedName, old string, new string) (resp X500OpOutcome, result *ChangePasswordResultData, err error)
 	AdministerPasswordSimple(ctx context.Context, dn DistinguishedName, new string) (resp X500OpOutcome, result *AdministerPasswordResultData, err error)
 }

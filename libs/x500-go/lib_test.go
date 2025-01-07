@@ -1699,3 +1699,26 @@ func TestStrongAuth(t *testing.T) {
 		return
 	}
 }
+
+func TestInterfaceImplementation(t *testing.T) {
+	conn, err := net.Dial("tcp", "localhost:4632")
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	errchan := make(chan error)
+	var idm interface{} = IDMClient(conn, &IDMClientConfig{
+		StartTLSPolicy: StartTLSNever,
+		Errchan:        errchan,
+	})
+	_, ok1 := idm.(DirectoryProtocolStack)
+	_, ok2 := idm.(DirectoryAccessClient)
+	if !ok1 {
+		t.Error("IDM does not implement DirectoryProtocolStack")
+		return
+	}
+	if !ok2 {
+		t.Error("IDM does not implement DirectoryAccessClient")
+		return
+	}
+}

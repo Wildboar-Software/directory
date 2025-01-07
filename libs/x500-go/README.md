@@ -39,7 +39,7 @@ Any `SEQUENCE OF SET` type will fail to be unmarshalled.
 - [ ] Test signing
 - [x] Request attribute certificate (https://wildboar-software.github.io/directory/docs/attr-cert)
 - [x] Use `asn1.RawContent`
-- [ ] Test to make sure `IDMClient` satisfies `DirectoryAccessClient`
+- [x] Test to make sure `IDMClient` satisfies `DirectoryAccessClient`
 - [ ] I think you can make the `Time` fields `time.Time`
 - [ ] Add extensions to `Name`
 - [ ] Add types defined in newer ASN.1 specifications
