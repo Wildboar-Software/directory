@@ -835,7 +835,7 @@ func (stack *IDMProtocolStack) processNextPDU() (bytesRead uint32, err error) {
 	pdu := IDM_PDU{}
 	bytesRead, err = stack.readPDU(&pdu)
 	if err != nil {
-		if errors.Is(err, net.ErrClosed) {
+		if errors.Is(err, net.ErrClosed) || err == io.EOF {
 			// If the socket is closed, we have to cancel all outstanding
 			// operations.
 			stack.mutex.Lock()
