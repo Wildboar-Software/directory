@@ -616,15 +616,45 @@ type BindKeyInfo = ENCRYPTED
 //	ReadArgument ::= OPTIONALLY-PROTECTED { ReadArgumentData }
 type ReadArgument = OPTIONALLY_PROTECTED
 
+// This is not defined in the X.500 specifications, but instead is a
+// non-standard extension to `ReadArgumentData` used by Meerkat DSA.
+//
+// It is documented [here](https://wildboar-software.github.io/directory/docs/attr-cert).
+//
+// If this element is present in any form in a `ReadArgumentData`, a Meerkat DSA
+// instance will generate an attribute certificate from the data returned by the
+// read request, signed using the DSA's signing key, if one is configured. (All
+// of this is subject to access controls, of course.)
+//
+// If `SingleUse` is TRUE, a single-use attribute certificate will be produced.
+// If `NoAssertion` is TRUE, a no-assertion attribute certificate will be
+// produced. The `asn1keep` is just so this can be encoded without Go's
+// `encoding/asn1` from eliding it from the encoded message.
+//
 // # ASN.1 Definition:
 //
-//	ReadArgumentData ::= SET {
-//	  object               [0]  Name,
-//	  selection            [1]  EntryInformationSelection DEFAULT {},
-//	  modifyRightsRequest  [2]  BOOLEAN DEFAULT FALSE,
-//	  ...,
-//	  ...,
-//	  COMPONENTS OF             CommonArguments }
+//		AttrCertReq ::= SET {
+//		    singleUse   [0] EXPLICIT BOOLEAN OPTIONAL,
+//		    noAssertion [1] EXPLICIT BOOLEAN OPTIONAL,
+//	        asn1keep    NULL OPTIONAL,
+//		    ...
+//		}
+type AttrCertReq struct {
+	SingleUse   bool          `asn1:"explicit,optional,tag:0"`
+	NoAssertion bool          `asn1:"explicit,optional,tag:1"`
+	Asn1Keep    asn1.RawValue `asn1:"optional"`
+}
+
+// # ASN.1 Definition:
+//
+//		ReadArgumentData ::= SET {
+//		  object               [0]  Name,
+//		  selection            [1]  EntryInformationSelection DEFAULT {},
+//		  modifyRightsRequest  [2]  BOOLEAN DEFAULT FALSE,
+//		  ...,
+//	      attrCertReq          [PRIVATE 0] EXPLICIT AttrCertReq,
+//		  ...,
+//		  COMPONENTS OF             CommonArguments }
 type ReadArgumentData struct {
 	Object              Name                      `asn1:"explicit,tag:0"`
 	Selection           EntryInformationSelection `asn1:"optional,explicit,tag:1,set"`
@@ -641,6 +671,17 @@ type ReadArgumentData struct {
 	NameResolveOnMaster bool                      `asn1:"optional,explicit,tag:21"`
 	OperationContexts   ContextSelection          `asn1:"optional,explicit,tag:20"`
 	FamilyGrouping      FamilyGrouping            `asn1:"optional,explicit,tag:19"`
+
+	// This is not defined in the X.500 specifications, but instead is a
+	// non-standard extension to `ReadArgumentData` used by Meerkat DSA.
+	//
+	// It is documented [here](https://wildboar-software.github.io/directory/docs/attr-cert).
+	//
+	// If this element is present in any form in a `ReadArgumentData`, a Meerkat DSA
+	// instance will generate an attribute certificate from the data returned by the
+	// read request, signed using the DSA's signing key, if one is configured. (All
+	// of this is subject to access controls, of course.)
+	AttrCertReq AttrCertReq `asn1:"optional,explicit,private,tag:0,set"`
 }
 
 // # ASN.1 Definition:
@@ -650,12 +691,13 @@ type ReadResult = OPTIONALLY_PROTECTED
 
 // # ASN.1 Definition:
 //
-//	ReadResultData ::= SET {
-//	  entry         [0]  EntryInformation,
-//	  modifyRights  [1]  ModifyRights OPTIONAL,
-//	  ...,
-//	  ...,
-//	  COMPONENTS OF      CommonResults }
+//		ReadResultData ::= SET {
+//		  entry         [0]  EntryInformation,
+//		  modifyRights  [1]  ModifyRights OPTIONAL,
+//		  ...,
+//	      attrCert      [PRIVATE 0] IMPLICIT OCTET STRING OPTIONAL,
+//		  ...,
+//		  COMPONENTS OF      CommonResults }
 type ReadResultData struct {
 	Entry              EntryInformation   `asn1:"explicit,tag:0"`
 	ModifyRights       ModifyRights       `asn1:"optional,explicit,tag:1"`
@@ -663,6 +705,20 @@ type ReadResultData struct {
 	Performer          DistinguishedName  `asn1:"optional,explicit,tag:29"`
 	AliasDereferenced  bool               `asn1:"optional,explicit,tag:28"`
 	Notification       [](Attribute)      `asn1:"optional,explicit,tag:27"`
+
+	// This is not defined in the X.500 specifications, but instead is a
+	// non-standard extension to `ReadArgumentData` used by Meerkat DSA.
+	//
+	// It is documented [here](https://wildboar-software.github.io/directory/docs/attr-cert).
+	//
+	// This field contains an attribute certificate (DER-encoded / not PEM) if
+	// one was both requested and permitted.
+	//
+	// (You might wonder why this is carried as an OCTET STRING: that was a
+	// design decision to ensure that the encoding rules being used by the
+	// directory would not cause the attribute certificate's encoding
+	// to change, and therefore, for its signature to become invalid.)
+	AttrCert []byte `asn1:"optional,implicit,private,tag:0"`
 }
 
 // # ASN.1 Definition:

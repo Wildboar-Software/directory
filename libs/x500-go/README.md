@@ -20,7 +20,7 @@ Any `SEQUENCE OF SET` type will fail to be unmarshalled.
 - [x] Handle `SEQUENCE OF SET` specially
 - [x] ~~Use the `utf8` tag~~
   - I think you only have to do this when using the `IMPLICIT` tag
-- [ ] Test every operation, since `encoding/asn1` is trash
+- [x] Test every operation, since `encoding/asn1` is trash
 - [ ] Documentation
 - [x] ~~Implement `String()` for `DistinguishedName` et al?~~
   - Not doing this because the extensibility means I have to also print anything
@@ -34,11 +34,10 @@ Any `SEQUENCE OF SET` type will fail to be unmarshalled.
 - [ ] List and Search Result Iterator
 - [ ] Break this library up into `x500` and `x500-client`
 - [x] Populate `timeLimit` from the context objects
-- [x] Any time an `asn1.RawValue` is taken from a user as a parameter, it needs
+- [ ] Any time an `asn1.RawValue` is taken from a user as a parameter, it needs
       to be marshalled so that `FullBytes` is populated.
 - [ ] Test signing
-- [ ] Implementation data
-- [ ] Request attribute certificate
+- [x] Request attribute certificate (https://wildboar-software.github.io/directory/docs/attr-cert)
 - [ ] Use `asn1.RawContent`
 - [ ] Test to make sure `IDMClient` satisfies `DirectoryAccessClient`
 - [ ] I think you can make the `Time` fields `time.Time`

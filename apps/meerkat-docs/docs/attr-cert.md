@@ -10,6 +10,7 @@ It has the following ASN.1 syntax:
 AttrCertReq ::= [PRIVATE 0] EXPLICIT SET {
     singleUse   [0] EXPLICIT BOOLEAN OPTIONAL,
     noAssertion [1] EXPLICIT BOOLEAN OPTIONAL,
+    asn1keep    NULL OPTIONAL,
     ...
 }
 ```
@@ -111,3 +112,9 @@ data.
 
 :::
 
+The `asn1keep` field is just a meaningless field that can be added to the
+`AttrCertReq` to ensure that `AttrCertReq` is not elided from the encoded `read`
+argument. Some ASN.1 libraries, such as Golang's `encoding/asn1` remove nested
+structures from the final encoded message if all of the fields of that structure
+evaluate to "falsy." Adding `asn1keep` to the message can ensure that it gets
+encoded. Meerkat DSA will not use or care about this field at all.
