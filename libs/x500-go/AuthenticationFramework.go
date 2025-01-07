@@ -20,22 +20,23 @@ type SIGNATURE struct {
 
 // # ASN.1 Definition:
 //
-//	SIGNED{ToBeSigned} ::= SEQUENCE {
-//	  toBeSigned              ToBeSigned,
-//	  algorithmIdentifier     AlgorithmIdentifier{{SupportedAlgorithms}},
-//	  signature               BIT STRING,
-//	  ...,
-//
-// [[4:
-//
-//	altAlgorithmIdentifier  AlgorithmIdentifier{{SupportedAltAlgorithms}} OPTIONAL,
-//	altSignature            BIT STRING OPTIONAL]]
-//	} (WITH COMPONENTS {..., altAlgorithmIdentifier PRESENT, altSignature PRESENT } |
-//	   WITH COMPONENTS {..., altAlgorithmIdentifier ABSENT,  altSignature ABSENT } )
+//		SIGNED{ToBeSigned} ::= SEQUENCE {
+//		  toBeSigned              ToBeSigned,
+//		  algorithmIdentifier     AlgorithmIdentifier{{SupportedAlgorithms}},
+//		  signature               BIT STRING,
+//		  ...,
+//	   [[4:
+//		  altAlgorithmIdentifier  AlgorithmIdentifier{{SupportedAltAlgorithms}} OPTIONAL,
+//		  altSignature            BIT STRING OPTIONAL]]
+//		  } (WITH COMPONENTS {..., altAlgorithmIdentifier PRESENT, altSignature PRESENT } |
+//		     WITH COMPONENTS {..., altAlgorithmIdentifier ABSENT,  altSignature ABSENT } )
 type SIGNED struct {
-	ToBeSigned          asn1.RawValue
-	AlgorithmIdentifier pkix.AlgorithmIdentifier
-	Signature           asn1.BitString
+	Raw                    asn1.RawContent
+	ToBeSigned             asn1.RawValue
+	AlgorithmIdentifier    pkix.AlgorithmIdentifier
+	Signature              asn1.BitString
+	AltAlgorithmIdentifier pkix.AlgorithmIdentifier `asn1:"optional"`
+	AltSignature           asn1.BitString           `asn1:"optional"`
 }
 
 // # ASN.1 Definition:

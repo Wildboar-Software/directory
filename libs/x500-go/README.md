@@ -38,9 +38,11 @@ Any `SEQUENCE OF SET` type will fail to be unmarshalled.
       to be marshalled so that `FullBytes` is populated.
 - [ ] Test signing
 - [x] Request attribute certificate (https://wildboar-software.github.io/directory/docs/attr-cert)
-- [ ] Use `asn1.RawContent`
+- [x] Use `asn1.RawContent`
 - [ ] Test to make sure `IDMClient` satisfies `DirectoryAccessClient`
 - [ ] I think you can make the `Time` fields `time.Time`
+- [ ] Add extensions to `Name`
+- [ ] Add types defined in newer ASN.1 specifications
 - [ ] Even higher-level `AddEntry` API
   <!-- x500 dap add subentry <object>               Add a subentry
   x500 dap add country <object> <countryName>  Add a country
