@@ -2538,7 +2538,7 @@ func (stack *IDMProtocolStack) AdministerPasswordSimple(ctx context.Context, dn 
 	}
 	newPwd := asn1.RawValue{
 		Class:      asn1.ClassContextSpecific,
-		Tag:        2,
+		Tag:        1,
 		IsCompound: true,
 		Bytes:      newstr,
 	}
