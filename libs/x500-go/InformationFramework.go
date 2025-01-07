@@ -85,9 +85,18 @@ type AttributeTypeAssertion struct {
 	AssertedContexts [](ContextAssertion) `asn1:"optional"`
 }
 
+// Note that the `dnsName` and `oid` alternatives are extremely new: they were
+// introduced in ITU-T Recommendation X.501 (2019), Amendment 1, which was
+// published in October of 2021.
+//
 // # ASN.1 Definition:
 //
-//	Name ::= CHOICE { -- only one possibility for now -- rdnSequence  RDNSequence }
+//	Name ::= CHOICE {
+//	  rdnSequence RDNSequence,
+//	  dnsName     DomainName,
+//	  oid         OBJECT IDENTIFIER }
+//
+//	 DomainName ::= UTF8String (CONSTRAINED BY { -- Conforms to the format of an (internationalized) domain name. -- })
 type Name = asn1.RawValue
 
 // # ASN.1 Definition:
