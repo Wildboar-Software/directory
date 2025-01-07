@@ -1,5 +1,12 @@
 # Changelog for Meerkat DSA
 
+## Version 3.2.5
+
+- Fix a bug where [attribute certificate requests](./attr-cert.md) would fail if
+  no extensions were added. (Fixed by upgrading `@wildboar/pki-stub`.)
+- Fix a bug where abandon operations could cause an unhandled promise rejection.
+- Significant performance improvements for encoding and decoding OIDs
+
 ## Version 3.2.4
 
 This version _doubles_ the speed of inserting new entries by caching
