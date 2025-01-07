@@ -5,6 +5,16 @@
 You will need to set `priority` in the service controls. Golang defaults enums
 to 0, even if you use the `default:1` tag on a struct member.
 
+The `timeLimit` field of the service controls is populated by the timeout
+specified with the `Context` object. If there is no such timeout specified
+either in the service controls, or in the context object, the request will not
+timeout unless configured to do so at the TCP or TLS layers. The `sizeLimit` and
+`attributeSizeLimit` fields get populated automatically with sensible defaults
+unless you supply your own values.
+
+This library supports requesting an attribute certificate from the DSA per the
+[private extension used by Meerkat DSA](https://wildboar-software.github.io/directory/docs/attr-cert).
+
 Known issues: https://github.com/golang/go/issues/27426
 Any `SEQUENCE OF SET` type will fail to be unmarshalled.
 
@@ -16,33 +26,12 @@ Any `SEQUENCE OF SET` type will fail to be unmarshalled.
 
 ## TODO
 
-- [x] Fix encoding of set members
-- [x] Handle `SEQUENCE OF SET` specially
-- [x] ~~Use the `utf8` tag~~
-  - I think you only have to do this when using the `IMPLICIT` tag
-- [x] Test every operation, since `encoding/asn1` is trash
 - [ ] Documentation
-- [x] ~~Implement `String()` for `DistinguishedName` et al?~~
-  - Not doing this because the extensibility means I have to also print anything
-    else that could appear.
-- [x] Check that channels cannot get stuck
-- [x] Replace `os.Exit()` and printing in tests
-- [x] Race condition checks
-- [x] Test Bind Errors
-- [x] Test socket closures
-- [x] Fix encoding of `asn1.RawValue`-typed fields to include tag
 - [ ] List and Search Result Iterator
 - [ ] Break this library up into `x500` and `x500-client`
-- [x] Populate `timeLimit` from the context objects
-- [ ] Any time an `asn1.RawValue` is taken from a user as a parameter, it needs
-      to be marshalled so that `FullBytes` is populated.
 - [ ] Test signing
-- [x] Request attribute certificate (https://wildboar-software.github.io/directory/docs/attr-cert)
-- [x] Use `asn1.RawContent`
-- [x] Test to make sure `IDMClient` satisfies `DirectoryAccessClient`
-- [ ] I think you can make the `Time` fields `time.Time`
-- [ ] Add extensions to `Name`
-- [ ] Add types defined in newer ASN.1 specifications
+- [ ] Add types defined in newer X.500 specifications
+  - I think I will wait until the newest version is released.
 - [ ] Even higher-level `AddEntry` API
   <!-- x500 dap add subentry <object>               Add a subentry
   x500 dap add country <object> <countryName>  Add a country
