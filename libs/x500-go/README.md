@@ -26,40 +26,31 @@ Any `SEQUENCE OF SET` type will fail to be unmarshalled.
 
 ## TODO
 
-- [ ] Documentation
+### MVP
+
+- [ ] Teletex Handling
+- [ ] `DirectoryString(s str)`
+- [ ] `FromDirectoryString(ds DirectoryString)`
+- [ ] Even higher-level API
+- [ ] Change `int64` enums to `int`
+- [ ] Define and implement interfaces
+  - [ ] `CommonArguments`
+  - [ ] `CommonResults`
+  - [ ] `AccessPoint`
+  - [ ] `AVMPcommonComponents`
+  - [ ] `SchemaElement`
+- [ ] Use `X500OperationError`
 - [ ] List and Search Result Iterator
-- [ ] Break this library up into `x500` and `x500-client`
 - [ ] Test signing
+- [ ] Documentation
+- [ ] Break this library up into `x500` and `x500-client`
+
+### Future
+
 - [ ] Add types defined in newer X.500 specifications
   - I think I will wait until the newest version is released.
-- [ ] Even higher-level `AddEntry` API
-  <!-- x500 dap add subentry <object>               Add a subentry
-  x500 dap add country <object> <countryName>  Add a country
-  x500 dap add locality <object>               Add a locality
-  x500 dap add person <object>                 Add a person
-  x500 dap add org <object>                    Add an organization
-  x500 dap add ou <object>                     Add an organizational unit
-  x500 dap add op <object>                     Add an organizational person
-  x500 dap add or <object>                     Add an organizational role
-  x500 dap add rp <object>                     Add a residential person
-  x500 dap add process <object>                Add an application process
-  x500 dap add device <object>                 Add a device
-  x500 dap add dmd <object>                    Add a DMD
-  x500 dap add iop <object>                    Add an inet organizational person -->
-
-- [ ] Even higher-level `ModifyEntry` API
-  <!-- x500 dap mod add aci <object> <type> <idtag>        Add an ACIItem to an entry
-  x500 dap mod add acs <object> <scheme>              Add an accessControlScheme to an entry
-  x500 dap mod add cr <object>                        Add a content rule to a subschema subentry
-  x500 dap mod add cur <object> <identifier>          Add a context use rule to a subschema subentry
-  x500 dap mod add friendship <object> <anchor>       Add a friendship to a subschema subentry
-  x500 dap mod add mru <object> <identifier>          Add a matching rule use to a subschema
-  x500 dap mod add sr <object> <id> <subordinate>     Add a name form to a subschema subentry
-  x500 dap mod add oc <object> <identifier>           Add a name form to a subschema subentry
-  x500 dap mod add sr <object> <ruleid> <nameform>    Add a DIT Structure Rule to a subschema -->
-  <!-- x500 dap mod become acsub <object>                Make a DSE into an access control subentry
-  x500 dap mod become admpoint <object>             Make a DSE an administrative point
-  x500 dap mod become collectivesub <object>        Make a DSE into a collectiveAttributeSubentry
-  x500 dap mod become pwdsub <object>               Make a DSE into a passwordAdminSubentry
-  x500 dap mod become subschema <object>            Make a DSE into a subschema
-  x500 dap mod become svcsub <object> <id> <dmdId>  Make a DSE into a serviceAdminSubentry -->
+- [ ] Support other SASL methods:
+  - [ ] `EXTERNAL`
+  - [ ] `ANONYMOUS`
+  - [ ] `OTP`
+- [ ] Support more `DSAInfo` attributes

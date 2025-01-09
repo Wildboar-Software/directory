@@ -429,7 +429,7 @@ func TestManySimultaneousReads(t *testing.T) {
 				t.Error(err.Error())
 				return
 			}
-			if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
+			if outcome.OutcomeType != OP_OUTCOME_RESULT {
 				t.Error(errors.New("non-result-received"))
 			}
 		}()
@@ -625,7 +625,7 @@ func TestAbandon(t *testing.T) {
 			t.Error(err.Error())
 			return
 		}
-		if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_ERROR {
+		if outcome.OutcomeType != OP_OUTCOME_ERROR {
 			t.Errorf("Did not receive error. Outcome type=%d", outcome.OutcomeType)
 			return
 		}
@@ -640,7 +640,7 @@ func TestAbandon(t *testing.T) {
 		if err != nil {
 			panic(err)
 		}
-		if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
+		if outcome.OutcomeType != OP_OUTCOME_RESULT {
 			t.Errorf("Did not receive abort result. Outcome type=%d", outcome.OutcomeType)
 		}
 		wg.Done()
@@ -955,7 +955,7 @@ func TestBindError(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	if response.OutcomeType != OPERATION_OUTCOME_TYPE_ERROR {
+	if response.OutcomeType != OP_OUTCOME_ERROR {
 		t.Logf("Outcome type: %v\n", response.OutcomeType)
 		t.FailNow()
 	}
@@ -984,7 +984,7 @@ func TestSocketClosure1(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	if response.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
+	if response.OutcomeType != OP_OUTCOME_RESULT {
 		t.Logf("Outcome type: %v\n", response.OutcomeType)
 		t.FailNow()
 	}
@@ -1040,7 +1040,7 @@ func TestSocketClosure2(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	if response.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
+	if response.OutcomeType != OP_OUTCOME_RESULT {
 		t.Logf("Outcome type: %v\n", response.OutcomeType)
 		t.FailNow()
 	}
@@ -1081,7 +1081,7 @@ func TestSocketClosure2(t *testing.T) {
 		t.Error("Failed due to timeout, but should have failed due to socket closure")
 		return
 	}
-	if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_FAILURE {
+	if outcome.OutcomeType != OP_OUTCOME_FAILURE {
 		t.Errorf("Outcome type should have been failure, but it was %d", outcome.OutcomeType)
 		return
 	}
@@ -1153,7 +1153,7 @@ func TestSocketClosure4(t *testing.T) {
 		t.Error("Failed due to timeout, but should have failed due to socket closure")
 		return
 	}
-	if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_FAILURE {
+	if outcome.OutcomeType != OP_OUTCOME_FAILURE {
 		t.Errorf("Outcome type should have been failure, but it was %d", outcome.OutcomeType)
 		return
 	}
@@ -1290,7 +1290,7 @@ func TestTagCorrection(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
+	if outcome.OutcomeType != OP_OUTCOME_RESULT {
 		t.Error("Non-result received")
 		t.FailNow()
 	}
@@ -1400,7 +1400,7 @@ func TestListSimple(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
+	if outcome.OutcomeType != OP_OUTCOME_RESULT {
 		t.FailNow()
 	}
 }
@@ -1488,7 +1488,7 @@ func TestAddEntrySimple(t *testing.T) {
 	}
 	// We probably don't have permission to do this. I just want to make
 	// sure the request is well-formed.
-	if outcome.OutcomeType == OPERATION_OUTCOME_TYPE_ABORT || outcome.OutcomeType == OPERATION_OUTCOME_TYPE_FAILURE || outcome.OutcomeType == OPERATION_OUTCOME_TYPE_REJECT {
+	if outcome.OutcomeType == OP_OUTCOME_ABORT || outcome.OutcomeType == OP_OUTCOME_FAILURE || outcome.OutcomeType == OP_OUTCOME_REJECT {
 		t.FailNow()
 	}
 }
@@ -1538,7 +1538,7 @@ func TestRemoveEntrySimple(t *testing.T) {
 	}
 	// We probably don't have permission to do this. I just want to make
 	// sure the request is well-formed.
-	if outcome.OutcomeType == OPERATION_OUTCOME_TYPE_ABORT || outcome.OutcomeType == OPERATION_OUTCOME_TYPE_FAILURE || outcome.OutcomeType == OPERATION_OUTCOME_TYPE_REJECT {
+	if outcome.OutcomeType == OP_OUTCOME_ABORT || outcome.OutcomeType == OP_OUTCOME_FAILURE || outcome.OutcomeType == OP_OUTCOME_REJECT {
 		t.FailNow()
 	}
 }
@@ -1575,7 +1575,7 @@ func TestChangePasswordSimple(t *testing.T) {
 	}
 	// We probably don't have permission to do this. I just want to make
 	// sure the request is well-formed.
-	if outcome.OutcomeType == OPERATION_OUTCOME_TYPE_ABORT || outcome.OutcomeType == OPERATION_OUTCOME_TYPE_FAILURE || outcome.OutcomeType == OPERATION_OUTCOME_TYPE_REJECT {
+	if outcome.OutcomeType == OP_OUTCOME_ABORT || outcome.OutcomeType == OP_OUTCOME_FAILURE || outcome.OutcomeType == OP_OUTCOME_REJECT {
 		t.FailNow()
 	}
 }
@@ -1612,7 +1612,7 @@ func TestAdministerPasswordSimple(t *testing.T) {
 	}
 	// We probably don't have permission to do this. I just want to make
 	// sure the request is well-formed.
-	if outcome.OutcomeType == OPERATION_OUTCOME_TYPE_ABORT || outcome.OutcomeType == OPERATION_OUTCOME_TYPE_FAILURE || outcome.OutcomeType == OPERATION_OUTCOME_TYPE_REJECT {
+	if outcome.OutcomeType == OP_OUTCOME_ABORT || outcome.OutcomeType == OP_OUTCOME_FAILURE || outcome.OutcomeType == OP_OUTCOME_REJECT {
 		t.FailNow()
 	}
 }
@@ -1711,10 +1711,10 @@ func TestInterfaceImplementation(t *testing.T) {
 		StartTLSPolicy: StartTLSNever,
 		Errchan:        errchan,
 	})
-	_, ok1 := idm.(DirectoryProtocolStack)
+	_, ok1 := idm.(RemoteOperationServiceElement)
 	_, ok2 := idm.(DirectoryAccessClient)
 	if !ok1 {
-		t.Error("IDM does not implement DirectoryProtocolStack")
+		t.Error("IDM does not implement RemoteOperationServiceElement")
 		return
 	}
 	if !ok2 {

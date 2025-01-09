@@ -377,7 +377,7 @@ func (stack *IDMProtocolStack) handleBindResultPDU(pdu IdmBindResult) {
 	// still send DER exclusively.
 	transferSyntax := asn1.ObjectIdentifier{2, 1, 2, 1} // Distinguished Encoding Rules
 	outcome := X500AssociateOutcome{
-		OutcomeType:                OPERATION_OUTCOME_TYPE_RESULT,
+		OutcomeType:                OP_OUTCOME_RESULT,
 		ACSEResult:                 Associate_result_Accepted,
 		ApplicationContext:         pdu.ProtocolID, // Technically not an application context
 		TransferSyntaxName:         transferSyntax,
@@ -491,7 +491,7 @@ func (stack *IDMProtocolStack) handleBindErrorPDU(pdu IdmBindError) {
 	// still send DER exclusively.
 	transferSyntax := asn1.ObjectIdentifier{2, 1, 2, 1} // Distinguished Encoding Rules
 	outcome := X500AssociateOutcome{
-		OutcomeType:        OPERATION_OUTCOME_TYPE_ERROR,
+		OutcomeType:        OP_OUTCOME_ERROR,
 		ACSEResult:         acseResult,
 		ApplicationContext: pdu.ProtocolID, // Technically not an application context
 		TransferSyntaxName: transferSyntax,
@@ -528,7 +528,7 @@ func (stack *IDMProtocolStack) handleResultPDU(pdu IdmResult) {
 		return
 	}
 	res := X500OpOutcome{
-		OutcomeType: OPERATION_OUTCOME_TYPE_RESULT,
+		OutcomeType: OP_OUTCOME_RESULT,
 		InvokeId:    asn1.RawValue{FullBytes: iidBytes},
 		OpCode:      pdu.Opcode,
 		Parameter:   pdu.Result,
@@ -554,7 +554,7 @@ func (stack *IDMProtocolStack) handleErrorPDU(pdu IdmError) {
 		return
 	}
 	res := X500OpOutcome{
-		OutcomeType: OPERATION_OUTCOME_TYPE_ERROR,
+		OutcomeType: OP_OUTCOME_ERROR,
 		InvokeId:    asn1.RawValue{FullBytes: iidBytes},
 		ErrCode:     pdu.Errcode,
 		Parameter:   pdu.Error,
@@ -580,7 +580,7 @@ func (stack *IDMProtocolStack) handleRejectPDU(pdu IdmReject) {
 		return
 	}
 	res := X500OpOutcome{
-		OutcomeType:   OPERATION_OUTCOME_TYPE_REJECT,
+		OutcomeType:   OP_OUTCOME_REJECT,
 		InvokeId:      asn1.RawValue{FullBytes: iidBytes},
 		RejectProblem: pdu.Reason,
 	}
@@ -603,7 +603,7 @@ func (stack *IDMProtocolStack) handleAbortPDU(pdu Abort) {
 	stack.bound = false
 
 	bindOutcome := X500AssociateOutcome{
-		OutcomeType: OPERATION_OUTCOME_TYPE_ABORT,
+		OutcomeType: OP_OUTCOME_ABORT,
 		ACSEResult:  Associate_result_Rejected_permanent,
 		Abort: X500Abort{
 			UserReason: pdu,
@@ -621,7 +621,7 @@ func (stack *IDMProtocolStack) handleAbortPDU(pdu Abort) {
 			return
 		}
 		outcome := X500OpOutcome{
-			OutcomeType: OPERATION_OUTCOME_TYPE_ABORT,
+			OutcomeType: OP_OUTCOME_ABORT,
 			InvokeId:    asn1.RawValue{FullBytes: iidBytes},
 			Abort: X500Abort{
 				UserReason: pdu,
@@ -840,7 +840,7 @@ func (stack *IDMProtocolStack) processNextPDU() (bytesRead uint32, err error) {
 			// operations.
 			stack.mutex.Lock()
 			bindOutcome := X500AssociateOutcome{
-				OutcomeType: OPERATION_OUTCOME_TYPE_FAILURE,
+				OutcomeType: OP_OUTCOME_FAILURE,
 				ACSEResult:  Associate_result_Rejected_transient,
 				err:         err,
 			}
@@ -855,7 +855,7 @@ func (stack *IDMProtocolStack) processNextPDU() (bytesRead uint32, err error) {
 			}
 			for _, op := range stack.pendingOperations {
 				outcome := X500OpOutcome{
-					OutcomeType: OPERATION_OUTCOME_TYPE_FAILURE,
+					OutcomeType: OP_OUTCOME_FAILURE,
 					err:         err,
 				}
 				select {
@@ -1015,12 +1015,12 @@ func (stack *IDMProtocolStack) Bind(ctx context.Context, arg X500AssociateArgume
 	case response = <-stack.bindOutcome:
 		stack.mutex.Lock()
 		defer stack.mutex.Unlock()
-		if response.OutcomeType == OPERATION_OUTCOME_TYPE_RESULT {
+		if response.OutcomeType == OP_OUTCOME_RESULT {
 			stack.bound = true
 		} else {
 			stack.bound = false
 		}
-		if response.OutcomeType == OPERATION_OUTCOME_TYPE_FAILURE {
+		if response.OutcomeType == OP_OUTCOME_FAILURE {
 			return response, response.err
 		}
 		return response, nil
@@ -1091,7 +1091,7 @@ func (stack *IDMProtocolStack) Request(ctx context.Context, req X500Request) (re
 	if err != nil {
 		return X500OpOutcome{}, err
 	}
-	if response.OutcomeType == OPERATION_OUTCOME_TYPE_FAILURE {
+	if response.OutcomeType == OP_OUTCOME_FAILURE {
 		return response, response.err
 	}
 	return response, nil
@@ -1368,7 +1368,7 @@ func getToBeSigned[T any](signedBytes []byte, dataIsSet bool) (res *T, err error
 }
 
 func getDataFromNullOrOptProtSeq[T any](outcome X500OpOutcome) (response X500OpOutcome, result *T, err error) {
-	if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
+	if outcome.OutcomeType != OP_OUTCOME_RESULT {
 		return outcome, nil, nil
 	}
 	param := outcome.Parameter
@@ -1519,7 +1519,7 @@ func (stack *IDMProtocolStack) Read(ctx context.Context, arg_data ReadArgumentDa
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
-	if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
+	if outcome.OutcomeType != OP_OUTCOME_RESULT {
 		return outcome, nil, nil
 	}
 	if outcome.Parameter.Class != asn1.ClassUniversal {
@@ -1606,7 +1606,7 @@ func (stack *IDMProtocolStack) Compare(ctx context.Context, arg_data CompareArgu
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
-	if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
+	if outcome.OutcomeType != OP_OUTCOME_RESULT {
 		return outcome, nil, nil
 	}
 	if outcome.Parameter.Class != asn1.ClassUniversal {
@@ -1742,7 +1742,7 @@ func (stack *IDMProtocolStack) List(ctx context.Context, arg_data ListArgumentDa
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
-	if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
+	if outcome.OutcomeType != OP_OUTCOME_RESULT {
 		return outcome, nil, nil
 	}
 	param := outcome.Parameter
@@ -1843,7 +1843,7 @@ func (stack *IDMProtocolStack) Search(ctx context.Context, arg_data SearchArgume
 	if err != nil {
 		return X500OpOutcome{}, nil, err
 	}
-	if outcome.OutcomeType != OPERATION_OUTCOME_TYPE_RESULT {
+	if outcome.OutcomeType != OP_OUTCOME_RESULT {
 		return outcome, nil, nil
 	}
 	param := outcome.Parameter
