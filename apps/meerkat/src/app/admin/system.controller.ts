@@ -87,7 +87,7 @@ export class SystemController {
         this.ctx.telemetry.trackEvent({
             name: "Hibernation",
             properties: {
-                ...flatten({
+                ...flatten<any, object>({
                     server: getServerStatistics(this.ctx),
                 }),
                 since: startDate,
@@ -106,7 +106,7 @@ export class SystemController {
         this.ctx.telemetry.trackEvent({
             name: "Hibernation",
             properties: {
-                ...flatten({
+                ...flatten<any, object>({
                     server: getServerStatistics(this.ctx),
                 }),
                 since: this.ctx.dsa.hibernatingSince,

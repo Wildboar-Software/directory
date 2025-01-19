@@ -1402,7 +1402,7 @@ async function main (): Promise<void> {
             ctx.telemetry.trackEvent({
                 name: "dbreport",
                 properties: {
-                    ...flatten({
+                    ...flatten<any, object>({
                         server: getServerStatistics(ctx),
                     }),
                     ...report,

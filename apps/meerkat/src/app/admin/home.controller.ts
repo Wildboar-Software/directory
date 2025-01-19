@@ -221,7 +221,7 @@ export class HomeController {
         this.ctx.telemetry.trackEvent({
             name: "OperationalBindingDecision",
             properties: {
-                ...flatten({
+                ...flatten<any, object>({
                     server: getServerStatistics(this.ctx),
                 }),
                 accepted: true,
@@ -290,7 +290,7 @@ export class HomeController {
         this.ctx.telemetry.trackEvent({
             name: "OperationalBindingDecision",
             properties: {
-                ...flatten({
+                ...flatten<any, object>({
                     server: getServerStatistics(this.ctx),
                 }),
                 accepted: false,
@@ -344,7 +344,7 @@ export class HomeController {
         this.ctx.telemetry.trackEvent({
             name: "OperationalBindingDecision",
             properties: {
-                ...flatten({
+                ...flatten<any, object>({
                     server: getServerStatistics(this.ctx),
                 }),
                 accepted: false,

@@ -30,8 +30,6 @@ import {
 } from "./constants";
 import type { SecureVersion } from "tls";
 import * as fs from "fs";
-import type { TelemetryClient } from "applicationinsights";
-import * as appInsights from "applicationinsights";
 import { telemetryDomain } from "./constants";
 import * as dns from "dns/promises";
 import { PEMObject } from "pem-ts";
@@ -116,16 +114,21 @@ import { Name } from "@wildboar/x500/src/lib/modules/InformationFramework/Name.t
 import { _encode_SubjectPublicKeyInfo } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/SubjectPublicKeyInfo.ta";
 import { id_tls_client_auth, tls_client_auth } from "./authn/external/tls_client_auth";
 
+/**
+ * Meerkat DSA once used Microsoft Azure's ApplicationInsights.
+ * (The last three words above are probably Trademarked.)
+ * These functions are now tombstones for its functionality.
+ */
 export
 interface MeerkatTelemetryClient {
     init: () => Promise<void>;
-    trackAvailability: TelemetryClient["trackAvailability"];
-    trackEvent: TelemetryClient["trackEvent"];
-    trackMetric: TelemetryClient["trackMetric"];
-    trackRequest: TelemetryClient["trackRequest"];
-    trackException: TelemetryClient["trackException"];
-    trackDependency: TelemetryClient["trackDependency"];
-    trackTrace: TelemetryClient["trackTrace"];
+    trackAvailability: (...args: any[]) => any;
+    trackEvent: (...args: any[]) => any;
+    trackMetric: (...args: any[]) => any;
+    trackRequest: (...args: any[]) => any;
+    trackException: (...args: any[]) => any;
+    trackDependency: (...args: any[]) => any;
+    trackTrace: (...args: any[]) => any;
 }
 
 export
@@ -1090,64 +1093,14 @@ const ctx: MeerkatContext = {
         // log: ['query', 'info', 'warn', 'error'],
     }),
     telemetry: {
-        init: async (): Promise<void> => {
-            try {
-                const records = await dns
-                    .resolveTxt(telemetryDomain);
-                for (const record of records) {
-                    const txt = record.join("");
-                    if (txt.startsWith("ikey=")) {
-                        const ikey = txt.slice("ikey=".length);
-                        appInsights.setup(ikey).start();
-                        appInsights.defaultClient.config.disableAppInsights = (
-                            (
-                                isDebugging
-                                || ctx.config.bulkInsertMode
-                            )
-                            && !process.env.MEERKAT_TEST_TELEMETRY
-                        );
-                        break;
-                    }
-                }
-            } catch (e) {
-                ctx.log.error(ctx.i18n.t("log:failed_init_telemetry", { e }));
-            }
-        },
-        trackAvailability: (...args) => {
-            try {
-                return appInsights.defaultClient?.trackAvailability(...args);
-            } catch { /* NOOP */ }
-        },
-        trackDependency: (...args) => {
-            try {
-                return appInsights.defaultClient?.trackDependency(...args);
-            } catch { /* NOOP */ }
-        },
-        trackException: (...args) => {
-            try {
-                return appInsights.defaultClient?.trackException(...args);
-            } catch { /* NOOP */ }
-        },
-        trackRequest: (...args) => {
-            try {
-                return appInsights.defaultClient?.trackRequest(...args);
-            } catch { /* NOOP */ }
-        },
-        trackMetric: (...args) => {
-            try {
-                return appInsights.defaultClient?.trackMetric(...args);
-            } catch { /* NOOP */ }
-        },
-        trackEvent: (...args) => {
-            try {
-                return appInsights.defaultClient?.trackEvent(...args);
-            } catch { /* NOOP */ }
-        },
-        trackTrace: (...args) => {
-            try {
-                return appInsights.defaultClient?.trackTrace(...args);
-            } catch { /* NOOP */ }
-        },
+        init: async (): Promise<void> => {},
+        trackAvailability: (...args) => {},
+        trackDependency: (...args) => {},
+        trackException: (...args) => {},
+        trackRequest: (...args) => {},
+        trackMetric: (...args) => {},
+        trackEvent: (...args) => {},
+        trackTrace: (...args) => {},
     },
     objectIdentifierToName: new Map(),
     nameToObjectIdentifier: new Map(),

@@ -418,7 +418,7 @@ async function handleRequestAndErrors (
             resultCode: 200,
             success: true,
             properties: {
-                ...flatten(stats),
+                ...flatten<any, object>(stats),
                 administratorEmail: ctx.config.administratorEmail,
             },
             measurements: {
@@ -438,7 +438,7 @@ async function handleRequestAndErrors (
                 : 500,
             success: false,
             properties: {
-                ...flatten(stats),
+                ...flatten<any, object>(stats),
                 administratorEmail: ctx.config.administratorEmail,
             },
             measurements: {
@@ -572,7 +572,7 @@ async function handleRequestAndErrors (
         ctx.telemetry.trackException({
             exception: e,
             properties: {
-                ...flatten(stats),
+                ...flatten<any, object>(stats),
                 administratorEmail: ctx.config.administratorEmail,
             },
             measurements: {
