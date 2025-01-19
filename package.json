@@ -107,7 +107,6 @@
     },
     "devDependencies": {
         "@docusaurus/module-type-aliases": "2.2.0",
-        "@nx-go/nx-go": "^2.8.0",
         "@nx-plus/docusaurus": "15.0.0-rc.0",
         "@nx/eslint-plugin": "16.7.4",
         "@nx/jest": "16.7.4",

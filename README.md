@@ -31,7 +31,7 @@ LDAP schema objects
 [X.500 client configuration file](https://wildboar-software.github.io/directory/docs/client-config)
 - [`libs/x500-client-ts`](https://github.com/Wildboar-Software/directory/tree/master/x500-client-ts): An X.500 client SDK written in TypeScript
 - [`libs/x500-functional-tests`](https://github.com/Wildboar-Software/directory/tree/master/x500-functional-tests): A suite of X.500 functional tests for X.500 directories.
-- [`libs/x500-go`](https://github.com/Wildboar-Software/directory/tree/master/x500-go): An X.500 client SDK written in the Go programming language.
+- [`libs/x500-go`](https://github.com/Wildboar-Software/x500-go): **MOVED** An X.500 client SDK written in the Go programming language.
 
 ## What is an X.500 Directory?
 
