@@ -851,11 +851,7 @@ async function requestValidationProcedure (
         ? getDateFromTime(chainedArgument.securityParameters.time)
         : undefined;
     const now = new Date();
-    const replayWindow = 60; // TODO: Make configurable.
-    if (
-        secureTime
-        && (Math.abs(differenceInSeconds(secureTime, now)) > replayWindow)
-    ) {
+    if (secureTime && (now > secureTime)) {
         throw new errors.SecurityError(
             ctx.i18n.t("err:replay"),
             new SecurityErrorData(
