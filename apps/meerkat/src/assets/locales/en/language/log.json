@@ -368,7 +368,7 @@
     "nrcr_timeout": "Timeout received from NRCR procedure for operation {{opid}}.",
     "accepted_operation": "Accepted invocation {{iid}} as operation {{opid}}.",
     "dsp_result_error_code": "DSP result for operation {{opid}} included an errorCode in the security parameters, which is invalid.",
-    "dsp_result_time": "DSP result for operation {{opid}} included a time in the security parameters that differed by too much from the receipt time. The result might have been replayed.",
+    "dsp_result_time": "DSP result for operation {{opid}} included a time in the security parameters that was less than the receipt time. The result might have been replayed.",
     "dsp_result_name": "DSP result for operation {{opid}} included a name in the security parameters that differed by the name of this DSA. The result might have been replayed.",
     "dsp_result_op_code": "DSP result for operation {{opid}} included an operation code in the security parameters that differed from the actual operation code.",
     "dsp_result_invalid_sig": "DSP result for operation {{opid}} had an invalid signature. {{e}}",

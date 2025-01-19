@@ -186,7 +186,7 @@
     "strong_creds_token_wrong_name": "Strong credentials bind token name did not match the AE-title of this DSA.",
     "strong_creds_name_cert_mismatch": "Strong credentials name does not match subject name in certification path.",
     "bulk_insert_mode_no_read": "No non-modification operations permitted while DSA is in bulk insert mode. This is a security feature. Disable bulk insert mode to re-enable all operations.",
-    "replay": "Chaining arguments time indicated in security parameters deviated too far from the current time, indicating a possible replay attack.",
+    "replay": "Chaining arguments time indicated in security parameters was less than the current time, indicating a possible replay attack.",
     "mismatch_requestor_and_bound_dn": "Requestor name did not match bound name.",
     "mismatch_requestor_and_originator": "Requestor name in the original DAP argument did not match the originator name in the chaining arguments.",
     "mismatch_requestor_and_sec_params_cert_subject": "Requestor did not match name in the subject of the user certificate supplied in the certification path of the original DAP argument.",

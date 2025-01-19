@@ -343,8 +343,7 @@ async function apinfoProcedure (
                     if (dsp_signature_valid && resultData.chainedResult.securityParameters?.time) {
                         const secureTime = getDateFromTime(resultData.chainedResult.securityParameters.time);
                         const now = new Date();
-                        const replayWindow = 60; // TODO: Make configurable.
-                        if (Math.abs(differenceInSeconds(secureTime, now)) > replayWindow) {
+                        if (now > secureTime) {
                             ctx.log.warn(ctx.i18n.t("log:dsp_result_time"), {
                                 opid: chainingArgs.operationIdentifier ?? "ABSENT",
                             });
