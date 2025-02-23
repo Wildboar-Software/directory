@@ -7,6 +7,10 @@
 - Fix a bug where abandon operations could cause an unhandled promise rejection.
 - Significant performance improvements for encoding and decoding OIDs
 
+By the way, the
+[Go X.500 client](https://pkg.go.dev/github.com/Wildboar-Software/x500-go/x500-dap-client)
+has been released! Yay!
+
 ## Version 3.2.4
 
 This version _doubles_ the speed of inserting new entries by caching
@@ -402,7 +406,6 @@ that X.500 directories can be easily used. These include:
 
 - A Rust SDK / Library
   - This will open up possibilities for PAM modules, Linux kernel modules, and more!
-- A Golang SDK / Library (which is already [partially complete](https://github.com/Wildboar-Software/directory/tree/master/libs/x500-go))
 - A [PassportJS](https://www.passportjs.org/) Strategy
 
 Depending on how long this takes, work may also begin on an X.500 GUI client!

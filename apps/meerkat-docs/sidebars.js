@@ -51,9 +51,10 @@ const sidebars = {
         },
         {
             type: 'category',
-            label: 'Clients',
+            label: 'Clients and Libraries',
             items: [
                 'x500cli',
+                'libraries',
                 'studio',
             ],
         },

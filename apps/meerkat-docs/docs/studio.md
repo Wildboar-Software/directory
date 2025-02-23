@@ -1,5 +1,12 @@
 # Wildboar Directory Studio
 
-Wildboar Directory Studio is a forthcoming X.500 Directory User Agent being
-written by Wildboar Software in TypeScript, Electron, React, and Material UI.
-It will be cross-platform. This will be a closed-source and proprietary project.
+This _was_ in progress, but may be re-written. It was incubating
+[here](https://github.com/JonathanWilbur/asn1.rs/tree/master/dirstudio).
+
+Currently, I am considering re-writing using iced.rs as the UI library instead
+of Tauri.
+
+Here is a depiction of what it looked like, if that gives you an idea as to
+what the plan is:
+
+![Wildboar Directory Studio](/img/dirstudio.png)

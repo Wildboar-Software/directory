@@ -1,5 +1,9 @@
 # Deep Dive
 
+This is documentation to provide an explanation of X.500 directory services at
+multiple levels of complexity, and more succinctly than competing textual works,
+with the added benefit of modern analogies.
+
 ## Executive Summary
 
 The X.500 directory is a technology for producing a global, distributed database
@@ -57,7 +61,7 @@ back then. However, if you research why the enthusiasm waned, you'll find that
 much of it is for reasons that are no longer applicable. X.500 directories are
 thought of as "legacy" mistakenly: I believe they are the _future_. There are
 technologies that died off because they are objectively inferior, such as
-floppy disks, and there are those that were dormat for a long time simply
+floppy disks, and there are those that were dormant for a long time simply
 because they were invented before their time.
 
 ### Other Executive Summaries
@@ -343,38 +347,267 @@ ordering matching rules, and substring matching rules, respectively.
 
 #### Compound Entries
 
-X.500 directory entries
+In many document-oriented databases, such as MongoDB, ElasticSearch, or CouchDB,
+documents themselves can contain "nested documents," and the directory is no
+different in this regard: except these are called "child entries" and the
+overall entry within which they are a substituent is called a "compound entry."
+
+Child entries are (almost) no different than any other entry in the directory:
+they are just normal entries, except they have the `child` auxiliary object
+class (`2.5.6.29`). An entry having this object class means "I am really a part
+of my immediate superior as a compound entry, rather than being a separate
+entry."
+
+Compound entries are useful for providing relational features to the directory.
+For example, you can have a compound entries that represent people, and child
+entries that represents computing devices they own. If you want to find
+a person that resides in Florida **and** has a certain model of device, you
+can use the "family grouping" feature of a search to obtain only these results,
+rather than performing two separate searches for people and devices and
+performing an inner join on the client-side.
 
 #### Hierarchical Groups
 
+Entries in the directory are arranged into a hierarchy, as established already.
+However, sometimes there is a need for some other hierarchy that is independent
+of the underlying directory structure. X.500 directories allow this via
+"hierarchical groups," which function like a "virtual hierarchy" on top of the
+directory.
+
+Hierarchical groups work very simply: each member in the virtual hierarchy has
+an attribute `hierarchicalParent` that points to its superior in this virtual
+hierarchy. There are other attributes that are supposed to be managed by the
+directory automatically:
+
+- `hierarchyBelow` is a `BOOLEAN` that indicates whether a hierarchical group
+  member has subordinates in the virtual hierarchy.
+- `hierarchyTop` points to the most superior entry in the virtual hierarchy.
+- `hierarchyLevel` indicates how deep within the virtual hierarchy an entry
+  resides.
+
+These are only used in searches to provide relational capabilities across this
+virtual hierarchy. For example, if the virtual hierarchy reflects the managerial
+structure of an organization, you can query the directory for all managers of
+employees that have poor performance reviews.
 
 #### Collective Attributes
 
-- These are often subtypes of non-collective attributes, so that they match.
+As the directory grows, there might be a need to place the same attribute values
+within entries over and over again, thereby wasting data storage space. For
+example, in a small city that falls entirely within a single postal code, every
+resident might have the exact same postal code (e.g. a "ZIP code" in the United
+States). Instead of creating 100,000 copies of this value for 100,000 denizens,
+the directory can store a collective variant of postal code that applies to
+all denizens automatically.
+
+Collective attributes are typically subtypes of some other non-collective
+attribute type, so that assertions that match against the collective variant
+match against the non-collective, and vice versa. As with other features we've
+mentioned so far, this provides relational searches. Recycling the previous
+example, you could search for all people with a certain name residing within a
+certain postal code.
+
+This may seem precarious in that a single exception to a collective attribute
+assignment may necessitate abandoning the collective assignment of this
+attribute, and individually assigning the attribute, making us no better off
+than before, but the X.500 specifications have this scenario covered by allowing
+entries to be marked as one-off exceptions via the `collectiveExclusions`
+attribute. If 99,999 of our denizens live in a postal code, but a single person
+lives in a different one, we can mark them as excluded from the applicability of
+this collective attribute.
 
 ### Usage
 
+#### Operations
+
+Interactions with the directory use a request-response model. The types of
+requests and responses supported by the directory are defined as "operations."
+As a simple example, "operations" for a padlock might be "lock" and "unlock."
+"Operations" for a video player might include "play," "pause," "fast-forward,"
+etc. In a database, "operations" might include "search," or "insert."
+
+The definition of an operation includes the syntax of the parameters for it
+(the "argument type"), the parameters expected in the response (the "result
+type"), and what types of errors might be returned by an operation. The errors
+themselves specify what parameters they might include.
+
+For example, an operation to read an entry from a directory takes the
+distinguished name of the entry to read in the argument. The result includes
+the entry if it exists and if the user is authorized. If the entry does not
+exist, the user is not authorized, or some other issue makes it impossible or
+undesirable to fulfill the request, an error may be returned, indicating the
+nature of the problem.
+
 #### ROSE Protocols and Transport
 
-#### Binding
+In the same way that a protocol stack such as TCP/IP encapsulates messages used
+by the application layer and provides services such as in-order delivery, the
+Remote Operation Service element (ROSE) is an abstract service that "frames"
+messages to the directory to identify whether they are requests, results,
+errors, rejections, etc., tags requests with a unique numeric identifier so
+they can be cancelled or monitored, and tags requests with an identifier of the
+operation type (such as a "read" or "search"). ROSE is, in other words, a
+Remote Procedure Call (RPC) mechanism.
+
+The abstract Remote Operation Service Element can be provided by the OSI
+protocol stack via a protocol defined in the X.880-series of ITU-T
+Recommendations, but it can also be provided over the "Internet Directly-Mapped"
+(IDM) protocol defined in ITU-T Recommendation X.519 specifically for usage by
+the directory, which runs over TCP/IP. There may be more implementations I do
+not know about: it is defined as an abstract service so it can be provided in
+many ways.
+
+#### Binding and Unbinding
+
+Before a Remote Operation Service Element (ROSE) can provide the Remote
+Operations Service (ROS), the "initiator" between two correspondent endpoints
+must "bind." A bind is a special operation that performs any initial setup for
+the ongoing ROS dialogue, which usually includes authentication, but could also
+include version or feature negotiation. The bind operation has no invocation
+identifier: there may only be one bind operation outstanding at a time.
+
+When a ROS peer is done, they may (or must, depending on how you look at it),
+unbind. Unbind basically just says "I'm done," but it could also include a
+reason why "I'm done" such as "I'm done, because I am suffering from an
+unrecoverable error."
+
+Requests may not be sent after unbinding. After unbinding, the dialogue is
+complete. However, the underlying transport may remain open, if desired; in
+concrete terms, the TCP socket may still be kept alive and re-used for a
+subsequent bind, perhaps to authenticate as a different user.
+
+
+#### Authentication
+
+As we have established, authentication information is carried in the bind
+operation.
+
+There are five forms of authentication defined in the directory specifications:
+
+- `simple`: Authentication via a distinguished name (username) and password
+- `strong`: Authentication via a cryptographic signature proving you possess a key
+- `externalProcedure`: An authentication procedure identified by an object identifier
+- `spkm`: Simple Public-Key GSS-API Mechanism (SPKM) described in IETF RFC 2025
+- `sasl`: Simple Authentication and Security Layer (SASL), which is itself a
+          flexible encapsulation mechanism for many more authentication
+          exchanges.
 
 #### The DAP Operations
 
+The directory service is provided to users via the Directory Access Protocol
+(DAP), which is a suite of 11 operations briefly described as such:
+
+- `read`: Read a single entry
+- `compare`: Evaluate an assertion against an entry, returning whether it matches
+- `abandon`: Abandon an ongoing operation
+- `list`: List the entries immediately subordinate to an entry in the DIT
+- `search`: Search for entries using a filter
+- `addEntry`: Create a new entry
+- `removeEntry`: Delete an entry
+- `modifyEntry`: Modify an entry, such as by adding attributes
+- `modifyDN`: Rename an entry, or move it and its descendants entirely
+- `administerPassword`: Reset a password of an entry
+- `changePassword`: Change a password of an entry
+
 #### Chaining
+
+The entire directory service can be (and is likely to be) split up among a
+multitude of servers cooperating with each other. Sometimes, the right place for
+a request to be fulfilled is not the server that originally received the
+request. In other cases, the original recipient of the request may only be able
+to partially satisfy the request, and may require more information from other
+directory servers. To fulfill such requests, directory servers do what is called
+"chaining," which where they wrap your request in an envelope of sorts, send
+this request to other servers saying "this is the original request, and this is
+what specifically I need from you to fulfill it." These secondary recipients
+may, in turn, chain the request, recursively, meaning that a single request
+could potentially propagate into a large number of chained messages.
+
+The protocol that directories speak with each other to provide chaining, and
+therefore the total satisfaction of requests, is called the Directory System
+Protocol (DSP). The syntax for almost all of its operations are identical to
+those of the Directory Access Protocol (DAP), except with a "chaining arguments"
+envelope that encloses the analogous DAP request, result, or error.
+
+In lieu of chaining, directory servers may simply return a referral, which
+basically says "here is the server to which you need to send your request."
+
+Directory users may indicate that they prefer chaining or that they forbid
+chaining entirely. They can also indicate that replicas of entries are
+satisfactory--that master copies are not needed--and hence, the directory
+should not chain requests to servers hosting the master copy if they themselves
+have a non-master copy. (What an excellent segue to our next topic!)
 
 #### Shadowing
 
-#### Relaxation
+The directory supports the replication of entries as read-only copies into
+other directories for performance purposes (arguably security as well). This
+replication is called "shadowing." Directory servers that store read-only copies
+or the "master" directory entries are said to "shadow" the "master" DSAs.
+
+Shadowing improves the throughput of the directory because read-only operations,
+such as searches, can be handled by an infinite number of replicas, and the
+master can exclusively deal with modification operations, such as `addEntry`
+or `modifyEntry`.
+
+Shadowing is very flexible and can include all entries within a subtree of the
+DIT or only a selection of said entries, and the replicated entries may receive
+all of the attributes of the master copies, or just a selection of them.
+
+Directory users can indicate that copies will suffice for their request. Copies
+are often less authoritative than shadows, since they may contain stale or
+out-of-date information, depending on how frequently updates to the master are
+propagated to the shadows, but using copies is likely to speed up directory
+operations.
+
+#### Relaxation or Tightening
+
+Sometimes when you perform a search, you start with an idea of how many entries
+you'd like to receive. The directory has a mechanism for altering search
+criteria on the fly to target the requested number of entries. This is done via
+"relaxation" which is where search criteria are altered to become less strict or
+removed entirely to increase the number of results returned, or "tightening" in
+which they become more restrictive to reduce the number of results returned.
+
+There are two ways this is achieved: matching-rule substitution and
+mapping-based matching.
+
+In matching-rule substitution, the matching rules used
+to compose the search filter are replaced with more or less restrictive
+equivalents. For instance, a case-sensitive search could be replaced with a
+case-insensitive search if too few results are matching.
+
+In mapping-based matching, certain filter criteria are replaced with others
+based on exterior data the directory has. One example of this would be a
+map of postal codes to cities. If a search is not turning up enough results, the
+directory can retry the request by replacing a filter selecting for a certain
+city with a filter for all of the postal codes that intersect with the bounds of
+the city and those neighboring them. In this sense, the directory would use its
+geographic knowledge to search a broader area for matching entries.
+
+In fact, the directory also allows users to control _how much broader_ each
+subsequent retry of the search is via an "extended area" parameter.
 
 #### Signing
 
-####
+Directory requests, results, and errors may be cryptographically-signed to
+provide non-repudiation and integrity. Transport Layer Security (TLS) provides
+confidentiality and integrity in point-to-point traffic between a client and
+server, but it does not protect a message that is passed along a chain of
+servers. One of the servers in the chain could alter the message along the way
+unless it is signed to prove its authenticity!
 
+Even if a user does not sign his requests, he can still request that the DSA
+sign its responses, including errors.
 
-## Administrator's Deep Dive
+<!-- ## Administrator's Deep Dive
+
+### Context Prefixes
 
 ### Administrative Areas
 
 ### Access Control
 
 ### Context Assertion Defaults
+
+### Operational Bindings -->
