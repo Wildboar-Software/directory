@@ -109,7 +109,7 @@ import {
 } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/SignedSecurityLabel.ta";
 import { DSACredentials } from "@wildboar/x500/src/lib/modules/DistributedOperations/DSACredentials.ta";
 import { DirectoryBindError, DSABindError } from "./errors";
-
+import type { URL } from "url";
 
 type EventReceiver<T> = (params: T) => void;
 
