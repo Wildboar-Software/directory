@@ -30,8 +30,6 @@ import {
 } from "./constants";
 import type { SecureVersion } from "tls";
 import * as fs from "fs";
-import { telemetryDomain } from "./constants";
-import * as dns from "dns/promises";
 import { PEMObject } from "pem-ts";
 import { BERElement, DERElement, ObjectIdentifier } from "asn1-ts";
 import {
