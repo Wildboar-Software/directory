@@ -26,7 +26,8 @@
         "help": "nx help",
         "line-count": "npx sloc --exclude 'node_modules/.*' libs apps",
         "pgen": "npx prisma generate --schema apps/meerkat/src/prisma/schema.prisma",
-        "pdep": "npx prisma migrate deploy --schema apps/meerkat/src/prisma/schema.prisma"
+        "pdep": "npx prisma migrate deploy --schema apps/meerkat/src/prisma/schema.prisma",
+        "check-updates": "npx npm-check-updates"
     },
     "private": true,
     "dependencies": {
