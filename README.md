@@ -26,7 +26,7 @@ The primary project in this repository is Meerkat DSA.
 - [`libs/parity-schema`](https://github.com/Wildboar-Software/directory/tree/master/parity-schema): TypeScript compilation of all X.500 schema necessary to achieve functional parity with most LDAP directories and IANA-registered
 LDAP schema objects
 - [`libs/rose-transport`](https://github.com/Wildboar-Software/directory/tree/master/rose-transport): An abstraction over all possible transports for Remote Operation Service Element protocol data units.
-- [`libs/x500-auth-ts`](https://github.com/Wildboar-Software/directory/tree/master/x500-auth-ts): An X.500 authentication library specifically for integration with ExpressJS, PassportJS, and/or NestJS.
+- [`libs/x500-auth-ts`](https://github.com/Wildboar-Software/directory/tree/master/x500-auth-ts): An X.500 authentication library specifically for integration with ExpressJS, PassportJS, NestJS, or similar HTTP server frameworks.
 - [`libs/x500-cli-config`](https://github.com/Wildboar-Software/directory/tree/master/x500-cli-config): Schema for the
 [X.500 client configuration file](https://wildboar-software.github.io/directory/docs/client-config)
 - [`libs/x500-client-ts`](https://github.com/Wildboar-Software/directory/tree/master/x500-client-ts): An X.500 client SDK written in TypeScript

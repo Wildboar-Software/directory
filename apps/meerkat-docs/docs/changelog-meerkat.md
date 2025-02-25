@@ -6,6 +6,8 @@
   no extensions were added. (Fixed by upgrading `@wildboar/pki-stub`.)
 - Fix a bug where abandon operations could cause an unhandled promise rejection.
 - Significant performance improvements for encoding and decoding OIDs
+- Remove NestJS from the web admin console: use ExpressJS instead.
+  - This removes a lot of dependencies from Meerkat DSA and makes it lighter.
 
 By the way, the
 [Go X.500 client](https://pkg.go.dev/github.com/Wildboar-Software/x500-go/x500-dap-client)

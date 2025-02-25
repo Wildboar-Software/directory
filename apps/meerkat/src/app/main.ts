@@ -1,8 +1,5 @@
 import type { ClientAssociation } from "@wildboar/meerkat-types";
-import { ValidationPipe } from '@nestjs/common';
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { NestExpressApplication } from '@nestjs/platform-express';
+import express from "express";
 import * as net from "net";
 import * as tls from "tls";
 import * as path from "path";
@@ -56,10 +53,8 @@ import { flatten } from "flat";
 import { getServerStatistics } from "./telemetry/getServerStatistics";
 import { naddrToURI } from "@wildboar/x500/src/lib/distributed/naddrToURI";
 import { getOnOCSPRequestCallback } from "./pki/getOnOCSPRequestCallback";
-import csurf from "csurf";
 import cookieParser from "cookie-parser";
 import { parseFormData } from "./admin/parseFormData";
-import { applyXSRFCookie } from "./admin/applyXSRFCookie";
 import printCode from "./utils/printCode";
 import {
     id_ac_directoryAccessAC,
@@ -94,6 +89,17 @@ import {
 import scheduleShadowUpdates from "./disp/scheduleShadowUpdates";
 import { BERElement } from "asn1-ts";
 import { cacheNamingContexts } from "./dit/cacheNamingContexts";
+import * as routes from "./admin/web";
+
+/**
+ * hbs (Handlebars templating engine) is an implicit dependency for
+ * ExpressJS template rendering. However, since it is never explicitly
+ * imported, webpack will shake it out of the dependencies in the
+ * resulting package.json. Merely importing this here and doing nothing
+ * else with it makes sure that it appears in the post-webpack
+ * package.json file.
+ */
+import("hbs").then();
 
 /**
  * @summary Check for Meerkat DSA updates
@@ -1314,43 +1320,73 @@ async function main (): Promise<void> {
 
     // Web admin portal
     if (ctx.config.webAdmin.port) {
-        // I tried making AppModule a dynamic module that would take `ctx` as an argument, but that did not work. See:
-        // See: https://github.com/nestjs/nest/issues/671
-        const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-            logger: isDebugging ? undefined : false,
-            httpsOptions: ctx.config.webAdmin.useTLS
-                ? {
-                    ca: ctx.config.tls.ca,
-                    cert: ctx.config.tls.cert,
-                    key: ctx.config.tls.key,
-                    pfx: ctx.config.tls.pfx,
-                    ciphers: ctx.config.tls.ciphers,
-                    honorCipherOrder: ctx.config.tls.honorCipherOrder,
-                    crl: ctx.config.tls.crl,
-                    passphrase: ctx.config.tls.passphrase,
-                    rejectUnauthorized: ctx.config.tls.rejectUnauthorizedClients,
-                    requestCert: ctx.config.tls.requestCert,
-                }
-                : undefined,
-        });
-        app.useStaticAssets(path.join(__dirname, "assets", "static"));
-        app.setBaseViewsDir(path.join(__dirname, "assets", "views"));
-        app.setViewEngine("hbs");
-        app.useGlobalPipes(new ValidationPipe({
-            transform: true,
-            skipMissingProperties: false,
-            forbidNonWhitelisted: true,
-        }));
-        app.use(cookieParser()); // Needed by csurf.
+        const app = express();
+        app.set("view engine", "hbs");
+        app.use(express.static(path.join(__dirname, "assets", "static")));
+        app.set("views", path.join(__dirname, "assets", "views"));
+
+        // Middleware: the ordering of these is important!
+        app.use(routes.setMeerkatContext);
+        app.use(routes.loggingMiddleware);
+        app.use(routes.securityMiddleware);
+        app.use(cookieParser());
+        app.use(routes.basicAuthMiddleware);
         app.use(parseFormData);
-        app.use(csurf({
-            cookie: {
-                sameSite: "strict",
-                httpOnly: true,
-            },
-        }));
-        app.use(applyXSRFCookie);
-        await app.listen(ctx.config.webAdmin.port, () => {
+
+        // Routes
+        app.get("/", routes.getHomePage);
+        app.get("/index", routes.getHomePage);
+        app.get("/home", routes.getHomePage);
+        app.get("/conformance", routes.getConformance);
+        app.get("/ob", routes.getOperationalBindings);
+        app.get("/ob/:id", routes.getOperationalBindingDetails);
+        app.post("/ob/:id/accept", routes.acceptOperationalBinding);
+        app.post("/ob/:id/reject", routes.rejectOperationalBinding);
+        app.post("/ob/:id/cancel", routes.cancelOperationalBinding);
+        app.get("/dsait/dse/:id", routes.getDseById);
+        app.post("/dsait/dse/:id/delete", routes.deleteDseById);
+        app.get("/robots.txt", routes.getRobotsTXT);
+        app.get("/.well-known/security.txt", routes.getWellKnownSecurityTXT);
+        app.get("/security.txt", routes.getSecurityTXT);
+        app.get("/attribute-certs", routes.getAttributeCerts);
+        app.get("/signing-certs", routes.getSigningCerts);
+        app.get("/signing-crls", routes.getSigningCRLs);
+        app.get("/signing-anchors", routes.getSigningAnchors);
+        app.get("/pki/signing/certs.pem", routes.getPkiSigningCerts);
+        app.get("/pki/signing/crls.pem", routes.getPkiSigningCRLs);
+        app.get("/pki/signing/trust-anchor-list.pem", routes.getPkiSigningTrustAnchorListPem);
+        app.get("/pki/signing/trust-anchor-list.cmsc", routes.getPkiSigningTrustAnchorListCMSC);
+        app.get("/pki/signing/trust-anchor-list-signed.pem", routes.getPkiSigningTrustAnchorListSignedPEM);
+        app.get("/pki/signing/trust-anchor-list-signed.cmsc", routes.getPkiSigningTrustAnchorListSignedCMSC);
+        app.get("/pki/signing/certs.p7b", routes.getSigningCertsP7B);
+        app.get("/pki/attribute-certs.pem", routes.getAttributeCertsPEM);
+        app.get("/pki/signing/signing.csr", routes.getSigningCSR);
+        app.get("/pki/signing/public-key.pem", routes.getSigningPublicKey);
+        app.get("/pki/signing/certs.pkipath", routes.getSigningCertsPkiPath);
+        app.get("/tls-certs", routes.getTLSCerts);
+        app.get("/tls-crls", routes.getTLSCRLs);
+        app.get("/tls-anchors", routes.getTLSAnchors);
+        app.get("/pki/tls/certs.pem", routes.getTLSCertsPEM);
+        app.get("/pki/tls/crls.pem", routes.getTlsCrlsPEM);
+        app.get("/pki/tls/trust-anchor-list.pem", routes.getTlsTrustAnchorListPEM);
+        app.get("/pki/tls/trust-anchor-list.cmsc", routes.getTlsTrustAnchorListCMSC);
+        app.get("/pki/tls/trust-anchor-list-signed.pem", routes.getTlsTrustAnchorListSignedPEM);
+        app.get("/pki/tls/trust-anchor-list-signed.cmsc", routes.getTlsTrustAnchorListSignedCMSC);
+        app.get("/pki/tls/certs.p7b", routes.getTlsCertsP7B);
+        app.get("/pki/tls/tls.csr", routes.getTlsCsr);
+        app.get("/pki/tls/public-key.pem", routes.getTlsPublicKeyPEM);
+        app.get("/pki/tls/certs.pkipath", routes.getTlsCertPKIPath);
+        app.get("/pki/tls/dhparam.pem", routes.getTlsDhParams);
+        app.get("/pki-selfcheck", routes.getPkiSelfCheck);
+        app.get("/remote-crl-cache", routes.getRemoteCRLCache);
+        app.get("/updates", routes.getUpdates);
+        app.get("/help", routes.getHelp);
+        app.get("/about", routes.getAbout);
+        app.get("/hibernate", routes.getHibernate);
+        app.post("/hibernate/start", routes.startHibernate);
+        app.post("/hibernate/end", routes.endHibernate);
+
+        app.listen(ctx.config.webAdmin.port, () => {
             ctx.log.info(ctx.i18n.t("log:listening", {
                 protocol: ctx.config.webAdmin.useTLS ? "HTTPS" : "HTTP",
                 port: ctx.config.webAdmin.port,

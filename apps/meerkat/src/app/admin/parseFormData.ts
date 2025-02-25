@@ -1,5 +1,4 @@
 import type { Request, Response, NextFunction } from "express";
-import { InternalServerErrorException, BadRequestException } from "@nestjs/common";
 
 export
 interface RequestWithBodyReadIndicator extends Request {
@@ -41,17 +40,24 @@ function parseFormData (
         chunks.push(chunk);
     });
     req.once("error", () => {
-        throw new InternalServerErrorException();
+        req.removeAllListeners();
+        res.status(500).send();
     });
     req.once("end", () => {
         const rawBody = Buffer.concat(chunks).toString("utf-8");
+        if (rawBody.length === 0) {
+            next();
+            return;
+        }
         const fields = rawBody.split("&");
         for (const field of fields) {
             const [ key, value ] = field.split("=");
-            if (!key || !value) {
-                throw new BadRequestException();
+            if (!key) {
+                req.removeAllListeners();
+                res.status(400).send();
+                return;
             }
-            req.body[key] = decodeURIComponent(value);
+            req.body[key] = decodeURIComponent(value ?? "");
         }
         next();
     });

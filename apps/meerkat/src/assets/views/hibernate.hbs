@@ -53,7 +53,7 @@
                     <button type="submit">End Hibernation</button>
                 </form>
             {{else}}
-                <span style="color: green;">ACTIVE</span>
+                <span style="color: green;">ACTIVE (NOT HIBERNATING)</span>
                 <form action="/hibernate/start" method="POST">
                     <input type="hidden" name="_csrf" value="{{csrfToken}}">
                     <button type="submit">Begin Hibernation</button>
