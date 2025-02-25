@@ -80,7 +80,7 @@ function printError (ctx: Context, e: { errcode?: Code, error: ASN1Element }): v
         const data = getOptionallyProtectedValue(param);
         console.error(colorize(
             "SECURITY ERROR: "
-            + securityErrorProblemNames.get(data.problem as number) ?? UNKNOWN_PROBLEM,
+            + (securityErrorProblemNames.get(data.problem as number) ?? UNKNOWN_PROBLEM),
         ));
         if (data.aliasDereferenced) {
             console.error(colorize(ALIAS_DEREFED));
@@ -103,7 +103,7 @@ function printError (ctx: Context, e: { errcode?: Code, error: ASN1Element }): v
         const data = getOptionallyProtectedValue(param);
         console.error(colorize(
             "SERVICE ERROR: "
-            + serviceErrorProblemNames.get(data.problem as number) ?? UNKNOWN_PROBLEM,
+            + (serviceErrorProblemNames.get(data.problem as number) ?? UNKNOWN_PROBLEM),
         ));
         if (data.aliasDereferenced) {
             console.error(colorize(ALIAS_DEREFED));
@@ -122,7 +122,7 @@ function printError (ctx: Context, e: { errcode?: Code, error: ASN1Element }): v
         const data = getOptionallyProtectedValue(param);
         console.error(colorize(
             "NAME ERROR: "
-            + nameErrorProblemNames.get(data.problem as number) ?? UNKNOWN_PROBLEM,
+            + (nameErrorProblemNames.get(data.problem as number) ?? UNKNOWN_PROBLEM),
         ));
         if (data.matched.rdnSequence.length) {
             console.error(colorize("This is the name that matched: " + stringifyDN(ctx, data.matched.rdnSequence)));
@@ -150,7 +150,7 @@ function printError (ctx: Context, e: { errcode?: Code, error: ASN1Element }): v
         ));
         for (let i = 0; i < data.problems.length; i++) {
             const problem = data.problems[i];
-            const probStr: string = attributeErrorProblemNames.get(problem.problem as number) ?? UNKNOWN_PROBLEM;
+            const probStr: string = (attributeErrorProblemNames.get(problem.problem as number) ?? UNKNOWN_PROBLEM);
             const TYPE_OID: string = problem.type_.toString();
             const spec = ctx.attributes.get(TYPE_OID);
             if (spec?.name) {
@@ -185,7 +185,7 @@ function printError (ctx: Context, e: { errcode?: Code, error: ASN1Element }): v
         const data = getOptionallyProtectedValue(param);
         console.error(colorize(
             "UPDATE ERROR: "
-            + updateErrorProblemNames.get(data.problem as number) ?? UNKNOWN_PROBLEM,
+            + (updateErrorProblemNames.get(data.problem as number) ?? UNKNOWN_PROBLEM),
         ));
         const attributeInfo = data.attributeInfo ?? [];
         for (let i = 0; i < attributeInfo.length; i++) {
@@ -298,7 +298,7 @@ function printError (ctx: Context, e: { errcode?: Code, error: ASN1Element }): v
         const data = getOptionallyProtectedValue(param);
         console.error(colorize(
             "ABANDON FAILED ERROR: "
-            + abandonFailedProblemNames.get(data.problem as number) ?? UNKNOWN_PROBLEM,
+            + (abandonFailedProblemNames.get(data.problem as number) ?? UNKNOWN_PROBLEM),
         ));
         if (data.aliasDereferenced) {
             console.error(colorize(ALIAS_DEREFED));

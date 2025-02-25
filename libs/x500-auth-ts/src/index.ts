@@ -8,7 +8,6 @@ import {
     SearchOptions,
     DAPBindOutcome,
 } from "@wildboar/x500-client-ts";
-import { URL } from "node:url";
 import {
     id_ac_directoryAccessAC,
 } from "@wildboar/x500/src/lib/modules/DirectoryOSIProtocols/id-ac-directoryAccessAC.va";
