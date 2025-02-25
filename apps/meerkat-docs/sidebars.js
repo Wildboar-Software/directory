@@ -11,8 +11,9 @@ const sidebars = {
             label: 'X.500',
             items: [
                 'intro',
-                'why-not-ldap',
                 'uses',
+                'why-not-ldap',
+                'deep-dive',
             ],
         },
         {
