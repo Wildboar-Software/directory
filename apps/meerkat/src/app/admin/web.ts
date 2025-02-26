@@ -1984,10 +1984,10 @@ function getOperationalBindingDetails(req: MeerkatReq, res: Response, next: Next
                 ? stringifyDN(req.ctx, cpdn)
                 : undefined,
             agreement_bytes: ob.agreement_ber
-                ? breakIntoLines(ob.agreement_ber.toString("hex"), 60).join("\n")
+                ? breakIntoLines(Buffer.from(ob.agreement_ber).toString("hex"), 60).join("\n")
                 : undefined,
             init_param_bytes: ob.initiator_ber
-                ? breakIntoLines(ob.initiator_ber.toString("hex"), 60).join("\n")
+                ? breakIntoLines(Buffer.from(ob.initiator_ber).toString("hex"), 60).join("\n")
                 : undefined,
             previous_uuid: ob.previous?.uuid,
             ap_ae_title,

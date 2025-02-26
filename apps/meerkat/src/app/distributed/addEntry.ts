@@ -1532,7 +1532,7 @@ async function addEntry (
         password = attr.type_.isEqualTo(userPwd["&id"])
             ? userPwd.decoderFor["&Type"]!(encoded)
             : {
-                clear: Buffer.from(encoded.octetString.buffer).toString("utf-8"),
+                clear: Buffer.from(encoded.octetString).toString("utf-8"),
             };
     }
     // TODO: Password policy applies _per password attribute_. This is something I'll

@@ -126,13 +126,13 @@ async function saveAccessPoint (
                         const uri = naddrToURI(nsap);
                         if (!uri) {
                             return {
-                                bytes: Buffer.from(nsap.buffer, nsap.byteOffset, nsap.byteLength),
+                                bytes: nsap,
                             };
                         }
                         const url = new URL(uri);
                         return {
                             url: url.toString(),
-                            bytes: Buffer.from(nsap.buffer, nsap.byteOffset, nsap.byteLength),
+                            bytes: nsap,
                             hostname: url.hostname,
                         };
                     }),

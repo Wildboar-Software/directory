@@ -123,6 +123,7 @@ import { commonAuxiliaryObjectClasses } from "./objectClassSets";
 import {
     inetOrgPersonNameForm,
 } from "@wildboar/parity-schema/src/lib/modules/InetOrgPerson/inetOrgPersonNameForm.oa";
+import { addHours } from "date-fns";
 
 const allNonSecurityContextTypes: OBJECT_IDENTIFIER[] = [
     ct.languageContext["&id"],
@@ -152,7 +153,7 @@ function securityParameters (): SecurityParameters {
         undefined,
         undefined, // DSA name
         {
-            generalizedTime: new Date(),
+            generalizedTime: addHours(new Date(), 1),
         },
         unpackBits(randomBytes(16)),
         ProtectionRequest_none,

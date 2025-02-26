@@ -69,6 +69,7 @@ import {
     _decode_Certificate,
 } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Certificate.ta";
 import { PEMObject } from "pem-ts";
+import { addHours } from "date-fns";
 
 const TEMPORARY_PASSWORD: string = "asdf";
 
@@ -93,7 +94,7 @@ function securityParameters (): SecurityParameters {
         undefined,
         undefined, // DSA name
         {
-            generalizedTime: new Date(),
+            generalizedTime: addHours(new Date(), 1),
         },
         unpackBits(randomBytes(16)),
         ProtectionRequest_none,

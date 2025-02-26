@@ -209,11 +209,7 @@ export function rbacACDF (
     hasher.update(atav_bytes);
     const calculated_digest = hasher.digest();
     const provided_digest_bytes = packBits(label.toBeSigned.attHash.hashValue);
-    const provided_digest = Buffer.from(
-        provided_digest_bytes.buffer,
-        provided_digest_bytes.byteOffset,
-        provided_digest_bytes.byteLength,
-    );
+    const provided_digest = provided_digest_bytes;
 
     if (Buffer.compare(calculated_digest, provided_digest)) {
         return userHasTopSecretClearance; // The hashes don't match up.

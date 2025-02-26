@@ -236,11 +236,7 @@ async function setEntryPassword (
                     tag_class: nowElement.tagClass,
                     constructed: false,
                     tag_number: nowElement.tagNumber,
-                    content_octets: Buffer.from(
-                        nowElement.value.buffer,
-                        nowElement.value.byteOffset,
-                        nowElement.value.byteLength,
-                    ),
+                    content_octets: nowElement.value,
                     jer: nowElement.toJSON() as string,
                 },
                 {
@@ -250,11 +246,7 @@ async function setEntryPassword (
                     tag_class: ASN1TagClass.universal,
                     constructed: true,
                     tag_number: ASN1UniversalType.sequence,
-                    content_octets: Buffer.from(
-                        encoded_enc_alg.value.buffer,
-                        encoded_enc_alg.value.byteOffset,
-                        encoded_enc_alg.value.byteLength,
-                    ),
+                    content_octets: encoded_enc_alg.value,
                     jer: encoded_enc_alg.toJSON() as object,
                 },
                 ...(exp_time_el
@@ -265,11 +257,7 @@ async function setEntryPassword (
                         tag_class: ASN1TagClass.universal,
                         constructed: false,
                         tag_number: ASN1UniversalType.generalizedTime,
-                        content_octets: Buffer.from(
-                            exp_time_el.value.buffer,
-                            exp_time_el.value.byteOffset,
-                            exp_time_el.value.byteLength,
-                        ),
+                        content_octets: exp_time_el.value,
                         jer: nowElement.toJSON() as string,
                     }]
                     : []),
@@ -281,11 +269,7 @@ async function setEntryPassword (
                         tag_class: ASN1TagClass.universal,
                         constructed: false,
                         tag_number: ASN1UniversalType.generalizedTime,
-                        content_octets: Buffer.from(
-                            end_time_el.value.buffer,
-                            end_time_el.value.byteOffset,
-                            end_time_el.value.byteLength,
-                        ),
+                        content_octets: end_time_el.value,
                         jer: nowElement.toJSON() as string,
                     }]
                     : []),
@@ -303,11 +287,7 @@ async function setEntryPassword (
                         tag_class: encodedOldPwd.tagClass,
                         constructed: (encodedOldPwd.construction === ASN1Construction.constructed),
                         tag_number: encodedOldPwd.tagNumber,
-                        content_octets: Buffer.from(
-                            encodedOldPwd.value.buffer,
-                            encodedOldPwd.value.byteOffset,
-                            encodedOldPwd.value.byteLength,
-                        ),
+                        content_octets: encodedOldPwd.value,
                     }]
                     : []),
             ],

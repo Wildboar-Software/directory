@@ -181,11 +181,7 @@ async function updateLocalSubr (
                     tag_class: atav.value.tagClass,
                     constructed: (atav.value.construction === ASN1Construction.constructed),
                     tag_number: atav.value.tagNumber,
-                    content_octets: Buffer.from(
-                        atav.value.value.buffer,
-                        atav.value.value.byteOffset,
-                        atav.value.value.byteLength,
-                    ),
+                    content_octets: atav.value.value,
                     order_index: i,
                     normalized_str: getEqualityNormalizer(ctx)?.(atav.type_)?.(ctx, atav.value),
                 })),

@@ -2305,7 +2305,7 @@ async function executeEntryModification (
         const password: UserPwd = attr.type_.isEqualTo(userPwd["&id"])
             ? userPwd.decoderFor["&Type"]!(encoded)
             : {
-                clear: Buffer.from(encoded.octetString.buffer).toString("utf-8"),
+                clear: Buffer.from(encoded.octetString).toString("utf-8"),
             };
         // TODO: Password policy applies _per password attribute_. This is something I'll
         // have to change when I re-write Meerkat DSA entirely.
@@ -3681,11 +3681,7 @@ async function modifyEntry (
                     tag_class: ASN1TagClass.universal,
                     constructed: false,
                     tag_number: ASN1UniversalType.objectIdentifier,
-                    content_octets: Buffer.from(
-                        autonomousId.value.buffer,
-                        autonomousId.value.byteOffset,
-                        autonomousId.value.byteLength,
-                    ),
+                    content_octets: autonomousId.value,
                     jer: id_ar_autonomousArea.toJSON(),
                     normalized_str: id_ar_autonomousArea.toString(),
                 },

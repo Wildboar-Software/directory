@@ -161,11 +161,7 @@ async function handleRequest (
             scope: scopeToString(sr.scope),
             base: stringifyDN(ctx, decodeLDAPDN(ctx, sr.baseObject)).slice(0, 128),
             filter: stringifyFilter(sr.filter).slice(0, 128),
-            sel: sr.attributes.map((attr) => Buffer.from(
-                attr.buffer,
-                attr.byteOffset,
-                attr.byteLength,
-            ).toString("utf-8")).join(", "),
+            sel: sr.attributes.map((attr) => Buffer.from(attr).toString("utf-8")).join(", "),
             typesOnly: sr.typesOnly ? "TRUE": "FALSE",
             deref: sr.derefAliases,
             size: sr.sizeLimit,

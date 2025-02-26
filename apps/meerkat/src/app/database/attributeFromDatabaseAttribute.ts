@@ -21,7 +21,7 @@ import { attributeValueFromDB, DBAttributeValue } from "../database/attributeVal
 export
 function attributeFromDatabaseAttribute (
     ctx: Context,
-    attr: { type_oid: Buffer, ContextValue?: { type: string; ber: Buffer; fallback: boolean; }[] } & DBAttributeValue,
+    attr: { type_oid: Uint8Array, ContextValue?: { type: string; ber: Uint8Array; fallback: boolean; }[] } & DBAttributeValue,
 ): Value {
     const value = attributeValueFromDB(attr);
     const contexts = groupByOID(attr.ContextValue ?? [], (cv) => cv.type);

@@ -184,7 +184,7 @@ import {
 import {
     TimeSpecification_time_absolute,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/TimeSpecification-time-absolute.ta";
-import { addDays } from "date-fns";
+import { addDays, addHours } from "date-fns";
 import {
     commonName,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
@@ -272,7 +272,7 @@ function securityParameters (): SecurityParameters {
         undefined,
         undefined, // DSA name
         {
-            generalizedTime: new Date(),
+            generalizedTime: addHours(new Date(), 1),
         },
         unpackBits(randomBytes(16)),
         ProtectionRequest_none,

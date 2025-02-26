@@ -147,6 +147,7 @@ import {
     ipHost,
 } from "@wildboar/parity-schema/src/lib/modules/NIS/ipHost.oa";
 import { commonAuxiliaryObjectClasses } from "./objectClassSets";
+import { addHours } from "date-fns";
 
 const deviceAuxiliaryObjectClasses: OBJECT_IDENTIFIER[] = [
     bootableDevice["&id"],
@@ -182,7 +183,7 @@ function securityParameters (): SecurityParameters {
         undefined,
         undefined, // DSA name
         {
-            generalizedTime: new Date(),
+            generalizedTime: addHours(new Date(), 1),
         },
         unpackBits(randomBytes(16)),
         ProtectionRequest_none,

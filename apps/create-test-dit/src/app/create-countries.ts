@@ -159,6 +159,7 @@ import {
 import { commonAuxiliaryObjectClasses } from "./objectClassSets";
 import { unstructuredName } from "@wildboar/pkcs/src/lib/modules/PKCS-9/unstructuredName.oa";
 import { unstructuredAddress } from "@wildboar/pkcs/src/lib/modules/PKCS-9/unstructuredAddress.oa";
+import { addHours } from "date-fns";
 
 const deviceAuxiliaryObjectClasses: OBJECT_IDENTIFIER[] = [
     bootableDevice["&id"],
@@ -194,7 +195,7 @@ function securityParameters (): SecurityParameters {
         undefined,
         undefined, // DSA name
         {
-            generalizedTime: new Date(),
+            generalizedTime: addHours(new Date(), 1),
         },
         unpackBits(randomBytes(16)),
         ProtectionRequest_none,

@@ -478,11 +478,7 @@ async function attemptPassword (
                 tag_class: ASN1TagClass.universal,
                 constructed: false,
                 tag_number: ASN1UniversalType.integer,
-                content_octets: Buffer.from(
-                    newFailsEl.value.buffer,
-                    newFailsEl.value.byteOffset,
-                    newFailsEl.value.byteLength,
-                ),
+                content_octets: newFailsEl.value,
                 jer: fails + 1,
             },
             {
@@ -492,11 +488,7 @@ async function attemptPassword (
                 tag_class: nowElement.tagClass,
                 constructed: false,
                 tag_number: nowElement.tagNumber,
-                content_octets: Buffer.from(
-                    nowElement.value.buffer,
-                    nowElement.value.byteOffset,
-                    nowElement.value.byteLength,
-                ),
+                content_octets: nowElement.value,
                 jer: nowElement.toJSON() as string,
             },
         ];
@@ -519,11 +511,7 @@ async function attemptPassword (
                 tag_class: nowElement.tagClass,
                 constructed: false,
                 tag_number: nowElement.tagNumber,
-                content_octets: Buffer.from(
-                    nowElement.value.buffer,
-                    nowElement.value.byteOffset,
-                    nowElement.value.byteLength,
-                ),
+                content_octets: nowElement.value,
                 jer: nowElement.toJSON() as string,
             });
         }
@@ -636,11 +624,7 @@ async function attemptPassword (
                     tag_class: ASN1TagClass.universal,
                     constructed: false,
                     tag_number: ASN1UniversalType.integer,
-                    content_octets: Buffer.from(
-                        zeroFailsEl.value.buffer,
-                        zeroFailsEl.value.byteOffset,
-                        zeroFailsEl.value.byteLength,
-                    ),
+                    content_octets: zeroFailsEl.value,
                     jer: 0,
                 },
                 {
@@ -650,11 +634,7 @@ async function attemptPassword (
                     tag_class: ASN1TagClass.universal,
                     constructed: false,
                     tag_number: ASN1UniversalType.generalizedTime,
-                    content_octets: Buffer.from(
-                        nowElement.value.buffer,
-                        nowElement.value.byteOffset,
-                        nowElement.value.byteLength,
-                    ),
+                    content_octets: nowElement.value,
                     jer: now.toISOString(),
                 },
             ],

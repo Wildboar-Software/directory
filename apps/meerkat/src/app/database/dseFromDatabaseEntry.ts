@@ -84,11 +84,11 @@ async function dseFromDatabaseEntry (
             object_class: string;
         }[];
         RDN?: {
-            type_oid: Buffer;
+            type_oid: Uint8Array;
             tag_class: number,
             constructed: boolean,
             tag_number: number,
-            content_octets: Buffer,
+            content_octets: Uint8Array,
         }[];
     }),
 ): Promise<DSE> {

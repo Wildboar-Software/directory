@@ -63,6 +63,7 @@ import {
     _encodeUTF8String,
     // _encodeNumericString,
 } from "asn1-ts/dist/node/functional";
+import { addHours } from "date-fns";
 
 const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
     Array(9).fill(FALSE_BIT));
@@ -85,7 +86,7 @@ function securityParameters (): SecurityParameters {
         undefined,
         undefined, // DSA name
         {
-            generalizedTime: new Date(),
+            generalizedTime: addHours(new Date(), 1),
         },
         unpackBits(randomBytes(16)),
         ProtectionRequest_none,

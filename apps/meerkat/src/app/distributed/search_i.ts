@@ -650,7 +650,7 @@ function convertFilterItemToPrismaSelect (
                             tag_class: ASN1TagClass.universal,
                             constructed: false,
                             tag_number: ASN1UniversalType.objectIdentifier,
-                            content_octets: Buffer.from(value.buffer, value.byteOffset, value.byteLength),
+                            content_octets: value,
                         },
                     },
                 };
@@ -665,7 +665,7 @@ function convertFilterItemToPrismaSelect (
                             tag_class: ASN1TagClass.universal,
                             constructed: false,
                             tag_number: ASN1UniversalType.integer,
-                            content_octets: Buffer.from(value.buffer, value.byteOffset, value.byteLength),
+                            content_octets: value,
                         },
                     },
                 };
@@ -699,7 +699,7 @@ function convertFilterItemToPrismaSelect (
                             tag_class: ASN1TagClass.universal,
                             constructed: false,
                             tag_number: ASN1UniversalType.objectIdentifier,
-                            content_octets: Buffer.from(value.buffer, value.byteOffset, value.byteLength),
+                            content_octets: value,
                         },
                     },
                 };
@@ -714,7 +714,7 @@ function convertFilterItemToPrismaSelect (
                             tag_class: ASN1TagClass.universal,
                             constructed: false,
                             tag_number: ASN1UniversalType.integer,
-                            content_octets: Buffer.from(value.buffer, value.byteOffset, value.byteLength),
+                            content_octets: value,
                         },
                     },
                 };

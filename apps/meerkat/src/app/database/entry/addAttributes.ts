@@ -96,11 +96,7 @@ async function addAttributes (
                 tag_class: value.tagClass,
                 constructed: (value.construction === ASN1Construction.constructed),
                 tag_number: value.tagNumber,
-                content_octets: Buffer.from(
-                    value.value.buffer,
-                    value.value.byteOffset,
-                    value.value.byteLength,
-                ),
+                content_octets: value.value,
                 jer: (value.construction === ASN1Construction.primitive)
                     ? value.toJSON() as Prisma.InputJsonValue
                     : undefined,
@@ -116,11 +112,7 @@ async function addAttributes (
                     tag_class: vwc.value.tagClass,
                     constructed: (vwc.value.construction === ASN1Construction.constructed),
                     tag_number: vwc.value.tagNumber,
-                    content_octets: Buffer.from(
-                        vwc.value.value.buffer,
-                        vwc.value.value.byteOffset,
-                        vwc.value.value.byteLength,
-                    ),
+                    content_octets: vwc.value.value,
                     jer: (vwc.value.construction === ASN1Construction.primitive)
                         ? vwc.value.toJSON() as Prisma.InputJsonValue
                         : undefined,

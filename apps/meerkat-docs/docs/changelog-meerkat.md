@@ -8,6 +8,8 @@
 - Significant performance improvements for encoding and decoding OIDs
 - Remove NestJS from the web admin console: use ExpressJS instead.
   - This removes a lot of dependencies from Meerkat DSA and makes it lighter.
+- Updated Prisma to 6.4.1.
+  - If you notice issues upgrading, you might want to try running prisma generate.
 
 By the way, the
 [Go X.500 client](https://pkg.go.dev/github.com/Wildboar-Software/x500-go/x500-dap-client)

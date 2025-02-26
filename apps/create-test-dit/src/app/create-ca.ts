@@ -153,6 +153,7 @@ import { AlgorithmIdentifier } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub
 import { SecurityClassification_confidential, SecurityClassification_restricted, SecurityClassification_secret, SecurityClassification_top_secret, SecurityClassification_unmarked } from "@wildboar/x500/src/lib/modules/EnhancedSecurity/SecurityClassification.ta";
 import { id_sha256 } from "@wildboar/x500/src/lib/modules/AlgorithmObjectIdentifiers/id-sha256.va";
 import { AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
+import { addHours } from "date-fns";
 
 const allNonSecurityContextTypes: OBJECT_IDENTIFIER[] = [
     ct.languageContext["&id"],
@@ -182,7 +183,7 @@ function securityParameters (): SecurityParameters {
         undefined,
         undefined, // DSA name
         {
-            generalizedTime: new Date(),
+            generalizedTime: addHours(new Date(), 1),
         },
         unpackBits(randomBytes(16)),
         ProtectionRequest_none,
