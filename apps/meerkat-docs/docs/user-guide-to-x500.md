@@ -1,84 +1,10 @@
-# Deep Dive
-
-This is documentation to provide an explanation of X.500 directory services at
-multiple levels of complexity, and more succinctly than competing textual works,
-with the added benefit of modern analogies.
-
-## Executive Summary
-
-The X.500 directory is a technology for producing a global, distributed database
-(although it can be used exclusively privately as well). It is "distributed" in
-the sense that the data can be split across a nearly infinite number of
-independent servers.
-
-The way that data is represented in an X.500 directory lends itself to great
-flexibility. An X.500 directory has features that make it like a time-series
-database, a graph database, a document-oriented database, and a relational
-database, all in one. It is designed primarily to store information about
-people and organizations, but it can store any kind of data.
-
-### The Problem It Solves
-
-Databases already exist, and they already have access controls, sharding,
-authentication, integrity at rest, and so on. However, many organizations still
-feel the need to put a REST API between end users and the database, which
-demonstrates some fundamental shortcoming of existing solutions. Existing
-solutions fall short in these respects, in which X.500 directories excel:
-
-1. **Standardized implementations with expectations of interoperability.** X.500
-   is a series of standards. Implementations of X.500 directories are generally
-   interoperable, if well-constructed. There is no "MySQL standard" or "Postgres
-   standard" where you could implement your own alternative and expect future
-   compatibility with all other implementations. Abundance of implementations
-   means more options, better security, and a better ecosystem.
-2. **Advanced access controls.** In many databases, access controls can
-   constrain who has access to particular collections, documents, columns,
-   tables, and so on, but X.500 directories can regulate specific values, use
-   groups as layer of indirection, and regulate complex selections of the data.
-3. **Designed to be split across domains of trust.** Unlike database sharding,
-   X.500 directories are designed to confederate data across the
-   organizational boundary. Organizations can share their data, and even let
-   others modify it, but control who, how, when, and so on.
-4. **Directly usable by end users.** Traditional databases often store or
-   present data in a format that is not directly usable by end users. For this
-   reason, custom REST APIs and web apps are created to convert a
-   mess of relational tables into composed, meaningful "objects" representing
-   real world things. In X.500 directories, the data is already stored in this
-   manner: X.500 directories model data as real world things, and they are
-   browseable by human-friendly names like `CN=Jonathan M. Wilbur` rather than
-   UUIDs or serial numbers. You do not need to re-invent the wheel when you
-   already have a Porsche waiting for you.
-
-There are a few other benefits that are simply too technical for an executive
-summary, but the above should be sufficient.
-
-### The Future
-
-The X.500 specifications were conceived in the late 1980s by the
-International Telecommunications Union with the intent of creating a sort of
-"distributed, global phonebook," and, admittedly, they had much more traction
-back then. However, if you research why the enthusiasm waned, you'll find that
-much of it is for reasons that are no longer applicable. X.500 directories are
-thought of as "legacy" mistakenly: I believe they are the _future_. There are
-technologies that died off because they are objectively inferior, such as
-floppy disks, and there are those that were dormant for a long time simply
-because they were invented before their time.
-
-### Other Executive Summaries
-
-In addition to the above summary, other executive summaries of X.500 directory
-services can be found in:
-
-- [ITU Recommendation X.500 (2019)](https://www.itu.int/rec/T-REC-X.500/en)
-- [IETF RFC 1308](https://www.rfc-editor.org/rfc/rfc1308.html)
-
-## User's Deep Dive
+# User's Deep Dive
 
 The X.500 specifications are so rich in features that it can seem difficult to
 break into it. This is a brief explanation of X.500 concepts for a user to
 meaningfully use an X.500 directory.
 
-### Object Identifiers
+## Object Identifiers
 
 X.500 directories use object identifiers to identify almost everything, so
 understanding what they are is important. If you finish reading this section
@@ -110,9 +36,9 @@ object identifiers that start with `1.3.6.1.4.1.56490`.
 With this out of the way, we can go over how an X.500 directory presents its
 information.
 
-### Information Model
+## Information Model
 
-#### Entries and Attributes
+### Entries and Attributes
 
 Directories represent information as _entries_. Entries represent real-world
 objects, such as a person, organization, device, etc. Entries are represented
@@ -208,7 +134,63 @@ has an object identifier of `2.5.4.0`. This is technically defined as a user
 attribute for historical reasons, but it still functions like an operational
 attribute.
 
-#### Context Types
+### Matching Rules
+
+X.500 directories use "matching rules" to define the logic of how two values are
+to be compared, sorted, and searched, which are called equality matching rules,
+ordering matching rules, and substring matching rules, respectively. The
+simplest example of a matching rule might be the `caseIgnoreMatch`, which
+compares two attributes that have a string syntax case-insensitively.
+
+If you have ever used a database, you might know how data types have an
+algorithm for comparing two values built-in and assumed for that data type.
+For example, when you query a SQL database with a clause like
+`lastName == 'Wilbur'` that database might perform a case-sensitive comparison
+unless you specify otherwise. This is not so with directories: the rules for
+comparing, ordering, and searching for substrings within values are explicitly
+associated as a part of each value's attribute type. Even though, for instance,
+a URL and a last name might be stored as strings, URL attribute values may be
+evaluated using case-sensitive matching, whereas last name attribute values may
+be evaluated using case-insensitive matching. Explicitly defining how values
+are expected to be compared can help DSAs index values appropriately.
+
+Attribute types may have _no_ matching rules associated. This does not mean that
+they cannot be compared; it just means that the matching rule to be used will
+have to be explicitly specified in search filters. However, attribute types for
+which no default equality matching rule is defined cannot have their values
+individually added, removed, or modified: the entire attribute must be replaced
+all at once with the new desired values, and no checks take place for
+duplicates.
+
+In general, attribute types that are expected to contain longer strings, such
+as descriptions, do not define equality matching rules or ordering rules--only
+substring matching rules. It can get computationally expensive to perform many
+string comparisons over large strings like that to check for duplicates. This
+also prevents huge strings, like those that might appear in the `description`
+attribute, from being used for naming entries.
+
+Ordering rules are often _not_ defined when there is an ambiguous way for values
+to be sorted: for instance, should you sort telephone numbers by ASCII character
+code points, alphabetically, or remove all the non-numeric characters and sort
+them like integers? There is no obvious, universally-assumed way of sorting
+them.
+
+Substring matching rules are usually undefined for an attribute type when the
+values are expected to be small enough that there is little value in substring
+searches or when a substring of the value would not have any meaning, such as
+a substring of an identifier generated from randomness.
+
+A matching rule may have "parent matching rules," whose meaning is left up to
+interpretation. A matching rule may also have an assertion syntax that differs
+from the syntax of the value being evaluated: for example, a "letter count"
+matching rule might take an integer as an assertion value, but evaluate against
+a string type by counting the number of letters in the string. A matching rule
+may define procedures for converting a value of a different syntax into the
+assertion syntax. If no assertion syntax is defined for a matching rule, the
+assertion syntax is the same as the syntax of the attribute on which the
+matching rule is used.
+
+### Context Types
 
 Attribute values can be tagged with a sort of "metadata" called _contexts_.
 Contexts are more general-purpose annotations for attribute values that are used
@@ -240,7 +222,7 @@ The type of context is identified by an object identifier. An attribute value
 may have zero, one, or more contexts of a given type, and may have multiple
 context types as well.
 
-#### The Directory Information Tree
+### The Directory Information Tree
 
 The entries in a directory are arranged in a hierarchical structure, referred to
 as the Directory Information Tree (DIT). In computer science, a "tree" is
@@ -258,7 +240,7 @@ or "first level." The first level contains real entries, which usually represent
 countries, international organizations, or top-level domains. These have entries
 beneath them, and those entries may have entries beneath them, recursively.
 
-#### Names
+### Names
 
 Directory entries are named using a selection of attribute values that are
 called "distinguished values," each of which are presented as an attribute type
@@ -314,7 +296,37 @@ object class. Name forms are not expected to apply uniformly throughout the
 Directory Information Tree; some regions of the tree can enforce different
 naming conventions from others.
 
-#### Schema
+### Aliases
+
+Sometimes the names of directory entries need to be changed. For instance, when
+people get married, it is common for the wife to change her last name to the
+husband's last name. Hence, an entry representing a person may need to be
+renamed from time to time. In other cases, there are acronyms or pseudonyms by
+which people refer to something other than its proper name. To make it easy for
+directory users to find what they are looking for, directories support
+"aliases." Aliases are special entries that are simply named pointers to other
+entries.
+
+For example, let's say a woman with a directory name `cn=Peggy Sue` gets married
+and changes her last name to "Smith." The directory entry can be renamed to
+`cn=Peggy Smith` and a new alias entry named `cn=Peggy Sue` can be created,
+which contains a pointer to the `cn=Peggy Smith` entry. The directory can
+seemlessly translate requests to, for example, read the birth date of
+`cn=Peggy Sue` to a request to read the birth date of `cn=Peggy Smith`. The
+reverse is true as well: `cn=Peggy Smith` could be the alias and point to
+`cn=Peggy Sue` instead.
+
+For another use case, people may customarily refer to a company such as
+"Pricewaterhouse Coopers International Limited" simply as "PwC" and hence, a
+directory name `o=PwC` could be used as an alias for
+`o=Pricewaterhouse Coopers International Limited`.
+
+Aliases can be dereferenced in the course of locating an entry, even if they are
+not the entry sought by a user. For instance, if a directory user tries to read
+an entry `c=US,st=Florida,cn=Jonathan Wilbur`, the directory can resolve the
+alias `st=Florida` to `st=FL` to obtain `c=US,st=FL,cn=Jonathan Wilbur`.
+
+### Schema
 
 In addition to the X.500 schema constructs mentioned above, further constructs
 can constrain where entries can appear and what object classes, attributes, and
@@ -339,13 +351,13 @@ Context Use Rules govern which contexts may be present in which attribute
 values within a region of the DIT. Matching use rules are used to control which
 matching combinations are defined for usage.
 
-#### Matching Rules
+Friend attributes are "friends" of an "anchor attribute." If the anchor
+attribute is used in a search filter, its friends will be evaluated for matches.
+If the anchor attribute is to be returned in response from the directory, the
+friend attributes will be returned automatically as well. Both of these cases
+can be disabled via service controls.
 
-X.500 directories use "matching rules" to define the logic of how two values are
-to be compared, sorted, and searched, which are called equality matching rules,
-ordering matching rules, and substring matching rules, respectively.
-
-#### Compound Entries
+### Compound Entries
 
 In many document-oriented databases, such as MongoDB, ElasticSearch, or CouchDB,
 documents themselves can contain "nested documents," and the directory is no
@@ -366,7 +378,7 @@ can use the "family grouping" feature of a search to obtain only these results,
 rather than performing two separate searches for people and devices and
 performing an inner join on the client-side.
 
-#### Hierarchical Groups
+### Hierarchical Groups
 
 Entries in the directory are arranged into a hierarchy, as established already.
 However, sometimes there is a need for some other hierarchy that is independent
@@ -390,7 +402,7 @@ virtual hierarchy. For example, if the virtual hierarchy reflects the managerial
 structure of an organization, you can query the directory for all managers of
 employees that have poor performance reviews.
 
-#### Collective Attributes
+### Collective Attributes
 
 As the directory grows, there might be a need to place the same attribute values
 within entries over and over again, thereby wasting data storage space. For
@@ -416,9 +428,7 @@ attribute. If 99,999 of our denizens live in a postal code, but a single person
 lives in a different one, we can mark them as excluded from the applicability of
 this collective attribute.
 
-### Usage
-
-#### Operations
+## Operations
 
 Interactions with the directory use a request-response model. The types of
 requests and responses supported by the directory are defined as "operations."
@@ -438,7 +448,7 @@ exist, the user is not authorized, or some other issue makes it impossible or
 undesirable to fulfill the request, an error may be returned, indicating the
 nature of the problem.
 
-#### ROSE Protocols and Transport
+## ROSE Protocols and Transport
 
 In the same way that a protocol stack such as TCP/IP encapsulates messages used
 by the application layer and provides services such as in-order delivery, the
@@ -457,7 +467,7 @@ the directory, which runs over TCP/IP. There may be more implementations I do
 not know about: it is defined as an abstract service so it can be provided in
 many ways.
 
-#### Binding and Unbinding
+## Binding and Unbinding
 
 Before a Remote Operation Service Element (ROSE) can provide the Remote
 Operations Service (ROS), the "initiator" between two correspondent endpoints
@@ -476,8 +486,7 @@ complete. However, the underlying transport may remain open, if desired; in
 concrete terms, the TCP socket may still be kept alive and re-used for a
 subsequent bind, perhaps to authenticate as a different user.
 
-
-#### Authentication
+## Authentication
 
 As we have established, authentication information is carried in the bind
 operation.
@@ -492,7 +501,7 @@ There are five forms of authentication defined in the directory specifications:
           flexible encapsulation mechanism for many more authentication
           exchanges.
 
-#### The DAP Operations
+## The DAP Operations
 
 The directory service is provided to users via the Directory Access Protocol
 (DAP), which is a suite of 11 operations briefly described as such:
@@ -509,21 +518,41 @@ The directory service is provided to users via the Directory Access Protocol
 - `administerPassword`: Reset a password of an entry
 - `changePassword`: Change a password of an entry
 
-#### Chaining
+Almost all of these operations share some parameters in their arguments (called
+"the common arguments"), and likewise, their results also share some parameters,
+called "the common results."
+
+The common arguments include "service controls," which can be used to specify
+among other things, how requests may be passed on to other directory servers,
+the priority of the request, the time limit of the request, the limit on the
+number of entries returned from searches or listings, whether (possibly
+out-of-date) replicated data is sufficient, whether aliases should be
+dereferenced automatically, and how large of an attribute is "too large." Other
+common arguments can be supplied to specify what contexts should be used for
+assertions, or how compound entries are to be evaluated for matches in searches.
+
+The common results may include the name of the server that fulfilled the
+request, a flag indicating whether an alias was dereferenced, or attributes used
+to provide notifications, warnings, or other information to the directory user.
+
+## Chaining
 
 The entire directory service can be (and is likely to be) split up among a
-multitude of servers cooperating with each other. Sometimes, the right place for
-a request to be fulfilled is not the server that originally received the
-request. In other cases, the original recipient of the request may only be able
-to partially satisfy the request, and may require more information from other
-directory servers. To fulfill such requests, directory servers do what is called
-"chaining," which where they wrap your request in an envelope of sorts, send
-this request to other servers saying "this is the original request, and this is
-what specifically I need from you to fulfill it." These secondary recipients
-may, in turn, chain the request, recursively, meaning that a single request
-could potentially propagate into a large number of chained messages.
+multitude of servers cooperating with each other. The individual servers
+providing the directory service are called Directory System Agents (DSAs), and
+the clients that interact with them are called Directory User Agents (DUAs).
+Sometimes, the right place for a request to be fulfilled is not the DSA that
+originally received the request from the DUA. In other cases, the original
+recipient of the request may only be able to partially satisfy the request, and
+may require more information from other directory servers. To fulfill such
+requests, directory servers do what is called "chaining," which is where they
+wrap the request in an envelope of sorts, send this request to other servers
+saying "this is the original request, and this is what specifically I need from
+you to fulfill it." These secondary recipients may, in turn, chain the request,
+recursively, meaning that a single request could potentially propagate into a
+large number of chained messages to many DSAs.
 
-The protocol that directories speak with each other to provide chaining, and
+The protocol that DSAs speak with each other to provide chaining, and
 therefore the total satisfaction of requests, is called the Directory System
 Protocol (DSP). The syntax for almost all of its operations are identical to
 those of the Directory Access Protocol (DAP), except with a "chaining arguments"
@@ -538,7 +567,7 @@ satisfactory--that master copies are not needed--and hence, the directory
 should not chain requests to servers hosting the master copy if they themselves
 have a non-master copy. (What an excellent segue to our next topic!)
 
-#### Shadowing
+## Shadowing
 
 The directory supports the replication of entries as read-only copies into
 other directories for performance purposes (arguably security as well). This
@@ -554,13 +583,18 @@ Shadowing is very flexible and can include all entries within a subtree of the
 DIT or only a selection of said entries, and the replicated entries may receive
 all of the attributes of the master copies, or just a selection of them.
 
+Shadowed information can be shadowed from other shadow DSAs as well. For this
+reason, the directory specifications make use of the terms "shadow supplier"
+and "shadow consumer" rather than "master" and "shadow," because the supplier of
+the shadowed data could itself be a shadow.
+
 Directory users can indicate that copies will suffice for their request. Copies
 are often less authoritative than shadows, since they may contain stale or
 out-of-date information, depending on how frequently updates to the master are
 propagated to the shadows, but using copies is likely to speed up directory
 operations.
 
-#### Relaxation or Tightening
+## Relaxation or Tightening
 
 Sometimes when you perform a search, you start with an idea of how many entries
 you'd like to receive. The directory has a mechanism for altering search
@@ -588,7 +622,7 @@ geographic knowledge to search a broader area for matching entries.
 In fact, the directory also allows users to control _how much broader_ each
 subsequent retry of the search is via an "extended area" parameter.
 
-#### Signing
+## Signing
 
 Directory requests, results, and errors may be cryptographically-signed to
 provide non-repudiation and integrity. Transport Layer Security (TLS) provides
@@ -599,15 +633,3 @@ unless it is signed to prove its authenticity!
 
 Even if a user does not sign his requests, he can still request that the DSA
 sign its responses, including errors.
-
-<!-- ## Administrator's Deep Dive
-
-### Context Prefixes
-
-### Administrative Areas
-
-### Access Control
-
-### Context Assertion Defaults
-
-### Operational Bindings -->

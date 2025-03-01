@@ -109,15 +109,13 @@ UserClasses ::= SEQUENCE {
   ... }
 
 ItemPermission ::= SEQUENCE {
-  precedence        Precedence OPTIONAL,
-             -- defaults to precedence in ACIItem
+  precedence        Precedence OPTIONAL, -- defaults to precedence in ACIItem
   userClasses       UserClasses,
   grantsAndDenials  GrantsAndDenials,
   ... }
 
 UserPermission ::= SEQUENCE {
-  precedence        Precedence OPTIONAL,
-             -- defaults to precedence in ACIItem
+  precedence        Precedence OPTIONAL, -- defaults to precedence in ACIItem
   protectedItems    ProtectedItems,
   grantsAndDenials  GrantsAndDenials,
   ... }

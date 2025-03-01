@@ -11,9 +11,11 @@ const sidebars = {
             label: 'X.500',
             items: [
                 'intro',
+                'executive-summary',
                 'uses',
+                'user-guide-to-x500',
+                'admin-guide-to-x500',
                 'why-not-ldap',
-                'deep-dive',
             ],
         },
         {
@@ -42,7 +44,6 @@ const sidebars = {
                 'usage',
                 'zonal',
                 'attr-cert',
-                'telemetry',
                 'conformance',
                 'deviations-nuances',
                 'information-disclosure',
