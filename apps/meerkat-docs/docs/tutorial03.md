@@ -1,4 +1,4 @@
-# Add NHOBs and Subordinates
+# Tutorial 3: Add NHOBs and Subordinates
 
 Non-Specific Operational Bindings (NHOB) allow multiple DSAs to share a
 namespace immediately subordinate to an entry. This special entry that serves as

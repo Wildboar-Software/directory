@@ -50,7 +50,7 @@ given Access Control Specific Area (ACSA), the following must be in place:
     attribute value set to the object identifier of the access control scheme
     you want to use in that administrative area.
 
-:::caution
+:::warning
 
 Note that the ACI items should be created before enabling access control. If
 there are no ACI items defined at all, then _nobody_ is permitted to do

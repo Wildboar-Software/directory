@@ -20,7 +20,7 @@ accept an operational binding in the "Operational Bindings" section, you will
 be able to check a box that indicates that the proposing DSA will be trusted
 for Identity-Based Requester Authentication.
 
-:::caution
+:::warning
 
 This is a dangerous setting, because it means that you will trust that DSA to
 honestly indicate the originator and authentication level. Do NOT enable this
@@ -134,7 +134,7 @@ no way to do this using Meerkat DSA (including the web admin console), currently
 
 ## Security Risks of Chaining
 
-:::caution
+:::warning
 
 If you allow a user to add an entry via the `addEntry` operation and they are
 authorization to chain operations, they might be able to spam the DSA with

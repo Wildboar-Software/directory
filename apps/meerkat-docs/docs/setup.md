@@ -263,7 +263,7 @@ configure authentication for it or put it behind a secure reverse HTTP proxy
 that requires authentication and TLS. Client TLS authentication would be even
 better than basic authentication.
 
-:::caution
+:::warning
 
 Access to the web administration console means full permission to do anything.
 It is highly recommended that you not only configure
@@ -311,7 +311,7 @@ things in this specific order (details to follow):
    - `rule-and-basic-access-control`
    - `rule-and-simple-access-control`
 
-:::caution
+:::warning
 
 If you create the administrative point with an ACSA role before creating the
 subentries, you might be locked out, unable to read or write anything including
@@ -321,7 +321,7 @@ a denial of access. Creating the ACSA administrative point is the switch that
 turns access control on. Ensure you configure your ACI items in your ACSA and
 ACIA subentries are configured to allow you to continue to set up your DSA!
 
-:::caution
+:::
 
 ### Creating the administrative user
 
@@ -383,7 +383,7 @@ with your autonomous administrative point. This is a DSE of type `admPoint` that
 has an `administrativeRole` attribute having value
 `id-ar-accessControlSpecificArea`.
 
-:::caution
+:::warning
 
 If you do not have access control administrative points defined, your DSA will
 be world-readable and world-writeable!

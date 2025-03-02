@@ -104,7 +104,7 @@ basically proves that _you are the DSA_. Hence, a DSA that supports ROB will
 check that ROB requests are signed with its own private key before relaying
 such requests.
 
-:::caution
+:::warning
 
 Using the DSA's private key usually entails it being installed on the device of
 the X.500 DUA. This means that the private key will be present on two or more

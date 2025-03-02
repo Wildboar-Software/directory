@@ -12,7 +12,7 @@ operational bindings and triggering
 using the X.500 protocols. In the future, we will find a way to make even this
 possible without the web console.
 
-:::caution
+:::warning
 
 Note that exposing the web-based administrative console is a **security risk**
 because, if a user can obtain illegitimate access to the web administration
@@ -34,7 +34,7 @@ be lightweight, cross-platform, and low maintenance. Originally, there was no
 security on the web administration console whatsoever, but this was added so
 that DSA administrators could have a modicum of security with minimal setup.
 
-:::caution
+:::warning
 
 HTTP Basic Authentication will only be enabled if both the
 [`MEERKAT_WEB_ADMIN_AUTH_USERNAME`](#meerkatwebadminauthusername) and
@@ -43,7 +43,7 @@ variables are set.
 
 :::
 
-:::caution
+:::warning
 
 HTTP Basic Authentication transmits your username and password in the clear
 (without encryption). This means that you should secure your communication with
@@ -59,7 +59,7 @@ password for any entry in your DSA.
 
 :::
 
-:::caution
+:::warning
 
 Using passwords in general is vastly inferior to TLS client certificate
 authentication. HTTP Basic Authentication was implemented in Meerkat DSA so that

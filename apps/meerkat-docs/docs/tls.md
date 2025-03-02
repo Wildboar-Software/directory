@@ -69,7 +69,7 @@ do to enable this is set the environment variable
 [`MEERKAT_TLS_REJECT_UNAUTHORIZED_CLIENTS`](./env.md#meerkattlsrejectunauthorizedclients)
 to `1` (enabled).
 
-:::caution
+:::warning
 
 While TLS client certificate authentication is generally very secure, there are
 risks involved. Namely, you are inviting TLS peers to submit X.509 certificates
@@ -92,7 +92,7 @@ the environment variable
 to `0` (disabled). This will cause Meerkat DSA to ignore an invalid
 certification path presented by a server to which it connects.
 
-:::caution
+:::warning
 
 If you disable server authentication, it mitigates the protection afforded by
 TLS; anybody can impersonate the server. If you disable server authentication

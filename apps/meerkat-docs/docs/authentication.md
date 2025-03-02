@@ -174,7 +174,7 @@ To enable password lockouts, just set the `pwdMaxFailures` operational attribute
 on the applicable password administration subentries. You can make the lockout
 temporary using the `pwdLockoutDuration` operational attribute, if desired.
 
-:::caution
+:::warning
 
 Enabling password lockouts might not be a good idea. This feature can allow
 nefarious users to purposefully guess wrong passwords for other users to lock
@@ -203,7 +203,7 @@ rejects the authentication attempt. It is strongly preferred for clients to
 supply a certification path in the bind argument so that this lookup need not
 happen.
 
-:::caution
+:::warning
 
 Enabling the above feature is risky, since it can open your DSA up to
 denial-of-service attacks. See more

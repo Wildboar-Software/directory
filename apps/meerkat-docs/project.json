@@ -5,17 +5,19 @@
     "sourceRoot": "apps/meerkat-docs/src",
     "targets": {
         "build": {
-            "executor": "@nx-plus/docusaurus:browser",
+            "executor": "nx:run-commands",
             "options": {
-                "outputPath": "dist/apps/meerkat-docs"
+              "command": "docusaurus build --config docusaurus.config.js --out-dir dist",
+              "cwd": "apps/meerkat-docs"
             }
-        },
-        "serve": {
-            "executor": "@nx-plus/docusaurus:dev-server",
+          },
+          "serve": {
+            "executor": "nx:run-commands",
             "options": {
-                "port": 3000
+              "command": "docusaurus start --port 3000 --config docusaurus.config.js",
+              "cwd": "apps/meerkat-docs"
             }
-        }
+          }
     },
     "tags": []
 }

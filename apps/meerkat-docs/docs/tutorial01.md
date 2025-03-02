@@ -1,6 +1,6 @@
 # Tutorial 1: Set up the X.500 CLI
 
-:::caution
+:::warning
 
 The X.500 CLI is under heavy development right now. This documentation could
 become invalidated. If you believe something is incorrect, please

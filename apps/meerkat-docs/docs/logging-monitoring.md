@@ -146,7 +146,7 @@ deliberately added so that Meerkat DSA log messages can be parsed by tools like
 [Fail2Ban](https://www.fail2ban.org/wiki/index.php/Main_Page), so that offending
 IP addresses can be blocked.
 
-:::caution
+:::warning
 
 If you are using a reverse proxy, such as Nginx, these IP addresses might be for
 the proxy and not for the actual offending client. If you automatically block IP
@@ -178,7 +178,7 @@ the IP address and the port number, since the user of
 Network Address Translation (NAT) means that the one or more people or devices
 could be sharing that IP address.
 
-:::caution
+:::warning
 
 If you are using a reverse proxy, such as Nginx, in front of your Meerkat DSA
 instance, make the IP addresses you are preserving are not for the proxy!

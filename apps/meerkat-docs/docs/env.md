@@ -35,7 +35,7 @@ and signing options (those pertaining to signed arguments, results, or errors)
 both have a suite of similar configuration options. The TLS options start with
 `MEERKAT_TLS_` and the signing options start with `MEERKAT_SIGNING_`.
 
-:::caution
+:::warning
 
 The TLS options do not affect the signing options, and vice versa. That means
 that, if you want to configure, say, a certificate authorities file for
@@ -228,7 +228,7 @@ still being set up.
 
 In some experiments, this has made `addEntry` operations run four times faster!
 
-:::caution
+:::warning
 
 Enabling this _disables_ access controls. This should NOT be enabled if your
 directory is accessible over a network to users that should not have
@@ -454,7 +454,7 @@ The largest Network Service Data Unit (NSDU) that an ISO Transport Over TCP
 TCP (ITOT), this means the maximum size of TPKT packets, which are innately
 limited to 65531 bytes.
 
-:::caution
+:::warning
 
 If this value is set too low, clients will not be able to send data to the
 configured DSA, or they will take an extremely long time to transmit. If this
@@ -471,7 +471,7 @@ to 65531 bytes in size.
 The largest Transport Protocol Data Unit (TPDU) that an ISO Transport Over TCP
 (ITOT) can transmit before being aborted or disconnected.
 
-:::caution
+:::warning
 
 If this value is set too low, clients will not be able to send data to the
 configured DSA, or they will take an extremely long time to transmit. If this
@@ -491,7 +491,7 @@ The largest Transport Service Data Unit (TSDU) that an ISO Transport Over TCP
 a sensible value and should generally not be changed unless there is a problem
 that warrants it.
 
-:::caution
+:::warning
 
 If this value is set too low, clients will not be able to send data to the
 configured DSA, or they will take an extremely long time to transmit. If this
@@ -507,7 +507,7 @@ The largest Session Service Data Unit (SSDU) that an ISO Transport Over TCP
 a sensible value and should generally not be changed unless there is a problem
 that warrants it.
 
-:::caution
+:::warning
 
 If this value is set too low, clients will not be able to send data to the
 configured DSA, or they will take an extremely long time to transmit. If this
@@ -523,7 +523,7 @@ ITU X.226 OSI Presentation association when using ISO Transport Over TCP (ITOT).
 This defaults to 10. If more than this many presentation contexts are proposed
 by a presentation peer, the presentation association will be refused.
 
-:::caution
+:::warning
 
 This option exists to prevent denial-of-service attacks in which a large number
 of presentation contexts are presented.
@@ -538,7 +538,7 @@ If this is unset, Meerkat DSA will not listen for ITOT traffic.
 
 Many legacy X.500 directory clients support ITOT.
 
-:::caution
+:::warning
 
 ISO Transport Over TCP (ITOT) does **NOT** provide point-to-point encryption or
 peer authentication like TLS does. This means that data sent over ITOT will be
@@ -569,7 +569,7 @@ ITOTS traffic.
 Many legacy X.500 directory clients support ITOT, but no known legacy clients
 support ITOT over TLS.
 
-:::caution
+:::warning
 
 ISO Transport Over TCP (ITOT) is very complicated, because it
 entails another much more complicated networking stack operating over TCP/IP.
@@ -697,7 +697,7 @@ brute force attacks.
 
 :::
 
-:::caution
+:::warning
 
 It might **NOT** be desirable to enable this because doing so could have legal
 implications. Meerkat DSA logs IP addresses. If Meerkat DSA also logs
@@ -765,7 +765,7 @@ can be decrypted. This is used for debugging purposes.
 The logging format is the same as an individual line of the
 [SSLKEYLOG format described here](https://firefox-source-docs.mozilla.org/security/nss/legacy/key_log_format/index.html).
 
-:::caution
+:::warning
 
 Do not enable this unless:
 
@@ -797,7 +797,7 @@ found, Meerkat DSA rejects the authentication attempt. It is strongly
 preferred for clients to supply a certification path in the bind argument
 so that this lookup need not happen.
 
-:::caution
+:::warning
 
 Enabling this opens up your Meerkat DSA instance to denial-of-service attacks.
 A particular lookup can be computationally expensive, and since a given user may
@@ -979,7 +979,7 @@ However, these cached vertices MUST eventually expire, otherwise, users could
 have out-of-date information or perform operations on entries to which they have
 had their permissions revoked since the last operation.
 
-:::caution
+:::warning
 
 To be clear, use of the most recent vertex **bypasses access controls**,
 regarding `Browse` and `ReturnDN` permissions. It is assumed that, if the user had
@@ -1023,7 +1023,7 @@ Whitespace-separated NSAP URLs that locate this DSA. This is important for
 enabling other DSAs to chain requests to this DSA. These NSAP URLs are used to
 populate the `myAccessPoint` attribute in the Root DSE.
 
-:::caution
+:::warning
 
 Do NOT include usernames and passwords in any URL
 (e.g. `https://username:password@example.com`) you supply with this environment
@@ -1046,7 +1046,7 @@ If set to `1`, Meerkat DSA will not log to the console.
 If set to `1`, Meerkat DSA will not include the timestamp in log messages.
 
 
-:::caution
+:::warning
 
 Enabling this (thereby turning off timestamps in log messages) can make your
 logs unusable, since you might not know when a particular concerning log event
@@ -1076,7 +1076,7 @@ If set to `1`, Meerkat DSA will not apply any access controls to adding new
 entries to the top level. Note that this does not negate access controls for
 already-existing first-level DSEs.
 
-:::caution
+:::warning
 
 This option being enabled reduces security of the system, because users can
 arbitarily create new entries at the top level. Only enable this option if you
@@ -1243,7 +1243,7 @@ UserPwd ::= CHOICE {
 
 ```
 
-:::caution
+:::warning
 
 Meerkat DSA does not do this by default because it could expose your users to
 offline dictionary attacks, which is an exponentially greater threat than
@@ -1668,7 +1668,7 @@ The file contents should look like this if you open them up in a text editor:
 -----END PRIVATE KEY-----
 ```
 
-:::caution
+:::warning
 
 This file is a secret key. Do not give it to anybody unless you are sure that
 they should be able to impersonate / act on behalf of this Meerkat DSA instance.
@@ -1943,7 +1943,7 @@ can be decrypted. This is used for debugging purposes.
 The format of the log file is the
 [SSLKEYLOG format described here](https://firefox-source-docs.mozilla.org/security/nss/legacy/key_log_format/index.html).
 
-:::caution
+:::warning
 
 Do not enable this unless:
 
@@ -2097,7 +2097,7 @@ The file contents should look like this if you open them up in a text editor:
 -----END PRIVATE KEY-----
 ```
 
-:::caution
+:::warning
 
 This file is a secret key. Do not give it to anybody unless you are sure that
 they should be able to impersonate / act on behalf of this Meerkat DSA instance.
@@ -2112,7 +2112,7 @@ the equivalent of this environment variable that affects signing is:
 
 The password to use to decrypt the private key to use for TLS.
 
-:::caution
+:::warning
 
 This value is a secret. Do not give it to anybody unless you are sure that
 they should be able to impersonate / act on behalf of this Meerkat DSA instance.
@@ -2137,7 +2137,7 @@ The minimum TLS version supported. Possible values are:
 - `TLSv1.1`
 - `TLSv1`
 
-:::caution
+:::warning
 
 Avoid setting this value to `TLSv1.1` or `TLSv1` unless absolutely necessary.
 These versions of TLS are much less secure. (Though, still better than no
@@ -2245,7 +2245,7 @@ the equivalent of this environment variable that affects signing is:
 
 The filepath to a PFX / PKCS #12 file to use for TLS.
 
-:::caution
+:::warning
 
 This is a security-sensitive file that contains both your X.509 certificate
 chain as well as your private key. Do NOT give this file to anybody that should
@@ -2269,7 +2269,7 @@ according to the trust anchors defined in the `MEERKAT_TLS_CA_FILE` file. This
 defaults to enabled, meaning that the identities of TLS servers will be checked
 as is usually expected from TLS.
 
-:::caution
+:::warning
 
 It is a security vulnerability to set this to `0`, because Meerkat DSA will not
 check the identities of peers that it connects to over TLS!
@@ -2371,7 +2371,7 @@ Overrides the name of the vendor of this DSA, which is displayed in the root DSE
 as the `vendorName` attribute. If this is unset, the `vendorName` attribute will
 read "Wildboar Software" regardless of the server's locale or language settings.
 
-:::caution
+:::warning
 
 Revealing that you are using a Meerkat DSA instance may make it easier for
 malicious users to profile your DSA in cyberattack attempts. For instance, if it
@@ -2411,7 +2411,7 @@ number, regardless of the server's locale or language settings. Everything said
 in this section is also true for the similar `fullVendorVersion` attribute used
 by OpenDJ.
 
-:::caution
+:::warning
 
 Revealing that you are using a specific version of Meerkat DSA instance may make
 it easier for malicious users to profile your DSA in cyberattack attempts. For
@@ -2447,7 +2447,7 @@ future.
 If set, this is the username that the web admin console will expect as part of
 HTTP basic authentication.
 
-:::caution
+:::warning
 
 HTTP Basic Authentication will only be enabled if both the
 [`MEERKAT_WEB_ADMIN_AUTH_USERNAME`](#meerkatwebadminauthusername) and
@@ -2456,7 +2456,7 @@ variables are set.
 
 :::
 
-:::caution
+:::warning
 
 HTTP Basic Authentication transmits your username and password in the clear
 (without encryption). This means that you should secure your communication with
@@ -2472,7 +2472,7 @@ password for any entry in your DSA.
 
 :::
 
-:::caution
+:::warning
 
 Using passwords in general is vastly inferior to TLS client certificate
 authentication. HTTP Basic Authentication was implemented in Meerkat DSA so that
@@ -2490,7 +2490,7 @@ kind of network access controls to prevent users from accessing it entirely.
 If set, this is the password that the web admin console will expect as part of
 HTTP basic authentication.
 
-:::caution
+:::warning
 
 HTTP Basic Authentication will only be enabled if both the
 [`MEERKAT_WEB_ADMIN_AUTH_USERNAME`](#meerkatwebadminauthusername) and
@@ -2499,7 +2499,7 @@ variables are set.
 
 :::
 
-:::caution
+:::warning
 
 HTTP Basic Authentication transmits your username and password in the clear
 (without encryption). This means that you should secure your communication with
@@ -2515,7 +2515,7 @@ password for any entry in your DSA.
 
 :::
 
-:::caution
+:::warning
 
 Using passwords in general is vastly inferior to TLS client certificate
 authentication. HTTP Basic Authentication was implemented in Meerkat DSA so that
@@ -2545,7 +2545,7 @@ web admin console.
 
 If set to `0`, the web admin console will _not_ use HTTPS and use HTTP instead.
 
-:::caution
+:::warning
 
 This will have no effect if TLS is not configured in Meerkat DSA in the first
 place.
@@ -2555,7 +2555,7 @@ place.
 If TLS is enabled, the web admin console will use the same TLS configuration
 that the directory services are configured to use.
 
-:::caution
+:::warning
 
 You should only disable TLS on the web admin console if you are using a reverse
 proxy that provides TLS.

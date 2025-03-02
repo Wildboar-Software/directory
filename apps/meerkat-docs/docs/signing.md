@@ -37,7 +37,7 @@ signing than for TLS. You can do this via the
 [`MEERKAT_TRUST_ANCHORS_FILE`](./env.md#meerkattrustanchorsfile) environment
 variables.
 
-:::caution
+:::warning
 
 If you do not configure signing trust anchors, the same trust anchors used for
 TLS will be used to verify digital signatures on arguments, results, and errors.

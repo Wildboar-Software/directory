@@ -151,7 +151,7 @@ agreement replicates all entries of object class `person` and another replicates
 all entries of object class `country` for an otherwise identical subtree
 specification.
 
-:::caution
+:::warning
 
 It is still strongly recommended to avoid using overlapping shadowed areas. The
 use of overlapping shadowed areas has not been tested at all. If overlapping
@@ -194,7 +194,7 @@ supplier will provide a total refresh. In either case, refreshes are
 idempotent, meaning that duplicate entries, attributes, values, etc. should just
 be ignored. If you experience a deviation on this front, it is a bug.
 
-:::caution
+:::warning
 
 This does not mean that Meerkat DSA is resilient to storage / database failures.
 Depending on the configuration of your operating system or database, writes may
