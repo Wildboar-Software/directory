@@ -3,9 +3,10 @@
     "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "apps/create-test-dit/src",
     "projectType": "application",
+    "tags": [],
     "targets": {
         "build": {
-            "executor": "@nrwl/webpack:webpack",
+            "executor": "@nx/webpack:webpack",
             "outputs": ["{options.outputPath}"],
             "options": {
                 "outputPath": "dist/apps/create-test-dit",
@@ -13,7 +14,8 @@
                 "tsConfig": "apps/create-test-dit/tsconfig.app.json",
                 "assets": ["apps/create-test-dit/src/assets"],
                 "target": "node",
-                "compiler": "tsc"
+                "compiler": "tsc",
+                "webpackConfig": "apps/create-test-dit/webpack.config.js"
             },
             "configurations": {
                 "production": {
@@ -40,10 +42,8 @@
             "executor": "@nx/jest:jest",
             "outputs": ["{workspaceRoot}/coverage/apps/create-test-dit"],
             "options": {
-                "jestConfig": "apps/create-test-dit/jest.config.ts",
-                "passWithNoTests": true
+                "jestConfig": "apps/create-test-dit/jest.config.ts"
             }
         }
-    },
-    "tags": []
+    }
 }

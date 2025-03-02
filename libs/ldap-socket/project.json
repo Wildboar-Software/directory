@@ -3,6 +3,7 @@
     "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "libs/ldap-socket/src",
     "projectType": "library",
+    "tags": [],
     "targets": {
         "build": {
             "executor": "@nx/js:tsc",
@@ -12,8 +13,7 @@
                 "tsConfig": "libs/ldap-socket/tsconfig.lib.json",
                 "packageJson": "libs/ldap-socket/package.json",
                 "main": "libs/ldap-socket/src/index.ts",
-                "assets": ["libs/ldap-socket/*.md"],
-                "updateBuildableProjectDepsInPackageJson": true
+                "assets": ["libs/ldap-socket/*.md"]
             }
         },
         "lint": {
@@ -27,10 +27,8 @@
             "executor": "@nx/jest:jest",
             "outputs": ["{workspaceRoot}/coverage/libs/ldap-socket"],
             "options": {
-                "jestConfig": "libs/ldap-socket/jest.config.ts",
-                "passWithNoTests": true
+                "jestConfig": "libs/ldap-socket/jest.config.ts"
             }
         }
-    },
-    "tags": []
+    }
 }

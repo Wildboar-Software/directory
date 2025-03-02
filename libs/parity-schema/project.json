@@ -3,16 +3,18 @@
     "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "libs/parity-schema/src",
     "projectType": "library",
+    "tags": [],
     "targets": {
         "build": {
-            "executor": "@nrwl/webpack:webpack",
+            "executor": "@nx/webpack:webpack",
             "outputs": ["{options.outputPath}"],
             "options": {
                 "outputPath": "dist/libs/parity-schema",
                 "main": "libs/parity-schema/src/index.ts",
                 "tsConfig": "libs/parity-schema/tsconfig.lib.json",
                 "target": "node",
-                "compiler": "tsc"
+                "compiler": "tsc",
+                "webpackConfig": "libs/parity-schema/webpack.config.js"
             },
             "configurations": {
                 "production": {
@@ -33,10 +35,8 @@
             "executor": "@nx/jest:jest",
             "outputs": ["{workspaceRoot}/coverage/libs/parity-schema"],
             "options": {
-                "jestConfig": "libs/parity-schema/jest.config.ts",
-                "passWithNoTests": true
+                "jestConfig": "libs/parity-schema/jest.config.ts"
             }
         }
-    },
-    "tags": []
+    }
 }

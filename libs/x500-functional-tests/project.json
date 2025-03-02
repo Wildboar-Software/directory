@@ -3,6 +3,7 @@
     "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "libs/x500-functional-tests/src",
     "projectType": "library",
+    "tags": [],
     "targets": {
         "lint": {
             "executor": "@nx/linter:eslint",
@@ -15,10 +16,8 @@
             "executor": "@nx/jest:jest",
             "outputs": ["{workspaceRoot}/coverage/libs/x500-functional-tests"],
             "options": {
-                "jestConfig": "libs/x500-functional-tests/jest.config.ts",
-                "passWithNoTests": true
+                "jestConfig": "libs/x500-functional-tests/jest.config.ts"
             }
         }
-    },
-    "tags": []
+    }
 }

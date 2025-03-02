@@ -3,9 +3,10 @@
     "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "apps/meerkat/src",
     "projectType": "application",
+    "tags": [],
     "targets": {
         "build": {
-            "executor": "@nrwl/webpack:webpack",
+            "executor": "@nx/webpack:webpack",
             "outputs": ["{options.outputPath}"],
             "options": {
                 "outputPath": "dist/apps/meerkat",
@@ -55,10 +56,8 @@
             "executor": "@nx/jest:jest",
             "outputs": ["{workspaceRoot}/coverage/apps/meerkat"],
             "options": {
-                "jestConfig": "apps/meerkat/jest.config.ts",
-                "passWithNoTests": true
+                "jestConfig": "apps/meerkat/jest.config.ts"
             }
         }
-    },
-    "tags": []
+    }
 }

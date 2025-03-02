@@ -3,6 +3,7 @@
     "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "libs/x500-cli-config/src",
     "projectType": "library",
+    "tags": [],
     "targets": {
         "build": {
             "executor": "@nx/js:tsc",
@@ -12,8 +13,7 @@
                 "tsConfig": "libs/x500-cli-config/tsconfig.lib.json",
                 "packageJson": "libs/x500-cli-config/package.json",
                 "main": "libs/x500-cli-config/src/index.ts",
-                "assets": ["libs/x500-cli-config/*.md"],
-                "updateBuildableProjectDepsInPackageJson": true
+                "assets": ["libs/x500-cli-config/*.md"]
             }
         },
         "lint": {
@@ -27,10 +27,8 @@
             "executor": "@nx/jest:jest",
             "outputs": ["{workspaceRoot}/coverage/libs/x500-cli-config"],
             "options": {
-                "jestConfig": "libs/x500-cli-config/jest.config.ts",
-                "passWithNoTests": true
+                "jestConfig": "libs/x500-cli-config/jest.config.ts"
             }
         }
-    },
-    "tags": []
+    }
 }

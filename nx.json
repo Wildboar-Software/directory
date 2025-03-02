@@ -1,18 +1,4 @@
 {
-    "affected": {
-        "defaultBase": "master"
-    },
-    "npmScope": "directory",
-    "tasksRunnerOptions": {
-        "default": {
-            "runner": "nx-cloud",
-            "options": {
-                "cacheableOperations": ["build", "lint", "test", "e2e"],
-                "accessToken": "Y2Y4NGI2OTctODY3OS00ZmU3LWI0MTctMmYwZTY4ZDhmYjNhfHJlYWQtd3JpdGU=",
-                "parallel": 1
-            }
-        }
-    },
     "defaultProject": "meerkat",
     "$schema": "./node_modules/nx/schemas/nx-schema.json",
     "namedInputs": {
@@ -34,17 +20,34 @@
     },
     "targetDefaults": {
         "build": {
-            "inputs": ["production", "^production"]
+            "inputs": ["production", "^production"],
+            "cache": true
         },
-        "test": {
+        "lint": {
+            "inputs": ["default", "{workspaceRoot}/.eslintrc.json"],
+            "cache": true
+        },
+        "@nx/jest:jest": {
             "inputs": [
                 "default",
                 "^production",
                 "{workspaceRoot}/jest.preset.js"
-            ]
-        },
-        "lint": {
-            "inputs": ["default", "{workspaceRoot}/.eslintrc.json"]
+            ],
+            "cache": true,
+            "options": {
+                "passWithNoTests": true
+            },
+            "configurations": {
+                "ci": {
+                    "ci": true,
+                    "codeCoverage": true
+                }
+            }
         }
-    }
+    },
+    "nxCloudAccessToken": "Y2Y4NGI2OTctODY3OS00ZmU3LWI0MTctMmYwZTY4ZDhmYjNhfHJlYWQtd3JpdGU=",
+    "parallel": 1,
+    "useInferencePlugins": false,
+    "defaultBase": "master",
+    "useLegacyCache": true
 }

@@ -3,9 +3,10 @@
     "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "apps/x500-cli/src",
     "projectType": "application",
+    "tags": [],
     "targets": {
         "build": {
-            "executor": "@nrwl/webpack:webpack",
+            "executor": "@nx/webpack:webpack",
             "outputs": ["{options.outputPath}"],
             "options": {
                 "outputPath": "dist/apps/x500-cli",
@@ -48,10 +49,8 @@
             "executor": "@nx/jest:jest",
             "outputs": ["{workspaceRoot}/coverage/apps/x500-cli"],
             "options": {
-                "jestConfig": "apps/x500-cli/jest.config.ts",
-                "passWithNoTests": true
+                "jestConfig": "apps/x500-cli/jest.config.ts"
             }
         }
-    },
-    "tags": []
+    }
 }

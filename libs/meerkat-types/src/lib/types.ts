@@ -1156,7 +1156,7 @@ export
 interface PublicKeyInfrastructureConfig
 extends OfflinePKIConfig, OnlinePKIConfig, CRLIndex, CertificatePolicyConfig {
 
-};
+}
 
 /**
  * Generic information that pertains to Privilege Management Infrastructure (PMI).
@@ -1277,7 +1277,7 @@ interface SCVPConfiguration {
      * compute the hash value for the requestHash item in the response.
      */
     hashAlgorithm?: OBJECT_IDENTIFIER;
-};
+}
 
 /**
  * @summary Properties of Meerkat DSA's digital signing of requests, responses, and errors.
@@ -3262,7 +3262,7 @@ interface Context {
      *
      * @see {@link pendingShadowingUpdateCycles}
      */
-    shadowUpdateCycles: Map<number, NodeJS.Timer>;
+    shadowUpdateCycles: Map<number, NodeJS.Timeout>;
 
     /**
      * This field's purpose is to act like a mutex and prevent two overlapping

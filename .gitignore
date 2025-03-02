@@ -49,3 +49,6 @@ Thumbs.db
 .cache-loader/
 data/zonal/boundary.csv
 data/zonal/gazette.csv
+
+.nx/cache
+.nx/workspace-data

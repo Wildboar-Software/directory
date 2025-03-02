@@ -3,6 +3,7 @@
     "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "apps/x500-auth-ts-example-express/src",
     "projectType": "application",
+    "tags": [],
     "targets": {
         "build": {
             "executor": "@nx/webpack:webpack",
@@ -13,7 +14,8 @@
                 "tsConfig": "apps/x500-auth-ts-example-express/tsconfig.app.json",
                 "assets": ["apps/x500-auth-ts-example-express/src/assets"],
                 "compiler": "tsc",
-                "target": "node"
+                "target": "node",
+                "webpackConfig": "apps/x500-auth-ts-example-express/webpack.config.js"
             },
             "configurations": {
                 "production": {
@@ -49,10 +51,8 @@
                 "{workspaceRoot}/coverage/apps/x500-auth-ts-example-express"
             ],
             "options": {
-                "jestConfig": "apps/x500-auth-ts-example-express/jest.config.ts",
-                "passWithNoTests": true
+                "jestConfig": "apps/x500-auth-ts-example-express/jest.config.ts"
             }
         }
-    },
-    "tags": []
+    }
 }

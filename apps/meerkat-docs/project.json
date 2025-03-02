@@ -7,7 +7,7 @@
         "build": {
             "executor": "nx:run-commands",
             "options": {
-              "command": "docusaurus build --config docusaurus.config.js --out-dir dist",
+              "command": "docusaurus build --config docusaurus.config.js --out-dir ../../dist/apps/meerkat-docs",
               "cwd": "apps/meerkat-docs"
             }
           },

@@ -3,6 +3,7 @@
     "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "libs/x500-auth-ts/src",
     "projectType": "library",
+    "tags": [],
     "targets": {
         "build": {
             "executor": "@nx/js:tsc",
@@ -11,9 +12,7 @@
                 "outputPath": "dist/libs/x500-auth-ts",
                 "main": "libs/x500-auth-ts/src/index.ts",
                 "tsConfig": "libs/x500-auth-ts/tsconfig.lib.json",
-                "assets": ["libs/x500-auth-ts/*.md"],
-                "buildableProjectDepsInPackageJsonType": "dependencies",
-                "updateBuildableProjectDepsInPackageJson": true
+                "assets": ["libs/x500-auth-ts/*.md"]
             },
             "dependsOn": [
                 {
@@ -44,10 +43,8 @@
             "executor": "@nx/jest:jest",
             "outputs": ["{workspaceRoot}/coverage/libs/x500-auth-ts"],
             "options": {
-                "jestConfig": "libs/x500-auth-ts/jest.config.ts",
-                "passWithNoTests": true
+                "jestConfig": "libs/x500-auth-ts/jest.config.ts"
             }
         }
-    },
-    "tags": []
+    }
 }
