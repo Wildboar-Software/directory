@@ -145,7 +145,7 @@ const config = {
             footer: {
                 style: 'dark',
                 links: [],
-                copyright: `Copyright © 2022 Wildboar Software. Built with Docusaurus.`,
+                copyright: `Copyright © 2022-2025 Wildboar Software. Built with Docusaurus.`,
             },
             prism: {
                 theme: lightCodeTheme,

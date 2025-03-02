@@ -2,13 +2,13 @@
 
 Meerkat DSA supports dynamic entries, as detailed in
 [IETF RFC 2589](https://www.rfc-editor.org/rfc/rfc2589.html), but deviates from
-the specification 
+the specification
 
 If an entry is marked as a dynamic object using the `dynamicObject` object
 class (OID `1.3.6.1.4.1.1466.101.119.2`), but the created entry does not contain
 the `entryTtl` operational attribute, the default value of the `entryTtl` will
 be determined by the
-[`MEERKAT_DEFAULT_ENTRY_TTL`](./env.md#meerkatdefaultentryttl) environment
+[`MEERKAT_DEFAULT_ENTRY_TTL`](./env.md#meerkat_default_entry_ttl) environment
 variable. If unset, this value defaults to 60, meaning that dynamic objects
 created without an `entryTtl` attribute that specifies otherwise will be
 automatically deleted after one minute.

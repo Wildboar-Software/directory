@@ -193,7 +193,7 @@ provided in strong authentication.
 
 If a certification path is _not_ supplied in the bind argument, but a name _is_
 supplied (via the `name` parameter), and if the environment variable
-[`MEERKAT_LOOKUP_UNCERT_STRONG_AUTH`](./env.md#meerkatlookupuncertstrongauth) is
+[`MEERKAT_LOOKUP_UNCERT_STRONG_AUTH`](./env.md#meerkat_lookup_uncert_strong_auth) is
 set to `1` (enabled), Meerkat DSA searches internally for a user by the asserted
 distinguished name; if this user is found, and it is of object class
 `pkiCertPath`, and it has an attribute of type `pkiPath`, each value of its
@@ -207,16 +207,16 @@ happen.
 
 Enabling the above feature is risky, since it can open your DSA up to
 denial-of-service attacks. See more
-[here](./env.md#meerkatlookupuncertstrongauth).
+[here](./env.md#meerkat_lookup_uncert_strong_auth).
 
 :::
 
 The certification path is verified with the trust anchors configured in
-[`MEERKAT_SIGNING_CA_FILE`](./env.md#meerkatsigningcafile). If this environment
+[`MEERKAT_SIGNING_CA_FILE`](./env.md#meerkat_signing_ca_file). If this environment
 variable is not configured, the bundle of certificates that are built in to
 the NodeJS runtime are used by default.
 
-If [`MEERKAT_SIGNING_DISABLE_VERIFICATION`](./env.md#meerkatsigningdisableverification)
+If [`MEERKAT_SIGNING_DISABLE_VERIFICATION`](./env.md#meerkat_signing_disable_verification)
 is enabled (meaning that all signature verification is disabled in Meerkat DSA),
 strong authentication will always fail.
 

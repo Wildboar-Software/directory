@@ -93,7 +93,7 @@ other Meerkat DSA-related things.
 ## MEERKAT_ADMINISTRATOR_EMAIL_PUBLIC
 
 If set to `1`, the administrator email configured by
-[`MEERKAT_ADMINISTRATOR_EMAIL`](#meerkatadministratoremail) will be exposed in
+[`MEERKAT_ADMINISTRATOR_EMAIL`](#meerkat_administrator_email) will be exposed in
 the root DSE as a value of the `administratorsAddress` attribute.
 
 This can be handy for allowing people and organizations to reach out to you or
@@ -1541,10 +1541,10 @@ bind token used in strong authentication.
 
 The filepath of the certificate authority certificates file to use for
 verifying signed arguments, results, and errors. This is NOT used for TLS; the
-TLS equivalent of this variable is [`MEERKAT_TLS_CA_FILE`](#meerkattlscafile).
+TLS equivalent of this variable is [`MEERKAT_TLS_CA_FILE`](#meerkat_tls_ca_file).
 
 The format of this file is the same as
-[`MEERKAT_SIGNING_CERTS_CHAIN_FILE`](#meerkatsigningcertschainfile), but there
+[`MEERKAT_SIGNING_CERTS_CHAIN_FILE`](#meerkat_signing_certs_chain_file), but there
 is no meaning imputed to the ordering of certificates in this file.
 
 If this is unspecified, a default bundle of trust anchors that are built into
@@ -1557,7 +1557,7 @@ own trust anchor, but still trust Mozilla's curated default trust anchors, you
 MUST obtain this bundle of certificates and add it to this file.
 
 This option does _add_ to the trust anchors trusted with the
-[`MEERKAT_TRUST_ANCHORS_FILE`](#meerkattrustanchorsfile) file.
+[`MEERKAT_TRUST_ANCHORS_FILE`](#meerkat_trust_anchors_file) file.
 
 :::info
 
@@ -1574,7 +1574,7 @@ from the DSA. This does not affect TLS and may be a totally different chain
 than that used for TLS.
 
 This file should have the same exact formatting as
-[`MEERKAT_TLS_CERT_FILE`](#meerkattlscertfile).
+[`MEERKAT_TLS_CERT_FILE`](#meerkat_tls_cert_file).
 
 ## MEERKAT_SIGNING_CRL_DP_ATTEMPTS_PER_CERT
 
@@ -1583,7 +1583,7 @@ remote CRL per a given X.509 certificate.
 
 To limit the number of endpoints within a distribution point that get checked,
 see
-[`MEERKAT_SIGNING_MAX_ENDPOINTS_PER_CRL_DP`](#meerkatsigningmaxendpointspercrldp).
+[`MEERKAT_SIGNING_MAX_ENDPOINTS_PER_CRL_DP`](#meerkat_signing_max_endpoints_per_crl_dp).
 
 :::info
 
@@ -1638,19 +1638,19 @@ may be treated as signed for the purposes of validation.
 ## MEERKAT_SIGNING_ERRORS_MIN_AUTH_LEVEL
 
 This overrides the value of
-[`MEERKAT_SIGNING_MIN_AUTH_LEVEL`](#meerkatsigningminauthlevel),
+[`MEERKAT_SIGNING_MIN_AUTH_LEVEL`](#meerkat_signing_min_auth_level),
 but only for signed errors.
 
 ## MEERKAT_SIGNING_ERRORS_MIN_AUTH_LOCAL_QUALIFIER
 
 This overrides the value of
-[`MEERKAT_SIGNING_MIN_AUTH_LOCAL_QUALIFIER`](#meerkatsigningminauthlocalqualifier),
+[`MEERKAT_SIGNING_MIN_AUTH_LOCAL_QUALIFIER`](#meerkat_signing_min_auth_local_qualifier),
 but only for signed errors.
 
 ## MEERKAT_SIGNING_ERRORS_MIN_AUTH_SIGNED
 
 This overrides the value of
-[`MEERKAT_SIGNING_MIN_AUTH_SIGNED`](#meerkatsigningminauthsigned),
+[`MEERKAT_SIGNING_MIN_AUTH_SIGNED`](#meerkat_signing_min_auth_signed),
 but only for signed errors.
 
 ## MEERKAT_SIGNING_KEY_FILE
@@ -1658,7 +1658,7 @@ but only for signed errors.
 The filepath to the PEM-encoded PKCS #8-formatted private key to use for signing
 arguments, results, and errors from this DSA. This does not affect TLS and may
 be a totally different key than that used for TLS (which is configured via the
-[`MEERKAT_TLS_KEY_FILE`](#meerkattlskeyfile) environment variable).
+[`MEERKAT_TLS_KEY_FILE`](#meerkat_tls_key_file) environment variable).
 
 The file contents should look like this if you open them up in a text editor:
 
@@ -1682,7 +1682,7 @@ given CRL distribution point listed on an X.509 certificate. This MUST be unset
 or an unsigned decimal integer.
 
 To limit the number of distribution points checked, see
-[`MEERKAT_SIGNING_CRL_DP_ATTEMPTS_PER_CERT`](#meerkatsigningcrldpattemptspercert).
+[`MEERKAT_SIGNING_CRL_DP_ATTEMPTS_PER_CERT`](#meerkat_signing_crl_dp_attempts_per_cert).
 
 :::info
 
@@ -1724,7 +1724,7 @@ Possible values are:
 - `2` for strong authentication, which corresponds to Strong or SPKM authentication.
 
 If a different setting is desired for errors only, consider setting the
-[`MEERKAT_SIGNING_ERRORS_MIN_AUTH_LEVEL`](#meerkatsigningerrorsminauthlevel)
+[`MEERKAT_SIGNING_ERRORS_MIN_AUTH_LEVEL`](#meerkat_signing_errors_min_auth_level)
 environment variable to override this for errors.
 
 ## MEERKAT_SIGNING_MIN_AUTH_LOCAL_QUALIFIER
@@ -1738,7 +1738,7 @@ If the minimum authentication level--as configured by the
 does not matter.
 
 If a different setting is desired for errors only, consider setting the
-[`MEERKAT_SIGNING_ERRORS_MIN_AUTH_LOCAL_QUALIFIER`](#meerkatsigningerrorsminauthlocalqualifier)
+[`MEERKAT_SIGNING_ERRORS_MIN_AUTH_LOCAL_QUALIFIER`](#meerkat_signing_errors_min_auth_local_qualifier)
 environment variable to override this for errors.
 
 ## MEERKAT_SIGNING_MIN_AUTH_SIGNED
@@ -1747,7 +1747,7 @@ If set to `1` a client association shall have signed arguments for a given
 operation in order to receive signed results or errors.
 
 If a different setting is desired for errors only, consider setting the
-[`MEERKAT_SIGNING_ERRORS_MIN_AUTH_SIGNED`](#meerkatsigningerrorsminauthsigned)
+[`MEERKAT_SIGNING_ERRORS_MIN_AUTH_SIGNED`](#meerkat_signing_errors_min_auth_signed)
 environment variable to override this for errors.
 
 ## MEERKAT_SIGNING_OCSP_CHECKINESS
@@ -1768,7 +1768,7 @@ to `3`.
 This only applies to OCSP responses obtained in the verification of signed
 arguments, results, and errors--not TLS peers. The equivalent of this
 configuration option for TLS peers is
-[`MEERKAT_TLS_OCSP_MAX_REQUESTS_PER_CERT`](#meerkattlsocspmaxrequestspercert).
+[`MEERKAT_TLS_OCSP_MAX_REQUESTS_PER_CERT`](#meerkat_tls_ocsp_max_requests_per_cert).
 
 ## MEERKAT_SIGNING_OCSP_REPLAY_WINDOW
 
@@ -1779,7 +1779,7 @@ considered invalid on the grounds of being a possible
 
 This only affects OCSP verification of signed arguments, results, or errors; the
 equivalent of this configuration option that controls OCSP verification for TLS
-is [`MEERKAT_TLS_OCSP_REPLAY_WINDOW`](#meerkattlsocspreplaywindow).
+is [`MEERKAT_TLS_OCSP_REPLAY_WINDOW`](#meerkat_tls_ocsp_replay_window).
 
 An attacker's ability to replay an OCSP response is not too dangerous as long as
 this threshold is low (in other words, the window is small). If the replay
@@ -1821,7 +1821,7 @@ The number of seconds for a given OCSP responder to respond before Meerkat DSA
 abandons the request. If set, this MUST be an unsigned decimal integer. This
 setting only applies to the verification of signed arguments, results, and
 errors; the equivalent setting for TLS is
-[`MEERKAT_TLS_OCSP_TIMEOUT`](#meerkattlsocsptimeout).
+[`MEERKAT_TLS_OCSP_TIMEOUT`](#meerkat_tls_ocsp_timeout).
 
 ## MEERKAT_SIGNING_OCSP_UNKNOWN_IS_FAILURE
 
@@ -1990,7 +1990,7 @@ MUST obtain this bundle of certificates and add it to this file.
 
 This does not affect the verification of signed arguments, results, or errors;
 the equivalent of this environment variable that affects signing is:
-[`MEERKAT_SIGNING_CA_FILE`](#meerkatsigningcafile).
+[`MEERKAT_SIGNING_CA_FILE`](#meerkat_signing_ca_file).
 
 ## MEERKAT_TLS_CERT_FILE
 
@@ -2016,7 +2016,7 @@ The file contents should look like this if you open them up in a text editor:
 
 This does not affect the production of signed arguments, results, or errors;
 the equivalent of this environment variable that affects signing is:
-[`MEERKAT_SIGNING_CERTS_CHAIN_FILE`](#meerkatsigningcertschainfile).
+[`MEERKAT_SIGNING_CERTS_CHAIN_FILE`](#meerkat_signing_certs_chain_file).
 
 ## MEERKAT_TLS_CIPHERS
 
@@ -2053,7 +2053,7 @@ The file contents should look like this if you open them up in a text editor:
 
 This does not affect the verification of signed arguments, results, or errors;
 the equivalent of this environment variable that affects signing is:
-[`MEERKAT_SIGNING_CRL_FILE`](#meerkatsigningcrlfile).
+[`MEERKAT_SIGNING_CRL_FILE`](#meerkat_signing_crl_file).
 
 ## MEERKAT_TLS_DH_PARAM_FILE
 
@@ -2106,7 +2106,7 @@ they should be able to impersonate / act on behalf of this Meerkat DSA instance.
 
 This does not affect the production of signed arguments, results, or errors;
 the equivalent of this environment variable that affects signing is:
-[`MEERKAT_SIGNING_KEY`](#meerkatsigningkey).
+[`MEERKAT_SIGNING_KEY_FILE`](#meerkat_signing_key_file).
 
 ## MEERKAT_TLS_KEY_PASSPHRASE
 
@@ -2155,7 +2155,7 @@ OCSP responder is defined for that certificate)
 
 This does not affect the verification of signed arguments, results, or errors;
 the equivalent of this environment variable that affects signing is:
-[`MEERKAT_SIGNING_OCSP_CHECKINESS`](#meerkatsigningocspcheckiness).
+[`MEERKAT_SIGNING_OCSP_CHECKINESS`](#meerkat_signing_ocsp_checkiness).
 
 ## MEERKAT_TLS_OCSP_MAX_REQUESTS_PER_CERT
 
@@ -2166,7 +2166,7 @@ to `3`.
 This only applies to OCSP responses obtained in the verification TLS peers--not
 signed arguments, results, or errors. The equivalent of this
 configuration option for signed arguments, results, or errors is
-[`MEERKAT_SIGNING_OCSP_MAX_REQUESTS_PER_CERT`](#meerkatsigningocspmaxrequestspercert).
+[`MEERKAT_SIGNING_OCSP_MAX_REQUESTS_PER_CERT`](#meerkat_signing_ocsp_max_requests_per_cert).
 
 ## MEERKAT_TLS_OCSP_REPLAY_WINDOW
 
@@ -2177,7 +2177,7 @@ considered invalid on the grounds of being a possible
 
 This only affects OCSP verification for TLS and does not affect OCSP
 verification for signed arguments, results, or errors; that is controlled by
-the [`MEERKAT_SIGNING_OCSP_REPLAY_WINDOW`](#meerkatsigningocspreplaywindow) configuration option.
+the [`MEERKAT_SIGNING_OCSP_REPLAY_WINDOW`](#meerkat_signing_ocsp_replay_window) configuration option.
 
 An attacker's ability to replay an OCSP response is not too dangerous as long as
 this threshold is low (in other words, the window is small). If the replay
@@ -2197,8 +2197,9 @@ it exceeds this size, Meerkat DSA will cancel fetching it, and/or refuse to
 decode it. This limit should NOT be considered exact.
 
 This only affects OCSP verification for TLS and does not affect OCSP
-verification for signed arguments, results, or errors; that is controlled by
-the [`MEERKAT_SIGNING_OCSP_RESPONSE_SIZE_LIMIT`](#meerkatsigningocspresponsesizelimit) configuration option.
+verification for signed arguments, results, or errors; that is controlled by the
+[`MEERKAT_SIGNING_OCSP_RESPONSE_SIZE_LIMIT`](#meerkat_signing_ocsp_response_size_limit)
+configuration option.
 
 :::info
 
@@ -2219,7 +2220,7 @@ signing certificate chain to the OCSP responder.
 
 This does not affect the verification of signed arguments, results, or errors;
 the equivalent of this environment variable that affects signing is:
-[`MEERKAT_SIGNING_OCSP_SIGN_REQUESTS`](#meerkatsigningocspsignrequests).
+[`MEERKAT_SIGNING_OCSP_SIGN_REQUESTS`](#meerkat_signing_ocsp_sign_requests).
 
 ## MEERKAT_TLS_OCSP_TIMEOUT
 
@@ -2228,7 +2229,7 @@ abandons the request. If set, this MUST be an unsigned decimal integer.
 
 This does not affect the verification of signed arguments, results, or errors;
 the equivalent of this environment variable that affects signing is:
-[`MEERKAT_SIGNING_OCSP_TIMEOUT`](#meerkatsigningocsptimeout).
+[`MEERKAT_SIGNING_OCSP_TIMEOUT`](#meerkat_signing_ocsp_timeout).
 
 ## MEERKAT_TLS_OCSP_UNKNOWN_IS_FAILURE
 
@@ -2239,7 +2240,7 @@ does not affect the verification of signed arguments, results, or errors.
 
 This does not affect the verification of signed arguments, results, or errors;
 the equivalent of this environment variable that affects signing is:
-[`MEERKAT_SIGNING_OCSP_UNKNOWN_IS_FAILURE`](#meerkatsigningocspunknownisfailure).
+[`MEERKAT_SIGNING_OCSP_UNKNOWN_IS_FAILURE`](#meerkat_signing_ocsp_unknown_is_failure).
 
 ## MEERKAT_TLS_PFX_FILE
 
@@ -2450,8 +2451,8 @@ HTTP basic authentication.
 :::warning
 
 HTTP Basic Authentication will only be enabled if both the
-[`MEERKAT_WEB_ADMIN_AUTH_USERNAME`](#meerkatwebadminauthusername) and
-[`MEERKAT_WEB_ADMIN_AUTH_PASSWORD`](#meerkatwebadminauthpassword) environment
+[`MEERKAT_WEB_ADMIN_AUTH_USERNAME`](#meerkat_web_admin_auth_username) and
+[`MEERKAT_WEB_ADMIN_AUTH_PASSWORD`](#meerkat_web_admin_auth_password) environment
 variables are set.
 
 :::
@@ -2461,7 +2462,7 @@ variables are set.
 HTTP Basic Authentication transmits your username and password in the clear
 (without encryption). This means that you should secure your communication with
 the web admin console by ensuring that
-[`MEERKAT_WEB_ADMIN_USE_TLS`](#meerkatwebadminusetls) is set to `1` and that
+[`MEERKAT_WEB_ADMIN_USE_TLS`](#meerkat_web_admin_use_tls) is set to `1` and that
 [TLS is configured](./tls.md) (otherwise, the former environment variable will
 have no effect). Otherwise, intermediaries may be able to sniff your password.
 
@@ -2493,8 +2494,8 @@ HTTP basic authentication.
 :::warning
 
 HTTP Basic Authentication will only be enabled if both the
-[`MEERKAT_WEB_ADMIN_AUTH_USERNAME`](#meerkatwebadminauthusername) and
-[`MEERKAT_WEB_ADMIN_AUTH_PASSWORD`](#meerkatwebadminauthpassword) environment
+[`MEERKAT_WEB_ADMIN_AUTH_USERNAME`](#meerkat_web_admin_auth_username) and
+[`MEERKAT_WEB_ADMIN_AUTH_PASSWORD`](#meerkat_web_admin_auth_password) environment
 variables are set.
 
 :::
@@ -2504,7 +2505,7 @@ variables are set.
 HTTP Basic Authentication transmits your username and password in the clear
 (without encryption). This means that you should secure your communication with
 the web admin console by ensuring that
-[`MEERKAT_WEB_ADMIN_USE_TLS`](#meerkatwebadminusetls) is set to `1` and that
+[`MEERKAT_WEB_ADMIN_USE_TLS`](#meerkat_web_admin_use_tls) is set to `1` and that
 [TLS is configured](./tls.md) (otherwise, the former environment variable will
 have no effect). Otherwise, intermediaries may be able to sniff your password.
 

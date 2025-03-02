@@ -10,14 +10,14 @@ is used. See [here](./signing.md) for information on configuring signing.
 ## TLS Configuration
 
 Almost all TLS-related environment variables start with `MEERKAT_TLS_`. Review
-these environment variables [here](./env.md#meerkattlsanswerocsprequests) for
+these environment variables [here](./env.md#meerkat_tls_answer_ocsp_requests) for
 information on specific configuration options.
 
 Your TLS configuration applies to scenarios where Meerkat DSA operates both as a
 server and a client. The only exceptions to this are:
 
-- [`MEERKAT_TLS_REJECT_UNAUTHORIZED_CLIENTS`](./env.md#meerkattlsrejectunauthorizedclients)
-- [`MEERKAT_TLS_REJECT_UNAUTHORIZED_SERVERS`](./env.md#meerkattlsrejectunauthorizedclients)
+- [`MEERKAT_TLS_REJECT_UNAUTHORIZED_CLIENTS`](./env.md#meerkat_tls_reject_unauthorized_clients)
+- [`MEERKAT_TLS_REJECT_UNAUTHORIZED_SERVERS`](./env.md#meerkat_tls_reject_unauthorized_servers)
 
 Which, as their names imply, operate differently depending on whether Meerkat
 DSA acts as a TLS client or server.
@@ -41,7 +41,7 @@ decrypted by supplying the passphrase in the `MEERKAT_TLS_KEY_PASSPHRASE`
 environment variable.
 
 You can configure your trust anchors (root certificate authorities) through the
-use of the [`MEERKAT_TLS_CA_FILE`](./env#meerkattlscafile) environment variable.
+use of the [`MEERKAT_TLS_CA_FILE`](./env#meerkat_tls_ca_file) environment variable.
 The file referred to by this variable contains the certificate authorities used
 to verify TLS peers. If unset, this defaults to a bundle of trust anchors that
 are built-in to the NodeJS runtime.
@@ -66,7 +66,7 @@ configured as such.
 
 As long as you have TLS already configured (as described above), all you need to
 do to enable this is set the environment variable
-[`MEERKAT_TLS_REJECT_UNAUTHORIZED_CLIENTS`](./env.md#meerkattlsrejectunauthorizedclients)
+[`MEERKAT_TLS_REJECT_UNAUTHORIZED_CLIENTS`](./env.md#meerkat_tls_reject_unauthorized_clients)
 to `1` (enabled).
 
 :::warning
@@ -88,7 +88,7 @@ needed, the benefits of this usually outweigh the risks.
 
 Yes, it is possible to disable server authentication. You can do this by setting
 the environment variable
-[`MEERKAT_TLS_REJECT_UNAUTHORIZED_SERVERS`](./env.md#meerkattlsrejectunauthorizedclients)
+[`MEERKAT_TLS_REJECT_UNAUTHORIZED_SERVERS`](./env.md#meerkat_tls_reject_unauthorized_servers)
 to `0` (disabled). This will cause Meerkat DSA to ignore an invalid
 certification path presented by a server to which it connects.
 

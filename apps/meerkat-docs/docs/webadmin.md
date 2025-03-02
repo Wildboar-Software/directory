@@ -37,9 +37,10 @@ that DSA administrators could have a modicum of security with minimal setup.
 :::warning
 
 HTTP Basic Authentication will only be enabled if both the
-[`MEERKAT_WEB_ADMIN_AUTH_USERNAME`](#meerkatwebadminauthusername) and
-[`MEERKAT_WEB_ADMIN_AUTH_PASSWORD`](#meerkatwebadminauthpassword) environment
-variables are set.
+[`MEERKAT_WEB_ADMIN_AUTH_USERNAME`](./env.md#meerkat_web_admin_auth_username)
+and
+[`MEERKAT_WEB_ADMIN_AUTH_PASSWORD`](./env.md#meerkat_web_admin_auth_password)
+environment variables are set.
 
 :::
 
@@ -48,9 +49,10 @@ variables are set.
 HTTP Basic Authentication transmits your username and password in the clear
 (without encryption). This means that you should secure your communication with
 the web admin console by ensuring that
-[`MEERKAT_WEB_ADMIN_USE_TLS`](#meerkatwebadminusetls) is set to `1` and that
-[TLS is configured](./tls.md) (otherwise, the former environment variable will
-have no effect). Otherwise, intermediaries may be able to sniff your password.
+[`MEERKAT_WEB_ADMIN_USE_TLS`](./env.md#meerkat_web_admin_use_tls) is set to `1`
+and that [TLS is configured](./tls.md) (otherwise, the former environment
+variable will have no effect). Otherwise, intermediaries may be able to sniff
+your password.
 
 Since this password is not well-protected, it is highly recommended that you
 also ensure that this password is not used for any other services. This password

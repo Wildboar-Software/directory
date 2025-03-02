@@ -107,10 +107,10 @@ variables and their effects are documented [here](./env.md).
 At minimum, you MUST define `DATABASE_URL`. Besides that, you SHOULD define the
 following other environment variables:
 
-- `MEERKAT_SIGNING_CERTS_CHAIN_FILE`, which is documented [here](./env.md#meerkatsigningcertschainfile).
-- `MEERKAT_SIGNING_KEY_FILE`, which is documented [here](./env.md#meerkatsigningkeyfile).
-- `MEERKAT_TLS_CERT_FILE`, which is documented [here](./env.md#meerkattlscertfile).
-- `MEERKAT_TLS_KEY_FILE`, which is documented [here](./env.md#meerkattlskeyfile).
+- `MEERKAT_SIGNING_CERTS_CHAIN_FILE`, which is documented [here](./env.md#meerkat_signing_certs_chain_file).
+- `MEERKAT_SIGNING_KEY_FILE`, which is documented [here](./env.md#meerkat_signing_key_file).
+- `MEERKAT_TLS_CERT_FILE`, which is documented [here](./env.md#meerkat_tls_cert_file).
+- `MEERKAT_TLS_KEY_FILE`, which is documented [here](./env.md#meerkat_tls_key_file).
 - `NODE_ENV`, which should always be set to `production` unless you are
   debugging or developing Meerkat DSA.
 - `LANG`, which should be set to the locale identifier for your desired locale.

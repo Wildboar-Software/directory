@@ -55,7 +55,7 @@ general).
 
 In lieu thereof, it is recommended to implement automation to obtain up-to-date
 CRLs and simply update the
-[`MEERKAT_SIGNING_CRL_FILE`](./env.md#meerkatsigningcrlfile) file and restart
+[`MEERKAT_SIGNING_CRL_FILE`](./env.md#meerkat_signing_crl_file) file and restart
 Meerkat DSA every so often so that it is up-to-date. This will be far more
 performant, far more secure, and can still give you very fresh information, if
 you choose to update it frequently.
@@ -64,7 +64,7 @@ you choose to update it frequently.
 
 Meerkat DSA can also be configured to provide OCSP requests for its own
 configured TLS certificate on demand. If
-[`MEERKAT_TLS_ANSWER_OCSP_REQUESTS`](./env.md#meerkattlsanswerocsprequests) is
+[`MEERKAT_TLS_ANSWER_OCSP_REQUESTS`](./env.md#meerkat_tls_answer_ocsp_requests) is
 set to `1` (enabled), Meerkat DSA will staple OCSP requests in the TLS
 handshake. This option does not affect how Meerkat DSA validates other TLS or
 signing peers.

@@ -26,15 +26,15 @@ start with `MEERKAT_SIGNING_`. You will notice some that start with
 overrides," which are discussed [here](./env.md#tls-and-signing-options).
 
 At minimum, you MUST define a
-[`MEERKAT_SIGNING_CERTS_CHAIN_FILE`](./env.md#meerkatsigningcertschainfile) and
-[`MEERKAT_SIGNING_KEY_FILE`](./env.md#meerkatsigningkeyfile) to enable signing.
+[`MEERKAT_SIGNING_CERTS_CHAIN_FILE`](./env.md#meerkat_signing_certs_chain_file) and
+[`MEERKAT_SIGNING_KEY_FILE`](./env.md#meerkat_signing_key_file) to enable signing.
 Notably, Meerkat DSA determines its Application Entity Title (AE-Title) from the
 signing certificate. (NOT the TLS certificate.)
 
 You will probably also want to define a separate set of trust anchors for
 signing than for TLS. You can do this via the
-[`MEERKAT_SIGNING_CA_FILE`](./env.md#meerkatsigningcafile) and
-[`MEERKAT_TRUST_ANCHORS_FILE`](./env.md#meerkattrustanchorsfile) environment
+[`MEERKAT_SIGNING_CA_FILE`](./env.md#meerkat_signing_ca_file) and
+[`MEERKAT_TRUST_ANCHORS_FILE`](./env.md#meerkat_trust_anchors_file) environment
 variables.
 
 :::warning
@@ -47,8 +47,8 @@ TLS will be used to verify digital signatures on arguments, results, and errors.
 By default, Meerkat DSA will check neither remote CRLs (given in an X.509
 certificate's `cRLDistributionPoints` extension) nor OCSP responders for the
 validity of a certificate used in signing unless these are turned on using the
-[`MEERKAT_SIGNING_REMOTE_CRL_CHECKINESS`](./env.md#meerkatsigningremotecrlcheckiness)
-and [`MEERKAT_SIGNING_OCSP_CHECKINESS`](./env.md#meerkatsigningocspcheckiness)
+[`MEERKAT_SIGNING_REMOTE_CRL_CHECKINESS`](./env.md#meerkat_signing_remote_crl_checkiness)
+and [`MEERKAT_SIGNING_OCSP_CHECKINESS`](./env.md#meerkat_signing_ocsp_checkiness)
 options. Before enabling these, you should understand the
 [pros and cons of doing so](./online-pki.md#ocsp-and-remote-crls).
 
@@ -57,7 +57,7 @@ options. Before enabling these, you should understand the
 Any client can submit signed arguments, and DSAs with which Meerkat DSA
 associates may return signed results or errors, provided that the operation
 itself permits such signed alternatives. If the
-[`MEERKAT_SIGNING_DISABLE_VERIFICATION`](./env.md#meerkatsigningdisableverification)
+[`MEERKAT_SIGNING_DISABLE_VERIFICATION`](./env.md#meerkat_signing_disable_verification)
 configuration option is enabled (set to `1`), these signature will NOT be
 verified, nor the presented certification path; otherwise, the presented
 signature will be verified in accordance with
@@ -106,9 +106,9 @@ do we?
 The overall authentication requirements for receiving signed results and errors
 comes from these environment variables:
 
-- [`MEERKAT_SIGNING_MIN_AUTH_LEVEL`](./env.md#meerkatsigningminauthlevel)
-- [`MEERKAT_SIGNING_MIN_AUTH_LOCAL_QUALIFIER`](./env.md#meerkatsigningminauthlocalqualifier)
-- [`MEERKAT_SIGNING_MIN_AUTH_SIGNED`](./env.md#meerkatsigningminauthsigned)
+- [`MEERKAT_SIGNING_MIN_AUTH_LEVEL`](./env.md#meerkat_signing_min_auth_level)
+- [`MEERKAT_SIGNING_MIN_AUTH_LOCAL_QUALIFIER`](./env.md#meerkat_signing_min_auth_local_qualifier)
+- [`MEERKAT_SIGNING_MIN_AUTH_SIGNED`](./env.md#meerkat_signing_min_auth_signed)
 
 These variables correspond to values of the `AuthenticationLevel` data
 structure defined in
@@ -160,9 +160,9 @@ errors. You can do so by modifying these environment variables, which follow the
 same semantics. These environment variables override the authentication level
 required for receiving signed results, if they are specified:
 
-- [`MEERKAT_SIGNING_ERRORS_MIN_AUTH_LEVEL`](./env.md#meerkatsigningerrorsminauthlevel)
-- [`MEERKAT_SIGNING_ERRORS_MIN_AUTH_LOCAL_QUALIFIER`](./env.md#meerkatsigningerrorsminauthlocalqualifier)
-- [`MEERKAT_SIGNING_ERRORS_MIN_AUTH_SIGNED`](./env.md#meerkatsigningerrorsminauthsigned)
+- [`MEERKAT_SIGNING_ERRORS_MIN_AUTH_LEVEL`](./env.md#meerkat_signing_errors_min_auth_level)
+- [`MEERKAT_SIGNING_ERRORS_MIN_AUTH_LOCAL_QUALIFIER`](./env.md#meerkat_signing_errors_min_auth_local_qualifier)
+- [`MEERKAT_SIGNING_ERRORS_MIN_AUTH_SIGNED`](./env.md#meerkat_signing_errors_min_auth_signed)
 
 ## How to Request Signed Results or Errors
 

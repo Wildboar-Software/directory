@@ -191,13 +191,13 @@ completely insecure (but better than nothing).
 
 The environment variables that are used to configure the `localQualifier` are:
 
-- [`MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_SSL3`](./env.md#meerkatlocalqualifierpointsforusingssl3)
-- [`MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_STARTTLS`](./env.md#meerkatlocalqualifierpointsforusingstarttls)
-- [`MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS`](./env.md#meerkatlocalqualifierpointsforusingtls)
-- [`MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_0`](./env.md#meerkatlocalqualifierpointsforusingtls10)
-- [`MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_1`](./env.md#meerkatlocalqualifierpointsforusingtls11)
-- [`MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_2`](./env.md#meerkatlocalqualifierpointsforusingtls12)
-- [`MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_3`](./env.md#meerkatlocalqualifierpointsforusingtls13)
+- [`MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_SSL3`](./env.md#meerkat_local_qualifier_points_for_using_ssl3)
+- [`MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_STARTTLS`](./env.md#meerkat_local_qualifier_points_for_using_starttls)
+- [`MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS`](./env.md#meerkat_local_qualifier_points_for_using_tls)
+- [`MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_0`](./env.md#meerkat_local_qualifier_points_for_using_tls_1_0)
+- [`MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_1`](./env.md#meerkat_local_qualifier_points_for_using_tls_1_1)
+- [`MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_2`](./env.md#meerkat_local_qualifier_points_for_using_tls_1_2)
+- [`MEERKAT_LOCAL_QUALIFIER_POINTS_FOR_USING_TLS_1_3`](./env.md#meerkat_local_qualifier_points_for_using_tls_1_3)
 
 ## Rule-Based Access Control
 
