@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-user-guide-to-x500" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.7.0">
+<title data-rh="true">User&#x27;s Deep Dive | Meerkat DSA</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://wildboar-software.github.io/directory/docs/user-guide-to-x500"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="keywords" content="directory, x500, x.500, ldap, database, meerkat, dsa, distributed"><meta data-rh="true" name="copyright" content="Copyright (c) 2021 Jonathan M. Wilbur &lt;jonathan@wilbur.space&gt;."><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="User&#x27;s Deep Dive | Meerkat DSA"><meta data-rh="true" name="description" content="The X.500 specifications are so rich in features that it can seem difficult to"><meta data-rh="true" property="og:description" content="The X.500 specifications are so rich in features that it can seem difficult to"><link data-rh="true" rel="icon" href="/directory/img/boar-head-rune-circle.svg"><link data-rh="true" rel="canonical" href="https://wildboar-software.github.io/directory/docs/user-guide-to-x500"><link data-rh="true" rel="alternate" href="https://wildboar-software.github.io/directory/docs/user-guide-to-x500" hreflang="en"><link data-rh="true" rel="alternate" href="https://wildboar-software.github.io/directory/docs/user-guide-to-x500" hreflang="x-default"><link rel="preconnect" href="https://www.google-analytics.com">
+<script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-177382419-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview")</script>
+<script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+
+<link rel="icon" href="/directory/img/boar-head-rune-circle.svg">
+<link rel="manifest" href="/directory/manifest.json">
+<meta name="theme-color" content="rgb(37, 194, 160)"><link rel="stylesheet" href="/directory/assets/css/styles.2a28baec.css">
+<script src="/directory/assets/js/runtime~main.80ceabf3.js" defer="defer"></script>
+<script src="/directory/assets/js/main.ad93db89.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();t(null!==e?e:"dark")}(),function(){try{const n=new URLSearchParams(window.location.search).entries();for(var[t,e]of n)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_G6ar" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/directory/"><div class="navbar__logo"><img src="/directory/img/boar-head-rune-circle-black.svg" alt="Wildboar Software Logo" class="themedComponent_DHUr themedComponent--light_DIHH"><img src="/directory/img/boar-head-rune-circle.svg" alt="Wildboar Software Logo" class="themedComponent_DHUr themedComponent--dark_Bv2M"></div><b class="navbar__title text--truncate">Meerkat DSA</b></a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/directory/docs/setup">Get Started</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/directory/docs/docs">Documentation</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/directory/docs/specs">X.500 Specifications</a><a class="navbar__item navbar__link" href="/directory/docs/demo">Demo</a></div><div class="navbar__items navbar__items--right"><a href="https://github.com/Wildboar-Software/directory" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_awgD"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a><div class="toggle_OLSw colorModeToggle_Hg9V"><button class="clean-btn toggleButton_wYmb toggleButtonDisabled_vaDU" type="button" disabled="" title="Switch between dark and light mode (currently dark mode)" aria-label="Switch between dark and light mode (currently dark mode)" aria-live="polite" aria-pressed="true"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_Sxwe"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_Yem1"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="navbarSearchContainer_bmvg"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_UyTV"><div class="docsWrapper_XLvK"><button aria-label="Scroll back to top" class="clean-btn theme-back-to-top-button backToTopButton_z1FD" type="button"></button><div class="docRoot_HciC"><aside class="theme-doc-sidebar-container docSidebarContainer_e5ai"><div class="sidebarViewport_N8x0"><div class="sidebar_vJCc"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_qiME"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/directory/docs/docs">How to use this documentation</a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role="button" aria-expanded="true" href="/directory/docs/intro">X.500</a></div><ul style="display:block;overflow:visible;height:auto" class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/intro">Introduction to X.500 Directory Systems</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/executive-summary">Executive Summary</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/uses">Uses</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/directory/docs/user-guide-to-x500">User&#x27;s Deep Dive</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/admin-guide-to-x500">Administrator&#x27;s Deep Dive</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/why-not-ldap">Why Not LDAP?</a></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/setup">Meerkat DSA</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/x500cli">Clients and Libraries</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/tutorial01">Tutorials</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/asn1">Reference</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/changelog-meerkat">Change Logs</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/versioning">For Developers</a></div></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/directory/docs/support">Support / Help</a></li></ul></nav></div></div></aside><main class="docMainContainer_namt"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_YAwJ"><div class="docItemContainer_Rv5Z"><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_zCmv" aria-label="Breadcrumbs"><ul class="breadcrumbs" itemscope="" itemtype="https://schema.org/BreadcrumbList"><li class="breadcrumbs__item"><a aria-label="Home page" class="breadcrumbs__link" href="/directory/"><svg viewBox="0 0 24 24" class="breadcrumbHomeIcon_JFrk"><path d="M10 19v-5h4v5c0 .55.45 1 1 1h3c.55 0 1-.45 1-1v-7h1.7c.46 0 .68-.57.33-.87L12.67 3.6c-.38-.34-.96-.34-1.34 0l-8.36 7.53c-.34.3-.13.87.33.87H5v7c0 .55.45 1 1 1h3c.55 0 1-.45 1-1z" fill="currentColor"></path></svg></a></li><li class="breadcrumbs__item"><span class="breadcrumbs__link">X.500</span><meta itemprop="position" content="1"></li><li itemscope="" itemprop="itemListElement" itemtype="https://schema.org/ListItem" class="breadcrumbs__item breadcrumbs__item--active"><span class="breadcrumbs__link" itemprop="name">User&#x27;s Deep Dive</span><meta itemprop="position" content="2"></li></ul></nav><div class="tocCollapsible_O_Qc theme-doc-toc-mobile tocMobile_tjDr"><button type="button" class="clean-btn tocCollapsibleButton_htYj">On this page</button></div><div class="theme-doc-markdown markdown"><header><h1>User&#x27;s Deep Dive</h1></header>
+<p>The X.500 specifications are so rich in features that it can seem difficult to
+break into it. This is a brief explanation of X.500 concepts for a user to
+meaningfully use an X.500 directory.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="object-identifiers">Object Identifiers<a href="#object-identifiers" class="hash-link" aria-label="Direct link to Object Identifiers" title="Direct link to Object Identifiers">​</a></h2>
+<p>X.500 directories use object identifiers to identify almost everything, so
+understanding what they are is important. If you finish reading this section
+understanding nothing else, understand that <em>object identifiers are
+globally-unique, numeric identifiers.</em></p>
+<p>Object identifiers are composed of an ordered sequence of non-negative integers,
+such as <code>2.5.4.3</code>. Each number in this list, called an <em>arc</em>, identifies
+<em>something</em>. Arcs can be associated with a textual identifier, called a
+<em>descriptor</em>, but these are optional and only serve to enhance readability.</p>
+<p>The first number is the root arc, which can have the values <code>0</code>,
+<code>1</code>, or <code>2</code>, exclusively. Each root arc is associated with and self-assigned to
+one of three international standards organizations. These organizations define
+object identifier arcs beneath the roots, which may be granted / delegated to
+other organizations; these secondhand organizations may then grant arcs beneath
+theirs to other organizations, recursively.</p>
+<p>There is no universal process for &quot;registering&quot; an object identifier. If you or
+your organization define an object identifier, you just simply <em>publish
+what it means somewhere</em>. You can obtain an object identifier arc of your own
+by registering with certain organizations. The Internet Assigned Numbers
+Authority (IANA), gives away free object identifier arcs under <code>1.3.6.1.4.1</code>,
+which it calls &quot;Private Enterprise Numbers.&quot; The Private Enterprise Number for
+Wildboar Software is <code>56490</code>, meaning that the object identifier is
+<code>1.3.6.1.4.1.56490</code>. This means that Wildboar Software is free to define all
+object identifiers that start with <code>1.3.6.1.4.1.56490</code>.</p>
+<p>With this out of the way, we can go over how an X.500 directory presents its
+information.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="information-model">Information Model<a href="#information-model" class="hash-link" aria-label="Direct link to Information Model" title="Direct link to Information Model">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="entries-and-attributes">Entries and Attributes<a href="#entries-and-attributes" class="hash-link" aria-label="Direct link to Entries and Attributes" title="Direct link to Entries and Attributes">​</a></h3>
+<p>Directories represent information as <em>entries</em>. Entries represent real-world
+objects, such as a person, organization, device, etc. Entries are represented
+like documents in a document-oriented database, or a row in a relational
+database or spreadsheet.</p>
+<p>Entries are composed of <em>attributes</em>, which represent aspects of the real-world
+object. If the entry represents a person, it might have a &quot;first name&quot;
+attribute; if the entry represents a device, it might have a &quot;serial number&quot;
+attribute; if the entry represents an organization, it might have a
+&quot;phone number&quot; attribute. Attributes are like the columns in a relational
+database or spreadsheet, or like the fields of a document in a document-oriented
+database. Attributes are identified by an <em>attribute type</em>, which is a
+globally-unique, numeric identifier. As a user of the X.500 directory, you do
+not need to know or memorize these identifiers: it is expected that whatever
+tool you use to browse the X.500 directory will translate these object
+identifiers into human-friendly names, such as &quot;First Name&quot; or &quot;Serial Number.&quot;
+Object identifiers that are unrecognized by your tooling can be searched for on
+websites like <a href="http://www.oid-info.com/" target="_blank" rel="noopener noreferrer">this</a> if your tooling does not already
+do this for you.</p>
+<p>Attributes contain one or more <em>values</em>, reflecting that some attributes of
+real world attributes may have multiple values. A person may have multiple email
+addresses, or an organization might have multiple mailing addresses, for
+instance. Some attributes may be defined in such a way as to only permit a
+single value, however; this is generally only used when it is known with
+certainty that only a single value could ever apply, such as in the
+<code>createTimestamp</code> attribute, which indicates the time at which a directory
+entry was created.</p>
+<p>As part of an attribute&#x27;s definition, an attribute may be defined to have a
+specific syntax; for instance, the <code>telephoneNumber</code> attribute type is defined
+to have a telephone number as its syntax. A user cannot insert a value of the
+<code>telephoneNumber</code> attribute into a well-behaved directory server that is not a
+valid telephone number. In addition, there may be rules specified for how values
+of such an attribute type are to be compared, sorted, or searched (called
+&quot;matching rules&quot;), as well as whether users are able to modify values of a given
+attribute type or whether they should be managed by the directory server itself.</p>
+<p>The attribute type definition can also indicate whether the attribute&#x27;s purpose
+is to be used by the end user of the directory, making it a <em>user attribute</em>, or
+whether the attribute is for the directory&#x27;s internal operation, which is called
+an <em>operational attribute</em>. Yes, X.500 directories use entries and attributes to
+manage their own configuration!</p>
+<p>Attribute types may be defined to be <em>dummy</em> attributes, which are kind of like
+&quot;aliases&quot; to one or more other attributes, or labeled as &quot;obsolete,&quot; preventing
+them from being added to the directory any further.</p>
+<p>An attribute type may be defined as a <em>subtype</em> of another. For instance, the
+<code>mobileTelephoneNumber</code> attribute type is defined as a subtype of
+<code>telephoneNumber</code>. This means that, if you query the X.500 directory for the
+<code>telephoneNumber</code> of a person, the directory will return values of the
+<code>telephoneNumber</code> attribute as well as the <code>mobileTelephoneNumber</code> attribute,
+and any other subtypes of <code>telephoneNumber</code>, such as <code>workTelephoneNumber</code>,
+unless you explicitly request for the directory to not do this. This also
+applies to matching: searches in the directory for a entries with a given
+<code>telephoneNumber</code> value will also return results for entries with a matching
+<code>mobileTelephoneNumber</code> value, but not the reverse.</p>
+<p>The attributes used to compose an entry are governed by the entry&#x27;s <em>object
+classes</em>. Object classes specify what attributes an entry <em>must</em> have or <em>may</em>
+have or both. Object classes are identified by an object identifier.</p>
+<p>There are <em>structural object classes</em>, which immutably define what an
+entry represents, such as a <code>person</code>, <code>organization</code>, or <code>device</code>. There are
+also auxiliary object classes, such as <code>married</code>, which can be used to permit
+further attributes in an entry, above and beyond the structural object classes,
+such as <code>spouseName</code>, and which usually indicate some circumstantial data about
+an entry, rather than something inherent to its definition; a <code>person</code> is always
+a <code>person</code>, and can never become a <code>device</code>, but a person can become <code>married</code>
+(and divorced, too!).</p>
+<p>Like attribute types, object classes can be defined as subclasses of each other.
+An <code>organizationalPerson</code> is defined as a subclass of <code>person</code>. The <code>person</code>
+object class requires a <code>surname</code> attribute, but permits a <code>commonName</code>
+attribute. As such, the <code>organizationalPerson</code> subclass does the same, but also
+permits more attribute types, such as <code>telephoneNumber</code>.</p>
+<p>There is a third type of object class, which is an <em>abstract object class</em>.
+Abstract object classes cannot be used to govern entries exclusively: they may
+only be used to define further subclasses, which may then be used. These are
+rare, but you should know about them at least.</p>
+<p>The most specific structural object class that defines an entry is refered to as
+the entry&#x27;s <em>structural object class</em>. For instance, if an entry has the object
+class <code>organizationalPerson</code>, it necessarily also has the object class <code>person</code>,
+but its <em>structural object class</em> would be <code>organizationalPerson</code>, because
+<code>organizationalPerson</code> is the most specific object class.</p>
+<p>The object classes of an entry are stored in the <code>objectClass</code> attribute, which
+has an object identifier of <code>2.5.4.0</code>. This is technically defined as a user
+attribute for historical reasons, but it still functions like an operational
+attribute.</p>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="matching-rules">Matching Rules<a href="#matching-rules" class="hash-link" aria-label="Direct link to Matching Rules" title="Direct link to Matching Rules">​</a></h3>
+<p>X.500 directories use &quot;matching rules&quot; to define the logic of how two values are
+to be compared, sorted, and searched, which are called equality matching rules,
+ordering matching rules, and substring matching rules, respectively. The
+simplest example of a matching rule might be the <code>caseIgnoreMatch</code>, which
+compares two attributes that have a string syntax case-insensitively.</p>
+<p>If you have ever used a database, you might know how data types have an
+algorithm for comparing two values built-in and assumed for that data type.
+For example, when you query a SQL database with a clause like
+<code>lastName == &#x27;Wilbur&#x27;</code> that database might perform a case-sensitive comparison
+unless you specify otherwise. This is not so with directories: the rules for
+comparing, ordering, and searching for substrings within values are explicitly
+associated as a part of each value&#x27;s attribute type. Even though, for instance,
+a URL and a last name might be stored as strings, URL attribute values may be
+evaluated using case-sensitive matching, whereas last name attribute values may
+be evaluated using case-insensitive matching. Explicitly defining how values
+are expected to be compared can help DSAs index values appropriately.</p>
+<p>Attribute types may have <em>no</em> matching rules associated. This does not mean that
+they cannot be compared; it just means that the matching rule to be used will
+have to be explicitly specified in search filters. However, attribute types for
+which no default equality matching rule is defined cannot have their values
+individually added, removed, or modified: the entire attribute must be replaced
+all at once with the new desired values, and no checks take place for
+duplicates.</p>
+<p>In general, attribute types that are expected to contain longer strings, such
+as descriptions, do not define equality matching rules or ordering rules--only
+substring matching rules. It can get computationally expensive to perform many
+string comparisons over large strings like that to check for duplicates. This
+also prevents huge strings, like those that might appear in the <code>description</code>
+attribute, from being used for naming entries.</p>
+<p>Ordering rules are often <em>not</em> defined when there is an ambiguous way for values
+to be sorted: for instance, should you sort telephone numbers by ASCII character
+code points, alphabetically, or remove all the non-numeric characters and sort
+them like integers? There is no obvious, universally-assumed way of sorting
+them.</p>
+<p>Substring matching rules are usually undefined for an attribute type when the
+values are expected to be small enough that there is little value in substring
+searches or when a substring of the value would not have any meaning, such as
+a substring of an identifier generated from randomness.</p>
+<p>A matching rule may have &quot;parent matching rules,&quot; whose meaning is left up to
+interpretation. A matching rule may also have an assertion syntax that differs
+from the syntax of the value being evaluated: for example, a &quot;letter count&quot;
+matching rule might take an integer as an assertion value, but evaluate against
+a string type by counting the number of letters in the string. A matching rule
+may define procedures for converting a value of a different syntax into the
+assertion syntax. If no assertion syntax is defined for a matching rule, the
+assertion syntax is the same as the syntax of the attribute on which the
+matching rule is used.</p>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="context-types">Context Types<a href="#context-types" class="hash-link" aria-label="Direct link to Context Types" title="Direct link to Context Types">​</a></h3>
+<p>Attribute values can be tagged with a sort of &quot;metadata&quot; called <em>contexts</em>.
+Contexts are more general-purpose annotations for attribute values that are used
+like so:</p>
+<ul>
+<li>To annotate strings with the language. For instance, if an organization has a
+<code>description</code> attribute value in English and another value in German, the
+English value can be tagged with a <code>languageContext</code> with a value that
+identifies it as English, and likewise for the German description.</li>
+<li>To indicate the time in which a value was/is true: by using a
+<code>temporalContext</code>, a directory entry can indicate that Mrs. Jane Smith&#x27;s last
+name was Doe up until July 25th, 2023, when she got married. This would be
+done by having a <code>surname</code> attribute value of <code>Doe</code> using a <code>temporalContext</code>
+indicating that this value is not applicable after July 25th, 2023, and
+another value of <code>Smith</code> with no contexts. Instead of deleting old information
+in the directory, it can be annotated with the &quot;validity time&quot; so that the
+directory can be queried across time. This means that a directory can
+function like a time-series database.</li>
+<li>To indicate the applicable locale of a numeric unit, such as a currency.</li>
+<li>To indicate a level of certainty associated with a value whose validity is
+uncertain.</li>
+<li>To annotate a value with a source of its information. For instance, if an
+attribute value was sourced from a person&#x27;s birth certificate, this could be
+indicated.</li>
+<li>To annotate a value with a digital signature, providing data integrity at
+rest.</li>
+</ul>
+<p>The type of context is identified by an object identifier. An attribute value
+may have zero, one, or more contexts of a given type, and may have multiple
+context types as well.</p>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="the-directory-information-tree">The Directory Information Tree<a href="#the-directory-information-tree" class="hash-link" aria-label="Direct link to The Directory Information Tree" title="Direct link to The Directory Information Tree">​</a></h3>
+<p>The entries in a directory are arranged in a hierarchical structure, referred to
+as the Directory Information Tree (DIT). In computer science, a &quot;tree&quot; is
+conventionally thought of and spoken of as being upside-down. The &quot;root&quot; of the
+tree is at the &quot;top,&quot; and there are branches beneath the root, leading down to
+&quot;leaves&quot; that terminate branches of the tree. Leaves are at the &quot;bottom&quot; of the
+tree, when using this terminology.</p>
+<p>The root of the tree is a magical entry called the &quot;Root DSE,&quot; and it is not
+technically an &quot;entry,&quot; but rather a special entry that is unique for every
+directory server, and used to provide information about the directory server.</p>
+<p>The entries immediately beneath the Root DSE are referred to as the &quot;top level&quot;
+or &quot;first level.&quot; The first level contains real entries, which usually represent
+countries, international organizations, or top-level domains. These have entries
+beneath them, and those entries may have entries beneath them, recursively.</p>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="names">Names<a href="#names" class="hash-link" aria-label="Direct link to Names" title="Direct link to Names">​</a></h3>
+<p>Directory entries are named using a selection of attribute values that are
+called &quot;distinguished values,&quot; each of which are presented as an attribute type
+object identifier and a value. This group of one or more distinguished values is
+known as the Relative Distinguished Name (RDN) of the entry.</p>
+<p>There may only be, at most, one value from each attribute type within a relative
+distinguished name. Only certain attribute types may be used in naming. As
+implied, the relative distinguished name must come from attribute values that
+are actually present in the entry: entries cannot &quot;distinguish&quot; values that they
+do not have.</p>
+<p>The following attribute types are commonly used for naming:</p>
+<ul>
+<li><code>countryName</code>, often abbreviated as <code>c</code></li>
+<li><code>stateOrProvinceName</code>, often abbreviated as <code>st</code></li>
+<li><code>localityName</code>, often abbreviated as <code>l</code></li>
+<li><code>organizationName</code>, often abbreviated as <code>o</code></li>
+<li><code>organizationalUnitName</code>, often abbreviated as <code>ou</code></li>
+<li><code>commonName</code>, often abbreviated as <code>cn</code></li>
+<li><code>givenName</code>, often abbreviated as <code>gn</code></li>
+<li><code>surname</code>, often abbreviated as <code>sn</code></li>
+<li><code>domainComponent</code>, often abbreviated as <code>dc</code></li>
+<li><code>uid</code></li>
+<li><code>title</code></li>
+<li><code>dnQualifier</code></li>
+</ul>
+<p>For the purposes of displaying to humans, attribute types and values are often
+represented as type-equals-value pairs (e.g. <code>cn=Jonathan Wilbur</code>). When
+displaying whole relative distinguished names, the distinguished values are
+joined with plus signs (<code>+</code>), after escaping any plus signs and backslashes
+within the attribute values with backslashes (e.g. <code>gn=Jonathan+sn=Wilbur</code>).</p>
+<p>Relative distinguished names are only expected to be unique among all entries
+immediately subordinate to a given other entry.</p>
+<p>The ordered sequence of relative distinguished names going from the top level
+entry to the identified entry is refered to as the &quot;distinguished name.&quot; This
+name uniquely and globally identifies an entry. When displayed textually, it
+is the string-form relative distinguished names, joined by commas, semi-colons,
+or forward slashes (e.g. <code>c=US,st=FL,l=Tampa,gn=Jonathan+sn=Wilbur</code>).</p>
+<p>The Root DSE is an exception to the rules above. The Root DSE has a zero-length
+distinguished name, and if needed, its relative distinguished name can be
+represented as a zero-length relative distinguished name.</p>
+<p>The attribute types that must be present or may be present in an entry&#x27;s
+relative distinguished name is governed by a <em>name form</em>. A name form is a
+schema construct that is enforced by the X.500 directory and uniquely identified
+by an object identifier. Name forms target entries by their structural object
+class, and there can be multiple name forms defined for a given structural
+object class. Name forms are not expected to apply uniformly throughout the
+Directory Information Tree; some regions of the tree can enforce different
+naming conventions from others.</p>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="aliases">Aliases<a href="#aliases" class="hash-link" aria-label="Direct link to Aliases" title="Direct link to Aliases">​</a></h3>
+<p>Sometimes the names of directory entries need to be changed. For instance, when
+people get married, it is common for the wife to change her last name to the
+husband&#x27;s last name. Hence, an entry representing a person may need to be
+renamed from time to time. In other cases, there are acronyms or pseudonyms by
+which people refer to something other than its proper name. To make it easy for
+directory users to find what they are looking for, directories support
+&quot;aliases.&quot; Aliases are special entries that are simply named pointers to other
+entries.</p>
+<p>For example, let&#x27;s say a woman with a directory name <code>cn=Peggy Sue</code> gets married
+and changes her last name to &quot;Smith.&quot; The directory entry can be renamed to
+<code>cn=Peggy Smith</code> and a new alias entry named <code>cn=Peggy Sue</code> can be created,
+which contains a pointer to the <code>cn=Peggy Smith</code> entry. The directory can
+seemlessly translate requests to, for example, read the birth date of
+<code>cn=Peggy Sue</code> to a request to read the birth date of <code>cn=Peggy Smith</code>. The
+reverse is true as well: <code>cn=Peggy Smith</code> could be the alias and point to
+<code>cn=Peggy Sue</code> instead.</p>
+<p>For another use case, people may customarily refer to a company such as
+&quot;Pricewaterhouse Coopers International Limited&quot; simply as &quot;PwC&quot; and hence, a
+directory name <code>o=PwC</code> could be used as an alias for
+<code>o=Pricewaterhouse Coopers International Limited</code>.</p>
+<p>Aliases can be dereferenced in the course of locating an entry, even if they are
+not the entry sought by a user. For instance, if a directory user tries to read
+an entry <code>c=US,st=Florida,cn=Jonathan Wilbur</code>, the directory can resolve the
+alias <code>st=Florida</code> to <code>st=FL</code> to obtain <code>c=US,st=FL,cn=Jonathan Wilbur</code>.</p>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="schema">Schema<a href="#schema" class="hash-link" aria-label="Direct link to Schema" title="Direct link to Schema">​</a></h3>
+<p>In addition to the X.500 schema constructs mentioned above, further constructs
+can constrain where entries can appear and what object classes, attributes, and
+contexts they can have.</p>
+<p>DIT Structure Rules are used to constrain what name forms (and hence, which
+entries) may be present in a given location in the Directory Information Tree.
+DIT Structure Rules are identified by a numeric identifier that is only unique
+within a region of the DIT. DIT Structure Rules are recursively defined as
+subordinates of other DIT Structure Rules. An example DIT Structure Rule might
+constrain entries of structural object class <code>locality</code> to appear beneath
+entries of structural object class <code>country</code>, since the reverse does not make
+sense. The DIT Structure Rule that permitted an entry to be inserted where it
+resides in the DIT is known as that entry&#x27;s <em>governing structure rule</em>.</p>
+<p>DIT Content Rules circumscribe which auxiliary object classes, entries within
+a region of the DIT may have, as well as what attribute types MUST, MAY, and
+MUST NOT be present within entries that fall within the purview of the DIT
+Content Rule.</p>
+<p>Context Use Rules govern which contexts may be present in which attribute
+values within a region of the DIT. Matching use rules are used to control which
+matching combinations are defined for usage.</p>
+<p>Friend attributes are &quot;friends&quot; of an &quot;anchor attribute.&quot; If the anchor
+attribute is used in a search filter, its friends will be evaluated for matches.
+If the anchor attribute is to be returned in response from the directory, the
+friend attributes will be returned automatically as well. Both of these cases
+can be disabled via service controls.</p>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="compound-entries">Compound Entries<a href="#compound-entries" class="hash-link" aria-label="Direct link to Compound Entries" title="Direct link to Compound Entries">​</a></h3>
+<p>In many document-oriented databases, such as MongoDB, ElasticSearch, or CouchDB,
+documents themselves can contain &quot;nested documents,&quot; and the directory is no
+different in this regard: except these are called &quot;child entries&quot; and the
+overall entry within which they are a substituent is called a &quot;compound entry.&quot;</p>
+<p>Child entries are (almost) no different than any other entry in the directory:
+they are just normal entries, except they have the <code>child</code> auxiliary object
+class (<code>2.5.6.29</code>). An entry having this object class means &quot;I am really a part
+of my immediate superior as a compound entry, rather than being a separate
+entry.&quot;</p>
+<p>Compound entries are useful for providing relational features to the directory.
+For example, you can have a compound entries that represent people, and child
+entries that represents computing devices they own. If you want to find
+a person that resides in Florida <strong>and</strong> has a certain model of device, you
+can use the &quot;family grouping&quot; feature of a search to obtain only these results,
+rather than performing two separate searches for people and devices and
+performing an inner join on the client-side.</p>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="hierarchical-groups">Hierarchical Groups<a href="#hierarchical-groups" class="hash-link" aria-label="Direct link to Hierarchical Groups" title="Direct link to Hierarchical Groups">​</a></h3>
+<p>Entries in the directory are arranged into a hierarchy, as established already.
+However, sometimes there is a need for some other hierarchy that is independent
+of the underlying directory structure. X.500 directories allow this via
+&quot;hierarchical groups,&quot; which function like a &quot;virtual hierarchy&quot; on top of the
+directory.</p>
+<p>Hierarchical groups work very simply: each member in the virtual hierarchy has
+an attribute <code>hierarchicalParent</code> that points to its superior in this virtual
+hierarchy. There are other attributes that are supposed to be managed by the
+directory automatically:</p>
+<ul>
+<li><code>hierarchyBelow</code> is a <code>BOOLEAN</code> that indicates whether a hierarchical group
+member has subordinates in the virtual hierarchy.</li>
+<li><code>hierarchyTop</code> points to the most superior entry in the virtual hierarchy.</li>
+<li><code>hierarchyLevel</code> indicates how deep within the virtual hierarchy an entry
+resides.</li>
+</ul>
+<p>These are only used in searches to provide relational capabilities across this
+virtual hierarchy. For example, if the virtual hierarchy reflects the managerial
+structure of an organization, you can query the directory for all managers of
+employees that have poor performance reviews.</p>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="collective-attributes">Collective Attributes<a href="#collective-attributes" class="hash-link" aria-label="Direct link to Collective Attributes" title="Direct link to Collective Attributes">​</a></h3>
+<p>As the directory grows, there might be a need to place the same attribute values
+within entries over and over again, thereby wasting data storage space. For
+example, in a small city that falls entirely within a single postal code, every
+resident might have the exact same postal code (e.g. a &quot;ZIP code&quot; in the United
+States). Instead of creating 100,000 copies of this value for 100,000 denizens,
+the directory can store a collective variant of postal code that applies to
+all denizens automatically.</p>
+<p>Collective attributes are typically subtypes of some other non-collective
+attribute type, so that assertions that match against the collective variant
+match against the non-collective, and vice versa. As with other features we&#x27;ve
+mentioned so far, this provides relational searches. Recycling the previous
+example, you could search for all people with a certain name residing within a
+certain postal code.</p>
+<p>This may seem precarious in that a single exception to a collective attribute
+assignment may necessitate abandoning the collective assignment of this
+attribute, and individually assigning the attribute, making us no better off
+than before, but the X.500 specifications have this scenario covered by allowing
+entries to be marked as one-off exceptions via the <code>collectiveExclusions</code>
+attribute. If 99,999 of our denizens live in a postal code, but a single person
+lives in a different one, we can mark them as excluded from the applicability of
+this collective attribute.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="operations">Operations<a href="#operations" class="hash-link" aria-label="Direct link to Operations" title="Direct link to Operations">​</a></h2>
+<p>Interactions with the directory use a request-response model. The types of
+requests and responses supported by the directory are defined as &quot;operations.&quot;
+As a simple example, &quot;operations&quot; for a padlock might be &quot;lock&quot; and &quot;unlock.&quot;
+&quot;Operations&quot; for a video player might include &quot;play,&quot; &quot;pause,&quot; &quot;fast-forward,&quot;
+etc. In a database, &quot;operations&quot; might include &quot;search,&quot; or &quot;insert.&quot;</p>
+<p>The definition of an operation includes the syntax of the parameters for it
+(the &quot;argument type&quot;), the parameters expected in the response (the &quot;result
+type&quot;), and what types of errors might be returned by an operation. The errors
+themselves specify what parameters they might include.</p>
+<p>For example, an operation to read an entry from a directory takes the
+distinguished name of the entry to read in the argument. The result includes
+the entry if it exists and if the user is authorized. If the entry does not
+exist, the user is not authorized, or some other issue makes it impossible or
+undesirable to fulfill the request, an error may be returned, indicating the
+nature of the problem.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="rose-protocols-and-transport">ROSE Protocols and Transport<a href="#rose-protocols-and-transport" class="hash-link" aria-label="Direct link to ROSE Protocols and Transport" title="Direct link to ROSE Protocols and Transport">​</a></h2>
+<p>In the same way that a protocol stack such as TCP/IP encapsulates messages used
+by the application layer and provides services such as in-order delivery, the
+Remote Operation Service element (ROSE) is an abstract service that &quot;frames&quot;
+messages to the directory to identify whether they are requests, results,
+errors, rejections, etc., tags requests with a unique numeric identifier so
+they can be cancelled or monitored, and tags requests with an identifier of the
+operation type (such as a &quot;read&quot; or &quot;search&quot;). ROSE is, in other words, a
+Remote Procedure Call (RPC) mechanism.</p>
+<p>The abstract Remote Operation Service Element can be provided by the OSI
+protocol stack via a protocol defined in the X.880-series of ITU-T
+Recommendations, but it can also be provided over the &quot;Internet Directly-Mapped&quot;
+(IDM) protocol defined in ITU-T Recommendation X.519 specifically for usage by
+the directory, which runs over TCP/IP. There may be more implementations I do
+not know about: it is defined as an abstract service so it can be provided in
+many ways.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="binding-and-unbinding">Binding and Unbinding<a href="#binding-and-unbinding" class="hash-link" aria-label="Direct link to Binding and Unbinding" title="Direct link to Binding and Unbinding">​</a></h2>
+<p>Before a Remote Operation Service Element (ROSE) can provide the Remote
+Operations Service (ROS), the &quot;initiator&quot; between two correspondent endpoints
+must &quot;bind.&quot; A bind is a special operation that performs any initial setup for
+the ongoing ROS dialogue, which usually includes authentication, but could also
+include version or feature negotiation. The bind operation has no invocation
+identifier: there may only be one bind operation outstanding at a time.</p>
+<p>When a ROS peer is done, they may (or must, depending on how you look at it),
+unbind. Unbind basically just says &quot;I&#x27;m done,&quot; but it could also include a
+reason why &quot;I&#x27;m done&quot; such as &quot;I&#x27;m done, because I am suffering from an
+unrecoverable error.&quot;</p>
+<p>Requests may not be sent after unbinding. After unbinding, the dialogue is
+complete. However, the underlying transport may remain open, if desired; in
+concrete terms, the TCP socket may still be kept alive and re-used for a
+subsequent bind, perhaps to authenticate as a different user.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="authentication">Authentication<a href="#authentication" class="hash-link" aria-label="Direct link to Authentication" title="Direct link to Authentication">​</a></h2>
+<p>As we have established, authentication information is carried in the bind
+operation.</p>
+<p>There are five forms of authentication defined in the directory specifications:</p>
+<ul>
+<li><code>simple</code>: Authentication via a distinguished name (username) and password</li>
+<li><code>strong</code>: Authentication via a cryptographic signature proving you possess a key</li>
+<li><code>externalProcedure</code>: An authentication procedure identified by an object identifier</li>
+<li><code>spkm</code>: Simple Public-Key GSS-API Mechanism (SPKM) described in IETF RFC 2025</li>
+<li><code>sasl</code>: Simple Authentication and Security Layer (SASL), which is itself a
+flexible encapsulation mechanism for many more authentication
+exchanges.</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="the-dap-operations">The DAP Operations<a href="#the-dap-operations" class="hash-link" aria-label="Direct link to The DAP Operations" title="Direct link to The DAP Operations">​</a></h2>
+<p>The directory service is provided to users via the Directory Access Protocol
+(DAP), which is a suite of 11 operations briefly described as such:</p>
+<ul>
+<li><code>read</code>: Read a single entry</li>
+<li><code>compare</code>: Evaluate an assertion against an entry, returning whether it matches</li>
+<li><code>abandon</code>: Abandon an ongoing operation</li>
+<li><code>list</code>: List the entries immediately subordinate to an entry in the DIT</li>
+<li><code>search</code>: Search for entries using a filter</li>
+<li><code>addEntry</code>: Create a new entry</li>
+<li><code>removeEntry</code>: Delete an entry</li>
+<li><code>modifyEntry</code>: Modify an entry, such as by adding attributes</li>
+<li><code>modifyDN</code>: Rename an entry, or move it and its descendants entirely</li>
+<li><code>administerPassword</code>: Reset a password of an entry</li>
+<li><code>changePassword</code>: Change a password of an entry</li>
+</ul>
+<p>Almost all of these operations share some parameters in their arguments (called
+&quot;the common arguments&quot;), and likewise, their results also share some parameters,
+called &quot;the common results.&quot;</p>
+<p>The common arguments include &quot;service controls,&quot; which can be used to specify
+among other things, how requests may be passed on to other directory servers,
+the priority of the request, the time limit of the request, the limit on the
+number of entries returned from searches or listings, whether (possibly
+out-of-date) replicated data is sufficient, whether aliases should be
+dereferenced automatically, and how large of an attribute is &quot;too large.&quot; Other
+common arguments can be supplied to specify what contexts should be used for
+assertions, or how compound entries are to be evaluated for matches in searches.</p>
+<p>The common results may include the name of the server that fulfilled the
+request, a flag indicating whether an alias was dereferenced, or attributes used
+to provide notifications, warnings, or other information to the directory user.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="chaining">Chaining<a href="#chaining" class="hash-link" aria-label="Direct link to Chaining" title="Direct link to Chaining">​</a></h2>
+<p>The entire directory service can be (and is likely to be) split up among a
+multitude of servers cooperating with each other. The individual servers
+providing the directory service are called Directory System Agents (DSAs), and
+the clients that interact with them are called Directory User Agents (DUAs).
+Sometimes, the right place for a request to be fulfilled is not the DSA that
+originally received the request from the DUA. In other cases, the original
+recipient of the request may only be able to partially satisfy the request, and
+may require more information from other directory servers. To fulfill such
+requests, directory servers do what is called &quot;chaining,&quot; which is where they
+wrap the request in an envelope of sorts, send this request to other servers
+saying &quot;this is the original request, and this is what specifically I need from
+you to fulfill it.&quot; These secondary recipients may, in turn, chain the request,
+recursively, meaning that a single request could potentially propagate into a
+large number of chained messages to many DSAs.</p>
+<p>The protocol that DSAs speak with each other to provide chaining, and
+therefore the total satisfaction of requests, is called the Directory System
+Protocol (DSP). The syntax for almost all of its operations are identical to
+those of the Directory Access Protocol (DAP), except with a &quot;chaining arguments&quot;
+envelope that encloses the analogous DAP request, result, or error.</p>
+<p>In lieu of chaining, directory servers may simply return a referral, which
+basically says &quot;here is the server to which you need to send your request.&quot;</p>
+<p>Directory users may indicate that they prefer chaining or that they forbid
+chaining entirely. They can also indicate that replicas of entries are
+satisfactory--that master copies are not needed--and hence, the directory
+should not chain requests to servers hosting the master copy if they themselves
+have a non-master copy. (What an excellent segue to our next topic!)</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="shadowing">Shadowing<a href="#shadowing" class="hash-link" aria-label="Direct link to Shadowing" title="Direct link to Shadowing">​</a></h2>
+<p>The directory supports the replication of entries as read-only copies into
+other directories for performance purposes (arguably security as well). This
+replication is called &quot;shadowing.&quot; Directory servers that store read-only copies
+or the &quot;master&quot; directory entries are said to &quot;shadow&quot; the &quot;master&quot; DSAs.</p>
+<p>Shadowing improves the throughput of the directory because read-only operations,
+such as searches, can be handled by an infinite number of replicas, and the
+master can exclusively deal with modification operations, such as <code>addEntry</code>
+or <code>modifyEntry</code>.</p>
+<p>Shadowing is very flexible and can include all entries within a subtree of the
+DIT or only a selection of said entries, and the replicated entries may receive
+all of the attributes of the master copies, or just a selection of them.</p>
+<p>Shadowed information can be shadowed from other shadow DSAs as well. For this
+reason, the directory specifications make use of the terms &quot;shadow supplier&quot;
+and &quot;shadow consumer&quot; rather than &quot;master&quot; and &quot;shadow,&quot; because the supplier of
+the shadowed data could itself be a shadow.</p>
+<p>Directory users can indicate that copies will suffice for their request. Copies
+are often less authoritative than shadows, since they may contain stale or
+out-of-date information, depending on how frequently updates to the master are
+propagated to the shadows, but using copies is likely to speed up directory
+operations.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="relaxation-or-tightening">Relaxation or Tightening<a href="#relaxation-or-tightening" class="hash-link" aria-label="Direct link to Relaxation or Tightening" title="Direct link to Relaxation or Tightening">​</a></h2>
+<p>Sometimes when you perform a search, you start with an idea of how many entries
+you&#x27;d like to receive. The directory has a mechanism for altering search
+criteria on the fly to target the requested number of entries. This is done via
+&quot;relaxation&quot; which is where search criteria are altered to become less strict or
+removed entirely to increase the number of results returned, or &quot;tightening&quot; in
+which they become more restrictive to reduce the number of results returned.</p>
+<p>There are two ways this is achieved: matching-rule substitution and
+mapping-based matching.</p>
+<p>In matching-rule substitution, the matching rules used
+to compose the search filter are replaced with more or less restrictive
+equivalents. For instance, a case-sensitive search could be replaced with a
+case-insensitive search if too few results are matching.</p>
+<p>In mapping-based matching, certain filter criteria are replaced with others
+based on exterior data the directory has. One example of this would be a
+map of postal codes to cities. If a search is not turning up enough results, the
+directory can retry the request by replacing a filter selecting for a certain
+city with a filter for all of the postal codes that intersect with the bounds of
+the city and those neighboring them. In this sense, the directory would use its
+geographic knowledge to search a broader area for matching entries.</p>
+<p>In fact, the directory also allows users to control <em>how much broader</em> each
+subsequent retry of the search is via an &quot;extended area&quot; parameter.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="signing">Signing<a href="#signing" class="hash-link" aria-label="Direct link to Signing" title="Direct link to Signing">​</a></h2>
+<p>Directory requests, results, and errors may be cryptographically-signed to
+provide non-repudiation and integrity. Transport Layer Security (TLS) provides
+confidentiality and integrity in point-to-point traffic between a client and
+server, but it does not protect a message that is passed along a chain of
+servers. One of the servers in the chain could alter the message along the way
+unless it is signed to prove its authenticity!</p>
+<p>Even if a user does not sign his requests, he can still request that the DSA
+sign its responses, including errors.</p></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col"><a href="https://github.com/Wildboar-Software/directory/edit/main/website/docs/user-guide-to-x500.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_UohW" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_g62E"></div></div></footer></article><nav class="pagination-nav docusaurus-mt-lg" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/directory/docs/uses"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Uses</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/directory/docs/admin-guide-to-x500"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Administrator&#x27;s Deep Dive</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_TN1Q thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#object-identifiers" class="table-of-contents__link toc-highlight">Object Identifiers</a></li><li><a href="#information-model" class="table-of-contents__link toc-highlight">Information Model</a><ul><li><a href="#entries-and-attributes" class="table-of-contents__link toc-highlight">Entries and Attributes</a></li><li><a href="#matching-rules" class="table-of-contents__link toc-highlight">Matching Rules</a></li><li><a href="#context-types" class="table-of-contents__link toc-highlight">Context Types</a></li><li><a href="#the-directory-information-tree" class="table-of-contents__link toc-highlight">The Directory Information Tree</a></li><li><a href="#names" class="table-of-contents__link toc-highlight">Names</a></li><li><a href="#aliases" class="table-of-contents__link toc-highlight">Aliases</a></li><li><a href="#schema" class="table-of-contents__link toc-highlight">Schema</a></li><li><a href="#compound-entries" class="table-of-contents__link toc-highlight">Compound Entries</a></li><li><a href="#hierarchical-groups" class="table-of-contents__link toc-highlight">Hierarchical Groups</a></li><li><a href="#collective-attributes" class="table-of-contents__link toc-highlight">Collective Attributes</a></li></ul></li><li><a href="#operations" class="table-of-contents__link toc-highlight">Operations</a></li><li><a href="#rose-protocols-and-transport" class="table-of-contents__link toc-highlight">ROSE Protocols and Transport</a></li><li><a href="#binding-and-unbinding" class="table-of-contents__link toc-highlight">Binding and Unbinding</a></li><li><a href="#authentication" class="table-of-contents__link toc-highlight">Authentication</a></li><li><a href="#the-dap-operations" class="table-of-contents__link toc-highlight">The DAP Operations</a></li><li><a href="#chaining" class="table-of-contents__link toc-highlight">Chaining</a></li><li><a href="#shadowing" class="table-of-contents__link toc-highlight">Shadowing</a></li><li><a href="#relaxation-or-tightening" class="table-of-contents__link toc-highlight">Relaxation or Tightening</a></li><li><a href="#signing" class="table-of-contents__link toc-highlight">Signing</a></li></ul></div></div></div></div></main></div></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2022-2025 Wildboar Software. Built with Docusaurus.</div></div></div></footer></div>
+</body>
+</html>

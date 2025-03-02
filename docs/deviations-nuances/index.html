@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-deviations-nuances" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.7.0">
+<title data-rh="true">Deviations and Nuances | Meerkat DSA</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://wildboar-software.github.io/directory/docs/deviations-nuances"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="keywords" content="directory, x500, x.500, ldap, database, meerkat, dsa, distributed"><meta data-rh="true" name="copyright" content="Copyright (c) 2021 Jonathan M. Wilbur &lt;jonathan@wilbur.space&gt;."><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Deviations and Nuances | Meerkat DSA"><meta data-rh="true" name="description" content="Meerkat DSA deviates from the X.500 specifications in a few ways, often due to"><meta data-rh="true" property="og:description" content="Meerkat DSA deviates from the X.500 specifications in a few ways, often due to"><link data-rh="true" rel="icon" href="/directory/img/boar-head-rune-circle.svg"><link data-rh="true" rel="canonical" href="https://wildboar-software.github.io/directory/docs/deviations-nuances"><link data-rh="true" rel="alternate" href="https://wildboar-software.github.io/directory/docs/deviations-nuances" hreflang="en"><link data-rh="true" rel="alternate" href="https://wildboar-software.github.io/directory/docs/deviations-nuances" hreflang="x-default"><link rel="preconnect" href="https://www.google-analytics.com">
+<script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-177382419-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview")</script>
+<script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+
+<link rel="icon" href="/directory/img/boar-head-rune-circle.svg">
+<link rel="manifest" href="/directory/manifest.json">
+<meta name="theme-color" content="rgb(37, 194, 160)"><link rel="stylesheet" href="/directory/assets/css/styles.2a28baec.css">
+<script src="/directory/assets/js/runtime~main.80ceabf3.js" defer="defer"></script>
+<script src="/directory/assets/js/main.ad93db89.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();t(null!==e?e:"dark")}(),function(){try{const n=new URLSearchParams(window.location.search).entries();for(var[t,e]of n)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_G6ar" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/directory/"><div class="navbar__logo"><img src="/directory/img/boar-head-rune-circle-black.svg" alt="Wildboar Software Logo" class="themedComponent_DHUr themedComponent--light_DIHH"><img src="/directory/img/boar-head-rune-circle.svg" alt="Wildboar Software Logo" class="themedComponent_DHUr themedComponent--dark_Bv2M"></div><b class="navbar__title text--truncate">Meerkat DSA</b></a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/directory/docs/setup">Get Started</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/directory/docs/docs">Documentation</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/directory/docs/specs">X.500 Specifications</a><a class="navbar__item navbar__link" href="/directory/docs/demo">Demo</a></div><div class="navbar__items navbar__items--right"><a href="https://github.com/Wildboar-Software/directory" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_awgD"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a><div class="toggle_OLSw colorModeToggle_Hg9V"><button class="clean-btn toggleButton_wYmb toggleButtonDisabled_vaDU" type="button" disabled="" title="Switch between dark and light mode (currently dark mode)" aria-label="Switch between dark and light mode (currently dark mode)" aria-live="polite" aria-pressed="true"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_Sxwe"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_Yem1"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="navbarSearchContainer_bmvg"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_UyTV"><div class="docsWrapper_XLvK"><button aria-label="Scroll back to top" class="clean-btn theme-back-to-top-button backToTopButton_z1FD" type="button"></button><div class="docRoot_HciC"><aside class="theme-doc-sidebar-container docSidebarContainer_e5ai"><div class="sidebarViewport_N8x0"><div class="sidebar_vJCc"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_qiME"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/directory/docs/docs">How to use this documentation</a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/intro">X.500</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role="button" aria-expanded="true" href="/directory/docs/setup">Meerkat DSA</a></div><ul style="display:block;overflow:visible;height:auto" class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/setup">Setup</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/env">Configuration</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/webadmin">The Web Admin Console</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/database">Database Administration</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/authorization">Authorization</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/authentication">Authentication</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/logging-monitoring">Logging and Monitoring</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/schema">Schema Administration</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/networking">Networking</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/distributed">Distributed Operations</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/tls">Transport Layer Security (TLS)</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/online-pki">Online PKI</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/signing">Signed Operations</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/opbinding">Operational Bindings</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/shadowing">Shadowing</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/dynamic">Dynamic Entries</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/administration">Administration</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/troubleshooting">Troubleshooting</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/advice">Advice</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/usage">Usage</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/zonal">Zonal Matching</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/attr-cert">Attribute Certificates</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/conformance">Conformance</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/directory/docs/deviations-nuances">Deviations and Nuances</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/information-disclosure">Information Disclosure</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/architecture">Architecture</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/roadmap">Roadmap</a></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/x500cli">Clients and Libraries</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/tutorial01">Tutorials</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/asn1">Reference</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/changelog-meerkat">Change Logs</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/versioning">For Developers</a></div></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/directory/docs/support">Support / Help</a></li></ul></nav></div></div></aside><main class="docMainContainer_namt"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_YAwJ"><div class="docItemContainer_Rv5Z"><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_zCmv" aria-label="Breadcrumbs"><ul class="breadcrumbs" itemscope="" itemtype="https://schema.org/BreadcrumbList"><li class="breadcrumbs__item"><a aria-label="Home page" class="breadcrumbs__link" href="/directory/"><svg viewBox="0 0 24 24" class="breadcrumbHomeIcon_JFrk"><path d="M10 19v-5h4v5c0 .55.45 1 1 1h3c.55 0 1-.45 1-1v-7h1.7c.46 0 .68-.57.33-.87L12.67 3.6c-.38-.34-.96-.34-1.34 0l-8.36 7.53c-.34.3-.13.87.33.87H5v7c0 .55.45 1 1 1h3c.55 0 1-.45 1-1z" fill="currentColor"></path></svg></a></li><li class="breadcrumbs__item"><span class="breadcrumbs__link">Meerkat DSA</span><meta itemprop="position" content="1"></li><li itemscope="" itemprop="itemListElement" itemtype="https://schema.org/ListItem" class="breadcrumbs__item breadcrumbs__item--active"><span class="breadcrumbs__link" itemprop="name">Deviations and Nuances</span><meta itemprop="position" content="2"></li></ul></nav><div class="tocCollapsible_O_Qc theme-doc-toc-mobile tocMobile_tjDr"><button type="button" class="clean-btn tocCollapsibleButton_htYj">On this page</button></div><div class="theme-doc-markdown markdown"><header><h1>Deviations and Nuances</h1></header>
+<p>Meerkat DSA deviates from the X.500 specifications in a few ways, often due to
+ambiguities in the specifications or creative leeway given by the
+specifications to DSA implementors. These deviations are noted below. Also
+noted below are nuances in Meerkat DSA:</p>
+<ul>
+<li>RFC 4512: &quot;The root DSE SHALL NOT be included if the client performs a subtree
+search starting from the root.&quot; I could not find anywhere in the X.500
+specifications where this behavior is required, however, it makes sense to me:
+a search that does not explicitly target the root DSE should not include it,
+because the root DSE is, in some sense, not a &quot;real&quot; entry in the DIT.</li>
+<li>Meerkat will not allow the creation of attribute values from the modifyDN
+operation. This is for security / integrity purposes.</li>
+<li>Meerkat DSA automatically sets the
+<code>SearchControlOptions.separateFamilyMembers</code> option when LDAP search requests
+are converted to DAP search requests. This does not violate the X.500
+standards, but it is not mentioned. In fact, there is no specified behavior on
+how to translate an LDAP request into DAP--only the opposite.</li>
+<li>Meerkat DSA will not throw a <code>noSuchAttributeOrValue</code> error during a compare
+operation. That is insecure because it reveals that the entry does not have an
+attribute of the asserted type.</li>
+<li>The &quot;Target Not Found&quot; subprocedure defined in X.518 seems to imply that a
+single CR must be chosen from candidateRefs to be added to the
+NRContinuationList. Instead, Meerkat DSA adds all of them. Why not try all of
+them?</li>
+<li>Check Suitability of filter for a subtree search in a shadowed area is
+extremely complicated and guaranteed to be incorrect. However, it will
+function better when the attribute selection of replication and the filter is
+simpler.</li>
+<li>Check Suitability of selection for a search or read is not performed at all.
+The selection will return whatever attributes are requested and replicated.</li>
+<li>The X.500 specifications are not clear at all as to how the <code>uniqueIdentifier</code>
+attribute is to be used for authentication, since it is multi-valued and
+user-modifiable, so, during bind, the first <code>uniqueIdentifier</code>, if it exists,
+will be used as the bound <code>NameAndOptionalUID</code>.</li>
+<li>How LDAP matching rule assertion syntax is obtained from
+MatchingRuleDescription: it is not. It is obtained from the
+<code>ldapAssertionSyntax</code> property of matching rules.</li>
+<li>Because LDAP schema values are converted to the equivalent X.500 types,
+extensions (fields starting with &quot;X-&quot;) will be ignored and not preserved.</li>
+<li>ITU Recommendation X.511, Section 7.5.f is not clear in what it means by
+&quot;behaves as though normal entries do not exist.&quot; The parent of a subentry is
+necessarily a normal entry. Does this mean that a subtree search can only
+return subentries immediately subordinate to the base object? Meerkat DSA
+behaves as if this were so.</li>
+<li><code>administrativeRole</code> is automatically added to top-level DSEs when added if it
+is not present, making the entry an AAP.</li>
+<li>The specification is not clear as to whether <code>pageNumber</code> is zero-indexed or
+one-indexed. Meerkat DSA will treat this as zero-indexed. This means that,
+whether the parameter is 0 or not supplied in the request, a simple falsy
+check can inform the DSA as to whether it can ignore this parameter. If a user
+did not want to use paging, they should omit this value, rather than setting
+it to zero or one to indicate that they want the first page; for this reason,
+1 will be treated as the &quot;second&quot; page. As another slight benefit, this also
+means that if clients differ in their behavior from this, it means that
+<em>fewer</em> entries will be returned.</li>
+<li>Pagination may not be used when signing is required and chaining is not
+prohibited. This is because there is no way to merge results while preserving
+the signatures from other DSAs. If chaining is prohibited, there will only be
+results from the local DSA, which mean that the results can be paginated and
+signed.</li>
+<li>There are necessarily no access controls that can be applied to first-level
+DSEs that do not yet exist. This begs the question: how do we control which
+users can add first-level DSEs? Meerkat DSA does this by prohibiting entries
+that do not have a <code>may_add_top_level_dse</code> flag set. The first entry to have
+a password set will automatically get this flag set as well. After that first
+entry, any other entries that should have this permission will require
+direct database queries to get this flag set. To use this privilege, a user
+cannot be authenticated anonymously. This does not apply if there are no
+users with passwords set, or if the <code>MEERKAT_OPEN_TOP_LEVEL</code> environment
+variable is set to <code>1</code>.</li>
+<li>When sorting is used in LDAP requests, the response will always indicate a
+successful sort by including the sort response control with a success code. If
+ever in the future, sorting status can &quot;trickle-up&quot; to the LDAP response from
+the operation dispatcher, maybe this will change.</li>
+<li><code>matchedValuesOnly</code> keeps only the matched values from all members of the
+returned family. This might not be incorrect, since the X.500 specifications
+do not clarify what the expected behavior is for non-contributing family
+members, but it is something to be aware of.</li>
+<li>The <code>restrictedBy</code> alternative of <code>ProtectedItems</code> is not supported for the
+purposes of access control.</li>
+<li>Pending implementation: it will be slightly more efficient to use the
+user-first alternative for ACI Items, because the ACI Items can be
+&quot;pre-filtered&quot; to only retain the relevant ones.</li>
+<li><code>DiscloseOnError</code> permissions do not apply to some operations, such as list
+and search when they return 0 results, or addEntry, because Meerkat DSA
+requires the target objects to be discoverable in the first place.</li>
+<li>We do not check for <code>DiscloseOnError</code> in modifyEntry and addEntry operations
+that add values, to determine when an attribute value already exists before it
+is added, because checks are already in place to determine if it can be added.
+The X.500 specifications permit the attribute value&#x27;s existence to be
+disclosed if DiscloseOnError OR Add permissions exist for that value, but
+since Add permissions are a necessary pre-requisite before Meerkat DSA even
+checks for duplicates, there is no need to worry about <code>DiscloseOnError</code>
+permissions.</li>
+<li>The ITU specs do not explicitly say that an IDM client cannot make multiple
+subsequent bind attempts before the first one gets a response. If this is
+allowed, it opens the doors to brute-force attempts. Nefarious users can
+circumvent rate-limiting by submitting back-to-back bind requests without
+waiting for each one to succeed sequentially. Meerkat DSA aborts IDM
+connections with clients that attempt back-to-back binds.</li>
+<li>ITU X.511 (2016), Page 43, Footnote 2: This is because, apparently, the ACI
+for a subordinate reference may not be available locally (see ITU X.518
+(2016), Section 19.3.1.2.1, item 3). If this is the case, the DSA <em>must</em> chain
+to let the subordinate DSA decide whether to reveal this entry. There is not
+really a good way to know if the subordinate DSA actually informed the
+superior DSA of relevant access control information, so Meerkat DSA will
+<em>assume</em> that it has all of the ACI information necessary to make this
+decision. If the subordinate does not inform the superior of ACI information,
+it is the fault of the subordinate if its <code>subr</code> entry is disclosed. For that
+matter, the subordinate DSA could use no access control or an unsupported
+access control scheme, for all the superior DSA knows.</li>
+<li>The specification is not clear as to which member of search or list results,
+including those within a compound entry or hierarchy selection, should have
+<code>partialName</code> set to <code>TRUE</code> when a name is partially-resolved. Meerkat DSA
+will only set <code>partialName</code> for the base object, unless
+<code>separateFamilyMembers</code> is used, in which case all members of the family will
+be marked accordingly.</li>
+<li>Permission to read the entry and the attribute types and values of the new RDN
+are required for renaming an entry. This prevents information disclosure where
+a nefarious user could attempt to discover values present in the entry by
+seeing which newRDN choices come back with a &quot;no such values&quot; error.</li>
+<li>The X.500 specifications demand that, if a change or removal of a subschema or
+DIT structural rule results in a change in the governing structural rule of
+any entry in the subschema, every entry within the subtree beneath that entry
+downwards until autonomous administrative points must have their governing
+structure rules recalculated. Meerkat DSA does not update governing structure
+rules automatically, because it could mean that potentially millions (or even
+billions, depending on how big the directory gets!) of entries would be
+affected. With Meerkat DSA, administrators must manually kick off a
+recalculation of an entry&#x27;s governing structure rule. This can be done by
+performing a modifyDN operation that &#x27;renames&#x27; an entry to its exact same name
+on every entry, starting from the immediate subordinates of any affected entry
+downwards until you reach autonomous administrative points or subschema
+administrative points. Note that, whenever an entry is made into an autonomous
+administrative point or subschema administrative point, or whenever such an
+administrative point has a DIT structure rule added, removed, or modified in
+its subschema, its governing structure rule will be automatically
+recalculated; this does not recurse downward automatically.</li>
+<li>When a subentry is added below an administrative point that is also a context
+prefix, the superior DSA&#x27;s operational binding (if one exists) is updated.</li>
+<li>The Root DSE may not be modified.</li>
+<li>The information selection of a read or search operation is not evaluated against the
+selection of information that is shadowed for a shadow DSE. Meerkat DSA
+will simply return whatever it has.</li>
+<li>When using the <code>removeValues</code> change from the <code>modifyEntry</code> operation, the
+presence of the values to be removed will not be checked. Whether they exist
+or not, this change will succeed. One benefit of this is that we do not have
+to worry about accidentally disclosing to users which values exist and do not
+exist for an entry by returning a different error when they do exist.</li>
+<li>When using the <code>alterValues</code> change from the <code>modifyEntry</code> operation, <code>Modify</code>
+permission is also required for the values that are to be replaced. This is
+more strict than the specification.</li>
+<li>Default context values are not used exactly as specified in X.501 (2016),
+Section 13.9.2. If the context is required by context use rules, and if the
+context of that type is not supplied, a default value can &quot;fill the gap,&quot; but
+beyond that, default context values are not used. This is because the verbiage
+of the section 13.9.2 is unclear.</li>
+<li>ITU Recommendation X.501 (2016), Section 14.10 states that, when a
+hierarchical parent is removed, its children are to be removed from <em>the</em>
+hierarchical group. The specification does not make it clear whether they
+should now belong to separate hierarchical groups with themselves at the top
+or if we should recursively remove all hierarchical group attributes for all
+hierarchical descendants. Meerkat DSA puts the children in their own separate
+hierarchical groups. It is not clear whether this is a deviation from the
+specification at all. This was chosen because it is the most performant,
+easiest to implement, and preserves potentially a lot of work from accidental
+deletion.</li>
+<li>Meerkat DSA does not throw an error if a search or list operation returns a
+null result (a result with zero entries or RDNs).</li>
+<li>The way Meerkat DSA handles invalid signed operations is complicated and is
+described <a href="/directory/docs/distributed#handling-of-invalid-signatures">here</a>.</li>
+<li>The <code>userPwdHistory</code> attribute returns password history items that have fallen
+out of history according to the <code>pwdMaxTimeInHistory</code> operational attribute.
+When passwords are changed, they are still evaluated against the current,
+valid password history.<!-- -->
+<ul>
+<li>This is done for performance reasons. There is no practical way to keep
+these attributes synced up with <code>pwdMaxTimeInHistory</code>.</li>
+</ul>
+</li>
+<li>Password history is never deleted unless <code>administerPassword</code> is used and only
+if there are insufficient slots in the <code>userPwdHistory</code> to store the old and
+new passwords.<!-- -->
+<ul>
+<li>This is kind of a good thing: if you change <code>pwdMaxTimeInHistory</code> to a
+higher value, the history items that would have been truncated from history
+will flawlessly re-appear in history.</li>
+</ul>
+</li>
+<li>Meerkat DSA can enforce mandatory password resets as described (mentioned in
+passing, really) in ITU Recommendation X.511. As it is unclear how this is to
+be recorded in the X.500 specifications, Meerkat DSA uses the <code>pwdReset</code>
+attribute defined <a href="https://datatracker.ietf.org/doc/html/draft-behera-ldap-password-policy-10" target="_blank" rel="noopener noreferrer">here</a>
+and commonly used in LDAP servers. In addition to this, the X.500
+specifications say that the only allowed operation should be <code>changePassword</code>,
+but Meerkat DSA is much more generous than this, allowing <code>modifyEntry</code>
+(since it can also be used to change an entry&#x27;s password),
+<code>administerPassword</code> (since theoretically, an administrator could administer
+their own password), and <code>search</code> and <code>list</code>, since many DUA implementations
+might present an interactive &quot;tree-like&quot; representation of the directory that
+automatically performs these operations and which cease to work if these
+operations are unavailable. In LDAP, the only operations available when a
+password is pending a change are <code>search</code>, <code>modifyEntry</code>, and the LDAP
+<code>changePassword</code> extended request.</li>
+<li>A <code>securityError</code> with a <code>problem</code> of <code>blockedCredentials</code> will never be
+returned, even if the account is blocked. This is for security reasons:<!-- -->
+<ul>
+<li>If the asserted credentials are invalid, it risks disclosing whether an
+entry exists. A nefarious user could guess distinguished names until they
+get a <code>blockedCredentials</code> error instead of <code>invalidCredentials</code>, which will
+reveal the existence of entries they were not supposed to know about.</li>
+<li>If the asserted credentials are valid, it risks disclosing the correct
+password for a locked account. Nefarious users could guess passwords for a
+locked account until they receive a <code>blockedCredentials</code> error instead of
+<code>invalidCredentials</code>, which will reveal that they guessed the password that
+was in place prior to the block.</li>
+</ul>
+</li>
+<li>Duplicates are only removed from search or list results in these
+circumstances:<!-- -->
+<ul>
+<li>When a local operation yields local results that are duplicates, and</li>
+<li>When paginated search results are requested and the <code>unmerged</code> option is
+left unused or explicitly set to <code>FALSE</code>.<!-- -->
+<ul>
+<li>This might not be a deviation at all, because the procedures for
+deduplicating entries are vague enough to lack details for handling the
+presence of multiple possibly-signed result sets. It is worth knowing,
+though: if you have a strong need for absolutely no duplicate entries in
+results, simply request pagination, even if you only read the first page.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="https://www.itu.int/rec/T-REC-X.501/en" target="_blank" rel="noopener noreferrer">ITU Recommendation X.501 (2019)</a>,
+Section 10.3 outlines very specific ordering in which entries included as a
+result of hierarchical selection are to be returned in search results, but
+Meerkat DSA does not strictly obey this, solely because an implementation that
+did strictly obey this would be complicated, and for the small benefit of
+correct ordering. Instead, Meerkat DSA performs the hierarchy selection
+sub-searches in such an order that the returned entries are innately <em>likely</em>
+to appear in approximately the proper ordering.</li>
+<li>Relaxations and Tightenings do not apply to <code>extensibleMatch</code>. This was partly
+due to difficulty in implementing this, but also because it seems like
+unintuitive behavior to replace matching rules that a user specifically
+requested.</li>
+<li>Where a search rule is used to provide default values in a request attribute
+profile, filter evaluation does not check if the supertypes of that the
+asserted attribute type have request attribute profiles with default values.</li>
+<li>The <code>additionalControl</code> component in a search rule has no effect, because
+Meerkat DSA does not recognize any service control attributes.</li>
+<li>The <code>matchingUse</code> component in a search rule&#x27;s <code>inputAttributeTypes</code> has no
+effect because there are no matching restrictions defined anywhere and Meerkat
+DSA does not support any.</li>
+<li>The <code>entryType</code> component of a search rule&#x27;s input attribute type&#x27;s
+<code>defaultValues</code> field is unused, because the specification does not define how
+it is to be used. As such, Meerkat DSA simply joins all default values defined
+in each item in this set as though there were no <code>entryType</code> field at all.</li>
+<li>When HOBs and NHOBs are terminated, the subordinate DSEs are not deleted from
+the subordinate DSA. This is so these entries can be &quot;repatriated&quot;: reused for
+later.</li>
+<li>When the last subordinate entry underneath an NSSR is deleted, the NHOB will
+not be automatically terminated. This is so more entries could be added back
+to the subordinate DSA, if desired. This is NOT the case with a hierarchical
+operational binding (HOB).</li>
+<li>When an <code>addEntry</code> operation is chained, Meerkat DSA checks if its superior
+DSE is of type <code>immSupr</code>, and that the chained request came from one of the
+superior DSAs. If so, the new entry is marked as having type <code>cp</code>. This is so
+the <code>addEntry</code>&#x27;s <code>targetSystem</code> parameter can be used to add new context
+prefixes beneath a Non-Specific Subordinate Reference (NSSR). Having entries
+of type <code>cp</code> beneath an NSSR are essential for list and search operations to
+work correctly across NHOBs.</li>
+<li>There is no way for a shadow supplier to indicate to a shadow consumer that it
+is the master for the replicated area. There is a <code>master</code> field in the
+shadowing agreement, but this is used generally just to indicate where the
+master DSA can be reached. As such, Meerkat DSA will assume that, if this
+field is present, the correspondent DSA is <em>not</em> the master.</li>
+<li>The X.500 specifications state that access to a given entry is denied under
+Rule-Based Access Control when access to all attribute values is denied.
+However, enforcing this would be devastating from a performance perspective.
+When performing a <code>list</code> operation, Meerkat DSA would have to check what might
+be thousands of attributes per entry. Instead, Meerkat DSA denies access to an
+entry if access to any of its distinguished values are denied. This is much
+faster, since usually only one single value is evaluated, and it is
+technically more strict from a security perspective.</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="the-never-contributing-bug">The &quot;Never Contributing&quot; Bug<a href="#the-never-contributing-bug" class="hash-link" aria-label="Direct link to The &quot;Never Contributing&quot; Bug" title="Direct link to The &quot;Never Contributing&quot; Bug">​</a></h2>
+<p>ITU Recommendation X.511 (2016), Section 7.13 states that:</p>
+<blockquote>
+<p>If the filter used is the default filter (and : <!-- -->), then all members of a
+family grouping shall be marked as participating members, but not as
+contributing members.</p>
+</blockquote>
+<p>This is a problem, because <code>familyReturn</code> defaults to <code>contributingEntriesOnly</code>,
+which means that <em>nothing</em> will be returned even though the compound entry as a
+whole matches <code>and:{}</code>. In other words, if the default search filter and
+selection are used, compound entries will be entirely hidden from results if the
+X.500 specifications are observed strictly.</p>
+<p>This was probably not intentional, so I reported it. In early January of 2022.
+Until I get clarification, Meerkat DSA will mark every entry as a contributing
+member if there is a match, but no identified contributing members.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="protected-passwords">Protected Passwords<a href="#protected-passwords" class="hash-link" aria-label="Direct link to Protected Passwords" title="Direct link to Protected Passwords">​</a></h2>
+<p>Annex E of
+<a href="https://www.itu.int/rec/T-REC-X.511/en" target="_blank" rel="noopener noreferrer">ITU Recommendation X.511 (2019)</a>
+defines a <em>proposed</em> algorithm for producing protected passwords as used by
+simple authentication. This is a non-normative section of the specification, and
+as such, it is not technically a deviation from the X.500 specifications.</p>
+<p>The Annex E solution incorporates the raw, <em>unhashed</em> password into the data
+structure that will be used to produce the hash that is evaluated. This means
+that the password would have to be stored <em>unhashed</em> to make this possible,
+which goes against all modern expectations for the secure storage of passwords
+in software architecture. For this reason, Meerkat DSA uses a procedure similar
+to the Annex E procedure, but by redefining the first hash input to replace the
+raw user password with a <code>UserPwd</code> (and, unrelated, to make the <code>random1</code>
+<code>BIT STRING</code> optional):</p>
+<div class="language-asn1 codeBlockContainer_ZGJx theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_qZBB"><pre tabindex="0" class="prism-code language-asn1 codeBlock_TAPP thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_AdAo"><span class="token-line" style="color:#F8F8F2"><span class="token plain">-- This is the data structure described in ITU Rec. X.511, Annex E.</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">X511-AnnexE-Hashable1 ::= SEQUENCE {</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">    name        DistinguishedName,</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">    time1       GeneralizedTime,</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">    random1     BIT STRING,</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">    password    OCTET STRING }</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">-- This is what Meerkat DSA actually hashes to produce f1.</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">Meerkats-Actual-Hashable1 ::= SEQUENCE {</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">    name        DistinguishedName,</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">    time1       GeneralizedTime,</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">    random1     BIT STRING OPTIONAL,</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">    password    encrypted &lt; UserPwd -- This is an ASN.1 &quot;selection type.&quot; -- }</span><br></span></code></pre><div class="buttonGroup_TNwR"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_MVhB" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_yxgH"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_QJLJ"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<p>The <code>password</code> field MUST use the <code>encrypted</code> alternative of <code>UserPwd</code>. The
+encrypted value MUST use the exact algorithm that can be found the <code>pwdEncAlg</code>
+operational attribute. The reason for this is that the password is stored
+encrypted / hashed in the database and cannot be &quot;re-encrypted&quot; using some other
+algorithm. Clients must first read the algorithm used for this password before
+attempting to produce a protected password, because they need the exact
+algorithm <em>and parameters</em> to produce an identical encrypted / hashed value.</p>
+<p>Unrelated to the problems above, Meerkat DSA also makes <code>random1</code> and <code>random2</code>
+optional for protected passwords. You will notice that the above
+<code>Meerkats-Actual-Hashable1</code> that <code>random1</code> is <code>OPTIONAL</code>. In addition to this,
+the second hashable defined in Annex E is also modified as such:</p>
+<div class="language-asn1 codeBlockContainer_ZGJx theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_qZBB"><pre tabindex="0" class="prism-code language-asn1 codeBlock_TAPP thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_AdAo"><span class="token-line" style="color:#F8F8F2"><span class="token plain">-- This is the data structure described in ITU Rec. X.511, Annex E.</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">X511-AnnexE-Hashable2 ::= SEQUENCE {</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">    f1          OCTET STRING, -- hashed octet string from above</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">    time2       GeneralizedTime,</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">    random2     BIT STRING }</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">-- This is what Meerkat DSA actually hashes to locally produce the hash value.</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">Meerkats-Actual-Hashable2 ::= SEQUENCE {</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">    f1          OCTET STRING, -- hashed octet string from above</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">    time2       GeneralizedTime,</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">    random2     BIT STRING OPTIONAL }</span><br></span></code></pre><div class="buttonGroup_TNwR"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_MVhB" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_yxgH"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_QJLJ"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<p>It is also worth noting that Meerkat DSA does not support every hash
+algorithm under the sun. These are the ones that are supported at the time of
+writing:</p>
+<ul>
+<li><code>sha1</code></li>
+<li><code>sha224</code></li>
+<li><code>sha256</code></li>
+<li><code>sha384</code></li>
+<li><code>sha512</code></li>
+<li><code>sha3-244</code></li>
+<li><code>sha3-256</code></li>
+<li><code>sha3-384</code></li>
+<li><code>sha3-512</code></li>
+<li><code>shake128</code></li>
+<li><code>shake256</code></li>
+</ul>
+<p>If a user produces a protected password with an algorithm not listed above, the
+password authentication will simply fail as though the password had been wrong.</p>
+<p>Finally, if a user provides simple credentials using the <code>protected</code>
+alternative, but does not supply a <code>time1</code> value, the <code>protected</code> password will
+be used to construct a <code>UserPwd</code> value (using the <code>encrypted</code> alternative), and
+that will be asserted. To reiterate, this does not violate the specifications,
+since this behavior is explicitly undefined therein.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="hidden-service-admin-areas">Hidden Service Admin Areas<a href="#hidden-service-admin-areas" class="hash-link" aria-label="Direct link to Hidden Service Admin Areas" title="Direct link to Hidden Service Admin Areas">​</a></h2>
+<p>The X.500 specifications mandate that searches are not to recurse into other
+service administrative areas, but this means that service admin points will not
+be discoverable at all via <code>search</code> operations. Since LDAP has no <code>list</code>
+operation, it also means that LDAP users will never be able to find any entry
+that lies in a different service administrative area (except by &quot;guessing&quot; that
+it exists).</p>
+<p>For example, if <code>C=US,ST=FL</code> is a service admin point, and a user performs a
+one-level search at <code>C=US</code>, the <code>ST=FL</code> subordinate will be hidden from the
+results entirely. The user will have no way of even finding <code>ST=FL</code> except for
+performing a <code>list</code> operation and noticing that this subordinate differs from
+the results obtained by a one-level search (since <code>list</code> is not governed by
+service administration).</p>
+<p>Meerkat DSA deviates from the specification by recursing one entry into other
+service administrative areas so that the DIT is traversible to users. Continuing
+on the previous example, this means that, if a user performs a one-level search
+at <code>C=US</code>, the <code>ST=FL</code> subordinate will be returned. If a subtree search at
+<code>C=US</code> is performed, <code>ST=FL</code> will be returned as well, but none of its
+subordinates (the latter of which is technically correct behavior).</p>
+<p>This behavior can be turned off by setting
+<a href="/directory/docs/env#meerkat_principled_service_admin"><code>MEERKAT_PRINCIPLED_SERVICE_ADMIN</code></a>
+to <code>1</code>.</p>
+<div class="theme-admonition theme-admonition-note admonition_IZjC alert alert--secondary"><div class="admonitionHeading_uVvU"><span class="admonitionIcon_HiR3"><svg viewBox="0 0 14 16"><path fill-rule="evenodd" d="M6.3 5.69a.942.942 0 0 1-.28-.7c0-.28.09-.52.28-.7.19-.18.42-.28.7-.28.28 0 .52.09.7.28.18.19.28.42.28.7 0 .28-.09.52-.28.7a1 1 0 0 1-.7.3c-.28 0-.52-.11-.7-.3zM8 7.99c-.02-.25-.11-.48-.31-.69-.2-.19-.42-.3-.69-.31H6c-.27.02-.48.13-.69.31-.2.2-.3.44-.31.69h1v3c.02.27.11.5.31.69.2.2.42.31.69.31h1c.27 0 .48-.11.69-.31.2-.19.3-.42.31-.69H8V7.98v.01zM7 2.3c-3.14 0-5.7 2.54-5.7 5.68 0 3.14 2.56 5.7 5.7 5.7s5.7-2.55 5.7-5.7c0-3.15-2.56-5.69-5.7-5.69v.01zM7 .98c3.86 0 7 3.14 7 7s-3.14 7-7 7-7-3.12-7-7 3.14-7 7-7z"></path></svg></span>note</div><div class="admonitionContent_bl22"><p>The above issue will be reported to the ITU working group that authors the X.500
+specifications, so it may be resolved in a future version.</p></div></div>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="other-deviations">Other Deviations<a href="#other-deviations" class="hash-link" aria-label="Direct link to Other Deviations" title="Direct link to Other Deviations">​</a></h2>
+<p>There are other deviations that haven&#x27;t been mentioned here. Most deviations
+are the frequency of automated updates to operational bindings. Meerkat DSA
+updates operational bindings more frequently than is required by the
+specifications. This should not be of significance more the vast majority of
+users, and is probably desirable.</p></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col"><a href="https://github.com/Wildboar-Software/directory/edit/main/website/docs/deviations-nuances.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_UohW" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_g62E"></div></div></footer></article><nav class="pagination-nav docusaurus-mt-lg" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/directory/docs/conformance"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Conformance</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/directory/docs/information-disclosure"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Information Disclosure</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_TN1Q thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#the-never-contributing-bug" class="table-of-contents__link toc-highlight">The &quot;Never Contributing&quot; Bug</a></li><li><a href="#protected-passwords" class="table-of-contents__link toc-highlight">Protected Passwords</a></li><li><a href="#hidden-service-admin-areas" class="table-of-contents__link toc-highlight">Hidden Service Admin Areas</a></li><li><a href="#other-deviations" class="table-of-contents__link toc-highlight">Other Deviations</a></li></ul></div></div></div></div></main></div></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2022-2025 Wildboar Software. Built with Docusaurus.</div></div></div></footer></div>
+</body>
+</html>

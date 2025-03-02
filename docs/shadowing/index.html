@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-shadowing" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.7.0">
+<title data-rh="true">Shadowing | Meerkat DSA</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://wildboar-software.github.io/directory/docs/shadowing"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="keywords" content="directory, x500, x.500, ldap, database, meerkat, dsa, distributed"><meta data-rh="true" name="copyright" content="Copyright (c) 2021 Jonathan M. Wilbur &lt;jonathan@wilbur.space&gt;."><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Shadowing | Meerkat DSA"><meta data-rh="true" name="description" content="Meerkat DSA supports all features of shadowing as described in"><meta data-rh="true" property="og:description" content="Meerkat DSA supports all features of shadowing as described in"><link data-rh="true" rel="icon" href="/directory/img/boar-head-rune-circle.svg"><link data-rh="true" rel="canonical" href="https://wildboar-software.github.io/directory/docs/shadowing"><link data-rh="true" rel="alternate" href="https://wildboar-software.github.io/directory/docs/shadowing" hreflang="en"><link data-rh="true" rel="alternate" href="https://wildboar-software.github.io/directory/docs/shadowing" hreflang="x-default"><link rel="preconnect" href="https://www.google-analytics.com">
+<script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-177382419-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview")</script>
+<script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+
+<link rel="icon" href="/directory/img/boar-head-rune-circle.svg">
+<link rel="manifest" href="/directory/manifest.json">
+<meta name="theme-color" content="rgb(37, 194, 160)"><link rel="stylesheet" href="/directory/assets/css/styles.2a28baec.css">
+<script src="/directory/assets/js/runtime~main.80ceabf3.js" defer="defer"></script>
+<script src="/directory/assets/js/main.ad93db89.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();t(null!==e?e:"dark")}(),function(){try{const n=new URLSearchParams(window.location.search).entries();for(var[t,e]of n)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_G6ar" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/directory/"><div class="navbar__logo"><img src="/directory/img/boar-head-rune-circle-black.svg" alt="Wildboar Software Logo" class="themedComponent_DHUr themedComponent--light_DIHH"><img src="/directory/img/boar-head-rune-circle.svg" alt="Wildboar Software Logo" class="themedComponent_DHUr themedComponent--dark_Bv2M"></div><b class="navbar__title text--truncate">Meerkat DSA</b></a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/directory/docs/setup">Get Started</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/directory/docs/docs">Documentation</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/directory/docs/specs">X.500 Specifications</a><a class="navbar__item navbar__link" href="/directory/docs/demo">Demo</a></div><div class="navbar__items navbar__items--right"><a href="https://github.com/Wildboar-Software/directory" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_awgD"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a><div class="toggle_OLSw colorModeToggle_Hg9V"><button class="clean-btn toggleButton_wYmb toggleButtonDisabled_vaDU" type="button" disabled="" title="Switch between dark and light mode (currently dark mode)" aria-label="Switch between dark and light mode (currently dark mode)" aria-live="polite" aria-pressed="true"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_Sxwe"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_Yem1"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="navbarSearchContainer_bmvg"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_UyTV"><div class="docsWrapper_XLvK"><button aria-label="Scroll back to top" class="clean-btn theme-back-to-top-button backToTopButton_z1FD" type="button"></button><div class="docRoot_HciC"><aside class="theme-doc-sidebar-container docSidebarContainer_e5ai"><div class="sidebarViewport_N8x0"><div class="sidebar_vJCc"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_qiME"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/directory/docs/docs">How to use this documentation</a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/intro">X.500</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role="button" aria-expanded="true" href="/directory/docs/setup">Meerkat DSA</a></div><ul style="display:block;overflow:visible;height:auto" class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/setup">Setup</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/env">Configuration</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/webadmin">The Web Admin Console</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/database">Database Administration</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/authorization">Authorization</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/authentication">Authentication</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/logging-monitoring">Logging and Monitoring</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/schema">Schema Administration</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/networking">Networking</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/distributed">Distributed Operations</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/tls">Transport Layer Security (TLS)</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/online-pki">Online PKI</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/signing">Signed Operations</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/opbinding">Operational Bindings</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/directory/docs/shadowing">Shadowing</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/dynamic">Dynamic Entries</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/administration">Administration</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/troubleshooting">Troubleshooting</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/advice">Advice</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/usage">Usage</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/zonal">Zonal Matching</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/attr-cert">Attribute Certificates</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/conformance">Conformance</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/deviations-nuances">Deviations and Nuances</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/information-disclosure">Information Disclosure</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/architecture">Architecture</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/roadmap">Roadmap</a></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/x500cli">Clients and Libraries</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/tutorial01">Tutorials</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/asn1">Reference</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/changelog-meerkat">Change Logs</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/versioning">For Developers</a></div></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/directory/docs/support">Support / Help</a></li></ul></nav></div></div></aside><main class="docMainContainer_namt"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_YAwJ"><div class="docItemContainer_Rv5Z"><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_zCmv" aria-label="Breadcrumbs"><ul class="breadcrumbs" itemscope="" itemtype="https://schema.org/BreadcrumbList"><li class="breadcrumbs__item"><a aria-label="Home page" class="breadcrumbs__link" href="/directory/"><svg viewBox="0 0 24 24" class="breadcrumbHomeIcon_JFrk"><path d="M10 19v-5h4v5c0 .55.45 1 1 1h3c.55 0 1-.45 1-1v-7h1.7c.46 0 .68-.57.33-.87L12.67 3.6c-.38-.34-.96-.34-1.34 0l-8.36 7.53c-.34.3-.13.87.33.87H5v7c0 .55.45 1 1 1h3c.55 0 1-.45 1-1z" fill="currentColor"></path></svg></a></li><li class="breadcrumbs__item"><span class="breadcrumbs__link">Meerkat DSA</span><meta itemprop="position" content="1"></li><li itemscope="" itemprop="itemListElement" itemtype="https://schema.org/ListItem" class="breadcrumbs__item breadcrumbs__item--active"><span class="breadcrumbs__link" itemprop="name">Shadowing</span><meta itemprop="position" content="2"></li></ul></nav><div class="tocCollapsible_O_Qc theme-doc-toc-mobile tocMobile_tjDr"><button type="button" class="clean-btn tocCollapsibleButton_htYj">On this page</button></div><div class="theme-doc-markdown markdown"><header><h1>Shadowing</h1></header>
+<p>Meerkat DSA supports all features of shadowing as described in
+<a href="https://www.itu.int/rec/T-REC-X.525/en" target="_blank" rel="noopener noreferrer">ITU Recommendation X.525 (2019)</a>, as
+well as the establishment of shadowing through the use of the
+Directory Operational Binding Management Protocol (DOP). The Directory
+Information Shadowing Protocol (DISP) is fully supported, and can use IDM, ITOT,
+IDM-over-TLS, and ITOT-over-TLS as transports (like the other directory
+protocols). Meerkat DSA is capable of acting as a shadow supplier and consumer
+at the first-level and otherwise.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="shadow-update-size-limits">Shadow Update Size Limits<a href="#shadow-update-size-limits" class="hash-link" aria-label="Direct link to Shadow Update Size Limits" title="Direct link to Shadow Update Size Limits">​</a></h2>
+<p>There are no size limits on shadow updates imposed by Meerkat DSA, but shadowing
+has only been tested with 20,000 entries. It is believed that Meerkat DSA should
+work fine up to 100,000 entries and beyond.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="establishment">Establishment<a href="#establishment" class="hash-link" aria-label="Direct link to Establishment" title="Direct link to Establishment">​</a></h2>
+<p>Shadow operational bindings may be proposed like other operational bindings
+via the use of
+<a href="/directory/docs/opbinding#relayed-operational-bindings">Relayed Operational Bindings</a>.
+Shadow operational bindings proposed by third parties may be agreed to via the
+<a href="/directory/docs/webadmin">Web Administration Console</a>.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="update-behavior">Update Behavior<a href="#update-behavior" class="hash-link" aria-label="Direct link to Update Behavior" title="Direct link to Update Behavior">​</a></h2>
+<p>If Meerkat DSA is acting as a shadow supplier, upon first establishing a
+shadowing agreement, Meerkat DSA will provide a total refresh to its consumer.
+Likewise, when acting as a consumer, Meerkat DSA will request a total refresh
+for the first update. Thereafter, Meerkat DSA produces and requests only
+incremental updates, with a few exceptions:</p>
+<ul>
+<li>After a shadowing agreement modification, a total refresh is performed.</li>
+<li>Secondary shadows always receive total refreshes for every update.</li>
+<li>If a previous total refresh did not succeed, another one will be performed.</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="secondary-shadows">Secondary Shadows<a href="#secondary-shadows" class="hash-link" aria-label="Direct link to Secondary Shadows" title="Direct link to Secondary Shadows">​</a></h2>
+<p>Meerkat DSA supports secondary shadows, however, secondary consumers will only
+receive total refreshes as stated above. This can be extremely expensive in
+terms of performance, and it should only be used for a small number of entries.</p>
+<div class="theme-admonition theme-admonition-info admonition_IZjC alert alert--info"><div class="admonitionHeading_uVvU"><span class="admonitionIcon_HiR3"><svg viewBox="0 0 14 16"><path fill-rule="evenodd" d="M7 2.3c3.14 0 5.7 2.56 5.7 5.7s-2.56 5.7-5.7 5.7A5.71 5.71 0 0 1 1.3 8c0-3.14 2.56-5.7 5.7-5.7zM7 1C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zm1 3H6v5h2V4zm0 6H6v2h2v-2z"></path></svg></span>info</div><div class="admonitionContent_bl22"><p>The rationale for this is that it is difficult to determine whether the shadow
+update from the master DSA overlaps with the the shadowed area of the secondary.
+If there is overlap, the attributes, values, and contexts received from the
+master may not be the same as those provided to the secondary. This problem gets
+very complicated. Future versions of Meerkat DSA will likely improve upon this.</p></div></div>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="timing-requirements-and-behavior">Timing Requirements and Behavior<a href="#timing-requirements-and-behavior" class="hash-link" aria-label="Direct link to Timing Requirements and Behavior" title="Direct link to Timing Requirements and Behavior">​</a></h2>
+<p>Shadowing updates can be configured to occur at regular intervals in the
+shadowing agreement, and they may be allowed to being at a configurable amount
+of time after the start of the interval (the &quot;window&quot;). Meerkat DSA will allow
+nearly any value (measured in number of seconds) for these intervals and windows,
+but aberrant behavior is likely to be observed if the frequency of shadow
+updates is less than one minute.</p>
+<div class="theme-admonition theme-admonition-tip admonition_IZjC alert alert--success"><div class="admonitionHeading_uVvU"><span class="admonitionIcon_HiR3"><svg viewBox="0 0 12 16"><path fill-rule="evenodd" d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path></svg></span>tip</div><div class="admonitionContent_bl22"><p>It is strongly recommended to use shadow update intervals of no less than one
+hour, and shadow window sizes of no less than 30 minutes. Replicating a large
+amount of data could take a very long time to insert into the database!</p></div></div>
+<p>Directory operations must eventually time out to ensure that resources are
+freed up when correspondent DSAs become non-responsive. For the purposes of
+determining the timeouts used for the <code>updateShadow</code> operation, Meerkat DSA
+measures the time taken to prepare the shadow update locally, multiplies it by
+ten, and restricts this value between 30 seconds and the configured update
+interval. This means that, if it takes 1 second to locally prepare a shadow
+update, Meerkat DSA will give the remote DSA 30 seconds to respond to the
+<code>updateShadow</code> operation before timing out; if it takes 30 seconds to produce
+a shadow update, Meerkat DSA will grant the consumer 300 seconds to respond to
+the <code>updateShadow</code> operation, so long as the update interval is not smaller than
+this number.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="loops">Loops<a href="#loops" class="hash-link" aria-label="Direct link to Loops" title="Direct link to Loops">​</a></h2>
+<p>It is possible to create shadows that result in an infinite loop using the
+<code>onChange</code> update mode. In other words, if an entry changes, a master DSA may
+update its shadow, and its shadow may have another shadow that it updates
+<code>onChange</code>. This secondary shadow may have the master DSA as its shadow consumer,
+which would cause an infinite loop of updates.</p>
+<p>Meerkat DSA has no defenses against this scenario. Administrators should only
+accept operational bindings from trustworthy parties. It falls upon
+administrators to ensure the sanity of shadowing agreements before agreeing to
+them.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="update-spill-over">Update Spill-over<a href="#update-spill-over" class="hash-link" aria-label="Direct link to Update Spill-over" title="Direct link to Update Spill-over">​</a></h2>
+<p>Long-running shadow updates will not be terminated. They will run to completion,
+and if they take so long that they spill over into another shadow update,
+Meerkat DSA will not detect this or abort the shadow update. It falls on
+administrators to ensure that shadow updates are not taking too long. In
+general, it is recommended to make shadow update intervals no shorter than one
+hour.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="role-reversal">Role Reversal<a href="#role-reversal" class="hash-link" aria-label="Direct link to Role Reversal" title="Direct link to Role Reversal">​</a></h2>
+<p>Meerkat DSA does not support a shadow consumer becoming a shadow supplier
+through a modification of a shadow operational binding. The shadowing roles may
+never be reversed. The use of the DISP operations are policed for their
+origination by the appropriate party in a shadow operational binding.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="modification">Modification<a href="#modification" class="hash-link" aria-label="Direct link to Modification" title="Direct link to Modification">​</a></h2>
+<p>Under the hood, the modification of shadowing agreements has almost the same
+effect of terminating a shadowing agreement and creating a new one. The only
+exception, as stated above, is that the roles may not be reversed. However, the
+update modes may be reversed, meaning that a supplier-initiated shadowing may
+become consumer-initiated and vice versa.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="termination">Termination<a href="#termination" class="hash-link" aria-label="Direct link to Termination" title="Direct link to Termination">​</a></h2>
+<p>When shadow operational bindings are terminated, the shadow DSEs that remained
+are not discarded. It is up to the administrator of the DSA to manually remove
+these, if that is desired. Otherwise, they will continue to work as shadow DSEs,
+and never receive updates until an applicable shadowing agreement is resumed.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="information-planes-and-alternative-relative-distinguished-names">Information Planes and Alternative Relative Distinguished Names<a href="#information-planes-and-alternative-relative-distinguished-names" class="hash-link" aria-label="Direct link to Information Planes and Alternative Relative Distinguished Names" title="Direct link to Information Planes and Alternative Relative Distinguished Names">​</a></h2>
+<p>The concepts of information &quot;planes&quot; and &quot;alternative relative distinguished
+names&quot; introduced seemingly out of nowhere in ITU Recommendation X.525 are not
+supported. Relative distinguished names must be unique for all DSEs within
+Meerkat DSA, even if they are shadows.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="overlapping-shadowed-areas">Overlapping Shadowed Areas<a href="#overlapping-shadowed-areas" class="hash-link" aria-label="Direct link to Overlapping Shadowed Areas" title="Direct link to Overlapping Shadowed Areas">​</a></h2>
+<p>Meerkat DSA neither supports the use of overlapping shadowed areas, nor
+verifies that all current shadowing agreements do not overlap with each other.
+<strong>It is the responsibility of the administrator to ensure that shadowing
+agreements do not overlap.</strong></p>
+<p>By &quot;overlapping shadowed areas,&quot; this means overlap of entries specified by the
+shadowing agreements subtree specification, even if the attributes or values
+replicated do not conflict.</p>
+<p>Note that refinement of said subtree using the <code>specificationFilter</code> can produce
+shadowed areas that do not overlap; shadowed areas that are &quot;interleaved&quot;
+through the use of object class refinement--in other words, those shadowed areas
+that would overlap but for the use of the <code>specificationFilter</code>--should be free
+from conflict. For example, there should be no problem if one shadowing
+agreement replicates all entries of object class <code>person</code> and another replicates
+all entries of object class <code>country</code> for an otherwise identical subtree
+specification.</p>
+<div class="theme-admonition theme-admonition-warning admonition_IZjC alert alert--warning"><div class="admonitionHeading_uVvU"><span class="admonitionIcon_HiR3"><svg viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path></svg></span>warning</div><div class="admonitionContent_bl22"><p>It is still strongly recommended to avoid using overlapping shadowed areas. The
+use of overlapping shadowed areas has not been tested at all. If overlapping
+shadowed areas are used at all, it would likely be less error-prone to replicate
+from different context prefixes or base entries at least.</p></div></div>
+<div class="theme-admonition theme-admonition-info admonition_IZjC alert alert--info"><div class="admonitionHeading_uVvU"><span class="admonitionIcon_HiR3"><svg viewBox="0 0 14 16"><path fill-rule="evenodd" d="M7 2.3c3.14 0 5.7 2.56 5.7 5.7s-2.56 5.7-5.7 5.7A5.71 5.71 0 0 1 1.3 8c0-3.14 2.56-5.7 5.7-5.7zM7 1C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zm1 3H6v5h2V4zm0 6H6v2h2v-2z"></path></svg></span>info</div><div class="admonitionContent_bl22"><p>The reason that overlapping shadowed areas are not supported is that it is
+unclear how to handle certain conflicting facts. For instance, if one DSA says
+that an SDSE has SDSEType <code>nssr</code> and another says it has type <code>familyMember</code>,
+what is to be done? There are too many combinations of SDSE types to validate
+all of them and ensure that the shadowed DSE is coherent. In addition to this,
+resolving which attributes and values are &quot;complete&quot; as a result of merging two
+shadow updates from differing origins could be very error-prone.</p><p>On top of this, I believe overlapping shadowed areas is a strange edge case that
+is not worthy of much support: there is supposed to be only one master DSA for
+any given entry, so it would be strange for there to be multiple shadowing
+agreements for the same area. If you really need this functionality, let me
+know!</p></div></div>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="performance">Performance<a href="#performance" class="hash-link" aria-label="Direct link to Performance" title="Direct link to Performance">​</a></h2>
+<p>Shadowing will be much faster if context selections are not used and if either
+all contexts or no contexts are supplied. Otherwise, little can be done to
+speed up shadowing specifically.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="network-disruption">Network Disruption<a href="#network-disruption" class="hash-link" aria-label="Direct link to Network Disruption" title="Direct link to Network Disruption">​</a></h2>
+<p>Meerkat DSA&#x27;s shadowing is resilient to network failure. When
+acting as a shadow supplier, Meerkat DSA does not discard its queue of pending
+incremental shadow updates until it receives a response to the <code>updateShadow</code>
+operation from a consumer. If no update has ever succeeded, a Meerkat DSA
+supplier will provide a total refresh. In either case, refreshes are
+idempotent, meaning that duplicate entries, attributes, values, etc. should just
+be ignored. If you experience a deviation on this front, it is a bug.</p>
+<div class="theme-admonition theme-admonition-warning admonition_IZjC alert alert--warning"><div class="admonitionHeading_uVvU"><span class="admonitionIcon_HiR3"><svg viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path></svg></span>warning</div><div class="admonitionContent_bl22"><p>This does not mean that Meerkat DSA is resilient to storage / database failures.
+Depending on the configuration of your operating system or database, writes may
+not really be persisted. Meerkat DSA responds to the <code>updateShadow</code> operation
+when the database <em>claims</em> that it has saved the data. What constitutes
+&quot;persistence&quot; is a much greater philosophical topic; to learn more, search for
+the terms &quot;Write-Through&quot; or &quot;Write-Back.&quot;</p></div></div>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="usage-of-shadowed-entries">Usage of Shadowed Entries<a href="#usage-of-shadowed-entries" class="hash-link" aria-label="Direct link to Usage of Shadowed Entries" title="Direct link to Usage of Shadowed Entries">​</a></h2>
+<p>The X.500 specifications are somewhat vague as to how to validate whether the
+locally shadowed information can satisfy a request, and therefore, whether a
+shadow DSA should respond to the request, or chain it to the master DSA,
+particularly as it relates to the <code>search</code> operation.</p>
+<div class="theme-admonition theme-admonition-note admonition_IZjC alert alert--secondary"><div class="admonitionHeading_uVvU"><span class="admonitionIcon_HiR3"><svg viewBox="0 0 14 16"><path fill-rule="evenodd" d="M6.3 5.69a.942.942 0 0 1-.28-.7c0-.28.09-.52.28-.7.19-.18.42-.28.7-.28.28 0 .52.09.7.28.18.19.28.42.28.7 0 .28-.09.52-.28.7a1 1 0 0 1-.7.3c-.28 0-.52-.11-.7-.3zM8 7.99c-.02-.25-.11-.48-.31-.69-.2-.19-.42-.3-.69-.31H6c-.27.02-.48.13-.69.31-.2.2-.3.44-.31.69h1v3c.02.27.11.5.31.69.2.2.42.31.69.31h1c.27 0 .48-.11.69-.31.2-.19.3-.42.31-.69H8V7.98v.01zM7 2.3c-3.14 0-5.7 2.54-5.7 5.68 0 3.14 2.56 5.7 5.7 5.7s5.7-2.55 5.7-5.7c0-3.15-2.56-5.69-5.7-5.69v.01zM7 .98c3.86 0 7 3.14 7 7s-3.14 7-7 7-7-3.12-7-7 3.14-7 7-7z"></path></svg></span>note</div><div class="admonitionContent_bl22"><p>Meerkat DSA&#x27;s rules for determining whether a request can be satisfied locally
+can and will change throughout time, and in addition to this, the code
+embodying these rules is very complex and likely to be buggy. What follows
+should be considered to be <em>generally</em> true.</p></div></div>
+<p>As heuristics for determining whether a Meerkat DSA shadow consumer will
+consider its shadowed data &quot;suitable&quot; for fulfilling the request, the following
+general principles apply:</p>
+<ul>
+<li>All modification operations always get chained to the master DSA.</li>
+<li>For shadowed information to be suitable, the target entry / entries must be
+present.<!-- -->
+<ul>
+<li>This is obvious for single-entry interrogation procedures, such as <code>read</code> and <code>compare</code>.</li>
+<li>For <code>list</code>, all immediate subordinates must be replicated, but they do not
+have to have any specific attributes or values.</li>
+<li>For <code>search</code> requests, only the base entry must be present if <code>baseObject</code>
+<code>search</code> is used.<!-- -->
+<ul>
+<li>Theoretically, a search could return the subtree of family members from a
+<code>baseObject</code> search. This implementation will assume that compound
+entries are always replicated as a unit.</li>
+</ul>
+</li>
+<li>All immediate subordinates under the base entry must be replicated if
+<code>oneLevel</code> <code>search</code> is used.</li>
+<li>If <code>wholeSubtree</code> <code>search</code> is used, all shadowing agreements that apply to
+the searched area must use empty shadow subtrees (a <code>SubtreeSpecification</code>
+that specifies no <code>base</code>, <code>minimum</code>, <code>maximum</code>, <code>specificExclusions</code>, or
+<code>specificationFilter</code> of any kind). This is the only way to ensure that the
+shadowed area would contain all the same entries that the master DSA(s)
+would.</li>
+</ul>
+</li>
+<li>In addition to this, the filtering and selection of attributes is considered:<!-- -->
+<ul>
+<li>As stated in the specifications, operational attributes never factor into
+deciding whether or not an entry is suitable, because they are always
+considered incomplete within shadowed DSEs. If you want authoritative,
+up-to-date operational attributes, query the master DSA.</li>
+<li>For single-entry interrogation operations (e.g. <code>read</code> and <code>compare</code>), the
+entry will always be suitable if all attributes are replicated, as indicated
+by the shadow DSE&#x27;s <code>attributesComplete</code> flag.</li>
+<li>For <code>search</code>, the shadowing agreement is consulted to ensure that all
+filtered and selected attributes are replicated and complete.</li>
+<li>Given the targeted nature of <code>compare</code>, the <code>compare</code> operation is extremely
+picky with respect to considering an entry suitable. If <code>noSubtypeMatch</code> is
+not provided as a service control and the entry is incomplete, the shadow
+DSE will not be suitable, because it cannot be known whether some unknown
+subtype of the asserted attribute type has been replicated.<!-- -->
+<ul>
+<li>For similar reasons, the target entry will be unsuitable unless the
+<code>dontMatchFriends</code> service control is used or all friend attributes are
+replicated as well.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Determining entry suitability based on contexts is somewhat shaky. The code
+for determining if there is sufficient overlap between replicated contexts and
+asserted or requested contexts gets extremely complicated. As such, it is
+strongly recommended to always replicate all contexts in Meerkat DSA.</li>
+<li>In general, the more narrow the focus of an operation, the more picky Meerkat
+DSA&#x27;s implementation of the Check Suitability procedure will be for
+determining whether the shadowed data is suitable. A <code>compare</code> operation will
+be extremely strict, whereas a <code>search</code> operation will be much more inclined
+to using shadowed data.</li>
+</ul>
+<p>You can check the <code>performer</code> field of the responses to see whether the shadow
+DSA or the master DSA responded. This will tell you whether or not the target
+entry was determined to be &quot;suitable&quot; with respect to the request.</p></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col"><a href="https://github.com/Wildboar-Software/directory/edit/main/website/docs/shadowing.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_UohW" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_g62E"></div></div></footer></article><nav class="pagination-nav docusaurus-mt-lg" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/directory/docs/opbinding"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Operational Bindings</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/directory/docs/dynamic"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Dynamic Entries</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_TN1Q thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#shadow-update-size-limits" class="table-of-contents__link toc-highlight">Shadow Update Size Limits</a></li><li><a href="#establishment" class="table-of-contents__link toc-highlight">Establishment</a></li><li><a href="#update-behavior" class="table-of-contents__link toc-highlight">Update Behavior</a></li><li><a href="#secondary-shadows" class="table-of-contents__link toc-highlight">Secondary Shadows</a></li><li><a href="#timing-requirements-and-behavior" class="table-of-contents__link toc-highlight">Timing Requirements and Behavior</a></li><li><a href="#loops" class="table-of-contents__link toc-highlight">Loops</a></li><li><a href="#update-spill-over" class="table-of-contents__link toc-highlight">Update Spill-over</a></li><li><a href="#role-reversal" class="table-of-contents__link toc-highlight">Role Reversal</a></li><li><a href="#modification" class="table-of-contents__link toc-highlight">Modification</a></li><li><a href="#termination" class="table-of-contents__link toc-highlight">Termination</a></li><li><a href="#information-planes-and-alternative-relative-distinguished-names" class="table-of-contents__link toc-highlight">Information Planes and Alternative Relative Distinguished Names</a></li><li><a href="#overlapping-shadowed-areas" class="table-of-contents__link toc-highlight">Overlapping Shadowed Areas</a></li><li><a href="#performance" class="table-of-contents__link toc-highlight">Performance</a></li><li><a href="#network-disruption" class="table-of-contents__link toc-highlight">Network Disruption</a></li><li><a href="#usage-of-shadowed-entries" class="table-of-contents__link toc-highlight">Usage of Shadowed Entries</a></li></ul></div></div></div></div></main></div></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2022-2025 Wildboar Software. Built with Docusaurus.</div></div></div></footer></div>
+</body>
+</html>

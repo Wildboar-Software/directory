@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-changelog-meerkat" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.7.0">
+<title data-rh="true">Changelog for Meerkat DSA | Meerkat DSA</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://wildboar-software.github.io/directory/docs/changelog-meerkat"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="keywords" content="directory, x500, x.500, ldap, database, meerkat, dsa, distributed"><meta data-rh="true" name="copyright" content="Copyright (c) 2021 Jonathan M. Wilbur &lt;jonathan@wilbur.space&gt;."><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Changelog for Meerkat DSA | Meerkat DSA"><meta data-rh="true" name="description" content="Version 3.2.5"><meta data-rh="true" property="og:description" content="Version 3.2.5"><link data-rh="true" rel="icon" href="/directory/img/boar-head-rune-circle.svg"><link data-rh="true" rel="canonical" href="https://wildboar-software.github.io/directory/docs/changelog-meerkat"><link data-rh="true" rel="alternate" href="https://wildboar-software.github.io/directory/docs/changelog-meerkat" hreflang="en"><link data-rh="true" rel="alternate" href="https://wildboar-software.github.io/directory/docs/changelog-meerkat" hreflang="x-default"><link rel="preconnect" href="https://www.google-analytics.com">
+<script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-177382419-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview")</script>
+<script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+
+<link rel="icon" href="/directory/img/boar-head-rune-circle.svg">
+<link rel="manifest" href="/directory/manifest.json">
+<meta name="theme-color" content="rgb(37, 194, 160)"><link rel="stylesheet" href="/directory/assets/css/styles.2a28baec.css">
+<script src="/directory/assets/js/runtime~main.80ceabf3.js" defer="defer"></script>
+<script src="/directory/assets/js/main.ad93db89.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();t(null!==e?e:"dark")}(),function(){try{const n=new URLSearchParams(window.location.search).entries();for(var[t,e]of n)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_G6ar" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/directory/"><div class="navbar__logo"><img src="/directory/img/boar-head-rune-circle-black.svg" alt="Wildboar Software Logo" class="themedComponent_DHUr themedComponent--light_DIHH"><img src="/directory/img/boar-head-rune-circle.svg" alt="Wildboar Software Logo" class="themedComponent_DHUr themedComponent--dark_Bv2M"></div><b class="navbar__title text--truncate">Meerkat DSA</b></a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/directory/docs/setup">Get Started</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/directory/docs/docs">Documentation</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/directory/docs/specs">X.500 Specifications</a><a class="navbar__item navbar__link" href="/directory/docs/demo">Demo</a></div><div class="navbar__items navbar__items--right"><a href="https://github.com/Wildboar-Software/directory" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_awgD"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a><div class="toggle_OLSw colorModeToggle_Hg9V"><button class="clean-btn toggleButton_wYmb toggleButtonDisabled_vaDU" type="button" disabled="" title="Switch between dark and light mode (currently dark mode)" aria-label="Switch between dark and light mode (currently dark mode)" aria-live="polite" aria-pressed="true"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_Sxwe"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_Yem1"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="navbarSearchContainer_bmvg"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_UyTV"><div class="docsWrapper_XLvK"><button aria-label="Scroll back to top" class="clean-btn theme-back-to-top-button backToTopButton_z1FD" type="button"></button><div class="docRoot_HciC"><aside class="theme-doc-sidebar-container docSidebarContainer_e5ai"><div class="sidebarViewport_N8x0"><div class="sidebar_vJCc"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_qiME"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/directory/docs/docs">How to use this documentation</a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/intro">X.500</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/setup">Meerkat DSA</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/x500cli">Clients and Libraries</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/tutorial01">Tutorials</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/asn1">Reference</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role="button" aria-expanded="true" href="/directory/docs/changelog-meerkat">Change Logs</a></div><ul style="display:block;overflow:visible;height:auto" class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/directory/docs/changelog-meerkat">Changelog for Meerkat DSA</a></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/versioning">For Developers</a></div></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/directory/docs/support">Support / Help</a></li></ul></nav></div></div></aside><main class="docMainContainer_namt"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_YAwJ"><div class="docItemContainer_Rv5Z"><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_zCmv" aria-label="Breadcrumbs"><ul class="breadcrumbs" itemscope="" itemtype="https://schema.org/BreadcrumbList"><li class="breadcrumbs__item"><a aria-label="Home page" class="breadcrumbs__link" href="/directory/"><svg viewBox="0 0 24 24" class="breadcrumbHomeIcon_JFrk"><path d="M10 19v-5h4v5c0 .55.45 1 1 1h3c.55 0 1-.45 1-1v-7h1.7c.46 0 .68-.57.33-.87L12.67 3.6c-.38-.34-.96-.34-1.34 0l-8.36 7.53c-.34.3-.13.87.33.87H5v7c0 .55.45 1 1 1h3c.55 0 1-.45 1-1z" fill="currentColor"></path></svg></a></li><li class="breadcrumbs__item"><span class="breadcrumbs__link">Change Logs</span><meta itemprop="position" content="1"></li><li itemscope="" itemprop="itemListElement" itemtype="https://schema.org/ListItem" class="breadcrumbs__item breadcrumbs__item--active"><span class="breadcrumbs__link" itemprop="name">Changelog for Meerkat DSA</span><meta itemprop="position" content="2"></li></ul></nav><div class="tocCollapsible_O_Qc theme-doc-toc-mobile tocMobile_tjDr"><button type="button" class="clean-btn tocCollapsibleButton_htYj">On this page</button></div><div class="theme-doc-markdown markdown"><header><h1>Changelog for Meerkat DSA</h1></header>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-325">Version 3.2.5<a href="#version-325" class="hash-link" aria-label="Direct link to Version 3.2.5" title="Direct link to Version 3.2.5">​</a></h2>
+<ul>
+<li>Fix a bug where <a href="/directory/docs/attr-cert">attribute certificate requests</a> would fail if
+no extensions were added. (Fixed by upgrading <code>@wildboar/pki-stub</code>.)</li>
+<li>Fix a bug where abandon operations could cause an unhandled promise rejection.</li>
+<li>Significant performance improvements for encoding and decoding OIDs</li>
+<li>Remove NestJS from the web admin console: use ExpressJS instead.<!-- -->
+<ul>
+<li>This removes a lot of dependencies from Meerkat DSA and makes it lighter.</li>
+</ul>
+</li>
+<li>Updated Prisma to 6.4.1.<!-- -->
+<ul>
+<li>If you notice issues upgrading, you might want to try running prisma generate.</li>
+</ul>
+</li>
+<li>Meerkat DSA appears to run just fine in the latest <a href="https://bun.sh/" target="_blank" rel="noopener noreferrer">Bun</a>
+runtime now, but it does not appear to be <em>that</em> much faster.</li>
+</ul>
+<p>By the way, the
+<a href="https://pkg.go.dev/github.com/Wildboar-Software/x500-go/x500-dap-client" target="_blank" rel="noopener noreferrer">Go X.500 client</a>
+has been released! Yay!</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-324">Version 3.2.4<a href="#version-324" class="hash-link" aria-label="Direct link to Version 3.2.4" title="Direct link to Version 3.2.4">​</a></h2>
+<p>This version <em>doubles</em> the speed of inserting new entries by caching
+subschema subentries between invocations of the <code>addEntry</code> operation.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-323">Version 3.2.3<a href="#version-323" class="hash-link" aria-label="Direct link to Version 3.2.3" title="Direct link to Version 3.2.3">​</a></h2>
+<p>This version improves the speed of inserting new entries by about 10% by caching
+schema between invocations of the <code>addEntry</code> operation.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-322">Version 3.2.2<a href="#version-322" class="hash-link" aria-label="Direct link to Version 3.2.2" title="Direct link to Version 3.2.2">​</a></h2>
+<p>This version <strong>dramatically</strong> improves the performance of the DSA for <code>search</code>
+and <code>list</code> operations and for <code>addEntry</code> when performed in rapid succession, as
+well as for a few other use cases. In general, you should see a 400% to 1000%
+increase in performance.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-321">Version 3.2.1<a href="#version-321" class="hash-link" aria-label="Direct link to Version 3.2.1" title="Direct link to Version 3.2.1">​</a></h2>
+<p>Fix bug with writing to IDM sockets.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-320">Version 3.2.0<a href="#version-320" class="hash-link" aria-label="Direct link to Version 3.2.0" title="Direct link to Version 3.2.0">​</a></h2>
+<p>This new version introduces new features around authentication and chaining.</p>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="new-features--improvements">New Features / Improvements<a href="#new-features--improvements" class="hash-link" aria-label="Direct link to New Features / Improvements" title="Direct link to New Features / Improvements">​</a></h3>
+<ul>
+<li>Support for SPKM authentication</li>
+<li>Support for <code>externalProcedure</code> authentication</li>
+<li>Mutual binding: Meerkat DSA will now send strong credentials or SPKM
+credentials back to the client.</li>
+<li>Verifying credentials returned by DSAs during chaining.</li>
+<li>Added the <a href="/directory/docs/env#meerkat_tls_request_cert"><code>MEERKAT_TLS_REQUEST_CERT</code></a>
+option to enable the DSA to request the TLS client certificate, even when
+client certificate authentication is not enforced.</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="bug-fixes">Bug Fixes<a href="#bug-fixes" class="hash-link" aria-label="Direct link to Bug Fixes" title="Direct link to Bug Fixes">​</a></h3>
+<ul>
+<li>Fixed incorrect object identifier for the
+<a href="/directory/docs/authorization#the-simple-security-policy">Simple Security Policy</a>.</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="upgrading">Upgrading<a href="#upgrading" class="hash-link" aria-label="Direct link to Upgrading" title="Direct link to Upgrading">​</a></h3>
+<p>You do not have to do anything to upgrade to this version. Just update the
+Meerkat DSA version.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-310">Version 3.1.0<a href="#version-310" class="hash-link" aria-label="Direct link to Version 3.1.0" title="Direct link to Version 3.1.0">​</a></h2>
+<p>This version introduces support for Rule-Based Access Control (RBAC), thereby
+enabling Meerkat DSA to enforce the <code>rule-based-access-control</code>,
+<code>rule-and-basic-access-control</code> and <code>rule-and-simple-access-control</code> access
+control schemes defined in
+<a href="https://www.itu.int/rec/T-REC-X.501/en" target="_blank" rel="noopener noreferrer">ITU Recommendation X.501 (2019)</a>.</p>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="new-features--improvements-1">New Features / Improvements<a href="#new-features--improvements-1" class="hash-link" aria-label="Direct link to New Features / Improvements" title="Direct link to New Features / Improvements">​</a></h3>
+<ul>
+<li>Support for Rule-Based Access Control</li>
+<li>Slight performance improvement when creating a new entry</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="bug-fixes-1">Bug Fixes<a href="#bug-fixes-1" class="hash-link" aria-label="Direct link to Bug Fixes" title="Direct link to Bug Fixes">​</a></h3>
+<ul>
+<li>Fix invalid OCSP requests<!-- -->
+<ul>
+<li>OCSP requests were made using the subject&#x27;s <code>subjectPublicKeyInfo</code> rather than the issuer&#x27;s.</li>
+</ul>
+</li>
+<li>Fix invalid OCSP verification<!-- -->
+<ul>
+<li>Verification would occur using the same issuer certificate over and over again</li>
+</ul>
+</li>
+<li>Fix invalid invalid remote CRL signature validation</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-300">Version 3.0.0<a href="#version-300" class="hash-link" aria-label="Direct link to Version 3.0.0" title="Direct link to Version 3.0.0">​</a></h2>
+<p>The defining aspect of this version is support for cross references. Cross
+references allow a DSA to &quot;bookmark&quot; the DSAs that were involved in servicing
+a previous request, so that, in chaining subsequent requests, the correct DSA
+can be used directly, rather than routing the request through a first-level DSA.</p>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="new-features--improvements-2">New Features / Improvements<a href="#new-features--improvements-2" class="hash-link" aria-label="Direct link to New Features / Improvements" title="Direct link to New Features / Improvements">​</a></h3>
+<ul>
+<li>Using cross references for routing purposes</li>
+<li>Returning cross references</li>
+<li>Requesting cross references from other DSAs</li>
+<li>More performant and correct <code>namingContexts</code> attribute</li>
+<li>More resilient and performant updating of superior DSAs</li>
+<li>Better logging surrounding name resolution</li>
+<li>Signature verification is faster and more resilient</li>
+<li>Chained results get verified</li>
+<li>Chained results returned from other DSAs get re-signed if they need it</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="bug-fixes-2">Bug Fixes<a href="#bug-fixes-2" class="hash-link" aria-label="Direct link to Bug Fixes" title="Direct link to Bug Fixes">​</a></h3>
+<ul>
+<li>Log invalid DSP signatures received from chained results.</li>
+<li>Wrong error code returned to DOP associations<!-- -->
+<ul>
+<li>The <code>operationalBindingError</code> was being coded as a <code>securityError</code>.</li>
+</ul>
+</li>
+<li>Bug where results received from chaining could get cross-wired<!-- -->
+<ul>
+<li>Meaning that a request might receive a result that belongs to another
+different request.</li>
+</ul>
+</li>
+<li>Time-related signatures verification issues<!-- -->
+<ul>
+<li>Signatures on certificates could be wrongfully rejected if verified at
+certain times of the year (due to a bizarre, undocumented behavior in
+ECMAScript).</li>
+</ul>
+</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="upgrading-1">Upgrading<a href="#upgrading-1" class="hash-link" aria-label="Direct link to Upgrading" title="Direct link to Upgrading">​</a></h3>
+<p>This is a breaking change, because the database schema had to be changed in a
+breaking manner. If you upgrade to this version, you will need to repopulate
+a new Meerkat DSA database.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-270">Version 2.7.0<a href="#version-270" class="hash-link" aria-label="Direct link to Version 2.7.0" title="Direct link to Version 2.7.0">​</a></h2>
+<p>The defining aspect of this version is support for shadowing, which allows you
+to replicate entries across multiple DSAs. It also includes many very serious
+bug fixes.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="new-features--improvements-3">New Features / Improvements<a href="#new-features--improvements-3" class="hash-link" aria-label="Direct link to New Features / Improvements" title="Direct link to New Features / Improvements">​</a></h2>
+<ul>
+<li>Support shadowing<!-- -->
+<ul>
+<li>Shadow operational binding management via DOP<!-- -->
+<ul>
+<li>This includes <a href="https://wildboar-software.github.io/directory/docs/opbinding#relayed-operational-bindings" target="_blank" rel="noopener noreferrer">relayed DOP</a></li>
+</ul>
+</li>
+<li>All DISP operations: consumer-initiated and supplier-initiated</li>
+<li>Total and incremental refreshes</li>
+</ul>
+</li>
+<li>Significant performance enhancements when inserting entries</li>
+<li>Improvements to the <a href="https://wildboar-software.github.io/directory/docs/webadmin" target="_blank" rel="noopener noreferrer">web admin console</a></li>
+<li>The <code>moddn</code> command in the X.500 CLI has been separated into two different
+<code>move</code> and <code>rename</code> commands, making it clearer what the syntax of the
+arguments should be.</li>
+<li>DAP / DSP operations can now be chained with signing when using bulk insert mode.</li>
+<li>Signatures on requests, results, and errors are ignored when using bulk insert mode.</li>
+<li>Connections between DSAs retained and reused, greatly improving performance for
+distributed operations.<!-- -->
+<ul>
+<li>This means that the TCP connections and TLS do not need to be re-established
+each time the DSA performs a distributed operation directed at a DSA that
+it has had prior contact with.</li>
+</ul>
+</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="bug-fixes-3">Bug Fixes<a href="#bug-fixes-3" class="hash-link" aria-label="Direct link to Bug Fixes" title="Direct link to Bug Fixes">​</a></h3>
+<ul>
+<li>Fix display of operational binding expiration times in the
+<a href="https://wildboar-software.github.io/directory/docs/webadmin" target="_blank" rel="noopener noreferrer">web admin console</a></li>
+<li>Fix non-use of shadow context prefix knowledge in Find DSE procedure</li>
+<li>Do not enforce access controls when moving an entry to the top level if open
+top level is configured.</li>
+<li>Fix a bug with getting context assertion defaults</li>
+<li>Fix logging unbinds at warning level</li>
+<li>Fix StartTLS establishment</li>
+<li>Fix OSI application association rejection when encountering an unsupported application context</li>
+<li>Fix OSI transmission of errors</li>
+<li>Fix handling of malformed TPDUs in the OSI transport layer</li>
+<li>Fix negotiation of TPDU size in OSI transport layer</li>
+<li>Use timeout supplied to X.500 client function to determine the TCP socket timeout</li>
+<li>Do not include the <code>valuesWithContext</code> in an attribute if there are no contexts</li>
+<li>Fix establishment of governing structure rule in a context prefix established
+by a hierarchical operational binding</li>
+<li>Chained operations will not be retried if they are modification operations and
+the outcome was an abort or reject, except with certain reason / problem codes.<!-- -->
+<ul>
+<li>This is because these outcomes could indicate an internal error, in which
+case, the modification might have been half-completed. If the error was
+caused by the user, we also do not want to propagate requests that were
+already determined to be invalid.</li>
+</ul>
+</li>
+<li>Fix back-propagation of rejects, aborts, and timeouts received from chained
+operations.</li>
+<li>Fix crash when encountering a malformed Invoke ID</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="upgrading-2">Upgrading<a href="#upgrading-2" class="hash-link" aria-label="Direct link to Upgrading" title="Direct link to Upgrading">​</a></h3>
+<p>You do not need to do anything for this to work other than apply migrations.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-260">Version 2.6.0<a href="#version-260" class="hash-link" aria-label="Direct link to Version 2.6.0" title="Direct link to Version 2.6.0">​</a></h2>
+<ul>
+<li>Create X.509 attribute certificates using an extension to the <code>read</code>
+operation, documented <a href="https://wildboar-software.github.io/directory/docs/attr-cert" target="_blank" rel="noopener noreferrer">here</a>.</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-250">Version 2.5.0<a href="#version-250" class="hash-link" aria-label="Direct link to Version 2.5.0" title="Direct link to Version 2.5.0">​</a></h2>
+<ul>
+<li>Support Non-Specific Hierarchical Operational Bindings (NHOBs), which allow
+entries in multiple directories to share / compete for the same namespace.</li>
+<li>Fixed bugs in operational binding management</li>
+<li>Fix issues with validating some self-signed certificates</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-244">Version 2.4.4<a href="#version-244" class="hash-link" aria-label="Direct link to Version 2.4.4" title="Direct link to Version 2.4.4">​</a></h2>
+<p><strong>SECURITY UPDATE</strong></p>
+<ul>
+<li>Fix use of <code>prescriptiveACI</code> to regulate subentries in simplified access
+control.</li>
+</ul>
+<p>This security bug was introduced as a result of version 2.4.2. You were
+unaffected if you did not use versions 2.4.2 or 2.4.3, or if you never used
+simplified access control.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-243">Version 2.4.3<a href="#version-243" class="hash-link" aria-label="Direct link to Version 2.4.3" title="Direct link to Version 2.4.3">​</a></h2>
+<p>Summary: small deviation introduced in which searches recurse one entry into
+other service administrative areas for the sake of DIT discoverability.</p>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="changes">Changes<a href="#changes" class="hash-link" aria-label="Direct link to Changes" title="Direct link to Changes">​</a></h3>
+<p>The X.500 specifications mandate that searches are not to recurse into other
+service administrative areas, but this means that service admin points will not
+be discoverable at all via <code>search</code> operations. Since LDAP has no <code>list</code>
+operation, it also means that LDAP users will never be able to find any entry
+that lies in a different service administrative area (except by &quot;guessing&quot; that
+it exists).</p>
+<p>For example, if <code>C=US,ST=FL</code> is a service admin point, and a user performs a
+one-level search at <code>C=US</code>, the <code>ST=FL</code> subordinate will be hidden from the
+results entirely. The user will have no way of even finding <code>ST=FL</code> except for
+performing a <code>list</code> operation and noticing that this subordinate differs from
+the results obtained by a one-level search (since <code>list</code> is not governed by
+service administration).</p>
+<p>This version of Meerkat DSA onwards will deviate from the specification by
+recursing one entry into other service administrative areas so that the DIT is
+traversible to users. Continuing on the previous example, this means that, if a
+user performs a one-level search at <code>C=US</code>, the <code>ST=FL</code> subordinate will be
+returned. If a subtree search at <code>C=US</code> is performed, <code>ST=FL</code> will be returned
+as well, but none of its subordinates (the latter of which is technically
+correct behavior).</p>
+<p>If this is undesirable, meaning that you want Meerkat DSA to behave exactly as
+the specifications specify, fear not: this version of Meerkat DSA also
+introduces a new option, <code>MEERKAT_PRINCIPLED_SERVICE_ADMIN</code>, which, if set to
+<code>1</code>, disables this deviation. Meerkat DSA will thereby adhere strictly to the
+specifications and service admin points will be hidden from search results.</p>
+<div class="theme-admonition theme-admonition-note admonition_IZjC alert alert--secondary"><div class="admonitionHeading_uVvU"><span class="admonitionIcon_HiR3"><svg viewBox="0 0 14 16"><path fill-rule="evenodd" d="M6.3 5.69a.942.942 0 0 1-.28-.7c0-.28.09-.52.28-.7.19-.18.42-.28.7-.28.28 0 .52.09.7.28.18.19.28.42.28.7 0 .28-.09.52-.28.7a1 1 0 0 1-.7.3c-.28 0-.52-.11-.7-.3zM8 7.99c-.02-.25-.11-.48-.31-.69-.2-.19-.42-.3-.69-.31H6c-.27.02-.48.13-.69.31-.2.2-.3.44-.31.69h1v3c.02.27.11.5.31.69.2.2.42.31.69.31h1c.27 0 .48-.11.69-.31.2-.19.3-.42.31-.69H8V7.98v.01zM7 2.3c-3.14 0-5.7 2.54-5.7 5.68 0 3.14 2.56 5.7 5.7 5.7s5.7-2.55 5.7-5.7c0-3.15-2.56-5.69-5.7-5.69v.01zM7 .98c3.86 0 7 3.14 7 7s-3.14 7-7 7-7-3.12-7-7 3.14-7 7-7z"></path></svg></span>note</div><div class="admonitionContent_bl22"><p>The above issue will be reported to the ITU working group that authors the X.500
+specifications, so it may be resolved in a future version.</p></div></div>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="updating">Updating<a href="#updating" class="hash-link" aria-label="Direct link to Updating" title="Direct link to Updating">​</a></h3>
+<p>You do not have to do anything to upgrade to this version. Just update the
+Meerkat DSA version.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-242">Version 2.4.2<a href="#version-242" class="hash-link" aria-label="Direct link to Version 2.4.2" title="Direct link to Version 2.4.2">​</a></h2>
+<p><strong>SECURITY UPDATE</strong></p>
+<ul>
+<li>Fix non-use of <code>prescriptiveACI</code> to regulate subentries in several access
+control schemes.</li>
+</ul>
+<p>Meerkat DSA previously did not use <code>prescriptiveACI</code> from superior access
+control areas to govern access to subentries.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-241">Version 2.4.1<a href="#version-241" class="hash-link" aria-label="Direct link to Version 2.4.1" title="Direct link to Version 2.4.1">​</a></h2>
+<ul>
+<li>Fix Denial-of-Service caused by failing assertion</li>
+</ul>
+<p>You do not have to do anything for this upgrade to work. Just update the
+version of Meerkat DSA you&#x27;re using.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-240">Version 2.4.0<a href="#version-240" class="hash-link" aria-label="Direct link to Version 2.4.0" title="Direct link to Version 2.4.0">​</a></h2>
+<ul>
+<li>Service Administration<!-- -->
+<ul>
+<li>This means that directory administrators can define search rules that
+constrain the types of searches users can perform</li>
+</ul>
+</li>
+</ul>
+<p>You do not have to do anything for this upgrade to work. Just update the
+version of Meerkat DSA you&#x27;re using. The Demo DIT has a
+<a href="/directory/docs/demo#demo-dit-overview">service administrative area</a> in
+<code>C=US,ST=FL,L=MAR,L=Ocala</code> that you can experiment with.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-230">Version 2.3.0<a href="#version-230" class="hash-link" aria-label="Direct link to Version 2.3.0" title="Direct link to Version 2.3.0">​</a></h2>
+<ul>
+<li>Relaxations and Tightenings<!-- -->
+<ul>
+<li>This means that users can specify a desired minimum and maximum number of
+entries to be returned from the search, and, if the first pass of the search
+does not return a number of results within this range, a new pass of the
+search will proceed, but using a user-specified replacement of the otherwise
+applicable matching rules that makes the search filter stricter or more
+relaxed.</li>
+</ul>
+</li>
+<li>Zonal matching<!-- -->
+<ul>
+<li>This is a type of relaxation that replaces locale-related attributes in the
+search filter with their equivalent &quot;zone identifiers,&quot; such as postal
+codes, and can intelligently expand the scope of the search by including
+neighboring zones.</li>
+<li>See <a href="https://wildboar-software.github.io/directory/docs/usage" target="_blank" rel="noopener noreferrer">the documentation on zonal matching</a>.</li>
+</ul>
+</li>
+</ul>
+<p>You do not need to do anything for this to work other than apply migrations.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-220">Version 2.2.0<a href="#version-220" class="hash-link" aria-label="Direct link to Version 2.2.0" title="Direct link to Version 2.2.0">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="changes-1">Changes<a href="#changes-1" class="hash-link" aria-label="Direct link to Changes" title="Direct link to Changes">​</a></h3>
+<ul>
+<li>Support all hierarchy selections in the <code>search</code> operation.</li>
+<li>Use the <code>extendedFilter</code> component of <code>search</code> operation arguments.</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="upgrading-to-this-version">Upgrading to this version<a href="#upgrading-to-this-version" class="hash-link" aria-label="Direct link to Upgrading to this version" title="Direct link to Upgrading to this version">​</a></h3>
+<ul>
+<li>If you previously set any hierarchical group-related attributes on any
+entries, hierarchical selections might not work as expected. You can fix this
+by removing the attributes and re-adding them.</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-210">Version 2.1.0<a href="#version-210" class="hash-link" aria-label="Direct link to Version 2.1.0" title="Direct link to Version 2.1.0">​</a></h2>
+<ul>
+<li>Implement the Search Continuation Reference Procedure defined in
+<a href="https://www.itu.int/rec/T-REC-X.518/en" target="_blank" rel="noopener noreferrer">ITU Recommendation X.518 (2019)</a>,
+Section 20.4.3.<!-- -->
+<ul>
+<li>This means that, in some circumstances, instead of returning continuation
+references to the client, Meerkat DSA will chain searches to other DSAs to
+continue the search.</li>
+</ul>
+</li>
+<li>Improved distinguished name comparison for checking which remote DSAs are
+trusted for Identity-Based Requester Authentication, described in
+<a href="https://www.itu.int/rec/T-REC-X.519/en" target="_blank" rel="noopener noreferrer">ITU Recommendation X.518 (2019)</a>,
+Section 22.1.1.</li>
+<li>Properly support the <code>unmerged</code> option in paginated <code>list</code> and <code>search</code>
+operations.</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-200">Version 2.0.0<a href="#version-200" class="hash-link" aria-label="Direct link to Version 2.0.0" title="Direct link to Version 2.0.0">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="changes-2">Changes<a href="#changes-2" class="hash-link" aria-label="Direct link to Changes" title="Direct link to Changes">​</a></h3>
+<ul>
+<li>Password Administration via Password Administrative Areas</li>
+<li>Password Assertion via the <code>compare</code> operation<!-- -->
+<ul>
+<li>Before, asserting a password using the <code>compare</code> operation would never work,
+because of a security feature of Meerkat DSA. User passwords were not even
+accessible via normal means in the code of Meerkat DSA (to prevent
+disclosing them, even if they are encrypted).</li>
+<li>Now, the <code>compare</code> operation can evaluate user passwords, and it has all of
+the same side-effects as attempting a password during a bind operation (e.g.
+incrementing <code>pwdFails</code> if the password is wrong).</li>
+</ul>
+</li>
+<li>Remote password checking via the <code>compare</code> operation during binding<!-- -->
+<ul>
+<li>This means that, no matter what DSA you attempt to bind to, it can submit a
+<code>compare</code> operation to the DSA that actually contains the password for a
+given user.</li>
+<li>This is configurable via the
+<a href="https://wildboar-software.github.io/directory/docs/env#meerkat_remote_pwd_time_limit" target="_blank" rel="noopener noreferrer"><code>MEERKAT_REMOTE_PWD_TIME_LIMIT</code></a>
+environment variable. It defaults to 0, meaning that this feature is
+disabled by default. This is for security reasons.</li>
+</ul>
+</li>
+<li>Nearly doubled performance for most workloads</li>
+<li>TLS Debugging Options<!-- -->
+<ul>
+<li>The ability to log (pre-)master secrets, either to the log or to a separate
+file via the <a href="https://wildboar-software.github.io/directory/docs/env#meerkat_log_tls_secrets" target="_blank" rel="noopener noreferrer"><code>MEERKAT_LOG_TLS_SECRETS</code></a> environment variable.</li>
+<li>The ability to print OpenSSL trace information via the
+<a href="https://wildboar-software.github.io/directory/docs/env#meerkat_sslkeylog_file" target="_blank" rel="noopener noreferrer"><code>MEERKAT_SSLKEYLOG_FILE</code></a>
+environment variable.</li>
+</ul>
+</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="upgrading-to-this-version-1">Upgrading to this Version<a href="#upgrading-to-this-version-1" class="hash-link" aria-label="Direct link to Upgrading to this Version" title="Direct link to Upgrading to this Version">​</a></h3>
+<p>The reason this version is a major version update is that I had to introduce a
+breaking change into the database schema. The schema for this version is totally
+incompatible with earlier versions. There is no way to &quot;upgrade&quot; to this
+version. You must completely restart.</p>
+<p>Fortunately, this update is a massive improvement and fix of many issues over
+the previous version, so it is plausible that this will mean fewer breaking
+changes going forward.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-130">Version 1.3.0<a href="#version-130" class="hash-link" aria-label="Direct link to Version 1.3.0" title="Direct link to Version 1.3.0">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="changes-3">Changes<a href="#changes-3" class="hash-link" aria-label="Direct link to Changes" title="Direct link to Changes">​</a></h3>
+<ul>
+<li>Support ISO Transport Over TCP (ITOT), as defined in <a href="https://datatracker.ietf.org/doc/html/rfc1006" target="_blank" rel="noopener noreferrer">IETF RFC 1006</a>.<!-- -->
+<ul>
+<li>This is supported both when Meerkat DSA acts as a server and as a client (in DSP, DOP, or DISP, for instance).</li>
+<li>It is recommended that you leave this disabled unless you need it for some reason.</li>
+</ul>
+</li>
+<li>Introduce missing LDAP syntaxes:<!-- -->
+<ul>
+<li><code>utmCoordinates</code></li>
+<li><code>uiiForm</code></li>
+<li><code>epcForm</code></li>
+<li><code>countryString3c</code></li>
+<li><code>countryString3n</code></li>
+<li><code>dnsString</code></li>
+<li><code>intEmailString</code></li>
+<li><code>jidString</code></li>
+</ul>
+</li>
+<li>Reject chaining to any TCP port that has the same port as the DBMS.<!-- -->
+<ul>
+<li>This is a security feature to prevent malicious users from tricking your DSA
+into making requests to your DBMS. (In all likelihood, your DBMS will
+probably just interpret these as corrupt packets, but there is a <em>chance</em>
+that it might not!)</li>
+</ul>
+</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="announcement">Announcement<a href="#announcement" class="hash-link" aria-label="Direct link to Announcement" title="Direct link to Announcement">​</a></h3>
+<p>Wildboar Software is now maintaining the
+<a href="https://en.wikipedia.org/wiki/ISO_Development_Environment" target="_blank" rel="noopener noreferrer">ISO Development Environment</a>!
+This massive project contains an X.500 directory that was implemented in the
+early 90s called &quot;Quipu.&quot; Check it out
+<a href="https://github.com/Wildboar-Software/isode" target="_blank" rel="noopener noreferrer">here</a>! It was recently updated in a
+<a href="https://app.bountysource.com/issues/109508245-will-not-compile-on-a-modern-linux-system-bounty" target="_blank" rel="noopener noreferrer">BountySource challenge</a>
+to run on modern Linux systems, such as Ubuntu. Thank you
+<a href="https://github.com/abcpro1" target="_blank" rel="noopener noreferrer">@abcpro1</a> for your work on this!</p>
+<p>Part of the rationale for prioritizing ITOT support was for integration testing
+with Quipu DSA. The <code>@wildboar/rose-transport</code> and <code>@wildboar/x500-client-ts</code>
+libraries have been tested with Quipu DSA, but Meerkat DSA has not been
+integration-tested with Quipu DSA yet. However, this is in the works!</p>
+<p>More documentation about Quipu DSA, the X.500 libraries, terminal client, and
+other tools found within ISODE will be added soon!</p>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="next-developments">Next Developments<a href="#next-developments" class="hash-link" aria-label="Direct link to Next Developments" title="Direct link to Next Developments">​</a></h3>
+<p>No promises, but the current plan is to work on X.500 clients and SDKs next so
+that X.500 directories can be easily used. These include:</p>
+<ul>
+<li>A Rust SDK / Library<!-- -->
+<ul>
+<li>This will open up possibilities for PAM modules, Linux kernel modules, and more!</li>
+</ul>
+</li>
+<li>A <a href="https://www.passportjs.org/" target="_blank" rel="noopener noreferrer">PassportJS</a> Strategy</li>
+</ul>
+<p>Depending on how long this takes, work may also begin on an X.500 GUI client!</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-127">Version 1.2.7<a href="#version-127" class="hash-link" aria-label="Direct link to Version 1.2.7" title="Direct link to Version 1.2.7">​</a></h2>
+<ul>
+<li>Fix excessively frequent database report telemetry.</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-126">Version 1.2.6<a href="#version-126" class="hash-link" aria-label="Direct link to Version 1.2.6" title="Direct link to Version 1.2.6">​</a></h2>
+<ul>
+<li>Fix crashes caused by use of telemetry.</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-125">Version 1.2.5<a href="#version-125" class="hash-link" aria-label="Direct link to Version 1.2.5" title="Direct link to Version 1.2.5">​</a></h2>
+<ul>
+<li>Fix use of <code>ManageDSAIT</code> control in LDAP not returning most search results.<!-- -->
+<ul>
+<li>This was caused because of a deviation in behavior from LDAP and DAP. Code
+was added so that LDAP behaves as would be expected from LDAP, while leaving
+the DAP code unchanged.</li>
+</ul>
+</li>
+</ul>
+<p>No administrative action is needed to upgrade to this version. Just download it
+and use it.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-124">Version 1.2.4<a href="#version-124" class="hash-link" aria-label="Direct link to Version 1.2.4" title="Direct link to Version 1.2.4">​</a></h2>
+<ul>
+<li>Log much more information on LDAP searches<!-- -->
+<ul>
+<li>Almost the entire search request is logged.</li>
+<li>The number of search results returned is logged.</li>
+<li>This was implemented specifically to make it easier to diagnose issues with
+integration with tools that use LDAP authentication. Often, LDAP searches
+are used to enumerate users, so it is important to be able to debug these.</li>
+</ul>
+</li>
+<li>Log bound distinguished names if the <code>MEERKAT_LOG_BOUND_DN</code> environment
+variable is set to <code>1</code>.</li>
+</ul>
+<p>No administrative action is needed to upgrade to this version. Just download it
+and use it.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-123">Version 1.2.3<a href="#version-123" class="hash-link" aria-label="Direct link to Version 1.2.3" title="Direct link to Version 1.2.3">​</a></h2>
+<ul>
+<li>Fixed a bug where <code>uid</code> and <code>dc</code> did not have LDAP names.</li>
+</ul>
+<p>No administrative action is needed to upgrade to this version. Just download it
+and use it.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-122">Version 1.2.2<a href="#version-122" class="hash-link" aria-label="Direct link to Version 1.2.2" title="Direct link to Version 1.2.2">​</a></h2>
+<ul>
+<li>Fixed access controls being too restrictive on LDAP users. Now LDAP user
+access controls work just like DAP user access controls.</li>
+<li>Added the <code>MEERKAT_REVEAL_USER_PWD</code> configuration option, which allows for
+hashed password values to be disclosed in the <code>userPwd</code> attribute.</li>
+</ul>
+<p>No administrative action is needed to upgrade to this version. Just download it
+and use it.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-121">Version 1.2.1<a href="#version-121" class="hash-link" aria-label="Direct link to Version 1.2.1" title="Direct link to Version 1.2.1">​</a></h2>
+<ul>
+<li>Fixed invalid object classes, such as <code>inetOrgPerson</code>, which did not permit
+some optional attributes that it should have, such as <code>mail</code>.</li>
+</ul>
+<p>No administrative action is needed to upgrade to this version. Just download it
+and use it.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-120">Version 1.2.0<a href="#version-120" class="hash-link" aria-label="Direct link to Version 1.2.0" title="Direct link to Version 1.2.0">​</a></h2>
+<ul>
+<li>The List Continuation Reference (LCR) procedure is now supported.</li>
+<li>Fixed a bug where continuation references produced during the <code>list</code> operation
+where not added to the partial outcome qualifier in the result.</li>
+<li>Fixed a security vulnerability where the names of subordinate references could
+be disclosed in a <code>search</code> operation to clients not authorized to see it.</li>
+<li>Almost all LDAP schema objects
+<a href="https://www.iana.org/assignments/ldap-parameters/ldap-parameters.xhtml" target="_blank" rel="noopener noreferrer">published with IANA</a>
+and almost all X.500 schema objects defined in any ITU recommendation
+are built-in to Meerkat DSA now.<!-- -->
+<ul>
+<li>&quot;Schema objects&quot; refers to attribute types, context types, matching rules,
+LDAP syntaxes, object classes, and name forms.</li>
+<li>These schema objects include those to support:<!-- -->
+<ul>
+<li>Samba Servers / Active Directory Domain Controllers</li>
+<li>PGP Key Servers</li>
+<li>SSH Authentication</li>
+<li>PAM Authentication</li>
+<li>DNS Servers</li>
+<li>Java</li>
+<li>Sabayon Servers</li>
+<li>Kerberos Servers</li>
+<li>Email Servers</li>
+<li>FTP Servers</li>
+<li>RADIUS Servers</li>
+<li>Remote Calendars</li>
+<li>Printer Discovery</li>
+<li>Sudo Configuration</li>
+<li>LDAP Tables</li>
+<li>Voicemail</li>
+<li>X.400 Messaging</li>
+<li>X.952 Open Distributed Processing</li>
+<li>DHCP Server Configuration</li>
+<li>DUA Configuration</li>
+<li>Dynamic Groups</li>
+<li>Federated Filesystem</li>
+<li>H.323 Multimedia</li>
+<li>Intelligent Networks</li>
+<li>And more!</li>
+</ul>
+</li>
+<li>Many new operational attributes are supported, such as:<!-- -->
+<ul>
+<li><code>vendorName</code></li>
+<li><code>vendorVersion</code></li>
+<li><code>administratorsAddress</code></li>
+<li><code>entryDN</code></li>
+<li><code>superiorUUID</code></li>
+</ul>
+</li>
+<li>Wildboar Software defined name forms for most structural object classes that
+were added to this release, to lessen the burden of setup.</li>
+</ul>
+</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-110">Version 1.1.0<a href="#version-110" class="hash-link" aria-label="Direct link to Version 1.1.0" title="Direct link to Version 1.1.0">​</a></h2>
+<ul>
+<li>Distributed operation is now secure.</li>
+<li>Production and verification of signed arguments, results, and errors.</li>
+<li>Strong authentication is now supported.</li>
+<li>Many performance improvements.</li>
+<li>The web admin console may now be protected using TLS and HTTP basic.
+authentication. It is also secure against CSRF attacks.</li>
+<li>Fixed a bug with parsing attribute certificates.</li>
+<li>Fixed hidden LDAP entries that have non-LDAP attribute types in RDNs.</li>
+<li>Fixed display of dates and times.</li>
+<li>Fix bug with Trust Anchor List file decoding (not reading a <code>ContentInfo</code>).</li>
+<li>Search Aliases procedure used the DSA&#x27;s name in the chaining arguments
+originator field. (Not a security vulnerability, though, since the association
+<em>was</em> used for AC decisions.)</li>
+<li>Fix bug where entry could be created without required attribute by merely
+providing the attribute with no values.</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="migration">Migration<a href="#migration" class="hash-link" aria-label="Direct link to Migration" title="Direct link to Migration">​</a></h3>
+<ul>
+<li><code>MEERKAT_TLS_CLIENT_CERT_AUTH</code> no longer controls <code>rejectUnauthorized</code>. This
+was a security bug. In fact, this environment variable is no longer used
+entirely. <code>MEERKAT_TLS_REJECT_UNAUTHORIZED_CLIENTS</code> controls mTLS. If set to
+<code>1</code>, mTLS is enforced.</li>
+<li><code>MEERKAT_SIGNING_KEY</code> has been renamed to <code>MEERKAT_SIGNING_KEY_FILE</code></li>
+<li><code>MEERKAT_SIGNING_CERT_CHAIN</code> has been renamed to <code>MEERKAT_SIGNING_CERTS_CHAIN_FILE</code></li>
+<li>Removed <code>DANGEROUSLY</code> from <code>ENABLE_DSP</code> and <code>ENABLE_DOP</code>
+<ul>
+<li>Just use the <code>ENABLE_DSP</code> and <code>ENABLE_DOP</code> environment variables to enable
+DSP and DOP, respectively.</li>
+</ul>
+</li>
+</ul></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col"><a href="https://github.com/Wildboar-Software/directory/edit/main/website/docs/changelog-meerkat.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_UohW" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_g62E"></div></div></footer></article><nav class="pagination-nav docusaurus-mt-lg" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/directory/docs/client-config"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">X.500 Client Configuration File</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/directory/docs/versioning"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Versioning</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_TN1Q thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#version-325" class="table-of-contents__link toc-highlight">Version 3.2.5</a></li><li><a href="#version-324" class="table-of-contents__link toc-highlight">Version 3.2.4</a></li><li><a href="#version-323" class="table-of-contents__link toc-highlight">Version 3.2.3</a></li><li><a href="#version-322" class="table-of-contents__link toc-highlight">Version 3.2.2</a></li><li><a href="#version-321" class="table-of-contents__link toc-highlight">Version 3.2.1</a></li><li><a href="#version-320" class="table-of-contents__link toc-highlight">Version 3.2.0</a><ul><li><a href="#new-features--improvements" class="table-of-contents__link toc-highlight">New Features / Improvements</a></li><li><a href="#bug-fixes" class="table-of-contents__link toc-highlight">Bug Fixes</a></li><li><a href="#upgrading" class="table-of-contents__link toc-highlight">Upgrading</a></li></ul></li><li><a href="#version-310" class="table-of-contents__link toc-highlight">Version 3.1.0</a><ul><li><a href="#new-features--improvements-1" class="table-of-contents__link toc-highlight">New Features / Improvements</a></li><li><a href="#bug-fixes-1" class="table-of-contents__link toc-highlight">Bug Fixes</a></li></ul></li><li><a href="#version-300" class="table-of-contents__link toc-highlight">Version 3.0.0</a><ul><li><a href="#new-features--improvements-2" class="table-of-contents__link toc-highlight">New Features / Improvements</a></li><li><a href="#bug-fixes-2" class="table-of-contents__link toc-highlight">Bug Fixes</a></li><li><a href="#upgrading-1" class="table-of-contents__link toc-highlight">Upgrading</a></li></ul></li><li><a href="#version-270" class="table-of-contents__link toc-highlight">Version 2.7.0</a></li><li><a href="#new-features--improvements-3" class="table-of-contents__link toc-highlight">New Features / Improvements</a><ul><li><a href="#bug-fixes-3" class="table-of-contents__link toc-highlight">Bug Fixes</a></li><li><a href="#upgrading-2" class="table-of-contents__link toc-highlight">Upgrading</a></li></ul></li><li><a href="#version-260" class="table-of-contents__link toc-highlight">Version 2.6.0</a></li><li><a href="#version-250" class="table-of-contents__link toc-highlight">Version 2.5.0</a></li><li><a href="#version-244" class="table-of-contents__link toc-highlight">Version 2.4.4</a></li><li><a href="#version-243" class="table-of-contents__link toc-highlight">Version 2.4.3</a><ul><li><a href="#changes" class="table-of-contents__link toc-highlight">Changes</a></li><li><a href="#updating" class="table-of-contents__link toc-highlight">Updating</a></li></ul></li><li><a href="#version-242" class="table-of-contents__link toc-highlight">Version 2.4.2</a></li><li><a href="#version-241" class="table-of-contents__link toc-highlight">Version 2.4.1</a></li><li><a href="#version-240" class="table-of-contents__link toc-highlight">Version 2.4.0</a></li><li><a href="#version-230" class="table-of-contents__link toc-highlight">Version 2.3.0</a></li><li><a href="#version-220" class="table-of-contents__link toc-highlight">Version 2.2.0</a><ul><li><a href="#changes-1" class="table-of-contents__link toc-highlight">Changes</a></li><li><a href="#upgrading-to-this-version" class="table-of-contents__link toc-highlight">Upgrading to this version</a></li></ul></li><li><a href="#version-210" class="table-of-contents__link toc-highlight">Version 2.1.0</a></li><li><a href="#version-200" class="table-of-contents__link toc-highlight">Version 2.0.0</a><ul><li><a href="#changes-2" class="table-of-contents__link toc-highlight">Changes</a></li><li><a href="#upgrading-to-this-version-1" class="table-of-contents__link toc-highlight">Upgrading to this Version</a></li></ul></li><li><a href="#version-130" class="table-of-contents__link toc-highlight">Version 1.3.0</a><ul><li><a href="#changes-3" class="table-of-contents__link toc-highlight">Changes</a></li><li><a href="#announcement" class="table-of-contents__link toc-highlight">Announcement</a></li><li><a href="#next-developments" class="table-of-contents__link toc-highlight">Next Developments</a></li></ul></li><li><a href="#version-127" class="table-of-contents__link toc-highlight">Version 1.2.7</a></li><li><a href="#version-126" class="table-of-contents__link toc-highlight">Version 1.2.6</a></li><li><a href="#version-125" class="table-of-contents__link toc-highlight">Version 1.2.5</a></li><li><a href="#version-124" class="table-of-contents__link toc-highlight">Version 1.2.4</a></li><li><a href="#version-123" class="table-of-contents__link toc-highlight">Version 1.2.3</a></li><li><a href="#version-122" class="table-of-contents__link toc-highlight">Version 1.2.2</a></li><li><a href="#version-121" class="table-of-contents__link toc-highlight">Version 1.2.1</a></li><li><a href="#version-120" class="table-of-contents__link toc-highlight">Version 1.2.0</a></li><li><a href="#version-110" class="table-of-contents__link toc-highlight">Version 1.1.0</a><ul><li><a href="#migration" class="table-of-contents__link toc-highlight">Migration</a></li></ul></li></ul></div></div></div></div></main></div></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2022-2025 Wildboar Software. Built with Docusaurus.</div></div></div></footer></div>
+</body>
+</html>

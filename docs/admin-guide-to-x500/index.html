@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-admin-guide-to-x500" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.7.0">
+<title data-rh="true">Administrator&#x27;s Deep Dive | Meerkat DSA</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://wildboar-software.github.io/directory/docs/admin-guide-to-x500"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="keywords" content="directory, x500, x.500, ldap, database, meerkat, dsa, distributed"><meta data-rh="true" name="copyright" content="Copyright (c) 2021 Jonathan M. Wilbur &lt;jonathan@wilbur.space&gt;."><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Administrator&#x27;s Deep Dive | Meerkat DSA"><meta data-rh="true" name="description" content="What follows is a deep dive for administrators of the directory. This is an"><meta data-rh="true" property="og:description" content="What follows is a deep dive for administrators of the directory. This is an"><link data-rh="true" rel="icon" href="/directory/img/boar-head-rune-circle.svg"><link data-rh="true" rel="canonical" href="https://wildboar-software.github.io/directory/docs/admin-guide-to-x500"><link data-rh="true" rel="alternate" href="https://wildboar-software.github.io/directory/docs/admin-guide-to-x500" hreflang="en"><link data-rh="true" rel="alternate" href="https://wildboar-software.github.io/directory/docs/admin-guide-to-x500" hreflang="x-default"><link rel="preconnect" href="https://www.google-analytics.com">
+<script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-177382419-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview")</script>
+<script async src="https://www.google-analytics.com/analytics.js"></script>
+
+
+
+<link rel="icon" href="/directory/img/boar-head-rune-circle.svg">
+<link rel="manifest" href="/directory/manifest.json">
+<meta name="theme-color" content="rgb(37, 194, 160)"><link rel="stylesheet" href="/directory/assets/css/styles.2a28baec.css">
+<script src="/directory/assets/js/runtime~main.80ceabf3.js" defer="defer"></script>
+<script src="/directory/assets/js/main.ad93db89.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();t(null!==e?e:"dark")}(),function(){try{const n=new URLSearchParams(window.location.search).entries();for(var[t,e]of n)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_G6ar" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/directory/"><div class="navbar__logo"><img src="/directory/img/boar-head-rune-circle-black.svg" alt="Wildboar Software Logo" class="themedComponent_DHUr themedComponent--light_DIHH"><img src="/directory/img/boar-head-rune-circle.svg" alt="Wildboar Software Logo" class="themedComponent_DHUr themedComponent--dark_Bv2M"></div><b class="navbar__title text--truncate">Meerkat DSA</b></a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/directory/docs/setup">Get Started</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/directory/docs/docs">Documentation</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/directory/docs/specs">X.500 Specifications</a><a class="navbar__item navbar__link" href="/directory/docs/demo">Demo</a></div><div class="navbar__items navbar__items--right"><a href="https://github.com/Wildboar-Software/directory" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_awgD"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a><div class="toggle_OLSw colorModeToggle_Hg9V"><button class="clean-btn toggleButton_wYmb toggleButtonDisabled_vaDU" type="button" disabled="" title="Switch between dark and light mode (currently dark mode)" aria-label="Switch between dark and light mode (currently dark mode)" aria-live="polite" aria-pressed="true"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_Sxwe"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_Yem1"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="navbarSearchContainer_bmvg"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_UyTV"><div class="docsWrapper_XLvK"><button aria-label="Scroll back to top" class="clean-btn theme-back-to-top-button backToTopButton_z1FD" type="button"></button><div class="docRoot_HciC"><aside class="theme-doc-sidebar-container docSidebarContainer_e5ai"><div class="sidebarViewport_N8x0"><div class="sidebar_vJCc"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_qiME"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/directory/docs/docs">How to use this documentation</a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role="button" aria-expanded="true" href="/directory/docs/intro">X.500</a></div><ul style="display:block;overflow:visible;height:auto" class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/intro">Introduction to X.500 Directory Systems</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/executive-summary">Executive Summary</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/uses">Uses</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/user-guide-to-x500">User&#x27;s Deep Dive</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/directory/docs/admin-guide-to-x500">Administrator&#x27;s Deep Dive</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/directory/docs/why-not-ldap">Why Not LDAP?</a></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/setup">Meerkat DSA</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/x500cli">Clients and Libraries</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/tutorial01">Tutorials</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/asn1">Reference</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/changelog-meerkat">Change Logs</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" href="/directory/docs/versioning">For Developers</a></div></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/directory/docs/support">Support / Help</a></li></ul></nav></div></div></aside><main class="docMainContainer_namt"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_YAwJ"><div class="docItemContainer_Rv5Z"><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_zCmv" aria-label="Breadcrumbs"><ul class="breadcrumbs" itemscope="" itemtype="https://schema.org/BreadcrumbList"><li class="breadcrumbs__item"><a aria-label="Home page" class="breadcrumbs__link" href="/directory/"><svg viewBox="0 0 24 24" class="breadcrumbHomeIcon_JFrk"><path d="M10 19v-5h4v5c0 .55.45 1 1 1h3c.55 0 1-.45 1-1v-7h1.7c.46 0 .68-.57.33-.87L12.67 3.6c-.38-.34-.96-.34-1.34 0l-8.36 7.53c-.34.3-.13.87.33.87H5v7c0 .55.45 1 1 1h3c.55 0 1-.45 1-1z" fill="currentColor"></path></svg></a></li><li class="breadcrumbs__item"><span class="breadcrumbs__link">X.500</span><meta itemprop="position" content="1"></li><li itemscope="" itemprop="itemListElement" itemtype="https://schema.org/ListItem" class="breadcrumbs__item breadcrumbs__item--active"><span class="breadcrumbs__link" itemprop="name">Administrator&#x27;s Deep Dive</span><meta itemprop="position" content="2"></li></ul></nav><div class="tocCollapsible_O_Qc theme-doc-toc-mobile tocMobile_tjDr"><button type="button" class="clean-btn tocCollapsibleButton_htYj">On this page</button></div><div class="theme-doc-markdown markdown"><header><h1>Administrator&#x27;s Deep Dive</h1></header>
+<p>What follows is a deep dive for administrators of the directory. This is an
+attempt to be a high-level overview. Administrators seeking to fully understand
+X.500 directories should read the X.500 specifications. See
+<a href="/directory/docs/specs">Specifications</a>.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="naming-contexts-and-request-routing">Naming Contexts and Request Routing<a href="#naming-contexts-and-request-routing" class="hash-link" aria-label="Direct link to Naming Contexts and Request Routing" title="Direct link to Naming Contexts and Request Routing">​</a></h2>
+<p>Earlier, we established that the directory can be (and is likely to be, given
+its use case) partitioned across a multitude of X.500 directory servers (DSAs).</p>
+<p>For the various DSAs to provide a seemless experience as though the user were
+only interacting with a single server, these DSAs store not only directory
+entries, but a supercategory of &quot;things that fall within the DIT&quot; called
+DSA-Specific Entries (DSEs). As you can imagine, when you have a distributed
+system like this, each DSA is going to have its own &quot;perspective&quot; of what the
+directory looks like. For a given distinguished name referring to something in
+the DIT, two DSAs might have something stored, but one might be a master entry
+in one DSA, and the other might be a shadow (replicated entry) in the other
+DSA. In addition to this, DSAs may store &quot;reference DSEs&quot; that &quot;point&quot; to the
+DSAs where an entry is really stored.</p>
+<p>Let&#x27;s explore an example. Let&#x27;s say the United States government runs an X.500
+DSA. It administers the <code>c=US</code> namespace of the directory. The <code>c=US</code> entry
+might have some real entries beneath it, such as <code>c=US,o=Congress</code>, but also
+some subordinate namespaces (&quot;context prefixes&quot;) handled by other DSAs. The
+substituent 50 states of the United States may themselves have DSAs. For
+example, <code>c=US,st=FL</code> <em>could</em> be administered in the United States&#x27; DSA, but it
+would be likely that Florida would want to manage its own DSA.</p>
+<p>Hence, the <code>c=US</code> DSA would have a reference DSE named <code>c=US,st=FL</code> that
+points to the network address (IP address or hostname, protocol, and port) of
+the DSA that administers the <code>c=US,st=FL</code> namespace. The <code>c=US,st=FL</code> DSA would
+have the real entry for <code>c=US,st=FL</code> and for <code>c=US</code>, it would have a reference
+DSE pointing back to the DSA that administers the <code>c=US</code> namespace. No matter
+where a request starts in the directory--no matter what entry is sought--the
+directory information tree can be navigated up and down using these reference
+DSEs to find the DSA that administers a given entry. This works kind of like
+the <code>NS</code> record in DNS, where a domain can delegate management of a subdomain
+to a separate name server: in that same way, DSAs can delegate subtrees
+of the DIT to other DSAs by storing reference DSEs identifying the responsible
+DSA instead of storing the entry itself.</p>
+<p>To clarify, the directory does more than merely store these references: it is
+a feature of the directory that the DSAs themselves use them. This is how
+chaining is achieved: a DSA descends its own internal DSA-specific information
+tree (called a &quot;DSAIT&quot;) to find an entry sought by a directory user, and when
+it encounters a reference entry, it either forwards the request to the DSA
+responsible for that namespace, or it returns a referral back to the user,
+thereby saying &quot;you make this request.&quot;</p>
+<p>To help understand this, let&#x27;s consider a hypothetical routing scenario: a user
+in Hamburg, Germany, wants to read an entry <code>c=US,st=FL,cn=Jonathan Wilbur</code>.
+This user&#x27;s &quot;home DSA&quot; is <code>c=DE,l=Hamburg</code>: they authenticate to and send
+requests to this server. The DSA responsible for <code>c=DE,l=Hamburg</code> sees that not
+even the first RDN of the sought distinguished name (<code>c=US</code>) matches what the
+user is searching for, so the request has <em>ascend</em> the directory information
+tree until we reach <code>c=US</code>, then it can descend. So it forwards the request to
+the DSA that administers <code>c=DE</code>. This DSA is a special &quot;top-level DSA,&quot; which
+contains the reference DSEs for all of the other countries, so it forwards the
+request laterally to the DSA that administers <code>c=US</code>. The DSA for <code>c=US</code> sees that it has
+a DSE for <code>c=US,st=FL</code>, but it is a reference DSE--not the real entry--so the
+DSA forwards the request to the DSA that handles the <code>c=US,st=FL</code> namespace.
+Finally, the DSA that administers <code>c=US,st=FL</code> sees that it has the entry named
+<code>c=US,st=FL,cn=Jonathan Wilbur</code>. It produces a result, possibly signs it to
+ensure end-to-end integrity, and propagates this result back to the user,
+traversing the exact path from which this request came in reverse.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="cross-references">Cross References<a href="#cross-references" class="hash-link" aria-label="Direct link to Cross References" title="Direct link to Cross References">​</a></h2>
+<p>Forwarding so many requests to a top-level DSA to be able to traverse laterally
+in the DIT would be extremely taxing on a very important DSA. One optimization
+directories can implement is cross references. These are basically cached
+references for other DSAs in the DIT. When you use DNS and resolve,
+<code>www.google.com</code>, your computer isn&#x27;t making a request to the root nameserver
+every single time: it caches the addresses of the servers that manage <code>com</code>,
+<code>google.com</code>, etc. In this same way, DSAs can store pointers to namespaces they
+have previously resolved.</p>
+<p>Continuing on our previous example, the DSA for <code>c=DE,l=Hamburg</code> can request
+that the <code>c=US</code> DSA return cross references. The <code>c=US</code> DSA&#x27;s chained request
+response can then contain the routable address of the DSA that administers
+<code>c=US,st=FL</code>. The <code>c=DE,l=Hamburg</code> can then forward requests destined for this
+namespace directly to the responsible DSA instead of propagating it up and down
+through the directory.</p>
+<p>Note that cross references, like any cached data, can become stale and contain
+information that is out-of-date, and trusting cross-references itself has
+security implications that ought to be considered by directory administrators.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="operational-bindings">Operational Bindings<a href="#operational-bindings" class="hash-link" aria-label="Direct link to Operational Bindings" title="Direct link to Operational Bindings">​</a></h2>
+<p>One thing you might be wondering is: how do reference DSEs get in the directory?
+They could be administered manually, but the preferrable method is for two
+correspondent DSAs to establish what is called an &quot;operational binding.&quot; An
+operational binding is a bilateral agreement between two DSAs to provide some
+service.</p>
+<p>There is a standard protocol by which a DSA proposes an operational binding to
+another DSA: the Directory Operational Binding Management Protocol (DOP). This
+protocol provides three operations: establish, modify, and terminate for a given
+operational binding. When establishing or modifying operational bindings,
+parameters of the proposed bilateral operation are sent. Operational bindings
+are identified by unique numbers assigned by the correspondent DSAs, and also
+include revision numbers for when modifications are made.</p>
+<p>In the X.500 specifications, there are three types of operational bindings
+defined, which we will discuss.</p>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="hierarchical-operational-bindings-hobs">Hierarchical Operational Bindings (HOBs)<a href="#hierarchical-operational-bindings-hobs" class="hash-link" aria-label="Direct link to Hierarchical Operational Bindings (HOBs)" title="Direct link to Hierarchical Operational Bindings (HOBs)">​</a></h3>
+<p>In a Hierarchical Operational Binding (HOB), one DSA agrees to be the &quot;superior&quot;
+DSA and another a &quot;subordinate.&quot; This is a simple case where a DSA delegates a
+subtree of the DIT that it would otherwise control to another DSA; concretely,
+that means that it forwards requests targeting entries that fall within that
+namespace to the subordinate DSA. The result of an HOB in the DIT is a
+&quot;subordinate reference&quot; DSE in the superior DSA that points to the subordinate
+DSA, and a &quot;superior reference&quot; DSE in the subordinate DSA that points to the
+superior DSA.</p>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="non-specific-hierarchical-operational-bindings-nhobs">Non-Specific Hierarchical Operational Bindings (NHOBs)<a href="#non-specific-hierarchical-operational-bindings-nhobs" class="hash-link" aria-label="Direct link to Non-Specific Hierarchical Operational Bindings (NHOBs)" title="Direct link to Non-Specific Hierarchical Operational Bindings (NHOBs)">​</a></h3>
+<p>A Non-Specific Hierarchical Operational Binding (NHOB) is like the Hierarchical
+Operational Binding (HOB), but with a twist: multiple DSAs compete for the
+namespace subordinate to an entry. When I say &quot;compete,&quot; it is not to insinuate
+that there is an adversarial relationship, but merely that names within the
+namespace are allocated on a first-come-first-served basis to the involved
+subordinate DSAs.</p>
+<p>In an NHOB, instead of a single subordinate reference DSE that points to a DSA
+(or cluster of them) that <em>definitely</em> has the entry for the next RDN to be
+resolved, it uses a <em>Non-Specific Subordinate Reference</em> (NSSR) which contains
+a list of subordinate DSAs that <em>might</em> have it. When an entry subordinate to
+the reference is sought, all of the subordinate DSAs are queried until one
+(or none) returns a result.</p>
+<p>DSAs in an NSSR do coordinate to avoid naming conflicts: when they create a new
+entry, the subordinate DSA is expected to attempt a read operation to all of
+them to check if the entry exists. This is imperfect: there could be a race
+condition in which duplicates are introduced, so this requires careful
+coordination and doesn&#x27;t scale well.</p>
+<p>It is not obvious to me why NHOBs would even be desirable: it is going to be
+less performant to have indeterminate routing information. The only benefit I
+can see is less managerial overhead from having to manage a single operational
+binding per subordinate naming context as is the case with HOBs. Either way,
+NHOBs are there for you to use.</p>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="shadowing-operational-bindings-sobs">Shadowing Operational Bindings (SOBs)<a href="#shadowing-operational-bindings-sobs" class="hash-link" aria-label="Direct link to Shadowing Operational Bindings (SOBs)" title="Direct link to Shadowing Operational Bindings (SOBs)">​</a></h3>
+<p>We have already discussed shadowing in the User&#x27;s Deep Dive, so it is presumed
+that you understand what shadowing is: basically, the provisioning of read-only
+replicas of directory information for better throughput and availability.</p>
+<p>Shadowing is established by a Shadowing Operational Binding (SOB). When
+established or modified, this operational binding&#x27;s parameters include:</p>
+<ul>
+<li>What directory information is to be replicated, including:<!-- -->
+<ul>
+<li>Which entries</li>
+<li>Which attributes</li>
+<li>Which values</li>
+<li>Which contexts</li>
+</ul>
+</li>
+<li>How often the replication is to take place, which can be:<!-- -->
+<ul>
+<li>At regular intervals, or</li>
+<li>Whenever the information changes</li>
+</ul>
+</li>
+<li>Who is to initiate the replication operations: the shadow DSA or master DSA</li>
+</ul>
+<p>SOBs may be &quot;pull&quot; or &quot;push&quot;: it may be expected that the shadow supplier
+periodically--or upon modifications--push changes to its consumers, or it may
+be expected that the shadow consumers periodically &quot;poll&quot; the shadow supplier
+for updates.</p>
+<p>Shadow updates are coordinated by specific shadowing operations, which are:</p>
+<ul>
+<li><code>coordinateShadowUpdate</code>: used by a shadow supplier in the &quot;push&quot; model to
+announce a forthcoming shadow update, to get prior approval before sending it,
+and ensuring that the DSAs are in agreement as to when the last shadow update
+occurred (this matters for ensuring incremental updates are complete).</li>
+<li><code>requestShadowUpdate</code>: used by a shadow consumer in the &quot;pull&quot; model to
+request an update.</li>
+<li><code>updateShadow</code>: is the operation that contains the actual shadowed data.</li>
+</ul>
+<p>The <code>updateShadow</code> operation may contain the entirety of all data to be updated,
+called a &quot;total refresh,&quot; or just whatever changed since the last update, called
+an &quot;incremental refresh.&quot; Alternative update methods could be defined. The
+choice of method used could be requested by a shadow supplier when requesting a
+shadow update.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="administrative-areas">Administrative Areas<a href="#administrative-areas" class="hash-link" aria-label="Direct link to Administrative Areas" title="Direct link to Administrative Areas">​</a></h2>
+<p>Just as the directory can be physically partitioned among multiple DSAs, the
+directory information tree can be partitioned in into &quot;administrative areas&quot; in
+which different access control rules, services, assumptions,
+collective attributes, etc. apply.</p>
+<p>An administrative area is created merely by adding an <code>administrativeRole</code>
+attribute to an entry in the DIT: this makes this entry an &quot;administrative
+point.&quot;</p>
+<p>Other than this attribute, (almost) all other configuration for administrative
+areas falls within special entries immediately subordinate to the administrative
+point, called &quot;subentries.&quot; Subentries are entries of object class <code>subentry</code>.
+Subentries MUST contain a name and a specification of the subtree of the
+administrative area to which their effects apply: other than this, auxiliary
+object classes are used to add more attributes depending on what administrative
+area type it configures.</p>
+<p>The directory specifications define the following administrative area types:</p>
+<ul>
+<li>Access Control Administrative Areas: where access controls are defined</li>
+<li>Subschema Administrative Areas: where recognized or applicable schema
+(e.g. attributes, object classes, etc.) may vary.</li>
+<li>Collective Attributes Administrative Areas: where collective attributes are
+applied to entries</li>
+<li>Context Default Administrative Areas: where default context assertions are
+applied to requests if none are supplied by the user.</li>
+<li>Service Administrative Areas: where &quot;service rules&quot; are applied to restrict
+what searches may be performed.</li>
+<li>Password Administrative Areas: where the rules for passwords (such as
+length, complexity, alphabets, etc.) are applied.</li>
+<li>Autonomous Areas: where all superior administrative areas are effectively
+marked as &quot;overridden&quot; completely.</li>
+</ul>
+<p>Administrative areas may fall within each other: in other words, <code>c=US</code> may be
+a password administrative area, and <code>c=US,st=FL</code> may be one as well. There is
+no conflict in this case: when passwords are managed in <code>c=US,st=FL</code> the
+password administrative area defined there overrides the one defined in <code>c=US</code>.
+As stated earlier, autonomous administrative areas entirely reset all
+superior administrative areas.</p>
+<p>In some cases, namely collective attribute administrative areas and access
+control administrative areas are further partitioned into &quot;specific areas&quot; and
+&quot;inner areas.&quot; Specific areas reset all superior administration of like kind:
+in other words, an access control specific area completely removes and overrides
+all access control rules defined in superior access control administrative
+areas. Inner areas, on the other hand, are <em>additive</em>. For example, Access
+Control Inner Areas (ACIAs) may introduce more access control rules that must be
+evaluated without resetting the rules applied from superior Access Control
+Specific Areas (ACSAs).</p>
+<p>These administrative areas are independent of the physical partitioning by
+naming contexts: an administrative area may span across multiple DSAs, or there
+can be multiple administrative areas within a single DSA.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="access-control">Access Control<a href="#access-control" class="hash-link" aria-label="Direct link to Access Control" title="Direct link to Access Control">​</a></h2>
+<p>X.500 directories are flexible in what access control schemes they can use.
+A special attribute, <code>accessControlScheme</code>, which is a single-valued attribute
+containing an object identifier, is placed in the Access Control Specific
+Point (ACSP) (which is the administrative point for an Access Control Specific
+Area (ACSA)). This identifier determines what access control scheme is used for
+that ACSA. Currently, the X.500 specifications define five access control
+schemes, which are:</p>
+<ul>
+<li><code>basicAccessControlScheme</code>: Uses Access Control Items (ACIs) stored in
+entries, subentries, and administrative points</li>
+<li><code>simplifiedAccessControlScheme</code>: Like <code>basicAccessControlScheme</code>, but uses
+only the access control rules in administrative points and subentries.</li>
+<li><code>rule-based-access-control</code>: Uses security clearances and labels on data</li>
+<li><code>rule-and-basic-access-control</code>: Combines <code>rule-based-access-control</code> and
+<code>basicAccessControlScheme</code>.</li>
+<li><code>rule-and-simple-access-control</code>: Combines <code>rule-based-access-control</code> and
+<code>simplifiedAccessControlScheme</code>.</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="access-control-items-an-intuitive-understanding">Access Control Items: An Intuitive Understanding<a href="#access-control-items-an-intuitive-understanding" class="hash-link" aria-label="Direct link to Access Control Items: An Intuitive Understanding" title="Direct link to Access Control Items: An Intuitive Understanding">​</a></h3>
+<p>If you think about how access control decisions are said aloud in natural
+language, such as &quot;forbid janitors from reading database credentials&quot; or
+&quot;allow administrator to change password for all employees,&quot; you&#x27;ll notice that
+access control rules across any application can be broken down as such:</p>
+<div class="codeBlockContainer_ZGJx theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_qZBB"><pre tabindex="0" class="prism-code language-text codeBlock_TAPP thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_AdAo"><span class="token-line" style="color:#F8F8F2"><span class="token plain"> allow  administrator to change password for all employees</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain"> -----  -------------    ---------------------------------</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain"> Action   Subject                   Operation</span><br></span></code></pre><div class="buttonGroup_TNwR"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_MVhB" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_yxgH"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_QJLJ"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<p>In some cases, the action is implicit: some access control schemes allow or
+deny by default, and access control rules can only be used to restrict or grant
+access beyond this default state. In other cases, other actions may be defined,
+such as &quot;audit,&quot; in which the protected access is logged, but otherwise allowed.</p>
+<p>Subjects are arguably a logical necessity for an access control rule. If there
+aren&#x27;t multiple users of something, whose access is being controlled and why?</p>
+<p>Operations are a logical necessity as well, even if the operation is an implicit
+&quot;everything&quot; or &quot;nothing.&quot; Sometimes operations are defined in terms of the
+thing being acted upon (the &quot;object&quot;), such that access control rules take the
+form of a &quot;subject-verb-predicate&quot; form. In the example above, the &quot;object&quot;
+would be &quot;all employees.&quot;</p>
+<p>All of this was a preface to introduce the Access Control Item (ACI): the unit
+of access control configuration under Basic Access Control (BAC) and
+Simplified Access Control (SAC). It follows a subject-verb-object format, but
+with a few other parameters. In summary, an ACI contains:</p>
+<ul>
+<li>The name of the rule: ACIs are named with human-readable strings</li>
+<li>The precedence: an integer identifying the precedence an ACI has</li>
+<li>The authentication level: how sure we are that the user authenticated is really that user</li>
+<li>The user: the &quot;subject&quot; using the terminology established above.</li>
+<li>The item: the &quot;object&quot; using the terminology established above.</li>
+<li>The operation</li>
+</ul>
+<p>There is a twist that makes ACIs difficult for the newcomer to understand, and
+for that reason, let me start by establishing what the problem is. In access
+control configuration, it is likely that patterns will emerge, if not intended.
+In an extremely secure facility that protects the break rooms and bathrooms by
+badge entry, lots of employees may be granted, and as such, the access control
+rules might look like:</p>
+<div class="codeBlockContainer_ZGJx theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_qZBB"><pre tabindex="0" class="prism-code language-text codeBlock_TAPP thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_AdAo"><span class="token-line" style="color:#F8F8F2"><span class="token plain">allow:alice   :ingress:break_room</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">allow:bob     :ingress:break_room</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">allow:charles :ingress:break_room</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">allow:desmond :ingress:break_room</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">allow:emerson :ingress:break_room</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">allow:alice   :ingress:bathroom</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">allow:bob     :ingress:bathroom</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">allow:charles :ingress:bathroom</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">allow:desmond :ingress:bathroom</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">allow:emerson :ingress:bathroom</span><br></span></code></pre><div class="buttonGroup_TNwR"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_MVhB" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_yxgH"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_QJLJ"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<p>Depending on the situation, it might be the case that you can simplify the rules
+by putting all of these employees in a security group, then grant the security
+group access such access, or maybe you could put all objects in an &quot;object
+group&quot; and grant access to that. When you do this, you effectively outsource
+the rules to some data outside of the rule itself: somewhere, some system
+contains a list of people who are members of the security group, or a list of
+objects that are substituents of the &quot;object group.&quot;</p>
+<p>This outsourcing, while unavoidable in some cases, is undesirable on some level:
+in real-world systems, it often requires more computational load or latency to
+perform a lookup of a group of people or objects. It also makes the rules less
+transparent: what information can we glean if the rule is defined as
+&quot;allow database readers to read the database&quot;?</p>
+<p>There is an alternative: because there are patterns that tend to emerge from
+these rules, we can <em>compress</em> them, like so:</p>
+<div class="codeBlockContainer_ZGJx theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_qZBB"><pre tabindex="0" class="prism-code language-text codeBlock_TAPP thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_AdAo"><span class="token-line" style="color:#F8F8F2"><span class="token plain">allow:break_room:ingress:alice,bob,charles,desmond,emerson</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">allow:bathroom:ingress:alice,bob,charles,desmond,emerson</span><br></span></code></pre><div class="buttonGroup_TNwR"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_MVhB" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_yxgH"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_QJLJ"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<p>In the above example, we effectively &quot;compressed&quot; the objects column.
+Alternatively, we could &quot;compress&quot; the users column, though this is less
+effective at reducing the size of the rules:</p>
+<div class="codeBlockContainer_ZGJx theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_qZBB"><pre tabindex="0" class="prism-code language-text codeBlock_TAPP thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_AdAo"><span class="token-line" style="color:#F8F8F2"><span class="token plain">allow:alice   :ingress:break_room,bathroom</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">allow:bob     :ingress:break_room,bathroom</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">allow:charles :ingress:break_room,bathroom</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">allow:desmond :ingress:break_room,bathroom</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">allow:emerson :ingress:break_room,bathroom</span><br></span></code></pre><div class="buttonGroup_TNwR"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_MVhB" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_yxgH"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_QJLJ"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<p>The point is that, usually, either subjects or objects in access control rules
+can be &quot;compressed&quot; and hence, ACIs in the directory are defined in terms of
+&quot;item first&quot; or &quot;user first&quot; variants. Now having the intuition we have about
+access control rules, looking at the ASN.1 definition of an ACI will make much
+more sense:</p>
+<div class="language-asn1 codeBlockContainer_ZGJx theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_qZBB"><pre tabindex="0" class="prism-code language-asn1 codeBlock_TAPP thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_AdAo"><span class="token-line" style="color:#F8F8F2"><span class="token plain">ACIItem ::= SEQUENCE {</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">  identificationTag    UnboundedDirectoryString,</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">  precedence           Precedence,</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">  authenticationLevel  AuthenticationLevel,</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">  itemOrUserFirst      CHOICE {</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">    itemFirst       [0]  SEQUENCE {</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">      protectedItems       ProtectedItems,</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">      itemPermissions      SET OF ItemPermission,</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">      ...},</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">    userFirst       [1]  SEQUENCE {</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">      userClasses          UserClasses,</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">      userPermissions      SET OF UserPermission,</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">      ...},</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">    ...},</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">  ... }</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">ItemPermission ::= SEQUENCE {</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">  precedence        Precedence OPTIONAL, -- defaults to precedence in ACIItem</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">  userClasses       UserClasses,</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">  grantsAndDenials  GrantsAndDenials,</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">  ... }</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">UserPermission ::= SEQUENCE {</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">  precedence        Precedence OPTIONAL, -- defaults to precedence in ACIItem</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">  protectedItems    ProtectedItems,</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">  grantsAndDenials  GrantsAndDenials,</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">  ... }</span><br></span></code></pre><div class="buttonGroup_TNwR"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_MVhB" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_yxgH"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_QJLJ"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<p>You will see that any alternative you choose in <code>itemOrUserFirst</code> has all of
+<code>UserClasses</code> (subject), <code>GrantsAndDenials</code> (verb), <code>ProtectedItems</code> (object).
+In fact, the ITU-T Recommendation X.501, which defines the access control
+schemes that use ACI, even instructs implementations to effectively &quot;decompress&quot;
+these ACIs into &quot;tuples&quot; internally before processing.</p>
+<p>With this intuitive understanding, let&#x27;s now get into the details of an ACI,
+starting with the user classes. There are five user classes defined by the X.500
+specifications, which I will not explain, since they mean exactly what they
+sound like they mean: <code>allUsers</code>, <code>thisEntry</code>, <code>name</code>, <code>userGroup</code>, <code>subtree</code>.</p>
+<p>Protected items can be entries, all user attributes, attribute types, attribute
+values, and context values, as you might expect, but the directory also supports
+controlling the number of values or the number of subordinate entries. Directory
+administrators can even define protected items in terms of object classes,
+filters that restrict the ranges of values</p>
+<p>There is a special <code>selfValue</code> protected item type, which means values that are
+distinguished names that represent the currently logged in user. The <code>selfValue</code>
+is useful for scenarios where you might want a user to be able to read values
+that pertain to them in other entries: for example, seeing that they are a
+member of a user group in the directory by granting them <code>selfValue</code> access to
+<code>member</code> instead of giving them full access to read all values of <code>member</code>.</p>
+<p>Finally, the grants and denials are simple bits defined per verb, which are:</p>
+<ul>
+<li><code>add</code>: Add something, such as an entry or attribute</li>
+<li><code>discloseOnError</code>: Disclose the existence of something hidden if there is an
+error pertaining to it</li>
+<li><code>read</code>: Read something, such as an entry or attribute</li>
+<li><code>remove</code>: Remove something, such as an entry or attribute</li>
+<li><code>browse</code>: Access an entry without providing the name explicitly</li>
+<li><code>export</code>: Move an entry out of its current location</li>
+<li><code>import</code>: Move an entry into this location</li>
+<li><code>modify</code>: Modify something, such as an entry or attribute</li>
+<li><code>rename</code>: Rename an entry</li>
+<li><code>returnDN</code>: Disclose the distinguished name of an entry</li>
+<li><code>compare</code>: Compare values, perhaps against an assertion</li>
+<li><code>filterMatch</code>: Match values in a filter</li>
+<li><code>invoke</code>: Attribute type-specific meaning</li>
+</ul>
+<p>By default, directories try to avoid disclosing information not needed to be
+known by users, even if indirectly via errors. For example, if I am not allowed
+to know the entries that fall beneath <code>c=US,l=Military Base</code>, but I attempt to
+create <code>c=US,l=Military Base,cn=Nuclear Missile #01</code> and the directory responds
+with an &quot;entry already exists&quot; error, it inadvertently disclosed the existence
+of an entry I wasn&#x27;t allowed to know about. Hence, ACIs define the
+<code>discloseOnError</code> permission. If <code>discloseOnError</code> is not granted, directories
+are expected to return errors that portend the non-existence of a protected
+item, such as &quot;no such object&quot; or &quot;no such attribute or value&quot; instead.</p>
+<p>The <code>invoke</code> permission is used in service administration, which we will discuss
+later.</p>
+<p>For each of the above permissions, a grant or a deny bit may be set, but both
+may be unset, which means &quot;I don&#x27;t have an opinion on this,&quot; thereby deferring
+to other ACIs to grant or deny for that particular subject-verb-object tuple.</p>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="basic-access-control">Basic Access Control<a href="#basic-access-control" class="hash-link" aria-label="Direct link to Basic Access Control" title="Direct link to Basic Access Control">​</a></h3>
+<p>Basic Access Control (BAC) is a scheme that users ACIs distributed throughout
+three different operational attributes:</p>
+<ul>
+<li><code>prescriptiveACI</code>: which apply ACIs broadly to entries in the ACSA or ACIA
+from subentries using their subtree specifications</li>
+<li><code>entryACI</code>: which apply &quot;one-off&quot; ACI to the entry in which this attribute exists</li>
+<li><code>subentryACI</code>: live in the administrative point and apply ACI to subentries</li>
+</ul>
+<p>Basic Access Control denies by default: in other words, if a user does not
+explicitly have permission to do something in an ACI, they will be denied it.
+In the interest of security, there is no way to grant access to &quot;all operational
+attributes&quot; even though there is for &quot;all user attribute&quot; with an ACI: access to
+each operational attribute has to be granted individually.</p>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="simplified-access-control">Simplified Access Control<a href="#simplified-access-control" class="hash-link" aria-label="Direct link to Simplified Access Control" title="Direct link to Simplified Access Control">​</a></h3>
+<p>Simplified Access Control (SAC) is the same as Basic Access Control (BAC),
+except that it uses neither <code>entryACI</code> nor Access Control Inner Areas (ACIAs).</p>
+<h3 class="anchor anchorWithStickyNavbar_fF9Z" id="rule-based-access-control">Rule-Based Access Control<a href="#rule-based-access-control" class="hash-link" aria-label="Direct link to Rule-Based Access Control" title="Direct link to Rule-Based Access Control">​</a></h3>
+<p>Rule-Based Access Control (RBAC) is not to be confused with the much more common
+term Role-Based Access Control. RBAC is an authentication scheme defined in
+which attribute values in the directory can be labeled with a special context,
+<code>attributeValueSecurityLabelContext</code>, that defines what security classification,
+such as &quot;top secret&quot; or &quot;classified,&quot; security categories, and privacy marks
+applies to that value. Access is granted based on what clearances a user has
+based on what values are present in the <code>clearance</code> attribute.</p>
+<p>Both clearances and security labels are associated with a security policy via
+an object identifier. Both clearances and security labels contain security
+classifications: security labels contain only one defining the classification
+of the object, and clearances can contain multiple (to be explained soon).</p>
+<p>A privacy mark may appear in a security label, which is a textual label. Its
+intended use case is something like the &quot;NOFORN&quot; or &quot;CUI&quot; as it is used in the
+United States.</p>
+<p>Security categories provide further restriction within the context of a
+security classification or privacy mark. It&#x27;s not clear to me how they differ
+in purpose from a privacy mark, if at all.</p>
+<p>Security policy dictates how clearances and security labels are used to grant
+or deny access. An example security policy might be the
+<a href="https://en.wikipedia.org/wiki/Bell%E2%80%93LaPadula_model" target="_blank" rel="noopener noreferrer">Bell–LaPadula (BLP) model</a>.
+In the BLP model, subjects do not automatically have access to things of a
+less sensitive classification, hence the possibility of multiple classification
+levels in a clearance.</p>
+<p>The integrity of security labels is ensured by digitally signing them.</p>
+<p>Rule-Based Access Control can be combined with Basic Access Control or
+Simplified Access Control, requiring access to be granted under both schemes
+for a given operation.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="context-assertion-defaults">Context Assertion Defaults<a href="#context-assertion-defaults" class="hash-link" aria-label="Direct link to Context Assertion Defaults" title="Direct link to Context Assertion Defaults">​</a></h2>
+<p>Through the use of language contexts, the directory allows us to annotate values
+with what language they represent. It is likely that, in a real, world-scale
+deployment of the directory, certain attributes like <code>description</code> might be
+present in an entry multiple times using translations across multiple languages.</p>
+<p>However, for data that is expected to be of regional interest, the directory has
+a way of defining default context assertions so that not all description values
+are returned every time a user performs a directory operation without the
+appropriate language context assertions. Instead, an administrative area that
+covers an exclusively English-speaking region can define <code>en</code> as the default
+language context, and therfore, directory operations in that administrative area
+will only return English descriptions by default.</p>
+<p>This is only an example of a broader concept: the directory can supply default
+context assertions via Context Default Administrative Areas (CDAAs). Context
+defaults can be defined for any user attribute and can use langage contexts or
+any other context type.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="password-administration">Password Administration<a href="#password-administration" class="hash-link" aria-label="Direct link to Password Administration" title="Direct link to Password Administration">​</a></h2>
+<p>Password administrative areas allow directory administrators to define password
+policy for an administrative area. Password policy includes things like:</p>
+<ul>
+<li>Requirements on password complexity, characters, words, etc.</li>
+<li>Max failed password attempts before lockout</li>
+<li>Lockout duration</li>
+<li>Password history retention rules</li>
+<li>Password encryption / hashing algorithms</li>
+<li>Whether passwords can be changed via <code>modifyEntry</code>, <code>changePassword</code> or both
+operations</li>
+<li>How many grace logins a user gets after his password expires</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="service-administration">Service Administration<a href="#service-administration" class="hash-link" aria-label="Direct link to Service Administration" title="Direct link to Service Administration">​</a></h2>
+<p>&quot;Service administration&quot; refers to the administration of search services in the
+X.500 directory via &quot;search rules.&quot; By default, users may perform any search
+they want, subject to access controls. Search rules allow directory
+administrators to constraint the searches a user can perform.</p>
+<p>Search rules are identified by a combination of an object identifier that
+identifiers the Directory Management Domain (DMD), and an integer that is unique
+within that domain.</p>
+<p>An object identifier also defines the &quot;service type,&quot; the meaning of which is
+unclear to me. The specifications give no examples. However, <code>serviceType</code> can
+be supplied in the DAP service controls to select the applicable search rules.</p>
+<p>A user class is a group of users identified by an integer that is unique within
+the DMD. It&#x27;s meaning is dependent on the DMD. This too can be supplied in the
+service controls.</p>
+<p>Service administrators can restrict what attribute types can be used in filters,
+what attributes can be returned, what service controls are on by default,
+mandatory, how compound entries are searched and returned, what relaxations and
+tightenings are applied, how many entries can be returned, and whether the
+search can be performed only on the base object, at one level, or for the entire
+subtree.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="subschema-administration">Subschema Administration<a href="#subschema-administration" class="hash-link" aria-label="Direct link to Subschema Administration" title="Direct link to Subschema Administration">​</a></h2>
+<p>A Subschema Administrative Area is where directory administrators define what
+X.500 directory schema is applicable for that area. This includes things that
+are universally-defined, such as attributes, object classes, name forms,
+matching rules, and context types, but may also contain things that are specific
+to that administrative area, such as DIT structure rules, content rules, context
+use rules, matching rule usages, and which attributes are considered &quot;friends.&quot;</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="integrity-at-rest">Integrity at Rest<a href="#integrity-at-rest" class="hash-link" aria-label="Direct link to Integrity at Rest" title="Direct link to Integrity at Rest">​</a></h2>
+<p>The directory also supports integrity at rest, although it is not required to do
+anything with it, such as verifying it prior to storing such protected data. An
+<code>attributeValueIntegrityInfoContext</code> context can be used to annotate attribute
+values with cryptographic signatures proving that they were not tampered with
+and are authentic in their origination.</p>
+<p>The <code>attributeIntegrityInfo</code> attribute
+can be used to sign all (or a selection of) the attributes in an entry, all at
+once. Note that the entire signature would have to be re-calculated if any of
+the involved attributes change. This attribute can be used in any entry by
+giving the entry the <code>integrityInfo</code> object class.</p>
+<p>It is my belief that this integrity mechanism is vulnerable to a sort of
+&quot;replay-like&quot; exploit: since nothing in the context value or signature binds
+the value to the entry, these values could just be copied to other entries with
+their signatures intact. I will report this to the ITU Study Group 17, but until
+this is resolved, beware relying on them.</p></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col"><a href="https://github.com/Wildboar-Software/directory/edit/main/website/docs/admin-guide-to-x500.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_UohW" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_g62E"></div></div></footer></article><nav class="pagination-nav docusaurus-mt-lg" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/directory/docs/user-guide-to-x500"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">User&#x27;s Deep Dive</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/directory/docs/why-not-ldap"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Why Not LDAP?</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_TN1Q thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#naming-contexts-and-request-routing" class="table-of-contents__link toc-highlight">Naming Contexts and Request Routing</a></li><li><a href="#cross-references" class="table-of-contents__link toc-highlight">Cross References</a></li><li><a href="#operational-bindings" class="table-of-contents__link toc-highlight">Operational Bindings</a><ul><li><a href="#hierarchical-operational-bindings-hobs" class="table-of-contents__link toc-highlight">Hierarchical Operational Bindings (HOBs)</a></li><li><a href="#non-specific-hierarchical-operational-bindings-nhobs" class="table-of-contents__link toc-highlight">Non-Specific Hierarchical Operational Bindings (NHOBs)</a></li><li><a href="#shadowing-operational-bindings-sobs" class="table-of-contents__link toc-highlight">Shadowing Operational Bindings (SOBs)</a></li></ul></li><li><a href="#administrative-areas" class="table-of-contents__link toc-highlight">Administrative Areas</a></li><li><a href="#access-control" class="table-of-contents__link toc-highlight">Access Control</a><ul><li><a href="#access-control-items-an-intuitive-understanding" class="table-of-contents__link toc-highlight">Access Control Items: An Intuitive Understanding</a></li><li><a href="#basic-access-control" class="table-of-contents__link toc-highlight">Basic Access Control</a></li><li><a href="#simplified-access-control" class="table-of-contents__link toc-highlight">Simplified Access Control</a></li><li><a href="#rule-based-access-control" class="table-of-contents__link toc-highlight">Rule-Based Access Control</a></li></ul></li><li><a href="#context-assertion-defaults" class="table-of-contents__link toc-highlight">Context Assertion Defaults</a></li><li><a href="#password-administration" class="table-of-contents__link toc-highlight">Password Administration</a></li><li><a href="#service-administration" class="table-of-contents__link toc-highlight">Service Administration</a></li><li><a href="#subschema-administration" class="table-of-contents__link toc-highlight">Subschema Administration</a></li><li><a href="#integrity-at-rest" class="table-of-contents__link toc-highlight">Integrity at Rest</a></li></ul></div></div></div></div></main></div></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2022-2025 Wildboar Software. Built with Docusaurus.</div></div></div></footer></div>
+</body>
+</html>
