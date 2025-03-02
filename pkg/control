@@ -1,8 +1,8 @@
 Package: meerkat-dsa
-Version: 3.2.4
+Version: 3.2.5
 Section: database
 Priority: optional
-Architecture: i386
+Architecture: amd64
 Homepage: https://github.com/Wildboar-Software/directory
 Maintainer: Jonathan M. Wilbur <jonathan.wilbur@wildboarsoftware.com>
 Description: X.500 Directory Server (DSA) and LDAP Server by Wildboar Software.

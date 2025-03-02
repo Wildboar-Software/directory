@@ -1,7 +1,7 @@
 # Conformance
 
-In the statements below, the term "Meerkat DSA" refers to version 3.2.4 of
-Meerkat DSA, hence these statements are only claimed for version 3.2.4 of
+In the statements below, the term "Meerkat DSA" refers to version 3.2.5 of
+Meerkat DSA, hence these statements are only claimed for version 3.2.5 of
 Meerkat DSA.
 
 ## X.519 Conformance Statement
