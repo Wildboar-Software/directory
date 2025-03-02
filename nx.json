@@ -48,6 +48,5 @@
     "nxCloudAccessToken": "Y2Y4NGI2OTctODY3OS00ZmU3LWI0MTctMmYwZTY4ZDhmYjNhfHJlYWQtd3JpdGU=",
     "parallel": 1,
     "useInferencePlugins": false,
-    "defaultBase": "master",
-    "useLegacyCache": true
+    "defaultBase": "master"
 }
