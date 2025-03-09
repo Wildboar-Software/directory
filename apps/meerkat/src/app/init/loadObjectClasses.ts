@@ -840,6 +840,7 @@ import {
 import {
     callPreferenceURIObject,
 } from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/callPreferenceURIObject.oa";
+import { objectClasses as schemaLevelIIObjectClasses } from "@wildboar/schema-level-ii";
 
 function prismaOCK2OCK (ock: PrismaObjectClassKind): ObjectClassKind {
     switch (ock) {
@@ -1140,6 +1141,7 @@ async function loadObjectClasses (ctx: Context): Promise<void> {
         sIPIdentity,
         genericIdentity,
         callPreferenceURIObject,
+        ...schemaLevelIIObjectClasses,
     };
     Object.entries(objectClassInfoObjects)
         .map(([ name, oc ]) => objectClassFromInformationObject(oc, name))

@@ -1,0 +1,20 @@
+BinarySigningTimeModule
+    { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1)
+    pkcs-9(9) smime(16) modules(0) 27 }
+
+DEFINITIONS IMPLICIT TAGS ::=
+BEGIN
+
+-- BinaryTime Definition
+
+BinaryTime ::= INTEGER (0..MAX)
+
+-- Signing Binary Time Attribute
+
+id-aa-binarySigningTime OBJECT IDENTIFIER ::= { iso(1)
+    member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9)
+    smime(16) aa(2) 46 }
+
+BinarySigningTime ::= BinaryTime
+
+END

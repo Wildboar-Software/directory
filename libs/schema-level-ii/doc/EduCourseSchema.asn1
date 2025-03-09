@@ -1,0 +1,117 @@
+EduCourseSchema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) edu-course-schema(199)
+}
+DEFINITIONS
+EXPLICIT TAGS
+EXTENSIBILITY IMPLIED
+::=
+BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    id-at, id-oc
+        FROM Wildboar
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) wildboar(1)}
+        WITH SUCCESSORS
+
+    ATTRIBUTE, OBJECT-CLASS, top
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+    UnboundedDirectoryString, directoryString, caseExactMatch
+        FROM SelectedAttributeTypes
+        {joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+        WITH SUCCESSORS
+    ;
+
+-- Object Identifiers
+
+-- See: https://www.iana.org/assignments/enterprise-numbers/?q=5923
+id-pen-internet2            OBJECT IDENTIFIER ::= {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) 5923 mace(1) eduMember(5) 2 eduMember(1)
+}
+
+id-mace                     OBJECT IDENTIFIER ::= { id-pen-internet2 mace(1) }
+id-eduCourse                OBJECT IDENTIFIER ::= { id-mace eduOrg(6) }
+
+id-at-eduCourseOffering     OBJECT IDENTIFIER ::= { id-eduCourse 1 1 }
+id-at-eduCourseMember       OBJECT IDENTIFIER ::= { id-eduCourse 1 2 }
+id-oc-eduCourse             OBJECT IDENTIFIER ::= { id-eduCourse 2 1 }
+
+-- Attribute Types
+
+/*
+Excerpt from the Internet2 MACE Working Group document here:
+https://spaces.at.internet2.edu/display/TI/TI.30.1?preview=%2F110336330%2F110336331%2Finternet2-courseID-eduCourse-200505.pdf
+
+###
+
+This is an attribute whose values are identifiers of eduCourse offering or
+section objects. Values are URIs.When eduCourseOffering appears as an attribute
+of a person object, it is multivalued and represents a set of eduCourseofferings
+or sections associated with eduCourse member objects in which the person is
+identified by the personIDattribute of the eduCourse member objects. The MACE
+CourseID working group may recommend particular means of mapping a local system
+of eduCourseoffering or section identifiers into a corresponding system of URIs.
+Example values:
+
+eduCourseOffering: urn:mace:uchicago.edu:classes:autumn2004:phys12100.003
+eduCourseOffering: http://wisc.edu/course/offering/2004fall/physics1101
+
+*/
+eduCourseOffering ATTRIBUTE ::= {
+    WITH SYNTAX			    UnboundedDirectoryString
+    EQUALITY MATCHING RULE  caseExactMatch
+    LDAP-SYNTAX			    directoryString.&id
+    LDAP-NAME			    {"eduCourseOffering"}
+    LDAP-DESC			    "identifiers for course offerings per the eduCourse data model"
+    ID					    id-at-eduCourseOffering
+}
+
+/*
+Excerpt from the Internet2 MACE Working Group document here:
+https://spaces.at.internet2.edu/display/TI/TI.30.1?preview=%2F110336330%2F110336331%2Finternet2-courseID-eduCourse-200505.pdf
+
+###
+
+This is an attribute whose values represent the roleTypes of eduCourse member
+objects associated with eduCourseoffering or section objects. The value syntax
+is <role>@<eduCourseOffering value>, where <role> is either the value ofthe
+roleType attribute of an eduCourse member object that is associated with either
+an eduCourse offering or aneduCourse section object identified by
+<eduCourseOffering value>, or <role> is a URI.When eduCourseMember appears as
+an attribute of a person object, it is multivalued and represents a set
+ofassociations between eduCourse offerings or sections and eduCourse member
+objects in which the person is identifiedby the personID.
+
+Example values:
+
+eduCourseMember: Learner@urn:mace:uchicago.edu:classes:autumn2004:phys12100.003
+eduCourseMember: Instructor@http://wisc.edu/course/offering/2004fall/physics1101
+*/
+eduCourseMember ATTRIBUTE ::= {
+    WITH SYNTAX			    UnboundedDirectoryString
+    EQUALITY MATCHING RULE  caseExactMatch
+    LDAP-SYNTAX			    directoryString.&id
+    LDAP-NAME			    {"eduCourseMember"}
+    LDAP-DESC			    "role-in-course offering per the eduCourse data model"
+    ID					    id-at-eduCourseMember
+}
+
+-- Object Classes
+
+eduCourse OBJECT-CLASS ::= {
+    SUBCLASS OF			    {top}
+    KIND				    auxiliary
+    MAY CONTAIN			    {eduCourseMember | eduCourseOffering}
+    LDAP-NAME			    {"eduCourse"}
+    ID					    id-oc-eduCourse
+}
+
+END

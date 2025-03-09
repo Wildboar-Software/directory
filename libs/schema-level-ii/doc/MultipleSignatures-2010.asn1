@@ -1,0 +1,64 @@
+MultipleSignatures-2010
+{iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9)
+smime(16) modules(0) id-mod-multipleSign-2009(59)}
+DEFINITIONS IMPLICIT TAGS ::=
+BEGIN
+-- EXPORTS All
+IMPORTS
+
+    ATTRIBUTE
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+    AlgorithmIdentifier{}, SupportedAlgorithms
+        FROM AuthenticationFramework
+        {joint-iso-itu-t ds(5) module(1) authenticationFramework(7) 9}
+        WITH SUCCESSORS
+
+    IssuerSerial
+        FROM AttributeCertificateDefinitions
+        {joint-iso-itu-t ds(5) module(1) attributeCertificateDefinitions(32) 9}
+        WITH SUCCESSORS
+    ;
+
+-- Object Identifiers
+
+id-aa-multipleSignatures OBJECT IDENTIFIER ::= {
+    iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9)
+    id-aa(2) 51}
+
+-- Types
+
+DigestAlgorithmIdentifier ::= AlgorithmIdentifier{{SupportedAlgorithms}}
+SignatureAlgorithmIdentifier ::= AlgorithmIdentifier{{SupportedAlgorithms}}
+Hash ::= OCTET STRING
+
+-- Cloned from ExtendedSecurityServices-2009 [RFC5911]
+ESSCertIDv2 ::= SEQUENCE {
+    hashAlgorithm   DigestAlgorithmIdentifier DEFAULT { algorithm mda-sha256.&id },
+    certHash        Hash,
+    issuerSerial    IssuerSerial OPTIONAL
+}
+
+SignAttrsHash ::= SEQUENCE {
+    algID           DigestAlgorithmIdentifier,
+    hash            OCTET STRING
+}
+
+MultipleSignatures ::= SEQUENCE {
+    bodyHashAlg     DigestAlgorithmIdentifier,
+    signAlg         SignatureAlgorithmIdentifier,
+    signAttrsHash   SignAttrsHash,
+    cert            ESSCertIDv2 OPTIONAL
+}
+
+-- Attributes
+
+-- at-multipleSignatures should be added ONLY to the SignedAttributesSet defined in [RFC5652]
+at-multipleSignatures ATTRIBUTE ::= {
+    WITH SYNTAX     MultipleSignatures
+    ID              id-aa-multipleSignatures
+}
+
+END

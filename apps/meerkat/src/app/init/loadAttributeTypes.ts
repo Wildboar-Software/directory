@@ -3753,6 +3753,7 @@ import {
 import {
     uuidMatch,
 } from "@wildboar/parity-schema/src/lib/modules/UUID/uuidMatch.oa";
+import { attributes as schemaLevelIIAttributes } from "@wildboar/schema-level-ii";
 
 /**
  * @summary Initialize Meerkat DSA's internal index of known attribute types.
@@ -4985,6 +4986,7 @@ async function loadAttributeTypes (ctx: Context): Promise<void> {
         ifMatchAll,
         interfaceReference,
         interfaceType,
+        ...schemaLevelIIAttributes,
     })
         .map(([ name, spec ]) => attributeFromInformationObject(spec, name))
         .forEach((attr) => {

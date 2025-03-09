@@ -189,6 +189,7 @@ import {
 import {
     callForwardingNameForm,
 } from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/callForwardingNameForm.oa";
+import { nameForms as schemaLevelIINameForms } from "@wildboar/schema-level-ii";
 
 /**
  * @summary Initialize Meerkat DSA's internal index of known name forms.
@@ -272,6 +273,7 @@ async function loadNameForms (ctx: Context): Promise<void> {
         calledUptUserNameForm,
         callingUptUserNameForm,
         callForwardingNameForm,
+        ...schemaLevelIINameForms,
     };
     Object.entries(nameFormInfoObjects)
         .map(([ name, io ]) => nameFormFromInformationObject(io, io["&ldapName"] ?? [ name ]))

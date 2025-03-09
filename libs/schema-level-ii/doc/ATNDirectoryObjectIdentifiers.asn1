@@ -1,0 +1,527 @@
+ATNDirectoryObjectIdentifiers
+{iso(1) identified-organization(3) icao(27) atn(0) objectIdentifiers(0) atnDirectory(0)}
+DEFINITIONS AUTOMATIC TAGS ::=
+BEGIN
+
+-- Prologue
+-- Exports Everything
+
+IMPORTS
+
+    NAME-FORM, ATTRIBUTE, OBJECT-CLASS
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+
+    organizationName, organizationalUnitName, owner, protocolInformation,
+    commonName, booleanMatch, boolean, integerMatch, integerOrderingMatch,
+    integer, caseIgnoreMatch, caseIgnoreOrderingMatch,
+    caseIgnoreSubstringsMatch, printableString, octetString,
+    octetStringMatch, octetStringSubstringsMatch
+        FROM SelectedAttributeTypes
+        {joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+
+    organizationalUnit, organization, organizationalPerson, applicationEntity,
+    certificationAuthority, device, dSA
+        FROM SelectedObjectClasses
+        {joint-iso-itu-t ds(5) module(1) selectedObjectClasses(6) 9}
+
+    mhs-or-addresses, mhs-maximum-content-length, mhs-deliverable-content-types,
+    mhs-acceptable-eits, mhs-exclusively-acceptable-eits, mhs-message-store-dn,
+    mhs-distribution-list, mhs-user-agent
+        FROM MHSDirectoryObjectsAndAttributes
+        {joint-iso-itu-t mhs(6) arch(5) modules(0) directory(1) version-1999(1)}
+
+    ContentLength
+        FROM MTSAbstractService
+        {joint-iso-itu-t mhs(6) mts(3) modules(0) mts-abstract-service(1)
+        version-1999(1)}
+
+    Certificate, certificateExactMatch, x509Certificate
+        FROM AuthenticationFramework
+        {joint-iso-itu-t ds(5) module(1) authenticationFramework(7) 9}
+
+    ;
+
+-- Types
+
+-- ub-content-length INTEGER ::= 2147483647
+-- ContentLength ::= INTEGER (0..ub-content-length)
+
+-- Object Identifiers
+
+id-oc OBJECT IDENTIFIER ::= {iso(1) identified-organisation(3) icao(27) atn-directory(7) oc(0)}
+id-at OBJECT IDENTIFIER ::= {iso(1) identified-organisation(3) icao(27) atn-directory(7) at(1)}
+id-nf OBJECT IDENTIFIER ::= {iso(1) identified-organisation(3) icao(27) atn-directory(7) nf(2)}
+
+id-oc-atn-AmhsUser                          OBJECT IDENTIFIER ::= {id-oc  1}
+id-oc-atn-OrganisationalUnit                OBJECT IDENTIFIER ::= {id-oc  2}
+id-oc-atn-OrganizationalPerson              OBJECT IDENTIFIER ::= {id-oc  3}
+id-oc-atn-OrganizationalRole                OBJECT IDENTIFIER ::= {id-oc  4}
+id-oc-atn-ApplicationEntity                 OBJECT IDENTIFIER ::= {id-oc  5}
+id-oc-atn-CertificationAuthority            OBJECT IDENTIFIER ::= {id-oc  6}
+id-oc-atn-AmhsDistributionList              OBJECT IDENTIFIER ::= {id-oc  7}
+id-oc-atn-AmhsUserAgent                     OBJECT IDENTIFIER ::= {id-oc  8}
+id-oc-atn-AmhsGateway                       OBJECT IDENTIFIER ::= {id-oc  9}
+id-oc-atn-Aircraft                          OBJECT IDENTIFIER ::= {id-oc 10}
+id-oc-atn-AtnFacility                       OBJECT IDENTIFIER ::= {id-oc 11}
+id-oc-atn-amhsMD                            OBJECT IDENTIFIER ::= {id-oc 12}
+id-oc-atn-idrpRouter                        OBJECT IDENTIFIER ::= {id-oc 13}
+id-oc-atn-AtnDirectorySystemAgent           OBJECT IDENTIFIER ::= {id-oc 14}
+id-oc-atn-Atn-Organization                  OBJECT IDENTIFIER ::= {id-oc 15}
+id-at-atn-AF-address                        OBJECT IDENTIFIER ::= {id-at  1}
+id-at-atn-PerCertificate                    OBJECT IDENTIFIER ::= {id-at  2}
+id-at-atn-DerCertificate                    OBJECT IDENTIFIER ::= {id-at  3}
+id-at-atn-amhs-direct-access                OBJECT IDENTIFIER ::= {id-at  4}
+id-at-atn-facilityName                      OBJECT IDENTIFIER ::= {id-at  5}
+id-at-atn-aircraftIDName                    OBJECT IDENTIFIER ::= {id-at  6}
+id-at-atn-Version                           OBJECT IDENTIFIER ::= {id-at  7}
+id-at-atn-ipm-heading-extensions            OBJECT IDENTIFIER ::= {id-at  8}
+id-at-atn-amhs-global-domain-identifier     OBJECT IDENTIFIER ::= {id-at  9}
+id-at-atn-icao-designator                   OBJECT IDENTIFIER ::= {id-at 10}
+id-at-atn-Net                               OBJECT IDENTIFIER ::= {id-at 11}
+id-at-atn-Amhs-addressing-scheme            OBJECT IDENTIFIER ::= {id-at 12}
+id-at-atn-AmhsMD-naming-context             OBJECT IDENTIFIER ::= {id-at 13}
+id-at-atn-maximum-number-of-body-parts	    OBJECT IDENTIFIER ::= {id-at 14}
+id-at-atn-maximum-text-size                 OBJECT IDENTIFIER ::= {id-at 15}
+id-at-atn-maximum-file-size                 OBJECT IDENTIFIER ::= {id-at 16}
+id-at-atn-use-of-amhs-security              OBJECT IDENTIFIER ::= {id-at 17}
+id-at-atn-use-of-directory                  OBJECT IDENTIFIER ::= {id-at 18}
+id-at-atn-group-of-addresses                OBJECT IDENTIFIER ::= {id-at 19}
+id-nf-atnOrgUnitNameForm                    OBJECT IDENTIFIER ::= {id-nf  0}
+id-nf-atnOrgPersonNameForm                  OBJECT IDENTIFIER ::= {id-nf  1}
+id-nf-atnOrgRoleNameForm                    OBJECT IDENTIFIER ::= {id-nf  2}
+id-nf-atnApplEntityNameForm                 OBJECT IDENTIFIER ::= {id-nf  3}
+id-nf-atnAmhsDLNameForm                     OBJECT IDENTIFIER ::= {id-nf  4}
+id-nf-atnAmhsUANameForm                     OBJECT IDENTIFIER ::= {id-nf  5}
+id-nf-atnAmhsGatewayNameForm                OBJECT IDENTIFIER ::= {id-nf  6}
+id-nf-atnAmhsMDNameForm                     OBJECT IDENTIFIER ::= {id-nf  7}
+id-nf-atnOrgNameForm                        OBJECT IDENTIFIER ::= {id-nf  8}
+id-nf-atnAircraftNameForm                   OBJECT IDENTIFIER ::= {id-nf  9}
+id-nf-atnFacilityNameForm                   OBJECT IDENTIFIER ::= {id-nf 10}
+id-nf-atnIdrpRouterNameForm                 OBJECT IDENTIFIER ::= {id-nf 11}
+id-nf-atnDSANameForm                        OBJECT IDENTIFIER ::= {id-nf 12}
+
+-- Attribute Types
+
+atn-AF-address ATTRIBUTE ::= {
+    WITH SYNTAX                 PrintableString(SIZE(8))
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 printableString.&id
+    LDAP-NAME                   {"atn-AF-address"}
+    ID                          id-at-atn-AF-address
+}
+
+atn-per-certificate ATTRIBUTE ::= {
+    WITH SYNTAX                 OCTET STRING
+    EQUALITY MATCHING RULE      octetStringMatch
+    LDAP-SYNTAX                 octetString.&id
+    LDAP-NAME                   {"atn-per-certificate"}
+    ID                          id-at-atn-PerCertificate
+}
+
+atn-der-certificate ATTRIBUTE ::= {
+    WITH SYNTAX                 Certificate
+    EQUALITY MATCHING RULE      certificateExactMatch
+    LDAP-SYNTAX                 x509Certificate.&id
+    LDAP-NAME                   {"atn-der-certificate"}
+    ID                          id-at-atn-DerCertificate
+}
+
+atn-amhs-direct-access ATTRIBUTE ::= {
+    WITH SYNTAX                 BOOLEAN
+    EQUALITY MATCHING RULE      booleanMatch
+    LDAP-SYNTAX                 boolean.&id
+    LDAP-NAME                   {"atn-amhs-direct-access"}
+    ID                          id-at-atn-amhs-direct-access
+}
+
+atn-facility-name ATTRIBUTE ::= {
+    WITH SYNTAX                 PrintableString(SIZE(1..64))
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 printableString.&id
+    LDAP-NAME                   {"atn-facility-name"}
+    ID                          id-at-atn-facilityName
+}
+
+atn-aircraftIDName ATTRIBUTE ::= {
+    WITH SYNTAX                 INTEGER(0..16777215)
+    EQUALITY MATCHING RULE      integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    LDAP-SYNTAX                 integer.&id
+    LDAP-NAME                   {"atn-aircraftIDName"}
+    ID                          id-at-atn-aircraftIDName
+}
+
+atn-version ATTRIBUTE ::= {
+    WITH SYNTAX                 INTEGER
+    EQUALITY MATCHING RULE      integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    LDAP-SYNTAX                 integer.&id
+    LDAP-NAME                   {"atn-version"}
+    ID                          id-at-atn-version
+}
+
+atn-ipm-heading-extensions ATTRIBUTE ::= {
+    WITH SYNTAX                 BOOLEAN
+    EQUALITY MATCHING RULE      booleanMatch
+    LDAP-SYNTAX                 boolean.&id
+    LDAP-NAME                   {"atn-ipm-heading-extensions"}
+    ID                          id-at-atn-ipm-heading-extensions
+}
+
+atn-global-domain-identifier ATTRIBUTE ::= {
+    SUBTYPE OF                  mhs-or-addresses
+    SINGLE VALUE                TRUE
+    ID                          id-at-atn-amhs-global-domain-identifier
+}
+
+atn-icao-designator ATTRIBUTE ::= {
+    WITH SYNTAX                 PrintableString(SIZE(2..7))
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 printableString.&id
+    LDAP-NAME                   {"atn-icao-designator"}
+    ID                          id-at-atn-icao-designator
+}
+
+atn-net ATTRIBUTE ::= {
+    WITH SYNTAX                 PrintableString(SIZE(1..19))
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    LDAP-SYNTAX                 printableString.&id
+    LDAP-NAME                   {"atn-net"}
+    ID                          id-at-atn-Net
+}
+
+atn-amhs-addressing-scheme ATTRIBUTE ::= {
+    WITH SYNTAX                 INTEGER {xf(0), caas(1), other(2)}
+    EQUALITY MATCHING RULE      integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 integer.&id
+    LDAP-NAME                   {"atn-amhs-addressing-scheme"}
+    ID                          id-at-atn-Amhs-addressing-scheme
+}
+
+atn-amhsMD-naming-context ATTRIBUTE ::= {
+    WITH SYNTAX                 PrintableString(SIZE(1..64))
+    EQUALITY MATCHING RULE      caseIgnoreMatch
+    ORDERING MATCHING RULE      caseIgnoreOrderingMatch
+    SUBSTRINGS MATCHING RULE    caseIgnoreSubstringsMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 printableString.&id
+    LDAP-NAME                   {"atn-amhsMD-naming-context"}
+    ID                          id-at-atn-AmhsMD-naming-context
+}
+
+atn-maximum-number-of-body-parts ATTRIBUTE ::= {
+    WITH SYNTAX                 INTEGER
+    EQUALITY MATCHING RULE      integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 integer.&id
+    LDAP-NAME                   {"atn-maximum-number-of-body-parts"}
+    ID                          id-at-atn-maximum-number-of-body-parts
+}
+
+atn-maximum-text-size ATTRIBUTE ::= {
+    WITH SYNTAX                 ContentLength
+    EQUALITY MATCHING RULE      integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 integer.&id
+    LDAP-NAME                   {"atn-maximum-text-size"}
+    ID                          id-at-atn-maximum-text-size
+}
+
+atn-maximum-file-size ATTRIBUTE ::= {
+    WITH SYNTAX                 ContentLength
+    EQUALITY MATCHING RULE      integerMatch
+    ORDERING MATCHING RULE      integerOrderingMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 integer.&id
+    LDAP-NAME                   {"atn-maximum-file-size"}
+    ID                          id-at-atn-maximum-file-size
+}
+
+atn-use-of-amhs-security ATTRIBUTE ::= {
+    WITH SYNTAX                 BOOLEAN
+    EQUALITY MATCHING RULE      booleanMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 boolean.&id
+    LDAP-NAME                   {"atn-use-of-amhs-security"}
+    ID                          id-at-atn-use-of-amhs-security
+}
+
+atn-use-of-directory ATTRIBUTE ::= {
+    WITH SYNTAX                 BOOLEAN
+    EQUALITY MATCHING RULE      booleanMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 boolean.&id
+    LDAP-NAME                   {"atn-use-of-directory"}
+    ID                          id-at-atn-use-of-directory
+}
+
+atn-group-of-addresses ATTRIBUTE ::= {
+    WITH SYNTAX                 BOOLEAN
+    EQUALITY MATCHING RULE      booleanMatch
+    SINGLE VALUE                TRUE
+    LDAP-SYNTAX                 boolean.&id
+    LDAP-NAME                   {"atn-group-of-addresses"}
+    ID                          id-at-atn-group-of-addresses
+}
+
+-- Object Classes
+
+atn-amhs-user OBJECT-CLASS ::= {
+    SUBCLASS OF     {top}
+    KIND            auxiliary
+    MUST CONTAIN    {
+        mhs-or-addresses
+        | atn-ipm-heading-extensions
+        | atn-amhs-direct-access
+    }
+    MAY CONTAIN     {
+        atn-per-certificate
+        | mhs-maximum-content-length
+        | mhs-deliverable-content-types
+        | mhs-acceptable-eits
+        | mhs-exclusively-acceptable-eits
+        | mhs-message-store-dn
+        | atn-der-certificate
+        | atn-AF-address
+        | atn-maximum-number-of-body-parts
+        | atn-use-of-amhs-security
+        | atn-use-of-directory
+        | atn-group-of-addresses
+        | atn-maximum-text-size
+        | atn-maximum-file-size
+
+    }
+    ID              id-oc-atn-AmhsUser
+}
+
+atn-organizational-unit OBJECT-CLASS ::= {
+    SUBCLASS OF     {organizationalUnit}
+    MAY CONTAIN     {
+        atn-per-certificate
+        | atn-der-certificate
+        | atn-facility-name
+    }
+    ID              id-oc-atn-OrganizationalUnit
+}
+
+atn-organizational-person OBJECT-CLASS ::= {
+    SUBCLASS OF     {organizationalPerson}
+    MAY CONTAIN     {atn-per-certificate | atn-der-certificate}
+    ID              id-oc-atn-OrganizationalPerson
+}
+
+atn-application-entity OBJECT-CLASS ::= {
+    SUBCLASS OF     {applicationEntity}
+    MAY CONTAIN     {
+        atn-per-certificate
+        | atn-der-certificate
+        | atn-version
+    }
+    ID              id-oc-atn-ApplicationEntity
+}
+
+atn-organizational-role OBJECT-CLASS ::= {
+    SUBCLASS OF     {organizationalRole}
+    MUST CONTAIN    {}
+    MAY CONTAIN     {
+        atn-per-certificate |
+        atn-der-certificate
+    }
+    ID              id-oc-atn-OrganizationalRole
+}
+
+atn-certification-authority OBJECT-CLASS ::= {
+    SUBCLASS OF     {certificationAuthority}
+    KIND            auxiliary
+    MAY CONTAIN     {atn-per-certificate | atn-der-certificate}
+    ID              id-oc-atn-certificationAuthority
+}
+
+atn-amhs-distribution-list OBJECT-CLASS ::= {
+    SUBCLASS OF     {mhs-distribution-list}
+    MUST CONTAIN    {atn-ipm-heading-extensions}
+    MAY CONTAIN     {
+        atn-maximum-number-of-body-parts
+        | atn-maximum-text-size
+        | atn-maximum-file-size
+        | atn-per-certificate
+        | atn-der-certificate
+        | atn-use-of-amhs-security
+        | atn-use-of-directory
+        | atn-AF-address
+    }
+    ID              id-oc-atn-AmhsDistributionList
+}
+
+atn-amhs-user-agent OBJECT-CLASS ::= {
+    SUBCLASS OF     {mhs-user-agent}
+    MUST CONTAIN    {atn-ipm-heading-extensions}
+    ID              id-oc-atn-AmhsUserAgent
+}
+
+atn-AmhsGateway OBJECT-CLASS ::= {
+    SUBCLASS OF     {applicationEntity}
+    MUST CONTAIN    {
+        owner
+        | mhs-deliverable-content-types
+        | protocolInformation
+        | mhs-deliverable-classes
+        | mhs-or-addresses
+        | atn-ipm-heading-extensions
+    }
+    MAY CONTAIN     {
+        mhs-maximum-content-length
+        | mhs-acceptable-eits
+        | mhs-exclusively-acceptable-eits
+        | atn-AF-address
+    }
+    ID              id-oc-atn-AmhsGateway
+}
+
+atn-aircraft OBJECT-CLASS ::= {
+    SUBCLASS OF     {top}
+    MUST CONTAIN    {atn-aircraftIDName}
+    MAY CONTAIN     {atn-per-certificate}
+    ID              id-oc-atn-Aircraft
+}
+
+atn-facility OBJECT-CLASS ::= {
+    SUBCLASS OF     {top}
+    MUST CONTAIN    {atn-facility-name}
+    MAY CONTAIN     {atn-per-certificate | atn-der-certificate}
+    ID              id-oc-atn-Facility
+}
+
+atn-amhsMD OBJECT-CLASS ::= {
+    SUBCLASS OF     {top}
+    MUST CONTAIN    {
+        commonName
+        | atn-global-domain-identifier
+        | atn-icao-designator
+        | atn-amhsMD-addressing-scheme
+    }
+    MAY CONTAIN     {atn-amhsMD-naming-context}
+    ID              id-oc-atn-amhsMD
+}
+
+atn-idrp-router OBJECT-CLASS ::= {
+    SUBCLASS OF     {device}
+    MUST CONTAIN    {
+        atn-net
+        | atn-per-certificate
+        | atn-version
+    }
+    ID              id-oc-atn-idrpRouter
+}
+
+atn-dSA OBJECT-CLASS ::= {
+    SUBCLASS OF     {dSA}
+    MUST CONTAIN    {
+        atn-per-certificate
+        | atn-der-certificate
+        | atn-version
+    }
+    ID              id-oc-atn-DirectorySystemAgent }
+
+atn-organization OBJECT-CLASS ::= {
+    SUBCLASS OF     {organization}
+    MUST CONTAIN    {atn-facility-name}
+    MAY CONTAIN     {atn-per-certificate | atn-der-certificate}
+    ID              id-oc-atn-Organization
+}
+
+-- Name Forms
+
+atnOrgUnitNameForm NAME-FORM ::= {
+    NAMES               atn-organizational-unit
+    WITH ATTRIBUTES     {organizationalUnitName}
+    ID                  id-nf-atnOrgUnitNameForm
+}
+
+atnOrgPersonNameForm NAME-FORM ::= {
+    NAMES               atn-organizational-person
+    WITH ATTRIBUTES     {commonName}
+    ID                  id-nf-atnOrgPersonNameForm
+}
+
+atnOrgRoleNameForm NAME-FORM ::= {
+    NAMES               atn-organizational-role
+    WITH ATTRIBUTES     {commonName}
+    ID                  id-nf-atnOrgRoleNameForm
+}
+
+atnApplEntityNameForm NAME-FORM ::= {
+    NAMES               atn-application-entity
+    WITH ATTRIBUTES     {commonName}
+    ID                  id-nf-atnApplEntityNameForm
+}
+
+atnAmhsDLNameForm NAME-FORM ::= {
+    NAMES               atn-amhs-distributionList
+    WITH ATTRIBUTES     {commonName}
+    ID                  id-nf-atnAmhsDLNameForm
+}
+
+atnAmhsUANameForm NAME-FORM ::= {
+    NAMES               atn-amhs-useragent
+    WITH ATTRIBUTES     {commonName}
+    ID                  id-nf-atnAmhsUANameForm
+}
+
+atnAmhsGatewayNameForm NAME-FORM ::= {
+    NAMES               atn-amhs-gateway
+    WITH ATTRIBUTES     {commonName}
+    ID                  id-nf-atnAmhsGatewayNameForm
+}
+
+atnAmhsMDNameForm NAME-FORM ::= {
+    NAMES               atn-amhsMD
+    WITH ATTRIBUTES     {commonName}
+    ID                  id-nf-atnAmhsMDNameForm
+}
+
+atnOrgNameForm NAME-FORM ::= {
+    NAMES               atn-organization
+    WITH ATTRIBUTES     {organizationName}
+    ID                  id-nf-atnOrgNameForm
+}
+
+atnAircraftNameForm NAME-FORM ::= {
+    NAMES               atn-aircraft
+    WITH ATTRIBUTES     {atn-aircraftIDName}
+    ID                  id-nf-atnAircraftNameForm
+}
+
+atnFacilityNameForm NAME-FORM ::= {
+    NAMES               atn-facility
+    WITH ATTRIBUTES     {atn-facility-name}
+    ID                  id-nf-atnFacilityNameForm
+}
+
+atnIdrpRouterNameForm NAME-FORM ::= {
+    NAMES               atn-idrp-router
+    WITH ATTRIBUTES     {commonName}
+    ID                  id-nf-atnIdrpRouterNameForm
+}
+
+atnDSANameForm NAME-FORM ::= {
+    NAMES               atn-dSA
+    WITH ATTRIBUTES     {commonName}
+    ID                  id-nf-atnDSANameForm
+}
+
+END

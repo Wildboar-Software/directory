@@ -1,0 +1,41 @@
+DeviceOwnerAttribute-2008
+    { joint-iso-ccitt(2) country(16) us(840) organization(1) gov(101)
+    dod(2) infosec(1) module(0) id-deviceOwnerAttribute-2008(34) }
+
+DEFINITIONS IMPLICIT TAGS ::=
+
+BEGIN
+
+-- EXPORTS ALL --
+
+IMPORTS
+
+    ATTRIBUTE, objectIdentifierMatch
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+    oid
+        FROM SelectedAttributeTypes
+        {joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+        WITH SUCCESSORS
+
+;
+
+-- device owner attribute OID and syntax
+
+id-deviceOwner OBJECT IDENTIFIER ::= {
+    joint-iso-ccitt(2) country(16) us(840) organization(1) gov(101)
+    dod(2) infosec(1) attributes(5) 69
+}
+
+at-deviceOwner ATTRIBUTE ::= {
+    WITH SYNTAX             OBJECT IDENTIFIER
+    EQUALITY MATCHING RULE  objectIdentifierMatch
+    LDAP-SYNTAX             oid.&id
+    LDAP-NAME               {"deviceOwner"}
+    LDAP-DESC               "Device Owner per IETF RFC 5916"
+    ID                      id-deviceOwner
+}
+
+END

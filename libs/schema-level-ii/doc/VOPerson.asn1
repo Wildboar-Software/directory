@@ -1,0 +1,255 @@
+/*
+Virtual Organization Person Schema.
+
+Text below copied from: https://refeds.org/specifications/voperson
+
+voPerson is both a set of recommendations and an LDAP attribute schema (object
+class), intended to provide a common reference point for attribute management
+within a Virtual Organization (VO)*. The primary goal is to provide a common
+deployment model to facilitate application integration within the organization.
+Although the primary audience is virtual organizations, this object class may be
+useful for others as well.
+
+voPerson is expected to be used alongside the eduPerson object class, which in
+turn is expected to be used alongside person, organizationalPerson, and
+inetOrgPerson object classes. This document includes recommendations for the
+usage of select attributes from these object classes.
+
+voPerson makes use of attribute options, a formal part of the LDAP specification
+(RFC 4512 §2.5) not widely used. Attribute options can provide metadata about
+values for the attribute. It may be necessary to configure the directory server
+to deliver attribute options. Attribute options are sometimes called tagging
+options or attribute description options.
+
+*A VO is an organization that includes members whose identity information is
+obtained from multiple sources, at least one of which is external to the
+organization. The organization may or may not be a legal entity.
+
+*/
+VOPerson {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) voPerson(203)
+}
+DEFINITIONS ::= BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    id-at, id-oc, id-pen, PrivateEnterpriseNumber
+        FROM Wildboar
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) wildboar(1)}
+        WITH SUCCESSORS
+
+    ATTRIBUTE, OBJECT-CLASS, distinguishedNameMatch, DistinguishedName, top
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+    UnboundedDirectoryString, directoryString, caseIgnoreMatch, caseExactMatch,
+    dn, octetString, octetStringMatch
+        FROM SelectedAttributeTypes
+        {joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+        WITH SUCCESSORS
+    ;
+
+-- Object Identifiers
+
+-- GÉANT (formerly 'Trans-European Research and Education Networking Association (TERENA)')
+pen-geant PrivateEnterpriseNumber ::= 25178
+
+ID ::= OBJECT IDENTIFIER
+
+id-geant                            ID ::= {id-pen pen-geant}
+id-voPersonRoot                     ID ::= {id-geant 4}
+id-voPersonObjectClass              ID ::= {id-voPersonRoot 1}
+
+id-at-voPersonApplicationUID        ID ::= { id-voPersonObjectClass 1 }
+id-at-voPersonAuthorName            ID ::= { id-voPersonObjectClass 2 }
+id-at-voPersonCertificateDN         ID ::= { id-voPersonObjectClass 3 }
+id-at-voPersonCertificateIssuerDN   ID ::= { id-voPersonObjectClass 4 }
+id-at-voPersonExternalID            ID ::= { id-voPersonObjectClass 5 }
+id-at-voPersonID                    ID ::= { id-voPersonObjectClass 6 }
+id-at-voPersonPolicyAgreement       ID ::= { id-voPersonObjectClass 7 }
+id-at-voPersonSoRID                 ID ::= { id-voPersonObjectClass 8 }
+id-at-voPersonStatus                ID ::= { id-voPersonObjectClass 9 }
+id-at-voPersonAffiliation           ID ::= { id-voPersonObjectClass 10 }
+id-at-voPersonExternalAffiliation   ID ::= { id-voPersonObjectClass 11 }
+id-at-voPersonScopedAffiliation     ID ::= { id-voPersonObjectClass 12 }
+id-at-voPersonApplicationPassword   ID ::= { id-voPersonObjectClass 13 }
+id-at-voPersonVerifiedEmail         ID ::= { id-voPersonObjectClass 14 }
+id-at-voPersonToken                 ID ::= { id-voPersonObjectClass 15 }
+
+id-oc-voPersonObjectClass           ID ::= id-voPersonObjectClass
+
+-- Attribute Types
+
+voPersonAffiliation ATTRIBUTE ::= {
+    WITH SYNTAX				    UnboundedDirectoryString
+    EQUALITY MATCHING RULE	    caseIgnoreMatch
+    LDAP-SYNTAX				    directoryString.&id
+    LDAP-NAME				    {"voPersonAffiliation"}
+    LDAP-DESC				    "voPerson Affiliation Within Local Scope"
+    ID						    id-at-voPersonAffiliation
+}
+
+voPersonApplicationUID ATTRIBUTE ::= {
+    WITH SYNTAX				    UnboundedDirectoryString
+    EQUALITY MATCHING RULE	    caseIgnoreMatch
+    LDAP-SYNTAX				    directoryString.&id
+    LDAP-NAME				    {"voPersonApplicationUID"}
+    LDAP-DESC				    "voPerson Application-Specific User Identifier"
+    ID						    id-at-voPersonApplicationUID
+}
+
+voPersonAuthorName ATTRIBUTE ::= {
+    WITH SYNTAX				    UnboundedDirectoryString
+    EQUALITY MATCHING RULE	    caseIgnoreMatch
+    LDAP-SYNTAX				    directoryString.&id
+    LDAP-NAME				    {"voPersonAuthorName"}
+    LDAP-DESC				    "voPerson Author Name"
+    ID						    id-at-voPersonAuthorName
+}
+
+voPersonExternalAffiliation ATTRIBUTE ::= {
+    WITH SYNTAX				    UnboundedDirectoryString
+    EQUALITY MATCHING RULE	    caseIgnoreMatch
+    LDAP-SYNTAX				    directoryString.&id
+    LDAP-NAME				    {"voPersonExternalAffiliation"}
+    LDAP-DESC				    "voPerson Scoped External Affiliation"
+    ID						    id-at-voPersonExternalAffiliation
+}
+
+voPersonExternalID ATTRIBUTE ::= {
+    WITH SYNTAX				    UnboundedDirectoryString
+    EQUALITY MATCHING RULE	    caseIgnoreMatch
+    LDAP-SYNTAX				    directoryString.&id
+    LDAP-NAME				    {"voPersonExternalID"}
+    LDAP-DESC				    "voPerson Scoped External Identifier"
+    ID						    id-at-voPersonExternalID
+}
+
+voPersonID ATTRIBUTE ::= {
+    WITH SYNTAX				    UnboundedDirectoryString
+    EQUALITY MATCHING RULE	    caseIgnoreMatch
+    LDAP-SYNTAX				    directoryString.&id
+    LDAP-NAME				    {"voPersonID"}
+    LDAP-DESC				    "voPerson Unique Identifier"
+    ID						    id-at-voPersonID
+}
+
+voPersonPolicyAgreement ATTRIBUTE ::= {
+    WITH SYNTAX				    UnboundedDirectoryString
+    EQUALITY MATCHING RULE	    caseIgnoreMatch
+    LDAP-SYNTAX				    directoryString.&id
+    LDAP-NAME				    {"voPersonPolicyAgreement"}
+    LDAP-DESC				    "voPerson Policy Agreement Indicator"
+    ID						    id-at-voPersonPolicyAgreement
+}
+
+voPersonScopedAffiliation ATTRIBUTE ::= {
+    WITH SYNTAX				    UnboundedDirectoryString
+    EQUALITY MATCHING RULE	    caseIgnoreMatch
+    LDAP-SYNTAX				    directoryString.&id
+    LDAP-NAME				    {"voPersonScopedAffiliation"}
+    LDAP-DESC				    "voPerson Affiliation With Explicit Local Scope"
+    ID						    id-at-voPersonScopedAffiliation
+}
+
+voPersonSoRID ATTRIBUTE ::= {
+    WITH SYNTAX				    UnboundedDirectoryString
+    EQUALITY MATCHING RULE	    caseIgnoreMatch
+    LDAP-SYNTAX				    directoryString.&id
+    LDAP-NAME				    {"voPersonSoRID"}
+    LDAP-DESC				    "voPerson External Identifier"
+    ID						    id-at-voPersonSoRID
+}
+
+voPersonStatus ATTRIBUTE ::= {
+    WITH SYNTAX				    UnboundedDirectoryString
+    EQUALITY MATCHING RULE	    caseIgnoreMatch
+    LDAP-SYNTAX				    directoryString.&id
+    LDAP-NAME				    {"voPersonStatus"}
+    LDAP-DESC				    "voPerson Status"
+    ID						    id-at-voPersonStatus
+}
+
+voPersonToken ATTRIBUTE ::= {
+    WITH SYNTAX				    UnboundedDirectoryString
+    EQUALITY MATCHING RULE	    caseExactMatch
+    LDAP-SYNTAX				    directoryString.&id
+    LDAP-NAME				    {"voPersonToken"}
+    LDAP-DESC				    "voPerson Token"
+    ID						    id-at-voPersonToken
+}
+
+voPersonVerifiedEmail ATTRIBUTE ::= {
+    WITH SYNTAX				    UnboundedDirectoryString
+    EQUALITY MATCHING RULE	    caseIgnoreMatch
+    LDAP-SYNTAX				    directoryString.&id
+    LDAP-NAME				    {"voPersonVerifiedEmail"}
+    LDAP-DESC				    "voPerson Verified Email Address"
+    ID						    id-at-voPersonVerifiedEmail
+}
+
+voPersonCertificateDN ATTRIBUTE ::= {
+    WITH SYNTAX				    DistinguishedName
+    EQUALITY MATCHING RULE	    distinguishedNameMatch
+    LDAP-SYNTAX				    dn.&id
+    LDAP-NAME				    {"voPersonCertificateDN"}
+    LDAP-DESC				    "voPerson Certificate Distinguished Name"
+    ID						    id-at-voPersonCertificateDN
+}
+
+voPersonCertificateIssuerDN ATTRIBUTE ::= {
+    WITH SYNTAX				    DistinguishedName
+    EQUALITY MATCHING RULE	    distinguishedNameMatch
+    LDAP-SYNTAX				    dn.&id
+    LDAP-NAME				    {"voPersonCertificateIssuerDN"}
+    LDAP-DESC				    "voPerson Certificate Issuer DN"
+    ID						    id-at-voPersonCertificateIssuerDN
+}
+
+voPersonApplicationPassword ATTRIBUTE ::= {
+    WITH SYNTAX				    OCTET STRING
+    EQUALITY MATCHING RULE	    octetStringMatch
+    LDAP-SYNTAX				    octetString.&id
+    LDAP-NAME				    {"voPersonApplicationPassword"}
+    LDAP-DESC				    "voPerson Application-Specific Password"
+    ID						    id-at-voPersonApplicationPassword
+}
+
+-- Attribute Sets
+
+VOPersonAttributes ATTRIBUTE ::= {
+    voPersonAffiliation
+    | voPersonApplicationPassword
+    | voPersonApplicationUID
+    | voPersonAuthorName
+    | voPersonCertificateDN
+    | voPersonCertificateIssuerDN
+    | voPersonExternalAffiliation
+    | voPersonExternalID
+    | voPersonID
+    | voPersonPolicyAgreement
+    | voPersonScopedAffiliation
+    | voPersonSoRID
+    | voPersonStatus
+    | voPersonToken
+    | voPersonVerifiedEmail,
+    ...
+}
+
+-- Object Classes
+
+voPersonObjectClass OBJECT-CLASS ::= {
+    SUBCLASS OF			{top}
+    KIND				auxiliary
+    MAY CONTAIN			{VOPersonAttributes}
+    LDAP-NAME			{"voPersonObjectClass"}
+    LDAP-DESC			"REFEDS Virtual Organization Person"
+    ID					id-oc-voPersonObjectClass
+}
+
+END

@@ -28,6 +28,7 @@
             "@wildboar/parity-schema/*": ["libs/parity-schema/*"],
             "@wildboar/passport-x500": ["libs/passport-x500/src/index.ts"],
             "@wildboar/rose-transport": ["libs/rose-transport/src/index.ts"],
+            "@wildboar/schema-level-ii": ["libs/schema-level-ii/src/index.ts"],
             "@wildboar/x500-auth": ["libs/x500-auth-ts/src/index.ts"],
             "@wildboar/x500-cli-config": ["libs/x500-cli-config/src/index.ts"],
             "@wildboar/x500-client-ts": ["libs/x500-client-ts/src/index.ts"],

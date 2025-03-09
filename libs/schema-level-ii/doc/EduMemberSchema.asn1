@@ -1,0 +1,72 @@
+-- Source: https://spaces.at.internet2.edu/display/macedir/OpenLDAP+eduMember
+-- I found this through the REFEDS page.
+EduMemberSchema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) edu-member-schema(197)
+}
+DEFINITIONS ::= BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    ATTRIBUTE, OBJECT-CLASS, top
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+    UnboundedDirectoryString, directoryString, caseExactMatch
+        FROM SelectedAttributeTypes
+        {joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+        WITH SUCCESSORS
+    ;
+
+-- Object Identifiers
+
+-- See: https://www.iana.org/assignments/enterprise-numbers/?q=5923
+id-pen-internet2            OBJECT IDENTIFIER ::= {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) 5923 mace(1) eduMember(5) 2 eduMember(1)
+}
+
+id-mace                     OBJECT IDENTIFIER ::= { id-pen-internet2 mace(1) }
+id-eduMember                OBJECT IDENTIFIER ::= { id-mace eduMember(5) }
+
+id-at-isMemberOf            OBJECT IDENTIFIER ::= { id-eduMember 1 1 }
+id-at-hasMember             OBJECT IDENTIFIER ::= { id-eduMember 1 2 }
+
+id-oc-eduMember             OBJECT IDENTIFIER ::= { id-eduMember 2 1 }
+
+-- Attribute Types
+
+isMemberOf ATTRIBUTE ::= {
+    WITH SYNTAX			    UnboundedDirectoryString
+    EQUALITY MATCHING RULE  caseExactMatch
+    LDAP-SYNTAX			    directoryString.&id
+    LDAP-NAME			    {"isMemberOf"}
+    LDAP-DESC               "identifiers for entities that are members of the group"
+    OBSOLETE                TRUE
+    ID					    id-at-isMemberOf
+}
+
+hasMember ATTRIBUTE ::= {
+    WITH SYNTAX			    UnboundedDirectoryString
+    EQUALITY MATCHING RULE  caseExactMatch
+    LDAP-SYNTAX			    directoryString.&id
+    LDAP-NAME			    {"hasMember"}
+    LDAP-DESC               "identifiers for entities that are members of the group"
+    OBSOLETE                TRUE
+    ID					    id-at-hasMember
+}
+
+-- Object Classes
+
+eduMember OBJECT-CLASS ::= {
+    SUBCLASS OF			{top}
+    KIND				auxiliary
+    MAY CONTAIN			{isMemberOf | hasMember}
+    LDAP-NAME			{"eduMember"}
+    ID					id-oc-eduMember
+}
+
+END

@@ -1,0 +1,39 @@
+ClearanceSponsorAttribute-2008
+{ joint-iso-ccitt(2) country(16) us(840) organization(1) gov(101)
+dod(2) infosec(1) modules(0) id-clearanceSponsorAttribute-2008(35) }
+DEFINITIONS IMPLICIT TAGS ::= BEGIN
+
+-- EXPORTS ALL --
+
+IMPORTS
+
+    ATTRIBUTE
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+    DirectoryString, caseIgnoreMatch, directoryString
+        FROM SelectedAttributeTypes
+        {joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+        WITH SUCCESSORS
+
+;
+
+id-clearanceSponsor OBJECT IDENTIFIER ::= {
+    joint-iso-ccitt(2) country(16) us(840) organization(1) gov(101)
+    dod(2) infosec(1) attributes(5) 68 }
+
+ub-clearance-sponsor INTEGER ::= 64
+
+ClearanceSponsorType ::= UTF8String(SIZE (1..ub-clearance-sponsor))
+
+at-clearanceSponsor ATTRIBUTE ::= {
+    WITH SYNTAX             ClearanceSponsorType
+    EQUALITY MATCHING RULE  caseIgnoreMatch
+    LDAP-SYNTAX             directoryString.&id
+    LDAP-NAME               {"clearanceSponsor"}
+    LDAP-DESC               "Clearance Sponsor per IETF RFC 5917"
+    ID                      id-clearanceSponsor
+}
+
+END

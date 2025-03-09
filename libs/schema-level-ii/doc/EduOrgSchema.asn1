@@ -1,0 +1,115 @@
+-- eduOrg Objectclass version 1.1 (2002-10-23)
+-- Source: https://spaces.at.internet2.edu/display/macedir/Generic+eduOrg
+-- See http://www.educause.edu/eduperson for background and usage
+EduOrgSchema {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) wildboar(56490) module(1) edu-org-schema(198)
+}
+DEFINITIONS ::= BEGIN
+
+EXPORTS ALL;
+
+IMPORTS
+
+    id-at, id-oc
+        FROM Wildboar
+        {iso(1) identified-organization(3) dod(6) internet(1) private(4)
+        enterprise(1) wildboar(56490) module(1) wildboar(1)}
+        WITH SUCCESSORS
+
+    ATTRIBUTE, OBJECT-CLASS, top
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+
+    UnboundedDirectoryString, directoryString, caseIgnoreMatch,
+    caseExactIA5Match
+        FROM SelectedAttributeTypes
+        {joint-iso-itu-t ds(5) module(1) selectedAttributeTypes(5) 9}
+        WITH SUCCESSORS
+    ;
+
+-- Object Identifiers
+
+-- See: https://www.iana.org/assignments/enterprise-numbers/?q=5923
+id-pen-internet2            OBJECT IDENTIFIER ::= {
+    iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) 5923 mace(1) eduMember(5) 2 eduMember(1)
+}
+
+id-mace                             OBJECT IDENTIFIER ::= { id-pen-internet2 mace(1) }
+id-eduOrg                           OBJECT IDENTIFIER ::= { id-mace eduOrg(2) }
+
+id-at-eduOrgHomePageURI             OBJECT IDENTIFIER ::= { id-eduOrg 1 2 }
+id-at-eduOrgIdentityAuthNPolicyURI  OBJECT IDENTIFIER ::= { id-eduOrg 1 3 }
+id-at-eduOrgLegalName               OBJECT IDENTIFIER ::= { id-eduOrg 1 4 }
+id-at-eduOrgSuperiorURI             OBJECT IDENTIFIER ::= { id-eduOrg 1 5 }
+id-at-eduOrgWhitePagesURI           OBJECT IDENTIFIER ::= { id-eduOrg 1 6 }
+
+id-oc-eduOrg                        OBJECT IDENTIFIER ::= { id-eduOrg 2 }
+
+-- Attribute Types
+
+eduOrgHomePageURI ATTRIBUTE ::= {
+    WITH SYNTAX				    UnboundedDirectoryString
+    EQUALITY MATCHING RULE	    caseExactIA5Match
+    LDAP-SYNTAX				    directoryString.&id
+    LDAP-NAME				    {"eduOrgHomePageURI"}
+    LDAP-DESC				    "eduOrg per Internet2 and EDUCAUSE"
+    ID						    id-at-eduOrgHomePageURI
+}
+
+eduOrgIdentityAuthNPolicyURI ATTRIBUTE ::= {
+    WITH SYNTAX				    UnboundedDirectoryString
+    EQUALITY MATCHING RULE	    caseExactIA5Match
+    LDAP-SYNTAX				    directoryString.&id
+    LDAP-NAME				    {"eduOrgIdentityAuthNPolicyURI"}
+    LDAP-DESC				    "eduOrg per Internet2 and EDUCAUSE"
+    ID						    id-at-eduOrgIdentityAuthNPolicyURI
+}
+
+eduOrgLegalName ATTRIBUTE ::= {
+    WITH SYNTAX				    UnboundedDirectoryString
+    EQUALITY MATCHING RULE	    caseIgnoreMatch
+    LDAP-SYNTAX				    directoryString.&id
+    LDAP-NAME				    {"eduOrgLegalName"}
+    LDAP-DESC				    "eduOrg per Internet2 and EDUCAUSE"
+    ID						    id-at-eduOrgLegalName
+}
+
+eduOrgSuperiorURI ATTRIBUTE ::= {
+    WITH SYNTAX				    UnboundedDirectoryString
+    EQUALITY MATCHING RULE	    caseExactIA5Match
+    LDAP-SYNTAX				    directoryString.&id
+    LDAP-NAME				    {"eduOrgSuperiorURI"}
+    LDAP-DESC				    "eduOrg per Internet2 and EDUCAUSE"
+    ID						    id-at-eduOrgSuperiorURI
+}
+
+eduOrgWhitePagesURI ATTRIBUTE ::= {
+    WITH SYNTAX				    UnboundedDirectoryString
+    EQUALITY MATCHING RULE	    caseExactIA5Match
+    LDAP-SYNTAX				    directoryString.&id
+    LDAP-NAME				    {"eduOrgWhitePagesURI"}
+    LDAP-DESC				    "eduOrg per Internet2 and EDUCAUSE"
+    ID						    id-at-eduOrgWhitePagesURI
+}
+
+-- Object Classes
+
+eduOrg OBJECT-CLASS ::= {
+    SUBCLASS OF			{top}
+    KIND				auxiliary
+    MAY CONTAIN			{
+        commonName
+        | eduOrgHomePageURI
+        | eduOrgIdentityAuthNPolicyURI
+        | eduOrgLegalName
+        | eduOrgSuperiorURI
+        | eduOrgWhitePagesURI
+    }
+    LDAP-NAME			{"eduOrg"}
+    ID					id-oc-eduOrg
+}
+
+END

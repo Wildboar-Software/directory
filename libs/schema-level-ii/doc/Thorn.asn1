@@ -1,0 +1,71 @@
+Thorn {
+    ccitt data(9) pss(2342) ucl(19200300) thorn(100) directoryDefinitions(1)
+}
+DEFINITIONS ::= BEGIN
+
+IMPORTS
+
+    AttributeType
+        FROM InformationFramework
+        {joint-iso-itu-t ds(5) module(1) informationFramework(1) 9}
+        WITH SUCCESSORS
+        ;
+
+MailBox ::= SEQUENCE {
+    mailboxType     PrintableString,
+    mailbox         IA5String,
+    ...
+}
+
+DocumentStoreSyntax ::= SEQUENCE {
+    method                  INTEGER { ftp(0), ftam(1) },
+    textEncodedHostName     IA5String,
+    directoryName           [0] IA5String OPTIONAL,
+    fileFsName              IA5String,
+    ...
+}
+
+DSAQualitySyntax ::= SEQUENCE {
+    serviceQuality      ENUMERATED {
+        defunct       (0),
+        experimental  (1),
+        best-effort   (2),
+        pilot-service (3),
+        full-service  (4) },
+    description     PrintableString OPTIONAL,
+    ...
+}
+
+DataQualitySyntax ::= SEQUENCE {
+    namespace-completeness ENUMERATED {
+        none        (1),
+        sample      (2),
+        selected    (3),
+        substantial (4),
+        full        (5) },
+    defaultAttributeQuality     AttributeQuality,
+    attributeQuality    SET OF SEQUENCE {
+        type        AttributeType,
+        quality     AttributeQuality,
+        ...
+    },
+    description     PrintableString OPTIONAL,
+    ...
+}
+
+AttributeQuality ::= SEQUENCE {
+    maintenance-level ENUMERATED {
+        unknown           (1),
+        external          (2),
+        system-maintained (3),
+        user-supplied     (4) },
+    attribute-completeness ENUMERATED {
+        none        (1),
+        sample      (2),
+        selected    (3),
+        substantial (4),
+        full        (5) } DEFAULT full,
+    ...
+}
+
+END
