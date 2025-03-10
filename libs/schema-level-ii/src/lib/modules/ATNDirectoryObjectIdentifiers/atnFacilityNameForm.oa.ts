@@ -3,12 +3,8 @@ import { NAME_FORM } from "@wildboar/x500/src/lib/modules/InformationFramework/N
 import { atn_facility_name } from "../ATNDirectoryObjectIdentifiers/atn-facility-name.oa";
 import { atn_facility } from "../ATNDirectoryObjectIdentifiers/atn-facility.oa";
 import { id_nf_atnFacilityNameForm } from "../ATNDirectoryObjectIdentifiers/id-nf-atnFacilityNameForm.va";
-export { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-export { NAME_FORM } from "@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca";
-export { OBJECT_CLASS } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
-export { atn_facility_name } from "../ATNDirectoryObjectIdentifiers/atn-facility-name.oa";
-export { atn_facility } from "../ATNDirectoryObjectIdentifiers/atn-facility.oa";
-export { id_nf_atnFacilityNameForm } from "../ATNDirectoryObjectIdentifiers/id-nf-atnFacilityNameForm.va";
+
+
 
 
 /* START_OF_SYMBOL_DEFINITION atnFacilityNameForm */

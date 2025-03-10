@@ -9,9 +9,7 @@ import * as $ from "asn1-ts/dist/node/functional";
 import { AttributeQuality, _decode_AttributeQuality, _encode_AttributeQuality } from "../Thorn/AttributeQuality.ta";
 import { DataQualitySyntax_attributeQuality_Item, _decode_DataQualitySyntax_attributeQuality_Item, _encode_DataQualitySyntax_attributeQuality_Item } from "../Thorn/DataQualitySyntax-attributeQuality-Item.ta";
 import { DataQualitySyntax_namespace_completeness, _decode_DataQualitySyntax_namespace_completeness, _encode_DataQualitySyntax_namespace_completeness, _enum_for_DataQualitySyntax_namespace_completeness } from "../Thorn/DataQualitySyntax-namespace-completeness.ta";
-export { AttributeQuality, _decode_AttributeQuality, _encode_AttributeQuality } from "../Thorn/AttributeQuality.ta";
-export { DataQualitySyntax_attributeQuality_Item, _decode_DataQualitySyntax_attributeQuality_Item, _encode_DataQualitySyntax_attributeQuality_Item } from "../Thorn/DataQualitySyntax-attributeQuality-Item.ta";
-export { DataQualitySyntax_namespace_completeness, DataQualitySyntax_namespace_completeness_full /* IMPORTED_LONG_ENUMERATION_ITEM */, DataQualitySyntax_namespace_completeness_none /* IMPORTED_LONG_ENUMERATION_ITEM */, DataQualitySyntax_namespace_completeness_sample /* IMPORTED_LONG_ENUMERATION_ITEM */, DataQualitySyntax_namespace_completeness_selected /* IMPORTED_LONG_ENUMERATION_ITEM */, DataQualitySyntax_namespace_completeness_substantial /* IMPORTED_LONG_ENUMERATION_ITEM */, _decode_DataQualitySyntax_namespace_completeness, _encode_DataQualitySyntax_namespace_completeness, _enum_for_DataQualitySyntax_namespace_completeness, full /* IMPORTED_SHORT_ENUMERATION_ITEM */, none /* IMPORTED_SHORT_ENUMERATION_ITEM */, sample /* IMPORTED_SHORT_ENUMERATION_ITEM */, selected /* IMPORTED_SHORT_ENUMERATION_ITEM */, substantial /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "../Thorn/DataQualitySyntax-namespace-completeness.ta";
+
 
 
 /* START_OF_SYMBOL_DEFINITION DataQualitySyntax */

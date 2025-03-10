@@ -6,13 +6,8 @@ import { integerMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTy
 import { integerOrderingMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integerOrderingMatch.oa";
 import { BinarySigningTime, _decode_BinarySigningTime, _encode_BinarySigningTime } from "./BinarySigningTime.ta";
 import { id_aa_binarySigningTime } from "./id-aa-binarySigningTime.va";
-export { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-export { AttributeUsage, AttributeUsage_dSAOperation /* IMPORTED_LONG_ENUMERATION_ITEM */, AttributeUsage_directoryOperation /* IMPORTED_LONG_ENUMERATION_ITEM */, AttributeUsage_distributedOperation /* IMPORTED_LONG_ENUMERATION_ITEM */, AttributeUsage_userApplications /* IMPORTED_LONG_ENUMERATION_ITEM */, _decode_AttributeUsage, _encode_AttributeUsage, _enum_for_AttributeUsage, dSAOperation /* IMPORTED_SHORT_ENUMERATION_ITEM */, directoryOperation /* IMPORTED_SHORT_ENUMERATION_ITEM */, distributedOperation /* IMPORTED_SHORT_ENUMERATION_ITEM */, userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
-export { integer } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integer.oa";
-export { integerMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integerMatch.oa";
-export { integerOrderingMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integerOrderingMatch.oa";
-export { BinarySigningTime, _decode_BinarySigningTime, _encode_BinarySigningTime } from "./BinarySigningTime.ta";
-export { id_aa_binarySigningTime } from "./id-aa-binarySigningTime.va";
+
+
 
 
 /* START_OF_SYMBOL_DEFINITION aa_binarySigningTime */

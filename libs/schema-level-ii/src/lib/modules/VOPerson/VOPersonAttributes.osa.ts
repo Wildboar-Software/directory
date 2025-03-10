@@ -15,22 +15,12 @@ import { voPersonSoRID } from "../VOPerson/voPersonSoRID.oa";
 import { voPersonStatus } from "../VOPerson/voPersonStatus.oa";
 import { voPersonToken } from "../VOPerson/voPersonToken.oa";
 import { voPersonVerifiedEmail } from "../VOPerson/voPersonVerifiedEmail.oa";
-export { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-export { voPersonAffiliation } from "../VOPerson/voPersonAffiliation.oa";
-export { voPersonApplicationPassword } from "../VOPerson/voPersonApplicationPassword.oa";
-export { voPersonApplicationUID } from "../VOPerson/voPersonApplicationUID.oa";
-export { voPersonAuthorName } from "../VOPerson/voPersonAuthorName.oa";
-export { voPersonCertificateDN } from "../VOPerson/voPersonCertificateDN.oa";
-export { voPersonCertificateIssuerDN } from "../VOPerson/voPersonCertificateIssuerDN.oa";
-export { voPersonExternalAffiliation } from "../VOPerson/voPersonExternalAffiliation.oa";
-export { voPersonExternalID } from "../VOPerson/voPersonExternalID.oa";
-export { voPersonID } from "../VOPerson/voPersonID.oa";
-export { voPersonPolicyAgreement } from "../VOPerson/voPersonPolicyAgreement.oa";
-export { voPersonScopedAffiliation } from "../VOPerson/voPersonScopedAffiliation.oa";
-export { voPersonSoRID } from "../VOPerson/voPersonSoRID.oa";
-export { voPersonStatus } from "../VOPerson/voPersonStatus.oa";
-export { voPersonToken } from "../VOPerson/voPersonToken.oa";
-export { voPersonVerifiedEmail } from "../VOPerson/voPersonVerifiedEmail.oa";
+
+
+
+
+
+
 
 
 /* START_OF_SYMBOL_DEFINITION VOPersonAttributes */

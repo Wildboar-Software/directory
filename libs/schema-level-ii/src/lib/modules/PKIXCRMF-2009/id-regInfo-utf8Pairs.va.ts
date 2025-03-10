@@ -4,7 +4,6 @@ import {
     OBJECT_IDENTIFIER
 } from "asn1-ts";
 import { id_regInfo } from "../PKIXCRMF-2009/id-regInfo.va";
-export { id_regInfo } from "../PKIXCRMF-2009/id-regInfo.va";
 
 
 /* START_OF_SYMBOL_DEFINITION id_regInfo_utf8Pairs */

@@ -8,8 +8,6 @@ import {
 import * as $ from "asn1-ts/dist/node/functional";
 import { CertTemplate, _decode_CertTemplate, _encode_CertTemplate } from "../PKIXCRMF-2009/CertTemplate.ta";
 import { Controls, _decode_Controls, _encode_Controls } from "../PKIXCRMF-2009/Controls.ta";
-export { CertTemplate, _decode_CertTemplate, _encode_CertTemplate } from "../PKIXCRMF-2009/CertTemplate.ta";
-export { Controls, _decode_Controls, _encode_Controls } from "../PKIXCRMF-2009/Controls.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION CertRequest */

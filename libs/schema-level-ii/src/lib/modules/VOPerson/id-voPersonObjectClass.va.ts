@@ -4,8 +4,6 @@ import {
 } from "asn1-ts";
 import { ID } from "../VOPerson/ID.ta";
 import { id_voPersonRoot } from "../VOPerson/id-voPersonRoot.va";
-export { ID, _decode_ID, _encode_ID } from "../VOPerson/ID.ta";
-export { id_voPersonRoot } from "../VOPerson/id-voPersonRoot.va";
 
 
 /* START_OF_SYMBOL_DEFINITION id_voPersonObjectClass */

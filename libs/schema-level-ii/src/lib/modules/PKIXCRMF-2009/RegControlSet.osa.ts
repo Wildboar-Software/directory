@@ -6,13 +6,8 @@ import { regCtrl_pkiArchiveOptions } from "../PKIXCRMF-2009/regCtrl-pkiArchiveOp
 import { regCtrl_pkiPublicationInfo } from "../PKIXCRMF-2009/regCtrl-pkiPublicationInfo.oa";
 import { regCtrl_protocolEncrKey } from "../PKIXCRMF-2009/regCtrl-protocolEncrKey.oa";
 import { regCtrl_regToken } from "../PKIXCRMF-2009/regCtrl-regToken.oa";
-export { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-export { regCtrl_authenticator } from "../PKIXCRMF-2009/regCtrl-authenticator.oa";
-export { regCtrl_oldCertID } from "../PKIXCRMF-2009/regCtrl-oldCertID.oa";
-export { regCtrl_pkiArchiveOptions } from "../PKIXCRMF-2009/regCtrl-pkiArchiveOptions.oa";
-export { regCtrl_pkiPublicationInfo } from "../PKIXCRMF-2009/regCtrl-pkiPublicationInfo.oa";
-export { regCtrl_protocolEncrKey } from "../PKIXCRMF-2009/regCtrl-protocolEncrKey.oa";
-export { regCtrl_regToken } from "../PKIXCRMF-2009/regCtrl-regToken.oa";
+
+
 
 
 /* START_OF_SYMBOL_DEFINITION RegControlSet */

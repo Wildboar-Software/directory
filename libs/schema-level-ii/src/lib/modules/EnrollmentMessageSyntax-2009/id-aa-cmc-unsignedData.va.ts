@@ -4,7 +4,6 @@ import {
     OBJECT_IDENTIFIER
 } from "asn1-ts";
 import { id_aa } from "../EnrollmentMessageSyntax-2009/id-aa.va";
-export { id_aa } from "../EnrollmentMessageSyntax-2009/id-aa.va";
 
 
 /* START_OF_SYMBOL_DEFINITION id_aa_cmc_unsignedData */

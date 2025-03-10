@@ -7,7 +7,6 @@ import {
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
 import { _decode_DSAQualitySyntax_serviceQuality, _encode_DSAQualitySyntax_serviceQuality, _enum_for_DSAQualitySyntax_serviceQuality, DSAQualitySyntax_serviceQuality } from "../Thorn/DSAQualitySyntax-serviceQuality.ta";
-export { _decode_DSAQualitySyntax_serviceQuality, _encode_DSAQualitySyntax_serviceQuality, _enum_for_DSAQualitySyntax_serviceQuality, best_effort /* IMPORTED_SHORT_ENUMERATION_ITEM */, defunct /* IMPORTED_SHORT_ENUMERATION_ITEM */, DSAQualitySyntax_serviceQuality, DSAQualitySyntax_serviceQuality_best_effort /* IMPORTED_LONG_ENUMERATION_ITEM */, DSAQualitySyntax_serviceQuality_defunct /* IMPORTED_LONG_ENUMERATION_ITEM */, DSAQualitySyntax_serviceQuality_experimental /* IMPORTED_LONG_ENUMERATION_ITEM */, DSAQualitySyntax_serviceQuality_full_service /* IMPORTED_LONG_ENUMERATION_ITEM */, DSAQualitySyntax_serviceQuality_pilot_service /* IMPORTED_LONG_ENUMERATION_ITEM */, experimental /* IMPORTED_SHORT_ENUMERATION_ITEM */, full_service /* IMPORTED_SHORT_ENUMERATION_ITEM */, pilot_service /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "../Thorn/DSAQualitySyntax-serviceQuality.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION DSAQualitySyntax */

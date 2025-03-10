@@ -3,11 +3,8 @@ import { NAME_FORM } from "@wildboar/x500/src/lib/modules/InformationFramework/N
 import { commonName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
 import { id_nf_atnAmhsDLNameForm } from "../ATNDirectoryObjectIdentifiers/id-nf-atnAmhsDLNameForm.va";
 import { atn_amhs_distribution_list } from "./atn-amhs-distribution-list.oa";
-export { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-export { NAME_FORM } from "@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca";
-export { OBJECT_CLASS } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
-export { commonName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
-export { id_nf_atnAmhsDLNameForm } from "../ATNDirectoryObjectIdentifiers/id-nf-atnAmhsDLNameForm.va";
+
+
 
 /* START_OF_SYMBOL_DEFINITION atnAmhsDLNameForm */
 /**

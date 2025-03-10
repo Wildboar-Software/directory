@@ -5,7 +5,6 @@ import {
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
 import { HardwareModules, _decode_HardwareModules, _encode_HardwareModules } from "../CMSFirmwareWrapper/HardwareModules.ta";
-export { HardwareModules, _decode_HardwareModules, _encode_HardwareModules } from "../CMSFirmwareWrapper/HardwareModules.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION CommunityIdentifier */

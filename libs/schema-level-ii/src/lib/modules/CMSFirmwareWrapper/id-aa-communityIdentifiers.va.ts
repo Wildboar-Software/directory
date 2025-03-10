@@ -5,7 +5,6 @@ import {
 } from "asn1-ts";
 
 
-
 /* START_OF_SYMBOL_DEFINITION id_aa_communityIdentifiers */
 /**
  * @summary id_aa_communityIdentifiers

@@ -6,7 +6,7 @@ import {
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
 import { PKMACValue, _decode_PKMACValue, _encode_PKMACValue } from "../PKIXCRMF-2009/PKMACValue.ta";
-export { PKMACValue, _decode_PKMACValue, _encode_PKMACValue } from "../PKIXCRMF-2009/PKMACValue.ta";
+
 
 /* START_OF_SYMBOL_DEFINITION POPOSigningKeyInput_authInfo */
 /**

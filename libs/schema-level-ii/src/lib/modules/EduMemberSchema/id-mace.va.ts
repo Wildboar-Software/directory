@@ -4,7 +4,6 @@ import {
     OBJECT_IDENTIFIER
 } from "asn1-ts";
 import { id_pen_internet2 } from "../EduMemberSchema/id-pen-internet2.va";
-export { id_pen_internet2 } from "../EduMemberSchema/id-pen-internet2.va";
 
 
 /* START_OF_SYMBOL_DEFINITION id_mace */

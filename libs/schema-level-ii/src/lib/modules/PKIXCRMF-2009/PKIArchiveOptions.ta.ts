@@ -7,8 +7,6 @@ import {
 import * as $ from "asn1-ts/dist/node/functional";
 import { EncryptedKey, _decode_EncryptedKey, _encode_EncryptedKey } from "../PKIXCRMF-2009/EncryptedKey.ta";
 import { KeyGenParameters, _decode_KeyGenParameters, _encode_KeyGenParameters } from "../PKIXCRMF-2009/KeyGenParameters.ta";
-export { EncryptedKey, _decode_EncryptedKey, _encode_EncryptedKey } from "../PKIXCRMF-2009/EncryptedKey.ta";
-export { KeyGenParameters, _decode_KeyGenParameters, _encode_KeyGenParameters } from "../PKIXCRMF-2009/KeyGenParameters.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION PKIArchiveOptions */

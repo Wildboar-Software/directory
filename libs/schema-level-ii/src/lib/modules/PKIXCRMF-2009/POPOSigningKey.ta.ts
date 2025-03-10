@@ -9,7 +9,6 @@ import {
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
 import { POPOSigningKeyInput, _decode_POPOSigningKeyInput, _encode_POPOSigningKeyInput } from "../PKIXCRMF-2009/POPOSigningKeyInput.ta";
-export { POPOSigningKeyInput, _decode_POPOSigningKeyInput, _encode_POPOSigningKeyInput } from "../PKIXCRMF-2009/POPOSigningKeyInput.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION POPOSigningKey */

@@ -3,12 +3,8 @@ import { NAME_FORM } from "@wildboar/x500/src/lib/modules/InformationFramework/N
 import { commonName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
 import { atn_idrp_router } from "../ATNDirectoryObjectIdentifiers/atn-idrp-router.oa";
 import { id_nf_atnIdrpRouterNameForm } from "../ATNDirectoryObjectIdentifiers/id-nf-atnIdrpRouterNameForm.va";
-export { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-export { NAME_FORM } from "@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca";
-export { OBJECT_CLASS } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
-export { commonName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
-export { atn_idrp_router } from "../ATNDirectoryObjectIdentifiers/atn-idrp-router.oa";
-export { id_nf_atnIdrpRouterNameForm } from "../ATNDirectoryObjectIdentifiers/id-nf-atnIdrpRouterNameForm.va";
+
+
 
 
 /* START_OF_SYMBOL_DEFINITION atnIdrpRouterNameForm */

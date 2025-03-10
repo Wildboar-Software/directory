@@ -4,7 +4,7 @@ import {
 } from "asn1-ts";
 import { ID } from "../VOPerson/ID.ta";
 import { pen_geant } from "./pen-geant.va";
-export { ID, _decode_ID, _encode_ID } from "../VOPerson/ID.ta";
+
 
 /* START_OF_SYMBOL_DEFINITION id_geant */
 /**

@@ -3,12 +3,9 @@ import { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/A
 import { userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
 import { SSIDList, _decode_SSIDList, _encode_SSIDList } from "../WLANCertExtn-2010/SSIDList.ta";
 import { id_aca_wlanSSID } from "../WLANCertExtn-2010/id-aca-wlanSSID.va";
-export { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-export { AttributeUsage, AttributeUsage_dSAOperation /* IMPORTED_LONG_ENUMERATION_ITEM */, AttributeUsage_directoryOperation /* IMPORTED_LONG_ENUMERATION_ITEM */, AttributeUsage_distributedOperation /* IMPORTED_LONG_ENUMERATION_ITEM */, AttributeUsage_userApplications /* IMPORTED_LONG_ENUMERATION_ITEM */, _decode_AttributeUsage, _encode_AttributeUsage, _enum_for_AttributeUsage, dSAOperation /* IMPORTED_SHORT_ENUMERATION_ITEM */, directoryOperation /* IMPORTED_SHORT_ENUMERATION_ITEM */, distributedOperation /* IMPORTED_SHORT_ENUMERATION_ITEM */, userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
-export { MATCHING_RULE } from "@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca";
-export { SYNTAX_NAME } from "@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca";
-export { SSIDList, _decode_SSIDList, _encode_SSIDList } from "../WLANCertExtn-2010/SSIDList.ta";
-export { id_aca_wlanSSID } from "../WLANCertExtn-2010/id-aca-wlanSSID.va";
+
+
+
 
 /* START_OF_SYMBOL_DEFINITION at_aca_wlanSSID */
 /**

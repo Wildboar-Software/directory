@@ -3,12 +3,8 @@ import { NAME_FORM } from "@wildboar/x500/src/lib/modules/InformationFramework/N
 import { commonName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
 import { atn_application_entity } from "../ATNDirectoryObjectIdentifiers/atn-application-entity.oa";
 import { id_nf_atnApplEntityNameForm } from "../ATNDirectoryObjectIdentifiers/id-nf-atnApplEntityNameForm.va";
-export { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-export { NAME_FORM } from "@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca";
-export { OBJECT_CLASS } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
-export { commonName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
-export { atn_application_entity } from "../ATNDirectoryObjectIdentifiers/atn-application-entity.oa";
-export { id_nf_atnApplEntityNameForm } from "../ATNDirectoryObjectIdentifiers/id-nf-atnApplEntityNameForm.va";
+
+
 
 
 /* START_OF_SYMBOL_DEFINITION atnApplEntityNameForm */

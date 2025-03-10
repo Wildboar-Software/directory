@@ -6,15 +6,10 @@ import { integerMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTy
 import { integerOrderingMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integerOrderingMatch.oa";
 import { _decode_atn_amhs_addressing_scheme_Type, _encode_atn_amhs_addressing_scheme_Type, atn_amhs_addressing_scheme_Type } from "../ATNDirectoryObjectIdentifiers/atn-amhs-addressing-scheme-Type.ta";
 import { id_at_atn_Amhs_addressing_scheme } from "../ATNDirectoryObjectIdentifiers/id-at-atn-Amhs-addressing-scheme.va";
-export { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-export { _decode_AttributeUsage, _encode_AttributeUsage, _enum_for_AttributeUsage, AttributeUsage, AttributeUsage_directoryOperation /* IMPORTED_LONG_ENUMERATION_ITEM */, AttributeUsage_distributedOperation /* IMPORTED_LONG_ENUMERATION_ITEM */, AttributeUsage_dSAOperation /* IMPORTED_LONG_ENUMERATION_ITEM */, AttributeUsage_userApplications /* IMPORTED_LONG_ENUMERATION_ITEM */, directoryOperation /* IMPORTED_SHORT_ENUMERATION_ITEM */, distributedOperation /* IMPORTED_SHORT_ENUMERATION_ITEM */, dSAOperation /* IMPORTED_SHORT_ENUMERATION_ITEM */, userApplications /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeUsage.ta";
-export { MATCHING_RULE } from "@wildboar/x500/src/lib/modules/InformationFramework/MATCHING-RULE.oca";
-export { SYNTAX_NAME } from "@wildboar/x500/src/lib/modules/InformationFramework/SYNTAX-NAME.oca";
-export { integer } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integer.oa";
-export { integerMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integerMatch.oa";
-export { integerOrderingMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/integerOrderingMatch.oa";
-export { _decode_atn_amhs_addressing_scheme_Type, _encode_atn_amhs_addressing_scheme_Type, atn_amhs_addressing_scheme_Type, atn_amhs_addressing_scheme_Type_caas /* IMPORTED_LONG_NAMED_INTEGER */, atn_amhs_addressing_scheme_Type_other /* IMPORTED_LONG_NAMED_INTEGER */, atn_amhs_addressing_scheme_Type_xf /* IMPORTED_LONG_NAMED_INTEGER */, caas /* IMPORTED_SHORT_NAMED_INTEGER */, other /* IMPORTED_SHORT_NAMED_INTEGER */, xf /* IMPORTED_SHORT_NAMED_INTEGER */ } from "../ATNDirectoryObjectIdentifiers/atn-amhs-addressing-scheme-Type.ta";
-export { id_at_atn_Amhs_addressing_scheme } from "../ATNDirectoryObjectIdentifiers/id-at-atn-Amhs-addressing-scheme.va";
+
+
+
+
 
 
 /* START_OF_SYMBOL_DEFINITION atn_amhs_addressing_scheme */

@@ -7,7 +7,6 @@ import {
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
 import { _decode_DocumentStoreSyntax_method, _encode_DocumentStoreSyntax_method, DocumentStoreSyntax_method } from "../Thorn/DocumentStoreSyntax-method.ta";
-export { _decode_DocumentStoreSyntax_method, _encode_DocumentStoreSyntax_method, DocumentStoreSyntax_method, DocumentStoreSyntax_method_ftam /* IMPORTED_LONG_NAMED_INTEGER */, DocumentStoreSyntax_method_ftp /* IMPORTED_LONG_NAMED_INTEGER */, ftam /* IMPORTED_SHORT_NAMED_INTEGER */, ftp /* IMPORTED_SHORT_NAMED_INTEGER */ } from "../Thorn/DocumentStoreSyntax-method.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION DocumentStoreSyntax */

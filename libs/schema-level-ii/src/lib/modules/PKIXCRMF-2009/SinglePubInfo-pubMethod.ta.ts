@@ -6,7 +6,6 @@ import {
 import * as $ from "asn1-ts/dist/node/functional";
 
 
-
 /* START_OF_SYMBOL_DEFINITION SinglePubInfo_pubMethod */
 /**
  * @summary SinglePubInfo_pubMethod

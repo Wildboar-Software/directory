@@ -7,8 +7,6 @@ import {
 import * as $ from "asn1-ts/dist/node/functional";
 import { POPOPrivKey, _decode_POPOPrivKey, _encode_POPOPrivKey } from "../PKIXCRMF-2009/POPOPrivKey.ta";
 import { POPOSigningKey, _decode_POPOSigningKey, _encode_POPOSigningKey } from "../PKIXCRMF-2009/POPOSigningKey.ta";
-export { POPOPrivKey, _decode_POPOPrivKey, _encode_POPOPrivKey } from "../PKIXCRMF-2009/POPOPrivKey.ta";
-export { POPOSigningKey, _decode_POPOSigningKey, _encode_POPOSigningKey } from "../PKIXCRMF-2009/POPOSigningKey.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION ProofOfPossession */

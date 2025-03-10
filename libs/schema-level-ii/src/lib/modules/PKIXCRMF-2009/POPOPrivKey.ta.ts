@@ -8,8 +8,7 @@ import {
 import * as $ from "asn1-ts/dist/node/functional";
 import { PKMACValue, _decode_PKMACValue, _encode_PKMACValue } from "../PKIXCRMF-2009/PKMACValue.ta";
 import { SubsequentMessage, _decode_SubsequentMessage, _encode_SubsequentMessage } from "../PKIXCRMF-2009/SubsequentMessage.ta";
-export { PKMACValue, _decode_PKMACValue, _encode_PKMACValue } from "../PKIXCRMF-2009/PKMACValue.ta";
-export { SubsequentMessage, SubsequentMessage_challengeResp /* IMPORTED_LONG_NAMED_INTEGER */, SubsequentMessage_encrCert /* IMPORTED_LONG_NAMED_INTEGER */, _decode_SubsequentMessage, _encode_SubsequentMessage, challengeResp /* IMPORTED_SHORT_NAMED_INTEGER */, encrCert /* IMPORTED_SHORT_NAMED_INTEGER */ } from "../PKIXCRMF-2009/SubsequentMessage.ta";
+
 
 /* START_OF_SYMBOL_DEFINITION POPOPrivKey */
 /**

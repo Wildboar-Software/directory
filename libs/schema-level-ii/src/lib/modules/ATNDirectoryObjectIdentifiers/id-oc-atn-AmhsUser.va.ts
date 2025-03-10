@@ -4,7 +4,6 @@ import {
     OBJECT_IDENTIFIER
 } from "asn1-ts";
 import { id_oc } from "../ATNDirectoryObjectIdentifiers/id-oc.va";
-export { id_oc } from "../ATNDirectoryObjectIdentifiers/id-oc.va";
 
 
 /* START_OF_SYMBOL_DEFINITION id_oc_atn_AmhsUser */

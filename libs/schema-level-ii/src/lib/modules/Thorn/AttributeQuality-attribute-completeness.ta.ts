@@ -5,7 +5,6 @@ import {
 import * as $ from "asn1-ts/dist/node/functional";
 
 
-
 /* START_OF_SYMBOL_DEFINITION _enum_for_AttributeQuality_attribute_completeness */
 /**
  * @summary AttributeQuality_attribute_completeness

@@ -7,8 +7,6 @@ import {
 import * as $ from "asn1-ts/dist/node/functional";
 import { PKIPublicationInfo_action, _decode_PKIPublicationInfo_action, _encode_PKIPublicationInfo_action } from "../PKIXCRMF-2009/PKIPublicationInfo-action.ta";
 import { SinglePubInfo, _decode_SinglePubInfo, _encode_SinglePubInfo } from "../PKIXCRMF-2009/SinglePubInfo.ta";
-export { PKIPublicationInfo_action, PKIPublicationInfo_action_dontPublish /* IMPORTED_LONG_NAMED_INTEGER */, PKIPublicationInfo_action_pleasePublish /* IMPORTED_LONG_NAMED_INTEGER */, _decode_PKIPublicationInfo_action, _encode_PKIPublicationInfo_action, dontPublish /* IMPORTED_SHORT_NAMED_INTEGER */, pleasePublish /* IMPORTED_SHORT_NAMED_INTEGER */ } from "../PKIXCRMF-2009/PKIPublicationInfo-action.ta";
-export { SinglePubInfo, _decode_SinglePubInfo, _encode_SinglePubInfo } from "../PKIXCRMF-2009/SinglePubInfo.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION PKIPublicationInfo */

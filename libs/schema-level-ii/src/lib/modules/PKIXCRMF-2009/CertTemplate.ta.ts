@@ -13,7 +13,6 @@ import {
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
 import { OptionalValidity, _decode_OptionalValidity, _encode_OptionalValidity } from "../PKIXCRMF-2009/OptionalValidity.ta";
-export { OptionalValidity, _decode_OptionalValidity, _encode_OptionalValidity } from "../PKIXCRMF-2009/OptionalValidity.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION CertTemplate */

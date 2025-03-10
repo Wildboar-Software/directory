@@ -7,8 +7,6 @@ import {
 import * as $ from "asn1-ts/dist/node/functional";
 import { PreferredOrLegacyPackageIdentifier, _decode_PreferredOrLegacyPackageIdentifier, _encode_PreferredOrLegacyPackageIdentifier } from "../CMSFirmwareWrapper/PreferredOrLegacyPackageIdentifier.ta";
 import { PreferredOrLegacyStalePackageIdentifier, _decode_PreferredOrLegacyStalePackageIdentifier, _encode_PreferredOrLegacyStalePackageIdentifier } from "../CMSFirmwareWrapper/PreferredOrLegacyStalePackageIdentifier.ta";
-export { PreferredOrLegacyPackageIdentifier, _decode_PreferredOrLegacyPackageIdentifier, _encode_PreferredOrLegacyPackageIdentifier } from "../CMSFirmwareWrapper/PreferredOrLegacyPackageIdentifier.ta";
-export { PreferredOrLegacyStalePackageIdentifier, _decode_PreferredOrLegacyStalePackageIdentifier, _encode_PreferredOrLegacyStalePackageIdentifier } from "../CMSFirmwareWrapper/PreferredOrLegacyStalePackageIdentifier.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION FirmwarePackageIdentifier */

@@ -12,8 +12,7 @@ import {
 import * as $ from "asn1-ts/dist/node/functional";
 import { CertRequest, _decode_CertRequest, _encode_CertRequest } from "../PKIXCRMF-2009/CertRequest.ta";
 import { ProofOfPossession, _decode_ProofOfPossession, _encode_ProofOfPossession } from "../PKIXCRMF-2009/ProofOfPossession.ta";
-export { CertRequest, _decode_CertRequest, _encode_CertRequest } from "../PKIXCRMF-2009/CertRequest.ta";
-export { ProofOfPossession, _decode_ProofOfPossession, _encode_ProofOfPossession } from "../PKIXCRMF-2009/ProofOfPossession.ta";
+
 
 /* START_OF_SYMBOL_DEFINITION CertReqMsg */
 /**

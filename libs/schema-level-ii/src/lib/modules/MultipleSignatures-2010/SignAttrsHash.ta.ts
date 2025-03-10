@@ -7,7 +7,6 @@ import {
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
 import { DigestAlgorithmIdentifier, _decode_DigestAlgorithmIdentifier, _encode_DigestAlgorithmIdentifier } from "../MultipleSignatures-2010/DigestAlgorithmIdentifier.ta";
-export { DigestAlgorithmIdentifier, _decode_DigestAlgorithmIdentifier, _encode_DigestAlgorithmIdentifier } from "../MultipleSignatures-2010/DigestAlgorithmIdentifier.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION SignAttrsHash */

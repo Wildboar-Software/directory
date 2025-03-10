@@ -8,14 +8,9 @@ import { atn_global_domain_identifier } from "../ATNDirectoryObjectIdentifiers/a
 import { atn_icao_designator } from "../ATNDirectoryObjectIdentifiers/atn-icao-designator.oa";
 import { id_oc_atn_amhsMD } from "../ATNDirectoryObjectIdentifiers/id-oc-atn-amhsMD.va";
 import { atn_amhs_addressing_scheme } from "./atn-amhs-addressing-scheme.oa";
-export { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-export { OBJECT_CLASS } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
-export { ObjectClassKind, ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */, ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */, ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */, _decode_ObjectClassKind, _encode_ObjectClassKind, _enum_for_ObjectClassKind, abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */, auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */, structural /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
-export { commonName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
-export { atn_amhsMD_naming_context } from "../ATNDirectoryObjectIdentifiers/atn-amhsMD-naming-context.oa";
-export { atn_global_domain_identifier } from "../ATNDirectoryObjectIdentifiers/atn-global-domain-identifier.oa";
-export { atn_icao_designator } from "../ATNDirectoryObjectIdentifiers/atn-icao-designator.oa";
-export { id_oc_atn_amhsMD } from "../ATNDirectoryObjectIdentifiers/id-oc-atn-amhsMD.va";
+
+
+
 
 /* START_OF_SYMBOL_DEFINITION atn_amhsMD */
 /**

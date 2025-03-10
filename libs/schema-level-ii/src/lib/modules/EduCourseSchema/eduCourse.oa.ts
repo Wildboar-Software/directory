@@ -5,13 +5,8 @@ import { top } from "@wildboar/x500/src/lib/modules/InformationFramework/top.oa"
 import { eduCourseMember } from "../EduCourseSchema/eduCourseMember.oa";
 import { eduCourseOffering } from "../EduCourseSchema/eduCourseOffering.oa";
 import { id_oc_eduCourse } from "../EduCourseSchema/id-oc-eduCourse.va";
-export { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-export { OBJECT_CLASS } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
-export { ObjectClassKind, ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */, ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */, ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */, _decode_ObjectClassKind, _encode_ObjectClassKind, _enum_for_ObjectClassKind, abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */, auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */, structural /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
-export { top } from "@wildboar/x500/src/lib/modules/InformationFramework/top.oa";
-export { eduCourseMember } from "../EduCourseSchema/eduCourseMember.oa";
-export { eduCourseOffering } from "../EduCourseSchema/eduCourseOffering.oa";
-export { id_oc_eduCourse } from "../EduCourseSchema/id-oc-eduCourse.va";
+
+
 
 
 /* START_OF_SYMBOL_DEFINITION eduCourse */

@@ -4,7 +4,6 @@ import {
     OBJECT_IDENTIFIER
 } from "asn1-ts";
 import { id_at } from "../ATNDirectoryObjectIdentifiers/id-at.va";
-export { id_at } from "../ATNDirectoryObjectIdentifiers/id-at.va";
 
 
 /* START_OF_SYMBOL_DEFINITION id_at_atn_Version */

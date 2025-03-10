@@ -6,7 +6,6 @@ import {
 import * as $ from "asn1-ts/dist/node/functional";
 
 
-
 /* START_OF_SYMBOL_DEFINITION atn_amhs_addressing_scheme_Type */
 /**
  * @summary atn_amhs_addressing_scheme_Type

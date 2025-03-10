@@ -5,7 +5,6 @@ import {
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
 import { PreferredPackageIdentifier, _decode_PreferredPackageIdentifier, _encode_PreferredPackageIdentifier } from "../CMSFirmwareWrapper/PreferredPackageIdentifier.ta";
-export { PreferredPackageIdentifier, _decode_PreferredPackageIdentifier, _encode_PreferredPackageIdentifier } from "../CMSFirmwareWrapper/PreferredPackageIdentifier.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION PreferredOrLegacyPackageIdentifier */

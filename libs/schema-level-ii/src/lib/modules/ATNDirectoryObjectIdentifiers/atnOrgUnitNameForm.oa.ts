@@ -3,12 +3,8 @@ import { NAME_FORM } from "@wildboar/x500/src/lib/modules/InformationFramework/N
 import { organizationalUnitName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationalUnitName.oa";
 import { atn_organizational_unit } from "../ATNDirectoryObjectIdentifiers/atn-organizational-unit.oa";
 import { id_nf_atnOrgUnitNameForm } from "../ATNDirectoryObjectIdentifiers/id-nf-atnOrgUnitNameForm.va";
-export { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-export { NAME_FORM } from "@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca";
-export { OBJECT_CLASS } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
-export { organizationalUnitName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/organizationalUnitName.oa";
-export { atn_organizational_unit } from "../ATNDirectoryObjectIdentifiers/atn-organizational-unit.oa";
-export { id_nf_atnOrgUnitNameForm } from "../ATNDirectoryObjectIdentifiers/id-nf-atnOrgUnitNameForm.va";
+
+
 
 
 /* START_OF_SYMBOL_DEFINITION atnOrgUnitNameForm */

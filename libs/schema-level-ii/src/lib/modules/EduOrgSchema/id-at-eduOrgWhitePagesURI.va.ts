@@ -4,7 +4,6 @@ import {
     OBJECT_IDENTIFIER
 } from "asn1-ts";
 import { id_eduOrg } from "../EduOrgSchema/id-eduOrg.va";
-export { id_eduOrg } from "../EduOrgSchema/id-eduOrg.va";
 
 
 /* START_OF_SYMBOL_DEFINITION id_at_eduOrgWhitePagesURI */

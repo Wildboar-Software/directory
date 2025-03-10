@@ -5,7 +5,6 @@ import {
 } from "asn1-ts";
 
 
-
 /* START_OF_SYMBOL_DEFINITION id_oc */
 /**
  * @summary id_oc

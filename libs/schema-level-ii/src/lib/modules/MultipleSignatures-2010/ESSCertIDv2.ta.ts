@@ -10,8 +10,6 @@ import {
 import * as $ from "asn1-ts/dist/node/functional";
 import { DigestAlgorithmIdentifier, _decode_DigestAlgorithmIdentifier, _encode_DigestAlgorithmIdentifier } from "../MultipleSignatures-2010/DigestAlgorithmIdentifier.ta";
 import { Hash, _decode_Hash, _encode_Hash } from "../MultipleSignatures-2010/Hash.ta";
-export { DigestAlgorithmIdentifier, _decode_DigestAlgorithmIdentifier, _encode_DigestAlgorithmIdentifier } from "../MultipleSignatures-2010/DigestAlgorithmIdentifier.ta";
-export { Hash, _decode_Hash, _encode_Hash } from "../MultipleSignatures-2010/Hash.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION ESSCertIDv2 */

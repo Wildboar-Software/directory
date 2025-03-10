@@ -5,13 +5,8 @@ import { top } from "@wildboar/x500/src/lib/modules/InformationFramework/top.oa"
 import { hasMember } from "../EduMemberSchema/hasMember.oa";
 import { id_oc_eduMember } from "../EduMemberSchema/id-oc-eduMember.va";
 import { isMemberOf } from "../EduMemberSchema/isMemberOf.oa";
-export { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-export { OBJECT_CLASS } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
-export { ObjectClassKind, ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */, ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */, ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */, _decode_ObjectClassKind, _encode_ObjectClassKind, _enum_for_ObjectClassKind, abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */, auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */, structural /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
-export { top } from "@wildboar/x500/src/lib/modules/InformationFramework/top.oa";
-export { hasMember } from "../EduMemberSchema/hasMember.oa";
-export { id_oc_eduMember } from "../EduMemberSchema/id-oc-eduMember.va";
-export { isMemberOf } from "../EduMemberSchema/isMemberOf.oa";
+
+
 
 
 /* START_OF_SYMBOL_DEFINITION eduMember */

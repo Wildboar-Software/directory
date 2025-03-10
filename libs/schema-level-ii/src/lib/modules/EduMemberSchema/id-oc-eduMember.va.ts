@@ -4,7 +4,6 @@ import {
     OBJECT_IDENTIFIER
 } from "asn1-ts";
 import { id_eduMember } from "../EduMemberSchema/id-eduMember.va";
-export { id_eduMember } from "../EduMemberSchema/id-eduMember.va";
 
 
 /* START_OF_SYMBOL_DEFINITION id_oc_eduMember */

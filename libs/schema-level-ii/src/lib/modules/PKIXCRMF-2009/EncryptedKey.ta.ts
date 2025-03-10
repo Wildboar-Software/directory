@@ -6,7 +6,7 @@ import {
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
 import { EncryptedValue, _decode_EncryptedValue, _encode_EncryptedValue } from "../PKIXCRMF-2009/EncryptedValue.ta";
-export { EncryptedValue, _decode_EncryptedValue, _encode_EncryptedValue } from "../PKIXCRMF-2009/EncryptedValue.ta";
+
 
 /* START_OF_SYMBOL_DEFINITION EncryptedKey */
 /**

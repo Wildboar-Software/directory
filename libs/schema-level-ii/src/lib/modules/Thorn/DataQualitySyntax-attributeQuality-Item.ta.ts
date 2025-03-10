@@ -7,8 +7,6 @@ import {
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
 import { AttributeQuality, _decode_AttributeQuality, _encode_AttributeQuality } from "../Thorn/AttributeQuality.ta";
-export { AttributeType, _decode_AttributeType, _encode_AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
-export { AttributeQuality, _decode_AttributeQuality, _encode_AttributeQuality } from "../Thorn/AttributeQuality.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION DataQualitySyntax_attributeQuality_Item */

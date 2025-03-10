@@ -4,12 +4,8 @@ import { OBJECT_CLASS } from "@wildboar/x500/src/lib/modules/InformationFramewor
 import { structural /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
 import { atn_ipm_heading_extensions } from "../ATNDirectoryObjectIdentifiers/atn-ipm-heading-extensions.oa";
 import { id_oc_atn_AmhsUserAgent } from "../ATNDirectoryObjectIdentifiers/id-oc-atn-AmhsUserAgent.va";
-export { mhs_user_agent } from "@wildboar/x400/src/lib/modules/MHSDirectoryObjectsAndAttributes/mhs-user-agent.oa";
-export { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-export { OBJECT_CLASS } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
-export { ObjectClassKind, ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */, ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */, ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */, _decode_ObjectClassKind, _encode_ObjectClassKind, _enum_for_ObjectClassKind, abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */, auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */, structural /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
-export { atn_ipm_heading_extensions } from "../ATNDirectoryObjectIdentifiers/atn-ipm-heading-extensions.oa";
-export { id_oc_atn_AmhsUserAgent } from "../ATNDirectoryObjectIdentifiers/id-oc-atn-AmhsUserAgent.va";
+
+
 
 
 /* START_OF_SYMBOL_DEFINITION atn_amhs_user_agent */

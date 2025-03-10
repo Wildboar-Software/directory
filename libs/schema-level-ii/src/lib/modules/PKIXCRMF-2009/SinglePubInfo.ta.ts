@@ -7,7 +7,7 @@ import {
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
 import { SinglePubInfo_pubMethod, _decode_SinglePubInfo_pubMethod, _encode_SinglePubInfo_pubMethod } from "../PKIXCRMF-2009/SinglePubInfo-pubMethod.ta";
-export { SinglePubInfo_pubMethod, SinglePubInfo_pubMethod_dontCare /* IMPORTED_LONG_NAMED_INTEGER */, SinglePubInfo_pubMethod_ldap /* IMPORTED_LONG_NAMED_INTEGER */, SinglePubInfo_pubMethod_web /* IMPORTED_LONG_NAMED_INTEGER */, SinglePubInfo_pubMethod_x500 /* IMPORTED_LONG_NAMED_INTEGER */, _decode_SinglePubInfo_pubMethod, _encode_SinglePubInfo_pubMethod, dontCare /* IMPORTED_SHORT_NAMED_INTEGER */, ldap /* IMPORTED_SHORT_NAMED_INTEGER */, web /* IMPORTED_SHORT_NAMED_INTEGER */, x500 /* IMPORTED_SHORT_NAMED_INTEGER */ } from "../PKIXCRMF-2009/SinglePubInfo-pubMethod.ta";
+
 
 /* START_OF_SYMBOL_DEFINITION SinglePubInfo */
 /**

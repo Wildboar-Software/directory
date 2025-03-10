@@ -4,7 +4,6 @@ import {
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
 import { CommunityIdentifier, _decode_CommunityIdentifier, _encode_CommunityIdentifier } from "../CMSFirmwareWrapper/CommunityIdentifier.ta";
-export { CommunityIdentifier, _decode_CommunityIdentifier, _encode_CommunityIdentifier } from "../CMSFirmwareWrapper/CommunityIdentifier.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION CommunityIdentifiers */

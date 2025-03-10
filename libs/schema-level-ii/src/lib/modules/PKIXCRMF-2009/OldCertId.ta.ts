@@ -4,7 +4,6 @@ import {
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
 import { CertId, _decode_CertId, _encode_CertId } from "../PKIXCRMF-2009/CertId.ta";
-export { CertId, _decode_CertId, _encode_CertId } from "../PKIXCRMF-2009/CertId.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION OldCertId */

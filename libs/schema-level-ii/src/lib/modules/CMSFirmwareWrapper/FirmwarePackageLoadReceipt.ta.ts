@@ -9,8 +9,6 @@ import {
 import * as $ from "asn1-ts/dist/node/functional";
 import { FWReceiptVersion, _decode_FWReceiptVersion, _encode_FWReceiptVersion, v1 /* IMPORTED_SHORT_NAMED_INTEGER */ } from "../CMSFirmwareWrapper/FWReceiptVersion.ta";
 import { PreferredOrLegacyPackageIdentifier, _decode_PreferredOrLegacyPackageIdentifier, _encode_PreferredOrLegacyPackageIdentifier } from "../CMSFirmwareWrapper/PreferredOrLegacyPackageIdentifier.ta";
-export { FWReceiptVersion, FWReceiptVersion_v1 /* IMPORTED_LONG_NAMED_INTEGER */, _decode_FWReceiptVersion, _encode_FWReceiptVersion, v1 /* IMPORTED_SHORT_NAMED_INTEGER */ } from "../CMSFirmwareWrapper/FWReceiptVersion.ta";
-export { PreferredOrLegacyPackageIdentifier, _decode_PreferredOrLegacyPackageIdentifier, _encode_PreferredOrLegacyPackageIdentifier } from "../CMSFirmwareWrapper/PreferredOrLegacyPackageIdentifier.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION FirmwarePackageLoadReceipt */

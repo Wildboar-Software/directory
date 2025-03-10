@@ -4,7 +4,6 @@ import {
     OBJECT_IDENTIFIER
 } from "asn1-ts";
 import { id_nf } from "../ATNDirectoryObjectIdentifiers/id-nf.va";
-export { id_nf } from "../ATNDirectoryObjectIdentifiers/id-nf.va";
 
 
 /* START_OF_SYMBOL_DEFINITION id_nf_atnAircraftNameForm */

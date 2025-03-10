@@ -7,7 +7,6 @@ import {
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
 import { HardwareSerialEntry, _decode_HardwareSerialEntry, _encode_HardwareSerialEntry } from "../CMSFirmwareWrapper/HardwareSerialEntry.ta";
-export { HardwareSerialEntry, _decode_HardwareSerialEntry, _encode_HardwareSerialEntry } from "../CMSFirmwareWrapper/HardwareSerialEntry.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION HardwareModules */

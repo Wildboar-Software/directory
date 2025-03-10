@@ -4,7 +4,6 @@ import {
     OBJECT_IDENTIFIER
 } from "asn1-ts";
 import { id_mace } from "../EduCourseSchema/id-mace.va";
-export { id_mace } from "../EduCourseSchema/id-mace.va";
 
 
 /* START_OF_SYMBOL_DEFINITION id_eduCourse */

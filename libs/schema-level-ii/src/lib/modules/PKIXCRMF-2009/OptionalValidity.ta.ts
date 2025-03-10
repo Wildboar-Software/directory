@@ -8,7 +8,6 @@ import {
 import * as $ from "asn1-ts/dist/node/functional";
 
 
-
 /* START_OF_SYMBOL_DEFINITION OptionalValidity */
 /**
  * @summary OptionalValidity

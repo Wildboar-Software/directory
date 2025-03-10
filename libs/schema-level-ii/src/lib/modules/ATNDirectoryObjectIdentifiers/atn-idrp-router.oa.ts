@@ -6,14 +6,9 @@ import { atn_net } from "../ATNDirectoryObjectIdentifiers/atn-net.oa";
 import { atn_per_certificate } from "../ATNDirectoryObjectIdentifiers/atn-per-certificate.oa";
 import { atn_version } from "../ATNDirectoryObjectIdentifiers/atn-version.oa";
 import { id_oc_atn_idrpRouter } from "../ATNDirectoryObjectIdentifiers/id-oc-atn-idrpRouter.va";
-export { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-export { OBJECT_CLASS } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
-export { ObjectClassKind, ObjectClassKind_abstract /* IMPORTED_LONG_ENUMERATION_ITEM */, ObjectClassKind_auxiliary /* IMPORTED_LONG_ENUMERATION_ITEM */, ObjectClassKind_structural /* IMPORTED_LONG_ENUMERATION_ITEM */, _decode_ObjectClassKind, _encode_ObjectClassKind, _enum_for_ObjectClassKind, abstract /* IMPORTED_SHORT_ENUMERATION_ITEM */, auxiliary /* IMPORTED_SHORT_ENUMERATION_ITEM */, structural /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "@wildboar/x500/src/lib/modules/InformationFramework/ObjectClassKind.ta";
-export { device } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/device.oa";
-export { atn_net } from "../ATNDirectoryObjectIdentifiers/atn-net.oa";
-export { atn_per_certificate } from "../ATNDirectoryObjectIdentifiers/atn-per-certificate.oa";
-export { atn_version } from "../ATNDirectoryObjectIdentifiers/atn-version.oa";
-export { id_oc_atn_idrpRouter } from "../ATNDirectoryObjectIdentifiers/id-oc-atn-idrpRouter.va";
+
+
+
 
 
 /* START_OF_SYMBOL_DEFINITION atn_idrp_router */

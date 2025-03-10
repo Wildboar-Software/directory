@@ -3,12 +3,8 @@ import { NAME_FORM } from "@wildboar/x500/src/lib/modules/InformationFramework/N
 import { atn_aircraft } from "../ATNDirectoryObjectIdentifiers/atn-aircraft.oa";
 import { atn_aircraftIDName } from "../ATNDirectoryObjectIdentifiers/atn-aircraftIDName.oa";
 import { id_nf_atnAircraftNameForm } from "../ATNDirectoryObjectIdentifiers/id-nf-atnAircraftNameForm.va";
-export { ATTRIBUTE } from "@wildboar/x500/src/lib/modules/InformationFramework/ATTRIBUTE.oca";
-export { NAME_FORM } from "@wildboar/x500/src/lib/modules/InformationFramework/NAME-FORM.oca";
-export { OBJECT_CLASS } from "@wildboar/x500/src/lib/modules/InformationFramework/OBJECT-CLASS.oca";
-export { atn_aircraft } from "../ATNDirectoryObjectIdentifiers/atn-aircraft.oa";
-export { atn_aircraftIDName } from "../ATNDirectoryObjectIdentifiers/atn-aircraftIDName.oa";
-export { id_nf_atnAircraftNameForm } from "../ATNDirectoryObjectIdentifiers/id-nf-atnAircraftNameForm.va";
+
+
 
 
 /* START_OF_SYMBOL_DEFINITION atnAircraftNameForm */

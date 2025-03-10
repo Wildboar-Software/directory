@@ -4,7 +4,6 @@ import {
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
 import { BinaryTime, _decode_BinaryTime, _encode_BinaryTime } from "../BinarySigningTimeModule/BinaryTime.ta";
-export { BinaryTime, _decode_BinaryTime, _encode_BinaryTime } from "../BinarySigningTimeModule/BinaryTime.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION BinarySigningTime */

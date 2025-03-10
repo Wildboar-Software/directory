@@ -4,7 +4,6 @@ import {
     ASN1Element as _Element
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
-export { Extension, _decode_Extension, _encode_Extension } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Extension.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION ExtensionReq */

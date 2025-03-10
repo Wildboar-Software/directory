@@ -4,7 +4,6 @@ import {
     OBJECT_IDENTIFIER
 } from "asn1-ts";
 import { id_pkix } from "../WLANCertExtn-2010/id-pkix.va";
-export { id_pkix } from "../WLANCertExtn-2010/id-pkix.va";
 
 
 /* START_OF_SYMBOL_DEFINITION id_pe */

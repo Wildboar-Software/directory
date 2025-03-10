@@ -4,7 +4,6 @@ import {
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
 import { BodyPartID, _decode_BodyPartID, _encode_BodyPartID } from "../EnrollmentMessageSyntax-2009/BodyPartID.ta";
-export { BodyPartID, _decode_BodyPartID, _encode_BodyPartID } from "../EnrollmentMessageSyntax-2009/BodyPartID.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION BodyPartPath */

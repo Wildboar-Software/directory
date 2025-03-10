@@ -4,8 +4,6 @@ import {
 } from "asn1-ts";
 import { ID } from "../VOPerson/ID.ta";
 import { id_geant } from "../VOPerson/id-geant.va";
-export { ID, _decode_ID, _encode_ID } from "../VOPerson/ID.ta";
-export { id_geant } from "../VOPerson/id-geant.va";
 
 
 /* START_OF_SYMBOL_DEFINITION id_voPersonRoot */

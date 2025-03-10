@@ -6,7 +6,7 @@ import {
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
 import { POPOSigningKeyInput_authInfo, _decode_POPOSigningKeyInput_authInfo, _encode_POPOSigningKeyInput_authInfo } from "../PKIXCRMF-2009/POPOSigningKeyInput-authInfo.ta";
-export { POPOSigningKeyInput_authInfo, _decode_POPOSigningKeyInput_authInfo, _encode_POPOSigningKeyInput_authInfo } from "../PKIXCRMF-2009/POPOSigningKeyInput-authInfo.ta";
+
 
 /* START_OF_SYMBOL_DEFINITION POPOSigningKeyInput */
 /**

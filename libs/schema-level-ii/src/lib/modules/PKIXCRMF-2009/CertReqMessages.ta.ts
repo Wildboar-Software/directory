@@ -4,7 +4,6 @@ import {
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
 import { CertReqMsg, _decode_CertReqMsg, _encode_CertReqMsg } from "../PKIXCRMF-2009/CertReqMsg.ta";
-export { CertReqMsg, _decode_CertReqMsg, _encode_CertReqMsg } from "../PKIXCRMF-2009/CertReqMsg.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION CertReqMessages */

@@ -4,7 +4,6 @@ import {
     OBJECT_IDENTIFIER
 } from "asn1-ts";
 import { id_eduCourse } from "../EduCourseSchema/id-eduCourse.va";
-export { id_eduCourse } from "../EduCourseSchema/id-eduCourse.va";
 
 
 /* START_OF_SYMBOL_DEFINITION id_oc_eduCourse */
