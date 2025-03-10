@@ -12,7 +12,7 @@
 <link rel="icon" href="/directory/img/boar-head-rune-circle.svg">
 <link rel="manifest" href="/directory/manifest.json">
 <meta name="theme-color" content="rgb(37, 194, 160)"><link rel="stylesheet" href="/directory/assets/css/styles.2a28baec.css">
-<script src="/directory/assets/js/runtime~main.80ceabf3.js" defer="defer"></script>
+<script src="/directory/assets/js/runtime~main.ee670d3f.js" defer="defer"></script>
 <script src="/directory/assets/js/main.ad93db89.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -20,7 +20,7 @@
 <p>We will not promise any particular schedule of delivery of features or bug fixes
 at this time. However, the very high-level roadmap for Meerkat DSA can be
 broken down to the following versions.</p>
-<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-330---schema-update-wildboar-schema">Version 3.3.0 - Schema Update (&quot;Wildboar Schema&quot;)<a href="#version-330---schema-update-wildboar-schema" class="hash-link" aria-label="Direct link to Version 3.3.0 - Schema Update (&quot;Wildboar Schema&quot;)" title="Direct link to Version 3.3.0 - Schema Update (&quot;Wildboar Schema&quot;)">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-340---schema-update-wildboar-schema">Version 3.4.0 - Schema Update (&quot;Wildboar Schema&quot;)<a href="#version-340---schema-update-wildboar-schema" class="hash-link" aria-label="Direct link to Version 3.4.0 - Schema Update (&quot;Wildboar Schema&quot;)" title="Direct link to Version 3.4.0 - Schema Update (&quot;Wildboar Schema&quot;)">​</a></h2>
 <p>This update will introduce thousands of new schema objects defined by Wildboar
 Software into the default schema. This is desirable so that X.500 directories
 can build upon a common framework of mutually-understood schemata, rather than
@@ -30,6 +30,30 @@ using a <code>married</code> auxiliary object class that permits the presence of
 <code>spouseDN</code> attribute in an entry. It would be unfortunate for directory
 administrators everywhere to define their own equivalent object classes, thereby
 duplicating work and reducing inter-domain compatibility.</p>
+<p>This change might get lumped in with <a href="#version-400---huge-breaking-update">Version 4.0.0</a>.</p>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-400---huge-breaking-update">Version 4.0.0 - Huge Breaking Update<a href="#version-400---huge-breaking-update" class="hash-link" aria-label="Direct link to Version 4.0.0 - Huge Breaking Update" title="Direct link to Version 4.0.0 - Huge Breaking Update">​</a></h2>
+<ul>
+<li>Use SQLite as the backing data store for better performance and smaller footprint</li>
+<li>Use Javascript-based configuration (or at least a file format) instead of
+environment variables</li>
+<li>Use <a href="https://getpino.io/" target="_blank" rel="noopener noreferrer">Pino</a> for logging</li>
+<li>Switch to using ESM modules</li>
+<li>Fix possibly wrong encoding of NSAP addresses<!-- -->
+<ul>
+<li>(Sorry, it&#x27;s not like I have a reference implementation to go off of.)</li>
+</ul>
+</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_fF9Z" id="version-410---privacy-and-security-features">Version 4.1.0 - Privacy and Security Features<a href="#version-410---privacy-and-security-features" class="hash-link" aria-label="Direct link to Version 4.1.0 - Privacy and Security Features" title="Direct link to Version 4.1.0 - Privacy and Security Features">​</a></h2>
+<ul>
+<li>TOR Routing</li>
+<li>I2P Routing</li>
+<li>VPN, TOR, and I2P Blocking</li>
+<li>DNS-over-TLS (DoT)</li>
+<li>DNS-over-HTTPS (DoH)</li>
+<li>DNS-over-QUIC (DoQ)</li>
+<li>DNSCrypt</li>
+</ul>
 <h2 class="anchor anchorWithStickyNavbar_fF9Z" id="integration-scalability-and-security">Integration, Scalability, and Security<a href="#integration-scalability-and-security" class="hash-link" aria-label="Direct link to Integration, Scalability, and Security" title="Direct link to Integration, Scalability, and Security">​</a></h2>
 <p>It is assumed that, after a few months or years of existence, there will be
 many Meerkat DSA instances running, and much more data stored in DSAs. As such,
@@ -115,6 +139,6 @@ because determining which filter item is to &quot;blame&quot; for a search retur
 results is a contextual, subjective problem, and it requires speculatively
 evaluating a second, arbitrarily less restrictive filter against all search
 results to determine if the original filter was originally overspecified.</li>
-</ul></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col"><a href="https://github.com/Wildboar-Software/directory/edit/main/website/docs/roadmap.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_UohW" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_g62E"></div></div></footer></article><nav class="pagination-nav docusaurus-mt-lg" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/directory/docs/architecture"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Architecture</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/directory/docs/x500cli"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">The X.500 Command Line Interface</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_TN1Q thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#version-330---schema-update-wildboar-schema" class="table-of-contents__link toc-highlight">Version 3.3.0 - Schema Update (&quot;Wildboar Schema&quot;)</a></li><li><a href="#integration-scalability-and-security" class="table-of-contents__link toc-highlight">Integration, Scalability, and Security</a></li><li><a href="#advanced-features" class="table-of-contents__link toc-highlight">Advanced Features</a></li><li><a href="#enterprise-features" class="table-of-contents__link toc-highlight">Enterprise Features</a></li><li><a href="#never-will-support" class="table-of-contents__link toc-highlight">Never Will Support</a></li></ul></div></div></div></div></main></div></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2022-2025 Wildboar Software. Built with Docusaurus.</div></div></div></footer></div>
+</ul></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col"><a href="https://github.com/Wildboar-Software/directory/edit/main/website/docs/roadmap.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_UohW" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_g62E"></div></div></footer></article><nav class="pagination-nav docusaurus-mt-lg" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/directory/docs/architecture"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Architecture</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/directory/docs/x500cli"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">The X.500 Command Line Interface</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_TN1Q thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#version-340---schema-update-wildboar-schema" class="table-of-contents__link toc-highlight">Version 3.4.0 - Schema Update (&quot;Wildboar Schema&quot;)</a></li><li><a href="#version-400---huge-breaking-update" class="table-of-contents__link toc-highlight">Version 4.0.0 - Huge Breaking Update</a></li><li><a href="#version-410---privacy-and-security-features" class="table-of-contents__link toc-highlight">Version 4.1.0 - Privacy and Security Features</a></li><li><a href="#integration-scalability-and-security" class="table-of-contents__link toc-highlight">Integration, Scalability, and Security</a></li><li><a href="#advanced-features" class="table-of-contents__link toc-highlight">Advanced Features</a></li><li><a href="#enterprise-features" class="table-of-contents__link toc-highlight">Enterprise Features</a></li><li><a href="#never-will-support" class="table-of-contents__link toc-highlight">Never Will Support</a></li></ul></div></div></div></div></main></div></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2022-2025 Wildboar Software. Built with Docusaurus.</div></div></div></footer></div>
 </body>
 </html>
