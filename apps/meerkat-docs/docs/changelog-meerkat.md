@@ -1,5 +1,52 @@
 # Changelog for Meerkat DSA
 
+## Version 3.3.0
+
+This update hard-codes new default schema elements from the following LDAP and
+X.500 directory schemas:
+
+- `ATNDirectoryObjectIdentifiers`, defined in ICAO Doc. 9880, Part IV for use by
+  the [Aeronautical Message Handling System (AMHS)](https://en.wikipedia.org/wiki/Aeronautical_Message_Handling_System)
+- `BinarySigningTimeModule` defined in [IETF RFC 6019](https://datatracker.ietf.org/doc/rfc6019/)
+  for CMS signatures.
+- `ClearanceSponsorAttribute-2008` as defined in [IETF RFC 5917](https://datatracker.ietf.org/doc/html/rfc5917)
+  for use by the United States Department of Defense (DoD).
+- `CMSFirmwareWrapper` defined in [IETF RFC 4108](https://datatracker.ietf.org/doc/html/rfc4108)
+  for signing firmware packages
+- `DeviceOwnerAttribute-2008` as defined in [IETF RFC 5916](https://datatracker.ietf.org/doc/rfc5916/)
+  for use by the United States Department of Defense (DoD).
+- `EduCourseSchema`, `EduMemberSchema`, and `EduOrgSchema` defined for use by
+  [REFEDS](https://wiki.refeds.org/#all-updates) for use in educational institutions.
+- `EnrollmentMessageSyntax-2009` as defined in
+  [IETF RFC 5272](https://www.rfc-editor.org/rfc/rfc5272.html)
+  for supporting Certificate Management over CMS (CMC).
+- `MultipleSignatures-2010` as defined in
+  [IETF RFC 5752](https://www.rfc-editor.org/rfc/rfc5752.html) for providing
+  multiple signatures to CMS data.
+- `PKIXCRMF-2009` as defined in
+  [IETF RFC 4211](https://datatracker.ietf.org/doc/html/rfc4211) for use in
+  requesting X.509 public key certificates.
+- `Thorn`: ancient X.500 directory schema, which I found
+  [here](https://github.com/Wildboar-Software/isode/blob/7ff410cc923b5535389a8fee13232688495197f2/dsap/x500as/th.py#L2).
+  I am not sure this was complete; there are no X.500 schema elements in it, so
+  this is not really a change for Meerkat DSA, but I believe it is where the
+  "data quality" LDAP syntax comes from.
+- `VOPerson` as defined by [REFEDS](https://wiki.refeds.org/#all-updates) for
+  use by "virtual organizations."
+- `WLANCertExtn-2010` as defined by
+  [IETF RFC 3770](https://datatracker.ietf.org/doc/html/rfc3770) for use in
+  Wireless Local Area Networks (WLANs).
+
+If you're wondering "why hard-code these things?" it is because:
+
+1. They are already defined, already in use, already useful, etc. and
+2. They compete for the namespace for attribute names. We do not want users of
+   the directory to define new attributes that have names that conflict with
+   schema that is already defined.
+
+Anyway, this should make the directory just a little more useful for you right
+out of the box.
+
 ## Version 3.2.5
 
 - Fix a bug where [attribute certificate requests](./attr-cert.md) would fail if

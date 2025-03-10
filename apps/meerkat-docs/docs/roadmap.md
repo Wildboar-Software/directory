@@ -4,7 +4,7 @@ We will not promise any particular schedule of delivery of features or bug fixes
 at this time. However, the very high-level roadmap for Meerkat DSA can be
 broken down to the following versions.
 
-## Version 3.3.0 - Schema Update ("Wildboar Schema")
+## Version 3.4.0 - Schema Update ("Wildboar Schema")
 
 This update will introduce thousands of new schema objects defined by Wildboar
 Software into the default schema. This is desirable so that X.500 directories
@@ -15,6 +15,28 @@ using a `married` auxiliary object class that permits the presence of a
 `spouseDN` attribute in an entry. It would be unfortunate for directory
 administrators everywhere to define their own equivalent object classes, thereby
 duplicating work and reducing inter-domain compatibility.
+
+This change might get lumped in with [Version 4.0.0](#version-400---huge-breaking-update).
+
+## Version 4.0.0 - Huge Breaking Update
+
+- Use SQLite as the backing data store for better performance and smaller footprint
+- Use Javascript-based configuration (or at least a file format) instead of
+  environment variables
+- Use [Pino](https://getpino.io/) for logging
+- Switch to using ESM modules
+- Fix possibly wrong encoding of NSAP addresses
+  - (Sorry, it's not like I have a reference implementation to go off of.)
+
+## Version 4.1.0 - Privacy and Security Features
+
+- TOR Routing
+- I2P Routing
+- VPN, TOR, and I2P Blocking
+- DNS-over-TLS (DoT)
+- DNS-over-HTTPS (DoH)
+- DNS-over-QUIC (DoQ)
+- DNSCrypt
 
 ## Integration, Scalability, and Security
 
