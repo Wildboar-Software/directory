@@ -1,74 +1,13 @@
 /* eslint-disable */
 import {
-    itu_t,
-    itu_r,
-    ccitt,
-    iso,
-    joint_iso_itu_t,
-    joint_iso_ccitt,
     OPTIONAL,
-    BOOLEAN,
-    INTEGER,
-    BIT_STRING,
-    OCTET_STRING,
-    NULL,
-    OBJECT_IDENTIFIER,
-    ObjectDescriptor,
-    EXTERNAL,
-    REAL,
-    INSTANCE_OF,
-    ENUMERATED,
-    EMBEDDED_PDV,
-    UTF8String,
-    RELATIVE_OID,
-    SEQUENCE,
-    SEQUENCE_OF,
-    SET,
-    SET_OF,
-    GraphicString,
-    NumericString,
-    VisibleString,
-    PrintableString,
-    ISO646String,
-    TeletexString,
-    GeneralString,
-    T61String,
-    UniversalString,
-    VideotexString,
-    BMPString,
-    IA5String,
-    CharacterString,
-    UTCTime,
-    GeneralizedTime,
-    TIME,
-    DATE,
-    TIME_OF_DAY,
-    DATE_TIME,
-    DURATION,
-    OID_IRI,
-    RELATIVE_OID_IRI,
-    TRUE,
-    FALSE,
-    TRUE_BIT,
-    FALSE_BIT,
-    PLUS_INFINITY,
-    MINUS_INFINITY,
-    NOT_A_NUMBER,
-    TYPE_IDENTIFIER,
-    ABSTRACT_SYNTAX,
     ASN1Element as _Element,
-    ASN1TagClass as _TagClass,
-    ASN1Construction as _Construction,
-    ASN1UniversalType as _UniversalType,
-    ObjectIdentifier as _OID,
-    External as _External,
-    EmbeddedPDV as _PDV,
-    ASN1ConstructionError as _ConstructionError,
+    ASN1TagClass as _TagClass
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
-import { PKIPublicationInfo_action, PKIPublicationInfo_action_dontPublish /* IMPORTED_LONG_NAMED_INTEGER */, dontPublish /* IMPORTED_SHORT_NAMED_INTEGER */, PKIPublicationInfo_action_pleasePublish /* IMPORTED_LONG_NAMED_INTEGER */, pleasePublish /* IMPORTED_SHORT_NAMED_INTEGER */, _decode_PKIPublicationInfo_action, _encode_PKIPublicationInfo_action } from "../PKIXCRMF-2009/PKIPublicationInfo-action.ta";
-export { PKIPublicationInfo_action, PKIPublicationInfo_action_dontPublish /* IMPORTED_LONG_NAMED_INTEGER */, dontPublish /* IMPORTED_SHORT_NAMED_INTEGER */, PKIPublicationInfo_action_pleasePublish /* IMPORTED_LONG_NAMED_INTEGER */, pleasePublish /* IMPORTED_SHORT_NAMED_INTEGER */, _decode_PKIPublicationInfo_action, _encode_PKIPublicationInfo_action } from "../PKIXCRMF-2009/PKIPublicationInfo-action.ta";
+import { PKIPublicationInfo_action, _decode_PKIPublicationInfo_action, _encode_PKIPublicationInfo_action } from "../PKIXCRMF-2009/PKIPublicationInfo-action.ta";
 import { SinglePubInfo, _decode_SinglePubInfo, _encode_SinglePubInfo } from "../PKIXCRMF-2009/SinglePubInfo.ta";
+export { PKIPublicationInfo_action, PKIPublicationInfo_action_dontPublish /* IMPORTED_LONG_NAMED_INTEGER */, PKIPublicationInfo_action_pleasePublish /* IMPORTED_LONG_NAMED_INTEGER */, _decode_PKIPublicationInfo_action, _encode_PKIPublicationInfo_action, dontPublish /* IMPORTED_SHORT_NAMED_INTEGER */, pleasePublish /* IMPORTED_SHORT_NAMED_INTEGER */ } from "../PKIXCRMF-2009/PKIPublicationInfo-action.ta";
 export { SinglePubInfo, _decode_SinglePubInfo, _encode_SinglePubInfo } from "../PKIXCRMF-2009/SinglePubInfo.ta";
 
 
@@ -76,9 +15,9 @@ export { SinglePubInfo, _decode_SinglePubInfo, _encode_SinglePubInfo } from "../
 /**
  * @summary PKIPublicationInfo
  * @description
- * 
+ *
  * ### ASN.1 Definition:
- * 
+ *
  * ```asn1
  * PKIPublicationInfo ::= SEQUENCE {
  *     action     INTEGER {
@@ -86,7 +25,7 @@ export { SinglePubInfo, _decode_SinglePubInfo, _encode_SinglePubInfo } from "../
  *                     pleasePublish (1) },
  *     pubInfos  SEQUENCE SIZE (1..MAX) OF SinglePubInfo OPTIONAL }
  * ```
- * 
+ *
  * @class
  */
 export
@@ -109,9 +48,9 @@ class PKIPublicationInfo {
     /**
      * @summary Restructures an object into a PKIPublicationInfo
      * @description
-     * 
+     *
      * This takes an `object` and converts it to a `PKIPublicationInfo`.
-     * 
+     *
      * @public
      * @static
      * @method
@@ -130,9 +69,9 @@ class PKIPublicationInfo {
 /**
  * @summary The Leading Root Component Types of PKIPublicationInfo
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the leading root component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
@@ -146,14 +85,14 @@ const _root_component_type_list_1_spec_for_PKIPublicationInfo: $.ComponentSpec[]
 /**
  * @summary The Trailing Root Component Types of PKIPublicationInfo
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the trailing root component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
 const _root_component_type_list_2_spec_for_PKIPublicationInfo: $.ComponentSpec[] = [
-    
+
 ];
 /* END_OF_SYMBOL_DEFINITION _root_component_type_list_2_spec_for_PKIPublicationInfo */
 
@@ -161,14 +100,14 @@ const _root_component_type_list_2_spec_for_PKIPublicationInfo: $.ComponentSpec[]
 /**
  * @summary The Extension Addition Component Types of PKIPublicationInfo
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the extension addition component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
 const _extension_additions_list_spec_for_PKIPublicationInfo: $.ComponentSpec[] = [
-    
+
 ];
 /* END_OF_SYMBOL_DEFINITION _extension_additions_list_spec_for_PKIPublicationInfo */
 

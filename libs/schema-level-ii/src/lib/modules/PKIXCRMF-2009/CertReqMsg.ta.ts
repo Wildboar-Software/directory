@@ -1,88 +1,27 @@
 /* eslint-disable */
 import {
-    itu_t,
-    itu_r,
-    ccitt,
-    iso,
-    joint_iso_itu_t,
-    joint_iso_ccitt,
-    OPTIONAL,
-    BOOLEAN,
-    INTEGER,
-    BIT_STRING,
-    OCTET_STRING,
-    NULL,
-    OBJECT_IDENTIFIER,
-    ObjectDescriptor,
-    EXTERNAL,
-    REAL,
-    INSTANCE_OF,
-    ENUMERATED,
-    EMBEDDED_PDV,
-    UTF8String,
-    RELATIVE_OID,
-    SEQUENCE,
-    SEQUENCE_OF,
-    SET,
-    SET_OF,
-    GraphicString,
-    NumericString,
-    VisibleString,
-    PrintableString,
-    ISO646String,
-    TeletexString,
-    GeneralString,
-    T61String,
-    UniversalString,
-    VideotexString,
-    BMPString,
-    IA5String,
-    CharacterString,
-    UTCTime,
-    GeneralizedTime,
-    TIME,
-    DATE,
-    TIME_OF_DAY,
-    DATE_TIME,
-    DURATION,
-    OID_IRI,
-    RELATIVE_OID_IRI,
-    TRUE,
-    FALSE,
-    TRUE_BIT,
-    FALSE_BIT,
-    PLUS_INFINITY,
-    MINUS_INFINITY,
-    NOT_A_NUMBER,
-    TYPE_IDENTIFIER,
-    ABSTRACT_SYNTAX,
-    ASN1Element as _Element,
-    ASN1TagClass as _TagClass,
-    ASN1Construction as _Construction,
-    ASN1UniversalType as _UniversalType,
-    ObjectIdentifier as _OID,
-    External as _External,
-    EmbeddedPDV as _PDV,
-    ASN1ConstructionError as _ConstructionError,
-} from "asn1-ts";
-import * as $ from "asn1-ts/dist/node/functional";
-import { CertRequest, _decode_CertRequest, _encode_CertRequest } from "../PKIXCRMF-2009/CertRequest.ta";
-export { CertRequest, _decode_CertRequest, _encode_CertRequest } from "../PKIXCRMF-2009/CertRequest.ta";
-import { ProofOfPossession, _decode_ProofOfPossession, _encode_ProofOfPossession } from "../PKIXCRMF-2009/ProofOfPossession.ta";
-export { ProofOfPossession, _decode_ProofOfPossession, _encode_ProofOfPossession } from "../PKIXCRMF-2009/ProofOfPossession.ta";
-import {
     AttributeTypeAndValue as SingleAttribute,
     _decode_AttributeTypeAndValue as _decode_SingleAttribute,
     _encode_AttributeTypeAndValue as _encode_SingleAttribute,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+import {
+    OPTIONAL,
+    ASN1Element as _Element,
+    ASN1TagClass as _TagClass
+} from "asn1-ts";
+import * as $ from "asn1-ts/dist/node/functional";
+import { CertRequest, _decode_CertRequest, _encode_CertRequest } from "../PKIXCRMF-2009/CertRequest.ta";
+import { ProofOfPossession, _decode_ProofOfPossession, _encode_ProofOfPossession } from "../PKIXCRMF-2009/ProofOfPossession.ta";
+export { CertRequest, _decode_CertRequest, _encode_CertRequest } from "../PKIXCRMF-2009/CertRequest.ta";
+export { ProofOfPossession, _decode_ProofOfPossession, _encode_ProofOfPossession } from "../PKIXCRMF-2009/ProofOfPossession.ta";
 
 /* START_OF_SYMBOL_DEFINITION CertReqMsg */
 /**
  * @summary CertReqMsg
  * @description
- * 
+ *
  * ### ASN.1 Definition:
- * 
+ *
  * ```asn1
  * CertReqMsg ::= SEQUENCE {
  *     certReq   CertRequest,
@@ -91,7 +30,7 @@ import {
  *     regInfo   SEQUENCE SIZE(1..MAX) OF
  *         SingleAttribute{{RegInfoSet}} OPTIONAL }
  * ```
- * 
+ *
  * @class
  */
 export
@@ -120,9 +59,9 @@ class CertReqMsg {
     /**
      * @summary Restructures an object into a CertReqMsg
      * @description
-     * 
+     *
      * This takes an `object` and converts it to a `CertReqMsg`.
-     * 
+     *
      * @public
      * @static
      * @method
@@ -141,9 +80,9 @@ class CertReqMsg {
 /**
  * @summary The Leading Root Component Types of CertReqMsg
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the leading root component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
@@ -158,14 +97,14 @@ const _root_component_type_list_1_spec_for_CertReqMsg: $.ComponentSpec[] = [
 /**
  * @summary The Trailing Root Component Types of CertReqMsg
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the trailing root component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
 const _root_component_type_list_2_spec_for_CertReqMsg: $.ComponentSpec[] = [
-    
+
 ];
 /* END_OF_SYMBOL_DEFINITION _root_component_type_list_2_spec_for_CertReqMsg */
 
@@ -173,14 +112,14 @@ const _root_component_type_list_2_spec_for_CertReqMsg: $.ComponentSpec[] = [
 /**
  * @summary The Extension Addition Component Types of CertReqMsg
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the extension addition component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
 const _extension_additions_list_spec_for_CertReqMsg: $.ComponentSpec[] = [
-    
+
 ];
 /* END_OF_SYMBOL_DEFINITION _extension_additions_list_spec_for_CertReqMsg */
 

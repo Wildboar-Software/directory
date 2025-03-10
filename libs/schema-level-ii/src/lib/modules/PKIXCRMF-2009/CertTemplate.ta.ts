@@ -1,88 +1,28 @@
 /* eslint-disable */
+import { AlgorithmIdentifier, _decode_AlgorithmIdentifier, _encode_AlgorithmIdentifier } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
+import { Extensions, _decode_Extensions, _encode_Extensions } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Extensions.ta";
+import { SubjectPublicKeyInfo, _decode_SubjectPublicKeyInfo, _encode_SubjectPublicKeyInfo } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SubjectPublicKeyInfo.ta";
+import { Version, _decode_Version, _encode_Version } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Version.ta";
+import { Name, _decode_Name, _encode_Name } from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
+import { UniqueIdentifier, _decode_UniqueIdentifier, _encode_UniqueIdentifier } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UniqueIdentifier.ta";
 import {
-    itu_t,
-    itu_r,
-    ccitt,
-    iso,
-    joint_iso_itu_t,
-    joint_iso_ccitt,
-    OPTIONAL,
-    BOOLEAN,
     INTEGER,
-    BIT_STRING,
-    OCTET_STRING,
-    NULL,
-    OBJECT_IDENTIFIER,
-    ObjectDescriptor,
-    EXTERNAL,
-    REAL,
-    INSTANCE_OF,
-    ENUMERATED,
-    EMBEDDED_PDV,
-    UTF8String,
-    RELATIVE_OID,
-    SEQUENCE,
-    SEQUENCE_OF,
-    SET,
-    SET_OF,
-    GraphicString,
-    NumericString,
-    VisibleString,
-    PrintableString,
-    ISO646String,
-    TeletexString,
-    GeneralString,
-    T61String,
-    UniversalString,
-    VideotexString,
-    BMPString,
-    IA5String,
-    CharacterString,
-    UTCTime,
-    GeneralizedTime,
-    TIME,
-    DATE,
-    TIME_OF_DAY,
-    DATE_TIME,
-    DURATION,
-    OID_IRI,
-    RELATIVE_OID_IRI,
-    TRUE,
-    FALSE,
-    TRUE_BIT,
-    FALSE_BIT,
-    PLUS_INFINITY,
-    MINUS_INFINITY,
-    NOT_A_NUMBER,
-    TYPE_IDENTIFIER,
-    ABSTRACT_SYNTAX,
+    OPTIONAL,
     ASN1Element as _Element,
-    ASN1TagClass as _TagClass,
-    ASN1Construction as _Construction,
-    ASN1UniversalType as _UniversalType,
-    ObjectIdentifier as _OID,
-    External as _External,
-    EmbeddedPDV as _PDV,
-    ASN1ConstructionError as _ConstructionError,
+    ASN1TagClass as _TagClass
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
 import { OptionalValidity, _decode_OptionalValidity, _encode_OptionalValidity } from "../PKIXCRMF-2009/OptionalValidity.ta";
 export { OptionalValidity, _decode_OptionalValidity, _encode_OptionalValidity } from "../PKIXCRMF-2009/OptionalValidity.ta";
-import { Name, _encode_Name, _decode_Name } from "@wildboar/x500/src/lib/modules/InformationFramework/Name.ta";
-import { SubjectPublicKeyInfo, _encode_SubjectPublicKeyInfo, _decode_SubjectPublicKeyInfo } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/SubjectPublicKeyInfo.ta";
-import { UniqueIdentifier, _decode_UniqueIdentifier, _encode_UniqueIdentifier } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UniqueIdentifier.ta";
-import { Extensions, _decode_Extensions, _encode_Extensions } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Extensions.ta";
-import { Version, _decode_Version, _encode_Version } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/Version.ta";
-import { AlgorithmIdentifier, _decode_AlgorithmIdentifier, _encode_AlgorithmIdentifier } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION CertTemplate */
 /**
  * @summary CertTemplate
  * @description
- * 
+ *
  * ### ASN.1 Definition:
- * 
+ *
  * ```asn1
  * CertTemplate ::= SEQUENCE {
  *     version      [0] Version               OPTIONAL,
@@ -97,7 +37,7 @@ import { AlgorithmIdentifier, _decode_AlgorithmIdentifier, _encode_AlgorithmIden
  *     subjectUID   [8] UniqueIdentifier      OPTIONAL,
  *     extensions   [9] Extensions{{CertExtensions}}  OPTIONAL }
  * ```
- * 
+ *
  * @class
  */
 export
@@ -168,9 +108,9 @@ class CertTemplate {
     /**
      * @summary Restructures an object into a CertTemplate
      * @description
-     * 
+     *
      * This takes an `object` and converts it to a `CertTemplate`.
-     * 
+     *
      * @public
      * @static
      * @method
@@ -189,9 +129,9 @@ class CertTemplate {
 /**
  * @summary The Leading Root Component Types of CertTemplate
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the leading root component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
@@ -213,14 +153,14 @@ const _root_component_type_list_1_spec_for_CertTemplate: $.ComponentSpec[] = [
 /**
  * @summary The Trailing Root Component Types of CertTemplate
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the trailing root component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
 const _root_component_type_list_2_spec_for_CertTemplate: $.ComponentSpec[] = [
-    
+
 ];
 /* END_OF_SYMBOL_DEFINITION _root_component_type_list_2_spec_for_CertTemplate */
 
@@ -228,14 +168,14 @@ const _root_component_type_list_2_spec_for_CertTemplate: $.ComponentSpec[] = [
 /**
  * @summary The Extension Addition Component Types of CertTemplate
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the extension addition component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
 const _extension_additions_list_spec_for_CertTemplate: $.ComponentSpec[] = [
-    
+
 ];
 /* END_OF_SYMBOL_DEFINITION _extension_additions_list_spec_for_CertTemplate */
 

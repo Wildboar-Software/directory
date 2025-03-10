@@ -1,82 +1,22 @@
 /* eslint-disable */
 import {
-    itu_t,
-    itu_r,
-    ccitt,
-    iso,
-    joint_iso_itu_t,
-    joint_iso_ccitt,
-    OPTIONAL,
-    BOOLEAN,
-    INTEGER,
-    BIT_STRING,
-    OCTET_STRING,
-    NULL,
-    OBJECT_IDENTIFIER,
-    ObjectDescriptor,
-    EXTERNAL,
-    REAL,
-    INSTANCE_OF,
-    ENUMERATED,
-    EMBEDDED_PDV,
-    UTF8String,
-    RELATIVE_OID,
-    SEQUENCE,
-    SEQUENCE_OF,
-    SET,
-    SET_OF,
-    GraphicString,
-    NumericString,
-    VisibleString,
-    PrintableString,
-    ISO646String,
-    TeletexString,
-    GeneralString,
-    T61String,
-    UniversalString,
-    VideotexString,
-    BMPString,
-    IA5String,
-    CharacterString,
-    UTCTime,
-    GeneralizedTime,
-    TIME,
-    DATE,
-    TIME_OF_DAY,
-    DATE_TIME,
-    DURATION,
-    OID_IRI,
-    RELATIVE_OID_IRI,
-    TRUE,
-    FALSE,
-    TRUE_BIT,
-    FALSE_BIT,
-    PLUS_INFINITY,
-    MINUS_INFINITY,
-    NOT_A_NUMBER,
-    TYPE_IDENTIFIER,
-    ABSTRACT_SYNTAX,
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
-    ASN1Construction as _Construction,
-    ASN1UniversalType as _UniversalType,
-    ObjectIdentifier as _OID,
-    External as _External,
-    EmbeddedPDV as _PDV,
-    ASN1ConstructionError as _ConstructionError,
+    OPTIONAL,
+    PrintableString
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
-import { DSAQualitySyntax_serviceQuality, _enum_for_DSAQualitySyntax_serviceQuality, DSAQualitySyntax_serviceQuality_defunct /* IMPORTED_LONG_ENUMERATION_ITEM */, defunct /* IMPORTED_SHORT_ENUMERATION_ITEM */, DSAQualitySyntax_serviceQuality_experimental /* IMPORTED_LONG_ENUMERATION_ITEM */, experimental /* IMPORTED_SHORT_ENUMERATION_ITEM */, DSAQualitySyntax_serviceQuality_best_effort /* IMPORTED_LONG_ENUMERATION_ITEM */, best_effort /* IMPORTED_SHORT_ENUMERATION_ITEM */, DSAQualitySyntax_serviceQuality_pilot_service /* IMPORTED_LONG_ENUMERATION_ITEM */, pilot_service /* IMPORTED_SHORT_ENUMERATION_ITEM */, DSAQualitySyntax_serviceQuality_full_service /* IMPORTED_LONG_ENUMERATION_ITEM */, full_service /* IMPORTED_SHORT_ENUMERATION_ITEM */, _decode_DSAQualitySyntax_serviceQuality, _encode_DSAQualitySyntax_serviceQuality } from "../Thorn/DSAQualitySyntax-serviceQuality.ta";
-export { DSAQualitySyntax_serviceQuality, _enum_for_DSAQualitySyntax_serviceQuality, DSAQualitySyntax_serviceQuality_defunct /* IMPORTED_LONG_ENUMERATION_ITEM */, defunct /* IMPORTED_SHORT_ENUMERATION_ITEM */, DSAQualitySyntax_serviceQuality_experimental /* IMPORTED_LONG_ENUMERATION_ITEM */, experimental /* IMPORTED_SHORT_ENUMERATION_ITEM */, DSAQualitySyntax_serviceQuality_best_effort /* IMPORTED_LONG_ENUMERATION_ITEM */, best_effort /* IMPORTED_SHORT_ENUMERATION_ITEM */, DSAQualitySyntax_serviceQuality_pilot_service /* IMPORTED_LONG_ENUMERATION_ITEM */, pilot_service /* IMPORTED_SHORT_ENUMERATION_ITEM */, DSAQualitySyntax_serviceQuality_full_service /* IMPORTED_LONG_ENUMERATION_ITEM */, full_service /* IMPORTED_SHORT_ENUMERATION_ITEM */, _decode_DSAQualitySyntax_serviceQuality, _encode_DSAQualitySyntax_serviceQuality } from "../Thorn/DSAQualitySyntax-serviceQuality.ta";
+import { _decode_DSAQualitySyntax_serviceQuality, _encode_DSAQualitySyntax_serviceQuality, _enum_for_DSAQualitySyntax_serviceQuality, DSAQualitySyntax_serviceQuality } from "../Thorn/DSAQualitySyntax-serviceQuality.ta";
+export { _decode_DSAQualitySyntax_serviceQuality, _encode_DSAQualitySyntax_serviceQuality, _enum_for_DSAQualitySyntax_serviceQuality, best_effort /* IMPORTED_SHORT_ENUMERATION_ITEM */, defunct /* IMPORTED_SHORT_ENUMERATION_ITEM */, DSAQualitySyntax_serviceQuality, DSAQualitySyntax_serviceQuality_best_effort /* IMPORTED_LONG_ENUMERATION_ITEM */, DSAQualitySyntax_serviceQuality_defunct /* IMPORTED_LONG_ENUMERATION_ITEM */, DSAQualitySyntax_serviceQuality_experimental /* IMPORTED_LONG_ENUMERATION_ITEM */, DSAQualitySyntax_serviceQuality_full_service /* IMPORTED_LONG_ENUMERATION_ITEM */, DSAQualitySyntax_serviceQuality_pilot_service /* IMPORTED_LONG_ENUMERATION_ITEM */, experimental /* IMPORTED_SHORT_ENUMERATION_ITEM */, full_service /* IMPORTED_SHORT_ENUMERATION_ITEM */, pilot_service /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "../Thorn/DSAQualitySyntax-serviceQuality.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION DSAQualitySyntax */
 /**
  * @summary DSAQualitySyntax
  * @description
- * 
+ *
  * ### ASN.1 Definition:
- * 
+ *
  * ```asn1
  * DSAQualitySyntax ::= SEQUENCE {
  *     serviceQuality      ENUMERATED {
@@ -89,7 +29,7 @@ export { DSAQualitySyntax_serviceQuality, _enum_for_DSAQualitySyntax_serviceQual
  *     ...
  * }
  * ```
- * 
+ *
  * @class
  */
 export
@@ -118,9 +58,9 @@ class DSAQualitySyntax {
     /**
      * @summary Restructures an object into a DSAQualitySyntax
      * @description
-     * 
+     *
      * This takes an `object` and converts it to a `DSAQualitySyntax`.
-     * 
+     *
      * @public
      * @static
      * @method
@@ -145,9 +85,9 @@ class DSAQualitySyntax {
 /**
  * @summary The Leading Root Component Types of DSAQualitySyntax
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the leading root component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
@@ -161,14 +101,14 @@ const _root_component_type_list_1_spec_for_DSAQualitySyntax: $.ComponentSpec[] =
 /**
  * @summary The Trailing Root Component Types of DSAQualitySyntax
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the trailing root component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
 const _root_component_type_list_2_spec_for_DSAQualitySyntax: $.ComponentSpec[] = [
-    
+
 ];
 /* END_OF_SYMBOL_DEFINITION _root_component_type_list_2_spec_for_DSAQualitySyntax */
 
@@ -176,14 +116,14 @@ const _root_component_type_list_2_spec_for_DSAQualitySyntax: $.ComponentSpec[] =
 /**
  * @summary The Extension Addition Component Types of DSAQualitySyntax
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the extension addition component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
 const _extension_additions_list_spec_for_DSAQualitySyntax: $.ComponentSpec[] = [
-    
+
 ];
 /* END_OF_SYMBOL_DEFINITION _extension_additions_list_spec_for_DSAQualitySyntax */
 

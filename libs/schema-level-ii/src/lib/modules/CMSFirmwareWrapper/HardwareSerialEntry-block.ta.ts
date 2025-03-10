@@ -1,69 +1,9 @@
 /* eslint-disable */
 import {
-    itu_t,
-    itu_r,
-    ccitt,
-    iso,
-    joint_iso_itu_t,
-    joint_iso_ccitt,
-    OPTIONAL,
-    BOOLEAN,
-    INTEGER,
-    BIT_STRING,
-    OCTET_STRING,
-    NULL,
-    OBJECT_IDENTIFIER,
-    ObjectDescriptor,
-    EXTERNAL,
-    REAL,
-    INSTANCE_OF,
-    ENUMERATED,
-    EMBEDDED_PDV,
-    UTF8String,
-    RELATIVE_OID,
-    SEQUENCE,
-    SEQUENCE_OF,
-    SET,
-    SET_OF,
-    GraphicString,
-    NumericString,
-    VisibleString,
-    PrintableString,
-    ISO646String,
-    TeletexString,
-    GeneralString,
-    T61String,
-    UniversalString,
-    VideotexString,
-    BMPString,
-    IA5String,
-    CharacterString,
-    UTCTime,
-    GeneralizedTime,
-    TIME,
-    DATE,
-    TIME_OF_DAY,
-    DATE_TIME,
-    DURATION,
-    OID_IRI,
-    RELATIVE_OID_IRI,
-    TRUE,
-    FALSE,
-    TRUE_BIT,
-    FALSE_BIT,
-    PLUS_INFINITY,
-    MINUS_INFINITY,
-    NOT_A_NUMBER,
-    TYPE_IDENTIFIER,
-    ABSTRACT_SYNTAX,
+    ASN1ConstructionError as _ConstructionError,
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
-    ASN1Construction as _Construction,
-    ASN1UniversalType as _UniversalType,
-    ObjectIdentifier as _OID,
-    External as _External,
-    EmbeddedPDV as _PDV,
-    ASN1ConstructionError as _ConstructionError,
+    OCTET_STRING
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
 
@@ -73,13 +13,13 @@ import * as $ from "asn1-ts/dist/node/functional";
 /**
  * @summary HardwareSerialEntry_block
  * @description
- * 
+ *
  * ### ASN.1 Definition:
- * 
+ *
  * ```asn1
  * HardwareSerialEntry-block ::= SEQUENCE { -- REMOVED_FROM_UNNESTING -- }
  * ```
- * 
+ *
  * @class
  */
 export
@@ -102,9 +42,9 @@ class HardwareSerialEntry_block {
     /**
      * @summary Restructures an object into a HardwareSerialEntry_block
      * @description
-     * 
+     *
      * This takes an `object` and converts it to a `HardwareSerialEntry_block`.
-     * 
+     *
      * @public
      * @static
      * @method
@@ -123,9 +63,9 @@ class HardwareSerialEntry_block {
 /**
  * @summary The Leading Root Component Types of HardwareSerialEntry_block
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the leading root component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
@@ -139,14 +79,14 @@ const _root_component_type_list_1_spec_for_HardwareSerialEntry_block: $.Componen
 /**
  * @summary The Trailing Root Component Types of HardwareSerialEntry_block
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the trailing root component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
 const _root_component_type_list_2_spec_for_HardwareSerialEntry_block: $.ComponentSpec[] = [
-    
+
 ];
 /* END_OF_SYMBOL_DEFINITION _root_component_type_list_2_spec_for_HardwareSerialEntry_block */
 
@@ -154,14 +94,14 @@ const _root_component_type_list_2_spec_for_HardwareSerialEntry_block: $.Componen
 /**
  * @summary The Extension Addition Component Types of HardwareSerialEntry_block
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the extension addition component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
 const _extension_additions_list_spec_for_HardwareSerialEntry_block: $.ComponentSpec[] = [
-    
+
 ];
 /* END_OF_SYMBOL_DEFINITION _extension_additions_list_spec_for_HardwareSerialEntry_block */
 

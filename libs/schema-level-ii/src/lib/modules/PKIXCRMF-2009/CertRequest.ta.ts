@@ -1,74 +1,14 @@
 /* eslint-disable */
 import {
-    itu_t,
-    itu_r,
-    ccitt,
-    iso,
-    joint_iso_itu_t,
-    joint_iso_ccitt,
-    OPTIONAL,
-    BOOLEAN,
     INTEGER,
-    BIT_STRING,
-    OCTET_STRING,
-    NULL,
-    OBJECT_IDENTIFIER,
-    ObjectDescriptor,
-    EXTERNAL,
-    REAL,
-    INSTANCE_OF,
-    ENUMERATED,
-    EMBEDDED_PDV,
-    UTF8String,
-    RELATIVE_OID,
-    SEQUENCE,
-    SEQUENCE_OF,
-    SET,
-    SET_OF,
-    GraphicString,
-    NumericString,
-    VisibleString,
-    PrintableString,
-    ISO646String,
-    TeletexString,
-    GeneralString,
-    T61String,
-    UniversalString,
-    VideotexString,
-    BMPString,
-    IA5String,
-    CharacterString,
-    UTCTime,
-    GeneralizedTime,
-    TIME,
-    DATE,
-    TIME_OF_DAY,
-    DATE_TIME,
-    DURATION,
-    OID_IRI,
-    RELATIVE_OID_IRI,
-    TRUE,
-    FALSE,
-    TRUE_BIT,
-    FALSE_BIT,
-    PLUS_INFINITY,
-    MINUS_INFINITY,
-    NOT_A_NUMBER,
-    TYPE_IDENTIFIER,
-    ABSTRACT_SYNTAX,
+    OPTIONAL,
     ASN1Element as _Element,
-    ASN1TagClass as _TagClass,
-    ASN1Construction as _Construction,
-    ASN1UniversalType as _UniversalType,
-    ObjectIdentifier as _OID,
-    External as _External,
-    EmbeddedPDV as _PDV,
-    ASN1ConstructionError as _ConstructionError,
+    ASN1TagClass as _TagClass
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
 import { CertTemplate, _decode_CertTemplate, _encode_CertTemplate } from "../PKIXCRMF-2009/CertTemplate.ta";
-export { CertTemplate, _decode_CertTemplate, _encode_CertTemplate } from "../PKIXCRMF-2009/CertTemplate.ta";
 import { Controls, _decode_Controls, _encode_Controls } from "../PKIXCRMF-2009/Controls.ta";
+export { CertTemplate, _decode_CertTemplate, _encode_CertTemplate } from "../PKIXCRMF-2009/CertTemplate.ta";
 export { Controls, _decode_Controls, _encode_Controls } from "../PKIXCRMF-2009/Controls.ta";
 
 
@@ -76,9 +16,9 @@ export { Controls, _decode_Controls, _encode_Controls } from "../PKIXCRMF-2009/C
 /**
  * @summary CertRequest
  * @description
- * 
+ *
  * ### ASN.1 Definition:
- * 
+ *
  * ```asn1
  * CertRequest ::= SEQUENCE {
  *     certReqId     INTEGER,
@@ -87,7 +27,7 @@ export { Controls, _decode_Controls, _encode_Controls } from "../PKIXCRMF-2009/C
  *     -- Selected fields of cert to be issued
  *     controls      Controls OPTIONAL }
  * ```
- * 
+ *
  * @class
  */
 export
@@ -116,9 +56,9 @@ class CertRequest {
     /**
      * @summary Restructures an object into a CertRequest
      * @description
-     * 
+     *
      * This takes an `object` and converts it to a `CertRequest`.
-     * 
+     *
      * @public
      * @static
      * @method
@@ -137,9 +77,9 @@ class CertRequest {
 /**
  * @summary The Leading Root Component Types of CertRequest
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the leading root component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
@@ -154,14 +94,14 @@ const _root_component_type_list_1_spec_for_CertRequest: $.ComponentSpec[] = [
 /**
  * @summary The Trailing Root Component Types of CertRequest
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the trailing root component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
 const _root_component_type_list_2_spec_for_CertRequest: $.ComponentSpec[] = [
-    
+
 ];
 /* END_OF_SYMBOL_DEFINITION _root_component_type_list_2_spec_for_CertRequest */
 
@@ -169,14 +109,14 @@ const _root_component_type_list_2_spec_for_CertRequest: $.ComponentSpec[] = [
 /**
  * @summary The Extension Addition Component Types of CertRequest
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the extension addition component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
 const _extension_additions_list_spec_for_CertRequest: $.ComponentSpec[] = [
-    
+
 ];
 /* END_OF_SYMBOL_DEFINITION _extension_additions_list_spec_for_CertRequest */
 

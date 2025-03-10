@@ -86,9 +86,9 @@ export { id_oc_atn_OrganizationalPerson } from "../ATNDirectoryObjectIdentifiers
 /**
  * @summary atn_organizational_person
  * @description
- * 
+ *
  * ### ASN.1 Definition:
- * 
+ *
  * ```asn1
  * atn-organizational-person OBJECT-CLASS ::= {
  *     SUBCLASS OF     {organizationalPerson}
@@ -96,7 +96,7 @@ export { id_oc_atn_OrganizationalPerson } from "../ATNDirectoryObjectIdentifiers
  *     ID              id-oc-atn-OrganizationalPerson
  * }
  * ```
- * 
+ *
  * @constant
  * @type {OBJECT_CLASS}
  * @implements {OBJECT_CLASS}

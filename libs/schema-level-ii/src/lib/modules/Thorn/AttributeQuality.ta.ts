@@ -1,84 +1,23 @@
 /* eslint-disable */
 import {
-    itu_t,
-    itu_r,
-    ccitt,
-    iso,
-    joint_iso_itu_t,
-    joint_iso_ccitt,
-    OPTIONAL,
-    BOOLEAN,
-    INTEGER,
-    BIT_STRING,
-    OCTET_STRING,
-    NULL,
-    OBJECT_IDENTIFIER,
-    ObjectDescriptor,
-    EXTERNAL,
-    REAL,
-    INSTANCE_OF,
-    ENUMERATED,
-    EMBEDDED_PDV,
-    UTF8String,
-    RELATIVE_OID,
-    SEQUENCE,
-    SEQUENCE_OF,
-    SET,
-    SET_OF,
-    GraphicString,
-    NumericString,
-    VisibleString,
-    PrintableString,
-    ISO646String,
-    TeletexString,
-    GeneralString,
-    T61String,
-    UniversalString,
-    VideotexString,
-    BMPString,
-    IA5String,
-    CharacterString,
-    UTCTime,
-    GeneralizedTime,
-    TIME,
-    DATE,
-    TIME_OF_DAY,
-    DATE_TIME,
-    DURATION,
-    OID_IRI,
-    RELATIVE_OID_IRI,
-    TRUE,
-    FALSE,
-    TRUE_BIT,
-    FALSE_BIT,
-    PLUS_INFINITY,
-    MINUS_INFINITY,
-    NOT_A_NUMBER,
-    TYPE_IDENTIFIER,
-    ABSTRACT_SYNTAX,
     ASN1Element as _Element,
     ASN1TagClass as _TagClass,
-    ASN1Construction as _Construction,
-    ASN1UniversalType as _UniversalType,
-    ObjectIdentifier as _OID,
-    External as _External,
-    EmbeddedPDV as _PDV,
-    ASN1ConstructionError as _ConstructionError,
+    OPTIONAL
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
-import { AttributeQuality_maintenance_level, _enum_for_AttributeQuality_maintenance_level, AttributeQuality_maintenance_level_unknown /* IMPORTED_LONG_ENUMERATION_ITEM */, unknown /* IMPORTED_SHORT_ENUMERATION_ITEM */, AttributeQuality_maintenance_level_external /* IMPORTED_LONG_ENUMERATION_ITEM */, external /* IMPORTED_SHORT_ENUMERATION_ITEM */, AttributeQuality_maintenance_level_system_maintained /* IMPORTED_LONG_ENUMERATION_ITEM */, system_maintained /* IMPORTED_SHORT_ENUMERATION_ITEM */, AttributeQuality_maintenance_level_user_supplied /* IMPORTED_LONG_ENUMERATION_ITEM */, user_supplied /* IMPORTED_SHORT_ENUMERATION_ITEM */, _decode_AttributeQuality_maintenance_level, _encode_AttributeQuality_maintenance_level } from "../Thorn/AttributeQuality-maintenance-level.ta";
-export { AttributeQuality_maintenance_level, _enum_for_AttributeQuality_maintenance_level, AttributeQuality_maintenance_level_unknown /* IMPORTED_LONG_ENUMERATION_ITEM */, unknown /* IMPORTED_SHORT_ENUMERATION_ITEM */, AttributeQuality_maintenance_level_external /* IMPORTED_LONG_ENUMERATION_ITEM */, external /* IMPORTED_SHORT_ENUMERATION_ITEM */, AttributeQuality_maintenance_level_system_maintained /* IMPORTED_LONG_ENUMERATION_ITEM */, system_maintained /* IMPORTED_SHORT_ENUMERATION_ITEM */, AttributeQuality_maintenance_level_user_supplied /* IMPORTED_LONG_ENUMERATION_ITEM */, user_supplied /* IMPORTED_SHORT_ENUMERATION_ITEM */, _decode_AttributeQuality_maintenance_level, _encode_AttributeQuality_maintenance_level } from "../Thorn/AttributeQuality-maintenance-level.ta";
-import { AttributeQuality_attribute_completeness, _enum_for_AttributeQuality_attribute_completeness, AttributeQuality_attribute_completeness_none /* IMPORTED_LONG_ENUMERATION_ITEM */, none /* IMPORTED_SHORT_ENUMERATION_ITEM */, AttributeQuality_attribute_completeness_sample /* IMPORTED_LONG_ENUMERATION_ITEM */, sample /* IMPORTED_SHORT_ENUMERATION_ITEM */, AttributeQuality_attribute_completeness_selected /* IMPORTED_LONG_ENUMERATION_ITEM */, selected /* IMPORTED_SHORT_ENUMERATION_ITEM */, AttributeQuality_attribute_completeness_substantial /* IMPORTED_LONG_ENUMERATION_ITEM */, substantial /* IMPORTED_SHORT_ENUMERATION_ITEM */, AttributeQuality_attribute_completeness_full /* IMPORTED_LONG_ENUMERATION_ITEM */, full /* IMPORTED_SHORT_ENUMERATION_ITEM */, _decode_AttributeQuality_attribute_completeness, _encode_AttributeQuality_attribute_completeness } from "../Thorn/AttributeQuality-attribute-completeness.ta";
-export { AttributeQuality_attribute_completeness, _enum_for_AttributeQuality_attribute_completeness, AttributeQuality_attribute_completeness_none /* IMPORTED_LONG_ENUMERATION_ITEM */, none /* IMPORTED_SHORT_ENUMERATION_ITEM */, AttributeQuality_attribute_completeness_sample /* IMPORTED_LONG_ENUMERATION_ITEM */, sample /* IMPORTED_SHORT_ENUMERATION_ITEM */, AttributeQuality_attribute_completeness_selected /* IMPORTED_LONG_ENUMERATION_ITEM */, selected /* IMPORTED_SHORT_ENUMERATION_ITEM */, AttributeQuality_attribute_completeness_substantial /* IMPORTED_LONG_ENUMERATION_ITEM */, substantial /* IMPORTED_SHORT_ENUMERATION_ITEM */, AttributeQuality_attribute_completeness_full /* IMPORTED_LONG_ENUMERATION_ITEM */, full /* IMPORTED_SHORT_ENUMERATION_ITEM */, _decode_AttributeQuality_attribute_completeness, _encode_AttributeQuality_attribute_completeness } from "../Thorn/AttributeQuality-attribute-completeness.ta";
+import { _decode_AttributeQuality_attribute_completeness, _encode_AttributeQuality_attribute_completeness, _enum_for_AttributeQuality_attribute_completeness, AttributeQuality_attribute_completeness, AttributeQuality_attribute_completeness_full /* IMPORTED_LONG_ENUMERATION_ITEM */ } from "../Thorn/AttributeQuality-attribute-completeness.ta";
+import { _decode_AttributeQuality_maintenance_level, _encode_AttributeQuality_maintenance_level, _enum_for_AttributeQuality_maintenance_level, AttributeQuality_maintenance_level } from "../Thorn/AttributeQuality-maintenance-level.ta";
+export { _decode_AttributeQuality_attribute_completeness, _encode_AttributeQuality_attribute_completeness, _enum_for_AttributeQuality_attribute_completeness, AttributeQuality_attribute_completeness, AttributeQuality_attribute_completeness_full /* IMPORTED_LONG_ENUMERATION_ITEM */, AttributeQuality_attribute_completeness_none /* IMPORTED_LONG_ENUMERATION_ITEM */, AttributeQuality_attribute_completeness_sample /* IMPORTED_LONG_ENUMERATION_ITEM */, AttributeQuality_attribute_completeness_selected /* IMPORTED_LONG_ENUMERATION_ITEM */, AttributeQuality_attribute_completeness_substantial /* IMPORTED_LONG_ENUMERATION_ITEM */, full /* IMPORTED_SHORT_ENUMERATION_ITEM */, none /* IMPORTED_SHORT_ENUMERATION_ITEM */, sample /* IMPORTED_SHORT_ENUMERATION_ITEM */, selected /* IMPORTED_SHORT_ENUMERATION_ITEM */, substantial /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "../Thorn/AttributeQuality-attribute-completeness.ta";
+export { _decode_AttributeQuality_maintenance_level, _encode_AttributeQuality_maintenance_level, _enum_for_AttributeQuality_maintenance_level, AttributeQuality_maintenance_level, AttributeQuality_maintenance_level_external /* IMPORTED_LONG_ENUMERATION_ITEM */, AttributeQuality_maintenance_level_system_maintained /* IMPORTED_LONG_ENUMERATION_ITEM */, AttributeQuality_maintenance_level_unknown /* IMPORTED_LONG_ENUMERATION_ITEM */, AttributeQuality_maintenance_level_user_supplied /* IMPORTED_LONG_ENUMERATION_ITEM */, external /* IMPORTED_SHORT_ENUMERATION_ITEM */, system_maintained /* IMPORTED_SHORT_ENUMERATION_ITEM */, unknown /* IMPORTED_SHORT_ENUMERATION_ITEM */, user_supplied /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "../Thorn/AttributeQuality-maintenance-level.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION AttributeQuality */
 /**
  * @summary AttributeQuality
  * @description
- * 
+ *
  * ### ASN.1 Definition:
- * 
+ *
  * ```asn1
  * AttributeQuality ::= SEQUENCE {
  *     maintenance-level ENUMERATED {
@@ -95,7 +34,7 @@ export { AttributeQuality_attribute_completeness, _enum_for_AttributeQuality_att
  *     ...
  * }
  * ```
- * 
+ *
  * @class
  */
 export
@@ -124,9 +63,9 @@ class AttributeQuality {
     /**
      * @summary Restructures an object into a AttributeQuality
      * @description
-     * 
+     *
      * This takes an `object` and converts it to a `AttributeQuality`.
-     * 
+     *
      * @public
      * @static
      * @method
@@ -163,9 +102,9 @@ class AttributeQuality {
 /**
  * @summary The Leading Root Component Types of AttributeQuality
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the leading root component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
@@ -179,14 +118,14 @@ const _root_component_type_list_1_spec_for_AttributeQuality: $.ComponentSpec[] =
 /**
  * @summary The Trailing Root Component Types of AttributeQuality
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the trailing root component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
 const _root_component_type_list_2_spec_for_AttributeQuality: $.ComponentSpec[] = [
-    
+
 ];
 /* END_OF_SYMBOL_DEFINITION _root_component_type_list_2_spec_for_AttributeQuality */
 
@@ -194,14 +133,14 @@ const _root_component_type_list_2_spec_for_AttributeQuality: $.ComponentSpec[] =
 /**
  * @summary The Extension Addition Component Types of AttributeQuality
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the extension addition component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
 const _extension_additions_list_spec_for_AttributeQuality: $.ComponentSpec[] = [
-    
+
 ];
 /* END_OF_SYMBOL_DEFINITION _extension_additions_list_spec_for_AttributeQuality */
 

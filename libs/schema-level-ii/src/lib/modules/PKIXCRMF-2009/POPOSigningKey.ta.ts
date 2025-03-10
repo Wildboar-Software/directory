@@ -1,91 +1,31 @@
 /* eslint-disable */
+import { AlgorithmIdentifier, _decode_AlgorithmIdentifier, _encode_AlgorithmIdentifier } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
 import {
-    itu_t,
-    itu_r,
-    ccitt,
-    iso,
-    joint_iso_itu_t,
-    joint_iso_ccitt,
-    OPTIONAL,
-    BOOLEAN,
-    INTEGER,
-    BIT_STRING,
-    OCTET_STRING,
-    NULL,
-    OBJECT_IDENTIFIER,
-    ObjectDescriptor,
-    EXTERNAL,
-    REAL,
-    INSTANCE_OF,
-    ENUMERATED,
-    EMBEDDED_PDV,
-    UTF8String,
-    RELATIVE_OID,
-    SEQUENCE,
-    SEQUENCE_OF,
-    SET,
-    SET_OF,
-    GraphicString,
-    NumericString,
-    VisibleString,
-    PrintableString,
-    ISO646String,
-    TeletexString,
-    GeneralString,
-    T61String,
-    UniversalString,
-    VideotexString,
-    BMPString,
-    IA5String,
-    CharacterString,
-    UTCTime,
-    GeneralizedTime,
-    TIME,
-    DATE,
-    TIME_OF_DAY,
-    DATE_TIME,
-    DURATION,
-    OID_IRI,
-    RELATIVE_OID_IRI,
-    TRUE,
-    FALSE,
-    TRUE_BIT,
-    FALSE_BIT,
-    PLUS_INFINITY,
-    MINUS_INFINITY,
-    NOT_A_NUMBER,
-    TYPE_IDENTIFIER,
-    ABSTRACT_SYNTAX,
-    ASN1Element as _Element,
-    ASN1TagClass as _TagClass,
-    ASN1Construction as _Construction,
-    ASN1UniversalType as _UniversalType,
-    ObjectIdentifier as _OID,
-    External as _External,
-    EmbeddedPDV as _PDV,
-    ASN1ConstructionError as _ConstructionError,
     ASN1UniversalType,
+    BIT_STRING,
+    OPTIONAL,
+    ASN1Element as _Element,
+    ASN1TagClass as _TagClass
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
 import { POPOSigningKeyInput, _decode_POPOSigningKeyInput, _encode_POPOSigningKeyInput } from "../PKIXCRMF-2009/POPOSigningKeyInput.ta";
 export { POPOSigningKeyInput, _decode_POPOSigningKeyInput, _encode_POPOSigningKeyInput } from "../PKIXCRMF-2009/POPOSigningKeyInput.ta";
-import { AlgorithmIdentifier, _decode_AlgorithmIdentifier, _encode_AlgorithmIdentifier } from "@wildboar/x500/src/lib/modules/AuthenticationFramework/AlgorithmIdentifier.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION POPOSigningKey */
 /**
  * @summary POPOSigningKey
  * @description
- * 
+ *
  * ### ASN.1 Definition:
- * 
+ *
  * ```asn1
  * POPOSigningKey ::= SEQUENCE {
  *     poposkInput           [0] POPOSigningKeyInput OPTIONAL,
  *     algorithmIdentifier   AlgorithmIdentifier{SIGNATURE-ALGORITHM, {SignatureAlgorithms}},
  *     signature             BIT STRING }
  * ```
- * 
+ *
  * @class
  */
 export
@@ -114,9 +54,9 @@ class POPOSigningKey {
     /**
      * @summary Restructures an object into a POPOSigningKey
      * @description
-     * 
+     *
      * This takes an `object` and converts it to a `POPOSigningKey`.
-     * 
+     *
      * @public
      * @static
      * @method
@@ -135,9 +75,9 @@ class POPOSigningKey {
 /**
  * @summary The Leading Root Component Types of POPOSigningKey
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the leading root component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
@@ -152,14 +92,14 @@ const _root_component_type_list_1_spec_for_POPOSigningKey: $.ComponentSpec[] = [
 /**
  * @summary The Trailing Root Component Types of POPOSigningKey
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the trailing root component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
 const _root_component_type_list_2_spec_for_POPOSigningKey: $.ComponentSpec[] = [
-    
+
 ];
 /* END_OF_SYMBOL_DEFINITION _root_component_type_list_2_spec_for_POPOSigningKey */
 
@@ -167,14 +107,14 @@ const _root_component_type_list_2_spec_for_POPOSigningKey: $.ComponentSpec[] = [
 /**
  * @summary The Extension Addition Component Types of POPOSigningKey
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the extension addition component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
 const _extension_additions_list_spec_for_POPOSigningKey: $.ComponentSpec[] = [
-    
+
 ];
 /* END_OF_SYMBOL_DEFINITION _extension_additions_list_spec_for_POPOSigningKey */
 

@@ -1,88 +1,27 @@
 /* eslint-disable */
 import {
-    itu_t,
-    itu_r,
-    ccitt,
-    iso,
-    joint_iso_itu_t,
-    joint_iso_ccitt,
     OPTIONAL,
-    BOOLEAN,
-    INTEGER,
-    BIT_STRING,
-    OCTET_STRING,
-    NULL,
-    OBJECT_IDENTIFIER,
-    ObjectDescriptor,
-    EXTERNAL,
-    REAL,
-    INSTANCE_OF,
-    ENUMERATED,
-    EMBEDDED_PDV,
-    UTF8String,
-    RELATIVE_OID,
-    SEQUENCE,
-    SEQUENCE_OF,
-    SET,
-    SET_OF,
-    GraphicString,
-    NumericString,
-    VisibleString,
-    PrintableString,
-    ISO646String,
-    TeletexString,
-    GeneralString,
-    T61String,
-    UniversalString,
-    VideotexString,
-    BMPString,
-    IA5String,
-    CharacterString,
-    UTCTime,
-    GeneralizedTime,
-    TIME,
-    DATE,
-    TIME_OF_DAY,
-    DATE_TIME,
-    DURATION,
-    OID_IRI,
-    RELATIVE_OID_IRI,
-    TRUE,
-    FALSE,
-    TRUE_BIT,
-    FALSE_BIT,
-    PLUS_INFINITY,
-    MINUS_INFINITY,
-    NOT_A_NUMBER,
-    TYPE_IDENTIFIER,
-    ABSTRACT_SYNTAX,
     ASN1Element as _Element,
-    ASN1TagClass as _TagClass,
-    ASN1Construction as _Construction,
-    ASN1UniversalType as _UniversalType,
-    ObjectIdentifier as _OID,
-    External as _External,
-    EmbeddedPDV as _PDV,
-    ASN1ConstructionError as _ConstructionError,
+    ASN1TagClass as _TagClass
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
 import { DigestAlgorithmIdentifier, _decode_DigestAlgorithmIdentifier, _encode_DigestAlgorithmIdentifier } from "../MultipleSignatures-2010/DigestAlgorithmIdentifier.ta";
-export { DigestAlgorithmIdentifier, _decode_DigestAlgorithmIdentifier, _encode_DigestAlgorithmIdentifier } from "../MultipleSignatures-2010/DigestAlgorithmIdentifier.ta";
-import { SignatureAlgorithmIdentifier, _decode_SignatureAlgorithmIdentifier, _encode_SignatureAlgorithmIdentifier } from "../MultipleSignatures-2010/SignatureAlgorithmIdentifier.ta";
-export { SignatureAlgorithmIdentifier, _decode_SignatureAlgorithmIdentifier, _encode_SignatureAlgorithmIdentifier } from "../MultipleSignatures-2010/SignatureAlgorithmIdentifier.ta";
-import { SignAttrsHash, _decode_SignAttrsHash, _encode_SignAttrsHash } from "../MultipleSignatures-2010/SignAttrsHash.ta";
-export { SignAttrsHash, _decode_SignAttrsHash, _encode_SignAttrsHash } from "../MultipleSignatures-2010/SignAttrsHash.ta";
 import { ESSCertIDv2, _decode_ESSCertIDv2, _encode_ESSCertIDv2 } from "../MultipleSignatures-2010/ESSCertIDv2.ta";
+import { SignAttrsHash, _decode_SignAttrsHash, _encode_SignAttrsHash } from "../MultipleSignatures-2010/SignAttrsHash.ta";
+import { SignatureAlgorithmIdentifier, _decode_SignatureAlgorithmIdentifier, _encode_SignatureAlgorithmIdentifier } from "../MultipleSignatures-2010/SignatureAlgorithmIdentifier.ta";
+export { DigestAlgorithmIdentifier, _decode_DigestAlgorithmIdentifier, _encode_DigestAlgorithmIdentifier } from "../MultipleSignatures-2010/DigestAlgorithmIdentifier.ta";
 export { ESSCertIDv2, _decode_ESSCertIDv2, _encode_ESSCertIDv2 } from "../MultipleSignatures-2010/ESSCertIDv2.ta";
+export { SignAttrsHash, _decode_SignAttrsHash, _encode_SignAttrsHash } from "../MultipleSignatures-2010/SignAttrsHash.ta";
+export { SignatureAlgorithmIdentifier, _decode_SignatureAlgorithmIdentifier, _encode_SignatureAlgorithmIdentifier } from "../MultipleSignatures-2010/SignatureAlgorithmIdentifier.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION MultipleSignatures */
 /**
  * @summary MultipleSignatures
  * @description
- * 
+ *
  * ### ASN.1 Definition:
- * 
+ *
  * ```asn1
  * MultipleSignatures ::= SEQUENCE {
  *     bodyHashAlg     DigestAlgorithmIdentifier,
@@ -91,7 +30,7 @@ export { ESSCertIDv2, _decode_ESSCertIDv2, _encode_ESSCertIDv2 } from "../Multip
  *     cert            ESSCertIDv2 OPTIONAL
  * }
  * ```
- * 
+ *
  * @class
  */
 export
@@ -126,9 +65,9 @@ class MultipleSignatures {
     /**
      * @summary Restructures an object into a MultipleSignatures
      * @description
-     * 
+     *
      * This takes an `object` and converts it to a `MultipleSignatures`.
-     * 
+     *
      * @public
      * @static
      * @method
@@ -147,9 +86,9 @@ class MultipleSignatures {
 /**
  * @summary The Leading Root Component Types of MultipleSignatures
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the leading root component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
@@ -165,14 +104,14 @@ const _root_component_type_list_1_spec_for_MultipleSignatures: $.ComponentSpec[]
 /**
  * @summary The Trailing Root Component Types of MultipleSignatures
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the trailing root component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
 const _root_component_type_list_2_spec_for_MultipleSignatures: $.ComponentSpec[] = [
-    
+
 ];
 /* END_OF_SYMBOL_DEFINITION _root_component_type_list_2_spec_for_MultipleSignatures */
 
@@ -180,14 +119,14 @@ const _root_component_type_list_2_spec_for_MultipleSignatures: $.ComponentSpec[]
 /**
  * @summary The Extension Addition Component Types of MultipleSignatures
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the extension addition component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
 const _extension_additions_list_spec_for_MultipleSignatures: $.ComponentSpec[] = [
-    
+
 ];
 /* END_OF_SYMBOL_DEFINITION _extension_additions_list_spec_for_MultipleSignatures */
 

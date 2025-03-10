@@ -1,86 +1,26 @@
 /* eslint-disable */
 import {
-    itu_t,
-    itu_r,
-    ccitt,
-    iso,
-    joint_iso_itu_t,
-    joint_iso_ccitt,
     OPTIONAL,
-    BOOLEAN,
-    INTEGER,
-    BIT_STRING,
-    OCTET_STRING,
-    NULL,
-    OBJECT_IDENTIFIER,
-    ObjectDescriptor,
-    EXTERNAL,
-    REAL,
-    INSTANCE_OF,
-    ENUMERATED,
-    EMBEDDED_PDV,
-    UTF8String,
-    RELATIVE_OID,
-    SEQUENCE,
-    SEQUENCE_OF,
-    SET,
-    SET_OF,
-    GraphicString,
-    NumericString,
-    VisibleString,
     PrintableString,
-    ISO646String,
-    TeletexString,
-    GeneralString,
-    T61String,
-    UniversalString,
-    VideotexString,
-    BMPString,
-    IA5String,
-    CharacterString,
-    UTCTime,
-    GeneralizedTime,
-    TIME,
-    DATE,
-    TIME_OF_DAY,
-    DATE_TIME,
-    DURATION,
-    OID_IRI,
-    RELATIVE_OID_IRI,
-    TRUE,
-    FALSE,
-    TRUE_BIT,
-    FALSE_BIT,
-    PLUS_INFINITY,
-    MINUS_INFINITY,
-    NOT_A_NUMBER,
-    TYPE_IDENTIFIER,
-    ABSTRACT_SYNTAX,
     ASN1Element as _Element,
-    ASN1TagClass as _TagClass,
-    ASN1Construction as _Construction,
-    ASN1UniversalType as _UniversalType,
-    ObjectIdentifier as _OID,
-    External as _External,
-    EmbeddedPDV as _PDV,
-    ASN1ConstructionError as _ConstructionError,
+    ASN1TagClass as _TagClass
 } from "asn1-ts";
 import * as $ from "asn1-ts/dist/node/functional";
-import { DataQualitySyntax_namespace_completeness, _enum_for_DataQualitySyntax_namespace_completeness, DataQualitySyntax_namespace_completeness_none /* IMPORTED_LONG_ENUMERATION_ITEM */, none /* IMPORTED_SHORT_ENUMERATION_ITEM */, DataQualitySyntax_namespace_completeness_sample /* IMPORTED_LONG_ENUMERATION_ITEM */, sample /* IMPORTED_SHORT_ENUMERATION_ITEM */, DataQualitySyntax_namespace_completeness_selected /* IMPORTED_LONG_ENUMERATION_ITEM */, selected /* IMPORTED_SHORT_ENUMERATION_ITEM */, DataQualitySyntax_namespace_completeness_substantial /* IMPORTED_LONG_ENUMERATION_ITEM */, substantial /* IMPORTED_SHORT_ENUMERATION_ITEM */, DataQualitySyntax_namespace_completeness_full /* IMPORTED_LONG_ENUMERATION_ITEM */, full /* IMPORTED_SHORT_ENUMERATION_ITEM */, _decode_DataQualitySyntax_namespace_completeness, _encode_DataQualitySyntax_namespace_completeness } from "../Thorn/DataQualitySyntax-namespace-completeness.ta";
-export { DataQualitySyntax_namespace_completeness, _enum_for_DataQualitySyntax_namespace_completeness, DataQualitySyntax_namespace_completeness_none /* IMPORTED_LONG_ENUMERATION_ITEM */, none /* IMPORTED_SHORT_ENUMERATION_ITEM */, DataQualitySyntax_namespace_completeness_sample /* IMPORTED_LONG_ENUMERATION_ITEM */, sample /* IMPORTED_SHORT_ENUMERATION_ITEM */, DataQualitySyntax_namespace_completeness_selected /* IMPORTED_LONG_ENUMERATION_ITEM */, selected /* IMPORTED_SHORT_ENUMERATION_ITEM */, DataQualitySyntax_namespace_completeness_substantial /* IMPORTED_LONG_ENUMERATION_ITEM */, substantial /* IMPORTED_SHORT_ENUMERATION_ITEM */, DataQualitySyntax_namespace_completeness_full /* IMPORTED_LONG_ENUMERATION_ITEM */, full /* IMPORTED_SHORT_ENUMERATION_ITEM */, _decode_DataQualitySyntax_namespace_completeness, _encode_DataQualitySyntax_namespace_completeness } from "../Thorn/DataQualitySyntax-namespace-completeness.ta";
 import { AttributeQuality, _decode_AttributeQuality, _encode_AttributeQuality } from "../Thorn/AttributeQuality.ta";
-export { AttributeQuality, _decode_AttributeQuality, _encode_AttributeQuality } from "../Thorn/AttributeQuality.ta";
 import { DataQualitySyntax_attributeQuality_Item, _decode_DataQualitySyntax_attributeQuality_Item, _encode_DataQualitySyntax_attributeQuality_Item } from "../Thorn/DataQualitySyntax-attributeQuality-Item.ta";
+import { DataQualitySyntax_namespace_completeness, _decode_DataQualitySyntax_namespace_completeness, _encode_DataQualitySyntax_namespace_completeness, _enum_for_DataQualitySyntax_namespace_completeness } from "../Thorn/DataQualitySyntax-namespace-completeness.ta";
+export { AttributeQuality, _decode_AttributeQuality, _encode_AttributeQuality } from "../Thorn/AttributeQuality.ta";
 export { DataQualitySyntax_attributeQuality_Item, _decode_DataQualitySyntax_attributeQuality_Item, _encode_DataQualitySyntax_attributeQuality_Item } from "../Thorn/DataQualitySyntax-attributeQuality-Item.ta";
+export { DataQualitySyntax_namespace_completeness, DataQualitySyntax_namespace_completeness_full /* IMPORTED_LONG_ENUMERATION_ITEM */, DataQualitySyntax_namespace_completeness_none /* IMPORTED_LONG_ENUMERATION_ITEM */, DataQualitySyntax_namespace_completeness_sample /* IMPORTED_LONG_ENUMERATION_ITEM */, DataQualitySyntax_namespace_completeness_selected /* IMPORTED_LONG_ENUMERATION_ITEM */, DataQualitySyntax_namespace_completeness_substantial /* IMPORTED_LONG_ENUMERATION_ITEM */, _decode_DataQualitySyntax_namespace_completeness, _encode_DataQualitySyntax_namespace_completeness, _enum_for_DataQualitySyntax_namespace_completeness, full /* IMPORTED_SHORT_ENUMERATION_ITEM */, none /* IMPORTED_SHORT_ENUMERATION_ITEM */, sample /* IMPORTED_SHORT_ENUMERATION_ITEM */, selected /* IMPORTED_SHORT_ENUMERATION_ITEM */, substantial /* IMPORTED_SHORT_ENUMERATION_ITEM */ } from "../Thorn/DataQualitySyntax-namespace-completeness.ta";
 
 
 /* START_OF_SYMBOL_DEFINITION DataQualitySyntax */
 /**
  * @summary DataQualitySyntax
  * @description
- * 
+ *
  * ### ASN.1 Definition:
- * 
+ *
  * ```asn1
  * DataQualitySyntax ::= SEQUENCE {
  *     namespace-completeness ENUMERATED {
@@ -99,7 +39,7 @@ export { DataQualitySyntax_attributeQuality_Item, _decode_DataQualitySyntax_attr
  *     ...
  * }
  * ```
- * 
+ *
  * @class
  */
 export
@@ -140,9 +80,9 @@ class DataQualitySyntax {
     /**
      * @summary Restructures an object into a DataQualitySyntax
      * @description
-     * 
+     *
      * This takes an `object` and converts it to a `DataQualitySyntax`.
-     * 
+     *
      * @public
      * @static
      * @method
@@ -167,9 +107,9 @@ class DataQualitySyntax {
 /**
  * @summary The Leading Root Component Types of DataQualitySyntax
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the leading root component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
@@ -185,14 +125,14 @@ const _root_component_type_list_1_spec_for_DataQualitySyntax: $.ComponentSpec[] 
 /**
  * @summary The Trailing Root Component Types of DataQualitySyntax
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the trailing root component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
 const _root_component_type_list_2_spec_for_DataQualitySyntax: $.ComponentSpec[] = [
-    
+
 ];
 /* END_OF_SYMBOL_DEFINITION _root_component_type_list_2_spec_for_DataQualitySyntax */
 
@@ -200,14 +140,14 @@ const _root_component_type_list_2_spec_for_DataQualitySyntax: $.ComponentSpec[] 
 /**
  * @summary The Extension Addition Component Types of DataQualitySyntax
  * @description
- * 
+ *
  * This is an array of `ComponentSpec`s that define how to decode the extension addition component type list of a SET or SEQUENCE.
- * 
+ *
  * @constant
  */
 export
 const _extension_additions_list_spec_for_DataQualitySyntax: $.ComponentSpec[] = [
-    
+
 ];
 /* END_OF_SYMBOL_DEFINITION _extension_additions_list_spec_for_DataQualitySyntax */
 
