@@ -6,34 +6,43 @@
     "tags": [],
     "targets": {
         "build": {
-            "executor": "@nx/webpack:webpack",
+            "executor": "@nx/esbuild:esbuild",
             "outputs": ["{options.outputPath}"],
+            "defaultConfiguration": "production",
             "options": {
-                "outputPath": "dist/apps/meerkat",
                 "main": "apps/meerkat/src/main.ts",
+                "outputPath": "dist/apps/meerkat",
+                "outputFileName": "main.js",
                 "tsConfig": "apps/meerkat/tsconfig.app.json",
-                "webpackConfig": "apps/meerkat/webpack.config.js",
+                "platform": "node",
+                "format": ["cjs"],
+                "esbuildOptions": {
+                    "banner": {
+                        "js": "#!/bin/env node"
+                    },
+                    "footer": {
+                        "js": "// Minified Meerkat DSA Javascript Source - Copyright (c) Wildboar Software 2025 - MIT License"
+                    }
+                },
                 "assets": [
-                    "apps/meerkat/src/assets",
-                    "apps/meerkat/src/prisma",
-                    "apps/meerkat/src/README.md"
-                ],
-                "memoryLimit": 4096,
-                "maxWorkers": 4,
-                "generatePackageJson": true,
-                "sourceMap": true,
-                "target": "node",
-                "compiler": "tsc"
+                    {
+                        "glob": "apps/meerkat/README.md",
+                        "input": "apps/meerkat/src",
+                        "output": "."
+                    },
+                    {
+                        "glob": "assets/**",
+                        "input": "apps/meerkat/src",
+                        "output": "."
+                    }
+                ]
             },
             "configurations": {
-                "production": {
-                    "optimization": true,
-                    "extractLicenses": true,
-                    "inspect": false
+                "development": {
+                    "minify": false
                 },
-                "dev": {
-                    "optimization": false,
-                    "extractLicenses": false
+                "production": {
+                    "minify": true
                 }
             }
         },

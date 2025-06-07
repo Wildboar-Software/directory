@@ -544,7 +544,7 @@ async function checkSuitabilityProcedure (
             /* In theory, the information could be incomplete with respect to
             the query, but there does not seem to be any way to determine
             whether all attribute types for an sDSE have been replicated. */
-            // TODO: Report this as a defect.
+            // TODO: Does this even make sense? Shouldn't this be _not suitable_?
             return true;
         }
         if (
