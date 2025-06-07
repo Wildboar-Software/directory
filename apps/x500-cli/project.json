@@ -6,29 +6,35 @@
     "tags": [],
     "targets": {
         "build": {
-            "executor": "@nx/webpack:webpack",
+            "executor": "@nx/esbuild:esbuild",
             "outputs": ["{options.outputPath}"],
+            "defaultConfiguration": "production",
             "options": {
-                "outputPath": "dist/apps/x500-cli",
                 "main": "apps/x500-cli/src/main.ts",
+                "outputPath": "dist/apps/x500-cli",
+                "outputFileName": "main.js",
                 "tsConfig": "apps/x500-cli/tsconfig.app.json",
+                "platform": "node",
+                "format": ["cjs"],
                 "assets": [
-                    "apps/x500-cli/src/assets",
-                    "apps/x500-cli/src/README.md"
-                ],
-                "memoryLimit": 1024,
-                "maxWorkers": 1,
-                "generatePackageJson": true,
-                "webpackConfig": "apps/x500-cli/webpack.config.js",
-                "externalDependencies": "none",
-                "target": "node",
-                "compiler": "tsc"
+                    {
+                        "glob": "**/*",
+                        "input": "apps/x500-cli/src/assets",
+                        "output": "."
+                    },
+                    {
+                        "glob": "README.md",
+                        "input": "apps/x500-cli/src",
+                        "output": "."
+                    }
+                ]
             },
             "configurations": {
+                "development": {
+                    "minify": false
+                },
                 "production": {
-                    "optimization": true,
-                    "extractLicenses": true,
-                    "inspect": false
+                    "minify": true
                 }
             }
         },

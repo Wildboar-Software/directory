@@ -15,10 +15,7 @@
             "outFiles": [
                 "${workspaceFolder}/dist/apps/meerkat/**/*.js"
             ],
-            "sourceMaps": true,
-            "sourceMapPathOverrides": {
-                "webpack://@wildboar/meerkat-dsa/./src/*": "${workspaceFolder}/apps/meerkat/src/*"
-            }
+            "sourceMaps": true
         },
         {
             "type": "node",

@@ -6,22 +6,30 @@
     "tags": [],
     "targets": {
         "build": {
-            "executor": "@nx/webpack:webpack",
+            "executor": "@nx/esbuild:esbuild",
             "outputs": ["{options.outputPath}"],
+            "defaultConfiguration": "production",
             "options": {
-                "outputPath": "dist/apps/create-test-dit",
                 "main": "apps/create-test-dit/src/main.ts",
+                "outputPath": "dist/apps/create-test-dit",
+                "outputFileName": "main.js",
                 "tsConfig": "apps/create-test-dit/tsconfig.app.json",
-                "assets": ["apps/create-test-dit/src/assets"],
-                "target": "node",
-                "compiler": "tsc",
-                "webpackConfig": "apps/create-test-dit/webpack.config.js"
+                "platform": "node",
+                "format": ["cjs"],
+                "assets": [
+                    {
+                        "glob": "**/*",
+                        "input": "apps/create-test-dit/src/assets",
+                        "output": "."
+                    }
+                ]
             },
             "configurations": {
+                "development": {
+                    "minify": false
+                },
                 "production": {
-                    "optimization": true,
-                    "extractLicenses": true,
-                    "inspect": false
+                    "minify": true
                 }
             }
         },

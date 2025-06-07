@@ -6,21 +6,23 @@
     "tags": [],
     "targets": {
         "build": {
-            "executor": "@nx/webpack:webpack",
+            "executor": "@nx/esbuild:esbuild",
             "outputs": ["{options.outputPath}"],
+            "defaultConfiguration": "production",
             "options": {
-                "outputPath": "dist/libs/parity-schema",
                 "main": "libs/parity-schema/src/index.ts",
+                "outputPath": "dist/libs/parity-schema",
+                "outputFileName": "index.js",
                 "tsConfig": "libs/parity-schema/tsconfig.lib.json",
-                "target": "node",
-                "compiler": "tsc",
-                "webpackConfig": "libs/parity-schema/webpack.config.js"
+                "platform": "node",
+                "format": ["cjs"]
             },
             "configurations": {
+                "development": {
+                    "minify": false
+                },
                 "production": {
-                    "optimization": true,
-                    "extractLicenses": true,
-                    "inspect": false
+                    "minify": true
                 }
             }
         },

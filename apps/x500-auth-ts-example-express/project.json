@@ -6,22 +6,30 @@
     "tags": [],
     "targets": {
         "build": {
-            "executor": "@nx/webpack:webpack",
+            "executor": "@nx/esbuild:esbuild",
             "outputs": ["{options.outputPath}"],
+            "defaultConfiguration": "production",
             "options": {
-                "outputPath": "dist/apps/x500-auth-ts-example-express",
                 "main": "apps/x500-auth-ts-example-express/src/main.ts",
+                "outputPath": "dist/apps/x500-auth-ts-example-express",
+                "outputFileName": "main.js",
                 "tsConfig": "apps/x500-auth-ts-example-express/tsconfig.app.json",
-                "assets": ["apps/x500-auth-ts-example-express/src/assets"],
-                "compiler": "tsc",
-                "target": "node",
-                "webpackConfig": "apps/x500-auth-ts-example-express/webpack.config.js"
+                "platform": "node",
+                "format": ["cjs"],
+                "assets": [
+                    {
+                        "glob": "**/*",
+                        "input": "apps/x500-auth-ts-example-express/src/assets",
+                        "output": "."
+                    }
+                ]
             },
             "configurations": {
+                "development": {
+                    "minify": false
+                },
                 "production": {
-                    "optimization": true,
-                    "extractLicenses": true,
-                    "inspect": false
+                    "minify": true
                 }
             }
         },
