@@ -13,10 +13,9 @@
             }
         },
         "test": {
-            "executor": "@nx/jest:jest",
-            "outputs": ["{workspaceRoot}/coverage/libs/x500-functional-tests"],
+            "executor": "nx:run-commands",
             "options": {
-                "jestConfig": "libs/x500-functional-tests/jest.config.ts"
+                "command": "node --test libs/x500-functional-tests/src/**/*.spec.ts"
             }
         }
     }

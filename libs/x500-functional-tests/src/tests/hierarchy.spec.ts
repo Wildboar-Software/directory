@@ -1,56 +1,57 @@
+import { describe, it } from "node:test";
 import {
     ASN1Element,
     FALSE_BIT,
     TRUE_BIT,
     BIT_STRING,
 } from "asn1-ts";
-import { DER } from "asn1-ts/dist/node/functional";
+import { DER } from "asn1-ts/dist/node/functional.js";
 import {
     IDMConnection,
 } from "@wildboar/idm";
 import {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta.js";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta.js";
+import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta.js";
 import {
     commonName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa.js";
 import * as crypto from "crypto";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import {
     ServiceControlOptions,
     ServiceControlOptions_manageDSAIT,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta.js";
 import type {
     Code,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta.js";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import {
     search,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa.js";
 import {
     SearchArgument,
     _encode_SearchArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta.js";
 import {
     SearchArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta.js";
 import {
     SearchArgumentData_subset_baseObject,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta.js";
 import {
     _decode_SearchResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta.js";
 import {
     connect,
     createTestNode,
     createTestRootDN,
     createTestRootNode,
     utf8,
-} from "../utils";
+} from "../utils.js";
 import {
     HierarchySelections_all,
     HierarchySelections_children,
@@ -62,10 +63,10 @@ import {
     HierarchySelections_siblingSubtree,
     HierarchySelections_subtree,
     HierarchySelections_top,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/HierarchySelections.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/HierarchySelections.ta.js";
 import {
     hierarchyParent,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyParent.oa";
+} from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyParent.oa.js";
 
 jest.setTimeout(30000);
 

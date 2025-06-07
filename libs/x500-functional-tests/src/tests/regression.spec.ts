@@ -7,7 +7,7 @@ import {
     FALSE_BIT,
     TRUE_BIT,
 } from "asn1-ts";
-import { BER, DER, _encodeInteger, _encodePrintableString } from "asn1-ts/dist/node/functional";
+import { BER, DER, _encodeInteger, _encodePrintableString } from "asn1-ts/dist/node/functional.js";
 import {
     IDMConnection,
 } from "@wildboar/idm";
@@ -77,8 +77,8 @@ import { ListArgumentData } from "@wildboar/x500/src/lib/modules/DirectoryAbstra
 import { ListArgument, _encode_ListArgument } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgument.ta";
 import { _encode_Code, list } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
 import { IDM_PDU, Request, _encode_IDM_PDU } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IDM-PDU.ta";
-
-jest.setTimeout(30000);
+import { describe, it, before } from "node:test";
+import { strict as assert } from "node:assert";
 
 const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(Array(9).fill(FALSE_BIT));
 // Necessary to make countries administrative points.
@@ -112,17 +112,16 @@ function writeOperation(
     });
 }
 
-describe("Meerkat DSA", () => {
-
+describe("Meerkat DSA", { timeout: 30000 }, async (t) => {
     let connection: IDMConnection | undefined;
 
-    beforeEach(async () => {
+    await before(async () => {
         if (!connection) {
             connection = await connect();
         }
     });
 
-    test("does not crash after encountering a malformed invoke ID", async () => {
+    await it("does not crash after encountering a malformed invoke ID", async () => {
         const reqData = new ListArgumentData(
             {
                 rdnSequence: [],

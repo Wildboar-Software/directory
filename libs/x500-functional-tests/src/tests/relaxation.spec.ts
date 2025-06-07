@@ -4,44 +4,45 @@ import {
     TRUE_BIT,
 } from "asn1-ts";
 import { DER, _encodePrintableString } from "asn1-ts/dist/node/functional";
+import { strict as assert } from "node:assert";
 import {
     IDMConnection,
 } from "@wildboar/idm";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta.js";
+import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta.js";
 import {
     commonName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa.js";
 import * as crypto from "crypto";
 import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import {
     ServiceControlOptions,
     ServiceControlOptions_manageDSAIT,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta.js";
 import type {
     Code,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta.js";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import {
     search,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa.js";
 import {
     SearchArgument,
     _encode_SearchArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta.js";
 import {
     SearchArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta.js";
 import {
     SearchArgumentData_subset_baseObject,
     SearchArgumentData_subset_oneLevel,
     SearchArgumentData_subset_wholeSubtree,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta.js";
 import {
     _decode_SearchResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta.js";
 import {
     connect,
     createTestRootDN,
@@ -50,26 +51,25 @@ import {
     createEntry,
     oid,
 } from "../utils";
-import { RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
-import { countryName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/countryName.oa";
-import { description, person, surname } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/person.oa";
-import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
-import { country } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/country.oa";
-import { stateOrProvinceName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/stateOrProvinceName.oa";
-import { localityName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localityName.oa";
-import { postalCode } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/postalCode.oa";
-import { residentialPerson } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/residentialPerson.oa";
-import { MRMapping, RelaxationPolicy } from "@wildboar/x500/src/lib/modules/ServiceAdministration/RelaxationPolicy.ta";
-import { Mapping } from "@wildboar/x500/src/lib/modules/ServiceAdministration/Mapping.ta";
-import { id_mr_zonalMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-mr-zonalMatch.va";
-import { AttributeValueAssertion } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
-import { MRSubstitution } from "@wildboar/x500/src/lib/modules/ServiceAdministration/MRSubstitution.ta";
-import { wordMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/wordMatch.oa";
-import { id_mr_systemProposedMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-mr-systemProposedMatch.va";
-import { caseExactMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseExactMatch.oa";
-import { SearchControlOptions, SearchControlOptions_includeAllAreas } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
-
-jest.setTimeout(30000);
+import { RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta.js";
+import { countryName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/countryName.oa.js";
+import { description, person, surname } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/person.oa.js";
+import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa.js";
+import { country } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/country.oa.js";
+import { stateOrProvinceName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/stateOrProvinceName.oa.js";
+import { localityName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localityName.oa.js";
+import { postalCode } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/postalCode.oa.js";
+import { residentialPerson } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/residentialPerson.oa.js";
+import { MRMapping, RelaxationPolicy } from "@wildboar/x500/src/lib/modules/ServiceAdministration/RelaxationPolicy.ta.js";
+import { Mapping } from "@wildboar/x500/src/lib/modules/ServiceAdministration/Mapping.ta.js";
+import { id_mr_zonalMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-mr-zonalMatch.va.js";
+import { AttributeValueAssertion } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta.js";
+import { MRSubstitution } from "@wildboar/x500/src/lib/modules/ServiceAdministration/MRSubstitution.ta.js";
+import { wordMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/wordMatch.oa.js";
+import { id_mr_systemProposedMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-mr-systemProposedMatch.va.js";
+import { caseExactMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/caseExactMatch.oa.js";
+import { SearchControlOptions, SearchControlOptions_includeAllAreas } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta.js";
+import { describe, it, before } from "node:test";
 
 const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(Array(9).fill(FALSE_BIT));
 // Necessary to make countries administrative points.
@@ -103,11 +103,10 @@ function writeOperation(
     });
 }
 
-describe("Meerkat DSA", () => {
-
+describe("Meerkat DSA", { timeout: 30000 }, async (t) => {
     let connection: IDMConnection | undefined;
 
-    beforeEach(async () => {
+    before(async () => {
         if (!connection) {
             connection = await connect();
         }
@@ -115,7 +114,7 @@ describe("Meerkat DSA", () => {
 
     // Skipped because this depends upon a dataset being loaded, so this won't
     // pass in CI/CD environments.
-    test.skip("zonal matching works", async () => {
+    it.skip("zonal matching works", async () => {
         const testId = `zonal-matching-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId);
@@ -245,16 +244,16 @@ describe("Meerkat DSA", () => {
             const decoded = _decode_SearchResult(result.result);
             const resData = getOptionallyProtectedValue(decoded);
             if ("searchInfo" in resData) {
-                expect(resData.searchInfo.entries.length).toBe(1);
+                assert.strictEqual(resData.searchInfo.entries.length, 1);
             } else {
-                expect(false).toBeFalsy();
+                assert.fail();
             }
         } else {
-            expect(false).toBeTruthy();
+            assert.fail();
         }
     });
 
-    test("matching rule substitution works", async () => {
+    it("matching rule substitution works", async () => {
         const testId = `matching-rule-substitution-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, [
@@ -313,16 +312,16 @@ describe("Meerkat DSA", () => {
             const decoded = _decode_SearchResult(result.result);
             const resData = getOptionallyProtectedValue(decoded);
             if ("searchInfo" in resData) {
-                expect(resData.searchInfo.entries.length).toBe(1);
+                assert.strictEqual(resData.searchInfo.entries.length, 1);
             } else {
-                expect(false).toBeFalsy();
+                assert.fail();
             }
         } else {
-            expect(false).toBeTruthy();
+            assert.fail();
         }
     });
 
-    test("systemPropopsedMatch matching rule substitution works", async () => {
+    it("systemPropopsedMatch matching rule substitution works", async () => {
         const testId = `system-proposed-match-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, [
@@ -381,17 +380,17 @@ describe("Meerkat DSA", () => {
             const decoded = _decode_SearchResult(result.result);
             const resData = getOptionallyProtectedValue(decoded);
             if ("searchInfo" in resData) {
-                expect(resData.searchInfo.entries.length).toBe(1);
+                assert.strictEqual(resData.searchInfo.entries.length, 1);
             } else {
-                expect(false).toBeFalsy();
+                assert.fail();
             }
         } else {
-            expect(false).toBeTruthy();
+            assert.fail();
         }
     });
 
 
-    test("relaxation works", async () => {
+    it("relaxation works", async () => {
         const testId = `relaxation-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, [
@@ -452,12 +451,12 @@ describe("Meerkat DSA", () => {
             const decoded = _decode_SearchResult(result.result);
             const resData = getOptionallyProtectedValue(decoded);
             if ("searchInfo" in resData) {
-                expect(resData.searchInfo.entries.length).toBe(1);
+                assert.strictEqual(resData.searchInfo.entries.length, 1);
             } else {
-                expect(false).toBeFalsy();
+                assert.fail();
             }
         } else {
-            expect(false).toBeTruthy();
+            assert.fail();
         }
     });
 
@@ -468,7 +467,7 @@ describe("Meerkat DSA", () => {
      * tightening is applied, only the one whose casing matching should be
      * returned.
      */
-    test("tightening works", async () => {
+    it("tightening works", async () => {
         const testId = `tightening-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, [
@@ -550,12 +549,12 @@ describe("Meerkat DSA", () => {
             const decoded = _decode_SearchResult(result.result);
             const resData = getOptionallyProtectedValue(decoded);
             if ("searchInfo" in resData) {
-                expect(resData.searchInfo.entries.length).toBe(1);
+                assert.strictEqual(resData.searchInfo.entries.length, 1);
             } else {
-                expect(false).toBeFalsy();
+                assert.fail();
             }
         } else {
-            expect(false).toBeTruthy();
+            assert.fail();
         }
     });
 
@@ -571,7 +570,7 @@ describe("Meerkat DSA", () => {
      * match all three entries and _return all three_ because we set
      * `includeAllAreas` to true.
      */
-    test.skip("includeAllAreas=TRUE works", async () => {
+    it.skip("includeAllAreas=TRUE works", async () => {
         const testId = `includeAllAreas-true-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, [
@@ -677,12 +676,12 @@ describe("Meerkat DSA", () => {
             const decoded = _decode_SearchResult(result.result);
             const resData = getOptionallyProtectedValue(decoded);
             if ("searchInfo" in resData) {
-                expect(resData.searchInfo.entries.length).toBe(3);
+                assert.strictEqual(resData.searchInfo.entries.length, 3);
             } else {
-                expect(false).toBeFalsy();
+                assert.fail();
             }
         } else {
-            expect(false).toBeTruthy();
+            assert.fail();
         }
     });
 
@@ -699,7 +698,7 @@ describe("Meerkat DSA", () => {
      * relaxed iteration (excluding the first returned from the first pass of
      * the search) because we set `includeAllAreas` to `FALSE`.
      */
-    test.skip("includeAllAreas=FALSE works", async () => {
+    it.skip("includeAllAreas=FALSE works", async () => {
         const testId = `includeAllAreas-false-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, [
@@ -805,15 +804,15 @@ describe("Meerkat DSA", () => {
             const decoded = _decode_SearchResult(result.result);
             const resData = getOptionallyProtectedValue(decoded);
             if ("searchInfo" in resData) {
-                expect(resData.searchInfo.entries.length).toBe(2);
+                assert.strictEqual(resData.searchInfo.entries.length, 2);
             } else {
-                expect(false).toBeFalsy();
+                assert.fail();
             }
         } else {
-            expect(false).toBeTruthy();
+            assert.fail();
         }
     });
 
-    test.todo("multiple tightenings");
-    test.todo("multiple relaxations");
+    it.todo("multiple tightenings");
+    it.todo("multiple relaxations");
 });

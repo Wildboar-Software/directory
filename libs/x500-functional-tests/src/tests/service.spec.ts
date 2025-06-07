@@ -14,29 +14,29 @@ import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
 import {
     ServiceControlOptions,
     ServiceControlOptions_manageDSAIT,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta.js";
 import type {
     Code,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta.js";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import {
     search,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa.js";
 import {
     SearchArgument,
     _encode_SearchArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta.js";
 import {
     SearchArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta.js";
 import {
     SearchArgumentData_subset_baseObject,
     SearchArgumentData_subset_oneLevel,
     SearchArgumentData_subset_wholeSubtree,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta.js";
 import {
     _decode_SearchResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta.js";
 import {
     connect,
     createTestNode,
@@ -47,37 +47,36 @@ import {
     createEntry,
     oid,
 } from "../utils";
-import { RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta";
-import { AttributeTypeAndValue } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttributeTypeAndValue.ta";
-import { commonName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
-import { Attribute } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import { searchRules } from "@wildboar/x500/src/lib/modules/InformationFramework/searchRules.oa";
-import { ControlOptions, EntryLimit, FamilyGrouping_compoundEntry, ImposedSubset_baseObject, RelaxationPolicy, RequestAttribute, ResultAttribute, SearchRuleDescription } from "@wildboar/x500/src/lib/modules/InformationFramework/SearchRuleDescription.ta";
-import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
-import { subentry, subtreeSpecification } from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa";
-import { serviceAdminSubentry } from "@wildboar/x500/src/lib/modules/InformationFramework/serviceAdminSubentry.oa";
-import { SubtreeSpecification } from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
-import { AttributeValueAssertion } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
-import { applicationProcess, description, organizationalUnitName } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/applicationProcess.oa";
-import { EntryInformationSelection, FamilyReturn } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
-import { ServiceControls } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
-import { FamilyReturn_memberSelect_compoundEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn-memberSelect.ta";
-import { family_information } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/family-information.oa";
+import { RelativeDistinguishedName } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/RelativeDistinguishedName.ta.js";
+import { AttributeTypeAndValue } from "@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttributeTypeAndValue.ta.js";
+import { commonName } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa.js";
+import { Attribute } from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta.js";
+import { searchRules } from "@wildboar/x500/src/lib/modules/InformationFramework/searchRules.oa.js";
+import { ControlOptions, EntryLimit, FamilyGrouping_compoundEntry, ImposedSubset_baseObject, RelaxationPolicy, RequestAttribute, ResultAttribute, SearchRuleDescription } from "@wildboar/x500/src/lib/modules/InformationFramework/SearchRuleDescription.ta.js";
+import { objectClass } from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa.js";
+import { subentry, subtreeSpecification } from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa.js";
+import { serviceAdminSubentry } from "@wildboar/x500/src/lib/modules/InformationFramework/serviceAdminSubentry.oa.js";
+import { SubtreeSpecification } from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta.js";
+import { AttributeValueAssertion } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta.js";
+import { applicationProcess, description, organizationalUnitName } from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/applicationProcess.oa.js";
+import { EntryInformationSelection, FamilyReturn } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta.js";
+import { ServiceControls } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta.js";
+import { FamilyReturn_memberSelect_compoundEntry } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/FamilyReturn-memberSelect.ta.js";
+import { family_information } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/family-information.oa.js";
 import { strict as assert } from "node:assert";
-import { MRMapping, MRSubstitution } from "@wildboar/x500/src/lib/modules/ServiceAdministration/MRMapping.ta";
-import { id_mr_systemProposedMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-mr-systemProposedMatch.va";
-import { SearchControlOptions, SearchControlOptions_noSystemRelaxation, SearchControlOptions_useSubset } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta";
-import { Context } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Context.ta";
-import { ContextProfile } from "@wildboar/x500/src/lib/modules/ServiceAdministration/ContextProfile.ta";
-import { languageContext } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/languageContext.oa";
-import { ContextAssertion } from "@wildboar/x500/src/lib/modules/InformationFramework/ContextAssertion.ta";
-import { localeContext } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localeContext.oa";
-import { name } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/name.oa";
-import { Attribute_valuesWithContext_Item } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Attribute-valuesWithContext-Item.ta";
-import { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
-import { RequestAttribute_defaultValues_Item } from "@wildboar/x500/src/lib/modules/ServiceAdministration/RequestAttribute-defaultValues-Item.ta";
-
-jest.setTimeout(30000);
+import { describe, it, before } from "node:test";
+import { MRMapping, MRSubstitution } from "@wildboar/x500/src/lib/modules/ServiceAdministration/MRMapping.ta.js";
+import { id_mr_systemProposedMatch } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/id-mr-systemProposedMatch.va.js";
+import { SearchControlOptions, SearchControlOptions_noSystemRelaxation, SearchControlOptions_useSubset } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchControlOptions.ta.js";
+import { Context } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Context.ta.js";
+import { ContextProfile } from "@wildboar/x500/src/lib/modules/ServiceAdministration/ContextProfile.ta.js";
+import { languageContext } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/languageContext.oa.js";
+import { ContextAssertion } from "@wildboar/x500/src/lib/modules/InformationFramework/ContextAssertion.ta.js";
+import { localeContext } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localeContext.oa.js";
+import { name } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/name.oa.js";
+import { Attribute_valuesWithContext_Item } from "@wildboar/pki-stub/src/lib/modules/InformationFramework/Attribute-valuesWithContext-Item.ta.js";
+import { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta.js";
+import { RequestAttribute_defaultValues_Item } from "@wildboar/x500/src/lib/modules/ServiceAdministration/RequestAttribute-defaultValues-Item.ta.js";
 
 const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(Array(9).fill(FALSE_BIT));
 // Necessary to make countries administrative points.
@@ -111,17 +110,16 @@ function writeOperation(
     });
 }
 
-describe("Meerkat DSA", () => {
-
+describe("Meerkat DSA", { timeout: 30000 }, async (t) => {
     let connection: IDMConnection | undefined;
 
-    beforeEach(async () => {
+    before(async () => {
         if (!connection) {
             connection = await connect();
         }
     });
 
-    test("search rules can allow certain searches", async () => {
+    await it("search rules can allow certain searches", async () => {
         const testId = `search-rule-allowed-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, undefined, undefined, true);
@@ -203,7 +201,7 @@ describe("Meerkat DSA", () => {
                 search["&operationCode"]!,
                 _encode_SearchArgument(arg, DER),
             );
-            expect("error" in result);
+            assert("error" in result);
         }
 
         { // Try a request that should be allowed
@@ -225,17 +223,17 @@ describe("Meerkat DSA", () => {
                 const decoded = _decode_SearchResult(result.result);
                 const resData = getOptionallyProtectedValue(decoded);
                 if ("searchInfo" in resData) {
-                    expect(resData.searchInfo.entries.length).toBe(3);
+                    assert.equal(resData.searchInfo.entries.length, 3);
                 } else {
-                    expect(false).toBeFalsy();
+                    assert.fail("Expected searchInfo in result");
                 }
             } else {
-                expect(false).toBeTruthy();
+                assert.fail("Expected result in response");
             }
         }
     });
 
-    test("search rules can allow certain searches based on filter attributes", async () => {
+    await it("search rules can allow certain searches based on filter attributes", async () => {
         const testId = `search-rule-filter-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, undefined, undefined, true);
@@ -377,7 +375,7 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    test("search rules can allow certain searches based on attribute combinations", async () => {
+    await it("search rules can allow certain searches based on attribute combinations", async () => {
         const testId = `search-rule-attr-combo-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, undefined, undefined, true);
@@ -550,7 +548,7 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    test("search rules can limit the returned attribute types", async () => {
+    await it("search rules can limit the returned attribute types", async () => {
         const testId = `search-rule-output-attr-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, undefined, undefined, true);
@@ -666,7 +664,7 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    test("search rules can set default controls", async () => {
+    await it("search rules can set default controls", async () => {
         const testId = `search-rule-default-controls-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, undefined, undefined, true);
@@ -771,7 +769,7 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    test("search rules can require mandatory controls", async () => {
+    await it("search rules can require mandatory controls", async () => {
         const testId = `search-rule-mandatory-controls-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, undefined, undefined, true);
@@ -894,7 +892,7 @@ describe("Meerkat DSA", () => {
         expect("error" in result);
     });
 
-    test("search rules can override controls", async () => {
+    await it("search rules can override controls", async () => {
         const testId = `search-rule-override-controls-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, undefined, undefined, true);
@@ -1027,7 +1025,7 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    test("search rules can override the family return member select", async () => {
+    await it("search rules can override the family return member select", async () => {
         const testId = `search-rule-member-select-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, undefined, undefined, true);
@@ -1127,7 +1125,7 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    test("search rules can override the family grouping", async () => {
+    await it("search rules can override the family grouping", async () => {
         const testId = `search-rule-family-grouping-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, undefined, undefined, true);
@@ -1257,7 +1255,7 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    test("search rules can affect relaxation", async () => {
+    await it("search rules can affect relaxation", async () => {
         const testId = `search-rule-relaxation-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, undefined, undefined, true);
@@ -1390,7 +1388,7 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    test("search rules can affect imposedSubset", async () => {
+    await it("search rules can affect imposedSubset", async () => {
         const testId = `search-rule-imposedSubset-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, undefined, undefined, true);
@@ -1485,7 +1483,7 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    test("search rules can affect the default entry limit", async () => {
+    await it("search rules can affect the default entry limit", async () => {
         const testId = `search-rule-entry-limit-default-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, undefined, undefined, true);
@@ -1582,7 +1580,7 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    test("search rules can affect the max entry limit", async () => {
+    await it("search rules can affect the max entry limit", async () => {
         const testId = `search-rule-entry-limit-max-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, undefined, undefined, true);
@@ -1699,7 +1697,7 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    test("useSubset search control option overrides a search rule's imposed subset", async () => {
+    await it("useSubset search control option overrides a search rule's imposed subset", async () => {
         const testId = `search-rule-useSubset-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, undefined, undefined, true);
@@ -1807,7 +1805,7 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    test("noSystemRelaxation search control option can disable search rule relaxation", async () => {
+    await it("noSystemRelaxation search control option can disable search rule relaxation", async () => {
         const testId = `search-rule-relaxation-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, undefined, undefined, true);
@@ -1954,7 +1952,7 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    test("search rules can limit returned values via matchedValuesOnly", async () => {
+    await it("search rules can limit returned values via matchedValuesOnly", async () => {
         const testId = `search-rule-matchedValuesOnly-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, undefined, undefined, true);
@@ -2092,7 +2090,7 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    test("search rules can limit returned values via selectedValues", async () => {
+    await it("search rules can limit returned values via selectedValues", async () => {
         const testId = `search-rule-selectedValues-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, undefined, undefined, true);
@@ -2232,7 +2230,7 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    test("search rules can allow certain searches based on filter item context types", async () => {
+    await it("search rules can allow certain searches based on filter item context types", async () => {
         const testId = `search-rule-request-contexts-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, undefined, undefined, true);
@@ -2398,7 +2396,7 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    test("search rules can allow certain searches based on filter item context values", async () => {
+    await it("search rules can allow certain searches based on filter item context values", async () => {
         const testId = `search-rule-request-context-values-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, undefined, undefined, true);
@@ -2565,7 +2563,7 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    test("search rules can allow certain searches based on filter item context combinations", async () => {
+    await it("search rules can allow certain searches based on filter item context combinations", async () => {
         const testId = `search-rule-request-context-combo-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, undefined, undefined, true);
@@ -2752,7 +2750,7 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    test("search rules can allow certain searches based on filter attribute subtypes", async () => {
+    await it("search rules can allow certain searches based on filter attribute subtypes", async () => {
         const testId = `search-rule-filter-subtypes-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, undefined, undefined, true);
@@ -2894,7 +2892,7 @@ describe("Meerkat DSA", () => {
         }
     });
 
-    test("search rules can limit the returned contexts", async () => {
+    await it("search rules can limit the returned contexts", async () => {
         const testId = `search-rule-output-context-types-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, undefined, undefined, true);
@@ -3052,7 +3050,7 @@ describe("Meerkat DSA", () => {
         expect(context_value.printableString).toBe("en");
     });
 
-    test("search rules can limit the returned context values", async () => {
+    await it("search rules can limit the returned context values", async () => {
         const testId = `search-rule-output-context-values-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, undefined, undefined, true);
@@ -3223,8 +3221,8 @@ describe("Meerkat DSA", () => {
      * This remains undone because the specifications say nothing about how to
      * use the entryType field.
      */
-    test.todo("defaultValues with an entry type");
-    test("search rules can use default values for input attribute types without an entry type", async () => {
+    it.todo("defaultValues with an entry type");
+    await it("search rules can use default values for input attribute types without an entry type", async () => {
         const testId = `search-rule-defaultValues-no-entry-type-${(new Date()).toISOString()}`;
         { // Setup
             await createTestRootNode(connection!, testId, undefined, undefined, true);
@@ -3337,8 +3335,8 @@ describe("Meerkat DSA", () => {
         expect(resData.searchInfo.entries.length).toBe(3);
     });
 
-    test.todo("complicated example");
-    test.todo("search rules can regulate a read operation");
-    test.todo("search rules can regulate a modifyEntry operation");
+    it.todo("complicated example");
+    it.todo("search rules can regulate a read operation");
+    it.todo("search rules can regulate a modifyEntry operation");
 
 });

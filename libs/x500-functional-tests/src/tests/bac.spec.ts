@@ -1,3 +1,4 @@
+import { describe, it } from "node:test";
 import {
     ASN1Element,
     FALSE_BIT,
@@ -10,305 +11,305 @@ import {
     BER,
     DER,
     _encodeObjectIdentifier,
-} from "asn1-ts/dist/node/functional";
+} from "asn1-ts/dist/node/functional.js";
 import * as net from "net";
 import {
     DirectoryBindArgument,
     _encode_DirectoryBindArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta.js";
 import {
     IdmBind,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta";
+} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta.js";
 import {
     _encode_IDM_PDU,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IDM-PDU.ta";
+} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IDM-PDU.ta.js";
 import {
     dap_ip,
-} from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
+} from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa.js";
 import {
     IDMConnection,
 } from "@wildboar/idm";
 import {
     addEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa.js";
 import {
     AddEntryArgument,
     _encode_AddEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta.js";
 import {
     AddEntryArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta.js";
 import {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta.js";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
-import type { AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta";
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta.js";
+import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta.js";
+import type { AttributeType } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeType.ta.js";
 import {
     commonName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa.js";
 import {
     _encode_UnboundedDirectoryString,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UnboundedDirectoryString.ta";
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UnboundedDirectoryString.ta.js";
 import {
     applicationProcess,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/applicationProcess.oa";
+} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/applicationProcess.oa.js";
 import {
     description,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa";
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa.js";
 import {
     localityName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localityName.oa";
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localityName.oa.js";
 import {
     administrativeRole,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
+} from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa.js";
 import {
     objectClass,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+} from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa.js";
 import {
     id_ar_autonomousArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va.js";
 import {
     id_ar_accessControlSpecificArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlSpecificArea.va";
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlSpecificArea.va.js";
 import {
     id_ar_accessControlInnerArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlInnerArea.va";
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-accessControlInnerArea.va.js";
 import * as crypto from "crypto";
-import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
+import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError.js";
 import {
     ServiceControlOptions,
     ServiceControlOptions_manageDSAIT,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta.js";
 import {
     ServiceControls,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta.js";
 import {
     read,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/read.oa";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/read.oa.js";
 import {
     ReadArgument,
     _encode_ReadArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta.js";
 import {
     ReadArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgumentData.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgumentData.ta.js";
 import {
     _decode_ReadResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResult.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResult.ta.js";
 import {
     EntryInformationSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta.js";
 import type {
     Code,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
-import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta.js";
+import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue.js";
 import {
     compare,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/compare.oa.js";
 import {
     CompareArgument,
     _encode_CompareArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgument.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgument.ta.js";
 import {
     CompareArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgumentData.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareArgumentData.ta.js";
 import {
     _decode_CompareResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareResult.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/CompareResult.ta.js";
 import {
     AttributeValueAssertion,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta";
+} from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeValueAssertion.ta.js";
 import {
     list,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/list.oa.js";
 import {
     ListArgument,
     _encode_ListArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgument.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgument.ta.js";
 import {
     ListArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgumentData.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListArgumentData.ta.js";
 import {
     _decode_ListResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResult.ta.js";
 import {
     removeEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/removeEntry.oa";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/removeEntry.oa.js";
 import {
     RemoveEntryArgument,
     _encode_RemoveEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgument.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgument.ta.js";
 import {
     RemoveEntryArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgumentData.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/RemoveEntryArgumentData.ta.js";
 import {
     modifyEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyEntry.oa.js";
 import {
     ModifyEntryArgument,
     _encode_ModifyEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgument.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgument.ta.js";
 import {
     ModifyEntryArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgumentData.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyEntryArgumentData.ta.js";
 import {
     modifyDN,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/modifyDN.oa.js";
 import {
     ModifyDNArgument,
     _encode_ModifyDNArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgument.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgument.ta.js";
 import {
     ModifyDNArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgumentData.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyDNArgumentData.ta.js";
 import {
     administerPassword,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/administerPassword.oa.js";
 import {
     AdministerPasswordArgument,
     _encode_AdministerPasswordArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordArgument.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordArgument.ta.js";
 import {
     AdministerPasswordArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordArgumentData.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AdministerPasswordArgumentData.ta.js";
 import {
     changePassword,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/changePassword.oa.js";
 import {
     ChangePasswordArgument,
     _encode_ChangePasswordArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ChangePasswordArgument.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ChangePasswordArgument.ta.js";
 import {
     ChangePasswordArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ChangePasswordArgumentData.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ChangePasswordArgumentData.ta.js";
 import {
     search,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/search.oa.js";
 import {
     SearchArgument,
     _encode_SearchArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgument.ta.js";
 import {
     SearchArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData.ta.js";
 import {
     SearchArgumentData_subset_wholeSubtree,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchArgumentData-subset.ta.js";
 import {
     _decode_SearchResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta.js";
 import {
     Attribute_valuesWithContext_Item,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute-valuesWithContext-Item.ta";
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute-valuesWithContext-Item.ta.js";
 import {
     Context,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta";
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Context.ta.js";
 import {
     localeContext,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localeContext.oa";
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/localeContext.oa.js";
 import {
     _encode_LocaleContextSyntax,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/LocaleContextSyntax.ta";
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/LocaleContextSyntax.ta.js";
 import { strict as assert } from "assert";
 import {
     RelativeDistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
+} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta.js";
 import {
     person,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/person.oa";
+} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/person.oa.js";
 import {
     surname,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/surname.oa";
-import { subentry } from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa";
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/surname.oa.js";
+import { subentry } from "@wildboar/x500/src/lib/modules/InformationFramework/subentry.oa.js";
 import {
     accessControlSubentry,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/accessControlSubentry.oa";
+} from "@wildboar/x500/src/lib/modules/InformationFramework/accessControlSubentry.oa.js";
 import {
     SubtreeSpecification,
     _encode_SubtreeSpecification,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta";
+} from "@wildboar/x500/src/lib/modules/InformationFramework/SubtreeSpecification.ta.js";
 import {
     subtreeSpecification,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/subtreeSpecification.oa";
+} from "@wildboar/x500/src/lib/modules/InformationFramework/subtreeSpecification.oa.js";
 import {
     userPwdClass,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/userPwdClass.oa";
+} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/userPwdClass.oa.js";
 import {
     ACIItem,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta";
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem.ta.js";
 import {
     ACIItem_itemOrUserFirst_itemFirst,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem-itemOrUserFirst-itemFirst.ta";
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ACIItem-itemOrUserFirst-itemFirst.ta.js";
 import {
     AuthenticationLevel_basicLevels,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta";
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels.ta.js";
 import {
     AuthenticationLevel_basicLevels_level_none,
     AuthenticationLevel_basicLevels_level_simple,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta";
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/AuthenticationLevel-basicLevels-level.ta.js";
 import {
     ItemPermission,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ItemPermission.ta";
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ItemPermission.ta.js";
 import {
     ProtectedItems,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ProtectedItems.ta";
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/ProtectedItems.ta.js";
 import {
     UserClasses,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/UserClasses.ta";
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/UserClasses.ta.js";
 import {
     prescriptiveACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/prescriptiveACI.oa";
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/prescriptiveACI.oa.js";
 import {
     subentryACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/subentryACI.oa";
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/subentryACI.oa.js";
 import {
     entryACI,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/entryACI.oa";
-import { nameError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa";
-import { securityError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa";
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/entryACI.oa.js";
+import { nameError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/nameError.oa.js";
+import { securityError } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/securityError.oa.js";
 import {
     SecurityProblem_insufficientAccessRights,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SecurityProblem.ta.js";
 import {
     NameProblem_noSuchObject,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta";
-import compareCode from "@wildboar/x500/src/lib/utils/compareCode";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/NameProblem.ta.js";
+import compareCode from "@wildboar/x500/src/lib/utils/compareCode.js";
 import {
     accessControlScheme,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/accessControlScheme.oa";
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/accessControlScheme.oa.js";
 import {
     basicAccessControlScheme,
-} from "@wildboar/x500/src/lib/modules/BasicAccessControl/basicAccessControlScheme.va";
+} from "@wildboar/x500/src/lib/modules/BasicAccessControl/basicAccessControlScheme.va.js";
 import {
     userPwd,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
+} from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa.js";
 import {
     userPassword,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
+} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa.js";
 import type {
     Credentials,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Credentials.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Credentials.ta.js";
 import {
     SimpleCredentials,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta.js";
 import {
     NameAndOptionalUID,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta";
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/NameAndOptionalUID.ta.js";
 import {
     ModifyRights_Item_permission_add,
     ModifyRights_Item_permission_remove,
     ModifyRights_Item_permission_rename,
     ModifyRights_Item_permission_move,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyRights-Item-permission.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ModifyRights-Item-permission.ta.js";
 import {
     createTestRootDN,
     createTestRootNode,
     utf8,
     oid,
-} from "../utils";
+} from "../utils.js";
 
 jest.setTimeout(30000);
 

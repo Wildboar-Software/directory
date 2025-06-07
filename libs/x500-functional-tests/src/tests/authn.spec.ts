@@ -7,132 +7,131 @@ import {
     BER,
     DER,
     _encodeObjectIdentifier,
-} from "asn1-ts/dist/node/functional";
+} from "asn1-ts/dist/node/functional.js";
 import * as net from "net";
 import {
     DirectoryBindArgument,
     _encode_DirectoryBindArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/DirectoryBindArgument.ta.js";
 import {
     IdmBind,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta";
+} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBind.ta.js";
 import {
     _encode_IDM_PDU,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IDM-PDU.ta";
+} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IDM-PDU.ta.js";
 import {
     dap_ip,
-} from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa";
+} from "@wildboar/x500/src/lib/modules/DirectoryIDMProtocols/dap-ip.oa.js";
 import { IDMConnection } from "@wildboar/idm";
 import {
     addEntry,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/addEntry.oa.js";
 import {
     AddEntryArgument,
     _encode_AddEntryArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgument.ta.js";
 import {
     AddEntryArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/AddEntryArgumentData.ta.js";
 import {
     DistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
+} from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta.js";
 import {
     Attribute,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta";
-import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta";
+} from "@wildboar/x500/src/lib/modules/InformationFramework/Attribute.ta.js";
+import { AttributeTypeAndValue } from "@wildboar/x500/src/lib/modules/InformationFramework/AttributeTypeAndValue.ta.js";
 import {
     commonName,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa";
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/commonName.oa.js";
 import {
     _encode_UnboundedDirectoryString,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UnboundedDirectoryString.ta";
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/UnboundedDirectoryString.ta.js";
 import {
     applicationProcess,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/applicationProcess.oa";
+} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/applicationProcess.oa.js";
 import {
     description,
-} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa";
+} from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/description.oa.js";
 import {
     administrativeRole,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa";
+} from "@wildboar/x500/src/lib/modules/InformationFramework/administrativeRole.oa.js";
 import {
     objectClass,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa";
+} from "@wildboar/x500/src/lib/modules/InformationFramework/objectClass.oa.js";
 import {
     id_ar_autonomousArea,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va";
+} from "@wildboar/x500/src/lib/modules/InformationFramework/id-ar-autonomousArea.va.js";
 import * as crypto from "crypto";
-import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError";
+import type { ResultOrError } from "@wildboar/x500/src/lib/types/ResultOrError.js";
 import {
     ServiceControlOptions,
     ServiceControlOptions_manageDSAIT,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControlOptions.ta.js";
 import {
     ServiceControls,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ServiceControls.ta.js";
 import {
     read,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/read.oa";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/read.oa.js";
 import {
     ReadArgument,
     _encode_ReadArgument,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgument.ta.js";
 import {
     ReadArgumentData,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgumentData.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadArgumentData.ta.js";
 import {
     _decode_ReadResult,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResult.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResult.ta.js";
 import {
     EntryInformationSelection,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/EntryInformationSelection.ta.js";
 import type {
     Code,
-} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta";
+} from "@wildboar/x500/src/lib/modules/CommonProtocolSpecification/Code.ta.js";
 import getOptionallyProtectedValue from "@wildboar/x500/src/lib/utils/getOptionallyProtectedValue";
 import { strict as assert } from "assert";
 import {
     RelativeDistinguishedName,
-} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta";
+} from "@wildboar/x500/src/lib/modules/InformationFramework/RelativeDistinguishedName.ta.js";
 import {
     userPwdClass,
-} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/userPwdClass.oa";
+} from "@wildboar/x500/src/lib/modules/SelectedObjectClasses/userPwdClass.oa.js";
 import {
     userPwd,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa";
+} from "@wildboar/x500/src/lib/modules/PasswordPolicy/userPwd.oa.js";
 import {
     userPassword,
-} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa";
+} from "@wildboar/x500/src/lib/modules/AuthenticationFramework/userPassword.oa.js";
 import type {
     Credentials,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Credentials.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/Credentials.ta.js";
 import {
     SimpleCredentials,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta.js";
 import {
     IdmBindError,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBindError.ta";
+} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBindError.ta.js";
 import {
     IdmBindResult,
-} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBindResult.ta";
+} from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/IdmBindResult.ta.js";
 import {
     pwdFails,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFails.oa";
+} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFails.oa.js";
 import {
     pwdFailureTime,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFailureTime.oa";
+} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdFailureTime.oa.js";
 import {
     pwdStartTime,
-} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdStartTime.oa";
+} from "@wildboar/x500/src/lib/modules/PasswordPolicy/pwdStartTime.oa.js";
 import {
     directoryBindError,
-} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/directoryBindError.oa";
+} from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/directoryBindError.oa.js";
+import { describe, it, before } from "node:test";
 
 function sleep (ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
-
-jest.setTimeout(30000);
 
 const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
     Array(9).fill(FALSE_BIT));
@@ -376,224 +375,16 @@ async function createTestRootNode(
     });
 }
 
-describe("Meerkat DSA Authentication", () => {
-
+describe("Meerkat DSA Authentication", { timeout: 30000 }, async (t) => {
     let connection: IDMConnection | undefined;
 
-    beforeEach(async () => {
+    before(async () => {
         if (!connection) {
             connection = await connect();
         }
     });
 
-    it.skip("Directory bind with correct simple credentials permits access", async () => {
-        // Already covered elsewhere.
-    });
-
-    // Skipped because this is really flaky locally.
-    it.skip("Directory bind via a password works and updates operational attributes correctly", async () => {
-        const loginId = `authn.simple.password.incorrect-${(new Date()).toISOString()}-login`;
-        const queryId = `authn.simple.password.incorrect-${(new Date()).toISOString()}-query`;
-        const loginDN = createTestRootDN(loginId);
-        const queryDN = createTestRootDN(queryId);
-        const password: string = "asdf";
-        { // Setup
-            await createTestRootNode(connection!, loginId, [
-                new Attribute(
-                    userPwd["&id"],
-                    [userPwd.encoderFor["&Type"]!({
-                        clear: password,
-                    }, DER)],
-                    undefined,
-                ),
-            ]);
-            await createTestRootNode(connection!, queryId, [
-                new Attribute(
-                    userPwd["&id"],
-                    [userPwd.encoderFor["&Type"]!({
-                        clear: password,
-                    }, DER)],
-                    undefined,
-                ),
-            ]);
-        }
-
-        await sleep(1000);
-
-        expect(connect({
-            simple: new SimpleCredentials(
-                queryDN,
-                undefined,
-                {
-                    userPwd: {
-                        clear: "WRONG_PASSWORD",
-                    },
-                },
-            ),
-        })).rejects.toBeInstanceOf(IdmBindError);
-
-        await sleep(2000);
-
-        const authenticatedConnection = await connect({
-            simple: new SimpleCredentials(
-                loginDN,
-                undefined,
-                {
-                    userPwd: {
-                        clear: password,
-                    },
-                },
-            ),
-        });
-
-        {
-            const reqData = new ReadArgumentData(
-                {
-                    rdnSequence: queryDN,
-                },
-                new EntryInformationSelection(
-                    {
-                        allUserAttributes: null,
-                    },
-                    undefined,
-                    {
-                        allOperationalAttributes: null,
-                    },
-                ),
-            );
-            const arg: ReadArgument = {
-                unsigned: reqData,
-            };
-            const response = await writeOperation(
-                authenticatedConnection!,
-                read["&operationCode"]!,
-                _encode_ReadArgument(arg, DER),
-            );
-            assert("result" in response);
-            assert(response.result);
-            const decoded = _decode_ReadResult(response.result);
-            const data = getOptionallyProtectedValue(decoded);
-            const fails = data.entry.information
-                ?.find((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(pwdFails["&id"]));
-            const startTime = data.entry.information
-                ?.find((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(pwdStartTime["&id"]));
-            const failTime = data.entry.information
-                ?.find((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(pwdFailureTime["&id"]));
-            const upass = data.entry.information
-                ?.find((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(userPassword["&id"]));
-            const upwd = data.entry.information
-                ?.find((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(userPwd["&id"]));
-            assert(fails);
-            assert(startTime);
-            assert(failTime);
-            assert(upass);
-            assert(upwd);
-            assert("attribute" in fails);
-            assert("attribute" in startTime);
-            assert("attribute" in failTime);
-            assert("attribute" in upass);
-            assert("attribute" in upwd);
-            expect(fails.attribute.values).toHaveLength(1);
-            expect(startTime.attribute.values).toHaveLength(1);
-            expect(failTime.attribute.values).toHaveLength(1);
-            expect(upass.attribute.values).toHaveLength(1);
-            expect(upwd.attribute.values).toHaveLength(1);
-            expect(fails.attribute.values[0].integer).toBe(1);
-            const st = startTime.attribute.values[0].generalizedTime;
-            const ft = failTime.attribute.values[0].generalizedTime;
-            expect(ft.valueOf()).toBeGreaterThan(st.valueOf());
-            const now = (new Date()).toISOString().slice(0, 15);
-            expect(st.toISOString().slice(0, 15)).toBe(now);
-            expect(ft.toISOString().slice(0, 15)).toBe(now);
-            expect(upass.attribute.values[0].value).toHaveLength(0);
-        }
-
-        // A correct login to reset pwdFails
-        await connect({
-            simple: new SimpleCredentials(
-                queryDN,
-                undefined,
-                {
-                    userPwd: {
-                        clear: password,
-                    },
-                },
-            ),
-        });
-
-        {
-            const reqData = new ReadArgumentData(
-                {
-                    rdnSequence: queryDN,
-                },
-                new EntryInformationSelection(
-                    {
-                        allUserAttributes: null,
-                    },
-                    undefined,
-                    {
-                        allOperationalAttributes: null,
-                    },
-                ),
-            );
-            const arg: ReadArgument = {
-                unsigned: reqData,
-            };
-            const response = await writeOperation(
-                authenticatedConnection!,
-                read["&operationCode"]!,
-                _encode_ReadArgument(arg, DER),
-            );
-            assert("result" in response);
-            assert(response.result);
-            const decoded = _decode_ReadResult(response.result);
-            const data = getOptionallyProtectedValue(decoded);
-            const fails = data.entry.information
-                ?.find((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(pwdFails["&id"]));
-            const startTime = data.entry.information
-                ?.find((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(pwdStartTime["&id"]));
-            const failTime = data.entry.information
-                ?.find((info) => ("attribute" in info) && info.attribute.type_.isEqualTo(pwdFailureTime["&id"]));
-            assert(fails);
-            assert(startTime);
-            assert(failTime);
-            assert("attribute" in fails);
-            assert("attribute" in startTime);
-            assert("attribute" in failTime);
-            expect(fails.attribute.values).toHaveLength(1);
-            expect(startTime.attribute.values).toHaveLength(1);
-            expect(failTime.attribute.values).toHaveLength(1);
-            expect(fails.attribute.values[0].integer).toBe(0);
-            const st = startTime.attribute.values[0].generalizedTime;
-            const ft = failTime.attribute.values[0].generalizedTime;
-            expect(ft.valueOf()).toBeGreaterThan(st.valueOf());
-            const now = (new Date()).toISOString().slice(0, 15);
-            expect(st.toISOString().slice(0, 15)).toBe(now);
-            expect(ft.toISOString().slice(0, 15)).toBe(now);
-        }
-    });
-
-    it.skip("An invalid password attempt increments the number of password failures", async () => {
-        // Already tested elsewhere.
-    });
-
-    it.skip("An valid password attempt resets the number of password failures to 0", async () => {
-        // Already tested elsewhere
-    });
-
-    it.skip("An invalid password attempt updates the pwdFailureTime", async () => {
-        // Already tested elsewhere.
-    });
-
-    it.skip("A password's pwdStartTime attribute is set correctly", async () => {
-        // Already tested elsewhere.
-    });
-
-    it.skip("The password is never returned in an entry", async () => {
-        // Already tested above for userPassword. Manually tested for userPwd.
-    });
-
-    it("Directory bind does not reveal which objects exist by displaying a different error message when the bind DN is wrong than when the password is wrong", async () => {
+    await it("Directory bind does not reveal which objects exist by displaying a different error message when the bind DN is wrong than when the password is wrong", async () => {
         const loginId = `authn.invalid.password.disclosure-${(new Date()).toISOString()}-login`;
         const loginDN = createTestRootDN(loginId);
         const wrongDN = createTestRootDN("WRONG_ID");
@@ -641,12 +432,10 @@ describe("Meerkat DSA Authentication", () => {
         const pwData = getOptionallyProtectedValue(pwResult);
         assert("securityError" in dnData.error);
         assert("securityError" in pwData.error);
-        expect(dnData.error.securityError).toBe(pwData.error.securityError);
+        assert.strictEqual(dnData.error.securityError, pwData.error.securityError);
     });
 
-    // Skipped because it seems to break all the other tests that come after it.
-    // This is probably not a bug in Meerkat DSA, but rather, a bug in this crappy test library.
-    it.skip("Operations cannot be performed if authentication fails", async () => {
+    await it("Operations cannot be performed if authentication fails", async () => {
         const loginId = `authn.no-request-before-bind-${(new Date()).toISOString()}-login`;
         const loginDN = createTestRootDN(loginId);
         const password: string = "asdf";
@@ -675,11 +464,12 @@ describe("Meerkat DSA Authentication", () => {
         const arg: ReadArgument = {
             unsigned: reqData,
         };
-        expect(writeOperation(
-            unboundConnection!,
-            read["&operationCode"]!,
-            _encode_ReadArgument(arg, DER),
-        )).rejects.toBeTruthy();
+        await assert.rejects(
+            writeOperation(
+                unboundConnection!,
+                read["&operationCode"]!,
+                _encode_ReadArgument(arg, DER),
+            )
+        );
     });
-
 });
