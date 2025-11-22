@@ -5,6 +5,7 @@ on:
     tags:
       - v2.*
       - v3.*
+      - v4.*
 
 env:
   CLUSTER_NAME: production
@@ -26,12 +27,12 @@ jobs:
       fail-fast: false
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         timeout-minutes: 2
       - name: Install Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '25'
         timeout-minutes: 2
       - name: Install NPM Packages
         run: npm ci
@@ -57,11 +58,11 @@ jobs:
   #     fail-fast: false
   #   steps:
   #     - name: Checkout
-  #       uses: actions/checkout@v3
+  #       uses: actions/checkout@v4
   #     - name: Install Node.js
-  #       uses: actions/setup-node@v3
+  #       uses: actions/setup-node@v4
   #       with:
-  #         node-version: '18'
+  #         node-version: '25'
   #     - name: Install NPM Packages
   #       run: npm ci
   #     - name: Generate Prisma Client
@@ -90,13 +91,13 @@ jobs:
           - 'x500-auth-ts'
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         timeout-minutes: 2
       - name: Install Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         timeout-minutes: 2
         with:
-          node-version: '18'
+          node-version: '25'
       - name: Install NPM Packages
         run: npm ci
         timeout-minutes: 5
@@ -127,17 +128,17 @@ jobs:
       fail-fast: false
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         timeout-minutes: 2
       - name: Determine Meerkat DSA Version
         timeout-minutes: 1
         run: |
             echo "PUBLISHING_MEERKAT_VERSION=$(cat k8s/charts/meerkat-dsa/Chart.yaml | grep appVersion | sed 's/appVersion: //' | sed 's/\r$//')" >> $GITHUB_ENV
       - name: Install Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         timeout-minutes: 2
         with:
-          node-version: '18'
+          node-version: '25'
       - name: Install NPM Packages
         run: npm ci
         timeout-minutes: 5
@@ -178,7 +179,7 @@ jobs:
       fail-fast: false
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         timeout-minutes: 2
       - name: Create the Helm Package
         run: helm package .

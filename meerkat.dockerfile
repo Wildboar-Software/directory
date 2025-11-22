@@ -1,4 +1,4 @@
-FROM node:23-alpine
+FROM node:25-alpine
 LABEL author="Wildboar Software"
 LABEL app="meerkat"
 # RUN /usr/local/bin/node -v

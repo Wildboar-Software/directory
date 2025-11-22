@@ -3,6 +3,7 @@ name: CLI Workflow
 on:
   push:
     tags:
+      - v4.*
       - v3.*
       - v2.*
   # push:
@@ -26,11 +27,11 @@ jobs:
           - 'x500-cli-config'
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '25'
       - name: Install NPM Packages
         run: npm ci
       - name: Generate Prisma Client
@@ -56,11 +57,11 @@ jobs:
       fail-fast: false
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '25'
       - name: Install NPM Packages
         run: npm ci
       - name: Compile the X.500 CLI
