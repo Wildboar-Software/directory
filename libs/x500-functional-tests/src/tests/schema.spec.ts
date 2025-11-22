@@ -474,7 +474,7 @@ import {
     TimeSpecification_time_absolute,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/TimeSpecification-time-absolute.ta";
 
-jest.setTimeout(30000);
+vi.setConfig({ testTimeout: 30_000 });
 
 const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
     Array(9).fill(FALSE_BIT));

@@ -43,20 +43,6 @@
             "options": {
                 "buildTarget": "x500-cli:build"
             }
-        },
-        "lint": {
-            "executor": "@nx/linter:eslint",
-            "options": {
-                "lintFilePatterns": ["apps/x500-cli/**/*.ts"]
-            },
-            "outputs": ["{options.outputFile}"]
-        },
-        "test": {
-            "executor": "@nx/jest:jest",
-            "outputs": ["{workspaceRoot}/coverage/apps/x500-cli"],
-            "options": {
-                "jestConfig": "apps/x500-cli/jest.config.ts"
-            }
         }
     }
 }

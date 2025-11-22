@@ -77,7 +77,7 @@ import { Attribute_valuesWithContext_Item } from "@wildboar/pki-stub/src/lib/mod
 import { DistinguishedName } from "@wildboar/x500/src/lib/modules/InformationFramework/DistinguishedName.ta";
 import { RequestAttribute_defaultValues_Item } from "@wildboar/x500/src/lib/modules/ServiceAdministration/RequestAttribute-defaultValues-Item.ta";
 
-jest.setTimeout(30000);
+vi.setConfig({ testTimeout: 30_000 });
 
 const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(Array(9).fill(FALSE_BIT));
 // Necessary to make countries administrative points.

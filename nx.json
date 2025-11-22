@@ -13,7 +13,6 @@
             "default",
             "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
             "!{projectRoot}/tsconfig.spec.json",
-            "!{projectRoot}/jest.config.[jt]s",
             "!{projectRoot}/.eslintrc.json",
             "!{projectRoot}/src/test-setup.[jt]s"
         ]
@@ -27,23 +26,6 @@
             "inputs": ["default", "{workspaceRoot}/.eslintrc.json"],
             "cache": true
         },
-        "@nx/jest:jest": {
-            "inputs": [
-                "default",
-                "^production",
-                "{workspaceRoot}/jest.preset.js"
-            ],
-            "cache": true,
-            "options": {
-                "passWithNoTests": true
-            },
-            "configurations": {
-                "ci": {
-                    "ci": true,
-                    "codeCoverage": true
-                }
-            }
-        },
         "@nx/js:tsc": {
             "cache": true,
             "dependsOn": ["^build"],
@@ -53,6 +35,10 @@
             "cache": true,
             "dependsOn": ["^build"],
             "inputs": ["production", "^production"]
+        },
+        "@nx/vitest:test": {
+            "cache": true,
+            "inputs": ["default", "^production"]
         }
     },
     "nxCloudAccessToken": "Y2Y4NGI2OTctODY3OS00ZmU3LWI0MTctMmYwZTY4ZDhmYjNhfHJlYWQtd3JpdGU=",

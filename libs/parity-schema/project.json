@@ -25,20 +25,6 @@
                     "minify": true
                 }
             }
-        },
-        "lint": {
-            "executor": "@nx/linter:eslint",
-            "outputs": ["{options.outputFile}"],
-            "options": {
-                "lintFilePatterns": ["libs/parity-schema/**/*.ts"]
-            }
-        },
-        "test": {
-            "executor": "@nx/jest:jest",
-            "outputs": ["{workspaceRoot}/coverage/libs/parity-schema"],
-            "options": {
-                "jestConfig": "libs/parity-schema/jest.config.ts"
-            }
         }
     }
 }

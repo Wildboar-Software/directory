@@ -67,7 +67,7 @@ import {
     hierarchyParent,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/hierarchyParent.oa";
 
-jest.setTimeout(30000);
+vi.setConfig({ testTimeout: 30_000 });
 
 const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(Array(9).fill(FALSE_BIT));
 // Necessary to make countries administrative points.

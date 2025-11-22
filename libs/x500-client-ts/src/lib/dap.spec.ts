@@ -16,7 +16,9 @@ import {
     createTimestamp,
 } from "@wildboar/x500/src/lib/modules/InformationFramework/createTimestamp.oa";
 import { TLSSocket } from "node:tls";
-import { SimpleCredentials } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
+import { ListResultData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ListResultData.ta";
+import { SearchResultData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SearchResult.ta";
+import { ReadResultData } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/ReadResultData.ta";
 
 describe("DAP Client", () => {
     it("works with IDM transport", async () => {
@@ -30,15 +32,7 @@ describe("DAP Client", () => {
         const dap = create_dap_client(rose);
         const bind_response = await dap.bind({
             protocol_id: id_idm_dap,
-            parameter: new DirectoryBindArgument({
-                simple: new SimpleCredentials(
-                    [],
-                    undefined,
-                    {
-                        unprotected: Buffer.from("heythere"),
-                    },
-                ),
-            }, undefined),
+            parameter: new DirectoryBindArgument(undefined, undefined),
         });
         if ("result" in bind_response) {
             expect(bind_response.result.parameter).toBeDefined();
@@ -56,7 +50,7 @@ describe("DAP Client", () => {
             },
         });
         if ("result" in response) {
-            const resultData = getOptionallyProtectedValue(response.result.parameter);
+            const resultData = getOptionallyProtectedValue<ReadResultData>(response.result.parameter);
             const ctinfo = resultData.entry.information?.find((info) => ("attribute" in info) && (
                 info.attribute.type_.isEqualTo(createTimestamp["&id"])
             ));
@@ -106,7 +100,7 @@ describe("DAP Client", () => {
             },
         });
         if ("result" in response) {
-            const resultData = getOptionallyProtectedValue(response.result.parameter);
+            const resultData = getOptionallyProtectedValue<ReadResultData>(response.result.parameter);
             const ctinfo = resultData.entry.information?.find((info) => ("attribute" in info) && (
                 info.attribute.type_.isEqualTo(createTimestamp["&id"])
             ));
@@ -154,7 +148,7 @@ describe("DAP Client", () => {
             },
         });
         if ("result" in response) {
-            const resultData = getOptionallyProtectedValue(response.result.parameter);
+            const resultData = getOptionallyProtectedValue<ReadResultData>(response.result.parameter);
             const ctinfo = resultData.entry.information?.find((info) => ("attribute" in info) && (
                 info.attribute.type_.isEqualTo(createTimestamp["&id"])
             ));
@@ -197,7 +191,7 @@ describe("DAP Client", () => {
             },
         });
         if ("result" in op1_response) {
-            const resultData = getOptionallyProtectedValue(op1_response.result.parameter);
+            const resultData = getOptionallyProtectedValue<ListResultData>(op1_response.result.parameter);
             assert("listInfo" in resultData);
         } else {
             assert(false);
@@ -207,9 +201,10 @@ describe("DAP Client", () => {
                 rdnSequence: [],
             },
             subset: "level",
+
         });
         if ("result" in op2_response) {
-            const resultData = getOptionallyProtectedValue(op2_response.result.parameter);
+            const resultData = getOptionallyProtectedValue<SearchResultData>(op2_response.result.parameter);
             assert("searchInfo" in resultData);
         } else {
             assert(false);

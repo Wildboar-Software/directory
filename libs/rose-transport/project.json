@@ -25,20 +25,6 @@
                     "target": "build"
                 }
             ]
-        },
-        "lint": {
-            "executor": "@nx/linter:eslint",
-            "outputs": ["{options.outputFile}"],
-            "options": {
-                "lintFilePatterns": ["libs/rose-transport/**/*.ts"]
-            }
-        },
-        "test": {
-            "executor": "@nx/jest:jest",
-            "outputs": ["{workspaceRoot}/coverage/libs/rose-transport"],
-            "options": {
-                "jestConfig": "libs/rose-transport/jest.config.ts"
-            }
         }
     }
 }

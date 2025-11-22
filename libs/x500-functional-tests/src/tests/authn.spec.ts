@@ -132,7 +132,7 @@ function sleep (ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-jest.setTimeout(30000);
+vi.setConfig({ testTimeout: 30_000 });
 
 const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(
     Array(9).fill(FALSE_BIT));

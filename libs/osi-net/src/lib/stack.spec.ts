@@ -101,6 +101,7 @@ import { randomBytes, randomInt } from 'node:crypto';
 import isDebugging from 'is-debugging';
 import { AttributeTypeAndValue } from '@wildboar/pki-stub/src/lib/modules/PKI-Stub/AttributeTypeAndValue.ta';
 import { Provider_reason_user_data_not_readable } from '@wildboar/copp/src/lib/modules/ISO8823-PRESENTATION/Provider-reason.ta';
+// import {  } from "vitest";
 
 const id_ber = new ObjectIdentifier([2, 1, 1]);
 const id_acse = new ObjectIdentifier([2, 2, 1, 0, 1]);
@@ -115,11 +116,11 @@ function withSockets(
         server: Server,
         cb: () => void
     ) => void
-) {
+): Promise<void> {
     const server = createServer();
     const port: number = isDebugging ? DEFAULT_PORT : randomInt(44400, 44600);
     // const port = DEFAULT_PORT;
-    return function (done: jest.DoneCallback) {
+    return new Promise((done) => {
         server.on('listening', () => {
             server.on('connection', (c) => {
                 c.setTimeout(1000);
@@ -151,7 +152,7 @@ function withSockets(
         });
         server.unref();
         server.listen(port);
-    };
+    });
 }
 
 function configure_itot_for_directory(stack: ISOTransportOverTCPStack): void {
@@ -315,7 +316,7 @@ function configure_itot_for_directory(stack: ISOTransportOverTCPStack): void {
 describe('The OSI network stack created with create_itot_stack()', () => {
     it(
         'can bind, handle a request, and unbind',
-        withSockets((socket1, socket2, server, done) => {
+        () => withSockets((socket1, socket2, server, done) => {
             const test_str: string = 'Big Chungus';
             const stack1 = create_itot_stack(socket1, {
                 sessionCaller: true,
@@ -639,7 +640,7 @@ describe('The OSI network stack created with create_itot_stack()', () => {
 
     it(
         'can relay an association-layer abort',
-        withSockets((socket1, socket2, server, done) => {
+        () => withSockets((socket1, socket2, server, done) => {
             const stack1 = create_itot_stack(socket1, {
                 sessionCaller: true,
                 transportCaller: true,
@@ -711,7 +712,7 @@ describe('The OSI network stack created with create_itot_stack()', () => {
 
     it(
         'can handle a large CONNECT SSDU',
-        withSockets((socket1, socket2, server, done) => {
+        () => withSockets((socket1, socket2, server, done) => {
             const stack1 = create_itot_stack(socket1, {
                 sessionCaller: true,
                 transportCaller: true,
@@ -775,7 +776,7 @@ describe('The OSI network stack created with create_itot_stack()', () => {
 
     it(
         'can handle a large FINISH SSDU',
-        withSockets((socket1, socket2, server, done) => {
+        () => withSockets((socket1, socket2, server, done) => {
             const stack1 = create_itot_stack(socket1, {
                 sessionCaller: true,
                 transportCaller: true,
@@ -895,7 +896,7 @@ describe('The OSI network stack created with create_itot_stack()', () => {
 
     it(
         'can handle a large ACCEPT SSDU',
-        withSockets((socket1, socket2, server, done) => {
+        () => withSockets((socket1, socket2, server, done) => {
             const stack1 = create_itot_stack(socket1, {
                 sessionCaller: true,
                 transportCaller: true,
@@ -1015,7 +1016,7 @@ describe('The OSI network stack created with create_itot_stack()', () => {
 
     it(
         'can handle a large REFUSE SSDU',
-        withSockets((socket1, socket2, server, done) => {
+        () => withSockets((socket1, socket2, server, done) => {
             const stack1 = create_itot_stack(socket1, {
                 sessionCaller: true,
                 transportCaller: true,
@@ -1047,7 +1048,7 @@ describe('The OSI network stack created with create_itot_stack()', () => {
                     undefined,
                     undefined,
                     [
-                        _encodeOctetString(randomBytes(70000), BER),
+                        _encodeOctetString(new Uint8Array(randomBytes(70000).buffer), BER),
                     ],
                     [
                         new External(
@@ -1117,7 +1118,7 @@ describe('The OSI network stack created with create_itot_stack()', () => {
 
     it(
         'can handle a large DISCONNECT SSDU',
-        withSockets((socket1, socket2, server, done) => {
+        () => withSockets((socket1, socket2, server, done) => {
             const stack1 = create_itot_stack(socket1, {
                 sessionCaller: true,
                 transportCaller: true,
@@ -1237,7 +1238,7 @@ describe('The OSI network stack created with create_itot_stack()', () => {
 
     it(
         'can handle a large ABORT SSDU',
-        withSockets((socket1, socket2, server, done) => {
+        () => withSockets((socket1, socket2, server, done) => {
             const stack1 = create_itot_stack(socket1, {
                 sessionCaller: true,
                 transportCaller: true,
@@ -1313,7 +1314,7 @@ describe('The OSI network stack created with create_itot_stack()', () => {
     // is not enabled in the session layer. Perhaps in a future release...
     it.skip(
         'can handle a large NOT FINISHED SSDU',
-        withSockets((socket1, socket2, server, done) => {
+        () => withSockets((socket1, socket2, server, done) => {
             const stack1 = create_itot_stack(socket1, {
                 sessionCaller: true,
                 transportCaller: true,
@@ -1434,7 +1435,7 @@ describe('The OSI network stack created with create_itot_stack()', () => {
 
     it(
         'can handle a large DATA TRANSFER SSDU',
-        withSockets((socket1, socket2, server, done) => {
+        () => withSockets((socket1, socket2, server, done) => {
             const test_str: string = 'Big Chungus';
             const stack1 = create_itot_stack(socket1, {
                 sessionCaller: true,
@@ -1738,7 +1739,7 @@ describe('The OSI network stack created with create_itot_stack()', () => {
     // TPDU size possible. You'll have to edit that code prior to running this
     // test.
     it.skip('can handle a large DATA TRANSFER SSDU despite small max TPDU size',
-        withSockets((socket1, socket2, server, done) => {
+        () => withSockets((socket1, socket2, server, done) => {
             const test_str: string = 'Big Chungus';
             const stack1 = create_itot_stack(socket1, {
                 sessionCaller: true,
@@ -2039,7 +2040,7 @@ describe('The OSI network stack created with create_itot_stack()', () => {
     );
 
     it('can handle a client destroying the socket',
-        withSockets((socket1, socket2, server, done) => {
+        () => withSockets((socket1, socket2, server, done) => {
             const stack1 = create_itot_stack(socket1, {
                 sessionCaller: true,
                 transportCaller: true,
@@ -2130,7 +2131,7 @@ describe('The OSI network stack created with create_itot_stack()', () => {
     );
 
     it('can handle a server destroying the socket',
-        withSockets((socket1, socket2, server, done) => {
+        () => withSockets((socket1, socket2, server, done) => {
             const stack1 = create_itot_stack(socket1, {
                 sessionCaller: true,
                 transportCaller: true,

@@ -15,20 +15,6 @@
                 "main": "libs/meerkat-types/src/index.ts",
                 "assets": ["libs/meerkat-types/*.md"]
             }
-        },
-        "lint": {
-            "executor": "@nx/linter:eslint",
-            "options": {
-                "lintFilePatterns": ["libs/meerkat-types/**/*.ts"]
-            },
-            "outputs": ["{options.outputFile}"]
-        },
-        "test": {
-            "executor": "@nx/jest:jest",
-            "outputs": ["{workspaceRoot}/coverage/libs/meerkat-types"],
-            "options": {
-                "jestConfig": "libs/meerkat-types/jest.config.ts"
-            }
         }
     }
 }

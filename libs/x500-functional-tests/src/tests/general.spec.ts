@@ -394,7 +394,7 @@ import {
     uiiInUrn,
 } from "@wildboar/x500/src/lib/modules/SelectedAttributeTypes/uiiInUrn.oa";
 
-jest.setTimeout(30000);
+vi.setConfig({ testTimeout: 30_000 });
 
 const serviceControlOptions: ServiceControlOptions = new Uint8ClampedArray(Array(9).fill(FALSE_BIT));
 // Necessary to make countries administrative points.
@@ -862,7 +862,6 @@ describe("Meerkat DSA", () => {
                 },
             ),
         };
-        // Jest seems to require that you return .resolves / .rejects expects.
         return expect(connect(creds)).resolves.toBeInstanceOf(IDMConnection);
     });
 
@@ -917,7 +916,6 @@ describe("Meerkat DSA", () => {
                 },
             ),
         };
-        // Jest seems to require that you return .resolves / .rejects expects.
         return expect(connect(creds)).resolves.toBeInstanceOf(IDMConnection);
     });
 
@@ -8894,7 +8892,6 @@ describe("Meerkat DSA", () => {
                 },
             ),
         };
-        // Jest seems to require that you return .resolves / .rejects expects.
         return expect(connect(creds)).resolves.toBeInstanceOf(IDMConnection);
     });
 

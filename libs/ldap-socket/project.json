@@ -15,20 +15,6 @@
                 "main": "libs/ldap-socket/src/index.ts",
                 "assets": ["libs/ldap-socket/*.md"]
             }
-        },
-        "lint": {
-            "executor": "@nx/linter:eslint",
-            "options": {
-                "lintFilePatterns": ["libs/ldap-socket/**/*.ts"]
-            },
-            "outputs": ["{options.outputFile}"]
-        },
-        "test": {
-            "executor": "@nx/jest:jest",
-            "outputs": ["{workspaceRoot}/coverage/libs/ldap-socket"],
-            "options": {
-                "jestConfig": "libs/ldap-socket/jest.config.ts"
-            }
         }
     }
 }

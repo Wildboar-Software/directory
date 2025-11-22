@@ -15,20 +15,6 @@
                 "main": "libs/ocsp-client/src/index.ts",
                 "assets": ["libs/ocsp-client/*.md"]
             }
-        },
-        "lint": {
-            "executor": "@nx/linter:eslint",
-            "outputs": ["{options.outputFile}"],
-            "options": {
-                "lintFilePatterns": ["libs/ocsp-client/**/*.ts"]
-            }
-        },
-        "test": {
-            "executor": "@nx/jest:jest",
-            "outputs": ["{workspaceRoot}/coverage/libs/ocsp-client"],
-            "options": {
-                "jestConfig": "libs/ocsp-client/jest.config.ts"
-            }
         }
     }
 }

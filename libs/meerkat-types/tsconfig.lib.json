@@ -7,6 +7,6 @@
         "types": ["node"],
         "esModuleInterop": true
     },
-    "exclude": ["**/*.spec.ts", "jest.config.ts"],
+    "exclude": ["**/*.spec.ts"],
     "include": ["**/*.ts"]
 }

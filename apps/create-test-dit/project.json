@@ -38,20 +38,6 @@
             "options": {
                 "buildTarget": "create-test-dit:build"
             }
-        },
-        "lint": {
-            "executor": "@nx/linter:eslint",
-            "outputs": ["{options.outputFile}"],
-            "options": {
-                "lintFilePatterns": ["apps/create-test-dit/**/*.ts"]
-            }
-        },
-        "test": {
-            "executor": "@nx/jest:jest",
-            "outputs": ["{workspaceRoot}/coverage/apps/create-test-dit"],
-            "options": {
-                "jestConfig": "apps/create-test-dit/jest.config.ts"
-            }
         }
     }
 }

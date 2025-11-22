@@ -841,6 +841,7 @@ import {
     callPreferenceURIObject,
 } from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/callPreferenceURIObject.oa";
 import { objectClasses as schemaLevelIIObjectClasses } from "@wildboar/schema-level-ii";
+import { strict as assert } from "node:assert";
 
 function prismaOCK2OCK (ock: PrismaObjectClassKind): ObjectClassKind {
     switch (ock) {
@@ -853,7 +854,7 @@ function prismaOCK2OCK (ock: PrismaObjectClassKind): ObjectClassKind {
     case (PrismaObjectClassKind.STRUCTURAL): {
         return ObjectClassKind_structural;
     }
-    default: throw new AssertionError();
+    default: assert(false);
     }
 }
 

@@ -32,7 +32,7 @@ const HOST = RUNNING_MEERKAT_DSA_HOST;
 const PORT = RUNNING_MEERKAT_DSA_ITOT_PORT;
 
 describe("Meerkat DSA ITOT Transport", () => {
-    it.skip("works with a real live server", (done) => {
+    it.skip("works with a real live server", () => new Promise<void>((done) => {
         const tcp = createConnection({
             host: HOST,
             port: PORT,
@@ -77,5 +77,5 @@ describe("Meerkat DSA ITOT Transport", () => {
                 ), BER),
             });
         });
-    });
+    }));
 });

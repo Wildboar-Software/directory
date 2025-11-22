@@ -32,18 +32,11 @@
                 }
             ]
         },
-        "lint": {
-            "executor": "@nx/linter:eslint",
-            "outputs": ["{options.outputFile}"],
-            "options": {
-                "lintFilePatterns": ["libs/x500-client-ts/**/*.ts"]
-            }
-        },
         "test": {
-            "executor": "@nx/jest:jest",
-            "outputs": ["{workspaceRoot}/coverage/libs/x500-client-ts"],
+            "executor": "@nx/vitest:test",
+            "outputs": ["{options.reportsDirectory}"],
             "options": {
-                "jestConfig": "libs/x500-client-ts/jest.config.ts"
+                "reportsDirectory": "../../coverage/libs/x500-client-ts"
             }
         }
     }

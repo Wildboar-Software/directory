@@ -31,20 +31,6 @@
                     "target": "build"
                 }
             ]
-        },
-        "lint": {
-            "executor": "@nx/linter:eslint",
-            "outputs": ["{options.outputFile}"],
-            "options": {
-                "lintFilePatterns": ["libs/x500-auth-ts/**/*.ts"]
-            }
-        },
-        "test": {
-            "executor": "@nx/jest:jest",
-            "outputs": ["{workspaceRoot}/coverage/libs/x500-auth-ts"],
-            "options": {
-                "jestConfig": "libs/x500-auth-ts/jest.config.ts"
-            }
         }
     }
 }

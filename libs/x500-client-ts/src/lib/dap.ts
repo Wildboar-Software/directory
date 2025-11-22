@@ -252,7 +252,7 @@ interface ListOptions extends CommonArguments, DAPOperationOptions, TargetsObjec
 
 export
 interface SearchOptions extends CommonArguments, DAPOperationOptions, Partial<TargetsObject> {
-    baseObject: TargetsObject["object"],
+    baseObject?: TargetsObject["object"],
     subset?: "base" | "level" | "subtree" | 0 | 1 | 2 | SearchArgumentData["subset"],
     filter?: Filter;
     searchAliases?: boolean;
@@ -584,7 +584,7 @@ function create_dap_client (rose: ROSETransport): DAPClient {
             }
         },
         search: async (params: SearchOptions): Promise<OperationOutcome<typeof search["&ResultType"]>> => {
-            const name = name_option_to_name(params.baseObject ?? params.object);
+            const name = name_option_to_name(params.baseObject ?? params.object!);
             if (!name) {
                 return {
                     other: {

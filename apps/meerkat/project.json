@@ -54,18 +54,11 @@
                 "port": 24010
             }
         },
-        "lint": {
-            "executor": "@nx/linter:eslint",
-            "options": {
-                "lintFilePatterns": ["apps/meerkat/**/*.ts"]
-            },
-            "outputs": ["{options.outputFile}"]
-        },
         "test": {
-            "executor": "@nx/jest:jest",
-            "outputs": ["{workspaceRoot}/coverage/apps/meerkat"],
+            "executor": "@nx/vitest:test",
+            "outputs": ["{options.reportsDirectory}"],
             "options": {
-                "jestConfig": "apps/meerkat/jest.config.ts"
+                "reportsDirectory": "../../coverage/apps/meerkat"
             }
         }
     }

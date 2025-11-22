@@ -108,7 +108,7 @@ import {
 import { Request } from "@wildboar/x500/src/lib/modules/IDMProtocolSpecification/Request.ta";
 import { SimpleCredentials } from "@wildboar/x500/src/lib/modules/DirectoryAbstractService/SimpleCredentials.ta";
 
-jest.setTimeout(5000);
+vi.setConfig({ testTimeout: 5_000 });
 
 function sleep (ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -450,7 +450,7 @@ describe.skip("Meerkat DSA", () => {
     it.todo("Memory leaks do not occur");
     it.todo("Requests are rejected when the DSA is hibernating");
 
-    it("An idle TCP socket is eventually closed", (done) => {
+    it("An idle TCP socket is eventually closed", () => new Promise<void>((done) => {
         // This test is pretty flaky, so we just don't run it in the pipeline.
         if (HOST !== "localhost") {
             done();
@@ -465,7 +465,7 @@ describe.skip("Meerkat DSA", () => {
         client.on("close", () => {
             done();
         });
-    }, 60000); // Meerkat DSA's default TCP timeout is 30s.
+    }), 60000); // Meerkat DSA's default TCP timeout is 30s.
 
     it("StartTLS cannot be used to recursively encapsulate traffic", async () => {
         const idm = await connect();
@@ -497,8 +497,8 @@ describe.skip("Meerkat DSA", () => {
         }
     });
 
-    it("Avoids denial-of-service by large IDMv1 packets", (done) => {
-        const errorHandler = jest.fn();
+    it("Avoids denial-of-service by large IDMv1 packets", () => new Promise<void>((done) => {
+        const errorHandler = vi.fn();
         const closeHandler = () => {
             expect(errorHandler).toHaveBeenCalled();
             giantIDMv1Packet.unpipe(client);
@@ -518,10 +518,10 @@ describe.skip("Meerkat DSA", () => {
             });
             giantIDMv1Packet.pipe(client);
         });
-    });
+    }));
 
-    it("Avoids denial-of-service by large IDMv2 packets", (done) => {
-        const errorHandler = jest.fn();
+    it("Avoids denial-of-service by large IDMv2 packets", () => new Promise<void>((done) => {
+        const errorHandler = vi.fn();
         const closeHandler = () => {
             expect(errorHandler).toHaveBeenCalled();
             giantIDMv2Packet.unpipe(client);
@@ -541,10 +541,10 @@ describe.skip("Meerkat DSA", () => {
             });
             giantIDMv2Packet.pipe(client);
         });
-    });
+    }));
 
-    it("Avoids denial-of-service by large LDAP messages", (done) => {
-        const errorHandler = jest.fn();
+    it("Avoids denial-of-service by large LDAP messages", () => new Promise<void>((done) => {
+        const errorHandler = vi.fn();
         const closeHandler = () => {
             expect(errorHandler).toHaveBeenCalled();
             giantDefiniteLengthLDAPMessage.unpipe(client);
@@ -564,10 +564,10 @@ describe.skip("Meerkat DSA", () => {
             });
             giantDefiniteLengthLDAPMessage.pipe(client);
         });
-    });
+    }));
 
-    it("Avoids denial-of-service by large indefinite-length LDAP messages", (done) => {
-        const errorHandler = jest.fn();
+    it("Avoids denial-of-service by large indefinite-length LDAP messages", () => new Promise<void>((done) => {
+        const errorHandler = vi.fn();
         const closeHandler = () => {
             expect(errorHandler).toHaveBeenCalled();
             giantIndefiniteLengthLDAPMessage.unpipe(client);
@@ -587,10 +587,10 @@ describe.skip("Meerkat DSA", () => {
             });
             giantIndefiniteLengthLDAPMessage.pipe(client);
         });
-    });
+    }));
 
-    it("Rejects any LDAP data that does not start with 0x30 (UNIVERSAL SEQUENCE)", (done) => {
-        const errorHandler = jest.fn();
+    it("Rejects any LDAP data that does not start with 0x30 (UNIVERSAL SEQUENCE)", () => new Promise<void>((done) => {
+        const errorHandler = vi.fn();
         const closeHandler = () => {
             expect(errorHandler).toHaveBeenCalled();
             done();
@@ -606,10 +606,10 @@ describe.skip("Meerkat DSA", () => {
             });
             client.write(Buffer.from([ 0x88 ]));
         });
-    });
+    }));
 
     // Skipped: This test is kind of flaky, even though I see it timing out at 60000ms, which means it worked.
-    it.skip("Avoids denial of service by IDM-based Slow Loris Attacks", (done) => {
+    it.skip("Avoids denial of service by IDM-based Slow Loris Attacks", () => new Promise<void>((done) => {
         const closeHandler = () => {
             done();
         };
@@ -624,9 +624,9 @@ describe.skip("Meerkat DSA", () => {
                 await sleep(1000);
             }
         });
-    }, 90000); // Timeout greater than one minute so slow loris protection kicks in.
+    }), 90000); // Timeout greater than one minute so slow loris protection kicks in.
 
-    it("Avoids denial of service by LDAP-based Slow Loris Attacks", (done) => {
+    it("Avoids denial of service by LDAP-based Slow Loris Attacks", () => new Promise<void>((done) => {
         // This test is pretty flaky, so we just don't run it in the pipeline.
         if (HOST !== "localhost") {
             done();
@@ -646,7 +646,7 @@ describe.skip("Meerkat DSA", () => {
                 await sleep(1000);
             }
         });
-    }, 90000); // Timeout greater than one minute so slow loris protection kicks in.
+    }), 90000); // Timeout greater than one minute so slow loris protection kicks in.
 
     it("permits recycling of a TCP socket via IDM re-binding", async () => {
         const idm = await connect();
@@ -779,7 +779,7 @@ describe.skip("Meerkat DSA", () => {
         // If it made it this far, the test passed.
     });
 
-    it("Rejects LDAP messages having a negative messageID", (done) => {
+    it("Rejects LDAP messages having a negative messageID", () => new Promise<void>((done) => {
         const NAUGHTY_ID: number = -1;
         const socket = net.createConnection({
             host: HOST,
@@ -807,9 +807,9 @@ describe.skip("Meerkat DSA", () => {
                 undefined,
             ));
         });
-    });
+    }));
 
-    it("Rejects LDAP messages having an excessively large messageID", (done) => {
+    it("Rejects LDAP messages having an excessively large messageID", () => new Promise<void>((done) => {
         const NAUGHTY_ID: number = Number.MAX_SAFE_INTEGER - 5;
         const socket = net.createConnection({
             host: HOST,
@@ -837,9 +837,9 @@ describe.skip("Meerkat DSA", () => {
                 undefined,
             ));
         });
-    });
+    }));
 
-    it("Rejects IDM requests having a negative invokeID", (done) => {
+    it("Rejects IDM requests having a negative invokeID", () => new Promise<void>((done) => {
         const NAUGHTY_ID: number = -1;
         connect()
             .then((idm) => {
@@ -864,9 +864,9 @@ describe.skip("Meerkat DSA", () => {
                     }, DER),
                 );
             });
-    });
+    }));
 
-    it("Rejects IDM requests having an excessively large invokeID", (done) => {
+    it("Rejects IDM requests having an excessively large invokeID", () => new Promise<void>((done) => {
         const NAUGHTY_ID: bigint = BigInt("3846092359682309568092358602835632562356029");
         connect()
             .then((idm) => {
@@ -891,7 +891,7 @@ describe.skip("Meerkat DSA", () => {
                     }, DER),
                 );
             });
-    });
+    }));
 
     it.skip("permits requests from other sockets to be handled, even while one particular IDM socket is getting inundated", async () => {
         const idm1 = await connect();
@@ -922,7 +922,7 @@ describe.skip("Meerkat DSA", () => {
         await sleep(45000);
     }, 60000); // Just timeout after five seconds.
 
-    it("Does not crash when it receives an IDMv1 frame that contains junk", (done) => {
+    it("Does not crash when it receives an IDMv1 frame that contains junk", () => new Promise<void>((done) => {
         const closeHandler = () => {
             connect().then(() => done());
         };
@@ -939,9 +939,9 @@ describe.skip("Meerkat DSA", () => {
                 0x33, 0x22, 0x11, // Junk data
             ]));
         });
-    });
+    }));
 
-    it("Does not crash when it receives an IDMv2 frame that contains junk", (done) => {
+    it("Does not crash when it receives an IDMv2 frame that contains junk", () => new Promise<void>((done) => {
         const closeHandler = () => {
             connect().then(() => done());
         };
@@ -958,9 +958,9 @@ describe.skip("Meerkat DSA", () => {
                 0x33, 0x22, 0x11, // Junk data
             ]));
         });
-    });
+    }));
 
-    it("Does not crash when it receives an IDM bind, and the client hangs up before the response", (done) => {
+    it("Does not crash when it receives an IDM bind, and the client hangs up before the response", () => new Promise<void>((done) => {
         const dba = new DirectoryBindArgument(
             undefined,
             undefined,
@@ -983,7 +983,7 @@ describe.skip("Meerkat DSA", () => {
                 .then(() => connect())
                 .then(() => done());
         });
-    });
+    }));
 
     it("Does not crash when it receives an IDM request, and the client hangs up before the abort", async () => {
         const idm = await connect();
@@ -1024,7 +1024,7 @@ describe.skip("Meerkat DSA", () => {
         }
     }, 60000);
 
-    it("Handles IDM requests received prior to the bind response", (done) => {
+    it("Handles IDM requests received prior to the bind response", () => new Promise<void>((done) => {
         const dn = createTestRootDN("oqrwhrgqoierngqr");
         const dba = new DirectoryBindArgument(
             {
@@ -1069,9 +1069,9 @@ describe.skip("Meerkat DSA", () => {
                 .catch((e) => console.error(e));
             client.uncork();
         });
-    });
+    }));
 
-    it("Does not get overwhelmed with requests that come in before the bind response", (done) => {
+    it("Does not get overwhelmed with requests that come in before the bind response", () => new Promise<void>((done) => {
         const dn = createTestRootDN("oqrwhrgqoierngqr");
         const dba = new DirectoryBindArgument(
             undefined,
@@ -1115,6 +1115,6 @@ describe.skip("Meerkat DSA", () => {
             }
             client.uncork();
         });
-    }, 10000);
+    }), 10000);
 
 });

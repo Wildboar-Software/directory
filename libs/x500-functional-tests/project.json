@@ -5,18 +5,11 @@
     "projectType": "library",
     "tags": [],
     "targets": {
-        "lint": {
-            "executor": "@nx/linter:eslint",
-            "outputs": ["{options.outputFile}"],
-            "options": {
-                "lintFilePatterns": ["libs/x500-functional-tests/**/*.ts"]
-            }
-        },
         "test": {
-            "executor": "@nx/jest:jest",
-            "outputs": ["{workspaceRoot}/coverage/libs/x500-functional-tests"],
+            "executor": "@nx/vitest:test",
+            "outputs": ["{options.reportsDirectory}"],
             "options": {
-                "jestConfig": "libs/x500-functional-tests/jest.config.ts"
+                "reportsDirectory": "../../coverage/libs/x500-functional-tests"
             }
         }
     }

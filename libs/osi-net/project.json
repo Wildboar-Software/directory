@@ -16,18 +16,11 @@
                 "assets": ["libs/osi-net/*.md"]
             }
         },
-        "lint": {
-            "executor": "@nx/linter:eslint",
-            "outputs": ["{options.outputFile}"],
-            "options": {
-                "lintFilePatterns": ["libs/osi-net/**/*.ts"]
-            }
-        },
         "test": {
-            "executor": "@nx/jest:jest",
-            "outputs": ["{workspaceRoot}/coverage/libs/osi-net"],
+            "executor": "@nx/vitest:test",
+            "outputs": ["{options.reportsDirectory}"],
             "options": {
-                "jestConfig": "libs/osi-net/jest.config.ts"
+                "reportsDirectory": "../../coverage/libs/osi-net"
             }
         }
     }

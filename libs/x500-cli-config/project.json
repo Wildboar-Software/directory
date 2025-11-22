@@ -15,20 +15,6 @@
                 "main": "libs/x500-cli-config/src/index.ts",
                 "assets": ["libs/x500-cli-config/*.md"]
             }
-        },
-        "lint": {
-            "executor": "@nx/linter:eslint",
-            "outputs": ["{options.outputFile}"],
-            "options": {
-                "lintFilePatterns": ["libs/x500-cli-config/**/*.ts"]
-            }
-        },
-        "test": {
-            "executor": "@nx/jest:jest",
-            "outputs": ["{workspaceRoot}/coverage/libs/x500-cli-config"],
-            "options": {
-                "jestConfig": "libs/x500-cli-config/jest.config.ts"
-            }
         }
     }
 }

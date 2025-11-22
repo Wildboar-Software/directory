@@ -29,10 +29,6 @@ import {
 } from "./constants";
 import type { SecureVersion } from "tls";
 import * as fs from "fs";
-import type { TelemetryClient } from "applicationinsights";
-import * as appInsights from "applicationinsights";
-import { telemetryDomain } from "./constants";
-import * as dns from "dns/promises";
 import { PEMObject } from "pem-ts";
 import { BERElement, DERElement, ObjectIdentifier } from "asn1-ts";
 import {
@@ -114,13 +110,13 @@ import { loadMatchingRules } from "./init/loadMatchingRules";
 export
 interface MeerkatTelemetryClient {
     init: () => Promise<void>;
-    trackAvailability: TelemetryClient["trackAvailability"];
-    trackEvent: TelemetryClient["trackEvent"];
-    trackMetric: TelemetryClient["trackMetric"];
-    trackRequest: TelemetryClient["trackRequest"];
-    trackException: TelemetryClient["trackException"];
-    trackDependency: TelemetryClient["trackDependency"];
-    trackTrace: TelemetryClient["trackTrace"];
+    trackAvailability: () => void;
+    trackEvent: () => void;
+    trackMetric: () => void;
+    trackRequest: () => void;
+    trackException: () => void;
+    trackDependency: () => void;
+    trackTrace: () => void;
 }
 
 export
@@ -548,6 +544,31 @@ const bindOverrides: SigningInfo["bindOverrides"] = {
 
 const config: Configuration = {
     maxRelaxationsOrTightenings: 3,
+    attributeCertificateDuration: 60,
+    disp: {
+        enabled: false,
+    },
+    principledServiceAdministration: false,
+    rbac: {
+        clearanceAuthorities: [],
+        getClearancesFromAttributeCertificates: true,
+        getClearancesFromDSAIT: true,
+        getClearancesFromPublicKeyCert: true,
+        labellingAuthorities: [],
+    },
+    requireMutualAuth: false,
+    shadowing: {
+        minAuthRequired: new AuthenticationLevel_basicLevels(
+            AuthenticationLevel_basicLevels_level_none,
+            undefined,
+            undefined,
+        ),
+    },
+    xr: {
+        requestCrossReferences: true,
+        returnCrossReferences: true,
+        signingRequiredToTrust: false,
+    },
     vendorName: process.env.MEERKAT_VENDOR_NAME?.length
         ? process.env.MEERKAT_VENDOR_NAME
         : undefined,
@@ -992,6 +1013,13 @@ const config: Configuration = {
 };
 
 const ctx: MeerkatContext = {
+    alreadyAssertedAttributeCertificates: new Set(),
+    externalProcedureAuthFunctions: new Map(),
+    labellingAuthorities: new Map(),
+    pendingShadowingUpdateCycles: new Map(),
+    rbacPolicies: new Map(),
+    shadowUpdateCycles: new Map(),
+    updatingShadow: new Set(),
     systemProposedRelaxations: new Map(),
     systemProposedTightenings: new Map(),
     i18n,
@@ -1012,6 +1040,8 @@ const ctx: MeerkatContext = {
             undefined,
         ),
         hibernatingSince: undefined,
+        namingContexts: [],
+        sentinelTriggeredHibernation: undefined,
     },
     otherDSAs: {
         byStringDN: new Map(),
@@ -1032,64 +1062,14 @@ const ctx: MeerkatContext = {
     }),
     db: 0 as never,
     telemetry: {
-        init: async (): Promise<void> => {
-            try {
-                const records = await dns
-                    .resolveTxt(telemetryDomain);
-                for (const record of records) {
-                    const txt = record.join("");
-                    if (txt.startsWith("ikey=")) {
-                        const ikey = txt.slice("ikey=".length);
-                        appInsights.setup(ikey).start();
-                        appInsights.defaultClient.config.disableAppInsights = (
-                            (
-                                isDebugging
-                                || ctx.config.bulkInsertMode
-                            )
-                            && !process.env.MEERKAT_TEST_TELEMETRY
-                        );
-                        break;
-                    }
-                }
-            } catch (e) {
-                ctx.log.error(ctx.i18n.t("log:failed_init_telemetry", { e }));
-            }
-        },
-        trackAvailability: (...args) => {
-            try {
-                return appInsights.defaultClient?.trackAvailability(...args);
-            } catch { /* NOOP */ }
-        },
-        trackDependency: (...args) => {
-            try {
-                return appInsights.defaultClient?.trackDependency(...args);
-            } catch { /* NOOP */ }
-        },
-        trackException: (...args) => {
-            try {
-                return appInsights.defaultClient?.trackException(...args);
-            } catch { /* NOOP */ }
-        },
-        trackRequest: (...args) => {
-            try {
-                return appInsights.defaultClient?.trackRequest(...args);
-            } catch { /* NOOP */ }
-        },
-        trackMetric: (...args) => {
-            try {
-                return appInsights.defaultClient?.trackMetric(...args);
-            } catch { /* NOOP */ }
-        },
-        trackEvent: (...args) => {
-            try {
-                return appInsights.defaultClient?.trackEvent(...args);
-            } catch { /* NOOP */ }
-        },
-        trackTrace: (...args) => {
-            try {
-                return appInsights.defaultClient?.trackTrace(...args);
-            } catch { /* NOOP */ }
-        },
+        init: async (): Promise<void> => {},
+        trackAvailability: () => {},
+        trackDependency: () => {},
+        trackException: () => {},
+        trackRequest: () => {},
+        trackMetric: () => {},
+        trackEvent: () => {},
+        trackTrace: () => {},
     },
     objectIdentifierToName: new Map(),
     nameToObjectIdentifier: new Map(),
