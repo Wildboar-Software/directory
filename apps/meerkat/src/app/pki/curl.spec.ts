@@ -3,7 +3,7 @@ import {
     curlHTTP2,
     curlLDAP,
     curlFTP,
-} from "./curl";
+} from "./curl.js";
 import { URL } from "node:url";
 import { strict as assert } from "node:assert";
 

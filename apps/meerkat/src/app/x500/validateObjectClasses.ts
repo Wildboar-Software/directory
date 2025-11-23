@@ -6,7 +6,7 @@ import {
     ObjectClassKind_auxiliary,
 } from "@wildboar/x500/InformationFramework";
 import { top } from "@wildboar/x500/InformationFramework";
-import getAncestorObjectClasses from "./getAncestorObjectClasses";
+import getAncestorObjectClasses from "./getAncestorObjectClasses.js";
 
 /**
  * @summary Determine whether a group of object classes are invalid

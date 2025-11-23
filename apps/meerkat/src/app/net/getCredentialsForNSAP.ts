@@ -1,5 +1,5 @@
 import type { Context } from "@wildboar/meerkat-types";
-import rdnFromJson from "../x500/rdnFromJson";
+import rdnFromJson from "../x500/rdnFromJson.js";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";

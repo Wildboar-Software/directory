@@ -4,15 +4,15 @@ import {
 } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { SDSEContent } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { FALSE, FALSE_BIT, ObjectIdentifier, TRUE, TRUE_BIT } from "@wildboar/asn1";
-import readAttributes from "../database/entry/readAttributes";
+import readAttributes from "../database/entry/readAttributes.js";
 import {
     EntryInformationSelection,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     ClassAttributeSelection,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
-import valuesFromAttribute from "../x500/valuesFromAttribute";
-import attributesFromValues from "../x500/attributesFromValues";
+import valuesFromAttribute from "../x500/valuesFromAttribute.js";
+import attributesFromValues from "../x500/attributesFromValues.js";
 import { attributes as x500at } from "@wildboar/x500";
 import { userPwdHistory } from "@wildboar/x500/PasswordPolicy";
 import { userPwdRecentlyExpired } from "@wildboar/x500/PasswordPolicy";

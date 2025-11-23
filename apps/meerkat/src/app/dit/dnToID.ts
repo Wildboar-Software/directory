@@ -2,7 +2,7 @@ import type { Context } from "@wildboar/meerkat-types";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import rdnToID from "./rdnToID";
+import rdnToID from "./rdnToID.js";
 
 /**
  * @summary Get the database ID of a DSE from its distinguished name

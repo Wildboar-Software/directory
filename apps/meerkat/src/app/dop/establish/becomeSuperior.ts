@@ -9,7 +9,7 @@ import {
 import {
     SubordinateToSuperior,
 } from "@wildboar/x500/HierarchicalOperationalBindings";
-import dnToVertex from "../../dit/dnToVertex";
+import dnToVertex from "../../dit/dnToVertex.js";
 import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
 import * as errors from "@wildboar/meerkat-types";
 import {
@@ -34,19 +34,19 @@ import {
 import {
     Attribute,
 } from "@wildboar/x500/InformationFramework";
-import getContextPrefixInfo from "../../hob/getContextPrefixInfo";
-import createSecurityParameters from "../../x500/createSecurityParameters";
+import getContextPrefixInfo from "../../hob/getContextPrefixInfo.js";
+import createSecurityParameters from "../../x500/createSecurityParameters.js";
 import {
     securityError,
 } from "@wildboar/x500/DirectoryAbstractService";
-import createEntry from "../../database/createEntry";
-import checkIfNameIsAlreadyTakenInNSSR from "../../distributed/checkIfNameIsAlreadyTakenInNSSR";
+import createEntry from "../../database/createEntry.js";
+import checkIfNameIsAlreadyTakenInNSSR from "../../distributed/checkIfNameIsAlreadyTakenInNSSR.js";
 import { operationalBindingError } from "@wildboar/x500/OperationalBindingManagement";
-import saveAccessPoint from "../../database/saveAccessPoint";
+import saveAccessPoint from "../../database/saveAccessPoint.js";
 import type {
     InvokeId,
 } from "@wildboar/x500/CommonProtocolSpecification";
-import DOPAssociation from "../DOPConnection";
+import DOPAssociation from "../DOPConnection.js";
 import {
     ServiceProblem_unwillingToPerform,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -56,10 +56,10 @@ import {
 import {
     serviceError,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { getEntryAttributesToShareInOpBinding } from "../../dit/getEntryAttributesToShareInOpBinding";
+import { getEntryAttributesToShareInOpBinding } from "../../dit/getEntryAttributesToShareInOpBinding.js";
 import { id_op_binding_shadow } from "@wildboar/x500/DirectoryOperationalBindingTypes";
-import { updateShadowConsumer } from "../../disp/createShadowUpdate";
-import stringifyDN from "../../x500/stringifyDN";
+import { updateShadowConsumer } from "../../disp/createShadowUpdate.js";
+import stringifyDN from "../../x500/stringifyDN.js";
 
 /**
  * @summary Create a new subr reference, thereby becoming a superior DSA

@@ -7,7 +7,7 @@ import {
 import {
     Refinement,
 } from "@wildboar/x500/InformationFramework";
-import isPrefix from "./isPrefix";
+import isPrefix from "./isPrefix.js";
 import { Context } from "@wildboar/meerkat-types";
 
 /**

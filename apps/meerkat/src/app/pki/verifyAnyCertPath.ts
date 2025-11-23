@@ -1,7 +1,7 @@
 import {
     verifyCertPath,
     VerifyCertPathArgs,
-} from "../pki/verifyCertPath";
+} from "../pki/verifyCertPath.js";
 import type {
     CertificationPath,
 } from "@wildboar/x500/AuthenticationFramework";

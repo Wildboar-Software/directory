@@ -1,5 +1,5 @@
 import type { Context, DIT } from "@wildboar/meerkat-types";
-import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry";
+import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry.js";
 import { randomUUID } from "crypto";
 import type { Prisma } from "@prisma/client";
 

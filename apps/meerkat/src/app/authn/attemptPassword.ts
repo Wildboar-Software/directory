@@ -3,7 +3,7 @@ import {
     UserPwd, _encode_UserPwd,
 } from "@wildboar/x500/PasswordPolicy";
 import * as crypto from "crypto";
-import encryptPassword from "./encryptPassword";
+import encryptPassword from "./encryptPassword.js";
 import type {
     SimpleCredentials,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -28,9 +28,9 @@ import {
 import { DER, _encodeInteger, _encodeGeneralizedTime, _decodeGeneralizedTime, _decodeInteger, _encodeBitString, _encodeOctetString } from "@wildboar/asn1/functional";
 import { userPwdRecentlyExpired } from "@wildboar/x500/PasswordPolicy";
 import { strict as assert } from "node:assert";
-import { getAdministrativePoints } from "../dit/getAdministrativePoints";
-import { getRelevantSubentries } from "../dit/getRelevantSubentries";
-import { getDistinguishedName } from "../x500/getDistinguishedName";
+import { getAdministrativePoints } from "../dit/getAdministrativePoints.js";
+import { getRelevantSubentries } from "../dit/getRelevantSubentries.js";
+import { getDistinguishedName } from "../x500/getDistinguishedName.js";
 import {
     pwdEndTime,
     pwdExpiryTime,
@@ -45,8 +45,8 @@ import {
     PwdResponseValue_error_changeAfterReset,
     PwdResponseValue_error_passwordExpired,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { removeAttribute } from "../database/entry/removeAttribute";
-import { addValues } from "../database/entry/addValues";
+import { removeAttribute } from "../database/entry/removeAttribute.js";
+import { addValues } from "../database/entry/addValues.js";
 import { pwdGraceUseTime } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdGraceUseTime.oa.js";
 import { pwdLastSuccess } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLastSuccess.oa.js";
 import { subSeconds, differenceInSeconds, addSeconds } from "date-fns";
@@ -58,7 +58,7 @@ import { Prisma } from "@prisma/client";
 import { pwdLockout } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdLockout.oa.js";
 import { pwdAccountLockedTime } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdAccountLockedTime.oa.js";
 import { pwdReset } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdReset.oa.js";
-import { groupByOID } from "../utils/groupByOID";
+import { groupByOID } from "../utils/groupByOID.js";
 import {
     _encode_DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
@@ -66,8 +66,8 @@ import {
     SimpleCredentials_validity_time1,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { SimpleCredentials_validity_time2 } from "@wildboar/x500/DirectoryAbstractService";
-import { digestOIDToNodeHash } from "../pki/digestOIDToNodeHash";
-import { attributeValueFromDB, DBAttributeValue } from "../database/attributeValueFromDB";
+import { digestOIDToNodeHash } from "../pki/digestOIDToNodeHash.js";
+import { attributeValueFromDB, DBAttributeValue } from "../database/attributeValueFromDB.js";
 
 const START_TIME_OID: string = pwdStartTime["&id"].toString();
 const EXPIRY_TIME_OID: string = pwdExpiryTime["&id"].toString();

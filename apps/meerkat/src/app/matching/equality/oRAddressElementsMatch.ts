@@ -4,7 +4,7 @@ import {
     ORAddress,
     _decode_ORAddress,
 } from "@wildboar/x400/MTSAbstractService";
-import { ORAddressInfo, orAddressToInfo, recursivelyNormalize } from "./orAddressUtilities";
+import { ORAddressInfo, orAddressToInfo, recursivelyNormalize } from "./orAddressUtilities.js";
 import { PresentationAddress } from "@wildboar/x500/SelectedAttributeTypes";
 import _ from "lodash";
 

@@ -12,10 +12,10 @@ import {
 import {
     CertificatePair,
 } from "@wildboar/x500/AuthenticationFramework";
-import { keyTypeToAlgOID } from "../pki/keyTypeToAlgOID";
+import { keyTypeToAlgOID } from "../pki/keyTypeToAlgOID.js";
 import { DERElement, unpackBits } from "@wildboar/asn1";
 import { randomBytes } from "crypto";
-import { generateSIGNED } from "../pki/generateSIGNED";
+import { generateSIGNED } from "../pki/generateSIGNED.js";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";

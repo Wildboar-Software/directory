@@ -10,12 +10,12 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
-import NOOP from "./NOOP";
+import NOOP from "./NOOP.js";
 import { DER } from "@wildboar/asn1/functional";
 import { namingContexts } from "@wildboar/x500/LdapSystemSchema";
 import { compareDistinguishedName } from "@wildboar/x500";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
-import isFirstLevelDSA from "../../dit/isFirstLevelDSA";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
+import isFirstLevelDSA from "../../dit/isFirstLevelDSA.js";
 
 
 export

@@ -16,8 +16,8 @@ import {
 import {
     _decode_BasicOCSPResponse,
 } from "@wildboar/ocsp";
-import { VCP_RETURN_OK, verifySignature } from "../pki/verifyCertPath";
-import { verifyAnyCertPath } from "../pki/verifyAnyCertPath";
+import { VCP_RETURN_OK, verifySignature } from "../pki/verifyCertPath.js";
+import { verifyAnyCertPath } from "../pki/verifyAnyCertPath.js";
 import {
     CertificationPath,
 } from "@wildboar/x500/AuthenticationFramework";
@@ -29,7 +29,7 @@ import { differenceInSeconds } from "date-fns";
 import {
     KeyUsage_digitalSignature,
 } from "@wildboar/x500/CertificateExtensions";
-import { id_kp_OCSPSigning } from "../constants";
+import { id_kp_OCSPSigning } from "../constants.js";
 
 export const VOR_RETURN_OK: number = 0;
 export const VOR_RETURN_NOT_SUCCESS: number = -1;

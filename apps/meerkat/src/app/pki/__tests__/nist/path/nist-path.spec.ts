@@ -35,7 +35,7 @@ import {
     VCP_RETURN_POLICY_NOT_ACCEPTABLE,
     VCP_RETURN_NO_AUTHORIZED_POLICIES,
     VCP_RETURN_NO_BASIC_CONSTRAINTS_CA,
-} from "../../../verifyCertPath";
+} from "../../../verifyCertPath.js";
 import type {
     TrustAnchorList,
 } from "@wildboar/tal";
@@ -45,6 +45,11 @@ import {
 import {
     PolicyInformation, PolicyQualifierInfo,
 } from "@wildboar/x500/CertificateExtensions";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const PKITS_CERTS_PATH = path.join(__dirname, "data");
 const VALIDITY_TIME: Date = new Date();
 // From section 3.1 of https://csrc.nist.gov/CSRC/media/Projects/PKI-Testing/documents/PKITS.pdf

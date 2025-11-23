@@ -1,5 +1,5 @@
 import type { Vertex } from "@wildboar/meerkat-types";
-import { ID_AUTONOMOUS, ID_AR_SERVICE } from "../../oidstr";
+import { ID_AUTONOMOUS, ID_AR_SERVICE } from "../../oidstr.js";
 
 export
 function getServiceAdminPoint (target: Vertex): Vertex | undefined {

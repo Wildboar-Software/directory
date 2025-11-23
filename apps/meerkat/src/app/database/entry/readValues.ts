@@ -15,16 +15,16 @@ import {
 import {
     AttributeUsage_userApplications,
 } from "@wildboar/x500/InformationFramework";
-import attributeFromDatabaseAttribute from "../attributeFromDatabaseAttribute";
-import readCollectiveValues from "./readCollectiveValues";
-import getDistinguishedName from "../../x500/getDistinguishedName";
+import attributeFromDatabaseAttribute from "../attributeFromDatabaseAttribute.js";
+import readCollectiveValues from "./readCollectiveValues.js";
+import getDistinguishedName from "../../x500/getDistinguishedName.js";
 import type {
     ContextSelection,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     id_soc_subschema,
 } from "@wildboar/x500/SchemaAdministration";
-import groupByOID from "../../utils/groupByOID";
+import groupByOID from "../../utils/groupByOID.js";
 import {
     TypeAndContextAssertion,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -34,16 +34,16 @@ import {
 import {
     id_oa_allAttributeTypes,
 } from "@wildboar/x500/InformationFramework";
-import getAttributeParentTypes from "../../x500/getAttributeParentTypes";
+import getAttributeParentTypes from "../../x500/getAttributeParentTypes.js";
 import { evaluateContextAssertion } from "@wildboar/x500";
 import {
     Context as X500Context,
 } from "@wildboar/x500/InformationFramework";
-import getAttributeSubtypes from "../../x500/getAttributeSubtypes";
-import getContextAssertionDefaults from "../../dit/getContextAssertionDefaults";
+import getAttributeSubtypes from "../../x500/getAttributeSubtypes.js";
+import getContextAssertionDefaults from "../../dit/getContextAssertionDefaults.js";
 import { ContextProfile, ResultAttribute } from "@wildboar/x500/ServiceAdministration";
-import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter.js";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
 
 // TODO: Explore making this a temporalContext
 const DEFAULT_CAD: ContextSelection = {

@@ -2,8 +2,8 @@ import type { Vertex, Context } from "@wildboar/meerkat-types";
 import {
     Attribute,
 } from "@wildboar/x500/InformationFramework";
-import { readAttributes } from "../database/entry/readAttributes";
-import subentryEIS from "../dop/subentryEIS";
+import { readAttributes } from "../database/entry/readAttributes.js";
+import subentryEIS from "../dop/subentryEIS.js";
 
 /**
  * @summary Reads a specific subset of attributes from a subentry

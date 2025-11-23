@@ -30,7 +30,7 @@ import {
     AttributeUsage_userApplications,
 } from "@wildboar/x500/InformationFramework";
 import { Prisma, AttributeUsage as PrismaAttributeUsage } from "@prisma/client";
-import asn1SyntaxInfo from "../../x500/asn1SyntaxToInfo";
+import asn1SyntaxInfo from "../../x500/asn1SyntaxToInfo.js";
 
 const SUBSCHEMA: string = subschema["&id"].toString();
 

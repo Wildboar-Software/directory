@@ -6,7 +6,7 @@ import {
 import {
     SIGNED,
 } from "@wildboar/x500/AuthenticationFramework";
-import { generateSignature } from "./generateSignature";
+import { generateSignature } from "./generateSignature.js";
 import {
     chainedRead,
 } from "@wildboar/x500/DistributedOperations";

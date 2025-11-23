@@ -29,7 +29,7 @@ import {
 import {
     DSABindArgument,
 } from "@wildboar/x500/DistributedOperations";
-import { versions } from "../versions";
+import { versions } from "../versions.js";
 import { compareDistinguishedName, compareGeneralName, naddrToURI } from "@wildboar/x500";
 import { BOOLEAN, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import {
@@ -42,7 +42,7 @@ import {
     DSABindError,
     BindReturn,
 } from "@wildboar/meerkat-types";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import { PresentationAddress } from "@wildboar/pki-stub";
 import {
     AbandonedData,
@@ -51,21 +51,21 @@ import {
     abandoned,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { ROSETransport, AsyncROSEClient, AbortReason } from "@wildboar/rose-transport";
-import { createStrongCredentials } from "../authn/createStrongCredentials";
-import getCredentialsForNSAP from "./getCredentialsForNSAP";
+import { createStrongCredentials } from "../authn/createStrongCredentials.js";
+import getCredentialsForNSAP from "./getCredentialsForNSAP.js";
 import { DSACredentials } from "@wildboar/x500/DistributedOperations";
-import { getOnOCSPResponseCallback } from "../pki/getOnOCSPResponseCallback";
+import { getOnOCSPResponseCallback } from "../pki/getOnOCSPResponseCallback.js";
 import { addMilliseconds, differenceInMilliseconds } from "date-fns";
 import { URL } from "node:url";
 import { Socket, createConnection } from "node:net";
 import { connect as tlsConnect, TLSSocket } from "node:tls";
 import isDebugging from "is-debugging";
-import stringifyDN from "../x500/stringifyDN";
+import stringifyDN from "../x500/stringifyDN.js";
 import { DSABindResult } from "@wildboar/x500/DistributedOperations";
 import { createWriteStream } from "node:fs";
-import attemptSPKMAuth from "../authn/attemptSPKMAuth";
-import { attemptStrongAuth } from "../authn/attemptStrongAuth";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import attemptSPKMAuth from "../authn/attemptSPKMAuth.js";
+import { attemptStrongAuth } from "../authn/attemptStrongAuth.js";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 
 const DEFAULT_CONNECTION_TIMEOUT_IN_MS: number = 15 * 1000;
 

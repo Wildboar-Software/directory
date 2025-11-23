@@ -1,6 +1,6 @@
 import type { DIT, Vertex, DSE } from "@wildboar/meerkat-types";
 import { strict as assert } from "assert";
-import keepSubsetOfDITById from "./keepSubsetOfDITById";
+import keepSubsetOfDITById from "./keepSubsetOfDITById.js";
 
 function dse (id: number, subordinates?: Vertex[]): Vertex {
     return {

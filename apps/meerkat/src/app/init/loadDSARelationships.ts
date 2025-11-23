@@ -1,11 +1,11 @@
 import type { Context } from "@wildboar/meerkat-types";
-import rdnFromJson from "../x500/rdnFromJson";
-import { stringifyDN } from "../x500/stringifyDN";
+import rdnFromJson from "../x500/rdnFromJson.js";
+import { stringifyDN } from "../x500/stringifyDN.js";
 import { DER } from "@wildboar/asn1/functional";
 import {
     _encode_DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers";
+import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers.js";
 import { Prisma, OperationalBindingInitiator } from "@prisma/client";
 import {
     id_op_binding_hierarchical,

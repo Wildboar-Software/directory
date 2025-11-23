@@ -6,7 +6,7 @@ import {
 import {
     Capability,
 } from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
-import { orAddressesMatch } from "./orAddressUtilities";
+import { orAddressesMatch } from "./orAddressUtilities.js";
 
 // addressCapabilitiesMatch MATCHING-RULE ::= {
 //     SYNTAX  AddressCapabilities

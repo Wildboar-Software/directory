@@ -6,7 +6,7 @@ import type {
     Attribute,
 } from "@wildboar/x500/InformationFramework";
 import { encodeLDAPOID } from "@wildboar/ldap";
-import { getLDAPSyntax } from "../x500/getLDAPSyntax";
+import { getLDAPSyntax } from "../x500/getLDAPSyntax.js";
 
 /**
  * @summary Convert an X.500 directory attribute into an LDAP `PartialAttribute`

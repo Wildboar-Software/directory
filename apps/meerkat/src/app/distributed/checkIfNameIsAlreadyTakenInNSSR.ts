@@ -32,7 +32,7 @@ import {
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import {
     updateError,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -40,9 +40,9 @@ import type {
     InvokeId,
 } from "@wildboar/x500/CommonProtocolSpecification";
 import { addMilliseconds } from "date-fns";
-import { printInvokeId } from "../utils/printInvokeId";
-import { bindForChaining } from "../net/bindToOtherDSA";
-import { stringifyDN } from "../x500/stringifyDN";
+import { printInvokeId } from "../utils/printInvokeId.js";
+import { bindForChaining } from "../net/bindToOtherDSA.js";
+import { stringifyDN } from "../x500/stringifyDN.js";
 import { randomInt } from "node:crypto";
 import { MAX_INVOKE_ID } from "@wildboar/x500-client-ts";
 

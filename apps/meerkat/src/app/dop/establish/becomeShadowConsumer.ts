@@ -3,11 +3,11 @@ import type { Vertex } from "@wildboar/meerkat-types";
 import {
     ShadowingAgreementInfo,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
-import dnToVertex from "../../dit/dnToVertex";
+import dnToVertex from "../../dit/dnToVertex.js";
 import {
     AccessPoint,
 } from "@wildboar/x500/DistributedOperations";
-import saveAccessPoint from "../../database/saveAccessPoint";
+import saveAccessPoint from "../../database/saveAccessPoint.js";
 import { Knowledge } from "@prisma/client";
 import {
     SupplierInformation,
@@ -15,10 +15,10 @@ import {
 import {
     OperationalBindingID,
 } from "@wildboar/x500/OperationalBindingManagement";
-import scheduleShadowUpdates from "../../disp/scheduleShadowUpdates";
+import scheduleShadowUpdates from "../../disp/scheduleShadowUpdates.js";
 import type { Prisma } from "@prisma/client";
 import { ASN1Construction } from "@wildboar/asn1";
-import getEqualityNormalizer from "../../x500/getEqualityNormalizer";
+import getEqualityNormalizer from "../../x500/getEqualityNormalizer.js";
 
 /**
  * @summary Become a shadow supplier by creating a local context prefix and scheduling updates

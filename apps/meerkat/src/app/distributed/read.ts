@@ -34,7 +34,7 @@ import {
     ChainingResults,
 } from "@wildboar/x500/DistributedOperations";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
-import getDistinguishedName from "../x500/getDistinguishedName";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
 import {
     EntryInformation,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -43,7 +43,7 @@ import {
     SecurityProblem_insufficientAccessRights,
     SecurityProblem_invalidSignature,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getRelevantSubentries from "../dit/getRelevantSubentries";
+import getRelevantSubentries from "../dit/getRelevantSubentries.js";
 import { type ACDFTuple } from "@wildboar/x500";
 import { type ACDFTupleExtended } from "@wildboar/x500";
 import { type ProtectedItem } from "@wildboar/x500";
@@ -56,23 +56,23 @@ import {
     PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
 } from "@wildboar/x500";
 import { getACDFTuplesFromACIItem } from "@wildboar/x500";
-import getIsGroupMember from "../authz/getIsGroupMember";
+import getIsGroupMember from "../authz/getIsGroupMember.js";
 import type { ModifyRights } from "@wildboar/x500/DirectoryAbstractService";
 import { ModifyRights_Item } from "@wildboar/x500/DirectoryAbstractService";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import {
     id_opcode_read,
 } from "@wildboar/x500/CommonProtocolSpecification";
 import {
     securityError,
 } from "@wildboar/x500/DirectoryAbstractService";
-import type { OperationDispatcherState } from "./OperationDispatcher";
+import type { OperationDispatcherState } from "./OperationDispatcher.js";
 import { DER, _encodeBitString } from "@wildboar/asn1/functional";
-import readPermittedEntryInformation from "../database/entry/readPermittedEntryInformation";
+import readPermittedEntryInformation from "../database/entry/readPermittedEntryInformation.js";
 import { codeToString } from "@wildboar/x500";
-import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
-import getEntryInformationSelectionStatistics from "../telemetry/getEntryInformationSelectionStatistics";
-import failover from "../utils/failover";
+import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments.js";
+import getEntryInformationSelectionStatistics from "../telemetry/getEntryInformationSelectionStatistics.js";
+import failover from "../utils/failover.js";
 import {
     AbandonedData,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -83,9 +83,9 @@ import {
     FamilyReturn_memberSelect_contributingEntriesOnly,
     FamilyReturn_memberSelect_participatingEntriesOnly,
 } from "@wildboar/x500/DirectoryAbstractService";
-import readFamily from "../database/family/readFamily";
-import readCompoundEntry from "../database/family/readCompoundEntry";
-import convertSubtreeToFamilyInformation from "../x500/convertSubtreeToFamilyInformation";
+import readFamily from "../database/family/readFamily.js";
+import readCompoundEntry from "../database/family/readCompoundEntry.js";
+import convertSubtreeToFamilyInformation from "../x500/convertSubtreeToFamilyInformation.js";
 import {
     EntryInformation_information_Item,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -107,34 +107,34 @@ import {
 import {
     AttributeProblem_noSuchAttributeOrValue,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getACIItems from "../authz/getACIItems";
-import { MINIMUM_MAX_ATTR_SIZE, UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
+import getACIItems from "../authz/getACIItems.js";
+import { MINIMUM_MAX_ATTR_SIZE, UNTRUSTED_REQ_AUTH_LEVEL } from "../constants.js";
 import {
     ServiceControlOptions_noSubtypeSelection,
     ServiceControlOptions_dontSelectFriends,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
-import bacSettings from "../authz/bacSettings";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
+import bacSettings from "../authz/bacSettings.js";
 import {
     NameAndOptionalUID,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import preprocessTuples from "../authz/preprocessTuples";
+import preprocessTuples from "../authz/preprocessTuples.js";
 import { attributeError } from "@wildboar/x500/DirectoryAbstractService";
-import isOperationalAttributeType from "../x500/isOperationalAttributeType";
+import isOperationalAttributeType from "../x500/isOperationalAttributeType.js";
 import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { generateSignature } from "../pki/generateSignature";
+import { generateSignature } from "../pki/generateSignature.js";
 import { SIGNED } from "@wildboar/x500/AuthenticationFramework";
-import { stringifyDN } from "../x500/stringifyDN";
+import { stringifyDN } from "../x500/stringifyDN.js";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import { printInvokeId } from "../utils/printInvokeId";
-import dseFromDatabaseEntry from "../database/dseFromDatabaseEntry";
+import { printInvokeId } from "../utils/printInvokeId.js";
+import dseFromDatabaseEntry from "../database/dseFromDatabaseEntry.js";
 import {
     TBSAttributeCertificate,
     _encode_TBSAttributeCertificate,
@@ -150,7 +150,7 @@ import { Extension } from "@wildboar/pki-stub";
 import { singleUse } from "@wildboar/x500/AttributeCertificateDefinitions";
 import { noAssertion } from "@wildboar/x500/AttributeCertificateDefinitions";
 import { _encode_AlgorithmIdentifier } from "@wildboar/pki-stub";
-import { acdf } from "../authz/acdf";
+import { acdf } from "../authz/acdf.js";
 
 function createAttributeCertificate (
     ctx: MeerkatContext,

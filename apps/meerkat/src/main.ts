@@ -4,7 +4,11 @@ import i18n from "i18next";
 import I18FileSystemBackend from "i18next-fs-backend";
 import osLocale from "os-locale";
 import * as path from "path";
-import main from "./app/main";
+import main from "./app/main.js";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 i18n
     .use(I18FileSystemBackend)

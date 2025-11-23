@@ -7,14 +7,14 @@ import type {
 import type {
     OperationalBindingID,
 } from "@wildboar/x500/OperationalBindingManagement";
-import { bindForOBM } from "../net/bindToOtherDSA";
+import { bindForOBM } from "../net/bindToOtherDSA.js";
 import {
     ServiceErrorData,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceProblem_unavailable,
 } from "@wildboar/x500/DirectoryAbstractService";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import {
     serviceError,
 } from "@wildboar/x500/DirectoryAbstractService";

@@ -14,9 +14,9 @@ import { id_pr_searchContextViolation } from "@wildboar/x500/SelectedAttributeTy
 import { id_pr_searchContextCombinationViolation } from "@wildboar/x500/SelectedAttributeTypes";
 import { Filter } from "@wildboar/x500/DirectoryAbstractService";
 import { ContextProfile } from "@wildboar/x500/ServiceAdministration";
-import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
-import { getRequiredContextsFromContextCombination } from "./getRequiredContextsFromContextCombination";
-import { checkContextCombination } from "./checkContextCombination";
+import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter.js";
+import { getRequiredContextsFromContextCombination } from "./getRequiredContextsFromContextCombination.js";
+import { checkContextCombination } from "./checkContextCombination.js";
 import type { FilterItem } from "@wildboar/x500/DirectoryAbstractService";
 import { ContextAssertion } from "@wildboar/x500/InformationFramework";
 import { ContextCombination } from "@wildboar/x500/ServiceAdministration";

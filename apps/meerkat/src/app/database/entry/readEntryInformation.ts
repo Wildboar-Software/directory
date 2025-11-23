@@ -2,7 +2,7 @@ import type { Context, Vertex } from "@wildboar/meerkat-types";
 import type {
     EntryInformation_information_Item,
 } from "@wildboar/x500/DirectoryAbstractService";
-import readAttributes, { ReadAttributesOptions } from "./readAttributes";
+import readAttributes, { ReadAttributesOptions } from "./readAttributes.js";
 import {
     EntryInformationSelection_infoTypes_attributeTypesOnly as typesOnly,
 } from "@wildboar/x500/DirectoryAbstractService";

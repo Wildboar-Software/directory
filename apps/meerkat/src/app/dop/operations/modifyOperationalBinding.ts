@@ -1,5 +1,5 @@
 import { OperationalBindingError } from "@wildboar/meerkat-types";
-import type DOPAssociation from "../DOPConnection";
+import type DOPAssociation from "../DOPConnection.js";
 import type { MeerkatContext } from "../../ctx.js";
 import * as errors from "@wildboar/meerkat-types";
 import type {
@@ -42,8 +42,8 @@ import { getDateFromTime } from "@wildboar/x500";
 import {
     _encode_CertificationPath,
 } from "@wildboar/x500/AuthenticationFramework";
-import rdnToJson from "../../x500/rdnToJson";
-import saveAccessPoint from "../../database/saveAccessPoint";
+import rdnToJson from "../../x500/rdnToJson.js";
+import saveAccessPoint from "../../database/saveAccessPoint.js";
 import {
     id_op_binding_hierarchical,
 } from "@wildboar/x500/DirectoryOperationalBindingTypes";
@@ -61,13 +61,13 @@ import {
 } from "@wildboar/x500/HierarchicalOperationalBindings";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import { DER } from "@wildboar/asn1/functional";
-import createSecurityParameters from "../../x500/createSecurityParameters";
+import createSecurityParameters from "../../x500/createSecurityParameters.js";
 import {
     id_err_operationalBindingError,
 } from "@wildboar/x500/CommonProtocolSpecification";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
-import updateContextPrefix from "../modify/updateContextPrefix";
-import updateLocalSubr from "../modify/updateLocalSubr";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
+import updateContextPrefix from "../modify/updateContextPrefix.js";
+import updateLocalSubr from "../modify/updateLocalSubr.js";
 import {
     InvokeId,
 } from "@wildboar/x500/CommonProtocolSpecification";
@@ -77,20 +77,20 @@ import {
 import {
     _encode_Token,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { getDateFromOBTime } from "../getDateFromOBTime";
-import { printInvokeId } from "../../utils/printInvokeId";
+import { getDateFromOBTime } from "../getDateFromOBTime.js";
+import { printInvokeId } from "../../utils/printInvokeId.js";
 import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { generateSignature } from "../../pki/generateSignature";
+import { generateSignature } from "../../pki/generateSignature.js";
 import { SIGNED } from "@wildboar/x500/AuthenticationFramework";
 import {
     id_op_modifyOperationalBinding
 } from "@wildboar/x500/CommonProtocolSpecification";
-import { rdnFromJson } from "../../x500/rdnFromJson";
+import { rdnFromJson } from "../../x500/rdnFromJson.js";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
@@ -106,7 +106,7 @@ import {
 import {
     securityError,
 } from "@wildboar/x500/DirectoryAbstractService";
-import stringifyDN from "../../x500/stringifyDN";
+import stringifyDN from "../../x500/stringifyDN.js";
 import {
     id_op_binding_non_specific_hierarchical,
 } from "@wildboar/x500/DirectoryOperationalBindingTypes";
@@ -121,7 +121,7 @@ import {
 import {
     _decode_NonSpecificHierarchicalAgreement,
 } from "@wildboar/x500/HierarchicalOperationalBindings";
-import dnToID from "../../dit/dnToID";
+import dnToID from "../../dit/dnToID.js";
 import { randomInt } from "crypto";
 import { id_op_binding_shadow } from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import {
@@ -132,9 +132,9 @@ import {
     _decode_AccessPoint,
 } from "@wildboar/x500/DistributedOperations";
 import { AttributeUsage_dSAOperation } from "@wildboar/x500/InformationFramework";
-import { becomeShadowConsumer } from "../establish/becomeShadowConsumer";
-import { becomeShadowSupplier } from "../establish/becomeShadowSupplier";
-import dnToVertex from "../../dit/dnToVertex";
+import { becomeShadowConsumer } from "../establish/becomeShadowConsumer.js";
+import { becomeShadowSupplier } from "../establish/becomeShadowSupplier.js";
+import dnToVertex from "../../dit/dnToVertex.js";
 
 function getInitiator (init: Initiator): OperationalBindingInitiator {
     // NOTE: Initiator is not extensible, so this is an exhaustive list.

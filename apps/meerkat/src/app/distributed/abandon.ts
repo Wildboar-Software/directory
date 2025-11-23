@@ -17,7 +17,7 @@ import {
     ChainingResults,
 } from "@wildboar/x500/DistributedOperations";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import {
     id_opcode_abandon,
 } from "@wildboar/x500/CommonProtocolSpecification";

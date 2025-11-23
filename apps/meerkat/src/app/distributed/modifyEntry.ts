@@ -45,7 +45,7 @@ import {
 import {
     ObjectClassKind,
 } from "@wildboar/x500/InformationFramework";
-import valuesFromAttribute from "../x500/valuesFromAttribute";
+import valuesFromAttribute from "../x500/valuesFromAttribute.js";
 import { AttributeErrorData } from "@wildboar/x500/DirectoryAbstractService";
 import {
     AttributeErrorData_problems_Item,
@@ -88,18 +88,18 @@ import {
     ChainingResults,
 } from "@wildboar/x500/DistributedOperations";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
-import getDistinguishedName from "../x500/getDistinguishedName";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
 import type { Prisma } from "@prisma/client";
-import addValues from "../database/entry/addValues";
-import removeValues from "../database/entry/removeValues";
-import removeAttribute from "../database/entry/removeAttribute";
-import dseFromDatabaseEntry from "../database/dseFromDatabaseEntry";
+import addValues from "../database/entry/addValues.js";
+import removeValues from "../database/entry/removeValues.js";
+import removeAttribute from "../database/entry/removeAttribute.js";
+import dseFromDatabaseEntry from "../database/dseFromDatabaseEntry.js";
 import { strict as assert } from "assert";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
 import { SecurityErrorData } from "@wildboar/x500/DirectoryAbstractService";
-import getRelevantSubentries from "../dit/getRelevantSubentries";
+import getRelevantSubentries from "../dit/getRelevantSubentries.js";
 import { type ACDFTuple } from "@wildboar/x500";
 import { type ACDFTupleExtended } from "@wildboar/x500";
 import {
@@ -110,11 +110,11 @@ import {
 } from "@wildboar/x500";
 import { getACDFTuplesFromACIItem } from "@wildboar/x500";
 import { type EqualityMatcher } from "@wildboar/x500";
-import getIsGroupMember from "../authz/getIsGroupMember";
+import getIsGroupMember from "../authz/getIsGroupMember.js";
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/InformationFramework";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import {
     id_opcode_modifyEntry,
 } from "@wildboar/x500/CommonProtocolSpecification";
@@ -142,19 +142,19 @@ import {
     serviceError,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { getDateFromTime } from "@wildboar/x500";
-import type { OperationDispatcherState } from "./OperationDispatcher";
+import type { OperationDispatcherState } from "./OperationDispatcher.js";
 import {
     id_oa_collectiveExclusions,
 } from "@wildboar/x500/InformationFramework";
-import readPermittedEntryInformation from "../database/entry/readPermittedEntryInformation";
+import readPermittedEntryInformation from "../database/entry/readPermittedEntryInformation.js";
 import {
     EntryInformation,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { codeToString } from "@wildboar/x500";
-import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
-import getEntryModificationStatistics from "../telemetry/getEntryModificationStatistics";
-import getEntryInformationSelectionStatistics from "../telemetry/getEntryInformationSelectionStatistics";
-import validateObjectClasses from "../x500/validateObjectClasses";
+import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments.js";
+import getEntryModificationStatistics from "../telemetry/getEntryModificationStatistics.js";
+import getEntryInformationSelectionStatistics from "../telemetry/getEntryInformationSelectionStatistics.js";
+import validateObjectClasses from "../x500/validateObjectClasses.js";
 import {
     ObjectClassKind_auxiliary,
 } from "@wildboar/x500/InformationFramework";
@@ -164,8 +164,8 @@ import {
 import {
     id_at_objectClass,
 } from "@wildboar/x500/InformationFramework";
-import getSubschemaSubentry from "../dit/getSubschemaSubentry";
-import failover from "../utils/failover";
+import getSubschemaSubentry from "../dit/getSubschemaSubentry.js";
+import failover from "../utils/failover.js";
 import {
     AbandonedData,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -178,8 +178,8 @@ import {
 import {
     Attribute_valuesWithContext_Item,
 } from "@wildboar/x500/InformationFramework";
-import extensibleObject from "../ldap/extensibleObject";
-import attributeTypesPermittedForEveryEntry from "../x500/attributeTypesPermittedForEveryEntry";
+import extensibleObject from "../ldap/extensibleObject.js";
+import attributeTypesPermittedForEveryEntry from "../x500/attributeTypesPermittedForEveryEntry.js";
 import {
     administrativeRole,
 } from "@wildboar/x500/InformationFramework";
@@ -187,9 +187,9 @@ import {
     FamilyReturn_memberSelect_contributingEntriesOnly,
     FamilyReturn_memberSelect_participatingEntriesOnly,
 } from "@wildboar/x500/DirectoryAbstractService";
-import readFamily from "../database/family/readFamily";
-import readCompoundEntry from "../database/family/readCompoundEntry";
-import convertSubtreeToFamilyInformation from "../x500/convertSubtreeToFamilyInformation";
+import readFamily from "../database/family/readFamily.js";
+import readCompoundEntry from "../database/family/readCompoundEntry.js";
+import convertSubtreeToFamilyInformation from "../x500/convertSubtreeToFamilyInformation.js";
 import {
     EntryInformation_information_Item,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -205,27 +205,27 @@ import {
 import {
     id_oc_child,
 } from "@wildboar/x500/InformationFramework";
-import getACIItems from "../authz/getACIItems";
-import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs";
-import { MINIMUM_MAX_ATTR_SIZE } from "../constants";
-import updateSuperiorDSA from "../dop/updateSuperiorDSA";
+import getACIItems from "../authz/getACIItems.js";
+import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs.js";
+import { MINIMUM_MAX_ATTR_SIZE } from "../constants.js";
+import updateSuperiorDSA from "../dop/updateSuperiorDSA.js";
 import {
     id_ar_autonomousArea,
 } from "@wildboar/x500/InformationFramework";
 import { compareElements } from "@wildboar/x500";
-import readValuesOfType from "../utils/readValuesOfType";
-import rdnToJson from "../x500/rdnToJson";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import readValuesOfType from "../utils/readValuesOfType.js";
+import rdnToJson from "../x500/rdnToJson.js";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { id_aca_subentryACI } from "@wildboar/x500/BasicAccessControl";
 import { id_aca_prescriptiveACI } from "@wildboar/x500/BasicAccessControl";
 import {
     id_aca_accessControlScheme,
 } from "@wildboar/x500/BasicAccessControl";
-import bacSettings from "../authz/bacSettings";
+import bacSettings from "../authz/bacSettings.js";
 import {
     NameAndOptionalUID,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import preprocessTuples from "../authz/preprocessTuples";
+import preprocessTuples from "../authz/preprocessTuples.js";
 import {
     userPassword,
 } from "@wildboar/x500/AuthenticationFramework";
@@ -244,23 +244,23 @@ import {
 import {
     id_oa_allAttributeTypes,
 } from "@wildboar/x500/InformationFramework";
-import isOperationalAttributeType from "../x500/isOperationalAttributeType";
+import isOperationalAttributeType from "../x500/isOperationalAttributeType.js";
 import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { generateSignature } from "../pki/generateSignature";
+import { generateSignature } from "../pki/generateSignature.js";
 import { SIGNED } from "@wildboar/x500/AuthenticationFramework";
-import { stringifyDN } from "../x500/stringifyDN";
-import { printInvokeId } from "../utils/printInvokeId";
-import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
-import { getEntryExistsFilter } from "../database/entryExistsFilter";
+import { stringifyDN } from "../x500/stringifyDN.js";
+import { printInvokeId } from "../utils/printInvokeId.js";
+import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants.js";
+import { getEntryExistsFilter } from "../database/entryExistsFilter.js";
 import {
     pwdModifyEntryAllowed,
 } from "@wildboar/x500/PasswordPolicy";
-import { getAdministrativePoints } from "../dit/getAdministrativePoints";
+import { getAdministrativePoints } from "../dit/getAdministrativePoints.js";
 import {
     id_ar_pwdAdminSpecificArea,
 } from "@wildboar/x500/InformationFramework";
@@ -269,15 +269,15 @@ import { UserPwd } from "@wildboar/x500/PasswordPolicy";
 import {
     checkPasswordQuality,
     CHECK_PWD_QUALITY_OK,
-} from "../password/checkPasswordQuality";
-import { attributeValueFromDB } from "../database/attributeValueFromDB";
+} from "../password/checkPasswordQuality.js";
+import { attributeValueFromDB } from "../database/attributeValueFromDB.js";
 import {
     SubordinateChanges,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
-import { getShadowIncrementalSteps } from "../dop/getRelevantSOBs";
-import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh";
+import { getShadowIncrementalSteps } from "../dop/getRelevantSOBs.js";
+import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh.js";
 import { governingStructureRule } from "@wildboar/x500/SchemaAdministration";
-import { acdf } from "../authz/acdf";
+import { acdf } from "../authz/acdf.js";
 
 type ValuesIndex = Map<IndexableOID, Value[]>;
 type ContextRulesIndex = Map<IndexableOID, DITContextUseDescription>;

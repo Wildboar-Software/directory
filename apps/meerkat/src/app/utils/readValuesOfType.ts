@@ -3,7 +3,7 @@ import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import {
     EntryInformationSelection,
 } from "@wildboar/x500/DirectoryAbstractService";
-import readValues from "../database/entry/readValues";
+import readValues from "../database/entry/readValues.js";
 import {
     AttributeUsage_userApplications,
 } from "@wildboar/x500/InformationFramework";

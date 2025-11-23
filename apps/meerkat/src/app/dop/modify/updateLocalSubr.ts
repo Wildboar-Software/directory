@@ -6,7 +6,7 @@ import {
 import {
     SubordinateToSuperior,
 } from "@wildboar/x500/HierarchicalOperationalBindings";
-import dnToVertex from "../../dit/dnToVertex";
+import dnToVertex from "../../dit/dnToVertex.js";
 import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
 import * as errors from "@wildboar/meerkat-types";
 import {
@@ -19,16 +19,16 @@ import { OpBindingErrorParam } from "@wildboar/x500/OperationalBindingManagement
 import {
     OpBindingErrorParam_problem_roleAssignment,
 } from "@wildboar/x500/OperationalBindingManagement";
-import createSecurityParameters from "../../x500/createSecurityParameters";
+import createSecurityParameters from "../../x500/createSecurityParameters.js";
 import {
     securityError,
 } from "@wildboar/x500/DirectoryAbstractService";
-import createEntry from "../../database/createEntry";
+import createEntry from "../../database/createEntry.js";
 import { compareRelativeDistinguishedName as compareRDN } from "@wildboar/x500";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
-import addAttributes from "../../database/entry/addAttributes";
-import removeAttribute from "../../database/entry/removeAttribute";
-import checkIfNameIsAlreadyTakenInNSSR from "../../distributed/checkIfNameIsAlreadyTakenInNSSR";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
+import addAttributes from "../../database/entry/addAttributes.js";
+import removeAttribute from "../../database/entry/removeAttribute.js";
+import checkIfNameIsAlreadyTakenInNSSR from "../../distributed/checkIfNameIsAlreadyTakenInNSSR.js";
 import {
     InvokeId,
 } from "@wildboar/x500/CommonProtocolSpecification";
@@ -42,11 +42,11 @@ import {
     id_op_binding_non_specific_hierarchical,
 } from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import { operationalBindingError } from "@wildboar/x500/OperationalBindingManagement";
-import saveAccessPoint from "../../database/saveAccessPoint";
+import saveAccessPoint from "../../database/saveAccessPoint.js";
 import { ASN1Construction } from "@wildboar/asn1";
-import getEqualityNormalizer from "../../x500/getEqualityNormalizer";
+import getEqualityNormalizer from "../../x500/getEqualityNormalizer.js";
 import { id_op_binding_shadow } from "@wildboar/x500/DirectoryOperationalBindingTypes";
-import { updateShadowConsumer } from "../../disp/createShadowUpdate";
+import { updateShadowConsumer } from "../../disp/createShadowUpdate.js";
 
 /**
  * @summary Update an update to a local subr DSE given by a subordinate DSA

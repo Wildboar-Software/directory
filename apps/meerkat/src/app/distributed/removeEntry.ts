@@ -13,7 +13,7 @@ import {
     RemoveEntryResultData,
     _encode_RemoveEntryResultData,
 } from "@wildboar/x500/DirectoryAbstractService";
-import deleteEntry from "../database/deleteEntry";
+import deleteEntry from "../database/deleteEntry.js";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
 } from "@wildboar/x500/DistributedOperations";
@@ -34,7 +34,7 @@ import {
     AccessPoint,
     _decode_AccessPoint,
 } from "@wildboar/x500/DistributedOperations";
-import getDistinguishedName from "../x500/getDistinguishedName";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
 import {
     OperationalBindingID,
 } from "@wildboar/x500/OperationalBindingManagement";
@@ -42,19 +42,19 @@ import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
 import { compareDistinguishedName } from "@wildboar/x500";
-import terminateByTypeAndBindingID from "../dop/terminateByTypeAndBindingID";
+import terminateByTypeAndBindingID from "../dop/terminateByTypeAndBindingID.js";
 import { SecurityErrorData } from "@wildboar/x500/DirectoryAbstractService";
 import {
     SecurityProblem_insufficientAccessRights,
     SecurityProblem_invalidSignature,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getRelevantSubentries from "../dit/getRelevantSubentries";
+import getRelevantSubentries from "../dit/getRelevantSubentries.js";
 import { type ACDFTuple } from "@wildboar/x500";
 import { type ACDFTupleExtended } from "@wildboar/x500";
 import { PERMISSION_CATEGORY_REMOVE } from "@wildboar/x500";
 import { getACDFTuplesFromACIItem } from "@wildboar/x500";
-import getIsGroupMember from "../authz/getIsGroupMember";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import getIsGroupMember from "../authz/getIsGroupMember.js";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import {
     id_opcode_removeEntry,
 } from "@wildboar/x500/CommonProtocolSpecification";
@@ -71,12 +71,12 @@ import {
     serviceError,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { getDateFromTime } from "@wildboar/x500";
-import type { OperationDispatcherState } from "./OperationDispatcher";
+import type { OperationDispatcherState } from "./OperationDispatcher.js";
 import { DER } from "@wildboar/asn1/functional";
 import { codeToString } from "@wildboar/x500";
-import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
-import failover from "../utils/failover";
+import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments.js";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
+import failover from "../utils/failover.js";
 import {
     AbandonedData,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -102,16 +102,16 @@ import {
     UpdateProblem_notAncestor,
     UpdateProblem_notAllowedOnNonLeaf,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getACIItems from "../authz/getACIItems";
-import getRelevantOperationalBindings from "../dop/getRelevantOperationalBindings";
-import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs";
-import updateSuperiorDSA from "../dop/updateSuperiorDSA";
-import bacSettings from "../authz/bacSettings";
+import getACIItems from "../authz/getACIItems.js";
+import getRelevantOperationalBindings from "../dop/getRelevantOperationalBindings.js";
+import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs.js";
+import updateSuperiorDSA from "../dop/updateSuperiorDSA.js";
+import bacSettings from "../authz/bacSettings.js";
 import {
     NameAndOptionalUID,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import preprocessTuples from "../authz/preprocessTuples";
-import removeAttribute from "../database/entry/removeAttribute";
+import preprocessTuples from "../authz/preprocessTuples.js";
+import removeAttribute from "../database/entry/removeAttribute.js";
 import {
     hierarchyParent,
 } from "@wildboar/x500/InformationFramework";
@@ -121,18 +121,18 @@ import {
 import {
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { generateSignature } from "../pki/generateSignature";
+import { generateSignature } from "../pki/generateSignature.js";
 import { SIGNED } from "@wildboar/x500/AuthenticationFramework";
-import { stringifyDN } from "../x500/stringifyDN";
-import { printInvokeId } from "../utils/printInvokeId";
-import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
-import { getEntryExistsFilter } from "../database/entryExistsFilter";
-import { getShadowIncrementalSteps } from "../dop/getRelevantSOBs";
+import { stringifyDN } from "../x500/stringifyDN.js";
+import { printInvokeId } from "../utils/printInvokeId.js";
+import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants.js";
+import { getEntryExistsFilter } from "../database/entryExistsFilter.js";
+import { getShadowIncrementalSteps } from "../dop/getRelevantSOBs.js";
 import {
     SubordinateChanges,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
-import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh";
-import { acdf } from "../authz/acdf";
+import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh.js";
+import { acdf } from "../authz/acdf.js";
 
 const PARENT: string = id_oc_parent.toString();
 const CHILD: string = id_oc_child.toString();

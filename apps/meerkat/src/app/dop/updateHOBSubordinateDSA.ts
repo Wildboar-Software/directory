@@ -3,7 +3,7 @@ import type { MeerkatContext } from "../ctx.js";
 import type {
     AccessPoint,
 } from "@wildboar/x500/DistributedOperations";
-import { bindForOBM } from "../net/bindToOtherDSA";
+import { bindForOBM } from "../net/bindToOtherDSA.js";
 import {
     modifyOperationalBinding,
     OperationalBindingID,
@@ -19,15 +19,15 @@ import {
 import {
     MasterAndShadowAccessPoints,
 } from "@wildboar/x500/DistributedOperations";
-import getDistinguishedName from "../x500/getDistinguishedName";
-import readSubordinates from "../dit/readSubordinates";
-import readAttributes from "../database/entry/readAttributes";
-import admPointEIS from "./admPointEIS";
-import subentryEIS from "./subentryEIS";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
+import readSubordinates from "../dit/readSubordinates.js";
+import readAttributes from "../database/entry/readAttributes.js";
+import admPointEIS from "./admPointEIS.js";
+import subentryEIS from "./subentryEIS.js";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import { BER, DER } from "@wildboar/asn1/functional";
-import { getEntryAttributesToShareInOpBinding } from "../dit/getEntryAttributesToShareInOpBinding";
-import stringifyDN from "../x500/stringifyDN";
+import { getEntryAttributesToShareInOpBinding } from "../dit/getEntryAttributesToShareInOpBinding.js";
+import stringifyDN from "../x500/stringifyDN.js";
 import { Prisma, OperationalBindingInitiator } from "@prisma/client";
 import {
     id_op_binding_hierarchical,
@@ -36,8 +36,8 @@ import { _encode_SuperiorToSubordinateModification } from "@wildboar/x500/Hierar
 import { compareCode, getOptionallyProtectedValue } from "@wildboar/x500";
 import { securityError } from "@wildboar/x500/DirectoryAbstractService";
 import { operationalBindingError } from "@wildboar/x500/OperationalBindingManagement";
-import printCode from "../utils/printCode";
-import { verifySIGNED } from "../pki/verifySIGNED";
+import printCode from "../utils/printCode.js";
+import { verifySIGNED } from "../pki/verifySIGNED.js";
 import {
     _encode_ModifyOperationalBindingResultData,
 } from "@wildboar/x500/OperationalBindingManagement";
@@ -49,7 +49,7 @@ import {
 import {
     RelativeDistinguishedName as RDN,
 } from "@wildboar/x500/InformationFramework";
-import printInvokeId from "../utils/printInvokeId";
+import printInvokeId from "../utils/printInvokeId.js";
 
 /**
  * @summary Updates a subordinate DSA of changes that may affect a hierarchical operational binding

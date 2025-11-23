@@ -37,9 +37,9 @@ import {
 } from "@wildboar/x500/CommonProtocolSpecification";
 import { BER } from "@wildboar/asn1/functional";
 import { INTEGER } from "@wildboar/asn1";
-import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
+import generateUnusedInvokeID from "../net/generateUnusedInvokeID.js";
 import { MeerkatContext } from "../ctx.js";
-import { getLogInfoFromIDM } from "../log/getLogInfoFromIDM";
+import { getLogInfoFromIDM } from "../log/getLogInfoFromIDM.js";
 
 const idm_reject_to_rose_reject: Map<IdmReject_reason, RejectReason> = new Map([
     [ IdmReject_reason_mistypedPDU, RejectReason.mistyped_pdu ],

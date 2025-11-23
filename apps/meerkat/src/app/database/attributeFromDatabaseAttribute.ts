@@ -1,10 +1,10 @@
 import type { Context, Value } from "@wildboar/meerkat-types";
 import { ObjectIdentifier, BERElement } from "@wildboar/asn1";
-import groupByOID from "../utils/groupByOID";
+import groupByOID from "../utils/groupByOID.js";
 import {
     Context as X500Context,
 } from "@wildboar/x500/InformationFramework";
-import { attributeValueFromDB, DBAttributeValue } from "../database/attributeValueFromDB";
+import { attributeValueFromDB, DBAttributeValue } from "../database/attributeValueFromDB.js";
 
 // TODO: Use the Node-API to speed up this function a lot.
 // - Create BERElement even faster.

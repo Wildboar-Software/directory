@@ -1,10 +1,10 @@
 import type { Context, Vertex } from "@wildboar/meerkat-types";
-import dnToVertex from "./dnToVertex";
+import dnToVertex from "./dnToVertex.js";
 import {
     CrossReference,
 } from "@wildboar/x500/DistributedOperations";
-import { createDse } from "../database/createEntry";
-import saveAccessPoint from "../database/saveAccessPoint";
+import { createDse } from "../database/createEntry.js";
+import saveAccessPoint from "../database/saveAccessPoint.js";
 import { Knowledge } from "@prisma/client";
 
 /**

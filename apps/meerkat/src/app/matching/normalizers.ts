@@ -11,7 +11,7 @@ import {
 import {
     _decode_PresentationAddress,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import getEqualityNormalizer from "../x500/getEqualityNormalizer";
+import getEqualityNormalizer from "../x500/getEqualityNormalizer.js";
 import { _decode_Time } from "@wildboar/x500/AuthenticationFramework";
 import {
     _decode_AlgorithmIdentifier,

@@ -8,8 +8,8 @@ import {
 import {
     id_soc_subschema,
 } from "@wildboar/x500/SchemaAdministration";
-import readSubordinates from "./readSubordinates";
-import { MAX_TRAVERSAL } from "../constants";
+import readSubordinates from "./readSubordinates.js";
+import { MAX_TRAVERSAL } from "../constants.js";
 
 const AUTONOMOUS: string = id_ar_autonomousArea.toString();
 const SUBSCHEMA: string = id_ar_subschemaAdminSpecificArea.toString();

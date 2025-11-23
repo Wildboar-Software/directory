@@ -26,7 +26,7 @@ import {
     ASN1UniversalType,
 } from "@wildboar/asn1";
 import { compareDistinguishedName } from "@wildboar/x500";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { DER } from "@wildboar/asn1/functional";
 import { getDateFromTime } from "@wildboar/x500";
 import { createVerify, createPublicKey, KeyObject } from "crypto";
@@ -204,13 +204,13 @@ import {
 import {
     subjectInfoAccess,
 } from "@wildboar/x500/PkiPmiExternalDataTypes";
-import { generateSignature } from "./generateSignature";
+import { generateSignature } from "./generateSignature.js";
 import {
     verifyOCSPResponse,
     VOR_RETURN_OK,
     VOR_RETURN_REVOKED,
     VOR_RETURN_UNKNOWN_INTOLERABLE,
-} from "./verifyOCSPResponse";
+} from "./verifyOCSPResponse.js";
 import _ from "lodash";
 import { Name } from "@wildboar/x500/InformationFramework";
 

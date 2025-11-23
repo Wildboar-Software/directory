@@ -35,9 +35,9 @@ import {
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import {
     readValues,
-} from "../database/entry/readValues";
+} from "../database/entry/readValues.js";
 import { evaluateContextAssertion } from "@wildboar/x500";
-import getDistinguishedName from "../x500/getDistinguishedName";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
 import {
     EntryInformationSelection,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -48,7 +48,7 @@ import {
     SecurityProblem_passwordExpired,
     SecurityProblem_invalidCredentials,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getRelevantSubentries from "../dit/getRelevantSubentries";
+import getRelevantSubentries from "../dit/getRelevantSubentries.js";
 import { type ACDFTuple } from "@wildboar/x500";
 import { type ACDFTupleExtended } from "@wildboar/x500";
 import {
@@ -57,11 +57,11 @@ import {
     PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
 } from "@wildboar/x500";
 import { getACDFTuplesFromACIItem } from "@wildboar/x500";
-import getIsGroupMember from "../authz/getIsGroupMember";
+import getIsGroupMember from "../authz/getIsGroupMember.js";
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/InformationFramework";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import {
     id_opcode_compare,
 } from "@wildboar/x500/CommonProtocolSpecification";
@@ -71,39 +71,39 @@ import {
 import {
     serviceError,
 } from "@wildboar/x500/DirectoryAbstractService";
-import type { OperationDispatcherState } from "./OperationDispatcher";
+import type { OperationDispatcherState } from "./OperationDispatcher.js";
 import { DER } from "@wildboar/asn1/functional";
 import { codeToString } from "@wildboar/x500";
-import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
-import getStatisticsFromAttributeValueAssertion from "../telemetry/getStatisticsFromAttributeValueAssertion";
-import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
-import failover from "../utils/failover";
+import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments.js";
+import getStatisticsFromAttributeValueAssertion from "../telemetry/getStatisticsFromAttributeValueAssertion.js";
+import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter.js";
+import failover from "../utils/failover.js";
 import {
     AbandonedData,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     abandoned,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getACIItems from "../authz/getACIItems";
-import getAttributeSubtypes from "../x500/getAttributeSubtypes";
+import getACIItems from "../authz/getACIItems.js";
+import getAttributeSubtypes from "../x500/getAttributeSubtypes.js";
 import {
     ServiceControlOptions_noSubtypeMatch,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import {
     FamilyGrouping_entryOnly,
     FamilyGrouping_compoundEntry,
     FamilyGrouping_strands,
 } from "@wildboar/x500/DirectoryAbstractService";
-import readFamily from "../database/family/readFamily";
-import readEntryOnly from "../database/family/readEntryOnly";
-import readCompoundEntry from "../database/family/readCompoundEntry";
-import readStrands from "../database/family/readStrands";
-import bacSettings from "../authz/bacSettings";
+import readFamily from "../database/family/readFamily.js";
+import readEntryOnly from "../database/family/readEntryOnly.js";
+import readCompoundEntry from "../database/family/readCompoundEntry.js";
+import readStrands from "../database/family/readStrands.js";
+import bacSettings from "../authz/bacSettings.js";
 import {
     NameAndOptionalUID,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import preprocessTuples from "../authz/preprocessTuples";
+import preprocessTuples from "../authz/preprocessTuples.js";
 import {
     AttributeErrorData,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -113,25 +113,25 @@ import {
 import {
     AttributeProblem_noSuchAttributeOrValue,
 } from "@wildboar/x500/DirectoryAbstractService";
-import isOperationalAttributeType from "../x500/isOperationalAttributeType";
+import isOperationalAttributeType from "../x500/isOperationalAttributeType.js";
 import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { generateSignature } from "../pki/generateSignature";
+import { generateSignature } from "../pki/generateSignature.js";
 import { SIGNED } from "@wildboar/x500/AuthenticationFramework";
-import { stringifyDN } from "../x500/stringifyDN";
+import { stringifyDN } from "../x500/stringifyDN.js";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import { printInvokeId } from "../utils/printInvokeId";
-import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
+import { printInvokeId } from "../utils/printInvokeId.js";
+import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants.js";
 import { userPwd } from "@wildboar/x500/PasswordPolicy";
 import { userPassword } from "@wildboar/x500/AuthenticationFramework";
 import { EqualityMatcher } from "@wildboar/x500";
-import attemptPassword from "../authn/attemptPassword";
+import attemptPassword from "../authn/attemptPassword.js";
 import { SimpleCredentials_password } from "@wildboar/x500/DirectoryAbstractService";
 import {
     PwdResponseValue_error_passwordExpired,
@@ -146,7 +146,7 @@ import {
 import {
     SimpleCredentials,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { acdf } from "../authz/acdf";
+import { acdf } from "../authz/acdf.js";
 
 /**
  * @summary The compare operation, as specified in ITU Recommendation X.511.

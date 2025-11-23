@@ -1,7 +1,7 @@
 import type { Entry as DatabaseEntry } from "@prisma/client";
 import { ObjectIdentifier, BERElement, ASN1Construction } from "@wildboar/asn1";
 import type { Context, DSE } from "@wildboar/meerkat-types";
-import rdnFromJson from "../x500/rdnFromJson";
+import rdnFromJson from "../x500/rdnFromJson.js";
 import {
     _decode_AccessPoint,
 } from "@wildboar/x500/DistributedOperations";
@@ -17,21 +17,21 @@ import {
 import {
     _decode_MasterOrShadowAccessPoint,
 } from "@wildboar/x500/DistributedOperations";
-import attributesFromValues from "../x500/attributesFromValues";
-import attributeFromDatabaseAttribute from "./attributeFromDatabaseAttribute";
+import attributesFromValues from "../x500/attributesFromValues.js";
+import attributeFromDatabaseAttribute from "./attributeFromDatabaseAttribute.js";
 import { Knowledge } from "@prisma/client";
 import {
     _decode_DitBridgeKnowledge,
 } from "@wildboar/x500/DistributedOperations";
-import getRDNFromEntryId from "./getRDNFromEntryId";
+import getRDNFromEntryId from "./getRDNFromEntryId.js";
 import { alias } from "@wildboar/x500/InformationFramework";
 import { parent } from "@wildboar/x500/InformationFramework";
 import { child } from "@wildboar/x500/InformationFramework";
-import readDITContentRuleDescriptions from "./readers/readDITContentRuleDescriptions";
-import readDITContextUseDescriptions from "./readers/readDITContextUseDescriptions";
-import readDITStructureRuleDescriptions from "./readers/readDITStructureRuleDescriptions";
-import readFriendsDescriptions from "./readers/readFriendsDescriptions";
-import readMatchingRuleUseDescriptions from "./readers/readMatchingRuleUseDescriptions";
+import readDITContentRuleDescriptions from "./readers/readDITContentRuleDescriptions.js";
+import readDITContextUseDescriptions from "./readers/readDITContextUseDescriptions.js";
+import readDITStructureRuleDescriptions from "./readers/readDITStructureRuleDescriptions.js";
+import readFriendsDescriptions from "./readers/readFriendsDescriptions.js";
+import readMatchingRuleUseDescriptions from "./readers/readMatchingRuleUseDescriptions.js";
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/InformationFramework";
@@ -47,7 +47,7 @@ import {
 import _ from "lodash";
 import { administrativeRole, pwdAttribute } from "@wildboar/x500/InformationFramework";
 import { accessControlScheme } from "@wildboar/x500/BasicAccessControl";
-import { attributeValueFromDB } from "./attributeValueFromDB";
+import { attributeValueFromDB } from "./attributeValueFromDB.js";
 
 
 const ALIAS: string = alias["&id"].toString();

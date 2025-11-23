@@ -17,11 +17,11 @@ import {
 import { DER } from "@wildboar/asn1/functional";
 import { Prisma, Knowledge } from "@prisma/client";
 import { randomInt } from "crypto";
-import rdnToJson from "../../x500/rdnToJson";
-import rdnFromJson from "../../x500/rdnFromJson";
+import rdnToJson from "../../x500/rdnToJson.js";
+import rdnFromJson from "../../x500/rdnFromJson.js";
 import { compareRDNSequence } from "@wildboar/x500";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
-import saveAccessPoint from "../saveAccessPoint";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
+import saveAccessPoint from "../saveAccessPoint.js";
 
 const MAX_RANDOM_INT: number = (2 ** 48) - 1; // -1 just to be safe.
 

@@ -1,4 +1,4 @@
-import { getNamesFromFamilyEntry, filterFamilyEntries } from "./hierarchySelection";
+import { getNamesFromFamilyEntry, filterFamilyEntries } from "./hierarchySelection.js";
 import { FamilyEntry } from "@wildboar/x500/DirectoryAbstractService";
 import { FamilyEntries } from "@wildboar/x500/DirectoryAbstractService";
 import {
@@ -10,7 +10,7 @@ import {
 import { commonName } from "@wildboar/x500/src/lib/collections/attributes";
 import { DER } from "@wildboar/asn1/functional";
 import { organization } from "@wildboar/x500/src/lib/collections/objectClasses";
-import { getMockCtx } from "../testing.spec";
+import { getMockCtx } from "../testing.spec.js";
 import { IndexableDN } from "@wildboar/meerkat-types";
 import { strict as assert } from "node:assert";
 

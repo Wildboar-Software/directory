@@ -15,7 +15,7 @@ import {
 import type {
     GeneralName,
 } from "@wildboar/x500/CertificateExtensions";
-import { generateSignature } from "./generateSignature";
+import { generateSignature } from "./generateSignature.js";
 import {
     _encode_OCSPResponse,
 } from "@wildboar/ocsp";

@@ -18,8 +18,8 @@ import {
     AuthenticationLevel_basicLevels_level_none,
     AuthenticationLevel_basicLevels_level_simple,
 } from "@wildboar/x500/BasicAccessControl";
-import attemptPassword from "../authn/attemptPassword";
-import getDistinguishedName from "../x500/getDistinguishedName";
+import attemptPassword from "../authn/attemptPassword.js";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
 import {
     SecurityProblem_unsupportedAuthenticationMethod,
     SecurityProblem_inappropriateAuthentication,
@@ -28,14 +28,14 @@ import {
 import {
     DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as DirectoryBindErrorData,
 } from "@wildboar/x500/DirectoryAbstractService";
-import versions from "../versions";
-import dnToVertex from "../dit/dnToVertex";
-import { attemptStrongAuth } from "../authn/attemptStrongAuth";
+import versions from "../versions.js";
+import dnToVertex from "../dit/dnToVertex.js";
+import { attemptStrongAuth } from "../authn/attemptStrongAuth.js";
 import {
     PwdResponseValue_error_passwordExpired,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { read_unique_id, read_clearance } from "../database/utils";
-import { OperationDispatcher } from "../distributed/OperationDispatcher";
+import { read_unique_id, read_clearance } from "../database/utils.js";
+import { OperationDispatcher } from "../distributed/OperationDispatcher.js";
 import type {
     CompareArgument,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -62,13 +62,13 @@ import {
     PwdResponseValue,
     _decode_PwdResponseValue,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { verifySIGNED } from "../pki/verifySIGNED";
+import { verifySIGNED } from "../pki/verifySIGNED.js";
 import {
     _encode_Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1,
 } from "@wildboar/x500/DistributedOperations";
 import { strict as assert } from "assert";
-import { attemptSPKMAuth } from "../authn/attemptSPKMAuth";
-import attemptExternalAuth from "../authn/attemptExternalAuth";
+import { attemptSPKMAuth } from "../authn/attemptSPKMAuth.js";
+import attemptExternalAuth from "../authn/attemptExternalAuth.js";
 
 const invalidCredentialsData = new DirectoryBindErrorData(
     versions,

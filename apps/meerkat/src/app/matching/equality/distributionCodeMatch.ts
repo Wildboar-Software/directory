@@ -1,7 +1,7 @@
 import { ASN1Element } from "@wildboar/asn1";
 import type { EqualityMatcher } from "@wildboar/x500";
 import { _decode_DistributionCode } from "@wildboar/x400/IPMSHeadingExtensions";
-import { univOrBmpToString } from "./orAddressUtilities";
+import { univOrBmpToString } from "./orAddressUtilities.js";
 
 // DistributionCode ::= SEQUENCE {
 //     oid-code           OBJECT IDENTIFIER OPTIONAL,

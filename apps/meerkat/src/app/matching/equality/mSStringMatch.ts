@@ -3,7 +3,7 @@ import { EqualityMatcher } from "@wildboar/x500";
 import {
     _decode_MSString,
 } from "@wildboar/x400/MSMatchingRules";
-import { msStringToString } from "./orAddressUtilities";
+import { msStringToString } from "./orAddressUtilities.js";
 
 export
 const mSStringMatch: EqualityMatcher = (

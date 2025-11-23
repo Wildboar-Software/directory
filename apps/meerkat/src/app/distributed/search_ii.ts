@@ -25,18 +25,18 @@ import {
 import {
     AbandonedData,
 } from "@wildboar/x500/DirectoryAbstractService";
-import readSubordinates from "../dit/readSubordinates";
+import readSubordinates from "../dit/readSubordinates.js";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
-import checkSuitabilityProcedure from "./checkSuitability";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import checkSuitabilityProcedure from "./checkSuitability.js";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import {
     abandoned,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     search,
 } from "@wildboar/x500/DirectoryAbstractService";
-import search_i_ex, { SearchState, update_search_state_with_search_rule } from "./search_i";
-import type { OperationDispatcherState } from "./OperationDispatcher";
+import search_i_ex, { SearchState, update_search_state_with_search_rule } from "./search_i.js";
+import type { OperationDispatcherState } from "./OperationDispatcher.js";
 import {
     ServiceErrorData,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -62,22 +62,22 @@ import {
 import {
     id_ar_autonomousArea,
 } from "@wildboar/x500/InformationFramework";
-import { stringifyDN } from "../x500/stringifyDN";
+import { stringifyDN } from "../x500/stringifyDN.js";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import { printInvokeId } from "../utils/printInvokeId";
+import { printInvokeId } from "../utils/printInvokeId.js";
 import {
     SecurityErrorData,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     securityError,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { getServiceAdminPoint } from "../dit/getServiceAdminPoint";
-import getEntryExistsFilter from "../database/entryExistsFilter";
+import { getServiceAdminPoint } from "../dit/getServiceAdminPoint.js";
+import getEntryExistsFilter from "../database/entryExistsFilter.js";
 import { searchRules } from "@wildboar/x500/InformationFramework";
-import { attributeValueFromDB } from "../database/attributeValueFromDB";
-import { MAX_RESULTS } from "../constants";
+import { attributeValueFromDB } from "../database/attributeValueFromDB.js";
+import { MAX_RESULTS } from "../constants.js";
 
 const BYTES_IN_A_UUID: number = 16;
 

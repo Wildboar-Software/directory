@@ -3,8 +3,8 @@ import type {
     Vertex,
     Value,
 } from "@wildboar/meerkat-types";
-import readCollectiveAttributes from "./readCollectiveAttributes";
-import valuesFromAttribute from "../../x500/valuesFromAttribute";
+import readCollectiveAttributes from "./readCollectiveAttributes.js";
+import valuesFromAttribute from "../../x500/valuesFromAttribute.js";
 
 /**
  * @summary Read the collective values of an entry

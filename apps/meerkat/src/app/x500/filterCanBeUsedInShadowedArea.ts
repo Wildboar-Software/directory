@@ -16,8 +16,8 @@ import {
 } from "@wildboar/x500/InformationFramework";
 import { Context, IndexableOID } from "@wildboar/meerkat-types";
 import { ClassAttributeSelection } from "@wildboar/x500/DirectoryShadowAbstractService";
-import getAncestorObjectClasses from "./getAncestorObjectClasses";
-import { ALL_USER_ATTRIBUTES_KEY } from "../constants";
+import getAncestorObjectClasses from "./getAncestorObjectClasses.js";
+import { ALL_USER_ATTRIBUTES_KEY } from "../constants.js";
 
 /**
  * @summary Determine whether an attribute type may be used in a shadowed area

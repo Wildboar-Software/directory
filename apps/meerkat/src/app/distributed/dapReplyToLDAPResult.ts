@@ -38,15 +38,15 @@ import {
     extensions,
 } from "@wildboar/ldap";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
-import getDistinguishedName from "../x500/getDistinguishedName";
-import encodeLDAPDN from "../ldap/encodeLDAPDN";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
+import encodeLDAPDN from "../ldap/encodeLDAPDN.js";
 import type {
     SearchResult,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getPartialAttributesFromEntryInformation from "../ldap/getPartialAttributesFromEntryInformation";
+import getPartialAttributesFromEntryInformation from "../ldap/getPartialAttributesFromEntryInformation.js";
 import { decodeLDAPOID } from "@wildboar/ldap";
 import { strict as assert } from "assert";
-import LDAPAssociation from "../ldap/LDAPConnection";
+import LDAPAssociation from "../ldap/LDAPConnection.js";
 
 const {
     postread: postreadOID,

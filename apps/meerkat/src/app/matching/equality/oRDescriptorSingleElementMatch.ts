@@ -4,8 +4,8 @@ import { EqualityMatcher, teletexToString } from "@wildboar/x500";
 import { _decode_MSString } from "@wildboar/x400/MSMatchingRules";
 import { _encode_ORName } from "@wildboar/x400/MTSAbstractService";
 import { _decode_ORDescriptor } from "@wildboar/x400/IPMSInformationObjects";
-import { msStringToString } from "./orAddressUtilities";
-import { oRNameSingleElementMatch } from "./oRNameSingleElementMatch";
+import { msStringToString } from "./orAddressUtilities.js";
+import { oRNameSingleElementMatch } from "./oRNameSingleElementMatch.js";
 
 // ORDescriptor ::= SET {
 //     formal-name       ORName OPTIONAL,

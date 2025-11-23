@@ -10,12 +10,12 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
-import NOOP from "./NOOP";
+import NOOP from "./NOOP.js";
 import { DER } from "@wildboar/asn1/functional";
 import {
     numSubordinates,
 } from "@wildboar/parity-schema/src/lib/modules/DS389CoreSchema/numSubordinates.oa.js";
-import { getEntryExistsFilter } from "../entryExistsFilter";
+import { getEntryExistsFilter } from "../entryExistsFilter.js";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (

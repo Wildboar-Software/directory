@@ -4,7 +4,7 @@ import { EqualityMatcher, teletexToString } from "@wildboar/x500";
 import { _encode_ORName } from "@wildboar/x400/MTSAbstractService";
 import { _decode_ORDescriptor } from "@wildboar/x400/IPMSInformationObjects";
 import { Context } from "@wildboar/meerkat-types";
-import getORNameSubstringElementsMatch from "./oRNameSubstringElementsMatch";
+import getORNameSubstringElementsMatch from "./oRNameSubstringElementsMatch.js";
 // ORDescriptor ::= SET {
 //     formal-name       ORName OPTIONAL,
 //     free-form-name    [0]  FreeFormName OPTIONAL,

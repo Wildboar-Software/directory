@@ -22,24 +22,24 @@ import {
     SecurityProblem_invalidSignature,
     SecurityProblem_invalidCredentials,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { printInvokeId } from "../utils/printInvokeId";
-import { verifyAnyCertPath } from "./verifyAnyCertPath";
-import { verifySignature, VCP_RETURN_OK } from "./verifyCertPath";
+import { printInvokeId } from "../utils/printInvokeId.js";
+import { verifyAnyCertPath } from "./verifyAnyCertPath.js";
+import { verifySignature, VCP_RETURN_OK } from "./verifyCertPath.js";
 import type {
     SIGNED,
 } from "@wildboar/x500/AuthenticationFramework";
 import {
     SecurityErrorData,
 } from "@wildboar/x500/DirectoryAbstractService";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import { securityError } from "@wildboar/x500/DirectoryAbstractService";
 import { RDNSequence } from "@wildboar/pki-stub";
-import { INTERNAL_ASSOCIATON_ID } from "../constants";
+import { INTERNAL_ASSOCIATON_ID } from "../constants.js";
 import {
     KeyUsage_digitalSignature,
 } from "@wildboar/x500/CertificateExtensions";
-import { id_anyExtendedKeyUsage, id_kp_clientAuth } from "../constants";
-import { stringifyDN } from "../x500/stringifyDN";
+import { id_anyExtendedKeyUsage, id_kp_clientAuth } from "../constants.js";
+import { stringifyDN } from "../x500/stringifyDN.js";
 
 /**
  * @summary Verify something that is cryptographically signed with X.509 SIGNED{}

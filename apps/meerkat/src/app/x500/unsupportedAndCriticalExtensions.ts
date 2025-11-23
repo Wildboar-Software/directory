@@ -31,7 +31,7 @@ import {
     EXT_BIT_PAGED_RESULTS_ON_THE_DSP,
     EXT_BIT_REPLACE_VALUES,
 } from "@wildboar/x500";
-import criticalExtensionsSupportedByThisDSA from "./criticalExtensionsSupportedByThisDSA";
+import criticalExtensionsSupportedByThisDSA from "./criticalExtensionsSupportedByThisDSA.js";
 
 export
 const unsupportedAndCriticalExtensions: BIT_STRING = new Uint8ClampedArray(36);

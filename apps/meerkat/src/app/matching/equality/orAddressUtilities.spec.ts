@@ -1,4 +1,4 @@
-import { recursivelyNormalize } from "./orAddressUtilities";
+import { recursivelyNormalize } from "./orAddressUtilities.js";
 
 describe("recursivelyNormalize()", () => {
     test("#1", () => {

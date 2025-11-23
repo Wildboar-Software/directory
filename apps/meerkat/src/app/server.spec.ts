@@ -1,5 +1,5 @@
 import { create_itot_stack } from "@wildboar/osi-net";
-import { rose_transport_from_itot_stack } from "./rose/itot";
+import { rose_transport_from_itot_stack } from "./rose/itot.js";
 import {
     id_ac_directoryAccessAC,
 } from "@wildboar/x500/DirectoryOSIProtocols";

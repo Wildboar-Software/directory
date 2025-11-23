@@ -1,7 +1,7 @@
 import type { Vertex, ClientAssociation } from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx.js";
 import { BOOLEAN, TRUE } from "@wildboar/asn1";
-import isPrefix from "../x500/isPrefix";
+import isPrefix from "../x500/isPrefix.js";
 import {
     SearchArgument,
     SearchResultData,
@@ -17,10 +17,10 @@ import { getOptionallyProtectedValue } from "@wildboar/x500";
 import {
     ChainingArguments,
 } from "@wildboar/x500/DistributedOperations";
-import OperationDispatcher from "./OperationDispatcher";
+import OperationDispatcher from "./OperationDispatcher.js";
 import type {
     SearchState,
-} from "./search_i";
+} from "./search_i.js";
 import type { InvokeId } from "@wildboar/x500/CommonProtocolSpecification";
 import { strict as assert } from "assert";
 import { referral } from "@wildboar/x500/DirectoryAbstractService";

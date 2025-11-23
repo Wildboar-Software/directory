@@ -10,13 +10,13 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
-import NOOP from "./NOOP";
+import NOOP from "./NOOP.js";
 import { ObjectIdentifier } from "@wildboar/asn1";
 import { DER, _encodeUTF8String } from "@wildboar/asn1/functional";
 import {
     subschemaSubentryList,
 } from "@wildboar/x500/InformationFramework";
-import getDistinguishedName from "../../x500/getDistinguishedName";
+import getDistinguishedName from "../../x500/getDistinguishedName.js";
 import {
     id_soc_subschema,
 } from "@wildboar/x500/SchemaAdministration";
@@ -25,7 +25,7 @@ import {
     _encode_DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
 import { compareDistinguishedName } from "@wildboar/x500";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/InformationFramework";

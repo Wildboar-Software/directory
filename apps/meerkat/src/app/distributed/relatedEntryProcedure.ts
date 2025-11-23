@@ -14,7 +14,7 @@ import {
     ContinuationReference,
 } from "@wildboar/x500/DistributedOperations";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
-import OperationDispatcher from "./OperationDispatcher";
+import OperationDispatcher from "./OperationDispatcher.js";
 import {
     ServiceProblem_busy,
     ServiceProblem_unavailable,
@@ -35,15 +35,15 @@ import {
 import {
     ServiceErrorData,
 } from "@wildboar/x500/DirectoryAbstractService";
-import createSecurityParameters from "../x500/createSecurityParameters";
-import type { OperationDispatcherState } from "./OperationDispatcher";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
+import type { OperationDispatcherState } from "./OperationDispatcher.js";
 import {
     AbandonedData,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     abandoned,
 } from "@wildboar/x500/DirectoryAbstractService";
-import type { SearchState } from "./search_i";
+import type { SearchState } from "./search_i.js";
 import {
     PartialOutcomeQualifier,
 } from "@wildboar/x500/DirectoryAbstractService";

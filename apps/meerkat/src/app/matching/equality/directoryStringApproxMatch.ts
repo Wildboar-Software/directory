@@ -4,7 +4,7 @@ import {
     _decode_UnboundedDirectoryString,
 } from "@wildboar/x500/SelectedAttributeTypes";
 import { directoryStringToString } from "@wildboar/x500";
-import { metaphone } from "../metaphone";
+import { metaphone } from "../metaphone.js";
 
 export
 const matcher: EqualityMatcher = (

@@ -16,10 +16,10 @@ import { DER } from "@wildboar/asn1/functional";
 import {
     supplierKnowledge,
 } from "@wildboar/x500/DSAOperationalAttributeTypes";
-import rdnToJson from "../../x500/rdnToJson";
-import saveAccessPoint from "../saveAccessPoint";
+import rdnToJson from "../../x500/rdnToJson.js";
+import saveAccessPoint from "../saveAccessPoint.js";
 import { compareRDNSequence } from "@wildboar/x500";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (

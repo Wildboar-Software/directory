@@ -13,7 +13,7 @@ import {
     LimitProblem_sizeLimitExceeded,
     LimitProblem_timeLimitExceeded,
 } from "@wildboar/x500/DirectoryAbstractService";
-import decodeLDAPDN from "../ldap/decodeLDAPDN";
+import decodeLDAPDN from "../ldap/decodeLDAPDN.js";
 import type {
     AddEntryResult,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -61,12 +61,12 @@ import type { AddResponse } from "@wildboar/ldap";
 import type { DelResponse } from "@wildboar/ldap";
 import type { ModifyDNResponse } from "@wildboar/ldap";
 import type { CompareResponse } from "@wildboar/ldap";
-import ldapResultToDAPError from "./ldapResultToDAPError";
+import ldapResultToDAPError from "./ldapResultToDAPError.js";
 import {
     PartialOutcomeQualifier,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getEntryInfoFromSearchResultEntry from "../ldap/getEntryInfoFromSearchResultEntry";
-import ldapReferenceToContinuationReference from "../ldap/ldapReferenceToContinuationReference";
+import getEntryInfoFromSearchResultEntry from "../ldap/getEntryInfoFromSearchResultEntry.js";
+import ldapReferenceToContinuationReference from "../ldap/ldapReferenceToContinuationReference.js";
 import { getRDN } from "@wildboar/x500";
 
 function ldapResultCodeToLimitProblem (code: LDAPResult_resultCode): LimitProblem | undefined {

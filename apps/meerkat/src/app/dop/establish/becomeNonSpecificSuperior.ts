@@ -3,7 +3,7 @@ import type { MeerkatContext } from "../../ctx.js";
 import {
     SuperiorToSubordinate,
 } from "@wildboar/x500/HierarchicalOperationalBindings";
-import dnToVertex from "../../dit/dnToVertex";
+import dnToVertex from "../../dit/dnToVertex.js";
 import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
 import * as errors from "@wildboar/meerkat-types";
 import {
@@ -21,16 +21,16 @@ import {
 import {
     Attribute,
 } from "@wildboar/x500/InformationFramework";
-import getContextPrefixInfo from "../../hob/getContextPrefixInfo";
-import createSecurityParameters from "../../x500/createSecurityParameters";
+import getContextPrefixInfo from "../../hob/getContextPrefixInfo.js";
+import createSecurityParameters from "../../x500/createSecurityParameters.js";
 import {
     securityError,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     operationalBindingError,
 } from "@wildboar/x500/OperationalBindingManagement";
-import saveAccessPoint from "../../database/saveAccessPoint";
-import DOPAssociation from "../DOPConnection";
+import saveAccessPoint from "../../database/saveAccessPoint.js";
+import DOPAssociation from "../DOPConnection.js";
 import {
     ServiceProblem_unwillingToPerform,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -40,7 +40,7 @@ import {
 import {
     serviceError,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { getEntryAttributesToShareInOpBinding } from "../../dit/getEntryAttributesToShareInOpBinding";
+import { getEntryAttributesToShareInOpBinding } from "../../dit/getEntryAttributesToShareInOpBinding.js";
 import {
     NHOBSubordinateToSuperior,
 } from "@wildboar/x500/HierarchicalOperationalBindings";
@@ -52,7 +52,7 @@ import {
 } from "@wildboar/x500/HierarchicalOperationalBindings";
 import { randomInt } from "crypto";
 import { id_op_binding_shadow } from "@wildboar/x500/DirectoryOperationalBindingTypes";
-import { updateShadowConsumer } from "../../disp/createShadowUpdate";
+import { updateShadowConsumer } from "../../disp/createShadowUpdate.js";
 
 /**
  * @summary Create a new nssr reference, thereby becoming a superior DSA in an NHOB

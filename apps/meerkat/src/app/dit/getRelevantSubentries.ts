@@ -1,13 +1,13 @@
 import type { Context, Vertex } from "@wildboar/meerkat-types";
 import { dnWithinSubtreeSpecification } from "@wildboar/x500";
-import getDistinguishedName from "../x500/getDistinguishedName";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
 import { OBJECT_IDENTIFIER, ObjectIdentifier } from "@wildboar/asn1";
 import type { DistinguishedName } from "@wildboar/x500/InformationFramework";
-import readSubordinates from "./readSubordinates";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import readSubordinates from "./readSubordinates.js";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { subtreeSpecification } from "@wildboar/x500/InformationFramework";
 import { _decode_SubtreeSpecification } from "@wildboar/x500/InformationFramework";
-import { attributeValueFromDB } from "../database/attributeValueFromDB";
+import { attributeValueFromDB } from "../database/attributeValueFromDB.js";
 import type { Prisma } from "@prisma/client";
 
 /**

@@ -1,7 +1,7 @@
 import type { Context } from "@wildboar/meerkat-types";
 import type { ASN1Element } from "@wildboar/asn1";
 import { DER, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
-import ldapSyntaxFromInformationObject from "./ldapSyntaxFromInformationObject";
+import ldapSyntaxFromInformationObject from "./ldapSyntaxFromInformationObject.js";
 import { attributeTypeDescription } from "@wildboar/x500/SelectedAttributeTypes";
 import { bitString } from "@wildboar/x500/SelectedAttributeTypes";
 import { boolean_ } from "@wildboar/x500/SelectedAttributeTypes";
@@ -48,15 +48,15 @@ import { jidString } from "@wildboar/x500/SelectedAttributeTypes";
 import { syntaxDecoders as decoders } from "@wildboar/ldap";
 import { syntaxEncoders as encoders } from "@wildboar/ldap";
 import { normalizeAttributeDescription } from "@wildboar/ldap";
-import decodeLDAPDN from "../ldap/decodeLDAPDN";
-import encodeLDAPDN from "../ldap/encodeLDAPDN";
+import decodeLDAPDN from "../ldap/decodeLDAPDN.js";
+import encodeLDAPDN from "../ldap/encodeLDAPDN.js";
 import {
     DistinguishedName,
     _decode_DistinguishedName,
     _encode_DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import * as localEncoders from "../ldap/syntaxEncoders";
-import * as localDecoders from "../ldap/syntaxDecoders";
+import * as localEncoders from "../ldap/syntaxEncoders.js";
+import * as localDecoders from "../ldap/syntaxDecoders.js";
 
 // IANA LDAP Syntaxes
 import {

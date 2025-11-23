@@ -2,7 +2,7 @@ import type { Context } from "@wildboar/meerkat-types";
 import type {
     GeneralName,
 } from "@wildboar/x500/CertificateExtensions";
-import { stringifyDN } from "./stringifyDN";
+import { stringifyDN } from "./stringifyDN.js";
 import { directoryStringToString } from "@wildboar/x500";
 
 /**

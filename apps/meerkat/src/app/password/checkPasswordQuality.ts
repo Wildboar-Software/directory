@@ -8,8 +8,8 @@ import { BERElement, BIT_STRING, ObjectIdentifier, TRUE_BIT } from "@wildboar/as
 import {
     _decode_UserPwd,
 } from "@wildboar/x500/PasswordPolicy";
-import encryptPassword from "../authn/encryptPassword";
-import getScryptAlgorithmIdentifier from "../x500/getScryptAlgorithmIdentifier";
+import encryptPassword from "../authn/encryptPassword.js";
+import getScryptAlgorithmIdentifier from "../x500/getScryptAlgorithmIdentifier.js";
 import { strict as assert } from "node:assert";
 import { subSeconds, addSeconds } from "date-fns";
 import { compareAlgorithmIdentifier } from "@wildboar/x500";
@@ -25,8 +25,8 @@ import {
 import {
     pwdMaxLength,
 } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdMaxLength.oa.js";
-import { groupByOID } from "../utils/groupByOID";
-import { attributeValueFromDB } from "../database/attributeValueFromDB";
+import { groupByOID } from "../utils/groupByOID.js";
+import { attributeValueFromDB } from "../database/attributeValueFromDB.js";
 
 export const CHECK_PWD_QUALITY_OK: number = 0;
 export const CHECK_PWD_QUALITY_LENGTH: number = -1;

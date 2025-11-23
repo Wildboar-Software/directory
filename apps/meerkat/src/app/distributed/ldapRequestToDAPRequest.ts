@@ -43,7 +43,7 @@ import { modifyDN } from "@wildboar/x500/DirectoryAbstractService";
 import { modifyEntry } from "@wildboar/x500/DirectoryAbstractService";
 import { removeEntry } from "@wildboar/x500/DirectoryAbstractService";
 import { search } from "@wildboar/x500/DirectoryAbstractService";
-import decodeLDAPDN from "../ldap/decodeLDAPDN";
+import decodeLDAPDN from "../ldap/decodeLDAPDN.js";
 import { type LDAPSyntaxDecoder } from "@wildboar/ldap";
 import type {
     AttributeType,
@@ -51,7 +51,7 @@ import type {
 import {
     AttributeErrorData,
 } from "@wildboar/x500/DirectoryAbstractService";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import {
     id_errcode_attributeError,
 } from "@wildboar/x500/CommonProtocolSpecification";
@@ -148,7 +148,7 @@ import type {
 import {
     PagedResultsRequest_newRequest,
 } from "@wildboar/x500/DirectoryAbstractService";
-import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
+import generateUnusedInvokeID from "../net/generateUnusedInvokeID.js";
 import { ContextAssertion } from "@wildboar/x500/InformationFramework";
 import {
     TypeAndContextAssertion,
@@ -171,12 +171,12 @@ import {
 import {
     serviceError,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getAttributeParentTypes from "../x500/getAttributeParentTypes";
-import getLDAPDecoder from "../ldap/getLDAPDecoder";
+import getAttributeParentTypes from "../x500/getAttributeParentTypes.js";
+import getLDAPDecoder from "../ldap/getLDAPDecoder.js";
 import {
     entryTtl,
 } from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa.js";
-import { getLDAPSyntax } from "../x500/getLDAPSyntax";
+import { getLDAPSyntax } from "../x500/getLDAPSyntax.js";
 
 const {
     modifyPassword,

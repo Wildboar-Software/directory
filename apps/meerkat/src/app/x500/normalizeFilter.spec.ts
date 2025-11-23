@@ -1,5 +1,5 @@
 // import type { Filter } from "@wildboar/x500/DirectoryAbstractService";
-// import normalizeFilter from "./normalizeFilter";
+// import normalizeFilter from "./normalizeFilter.js";
 
 describe("normalizeFilter()", () => {
 

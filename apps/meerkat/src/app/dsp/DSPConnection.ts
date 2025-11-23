@@ -10,7 +10,7 @@ import * as errors from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx.js";
 import { ASN1Element } from "@wildboar/asn1";
 import { DER } from "@wildboar/asn1/functional";
-import versions from "../versions";
+import versions from "../versions.js";
 import {
     DSABindArgument,
     _decode_DSABindArgument,
@@ -18,7 +18,7 @@ import {
 import {
     _encode_DSABindResult,
 } from "@wildboar/x500/DistributedOperations";
-import OperationDispatcher from "../distributed/OperationDispatcher";
+import OperationDispatcher from "../distributed/OperationDispatcher.js";
 import { dsp_ip } from "@wildboar/x500/DirectoryIDMProtocols";
 import {
     _encode_Code,
@@ -32,32 +32,32 @@ import { _encode_ReferralData } from "@wildboar/x500/DirectoryAbstractService";
 import { _encode_SecurityErrorData } from "@wildboar/x500/DirectoryAbstractService";
 import { ServiceErrorData, ServiceProblem_unavailable, _encode_ServiceErrorData } from "@wildboar/x500/DirectoryAbstractService";
 import { _encode_UpdateErrorData } from "@wildboar/x500/DirectoryAbstractService";
-import { bind as doBind } from "../authn/dsaBind";
+import { bind as doBind } from "../authn/dsaBind.js";
 import {
     directoryBindError,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     AuthenticationLevel_basicLevels_level_none,
 } from "@wildboar/x500/BasicAccessControl";
-import getServerStatistics from "../telemetry/getServerStatistics";
-import getConnectionStatistics from "../telemetry/getConnectionStatistics";
+import getServerStatistics from "../telemetry/getServerStatistics.js";
+import getConnectionStatistics from "../telemetry/getConnectionStatistics.js";
 import { codeToString } from "@wildboar/x500";
-import getContinuationReferenceStatistics from "../telemetry/getContinuationReferenceStatistics";
+import getContinuationReferenceStatistics from "../telemetry/getContinuationReferenceStatistics.js";
 import { chainedRead } from "@wildboar/x500/DistributedOperations";
 import { EventEmitter } from "node:events";
 import { differenceInMilliseconds } from "date-fns";
 import * as crypto from "crypto";
-import sleep from "../utils/sleep";
+import sleep from "../utils/sleep.js";
 import isDebugging from "is-debugging";
 import { strict as assert } from "assert";
-import { flatten } from "flat";
+import flat from "flat";
 import { naddrToURI } from "@wildboar/x500";
-import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics";
-import { printInvokeId } from "../utils/printInvokeId";
+import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics.js";
+import { printInvokeId } from "../utils/printInvokeId.js";
 import {
     getStatisticsFromSecurityParameters,
-} from "../telemetry/getStatisticsFromSecurityParameters";
-import { signDirectoryError } from "../pki/signDirectoryError";
+} from "../telemetry/getStatisticsFromSecurityParameters.js";
+import { signDirectoryError } from "../pki/signDirectoryError.js";
 import {
     abandoned,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -87,8 +87,8 @@ import {
     Versions_v2,
     _encode_DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as _encode_DBE_Param,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { stringifyDN } from "../x500/stringifyDN";
-import printCode from "../utils/printCode";
+import { stringifyDN } from "../x500/stringifyDN.js";
+import printCode from "../utils/printCode.js";
 import {
     ROSETransport,
     RejectReason,
@@ -102,6 +102,8 @@ import {
 import {
     changePassword,
 } from "@wildboar/x500/DirectoryAbstractService";
+
+const flatten = flat.flatten;
 
 /**
  * @summary The handles a request, but not errors

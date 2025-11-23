@@ -120,7 +120,7 @@ import {
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import encodeLDAPDN from "../ldap/encodeLDAPDN";
+import encodeLDAPDN from "../ldap/encodeLDAPDN.js";
 import type {
     AccessPointInformation,
 } from "@wildboar/x500/DistributedOperations";

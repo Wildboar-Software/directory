@@ -16,10 +16,10 @@ import {
     consumerKnowledge,
 } from "@wildboar/x500/DSAOperationalAttributeTypes";
 import { Knowledge } from "@prisma/client";
-import rdnToJson from "../../x500/rdnToJson";
+import rdnToJson from "../../x500/rdnToJson.js";
 import { compareDistinguishedName } from "@wildboar/x500";
-import saveAccessPoint from "../saveAccessPoint";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import saveAccessPoint from "../saveAccessPoint.js";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (

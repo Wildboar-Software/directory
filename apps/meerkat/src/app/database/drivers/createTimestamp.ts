@@ -11,7 +11,7 @@ import type {
     SpecialAttributeValueDetector,
     PendingUpdates,
 } from "@wildboar/meerkat-types";
-import NOOP from "./NOOP";
+import NOOP from "./NOOP.js";
 import { DER, _encodeGeneralizedTime } from "@wildboar/asn1/functional";
 import {
     createTimestamp,

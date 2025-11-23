@@ -4,7 +4,7 @@ import { stringifyRDNSequence as stringifyLDAPDN } from "@wildboar/ldap";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import { getLDAPSyntax } from "../x500/getLDAPSyntax";
+import { getLDAPSyntax } from "../x500/getLDAPSyntax.js";
 
 /**
  * @summary Convert a distinguished name to a string

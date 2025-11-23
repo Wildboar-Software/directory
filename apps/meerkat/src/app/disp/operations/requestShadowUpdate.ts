@@ -6,24 +6,24 @@ import {
 import {
     RequestShadowUpdateResult,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
-import DISPAssociation from "../DISPConnection";
+import DISPAssociation from "../DISPConnection.js";
 import { InvokeId } from "@wildboar/x500/CommonProtocolSpecification";
 import { Versions_v2 } from "@wildboar/x500/DirectoryAbstractService";
 import { BERElement, FALSE, TRUE_BIT } from "@wildboar/asn1";
-import { verifySIGNED } from "../../pki/verifySIGNED";
+import { verifySIGNED } from "../../pki/verifySIGNED.js";
 import {
     _encode_RequestShadowUpdateArgumentData,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { ShadowErrorData } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { ShadowProblem_invalidAgreementID, ShadowProblem_invalidSequencing, ShadowProblem_unsuitableTiming, ShadowProblem_unsupportedStrategy, ShadowProblem_unwillingToPerform } from "@wildboar/x500/DirectoryShadowAbstractService";
-import createSecurityParameters from "../../x500/createSecurityParameters";
+import createSecurityParameters from "../../x500/createSecurityParameters.js";
 import { id_errcode_shadowError } from "@wildboar/x500/CommonProtocolSpecification";
 import { _decode_AccessPoint } from "@wildboar/x500/DistributedOperations";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
 import { compareDistinguishedName, getOptionallyProtectedValue } from "@wildboar/x500";
-import stringifyDN from "../../x500/stringifyDN";
+import stringifyDN from "../../x500/stringifyDN.js";
 import { id_op_binding_shadow } from "@wildboar/x500/DirectoryOperationalBindingTypes";
-import { updateShadowConsumer } from "../createShadowUpdate";
+import { updateShadowConsumer } from "../createShadowUpdate.js";
 import { ShadowingAgreementInfo, _decode_ShadowingAgreementInfo } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { addSeconds } from "date-fns";
 import { UpdateWindow } from "@wildboar/x500/DirectoryShadowAbstractService";

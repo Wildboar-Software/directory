@@ -13,7 +13,7 @@ import {
 import {
     isMemberOf,
 } from "@wildboar/parity-schema/src/lib/modules/OpenDJCoreSchema/isMemberOf.oa.js";
-import { readAttributes } from "../database/entry/readAttributes";
+import { readAttributes } from "../database/entry/readAttributes.js";
 import {
     EntryInformationSelection,
 } from "@wildboar/x500/DirectoryAbstractService";

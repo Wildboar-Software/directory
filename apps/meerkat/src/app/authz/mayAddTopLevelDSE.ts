@@ -2,7 +2,7 @@ import type { Context, ClientAssociation } from "@wildboar/meerkat-types";
 import {
     AuthenticationLevel_basicLevels_level_none,
 } from "@wildboar/x500/BasicAccessControl";
-import anyPasswordsExist from "./anyPasswordsExist";
+import anyPasswordsExist from "./anyPasswordsExist.js";
 
 /**
  * @summary Whether a bound client may add a top-level DSE.

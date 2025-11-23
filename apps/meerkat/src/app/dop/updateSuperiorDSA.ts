@@ -2,9 +2,9 @@ import { Vertex, ServiceError, UpdateError } from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx.js";
 import { BERElement, packBits } from "@wildboar/asn1";
 import { DER } from "@wildboar/asn1/functional";
-import { bindForOBM } from "../net/bindToOtherDSA";
-import dnToVertex from "../dit/dnToVertex";
-import getRelevantOperationalBindings from "./getRelevantOperationalBindings";
+import { bindForOBM } from "../net/bindToOtherDSA.js";
+import dnToVertex from "../dit/dnToVertex.js";
+import getRelevantOperationalBindings from "./getRelevantOperationalBindings.js";
 import {
     HierarchicalAgreement,
     _decode_HierarchicalAgreement,
@@ -20,7 +20,7 @@ import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
 import { compareDistinguishedName } from "@wildboar/x500";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { addMilliseconds, differenceInMilliseconds } from "date-fns";
 import {
     modifyOperationalBinding,
@@ -41,12 +41,12 @@ import {
 import {
     Attribute,
 } from "@wildboar/x500/InformationFramework";
-import readSubordinates from "../dit/readSubordinates";
-import getAttributesFromSubentry from "../dit/getAttributesFromSubentry";
+import readSubordinates from "../dit/readSubordinates.js";
+import getAttributesFromSubentry from "../dit/getAttributesFromSubentry.js";
 import {
     id_op_binding_hierarchical,
 } from "@wildboar/x500/DirectoryOperationalBindingTypes";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import {
     UpdateErrorData,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -76,18 +76,18 @@ import {
     _encode_CertificationPath,
 } from "@wildboar/x500/AuthenticationFramework";
 import { getDateFromTime } from "@wildboar/x500";
-import { rdnToJson } from "../x500/rdnToJson";
+import { rdnToJson } from "../x500/rdnToJson.js";
 import type {
     Code,
 } from "@wildboar/x500/CommonProtocolSpecification";
 import { compareCode } from "@wildboar/x500";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
-import { sleep } from "../utils/sleep";
+import { sleep } from "../utils/sleep.js";
 import { ResultParameters } from "@wildboar/rose-transport";
 import {
     ModifyOperationalBindingResult,
 } from "@wildboar/x500/OperationalBindingManagement";
-import { getEntryAttributesToShareInOpBinding } from "../dit/getEntryAttributesToShareInOpBinding";
+import { getEntryAttributesToShareInOpBinding } from "../dit/getEntryAttributesToShareInOpBinding.js";
 import { dSAProblem } from "@wildboar/x500/SelectedAttributeTypes";
 import {
     id_pr_targetDsaUnavailable,

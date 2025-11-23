@@ -15,7 +15,7 @@ import type {
     Extension,
 } from "@wildboar/x500/AuthenticationFramework";
 import { DERElement } from "@wildboar/asn1";
-import most from "../../utils/most";
+import most from "../../utils/most.js";
 
 export
 const acceptableCertPoliciesMatch: EqualityMatcher = (

@@ -2,7 +2,7 @@ import type { Context } from "@wildboar/meerkat-types";
 import { type LDAPSyntaxEncoder } from "@wildboar/ldap";
 import { ASN1Element } from "@wildboar/asn1";
 import { directoryStringToString } from "@wildboar/x500";
-import encodeLDAPDN from "./encodeLDAPDN";
+import encodeLDAPDN from "./encodeLDAPDN.js";
 import type {
     UnboundedDirectoryString as UBS,
 } from "@wildboar/x500/SelectedAttributeTypes";

@@ -1,7 +1,7 @@
 import type { Context } from "@wildboar/meerkat-types";
 import { ASN1Element, ASN1TagClass, ASN1UniversalType } from "@wildboar/asn1";
 import type { EqualityMatcher } from "@wildboar/x500";
-import { getORDescriptorSubstringElementsMatcher } from "./oRDescriptorSubstringElementsMatch";
+import { getORDescriptorSubstringElementsMatcher } from "./oRDescriptorSubstringElementsMatch.js";
 
 // CirculationMember ::= SET {
 //     circulation-recipient

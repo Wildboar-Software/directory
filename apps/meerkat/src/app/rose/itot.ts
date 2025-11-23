@@ -200,7 +200,7 @@ import { MeerkatContext } from "../ctx.js";
 import {
     disp_ip,
 } from "@wildboar/x500/DirectoryIDMProtocols";
-import { getLogInfoFromITOTStack } from "../log/getLogInfoFromITOTStack";
+import { getLogInfoFromITOTStack } from "../log/getLogInfoFromITOTStack.js";
 import { _encode_Code } from "@wildboar/x500/CommonProtocolSpecification";
 
 const id_ber = ObjectIdentifier.fromParts([2, 1, 1]);

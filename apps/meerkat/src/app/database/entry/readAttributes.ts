@@ -2,11 +2,11 @@ import type { Context, IndexableOID, Vertex } from "@wildboar/meerkat-types";
 import {
     Attribute,
 } from "@wildboar/x500/InformationFramework";
-import readValues, { ReadValuesOptions } from "./readValues";
-import attributesFromValues from "../../x500/attributesFromValues";
-import getAttributeSizeFilter from "../../x500/getAttributeSizeFilter";
-import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import readValues, { ReadValuesOptions } from "./readValues.js";
+import attributesFromValues from "../../x500/attributesFromValues.js";
+import getAttributeSizeFilter from "../../x500/getAttributeSizeFilter.js";
+import getEqualityMatcherGetter from "../../x500/getEqualityMatcherGetter.js";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
 import { ContextProfile } from "@wildboar/x500/ServiceAdministration";
 import { ResultAttribute } from "@wildboar/x500/ServiceAdministration";
 import { ASN1Element, ObjectIdentifier } from "@wildboar/asn1";

@@ -5,7 +5,7 @@ import type {
     PartialOutcomeQualifierStatistics,
     IndexableDN,
 } from "@wildboar/meerkat-types";
-import { LDAPAssociation } from "../ldap/LDAPConnection";
+import { LDAPAssociation } from "../ldap/LDAPConnection.js";
 import {
     ASN1TagClass,
     ASN1Element,
@@ -27,18 +27,18 @@ import {
 import {
     SearchResultData_searchInfo,
 } from "@wildboar/x500/DirectoryAbstractService";
-import type { OperationDispatcherState } from "./OperationDispatcher";
+import type { OperationDispatcherState } from "./OperationDispatcher.js";
 import { strict as assert } from "assert";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
-import type { SearchState } from "./search_i";
+import type { SearchState } from "./search_i.js";
 import {
     SearchArgumentData,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getDistinguishedName from "../x500/getDistinguishedName";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
 import {
     PartialOutcomeQualifier,
 } from "@wildboar/x500/DirectoryAbstractService";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import { search } from "@wildboar/x500/DirectoryAbstractService";
 import {
     EntryInformation,
@@ -50,15 +50,15 @@ import type {
 import type {
     EntryInformation_information_Item,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getOrderingMatcherGetter from "../x500/getOrderingMatcherGetter";
-import { MAX_RESULTS, MAX_SORT_KEYS } from "../constants";
+import getOrderingMatcherGetter from "../x500/getOrderingMatcherGetter.js";
+import { MAX_RESULTS, MAX_SORT_KEYS } from "../constants.js";
 import {
     LimitProblem_sizeLimitExceeded,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     SearchControlOptions_entryCount as entryCountBit,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { generateSignature } from "../pki/generateSignature";
+import { generateSignature } from "../pki/generateSignature.js";
 import { SIGNED } from "@wildboar/x500/AuthenticationFramework";
 import {
     _encode_Name,
@@ -78,9 +78,9 @@ import {
 import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics";
-import { stringifyDN } from "../x500/stringifyDN";
-import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers";
+import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics.js";
+import { stringifyDN } from "../x500/stringifyDN.js";
+import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers.js";
 import { _encode_Attribute } from "@wildboar/pki-stub";
 
 export

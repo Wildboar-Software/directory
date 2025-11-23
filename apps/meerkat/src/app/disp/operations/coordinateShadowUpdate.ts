@@ -6,11 +6,11 @@ import {
 import {
     CoordinateShadowUpdateResult,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
-import DISPAssociation from "../DISPConnection";
+import DISPAssociation from "../DISPConnection.js";
 import { InvokeId } from "@wildboar/x500/CommonProtocolSpecification";
 import { Versions_v2 } from "@wildboar/x500/DirectoryAbstractService";
 import { BERElement, FALSE, TRUE_BIT } from "@wildboar/asn1";
-import { verifySIGNED } from "../../pki/verifySIGNED";
+import { verifySIGNED } from "../../pki/verifySIGNED.js";
 import {
     _encode_CoordinateShadowUpdateArgumentData,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
@@ -18,13 +18,13 @@ import { compareDistinguishedName, getOptionallyProtectedValue } from "@wildboar
 import { id_op_binding_shadow } from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import { ShadowErrorData } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { ShadowProblem_invalidAgreementID, ShadowProblem_invalidSequencing, ShadowProblem_unsuitableTiming, ShadowProblem_unwillingToPerform } from "@wildboar/x500/DirectoryShadowAbstractService";
-import createSecurityParameters from "../../x500/createSecurityParameters";
+import createSecurityParameters from "../../x500/createSecurityParameters.js";
 import { id_errcode_shadowError } from "@wildboar/x500/CommonProtocolSpecification";
 import { ShadowProblem_unsupportedStrategy } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { addSeconds, differenceInSeconds } from "date-fns";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
 import { _decode_AccessPoint } from "@wildboar/x500/DistributedOperations";
-import stringifyDN from "../../x500/stringifyDN";
+import stringifyDN from "../../x500/stringifyDN.js";
 import { ShadowingAgreementInfo, _decode_ShadowingAgreementInfo } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { UpdateWindow } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { OperationalBindingInitiator } from "@prisma/client";

@@ -1,5 +1,5 @@
 import { IDMConnection } from "@wildboar/idm";
-import { getLogInfoFromSocket } from "./getLogInfoFromSocket";
+import { getLogInfoFromSocket } from "./getLogInfoFromSocket.js";
 
 export
 function getLogInfoFromIDM (idm: IDMConnection) {

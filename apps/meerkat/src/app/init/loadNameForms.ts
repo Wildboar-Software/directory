@@ -1,7 +1,7 @@
 import type { Context } from "@wildboar/meerkat-types";
 import { ObjectIdentifier } from "@wildboar/asn1";
 import { nameForms as x500nf } from "@wildboar/x500";
-import nameFormFromInformationObject from "./nameFormFromInformationObject";
+import nameFormFromInformationObject from "./nameFormFromInformationObject.js";
 
 // X.400 Name Forms
 import {
@@ -121,34 +121,34 @@ import {
 } from "@wildboar/parity-schema/src/lib/modules/TableFramework/textTableEntryNameForm.oa.js";
 import {
     uddiAddressNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiAddressNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiAddressNameForm.oa.js"
 import {
     uddiBindingTemplateNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiBindingTemplateNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiBindingTemplateNameForm.oa.js"
 import {
     uddiBusinessEntityNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiBusinessEntityNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiBusinessEntityNameForm.oa.js"
 import {
     uddiBusinessServiceNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiBusinessServiceNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiBusinessServiceNameForm.oa.js"
 import {
     uddiContactNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiContactNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiContactNameForm.oa.js"
 import {
     uddiPublisherAssertionNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiPublisherAssertionNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiPublisherAssertionNameForm.oa.js"
 import {
     uddiTModelInstanceInfoNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiTModelInstanceInfoNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiTModelInstanceInfoNameForm.oa.js"
 import {
     uddiTModelNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiTModelNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiTModelNameForm.oa.js"
 import {
     uddiv3EntityObituaryNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiv3EntityObituaryNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiv3EntityObituaryNameForm.oa.js"
 import {
     uddiv3SubscriptionNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiv3SubscriptionNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiv3SubscriptionNameForm.oa.js"
 
 import {
     traderPolicyEntryNF,
@@ -164,31 +164,31 @@ import {
 } from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/proxyOfferEntryNF.oa.js";
 import {
     uptProviderNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/uptProviderNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/uptProviderNameForm.oa.js"
 import {
     partnerNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/partnerNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/partnerNameForm.oa.js"
 import {
     adminUnitNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/adminUnitNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/adminUnitNameForm.oa.js"
 import {
     agreedServiceNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/agreedServiceNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/agreedServiceNameForm.oa.js"
 import {
     userProfileNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/userProfileNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/userProfileNameForm.oa.js"
 import {
     userProfileAliasNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/userProfileAliasNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/userProfileAliasNameForm.oa.js"
 import {
     calledUptUserNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/calledUptUserNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/calledUptUserNameForm.oa.js"
 import {
     callingUptUserNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/callingUptUserNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/callingUptUserNameForm.oa.js"
 import {
     callForwardingNameForm,
-} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/callForwardingNameForm.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/callForwardingNameForm.oa.js"
 import { nameForms as schemaLevelIINameForms } from "@wildboar/schema-level-ii";
 
 /**

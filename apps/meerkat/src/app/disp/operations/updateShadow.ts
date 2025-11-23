@@ -4,8 +4,8 @@ import {
     UpdateShadowArgument,
     UpdateShadowResult,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
-import DISPAssociation from "../DISPConnection";
-import { verifySIGNED } from "../../pki/verifySIGNED";
+import DISPAssociation from "../DISPConnection.js";
+import { verifySIGNED } from "../../pki/verifySIGNED.js";
 import {
     UpdateWindow,
     _encode_UpdateShadowArgumentData,
@@ -42,7 +42,7 @@ import {
     ShadowProblem_unsuitableTiming,
     ShadowProblem_updateAlreadyReceived,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
-import createSecurityParameters from "../../x500/createSecurityParameters";
+import createSecurityParameters from "../../x500/createSecurityParameters.js";
 import {
     id_errcode_shadowError,
 } from "@wildboar/x500/CommonProtocolSpecification";
@@ -51,8 +51,8 @@ import {
     ShadowingAgreementInfo,
     _decode_ShadowingAgreementInfo,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
-import dnToVertex from "../../dit/dnToVertex";
-import { becomeShadowConsumer } from "../../dop/establish/becomeShadowConsumer";
+import dnToVertex from "../../dit/dnToVertex.js";
+import { becomeShadowConsumer } from "../../dop/establish/becomeShadowConsumer.js";
 import {
     _decode_AccessPoint,
 } from "@wildboar/x500/DistributedOperations";
@@ -79,11 +79,11 @@ import {
     DSEType_subr,
     DSEType_familyMember,
 } from "@wildboar/x500/DSAOperationalAttributeTypes";
-import deleteEntry from "../../database/deleteEntry";
+import deleteEntry from "../../database/deleteEntry.js";
 import { Attribute } from "@wildboar/pki-stub";
 import { dseType } from "@wildboar/x500/DSAOperationalAttributeTypes";
 import { DER, _decodeObjectIdentifier } from "@wildboar/asn1/functional";
-import addAttributes from "../../database/entry/addAttributes";
+import addAttributes from "../../database/entry/addAttributes.js";
 import bPromise from "bluebird";
 import {
     LocalName,
@@ -91,24 +91,24 @@ import {
     objectClass,
 } from "@wildboar/x500/InformationFramework";
 import { clearance } from "@wildboar/x500/EnhancedSecurity";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
-import readSubordinates from "../../dit/readSubordinates";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
+import readSubordinates from "../../dit/readSubordinates.js";
 import { Refinement } from "@wildboar/x500/InformationFramework";
 import { OperationalBindingInitiator, Prisma } from "@prisma/client";
-import createEntry, { createDse } from "../../database/createEntry";
-import stringifyDN from "../../x500/stringifyDN";
+import createEntry, { createDse } from "../../database/createEntry.js";
+import stringifyDN from "../../x500/stringifyDN.js";
 import { ContentChange } from "@wildboar/x500/DirectoryShadowAbstractService";
-import rdnToID from "../../dit/rdnToID";
-import { renameEntry } from "../../database/renameEntry";
-import removeAttribute from "../../database/entry/removeAttribute";
-import addValues from "../../database/entry/addValues";
+import rdnToID from "../../dit/rdnToID.js";
+import { renameEntry } from "../../database/renameEntry.js";
+import removeAttribute from "../../database/entry/removeAttribute.js";
+import addValues from "../../database/entry/addValues.js";
 import { EntryModification } from "@wildboar/x500/DirectoryAbstractService";
-import valuesFromAttribute from "../../x500/valuesFromAttribute";
-import removeValues from "../../database/entry/removeValues";
-import readValuesOfType from "../../utils/readValuesOfType";
-import { isAcceptableTypeForAlterValues } from "../../distributed/modifyEntry";
-import subtreeIntersection from "../../x500/subtreeIntersection";
-import { updateShadowConsumer } from "../createShadowUpdate";
+import valuesFromAttribute from "../../x500/valuesFromAttribute.js";
+import removeValues from "../../database/entry/removeValues.js";
+import readValuesOfType from "../../utils/readValuesOfType.js";
+import { isAcceptableTypeForAlterValues } from "../../distributed/modifyEntry.js";
+import subtreeIntersection from "../../x500/subtreeIntersection.js";
+import { updateShadowConsumer } from "../createShadowUpdate.js";
 import {
     ShadowProblem_unwillingToPerform,
     ClassAttributeSelection,
@@ -119,8 +119,8 @@ import {
 } from "@wildboar/x500/InformationFramework";
 import { addSeconds } from "date-fns";
 import { RelativeDistinguishedName } from "@wildboar/pki-stub";
-import { stripEntry } from "../../database/stripEntry";
-import getDistinguishedName from "../../x500/getDistinguishedName";
+import { stripEntry } from "../../database/stripEntry.js";
+import getDistinguishedName from "../../x500/getDistinguishedName.js";
 import { child } from "@wildboar/x500/InformationFramework";
 
 /**

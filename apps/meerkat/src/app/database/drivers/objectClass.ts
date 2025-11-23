@@ -29,7 +29,7 @@ import {
 import {
     subentry,
 } from "@wildboar/x500/InformationFramework";
-import { getEntryExistsFilter } from "../../database/entryExistsFilter";
+import { getEntryExistsFilter } from "../../database/entryExistsFilter.js";
 import type { Attribute } from "@wildboar/pki-stub";
 
 const PARENT: string = parent["&id"].toString();

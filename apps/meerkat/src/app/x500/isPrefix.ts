@@ -3,7 +3,7 @@ import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
 import { compareRDNSequence } from "@wildboar/x500";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 
 /**
  * @summary Determine whether one distinguished name is a prefix of another

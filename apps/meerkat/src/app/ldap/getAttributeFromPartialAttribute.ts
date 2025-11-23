@@ -6,7 +6,7 @@ import type {
 import {
     Attribute,
 } from "@wildboar/x500/InformationFramework";
-import { getLDAPSyntax } from "../x500/getLDAPSyntax";
+import { getLDAPSyntax } from "../x500/getLDAPSyntax.js";
 
 /**
  * @summary Convert an LDAP `PartialAttribute` into an X.500 directory attribute

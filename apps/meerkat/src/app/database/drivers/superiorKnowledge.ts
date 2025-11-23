@@ -16,11 +16,11 @@ import { DER } from "@wildboar/asn1/functional";
 import {
     superiorKnowledge,
 } from "@wildboar/x500/DSAOperationalAttributeTypes";
-import rdnToJson from "../../x500/rdnToJson";
+import rdnToJson from "../../x500/rdnToJson.js";
 import { compareDistinguishedName } from "@wildboar/x500";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
-import isFirstLevelDSA from "../../dit/isFirstLevelDSA";
-import saveAccessPoint from "../saveAccessPoint";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
+import isFirstLevelDSA from "../../dit/isFirstLevelDSA.js";
+import saveAccessPoint from "../saveAccessPoint.js";
 import { compareRDNSequence } from "@wildboar/x500";
 
 export

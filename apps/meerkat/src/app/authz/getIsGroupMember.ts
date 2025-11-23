@@ -12,9 +12,9 @@ import {
 } from "@wildboar/x500/InformationFramework";
 import { type EqualityMatcher } from "@wildboar/x500";
 import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
-import dnToVertex from "../dit/dnToVertex";
+import dnToVertex from "../dit/dnToVertex.js";
 import { compareDistinguishedName } from "@wildboar/x500";
-import readValues from "../database/entry/readValues";
+import readValues from "../database/entry/readValues.js";
 import {
     EntryInformationSelection,
 } from "@wildboar/x500/DirectoryAbstractService";

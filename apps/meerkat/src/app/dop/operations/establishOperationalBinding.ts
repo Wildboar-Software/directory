@@ -1,7 +1,7 @@
 import type { MeerkatContext } from "../../ctx.js";
 import * as errors from "@wildboar/meerkat-types";
 import { Vertex } from "@wildboar/meerkat-types";
-import DOPAssociation from "../DOPConnection";
+import DOPAssociation from "../DOPConnection.js";
 import { INTEGER, FALSE, unpackBits, ASN1TagClass, ASN1Construction, OBJECT_IDENTIFIER, TRUE } from "@wildboar/asn1";
 import type {
     EstablishOperationalBindingArgument,
@@ -68,33 +68,33 @@ import {
 } from "@wildboar/x500/OperationalBindingManagement";
 import { compareDistinguishedName } from "@wildboar/x500";
 import { ASN1Element, packBits } from "@wildboar/asn1";
-import becomeSubordinate from "../establish/becomeSubordinate";
+import becomeSubordinate from "../establish/becomeSubordinate.js";
 import { OperationalBindingInitiator, Knowledge } from "@prisma/client";
 import {
     _encode_CertificationPath,
 } from "@wildboar/x500/AuthenticationFramework";
-import rdnToJson from "../../x500/rdnToJson";
+import rdnToJson from "../../x500/rdnToJson.js";
 import { getDateFromTime } from "@wildboar/x500";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import { DER, _encodeNull } from "@wildboar/asn1/functional";
-import createSecurityParameters from "../../x500/createSecurityParameters";
+import createSecurityParameters from "../../x500/createSecurityParameters.js";
 import {
     id_err_operationalBindingError,
 } from "@wildboar/x500/CommonProtocolSpecification";
 import {
     id_op_establishOperationalBinding,
 } from "@wildboar/x500/CommonProtocolSpecification";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
-import saveAccessPoint from "../../database/saveAccessPoint";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
+import saveAccessPoint from "../../database/saveAccessPoint.js";
 import {
     _encode_AttributeCertificationPath as _encode_ACP,
 } from "@wildboar/x500/AttributeCertificateDefinitions";
 import {
     _encode_Token,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { getDateFromOBTime } from "../getDateFromOBTime";
-import { printInvokeId } from "../../utils/printInvokeId";
-import { validateEntry, ValidateEntryReturn } from "../../x500/validateNewEntry";
+import { getDateFromOBTime } from "../getDateFromOBTime.js";
+import { printInvokeId } from "../../utils/printInvokeId.js";
+import { validateEntry, ValidateEntryReturn } from "../../x500/validateNewEntry.js";
 import { randomInt, timingSafeEqual } from "crypto";
 import {
     ErrorProtectionRequest_signed,
@@ -102,7 +102,7 @@ import {
 import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { generateSignature } from "../../pki/generateSignature";
+import { generateSignature } from "../../pki/generateSignature.js";
 import { SIGNED } from "@wildboar/x500/AuthenticationFramework";
 import {
     EstablishOperationalBindingArgumentData_initiator,
@@ -114,22 +114,22 @@ import {
 // import {
 //     _decode_ShadowingAgreementInfo,
 // } from "@wildboar/x500/DirectoryShadowAbstractService";
-import dnToVertex from "../../dit/dnToVertex";
-import getContextPrefixInfo from "../../hob/getContextPrefixInfo";
-import { getEntryAttributesToShareInOpBinding } from "../../dit/getEntryAttributesToShareInOpBinding";
+import dnToVertex from "../../dit/dnToVertex.js";
+import getContextPrefixInfo from "../../hob/getContextPrefixInfo.js";
+import { getEntryAttributesToShareInOpBinding } from "../../dit/getEntryAttributesToShareInOpBinding.js";
 import {
     Attribute,
 } from "@wildboar/x500/InformationFramework";
-import rdnToID from "../../dit/rdnToID";
-import getVertexById from "../../database/getVertexById";
-import createEntry from "../../database/createEntry";
-import getAttributesFromSubentry from "../../dit/getAttributesFromSubentry";
-import { bindForOBM } from "../../net/bindToOtherDSA";
+import rdnToID from "../../dit/rdnToID.js";
+import getVertexById from "../../database/getVertexById.js";
+import createEntry from "../../database/createEntry.js";
+import getAttributesFromSubentry from "../../dit/getAttributesFromSubentry.js";
+import { bindForOBM } from "../../net/bindToOtherDSA.js";
 import { SecurityErrorData } from "@wildboar/x500/DirectoryAbstractService";
 import {
     SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { becomeNonSpecificSubordinate } from "../establish/becomeNonSpecificSubordinate";
+import { becomeNonSpecificSubordinate } from "../establish/becomeNonSpecificSubordinate.js";
 import {
     _decode_NHOBSubordinateToSuperior,
     _encode_NHOBSubordinateToSuperior,
@@ -138,34 +138,34 @@ import {
     _decode_NHOBSuperiorToSubordinate,
     _encode_NHOBSuperiorToSubordinate,
 } from "@wildboar/x500/HierarchicalOperationalBindings";
-import becomeNonSpecificSuperior from "../establish/becomeNonSpecificSuperior";
-import becomeSuperior from "../establish/becomeSuperior";
+import becomeNonSpecificSuperior from "../establish/becomeNonSpecificSuperior.js";
+import becomeSuperior from "../establish/becomeSuperior.js";
 import { Prisma, ShadowedKnowledgeType } from "@prisma/client";
-import stringifyDN from "../../x500/stringifyDN";
+import stringifyDN from "../../x500/stringifyDN.js";
 import {
     top,
     DistinguishedName,
     SubtreeSpecification,
 } from "@wildboar/x500/InformationFramework";
 import { person } from "@wildboar/x500/SelectedObjectClasses";
-import terminateByTypeAndBindingID from "../terminateByTypeAndBindingID";
+import terminateByTypeAndBindingID from "../terminateByTypeAndBindingID.js";
 import {
     ShadowingAgreementInfo,
     UnitOfReplication,
     _decode_ShadowingAgreementInfo,
     _encode_ShadowingAgreementInfo,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
-import { becomeShadowConsumer } from "../establish/becomeShadowConsumer";
-import { becomeShadowSupplier } from "../establish/becomeShadowSupplier";
-import { updateShadowConsumer } from "../../disp/createShadowUpdate";
+import { becomeShadowConsumer } from "../establish/becomeShadowConsumer.js";
+import { becomeShadowSupplier } from "../establish/becomeShadowSupplier.js";
+import { updateShadowConsumer } from "../../disp/createShadowUpdate.js";
 import { AttributeUsage_dSAOperation } from "@wildboar/x500/InformationFramework";
 import { addYears, subSeconds } from "date-fns";
 import { ModificationParameter, _encode_ModificationParameter } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { AreaSpecification } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { id_op_modifyOperationalBinding } from "@wildboar/x500/CommonProtocolSpecification";
-import scheduleShadowUpdates from "../../disp/scheduleShadowUpdates";
+import scheduleShadowUpdates from "../../disp/scheduleShadowUpdates.js";
 import { PeriodicStrategy, SchedulingParameters } from "@wildboar/x500/DirectoryShadowAbstractService";
-import { cacheNamingContexts } from "../../dit/cacheNamingContexts";
+import { cacheNamingContexts } from "../../dit/cacheNamingContexts.js";
 
 // TODO: Use printCode()
 function codeToString (code?: Code): string | undefined {

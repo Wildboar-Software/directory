@@ -7,9 +7,9 @@ import {
     _decode_ShadowingAgreementInfo,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { BERElement, OBJECT_IDENTIFIER, ObjectIdentifier } from "@wildboar/asn1";
-import getDistinguishedName from "../x500/getDistinguishedName";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
 import { compareDistinguishedName, dnWithinSubtreeSpecification, evaluateContextAssertion, groupByOID, objectClassesWithinRefinement } from "@wildboar/x500";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { UnitOfReplication } from "@wildboar/x500/DirectoryShadowAbstractService";
 import {
     IncrementalStepRefresh, SubordinateChanges,
@@ -19,23 +19,23 @@ import {
 } from "@wildboar/x500/DirectoryShadowAbstractService";
 import {
     getAttributeTypeFromEntryModification,
-} from "../x500/getAttributeTypeFromEntryModification";
+} from "../x500/getAttributeTypeFromEntryModification.js";
 import { AttributeUsage_userApplications } from "@wildboar/x500/InformationFramework";
 import {
     ContextSelection, TypeAndContextAssertion,
 } from "@wildboar/x500/DirectoryAbstractService";
-import valuesFromAttribute from "../x500/valuesFromAttribute";
-import attributesFromValues from "../x500/attributesFromValues";
+import valuesFromAttribute from "../x500/valuesFromAttribute.js";
+import attributesFromValues from "../x500/attributesFromValues.js";
 import { Attribute } from "@wildboar/pki-stub";
-import { ALL_ATTRIBUTE_TYPES, MAX_TRAVERSAL } from "../constants";
-import getAttributeParentTypes from "../x500/getAttributeParentTypes";
+import { ALL_ATTRIBUTE_TYPES, MAX_TRAVERSAL } from "../constants.js";
+import getAttributeParentTypes from "../x500/getAttributeParentTypes.js";
 import { ContentChange, ContentChange_rename } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { EntryModification } from "@wildboar/x500/DirectoryAbstractService";
-import getSDSEContent, { mandatoryReplicatedAttributeTypesSet } from "../disp/getSDSEContent";
+import getSDSEContent, { mandatoryReplicatedAttributeTypesSet } from "../disp/getSDSEContent.js";
 import { DistinguishedName } from "@wildboar/pki-stub";
-import readSubordinates from "../dit/readSubordinates";
+import readSubordinates from "../dit/readSubordinates.js";
 import { LocalName } from "@wildboar/x500/InformationFramework";
-import isPrefix from "../x500/isPrefix";
+import isPrefix from "../x500/isPrefix.js";
 import { nonSpecificKnowledge, specificKnowledge } from "@wildboar/x500/DSAOperationalAttributeTypes";
 import { child } from "@wildboar/x500/InformationFramework";
 

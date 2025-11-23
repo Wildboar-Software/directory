@@ -1,5 +1,5 @@
 import type { Context } from "@wildboar/meerkat-types";
-import { getEntryExistsFilter } from "../database/entryExistsFilter";
+import { getEntryExistsFilter } from "../database/entryExistsFilter.js";
 
 export
 async function createDatabaseReport (ctx: Context): Promise<Record<string, any>> {

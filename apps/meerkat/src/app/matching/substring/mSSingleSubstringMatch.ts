@@ -2,7 +2,7 @@ import { SubstringsMatcher, SubstringSelection } from "@wildboar/x500";
 import {
     _decode_MSString,
 } from "@wildboar/x400/MSMatchingRules";
-import { msStringToString } from "../equality/orAddressUtilities";
+import { msStringToString } from "../equality/orAddressUtilities.js";
 import type { ASN1Element } from "@wildboar/asn1";
 
 export

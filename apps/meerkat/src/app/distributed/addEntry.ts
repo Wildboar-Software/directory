@@ -62,8 +62,8 @@ import {
 import {
     ChainingResults,
 } from "@wildboar/x500/DistributedOperations";
-import { createDse } from "../database/createEntry";
-import getRelevantSubentries from "../dit/getRelevantSubentries";
+import { createDse } from "../database/createEntry.js";
+import getRelevantSubentries from "../dit/getRelevantSubentries.js";
 import { type ACDFTuple } from "@wildboar/x500";
 import { type ACDFTupleExtended } from "@wildboar/x500";
 import {
@@ -73,61 +73,61 @@ import {
     PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
 } from "@wildboar/x500";
 import { getACDFTuplesFromACIItem } from "@wildboar/x500";
-import getIsGroupMember from "../authz/getIsGroupMember";
+import getIsGroupMember from "../authz/getIsGroupMember.js";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import {
     id_opcode_addEntry,
 } from "@wildboar/x500/CommonProtocolSpecification";
-import establishSubordinate from "../dop/establishSubordinate";
+import establishSubordinate from "../dop/establishSubordinate.js";
 import { addSeconds, differenceInMilliseconds } from "date-fns";
 import { getDateFromTime } from "@wildboar/x500";
-import type { OperationDispatcherState } from "./OperationDispatcher";
+import type { OperationDispatcherState } from "./OperationDispatcher.js";
 import { DER, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
 import { codeToString } from "@wildboar/x500";
-import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
+import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments.js";
 import { naddrToURI } from "@wildboar/x500";
-import checkIfNameIsAlreadyTakenInNSSR from "./checkIfNameIsAlreadyTakenInNSSR";
-import valuesFromAttribute from "../x500/valuesFromAttribute";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import checkIfNameIsAlreadyTakenInNSSR from "./checkIfNameIsAlreadyTakenInNSSR.js";
+import valuesFromAttribute from "../x500/valuesFromAttribute.js";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { subschema } from "@wildboar/x500/SchemaAdministration";
 import { checkNameForm } from "@wildboar/x500";
-import failover from "../utils/failover";
-import getACIItems from "../authz/getACIItems";
-import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs";
+import failover from "../utils/failover.js";
+import getACIItems from "../authz/getACIItems.js";
+import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs.js";
 import type { DistinguishedName } from "@wildboar/x500/InformationFramework";
-import updateSuperiorDSA from "../dop/updateSuperiorDSA";
+import updateSuperiorDSA from "../dop/updateSuperiorDSA.js";
 import { id_ar_autonomousArea } from "@wildboar/x500/InformationFramework";
-import bacSettings from "../authz/bacSettings";
+import bacSettings from "../authz/bacSettings.js";
 import {
     NameAndOptionalUID,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import preprocessTuples from "../authz/preprocessTuples";
-import groupByOID from "../utils/groupByOID";
-import rdnToID from "../dit/rdnToID";
-import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry";
+import preprocessTuples from "../authz/preprocessTuples.js";
+import groupByOID from "../utils/groupByOID.js";
+import rdnToID from "../dit/rdnToID.js";
+import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry.js";
 import { userPwd } from "@wildboar/x500/PasswordPolicy";
 import { userPassword } from "@wildboar/x500/AuthenticationFramework";
 import { dseType } from "@wildboar/x500/DSAOperationalAttributeTypes";
-import isOperationalAttributeType from "../x500/isOperationalAttributeType";
-import becomeSuperior from "../dop/establish/becomeSuperior";
+import isOperationalAttributeType from "../x500/isOperationalAttributeType.js";
+import becomeSuperior from "../dop/establish/becomeSuperior.js";
 import {
     hierarchicalOperationalBinding,
     HierarchicalAgreement,
 } from "@wildboar/x500/HierarchicalOperationalBindings";
-import getDistinguishedName from "../x500/getDistinguishedName";
-import saveAccessPoint from "../database/saveAccessPoint";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
+import saveAccessPoint from "../database/saveAccessPoint.js";
 import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
-import { rdnToJson } from "../x500/rdnToJson";
-import { getDateFromOBTime } from "../dop/getDateFromOBTime";
-import { printInvokeId } from "../utils/printInvokeId";
-import { validateEntry } from "../x500/validateNewEntry";
+import { rdnToJson } from "../x500/rdnToJson.js";
+import { getDateFromOBTime } from "../dop/getDateFromOBTime.js";
+import { printInvokeId } from "../utils/printInvokeId.js";
+import { validateEntry } from "../x500/validateNewEntry.js";
 import { ChainingArguments } from "@wildboar/x500/DistributedOperations";
-import { generateSignature } from "../pki/generateSignature";
+import { generateSignature } from "../pki/generateSignature.js";
 import { SIGNED } from "@wildboar/x500/AuthenticationFramework";
-import { stringifyDN } from "../x500/stringifyDN";
-import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
-import { getEntryExistsFilter } from "../database/entryExistsFilter";
+import { stringifyDN } from "../x500/stringifyDN.js";
+import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants.js";
+import { getEntryExistsFilter } from "../database/entryExistsFilter.js";
 import {
     _encode_SuperiorToSubordinate,
 } from "@wildboar/x500/HierarchicalOperationalBindings";
@@ -136,15 +136,15 @@ import { UserPwd } from "@wildboar/x500/PasswordPolicy";
 import {
     checkPasswordQuality,
     CHECK_PWD_QUALITY_OK,
-} from "../password/checkPasswordQuality";
-import { bindForChaining } from "../net/bindToOtherDSA";
+} from "../password/checkPasswordQuality.js";
+import { bindForChaining } from "../net/bindToOtherDSA.js";
 import { dSAProblem } from "@wildboar/x500/SelectedAttributeTypes";
 import { id_pr_targetDsaUnavailable } from "@wildboar/x500/SelectedAttributeTypes";
-import DSPAssociation from "../dsp/DSPConnection";
-import { getShadowIncrementalSteps } from "../dop/getRelevantSOBs";
+import DSPAssociation from "../dsp/DSPConnection.js";
+import { getShadowIncrementalSteps } from "../dop/getRelevantSOBs.js";
 import { SubordinateChanges } from "@wildboar/x500/DirectoryShadowAbstractService";
-import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh";
-import { acdf } from "../authz/acdf";
+import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh.js";
+import { acdf } from "../authz/acdf.js";
 
 const ID_AUTONOMOUS: string = id_ar_autonomousArea.toString();
 const ID_AC_SPECIFIC: string = id_ar_accessControlSpecificArea.toString();

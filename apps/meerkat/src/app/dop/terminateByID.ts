@@ -7,19 +7,19 @@ import {
     _decode_HierarchicalAgreement,
 } from "@wildboar/x500/HierarchicalOperationalBindings";
 import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
-import removeSubordinate from "./terminate/removeSubordinate";
+import removeSubordinate from "./terminate/removeSubordinate.js";
 import {
     id_op_binding_non_specific_hierarchical,
 } from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import {
     _decode_NonSpecificHierarchicalAgreement,
 } from "@wildboar/x500/HierarchicalOperationalBindings";
-import dnToVertex from "../dit/dnToVertex";
+import dnToVertex from "../dit/dnToVertex.js";
 import {
     id_op_binding_shadow,
 } from "@wildboar/x500/DirectoryOperationalBindingTypes";
-import { removeConsumer } from "./terminate/removeConsumer";
-import { removeSupplier } from "./terminate/removeSupplier";
+import { removeConsumer } from "./terminate/removeConsumer.js";
+import { removeSupplier } from "./terminate/removeSupplier.js";
 
 /**
  * @summary Terminates an operational binding by its database ID.

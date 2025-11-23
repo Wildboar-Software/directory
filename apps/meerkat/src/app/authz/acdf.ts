@@ -10,9 +10,9 @@ import { ProtectedItem, ACDFTupleExtended } from "@wildboar/x500";
 import type {
     NameAndOptionalUID,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import accessControlSchemesThatUseACIItems from "./accessControlSchemesThatUseACIItems";
-import accessControlSchemesThatUseRBAC from "./accessControlSchemesThatUseRBAC";
-import { rbacACDF } from "./rbacACDF";
+import accessControlSchemesThatUseACIItems from "./accessControlSchemesThatUseACIItems.js";
+import accessControlSchemesThatUseRBAC from "./accessControlSchemesThatUseRBAC.js";
+import { rbacACDF } from "./rbacACDF.js";
 import { attributeValueSecurityLabelContext } from "@wildboar/x500/EnhancedSecurity";
 
 const avslc = attributeValueSecurityLabelContext["&id"];

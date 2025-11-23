@@ -11,12 +11,12 @@ import {
     _decode_Certificate,
 } from "@wildboar/x500/AuthenticationFramework";
 import { NameAndOptionalUID } from "@wildboar/x500/SelectedAttributeTypes";
-import dnToVertex from "../../dit/dnToVertex";
-import { read_clearance } from "../../database/utils";
+import dnToVertex from "../../dit/dnToVertex.js";
+import { read_clearance } from "../../database/utils.js";
 import {
     DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as DirectoryBindErrorData,
 } from "@wildboar/x500/DirectoryAbstractService";
-import versions from "../../versions";
+import versions from "../../versions.js";
 import {
     SecurityProblem_invalidCredentials,
 } from "@wildboar/x500/DirectoryAbstractService";

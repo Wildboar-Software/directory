@@ -8,12 +8,12 @@ import {
 import { SearchArgumentData } from "@wildboar/x500/DirectoryAbstractService";
 import { ObjectIdentifier, TRUE_BIT } from "@wildboar/asn1";
 import { ContextProfile } from "@wildboar/x500/ServiceAdministration";
-import getAttributeParentTypes from "../x500/getAttributeParentTypes";
-import { getAttributeTypeNegationFromFilter } from "./getAttributeTypeNegationFromFilter";
-import { getRequiredAttributesFromAttributeCombination } from "./getRequiredAttributesFromAttributeCombination";
-import { checkAttributeCombination } from "./checkAttributeCombination";
-import { check_for_disallowed_search_values } from "./check_for_disallowed_search_values";
-import { check_for_disallowed_contexts } from "./check_for_disallowed_contexts";
+import getAttributeParentTypes from "../x500/getAttributeParentTypes.js";
+import { getAttributeTypeNegationFromFilter } from "./getAttributeTypeNegationFromFilter.js";
+import { getRequiredAttributesFromAttributeCombination } from "./getRequiredAttributesFromAttributeCombination.js";
+import { checkAttributeCombination } from "./checkAttributeCombination.js";
+import { check_for_disallowed_search_values } from "./check_for_disallowed_search_values.js";
+import { check_for_disallowed_contexts } from "./check_for_disallowed_contexts.js";
 import { AttributeCombination } from "@wildboar/x500/ServiceAdministration";
 import { FilterItem } from "@wildboar/x500/DirectoryAbstractService";
 import type { AttributeType } from "@wildboar/x500/InformationFramework";

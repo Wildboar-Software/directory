@@ -1,8 +1,8 @@
 import type { Context, Vertex } from "@wildboar/meerkat-types";
-import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry";
+import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry.js";
 import type { Prisma } from "@prisma/client";
-import { MAX_RESULTS } from "../constants";
-import { getEntryExistsFilter } from "../database/entryExistsFilter";
+import { MAX_RESULTS } from "../constants.js";
+import { getEntryExistsFilter } from "../database/entryExistsFilter.js";
 
 /**
  * @summary Read a DSE's subordinates into memory from the database

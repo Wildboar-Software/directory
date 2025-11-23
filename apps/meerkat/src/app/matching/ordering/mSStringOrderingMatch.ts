@@ -3,7 +3,7 @@ import { OrderingMatcher } from "@wildboar/x500";
 import {
     _decode_MSString,
 } from "@wildboar/x400/MSMatchingRules";
-import { msStringToString } from "../equality/orAddressUtilities";
+import { msStringToString } from "../equality/orAddressUtilities.js";
 
 export
 const mSStringOrderingMatch: OrderingMatcher = (

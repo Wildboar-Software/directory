@@ -1,7 +1,7 @@
 import { ASN1Element, ASN1TagClass } from "@wildboar/asn1";
 import { EqualityMatcher } from "@wildboar/x500";
 import { Context } from "@wildboar/meerkat-types";
-import { getORDescriptorSubstringElementsMatcher } from "./oRDescriptorSubstringElementsMatch";
+import { getORDescriptorSubstringElementsMatcher } from "./oRDescriptorSubstringElementsMatch.js";
 
 // RecipientSpecifier ::= SET {
 //     recipient              [0]  ORDescriptor,

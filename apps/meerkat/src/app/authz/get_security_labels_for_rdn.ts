@@ -1,7 +1,7 @@
 import { Context, MistypedArgumentError, Value } from "@wildboar/meerkat-types";
 import { attributeValueSecurityLabelContext } from "@wildboar/x500/EnhancedSecurity";
 import { RelativeDistinguishedName } from "@wildboar/pki-stub";
-import { attributeValueFromDB } from "../database/attributeValueFromDB";
+import { attributeValueFromDB } from "../database/attributeValueFromDB.js";
 import {
     SignedSecurityLabel, _decode_SignedSecurityLabel,
 } from "@wildboar/x500/EnhancedSecurity";
@@ -9,7 +9,7 @@ import {
     Context as X500Context,
 } from "@wildboar/x500/InformationFramework";
 import { groupByOID } from "@wildboar/x500";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { BERElement, ObjectIdentifier } from "@wildboar/asn1";
 
 const AVSLC: string = attributeValueSecurityLabelContext["&id"].toString();

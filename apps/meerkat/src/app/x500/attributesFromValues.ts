@@ -8,7 +8,7 @@ import {
 import {
     Context,
 } from "@wildboar/x500/InformationFramework";
-import groupByOID from "../utils/groupByOID";
+import groupByOID from "../utils/groupByOID.js";
 
 /**
  * @summary Convert values into X.500 directory attributes

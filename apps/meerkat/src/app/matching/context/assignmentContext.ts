@@ -1,7 +1,7 @@
 import { Context } from "@wildboar/meerkat-types";
 import { compareDistinguishedName, EqualityMatcher } from "@wildboar/x500";
 import { ASN1Element } from "@wildboar/asn1";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
 import {
     _decode_DistinguishedName,
 } from "@wildboar/x500/InformationFramework";

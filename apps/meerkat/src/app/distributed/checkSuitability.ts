@@ -31,19 +31,19 @@ import {
     _decode_CompareArgument,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { isModificationOperation } from "@wildboar/x500";
-import unmetCriticalExtension from "../x500/unmetCriticalExtension";
+import unmetCriticalExtension from "../x500/unmetCriticalExtension.js";
 import {
     ServiceProblem_unavailableCriticalExtension,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     ServiceErrorData,
 } from "@wildboar/x500/DirectoryAbstractService";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import {
     serviceError,
 } from "@wildboar/x500/DirectoryAbstractService";
-import filterCanBeUsedInShadowedArea from "../x500/filterCanBeUsedInShadowedArea";
-import { getEntryExistsFilter } from "../database/entryExistsFilter";
+import filterCanBeUsedInShadowedArea from "../x500/filterCanBeUsedInShadowedArea.js";
+import { getEntryExistsFilter } from "../database/entryExistsFilter.js";
 import {
     EntryInformationSelection_infoTypes_attributeTypesOnly,
     EntryInformationSelection_infoTypes_attributeTypesAndValues as typesAndValues,
@@ -58,9 +58,9 @@ import {
     _decode_ShadowingAgreementInfo,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { BERElement, ObjectIdentifier, TRUE_BIT } from "@wildboar/asn1";
-import getDistinguishedName from "../x500/getDistinguishedName";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
 import { dnWithinSubtreeSpecification } from "@wildboar/x500";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import {
     UnitOfReplication,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
@@ -73,19 +73,19 @@ import {
 import {
     TypeAndContextAssertion,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getRelevantSubentries from "../dit/getRelevantSubentries";
-import { OperationDispatcherState } from "./OperationDispatcher";
-import getContextAssertionDefaults from "../dit/getContextAssertionDefaults";
+import getRelevantSubentries from "../dit/getRelevantSubentries.js";
+import { OperationDispatcherState } from "./OperationDispatcher.js";
+import getContextAssertionDefaults from "../dit/getContextAssertionDefaults.js";
 import { contextAssertionDefaults } from "@wildboar/x500/InformationFramework";
-import { isMatchAllFilter } from "../x500/isMatchAllFilter";
+import { isMatchAllFilter } from "../x500/isMatchAllFilter.js";
 import {
     SubtreeSpecification,
 } from "@wildboar/x500/InformationFramework";
 import {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import isPrefix from "../x500/isPrefix";
-import { ALL_USER_ATTRIBUTES_KEY } from "../constants";
+import isPrefix from "../x500/isPrefix.js";
+import { ALL_USER_ATTRIBUTES_KEY } from "../constants.js";
 import {
     FamilyReturn_memberSelect_contributingEntriesOnly,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -94,7 +94,7 @@ import {
     ServiceControlOptions_dontMatchFriends,
     ServiceControlOptions_noSubtypeMatch,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { addFriends } from "../database/entry/readValues";
+import { addFriends } from "../database/entry/readValues.js";
 import { subschema } from "@wildboar/x500/SchemaAdministration";
 
 const DEFAULT_CAD: ContextSelection = {

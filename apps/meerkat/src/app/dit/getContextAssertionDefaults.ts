@@ -9,7 +9,7 @@ import {
 import {
     TypeAndContextAssertion, _decode_TypeAndContextAssertion,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { attributeValueFromDB } from "../database/attributeValueFromDB";
+import { attributeValueFromDB } from "../database/attributeValueFromDB.js";
 
 const CAD_SUBENTRY: string = contextAssertionSubentry["&id"].toString();
 

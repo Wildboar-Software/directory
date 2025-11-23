@@ -1,6 +1,6 @@
 import { type EqualityMatcher } from "@wildboar/x500";
 import type { ASN1Element } from "@wildboar/asn1";
-import { metaphone } from "../metaphone";
+import { metaphone } from "../metaphone.js";
 
 export
 const matcher: EqualityMatcher = (

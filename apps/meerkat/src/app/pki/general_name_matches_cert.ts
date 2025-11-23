@@ -1,7 +1,7 @@
 import { Context } from "@wildboar/meerkat-types";
 import { Certificate } from "@wildboar/pki-stub";
 import { GeneralName } from "@wildboar/x500/CertificateExtensions";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { compareGeneralName, compareName } from "@wildboar/x500";
 import { DERElement } from "@wildboar/asn1";
 import { subjectAltName } from "@wildboar/x500/CertificateExtensions";

@@ -3,14 +3,14 @@ import type { ClientAssociation } from "@wildboar/meerkat-types";
 import {
     OperationProgress_nameResolutionPhase_completed as completed,
 } from "@wildboar/x500/DistributedOperations";
-import scrProcedure from "./scrProcedure";
-import type { SearchState } from "./search_i";
+import scrProcedure from "./scrProcedure.js";
+import type { SearchState } from "./search_i.js";
 import {
     SearchArgument,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { OperationDispatcherState } from "./OperationDispatcher";
-import printInvokeId from "../utils/printInvokeId";
-import printCode from "../utils/printCode";
+import { OperationDispatcherState } from "./OperationDispatcher.js";
+import printInvokeId from "../utils/printInvokeId.js";
+import printCode from "../utils/printCode.js";
 
 /**
  * @summary The Results Merging Procedure (for search), defined in ITU Recommendation X.518.

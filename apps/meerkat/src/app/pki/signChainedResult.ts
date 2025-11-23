@@ -6,7 +6,7 @@ import {
 import {
     SIGNED,
 } from "@wildboar/x500/AuthenticationFramework";
-import { generateSignature } from "./generateSignature";
+import { generateSignature } from "./generateSignature.js";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import {
     _encode_Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1,

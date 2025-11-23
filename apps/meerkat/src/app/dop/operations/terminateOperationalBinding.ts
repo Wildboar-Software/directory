@@ -1,4 +1,4 @@
-import type DOPAssociation from "../DOPConnection";
+import type DOPAssociation from "../DOPConnection.js";
 import * as errors from "@wildboar/meerkat-types";
 import { DER } from "@wildboar/asn1/functional";
 import type {
@@ -28,15 +28,15 @@ import {
 } from "@wildboar/x500/OperationalBindingManagement";
 import { ASN1Construction, ASN1TagClass, FALSE, OBJECT_IDENTIFIER, packBits, unpackBits } from "@wildboar/asn1";
 import { differenceInMilliseconds } from "date-fns";
-import terminate from "../terminateByID";
+import terminate from "../terminateByID.js";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
-import createSecurityParameters from "../../x500/createSecurityParameters";
+import createSecurityParameters from "../../x500/createSecurityParameters.js";
 import {
     id_err_operationalBindingError,
 } from "@wildboar/x500/CommonProtocolSpecification";
 import { setTimeout as safeSetTimeout } from "safe-timers";
-import { getDateFromOBTime } from "../getDateFromOBTime";
-import { printInvokeId } from "../../utils/printInvokeId";
+import { getDateFromOBTime } from "../getDateFromOBTime.js";
+import { printInvokeId } from "../../utils/printInvokeId.js";
 import {
     InvokeId,
 } from "@wildboar/x500/CommonProtocolSpecification";
@@ -46,12 +46,12 @@ import {
 import {
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { generateSignature } from "../../pki/generateSignature";
+import { generateSignature } from "../../pki/generateSignature.js";
 import { SIGNED } from "@wildboar/x500/AuthenticationFramework";
 import {
     id_op_terminateOperationalBinding,
 } from "@wildboar/x500/CommonProtocolSpecification";
-import { rdnFromJson } from "../../x500/rdnFromJson";
+import { rdnFromJson } from "../../x500/rdnFromJson.js";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
@@ -67,19 +67,19 @@ import {
 import {
     securityError,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
 import { MeerkatContext } from "../../ctx.js";
 import { AccessPoint, _decode_AccessPoint } from "@wildboar/x500/DistributedOperations";
-import { terminateByTypeAndBindingID } from "../terminateByTypeAndBindingID";
+import { terminateByTypeAndBindingID } from "../terminateByTypeAndBindingID.js";
 import { timingSafeEqual } from "crypto";
 import {
     id_op_binding_non_specific_hierarchical,
 } from "@wildboar/x500/DirectoryOperationalBindingTypes";
-import stringifyDN from "../../x500/stringifyDN";
+import stringifyDN from "../../x500/stringifyDN.js";
 import {
     id_op_binding_shadow,
 } from "@wildboar/x500/DirectoryOperationalBindingTypes";
-import { cacheNamingContexts } from "../../dit/cacheNamingContexts";
+import { cacheNamingContexts } from "../../dit/cacheNamingContexts.js";
 
 
 async function relayedTerminateOperationalBinding (

@@ -4,7 +4,7 @@ import type { ASN1Element } from "@wildboar/asn1";
 import {
     _decode_PolicySpecification,
 } from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/PolicySpecification.ta.js";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
 import {
     compareDistinguishedName,
     directoryStringToString,

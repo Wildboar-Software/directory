@@ -3,7 +3,7 @@ import type { RDNSequence } from "@wildboar/x500/InformationFramework";
 import { AttributeTypeAndValue } from "@wildboar/x500/InformationFramework";
 import { normalizeAttributeDescription } from "@wildboar/ldap";
 import { destringifyRDNSequence } from "@wildboar/ldap";
-import { getLDAPSyntax } from "../x500/getLDAPSyntax";
+import { getLDAPSyntax } from "../x500/getLDAPSyntax.js";
 
 /**
  * @summary Decode an LDAP distinguished name and reverse it.

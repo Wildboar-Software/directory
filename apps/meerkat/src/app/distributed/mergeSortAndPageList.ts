@@ -15,7 +15,7 @@ import {
 } from "@wildboar/asn1";
 import * as $ from "@wildboar/asn1/functional";
 import { DER } from "@wildboar/asn1/functional";
-import type { OperationDispatcherState } from "./OperationDispatcher";
+import type { OperationDispatcherState } from "./OperationDispatcher.js";
 import { strict as assert } from "assert";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import {
@@ -24,21 +24,21 @@ import {
 import {
     ListResult, _encode_ListResult,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getDistinguishedName from "../x500/getDistinguishedName";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
 import {
     PartialOutcomeQualifier,
 } from "@wildboar/x500/DirectoryAbstractService";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import { list } from "@wildboar/x500/DirectoryAbstractService";
 import type {
     SortKey,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getOrderingMatcherGetter from "../x500/getOrderingMatcherGetter";
-import { MAX_RESULTS, MAX_SORT_KEYS } from "../constants";
+import getOrderingMatcherGetter from "../x500/getOrderingMatcherGetter.js";
+import { MAX_RESULTS, MAX_SORT_KEYS } from "../constants.js";
 import {
     LimitProblem_sizeLimitExceeded,
 } from "@wildboar/x500/DirectoryAbstractService";
-import type { ListState } from "./list_i";
+import type { ListState } from "./list_i.js";
 import {
     ListResultData_listInfo_subordinates_Item as ListItem,
     ListResultData_listInfo_subordinates_Item,
@@ -47,7 +47,7 @@ import {
 import {
     ListResultData_listInfo,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { generateSignature } from "../pki/generateSignature";
+import { generateSignature } from "../pki/generateSignature.js";
 import { SIGNED } from "@wildboar/x500/AuthenticationFramework";
 import {
     _encode_Name,
@@ -67,9 +67,9 @@ import {
 import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics";
-import { stringifyDN } from "../x500/stringifyDN";
-import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers";
+import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics.js";
+import { stringifyDN } from "../x500/stringifyDN.js";
+import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers.js";
 
 export
 interface MergeListResultsReturn {

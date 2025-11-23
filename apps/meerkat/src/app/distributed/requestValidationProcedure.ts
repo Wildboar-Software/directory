@@ -73,17 +73,17 @@ import { TraceItem } from "@wildboar/x500/DistributedOperations";
 import { compareCode } from "@wildboar/x500";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import type { Request } from "@wildboar/x500";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import {
     serviceError,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { printInvokeId } from "../utils/printInvokeId";
+import { printInvokeId } from "../utils/printInvokeId.js";
 import {
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { verifySIGNED } from "../pki/verifySIGNED";
-import { isArgumentSigned } from "../x500/isArgumentSigned";
-import DSPAssociation from "../dsp/DSPConnection";
+import { verifySIGNED } from "../pki/verifySIGNED.js";
+import { isArgumentSigned } from "../x500/isArgumentSigned.js";
+import DSPAssociation from "../dsp/DSPConnection.js";
 import {
     _decode_AlgorithmIdentifier,
 } from "@wildboar/pki-stub";
@@ -92,17 +92,17 @@ import {
     CommonArguments,
     _decode_CommonArguments,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
-import DAPAssociation from "../dap/DAPConnection";
-import LDAPAssociation from "../ldap/LDAPConnection";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
+import DAPAssociation from "../dap/DAPConnection.js";
+import LDAPAssociation from "../ldap/LDAPConnection.js";
 import {
     AuthenticationLevel_basicLevels_level_none,
     AuthenticationLevel_basicLevels_level_strong,
 } from "@wildboar/x500/BasicAccessControl";
-import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
-import cloneChainingArgs from "../x500/cloneChainingArguments";
-import { isTrustedForIBRA } from "./isTrustedForIBRA";
-import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
+import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants.js";
+import cloneChainingArgs from "../x500/cloneChainingArguments.js";
+import { isTrustedForIBRA } from "./isTrustedForIBRA.js";
+import generateUnusedInvokeID from "../net/generateUnusedInvokeID.js";
 
 type Chain = OPTIONALLY_PROTECTED<Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1>;
 

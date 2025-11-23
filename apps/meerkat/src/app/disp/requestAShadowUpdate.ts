@@ -3,19 +3,19 @@ import { BERElement } from "@wildboar/asn1";
 import {
     _decode_AccessPoint,
 } from "@wildboar/x500/DistributedOperations";
-import { bindForDISP } from "../net/bindToOtherDSA";
+import { bindForDISP } from "../net/bindToOtherDSA.js";
 import {
     id_ac_shadowSupplierInitiatedAsynchronousAC,
 } from "@wildboar/x500/DirectoryOSIProtocols";
 import { OperationalBindingID } from "@wildboar/x500/OperationalBindingManagement";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import { compareCode, getOptionallyProtectedValue } from "@wildboar/x500";
 import {
     id_errcode_shadowError,
 } from "@wildboar/x500/CommonProtocolSpecification";
 import { shadowError } from "@wildboar/x500/DirectoryShadowAbstractService";
-import stringifyDN from "../x500/stringifyDN";
-import printCode from "../utils/printCode";
+import stringifyDN from "../x500/stringifyDN.js";
+import printCode from "../utils/printCode.js";
 import { id_opcode_requestShadowUpdate } from "@wildboar/x500/CommonProtocolSpecification";
 import {
     RequestShadowUpdateArgumentData_requestedStrategy_standard_incremental,

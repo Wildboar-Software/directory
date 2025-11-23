@@ -50,7 +50,7 @@
         "@wildboar/scvp": "npm:@jsr/wildboar__scvp@^2.0.1",
         "@wildboar/tal": "npm:@jsr/wildboar__tal@^2.0.0",
         "@wildboar/x400": "npm:@jsr/wildboar__x400@^2.0.1",
-        "@wildboar/x500": "npm:@jsr/wildboar__x500@^2.0.3",
+        "@wildboar/x500": "npm:@jsr/wildboar__x500@^2.0.4",
         "@wildboar/x700": "npm:@jsr/wildboar__x700@^2.0.1",
         "basic-ftp": "^5.0.2",
         "bluebird": "^3.7.2",

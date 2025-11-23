@@ -19,9 +19,9 @@ import {
 import {
     Attribute,
 } from "@wildboar/x500/InformationFramework";
-import readSubordinates from "../dit/readSubordinates";
-import getAttributesFromSubentry from "../dit/getAttributesFromSubentry";
-import { getEntryAttributesToShareInOpBinding } from "../dit/getEntryAttributesToShareInOpBinding";
+import readSubordinates from "../dit/readSubordinates.js";
+import getAttributesFromSubentry from "../dit/getAttributesFromSubentry.js";
+import { getEntryAttributesToShareInOpBinding } from "../dit/getEntryAttributesToShareInOpBinding.js";
 
 /**
  * @summary Given a vertex, produce a `DITcontext` per ITU Recommendation X.518.

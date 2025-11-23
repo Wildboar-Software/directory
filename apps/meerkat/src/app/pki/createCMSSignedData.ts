@@ -22,9 +22,9 @@ import {
     SignerInfo,
     IssuerAndSerialNumber,
 } from "@wildboar/cms";
-import { sigAlgToHashAlg } from "../pki/sigAlgToHashAlg";
-import { keyTypeToAlgOID } from "../pki/keyTypeToAlgOID";
-import { digestOIDToNodeHash } from "../pki/digestOIDToNodeHash";
+import { sigAlgToHashAlg } from "../pki/sigAlgToHashAlg.js";
+import { keyTypeToAlgOID } from "../pki/keyTypeToAlgOID.js";
+import { digestOIDToNodeHash } from "../pki/digestOIDToNodeHash.js";
 import type { PkiPath } from "@wildboar/pki-stub";
 import type {
     CertificateList,

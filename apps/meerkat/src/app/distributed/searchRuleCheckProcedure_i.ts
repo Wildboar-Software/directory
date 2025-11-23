@@ -1,5 +1,5 @@
 import { Context, Vertex, ServiceError, ClientAssociation, AttributeError } from "@wildboar/meerkat-types";
-import type { OperationDispatcherState } from "./OperationDispatcher";
+import type { OperationDispatcherState } from "./OperationDispatcher.js";
 import { ACDFTupleExtended, ACDFTuple, getACDFTuplesFromACIItem } from "@wildboar/x500";
 import {
     serviceAdminSubentry,
@@ -25,8 +25,8 @@ import {
 import {
     serviceError,
 } from "@wildboar/x500/DirectoryAbstractService";
-import createSecurityParameters from "../x500/createSecurityParameters";
-import printInvokeId from "../utils/printInvokeId";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
+import printInvokeId from "../utils/printInvokeId.js";
 import {
     searchServiceProblem,
 } from "@wildboar/x500/SelectedAttributeTypes";
@@ -109,7 +109,7 @@ import {
 import {
     attributeError,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getDistinguishedName from "../x500/getDistinguishedName";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
 import {
     AttributeType,
 } from "@wildboar/x500/InformationFramework";
@@ -148,26 +148,26 @@ import {
     NameAndOptionalUID,
 } from "@wildboar/x500/SelectedAttributeTypes";
 import { searchRules } from "@wildboar/x500/InformationFramework";
-import { attributeValueFromDB } from "../database/attributeValueFromDB";
+import { attributeValueFromDB } from "../database/attributeValueFromDB.js";
 import { _decode_SearchRuleDescription } from "@wildboar/x500/InformationFramework";
-import getRelevantSubentries from "../dit/getRelevantSubentries";
-import getAdministrativePoints from "../dit/getAdministrativePoints";
-import { ID_AC_SPECIFIC, ID_AUTONOMOUS } from "../../oidstr";
-import getACIItems from "../authz/getACIItems";
-import getIsGroupMember from "../authz/getIsGroupMember";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
-import preprocessTuples from "../authz/preprocessTuples";
-import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
+import getRelevantSubentries from "../dit/getRelevantSubentries.js";
+import getAdministrativePoints from "../dit/getAdministrativePoints.js";
+import { ID_AC_SPECIFIC, ID_AUTONOMOUS } from "../../oidstr.js";
+import getACIItems from "../authz/getACIItems.js";
+import getIsGroupMember from "../authz/getIsGroupMember.js";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
+import preprocessTuples from "../authz/preprocessTuples.js";
+import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants.js";
 import { PERMISSION_CATEGORY_INVOKE } from "@wildboar/x500";
-import { bacSettings } from "../authz/bacSettings";
+import { bacSettings } from "../authz/bacSettings.js";
 import { AttributeTypeAndValue } from "@wildboar/pki-stub";
-import { getServiceAdminPoint } from "../dit/getServiceAdminPoint";
-import { is_empty_search_rule } from "../service/is_empty_search_rule";
-import { general_check_of_search_filter } from "../service/general_check_of_search_filter";
-import { check_of_request_attribute_profiles } from "../service/check_of_request_attribute_profiles";
-import { check_of_controls_and_hierarchy_selections } from "../service/check_of_controls_and_hierarchy_selections";
-import { check_of_matching_use } from "../service/check_of_matching_use";
-import { acdf } from "../authz/acdf";
+import { getServiceAdminPoint } from "../dit/getServiceAdminPoint.js";
+import { is_empty_search_rule } from "../service/is_empty_search_rule.js";
+import { general_check_of_search_filter } from "../service/general_check_of_search_filter.js";
+import { check_of_request_attribute_profiles } from "../service/check_of_request_attribute_profiles.js";
+import { check_of_controls_and_hierarchy_selections } from "../service/check_of_controls_and_hierarchy_selections.js";
+import { check_of_matching_use } from "../service/check_of_matching_use.js";
+import { acdf } from "../authz/acdf.js";
 
 const SEARCH_RULE_BYTES: Buffer = searchRules["&id"].toBytes();
 

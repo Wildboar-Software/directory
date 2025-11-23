@@ -10,12 +10,12 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
-import NOOP from "./NOOP";
+import NOOP from "./NOOP.js";
 import { DER } from "@wildboar/asn1/functional";
 import {
     collectiveAttributeSubentryList,
 } from "@wildboar/x500/InformationFramework";
-import getDistinguishedName from "../../x500/getDistinguishedName";
+import getDistinguishedName from "../../x500/getDistinguishedName.js";
 import {
     id_sc_collectiveAttributeSubentry,
 } from "@wildboar/x500/InformationFramework";
@@ -24,7 +24,7 @@ import {
     _encode_DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
 import { compareDistinguishedName } from "@wildboar/x500";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
 
 const SUBENTRY_CLASS: string = id_sc_collectiveAttributeSubentry.toString();
 

@@ -2,11 +2,11 @@ import type { Context } from "@wildboar/meerkat-types";
 import type { ASN1Element } from "@wildboar/asn1";
 import { compareDistinguishedName, EqualityMatcher } from "@wildboar/x500";
 import { _decode_ORName } from "@wildboar/x400/MTSAbstractService";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
 import {
     _decode_ORAddress,
 } from "@wildboar/x400/MTSAbstractService";
-import { orAddressesMatch } from "./orAddressUtilities";
+import { orAddressesMatch } from "./orAddressUtilities.js";
 
 export
 function getORNameMatcher (ctx: Context): EqualityMatcher {

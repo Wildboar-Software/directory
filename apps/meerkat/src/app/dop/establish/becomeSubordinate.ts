@@ -14,34 +14,34 @@ import {
 import {
     MasterOrShadowAccessPoint_category_master,
 } from "@wildboar/x500/DistributedOperations";
-import dnToVertex from "../../dit/dnToVertex";
+import dnToVertex from "../../dit/dnToVertex.js";
 import { Knowledge } from "@prisma/client";
 import { DER, _decodeObjectIdentifier } from "@wildboar/asn1/functional";
-import createEntry from "../../database/createEntry";
+import createEntry from "../../database/createEntry.js";
 import {
     superiorKnowledge,
 } from "@wildboar/x500/DSAOperationalAttributeTypes";
 import {
     addValue,
-} from "../../database/drivers/superiorKnowledge";
+} from "../../database/drivers/superiorKnowledge.js";
 import {
     AccessPoint,
     _encode_AccessPoint,
 } from "@wildboar/x500/DistributedOperations";
-import saveAccessPoint from "../../database/saveAccessPoint";
-import isFirstLevelDSA from "../../dit/isFirstLevelDSA";
+import saveAccessPoint from "../../database/saveAccessPoint.js";
+import isFirstLevelDSA from "../../dit/isFirstLevelDSA.js";
 import type {
     OBJECT_CLASS,
 } from "@wildboar/x500/InformationFramework";
 import { INTEGER, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import { SubentryInfo, Vertex as X500Vertex } from "@wildboar/x500/HierarchicalOperationalBindings";
-import readSubordinates from "../../dit/readSubordinates";
-import readAttributes from "../../database/entry/readAttributes";
-import subentryEIS from "../subentryEIS";
+import readSubordinates from "../../dit/readSubordinates.js";
+import readAttributes from "../../database/entry/readAttributes.js";
+import subentryEIS from "../subentryEIS.js";
 import { MeerkatContext } from "../../ctx.js";
-import getSubschemaSubentry from "../../dit/getSubschemaSubentry";
+import getSubschemaSubentry from "../../dit/getSubschemaSubentry.js";
 import { objectClass } from "@wildboar/x500/InformationFramework";
-import getStructuralObjectClass from "../../x500/getStructuralObjectClass";
+import getStructuralObjectClass from "../../x500/getStructuralObjectClass.js";
 import { checkNameForm } from "@wildboar/x500";
 import { Attribute } from "@wildboar/x500/InformationFramework";
 import { governingStructureRule } from "@wildboar/x500/SchemaAdministration";

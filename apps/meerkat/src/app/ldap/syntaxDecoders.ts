@@ -10,8 +10,8 @@ import {
     OBJECT_IDENTIFIER,
 } from "@wildboar/asn1";
 import { BER, DER, _encodeNumericString, _encodePrintableString, _encodeUTF8String } from "@wildboar/asn1/functional";
-import lex from "./lexSchema";
-import isDigit from "../utils/isDigit";
+import lex from "./lexSchema.js";
+import isDigit from "../utils/isDigit.js";
 import {
     ObjectClassKind,
     ObjectClassKind_abstract,
@@ -69,9 +69,9 @@ import {
 import {
     _encode_SubtreeSpecification,
 } from "@wildboar/x500/InformationFramework";
-import { getSubtreeSpecLexer } from "./lexSubtreeSpec";
+import { getSubtreeSpecLexer } from "./lexSubtreeSpec.js";
 import { phone } from "phone";
-import decodeLDAPDN from "./decodeLDAPDN";
+import decodeLDAPDN from "./decodeLDAPDN.js";
 import {
     _encode_RelativeDistinguishedName,
 } from "@wildboar/pki-stub";
@@ -91,7 +91,9 @@ import { UiiItem } from "@wildboar/x500/SelectedAttributeTypes";
 import { EpcFormat_fields_Item_charField } from "@wildboar/x500/SelectedAttributeTypes";
 import { EpcFormat_fields_Item, EpcFormat_fields_Item_result, EpcFormat_fields_Item_result_alpha7bits, EpcFormat_fields_Item_result_numeric, EpcFormat_fields_Item_result_numericPad } from "@wildboar/x500/SelectedAttributeTypes";
 import { EpcFormat, _encode_EpcFormat } from "@wildboar/x500/SelectedAttributeTypes";
-import { parseOneAddress } from "email-addresses";
+import emailAddresses from "email-addresses";
+
+const parseOneAddress = emailAddresses.parseOneAddress;
 
 function qdstring (escaped: string): string {
     return escaped

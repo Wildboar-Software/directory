@@ -1,5 +1,5 @@
 import type { Vertex, ClientAssociation, Context, IndexableDN } from "@wildboar/meerkat-types";
-import { OperationDispatcher } from "./OperationDispatcher";
+import { OperationDispatcher } from "./OperationDispatcher.js";
 import { ASN1Construction, BERElement, FALSE, FALSE_BIT, TRUE, TRUE_BIT } from "@wildboar/asn1";
 import {
     SearchResultData,
@@ -41,14 +41,14 @@ import {
     AttributeTypeAndValue,
 } from "@wildboar/pki-stub";
 import { SearchArgumentData_subset_baseObject } from "@wildboar/x500/DirectoryAbstractService";
-import { SearchState } from "./search_i";
+import { SearchState } from "./search_i.js";
 import { EntryInformation } from "@wildboar/x500/DirectoryAbstractService";
 import { strict as assert } from "node:assert";
 import { MeerkatContext } from "../ctx.js";
 import type { DistinguishedValue } from "@prisma/client";
 import { OperationProgress_nameResolutionPhase_notStarted } from "@wildboar/x500/DistributedOperations";
 import { TraceItem } from "@wildboar/x500/DistributedOperations";
-import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
+import generateUnusedInvokeID from "../net/generateUnusedInvokeID.js";
 import { addSeconds } from "date-fns";
 import {
     PartialOutcomeQualifier,
@@ -58,8 +58,8 @@ import {
 } from "@wildboar/x500/DirectoryAbstractService";
 import { id_ar_serviceSpecificArea } from "@wildboar/x500/InformationFramework";
 import { id_ar_autonomousArea } from "@wildboar/x500/InformationFramework";
-import getDistinguishedName from "../x500/getDistinguishedName";
-import isPrefix from "../x500/isPrefix";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
+import isPrefix from "../x500/isPrefix.js";
 import {
     EntryInformationSelection,
     FamilyReturn,
@@ -67,14 +67,14 @@ import {
 import {
     FamilyReturn_memberSelect_compoundEntry,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { stringifyDN } from "../x500/stringifyDN";
-import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers";
+import { stringifyDN } from "../x500/stringifyDN.js";
+import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers.js";
 import { DER } from "@wildboar/asn1/functional";
 import { family_information } from "@wildboar/x500/DirectoryAbstractService";
 import { FamilyEntries, FamilyEntry } from "@wildboar/x500/DirectoryAbstractService";
-import iterateOverSearchResults from "../x500/iterateOverSearchResults";
+import iterateOverSearchResults from "../x500/iterateOverSearchResults.js";
 import { compareDistinguishedName, getOptionallyProtectedValue } from "@wildboar/x500";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 
 export
 function getNamesFromFamilyEntry (fe: FamilyEntry, base_dn: DistinguishedName): DistinguishedName[] {

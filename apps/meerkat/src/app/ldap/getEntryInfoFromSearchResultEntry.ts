@@ -8,8 +8,8 @@ import {
 import type {
     EntryInformation_information_Item,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getEntryInfoItemFromPartialAttribute from "./getEntryInfoItemFromPartialAttribute";
-import decodeLDAPDN from "./decodeLDAPDN";
+import getEntryInfoItemFromPartialAttribute from "./getEntryInfoItemFromPartialAttribute.js";
+import decodeLDAPDN from "./decodeLDAPDN.js";
 
 /**
  * @summary Converts an LDAP `SearchResultEntry` into X.500 `EntryInformation`

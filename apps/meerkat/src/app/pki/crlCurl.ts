@@ -1,5 +1,5 @@
 import type { RemoteCRLOptions } from "@wildboar/meerkat-types";
-import { curlHTTP, curlHTTP2, curlFTP, curlLDAP } from "./curl";
+import { curlHTTP, curlHTTP2, curlFTP, curlLDAP } from "./curl.js";
 import { BERElement, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import type {
     DistributionPoint,
@@ -50,7 +50,7 @@ import {
 import {
     TypeAndContextAssertion,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { NOW_CONTEXT_ASSERTION, DEFAULT_REMOTE_CRL_SIZE_LIMIT } from "../constants";
+import { NOW_CONTEXT_ASSERTION, DEFAULT_REMOTE_CRL_SIZE_LIMIT } from "../constants.js";
 import { differenceInSeconds } from "date-fns";
 import type { MeerkatContext } from "../ctx.js";
 import {

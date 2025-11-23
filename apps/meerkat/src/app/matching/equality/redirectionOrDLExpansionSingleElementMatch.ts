@@ -1,6 +1,6 @@
 import { ASN1Element, BERElement } from "@wildboar/asn1";
 import type { EqualityMatcher } from "@wildboar/x500";
-import { oRNameSingleElementMatch } from "./oRNameSingleElementMatch";
+import { oRNameSingleElementMatch } from "./oRNameSingleElementMatch.js";
 
 // DLExpansionHistory ::= SEQUENCE SIZE (1..ub-dl-expansions) OF DLExpansion
 

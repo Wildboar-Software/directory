@@ -7,7 +7,7 @@ import type {
 import { ASN1Construction } from "@wildboar/asn1";
 import type { Prisma } from "@prisma/client";
 import type { DistinguishedName } from "@wildboar/x500/InformationFramework";
-import rdnToJson from "../../x500/rdnToJson";
+import rdnToJson from "../../x500/rdnToJson.js";
 
 /**
  * @summary Delete an attribute from an entry

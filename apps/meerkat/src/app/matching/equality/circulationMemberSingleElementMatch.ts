@@ -1,6 +1,6 @@
 import { ASN1Element, ASN1TagClass, ASN1UniversalType } from "@wildboar/asn1";
 import type { EqualityMatcher } from "@wildboar/x500";
-import { oRDescriptorSingleElementMatch } from "./oRDescriptorSingleElementMatch";
+import { oRDescriptorSingleElementMatch } from "./oRDescriptorSingleElementMatch.js";
 
 // RecipientSpecifier ::= SET {
 //     recipient              [0]  ORDescriptor,

@@ -127,7 +127,7 @@ import {
 import {
     SecurityErrorData,
 } from "@wildboar/x500/DirectoryAbstractService";
-import ldapReferenceToContinuationReference from "../ldap/ldapReferenceToContinuationReference";
+import ldapReferenceToContinuationReference from "../ldap/ldapReferenceToContinuationReference.js";
 
 function serviceErrorData (problem: INTEGER): ServiceErrorData {
     return new ServiceErrorData(

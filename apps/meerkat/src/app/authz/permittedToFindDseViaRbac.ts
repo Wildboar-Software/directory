@@ -5,8 +5,8 @@ import {
     PERMISSION_CATEGORY_RETURN_DN,
 } from "@wildboar/x500";
 import { attributeValueSecurityLabelContext } from "@wildboar/x500/EnhancedSecurity";
-import getEqualityNormalizer from "../x500/getEqualityNormalizer";
-import { rbacACDF } from "./rbacACDF";
+import getEqualityNormalizer from "../x500/getEqualityNormalizer.js";
+import { rbacACDF } from "./rbacACDF.js";
 import { _decode_SignedSecurityLabel } from "@wildboar/x500/EnhancedSecurity";
 
 /**

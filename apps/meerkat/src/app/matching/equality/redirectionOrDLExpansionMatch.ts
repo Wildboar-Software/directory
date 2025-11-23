@@ -1,7 +1,7 @@
 import type { Context } from "@wildboar/meerkat-types";
 import { ASN1Element, BERElement } from "@wildboar/asn1";
 import type { EqualityMatcher } from "@wildboar/x500";
-import { getORNameMatcher } from "./oRNameMatch";
+import { getORNameMatcher } from "./oRNameMatch.js";
 
 // DLExpansionHistory ::= SEQUENCE SIZE (1..ub-dl-expansions) OF DLExpansion
 

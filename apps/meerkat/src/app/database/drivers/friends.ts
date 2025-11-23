@@ -15,7 +15,7 @@ import { DER } from "@wildboar/asn1/functional";
 import { friends } from "@wildboar/x500/SchemaAdministration";
 import { subschema } from "@wildboar/x500/SchemaAdministration";
 import { directoryStringToString } from "@wildboar/x500";
-import readFriendsDescriptions from "../readers/readFriendsDescriptions";
+import readFriendsDescriptions from "../readers/readFriendsDescriptions.js";
 
 const SUBSCHEMA: string = subschema["&id"].toString();
 

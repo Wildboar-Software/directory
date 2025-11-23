@@ -8,8 +8,8 @@ import type {
 import type {
     PartialAttribute,
 } from "@wildboar/ldap";
-import getPartialAttributeFromEntryInfoItem from "./getPartialAttributeFromEntryInfoItem";
-import encodeLDAPDN from "./encodeLDAPDN";
+import getPartialAttributeFromEntryInfoItem from "./getPartialAttributeFromEntryInfoItem.js";
+import encodeLDAPDN from "./encodeLDAPDN.js";
 
 /**
  * @summary Converts X.500 `EntryInformation` into an LDAP `SearchResultEntry`

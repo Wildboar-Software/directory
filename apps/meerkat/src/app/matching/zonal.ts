@@ -19,7 +19,7 @@ import {
     postalCode,
     stateOrProvinceName,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import getAttributeParentTypes from "../x500/getAttributeParentTypes";
+import getAttributeParentTypes from "../x500/getAttributeParentTypes.js";
 import {
     ZonalResult, ZonalResult_cannot_select_mapping,
 } from "@wildboar/x500/SelectedAttributeTypes";

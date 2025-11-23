@@ -17,8 +17,8 @@ import {
     _decode_DistinguishedName,
     _encode_DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import rdnToJson from "../../x500/rdnToJson";
-import dnToID from "../../dit/dnToID";
+import rdnToJson from "../../x500/rdnToJson.js";
+import dnToID from "../../dit/dnToID.js";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (

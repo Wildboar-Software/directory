@@ -1,4 +1,4 @@
-import { uuidMatch } from "./uuidMatch";
+import { uuidMatch } from "./uuidMatch.js";
 import { DER, _encodeOctetString } from "@wildboar/asn1/functional";
 
 describe("uuidMatch", () => {

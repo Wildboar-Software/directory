@@ -1,4 +1,4 @@
-import { isSubstringSubset } from "./oRAddressSubstringElementsMatch";
+import { isSubstringSubset } from "./oRAddressSubstringElementsMatch.js";
 
 describe("isSubstringSubset()", () => {
     test("#1", () => {

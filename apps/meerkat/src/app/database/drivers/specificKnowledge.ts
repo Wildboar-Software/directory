@@ -16,9 +16,9 @@ import { DER } from "@wildboar/asn1/functional";
 import {
     specificKnowledge,
 } from "@wildboar/x500/DSAOperationalAttributeTypes";
-import saveAccessPoint from "../saveAccessPoint";
+import saveAccessPoint from "../saveAccessPoint.js";
 import { compareRDNSequence } from "@wildboar/x500";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (

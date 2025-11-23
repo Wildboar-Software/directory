@@ -9,7 +9,7 @@ import type { MeerkatContext } from "../ctx.js";
 import {
     NameAndOptionalUID,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import dnToVertex from "../dit/dnToVertex";
+import dnToVertex from "../dit/dnToVertex.js";
 import {
     AuthenticationLevel_basicLevels,
 } from "@wildboar/x500/BasicAccessControl";
@@ -22,21 +22,21 @@ import {
 import {
     DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as DirectoryBindErrorData,
 } from "@wildboar/x500/DirectoryAbstractService";
-import versions from "../versions";
+import versions from "../versions.js";
 import {
     id_oc_pkiCertPath,
 } from "@wildboar/x500/AuthenticationFramework";
 import {
     pkiPath,
 } from "@wildboar/x500/AuthenticationFramework";
-import readValuesOfType from "../utils/readValuesOfType";
+import readValuesOfType from "../utils/readValuesOfType.js";
 import {
     CertificatePair,
     CertificationPath,
 } from "@wildboar/x500/AuthenticationFramework";
 import { compareAlgorithmIdentifier } from "@wildboar/x500";
 import { compareDistinguishedName } from "@wildboar/x500";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { getDateFromTime } from "@wildboar/x500";
 import {
     verifyToken,
@@ -44,7 +44,7 @@ import {
     VT_RETURN_CODE_MALFORMED,
     VT_RETURN_CODE_INVALID_SIG,
     VT_RETURN_CODE_UNTRUSTED, // FIXME: Why is this not used?
-} from "../pki/verifyToken";
+} from "../pki/verifyToken.js";
 import { strict as assert } from "assert";
 import {
     StrongCredentials,
@@ -55,7 +55,7 @@ import {
 } from "@wildboar/x500/AttributeCertificateDefinitions";
 import type { Socket } from "node:net";
 import type { TLSSocket } from "node:tls";
-import { read_unique_id, read_clearance } from "../database/utils";
+import { read_unique_id, read_clearance } from "../database/utils.js";
 import { clearance } from "@wildboar/x500/EnhancedSecurity";
 import {
     verifyAttrCert,
@@ -86,12 +86,12 @@ import {
     VAC_CRL_REVOKED,
     VAC_OCSP_OTHER,
     VAC_OCSP_REVOKED,
-} from "../pki/verifyAttrCertPath";
+} from "../pki/verifyAttrCertPath.js";
 import { Clearance } from "@wildboar/x500/EnhancedSecurity";
 import { subjectDirectoryAttributes } from "@wildboar/x500/CertificateExtensions";
 import { DERElement, unpackBits } from "@wildboar/asn1";
 import { TokenContent, _encode_TokenContent } from "@wildboar/x500/DirectoryAbstractService";
-import { getAlgorithmInfoFromKey } from "../pki/getAlgorithmInfoFromKey";
+import { getAlgorithmInfoFromKey } from "../pki/getAlgorithmInfoFromKey.js";
 import { addSeconds } from "date-fns";
 import { randomBytes } from "crypto";
 import { DER } from "@wildboar/asn1/functional";

@@ -8,12 +8,12 @@ import {
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import dnToVertex from "../../dit/dnToVertex";
+import dnToVertex from "../../dit/dnToVertex.js";
 import { Knowledge, OperationalBindingInitiator } from "@prisma/client";
 import { DER } from "@wildboar/asn1/functional";
-import createEntry from "../../database/createEntry";
-import addAttributes from "../../database/entry/addAttributes";
-import removeAttribute from "../../database/entry/removeAttribute";
+import createEntry from "../../database/createEntry.js";
+import addAttributes from "../../database/entry/addAttributes.js";
+import removeAttribute from "../../database/entry/removeAttribute.js";
 import {
     OpBindingErrorParam,
 } from "@wildboar/x500/OperationalBindingManagement";
@@ -23,7 +23,7 @@ import {
 import {
     id_op_binding_hierarchical,
 } from "@wildboar/x500/DirectoryOperationalBindingTypes";
-import createSecurityParameters from "../../x500/createSecurityParameters";
+import createSecurityParameters from "../../x500/createSecurityParameters.js";
 import {
     operationalBindingError,
 } from "@wildboar/x500/OperationalBindingManagement";
@@ -31,14 +31,14 @@ import {
     AccessPoint,
     _encode_AccessPoint,
 } from "@wildboar/x500/DistributedOperations";
-import saveAccessPoint from "../../database/saveAccessPoint";
-import dseFromDatabaseEntry from "../../database/dseFromDatabaseEntry";
+import saveAccessPoint from "../../database/saveAccessPoint.js";
+import dseFromDatabaseEntry from "../../database/dseFromDatabaseEntry.js";
 import { strict as assert } from "assert";
 import { NHOBSuperiorToSubordinate } from "@wildboar/x500/HierarchicalOperationalBindings";
-import deleteEntry from "../../database/deleteEntry";
+import deleteEntry from "../../database/deleteEntry.js";
 import { RelativeDistinguishedName } from "@wildboar/pki-stub";
 import { id_op_binding_shadow } from "@wildboar/x500/DirectoryOperationalBindingTypes";
-import { updateShadowConsumer } from "../../disp/createShadowUpdate";
+import { updateShadowConsumer } from "../../disp/createShadowUpdate.js";
 import { MeerkatContext } from "../../ctx.js";
 
 async function partiallyResolveDN (ctx: Context, dn: DistinguishedName): Promise<Vertex> {

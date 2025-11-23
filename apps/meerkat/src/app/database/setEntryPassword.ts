@@ -4,10 +4,10 @@ import {
     UserPwd_encrypted,
     _encode_UserPwd,
 } from "@wildboar/x500/PasswordPolicy";
-import encryptPassword from "../x500/encryptPassword";
-import getScryptAlgorithmIdentifier from "../x500/getScryptAlgorithmIdentifier";
+import encryptPassword from "../x500/encryptPassword.js";
+import getScryptAlgorithmIdentifier from "../x500/getScryptAlgorithmIdentifier.js";
 import { Prisma } from "@prisma/client";
-import anyPasswordsExist from "../authz/anyPasswordsExist";
+import anyPasswordsExist from "../authz/anyPasswordsExist.js";
 import { DER, _encodeGeneralizedTime } from "@wildboar/asn1/functional";
 import {
     pwdStartTime,
@@ -27,9 +27,9 @@ import {
 import {
     pwdGraceUseTime,
 } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdGraceUseTime.oa.js";
-import { getAdministrativePoints } from "../dit/getAdministrativePoints";
-import { getRelevantSubentries } from "../dit/getRelevantSubentries";
-import { getDistinguishedName } from "../x500/getDistinguishedName";
+import { getAdministrativePoints } from "../dit/getAdministrativePoints.js";
+import { getRelevantSubentries } from "../dit/getRelevantSubentries.js";
+import { getDistinguishedName } from "../x500/getDistinguishedName.js";
 import { addSeconds } from "date-fns";
 import { pwdEncAlg, pwdExpiryAge, pwdMaxAge } from "@wildboar/x500/PasswordPolicy";
 import { AlgorithmIdentifier, _encode_AlgorithmIdentifier } from "@wildboar/pki-stub";

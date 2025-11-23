@@ -18,9 +18,9 @@ import {
 import {
     UserPwd_encrypted,
 } from "@wildboar/x500/PasswordPolicy";
-import readEntryPassword from "../readEntryPassword";
-import setEntryPassword from "../setEntryPassword";
-import { validateAlgorithmParameters } from "../../authn/validateAlgorithmParameters";
+import readEntryPassword from "../readEntryPassword.js";
+import setEntryPassword from "../setEntryPassword.js";
+import { validateAlgorithmParameters } from "../../authn/validateAlgorithmParameters.js";
 
 // Returns an empty password, so the user can at least see if one exists or not.
 export

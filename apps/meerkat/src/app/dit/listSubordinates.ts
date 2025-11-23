@@ -1,7 +1,7 @@
 import type { Context } from "@wildboar/meerkat-types";
 import type { Prisma } from "@prisma/client";
-import { MAX_RESULTS } from "../constants";
-import { getEntryExistsFilter } from "../database/entryExistsFilter";
+import { MAX_RESULTS } from "../constants.js";
+import { getEntryExistsFilter } from "../database/entryExistsFilter.js";
 
 /**
  * @summary Get the RDNs of immediately suborinate entries

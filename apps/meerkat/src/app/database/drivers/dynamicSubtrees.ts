@@ -16,7 +16,7 @@ import {
 import {
     dynamicSubtrees,
 } from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/dynamicSubtrees.oa.js";
-import NOOP from "./NOOP";
+import NOOP from "./NOOP.js";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (

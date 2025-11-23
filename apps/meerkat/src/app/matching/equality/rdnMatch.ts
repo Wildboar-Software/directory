@@ -5,7 +5,7 @@ import {
     _decode_RelativeDistinguishedName,
 } from "@wildboar/x500/InformationFramework";
 import { compareRelativeDistinguishedName } from "@wildboar/x500";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
 
 export
 function getRDNMatcher (ctx: Context): EqualityMatcher {

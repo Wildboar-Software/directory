@@ -8,8 +8,8 @@ import type {
 import type {
     JoinAttPair,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getFilterStatistics from "./getFilterStatistics";
-import getEntryInformationSelectionStatistics from "./getEntryInformationSelectionStatistics";
+import getFilterStatistics from "./getFilterStatistics.js";
+import getEntryInformationSelectionStatistics from "./getEntryInformationSelectionStatistics.js";
 import { directoryStringToString } from "@wildboar/x500";
 
 function getJoinAttPairStatistics (jap: JoinAttPair): JoinAttPairStatistics {

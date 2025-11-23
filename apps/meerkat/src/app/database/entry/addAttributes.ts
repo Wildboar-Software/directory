@@ -5,13 +5,13 @@ import type {
 } from "@wildboar/meerkat-types";
 import type { Prisma } from "@prisma/client";
 import type { DistinguishedName } from "@wildboar/x500/InformationFramework";
-import { validateValues } from "./addValues";
+import { validateValues } from "./addValues.js";
 import {
     Attribute,
 } from "@wildboar/x500/InformationFramework";
-import valuesFromAttribute from "../../x500/valuesFromAttribute";
-import rdnToJson from "../../x500/rdnToJson";
-import getEqualityNormalizer from "../../x500/getEqualityNormalizer";
+import valuesFromAttribute from "../../x500/valuesFromAttribute.js";
+import rdnToJson from "../../x500/rdnToJson.js";
+import getEqualityNormalizer from "../../x500/getEqualityNormalizer.js";
 import {
     AttributeUsage_userApplications as userApplications,
 } from "@wildboar/x500/InformationFramework";

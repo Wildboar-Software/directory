@@ -20,8 +20,8 @@ import {
     _encode_DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
 import { compareDistinguishedName } from "@wildboar/x500";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
-import rdnToJson from "../../x500/rdnToJson";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
+import rdnToJson from "../../x500/rdnToJson.js";
 import { Prisma } from "@prisma/client";
 
 export

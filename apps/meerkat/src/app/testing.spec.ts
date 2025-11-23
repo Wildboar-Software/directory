@@ -26,7 +26,7 @@ import {
     DEFAULT_IDM_BUFFER_SIZE,
     DEFAULT_LDAP_BUFFER_SIZE,
     DEFAULT_REMOTE_CRL_CACHE_TTL,
-} from "./constants";
+} from "./constants.js";
 import type { SecureVersion } from "tls";
 import * as fs from "fs";
 import { PEMObject } from "pem-ts";
@@ -97,15 +97,15 @@ import {
 import {
     AuthenticationLevel_basicLevels_level_none,
 } from "@wildboar/x500/BasicAccessControl";
-import { decodePkiPathFromPEM } from "./utils/decodePkiPathFromPEM";
+import { decodePkiPathFromPEM } from "./utils/decodePkiPathFromPEM.js";
 import type {
     PkiPath,
 } from "@wildboar/pki-stub";
 import { rootCertificates } from "tls";
 import { strict as assert } from "assert";
 import * as x500at from "@wildboar/x500/src/lib/collections/attributes";
-import { attributeFromInformationObject } from "./init/attributeFromInformationObject";
-import { loadMatchingRules } from "./init/loadMatchingRules";
+import { attributeFromInformationObject } from "./init/attributeFromInformationObject.js";
+import { loadMatchingRules } from "./init/loadMatchingRules.js";
 
 export
 interface MeerkatTelemetryClient {

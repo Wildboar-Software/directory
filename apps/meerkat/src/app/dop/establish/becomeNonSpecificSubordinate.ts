@@ -5,29 +5,29 @@ import {
 import {
     MasterOrShadowAccessPoint_category_master,
 } from "@wildboar/x500/DistributedOperations";
-import dnToVertex from "../../dit/dnToVertex";
-import valuesFromAttribute from "../../x500/valuesFromAttribute";
+import dnToVertex from "../../dit/dnToVertex.js";
+import valuesFromAttribute from "../../x500/valuesFromAttribute.js";
 import { DER } from "@wildboar/asn1/functional";
-import addValues from "../../database/entry/addValues";
+import addValues from "../../database/entry/addValues.js";
 import {
     superiorKnowledge,
 } from "@wildboar/x500/DSAOperationalAttributeTypes";
 import {
     addValue,
-} from "../../database/drivers/superiorKnowledge";
+} from "../../database/drivers/superiorKnowledge.js";
 import {
     AccessPoint,
     _encode_AccessPoint,
 } from "@wildboar/x500/DistributedOperations";
-import isFirstLevelDSA from "../../dit/isFirstLevelDSA";
+import isFirstLevelDSA from "../../dit/isFirstLevelDSA.js";
 import {
     NHOBSubordinateToSuperior,
 } from "@wildboar/x500/HierarchicalOperationalBindings";
 import {
     NHOBSuperiorToSubordinate,
 } from "@wildboar/x500/HierarchicalOperationalBindings";
-import { createContextPrefixEntry } from "./becomeSubordinate";
-import saveAccessPoint from "../../database/saveAccessPoint";
+import { createContextPrefixEntry } from "./becomeSubordinate.js";
+import saveAccessPoint from "../../database/saveAccessPoint.js";
 import { Knowledge } from "@prisma/client";
 
 /**

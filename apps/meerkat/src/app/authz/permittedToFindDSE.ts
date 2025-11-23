@@ -8,27 +8,27 @@ import {
     PERMISSION_CATEGORY_RETURN_DN,
     PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
 } from "@wildboar/x500";
-import accessControlSchemesThatUseACIItems from "./accessControlSchemesThatUseACIItems";
+import accessControlSchemesThatUseACIItems from "./accessControlSchemesThatUseACIItems.js";
 import type {
     NameAndOptionalUID,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import bacSettings from "./bacSettings";
+import bacSettings from "./bacSettings.js";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
-import getDistinguishedName from "../x500/getDistinguishedName";
-import getACIItems from "./getACIItems";
-import getRelevantSubentries from "../dit/getRelevantSubentries";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
+import getACIItems from "./getACIItems.js";
+import getRelevantSubentries from "../dit/getRelevantSubentries.js";
 import { getACDFTuplesFromACIItem } from "@wildboar/x500";
-import getIsGroupMember from "../authz/getIsGroupMember";
+import getIsGroupMember from "../authz/getIsGroupMember.js";
 import type {
     AuthenticationLevel,
 } from "@wildboar/x500/BasicAccessControl";
-import preprocessTuples from "./preprocessTuples";
-import accessControlSchemesThatUseRBAC from "./accessControlSchemesThatUseRBAC";
-import dnToVertex from "../dit/dnToVertex";
-import permittedToFindDseViaRbac from "./permittedToFindDseViaRbac";
+import preprocessTuples from "./preprocessTuples.js";
+import accessControlSchemesThatUseRBAC from "./accessControlSchemesThatUseRBAC.js";
+import dnToVertex from "../dit/dnToVertex.js";
+import permittedToFindDseViaRbac from "./permittedToFindDseViaRbac.js";
 
 export
 interface PermittedToFindDSEReturn {

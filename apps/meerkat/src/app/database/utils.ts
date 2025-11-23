@@ -1,7 +1,7 @@
 import { Context, Vertex } from "@wildboar/meerkat-types";
 import { clearance } from "@wildboar/x500/EnhancedSecurity";
 import { uniqueIdentifier } from "@wildboar/x500/SelectedAttributeTypes";
-import { attributeValueFromDB } from "./attributeValueFromDB";
+import { attributeValueFromDB } from "./attributeValueFromDB.js";
 
 export
 async function read_unique_id (ctx: Context, vertex: Vertex): Promise<typeof uniqueIdentifier["&Type"] | undefined> {

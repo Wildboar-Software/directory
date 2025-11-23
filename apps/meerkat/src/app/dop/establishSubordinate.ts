@@ -3,7 +3,7 @@ import type { MeerkatContext } from "../ctx.js";
 import type {
     AccessPoint,
 } from "@wildboar/x500/DistributedOperations";
-import { bindForOBM } from "../net/bindToOtherDSA";
+import { bindForOBM } from "../net/bindToOtherDSA.js";
 import {
     establishOperationalBinding,
 } from "@wildboar/x500/OperationalBindingManagement";
@@ -23,13 +23,13 @@ import {
 import {
     MasterAndShadowAccessPoints,
 } from "@wildboar/x500/DistributedOperations";
-import getDistinguishedName from "../x500/getDistinguishedName";
-import readSubordinates from "../dit/readSubordinates";
-import admPointEIS from "./admPointEIS";
-import subentryEIS from "./subentryEIS";
-import readAttributes from "../database/entry/readAttributes";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
+import readSubordinates from "../dit/readSubordinates.js";
+import admPointEIS from "./admPointEIS.js";
+import subentryEIS from "./subentryEIS.js";
+import readAttributes from "../database/entry/readAttributes.js";
 import { addMilliseconds } from "date-fns";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import {
     ServiceErrorData,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -40,7 +40,7 @@ import {
     serviceError,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { checkNameForm, getOptionallyProtectedValue } from "@wildboar/x500";
-import { verifySIGNED } from "../pki/verifySIGNED";
+import { verifySIGNED } from "../pki/verifySIGNED.js";
 import {
     _encode_EstablishOperationalBindingResultData,
 } from "@wildboar/x500/OperationalBindingManagement";
@@ -56,10 +56,10 @@ import {
 import { DER, _decodeObjectIdentifier, _encodeInteger } from "@wildboar/asn1/functional";
 import { objectClass } from "@wildboar/x500/InformationFramework";
 import { governingStructureRule } from "@wildboar/x500/SchemaAdministration";
-import getSubschemaSubentry from "../dit/getSubschemaSubentry";
+import getSubschemaSubentry from "../dit/getSubschemaSubentry.js";
 import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
-import getStructuralObjectClass from "../x500/getStructuralObjectClass";
-import { getEntryAttributesToShareInOpBinding } from "../dit/getEntryAttributesToShareInOpBinding";
+import getStructuralObjectClass from "../x500/getStructuralObjectClass.js";
+import { getEntryAttributesToShareInOpBinding } from "../dit/getEntryAttributesToShareInOpBinding.js";
 
 // dSAOperationalBindingManagementBind OPERATION ::= dSABind
 

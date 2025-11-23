@@ -9,7 +9,7 @@ import {
     IndexableOID,
 } from "@wildboar/meerkat-types";
 import type { MeerkatContext } from "../ctx.js";
-import DSPAssociation from "../dsp/DSPConnection";
+import DSPAssociation from "../dsp/DSPConnection.js";
 import type { Request } from "@wildboar/x500";
 import {
     ChainingArguments,
@@ -31,17 +31,17 @@ import {
     _decode_SearchResult,
 } from "@wildboar/x500/DirectoryAbstractService";
 import * as errors from "@wildboar/meerkat-types";
-import requestValidationProcedure from "./requestValidationProcedure";
+import requestValidationProcedure from "./requestValidationProcedure.js";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
-import getSoughtObjectFromRequest from "./getSoughtObjectFromRequest";
-import findDSE from "./findDSE";
+import getSoughtObjectFromRequest from "./getSoughtObjectFromRequest.js";
+import findDSE from "./findDSE.js";
 import {
     ContinuationReference,
 } from "@wildboar/x500/DistributedOperations";
 import {
     TraceItem,
 } from "@wildboar/x500/DistributedOperations";
-import nrcrProcedure from "./nrcrProcedure";
+import nrcrProcedure from "./nrcrProcedure.js";
 import { TRUE_BIT, ASN1Element, ObjectIdentifier, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import {
     ServiceControlOptions_chainingProhibited as chainingProhibitedBit,
@@ -64,38 +64,38 @@ import { read } from "@wildboar/x500/DirectoryAbstractService";
 import { removeEntry } from "@wildboar/x500/DirectoryAbstractService";
 import { search } from "@wildboar/x500/DirectoryAbstractService";
 import { strict as assert } from "assert";
-import { abandon as doAbandon } from "./abandon";
-import { addEntry as doAddEntry } from "./addEntry";
-import { administerPassword as doAdministerPassword } from "./administerPassword";
-import { changePassword as doChangePassword } from "./changePassword";
-import { compare as doCompare } from "./compare";
-import { modifyDN as doModifyDN } from "./modifyDN";
-import { modifyEntry as doModifyEntry } from "./modifyEntry";
-import { read as doRead } from "./read";
-import { removeEntry as doRemoveEntry } from "./removeEntry";
-import list_i from "./list_i";
-import list_ii from "./list_ii";
+import { abandon as doAbandon } from "./abandon.js";
+import { addEntry as doAddEntry } from "./addEntry.js";
+import { administerPassword as doAdministerPassword } from "./administerPassword.js";
+import { changePassword as doChangePassword } from "./changePassword.js";
+import { compare as doCompare } from "./compare.js";
+import { modifyDN as doModifyDN } from "./modifyDN.js";
+import { modifyEntry as doModifyEntry } from "./modifyEntry.js";
+import { read as doRead } from "./read.js";
+import { removeEntry as doRemoveEntry } from "./removeEntry.js";
+import list_i from "./list_i.js";
+import list_ii from "./list_ii.js";
 import search_i, {
     apply_mr_mapping,
     getCurrentNumberOfResults,
     update_search_state_with_search_rule,
     update_operation_dispatcher_state_with_search_rule,
-} from "./search_i";
-import search_ii from "./search_ii";
-import resultsMergingProcedureForList from "./resultsMergingProcedureForList";
-import resultsMergingProcedureForSearch from "./resultsMergingProcedureForSearch";
+} from "./search_i.js";
+import search_ii from "./search_ii.js";
+import resultsMergingProcedureForList from "./resultsMergingProcedureForList.js";
+import resultsMergingProcedureForSearch from "./resultsMergingProcedureForSearch.js";
 import {
     OperationProgress_nameResolutionPhase,
     OperationProgress_nameResolutionPhase_completed as completed, OperationProgress_nameResolutionPhase_completed,
 } from "@wildboar/x500/DistributedOperations";
 import { DER } from "@wildboar/asn1/functional";
-import type { SearchState } from "./search_i";
+import type { SearchState } from "./search_i.js";
 import { ChainingResults } from "@wildboar/x500/DistributedOperations";
 import type { Error_ } from "@wildboar/x500";
 import type { InvokeId } from "@wildboar/x500/CommonProtocolSpecification";
 import type { Code } from "@wildboar/x500/CommonProtocolSpecification";
-import relatedEntryProcedure from "./relatedEntryProcedure";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import relatedEntryProcedure from "./relatedEntryProcedure.js";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import type { OPTIONALLY_PROTECTED } from "@wildboar/x500/EnhancedSecurity";
 import {
     Chained_ArgumentType_OPTIONALLY_PROTECTED_Parameter1,
@@ -108,44 +108,44 @@ import {
     id_errcode_securityError,
 } from "@wildboar/x500/CommonProtocolSpecification";
 import { codeToString } from "@wildboar/x500";
-import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
-import getFilterStatistics from "../telemetry/getFilterStatistics";
-import getEntryInformationSelectionStatistics from "../telemetry/getEntryInformationSelectionStatistics";
-import getStatisticsFromPagedResultsRequest from "../telemetry/getStatisticsFromPagedResultsRequest";
-import getJoinArgumentStatistics from "../telemetry/getJoinArgumentStatistics";
+import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments.js";
+import getFilterStatistics from "../telemetry/getFilterStatistics.js";
+import getEntryInformationSelectionStatistics from "../telemetry/getEntryInformationSelectionStatistics.js";
+import getStatisticsFromPagedResultsRequest from "../telemetry/getStatisticsFromPagedResultsRequest.js";
+import getJoinArgumentStatistics from "../telemetry/getJoinArgumentStatistics.js";
 import { Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 } from "@wildboar/x500/DistributedOperations";
-import ldapRequestToDAPRequest from "../distributed/ldapRequestToDAPRequest";
+import ldapRequestToDAPRequest from "../distributed/ldapRequestToDAPRequest.js";
 import { BER } from "@wildboar/asn1/functional";
-import failover from "../utils/failover";
-import mergeSortAndPageSearch from "./mergeSortAndPageSearch";
-import mergeSortAndPageList from "./mergeSortAndPageList";
+import failover from "../utils/failover.js";
+import mergeSortAndPageSearch from "./mergeSortAndPageSearch.js";
+import mergeSortAndPageList from "./mergeSortAndPageList.js";
 import { SearchResultData_searchInfo } from "@wildboar/x500/DirectoryAbstractService";
-import getDistinguishedName from "../x500/getDistinguishedName";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
 import { Attribute } from "@wildboar/pki-stub";
 import {
     FamilyReturn,
     ProtectionRequest_signed,
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { signChainedResult } from "../pki/signChainedResult";
+import { signChainedResult } from "../pki/signChainedResult.js";
 import { addSeconds } from "date-fns";
 import { randomInt } from "crypto";
 import { CommonArguments } from "@wildboar/x500/DirectoryAbstractService";
-import LDAPAssociation from "../ldap/LDAPConnection";
-import stringifyDN from "../x500/stringifyDN";
+import LDAPAssociation from "../ldap/LDAPConnection.js";
+import stringifyDN from "../x500/stringifyDN.js";
 import { MRMapping } from "@wildboar/x500/ServiceAdministration";
-import cloneChainingArgs from "../x500/cloneChainingArguments";
+import cloneChainingArgs from "../x500/cloneChainingArguments.js";
 import { MRSubstitution } from "@wildboar/x500/ServiceAdministration";
 import {
     SearchControlOptions_includeAllAreas, SearchControlOptions_noSystemRelaxation,
 } from "@wildboar/x500/DirectoryAbstractService";
-import normalizeFilter from "../x500/normalizeFilter";
+import normalizeFilter from "../x500/normalizeFilter.js";
 import {
     appliedRelaxation,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import { MAX_RESULTS } from "../constants";
-import { searchRuleCheckProcedure_i } from "./searchRuleCheckProcedure_i";
-import searchRuleCheckProcedure_ii from "./searchRuleCheckProcedure_ii";
+import { MAX_RESULTS } from "../constants.js";
+import { searchRuleCheckProcedure_i } from "./searchRuleCheckProcedure_i.js";
+import searchRuleCheckProcedure_ii from "./searchRuleCheckProcedure_ii.js";
 import { SearchArgumentData_subset_baseObject } from "@wildboar/x500/DirectoryAbstractService";
 import { ResultAttribute, SearchRule } from "@wildboar/x500/ServiceAdministration";
 import { AbortReason } from "@wildboar/rose-transport";

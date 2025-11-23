@@ -1,5 +1,5 @@
 import type { Context } from "@wildboar/meerkat-types";
-import { getEntryExistsFilter } from "../database/entryExistsFilter";
+import { getEntryExistsFilter } from "../database/entryExistsFilter.js";
 
 /**
  * @summary Determines whether any passwords are defined at all.

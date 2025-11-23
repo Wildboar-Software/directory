@@ -11,8 +11,8 @@ import {
 import { ReferralData } from "@wildboar/x500/DirectoryAbstractService";
 import { strict as assert } from "assert";
 import { ServiceErrorData } from "@wildboar/x500/DirectoryAbstractService";
-import { apinfoProcedure } from "./apinfoProcedure";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import { apinfoProcedure } from "./apinfoProcedure.js";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import {
     ServiceProblem_timeLimitExceeded,
     ServiceProblem_unableToProceed,
@@ -38,8 +38,8 @@ import {
 import { compareCode } from "@wildboar/x500";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import { NameErrorData } from "@wildboar/x500/DirectoryAbstractService";
-import { OperationDispatcher, OperationDispatcherState } from "./OperationDispatcher";
-import cloneChainingArguments from "../x500/cloneChainingArguments";
+import { OperationDispatcher, OperationDispatcherState } from "./OperationDispatcher.js";
+import cloneChainingArguments from "../x500/cloneChainingArguments.js";
 import { chainedRead } from "@wildboar/x500/DistributedOperations";
 import {
     AbandonedData,
@@ -47,7 +47,7 @@ import {
 import {
     abandoned,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getDistinguishedName from "../x500/getDistinguishedName";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
 import type {
     OPTIONALLY_PROTECTED,
 } from "@wildboar/x500/EnhancedSecurity";
@@ -57,11 +57,11 @@ import type {
 import {
     ReferenceType_nonSpecificSubordinate,
 } from "@wildboar/x500/DistributedOperations";
-import { printInvokeId } from "../utils/printInvokeId";
+import { printInvokeId } from "../utils/printInvokeId.js";
 import { compareAuthenticationLevel } from "@wildboar/x500";
 import { OperationOutcome, RejectReason, AbortReason } from "@wildboar/rose-transport";
-import stringifyDN from "../x500/stringifyDN";
-import printCode from "../utils/printCode";
+import stringifyDN from "../x500/stringifyDN.js";
+import printCode from "../utils/printCode.js";
 
 /**
  * These are rejection reasons that may reflect some transient or circumstantial

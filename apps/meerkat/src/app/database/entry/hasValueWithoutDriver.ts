@@ -3,7 +3,7 @@ import {
     Value,
 } from "@wildboar/meerkat-types";
 import { type EqualityMatcher } from "@wildboar/x500";
-import { attributeValueFromDB } from "../attributeValueFromDB";
+import { attributeValueFromDB } from "../attributeValueFromDB.js";
 
 /**
  * Multiple database trips will take a toll on performance. However, it is not

@@ -1,5 +1,5 @@
 import type { Context } from "@wildboar/meerkat-types";
-import { generateSignature } from "./generateSignature";
+import { generateSignature } from "./generateSignature.js";
 import {
     SIGNED,
 } from "@wildboar/x500/AuthenticationFramework";

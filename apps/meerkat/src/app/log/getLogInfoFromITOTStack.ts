@@ -1,5 +1,5 @@
 import { ISOTransportOverTCPStack } from "@wildboar/osi-net";
-import { getLogInfoFromSocket } from "./getLogInfoFromSocket";
+import { getLogInfoFromSocket } from "./getLogInfoFromSocket.js";
 
 export
 function getLogInfoFromITOTStack (itot: ISOTransportOverTCPStack) {

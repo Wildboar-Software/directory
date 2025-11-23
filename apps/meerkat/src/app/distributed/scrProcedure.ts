@@ -4,8 +4,8 @@ import {
     ContinuationReference, ReferenceType_ditBridge,
 } from "@wildboar/x500/DistributedOperations";
 import { SearchArgument, _encode_SearchArgument } from "@wildboar/x500/DirectoryAbstractService";
-import { SearchState } from "./search_i";
-import { OperationDispatcherState } from "./OperationDispatcher";
+import { SearchState } from "./search_i.js";
+import { OperationDispatcherState } from "./OperationDispatcher.js";
 import { TRUE, TRUE_BIT } from "@wildboar/asn1";
 import { DER } from "@wildboar/asn1/functional";
 import {
@@ -13,7 +13,7 @@ import {
     ServiceControlOptions_manageDSAIT as manageDSAITBit,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { compareAuthenticationLevel, ChainedRequest, getOptionallyProtectedValue, compareCode } from "@wildboar/x500";
-import { apinfoProcedure } from "./apinfoProcedure";
+import { apinfoProcedure } from "./apinfoProcedure.js";
 import {
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -25,18 +25,20 @@ import {
 import {
     OperationProgress_nameResolutionPhase_completed,
 } from "@wildboar/x500/DistributedOperations";
-import cloneChainingArgs from "../x500/cloneChainingArguments";
-import createSecurityParameters from "../x500/createSecurityParameters";
-import { Promise as bPromise } from "bluebird";
+import cloneChainingArgs from "../x500/cloneChainingArguments.js";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
+import bb from "bluebird";
 import {
     ServiceControls_priority_high,
 } from "@wildboar/x500/DirectoryAbstractService";
-import printCode from "../utils/printCode";
-import stringifyDN from "../x500/stringifyDN";
-import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers";
+import printCode from "../utils/printCode.js";
+import stringifyDN from "../x500/stringifyDN.js";
+import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers.js";
 import { id_opcode_search } from "@wildboar/x500/CommonProtocolSpecification";
 import { _decode_SearchResult } from "@wildboar/x500/DirectoryAbstractService";
 import { chainedSearch } from "@wildboar/x500/DistributedOperations";
+
+const bPromise = bb.Promise;
 
 /**
  * @summary Search Continuation Reference Procedure, as defined in ITU Recommendation X.518.

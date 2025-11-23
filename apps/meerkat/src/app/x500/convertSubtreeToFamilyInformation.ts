@@ -8,7 +8,7 @@ import {
 import {
     FamilyEntry,
 } from "@wildboar/x500/DirectoryAbstractService";
-import groupByOID from "../utils/groupByOID";
+import groupByOID from "../utils/groupByOID.js";
 
 /**
  * @summary Convert a subtree of entries into groups of `FamilyEntries`

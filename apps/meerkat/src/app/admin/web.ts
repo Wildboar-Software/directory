@@ -2,11 +2,11 @@ import type { Request, Response, NextFunction } from "express";
 import { MeerkatContext, default as ctx } from "../ctx.js";
 import * as fs from "fs/promises";
 import * as path from "path";
-import { flatten } from "flat";
-import { getServerStatistics } from "../telemetry/getServerStatistics";
-import sleep from "../utils/sleep";
-import stringifyDN from "../x500/stringifyDN";
-import { rdnFromJson } from "../x500/rdnFromJson";
+import flat from "flat";
+import { getServerStatistics } from "../telemetry/getServerStatistics.js";
+import sleep from "../utils/sleep.js";
+import stringifyDN from "../x500/stringifyDN.js";
+import { rdnFromJson } from "../x500/rdnFromJson.js";
 import { stringifyRelativeDistinguishedName as rdnToString } from "@wildboar/ldap";
 import { type StringEncoderGetter } from "@wildboar/ldap";
 import { type StringEncoder } from "@wildboar/ldap";
@@ -14,8 +14,8 @@ import { OBJECT_IDENTIFIER, ASN1Element, ASN1TagClass, ASN1UniversalType, BIT_ST
 import type {
     RelativeDistinguishedName
 } from "@wildboar/x500/InformationFramework";
-import getRDNFromEntryId from "../database/getRDNFromEntryId";
-import getDNFromEntryId from "../database/getDNFromEntryId";
+import getRDNFromEntryId from "../database/getRDNFromEntryId.js";
+import getDNFromEntryId from "../database/getDNFromEntryId.js";
 import { id_ar_autonomousArea } from "@wildboar/x500/InformationFramework";
 import { id_ar_accessControlSpecificArea } from "@wildboar/x500/InformationFramework";
 import { id_ar_accessControlInnerArea } from "@wildboar/x500/InformationFramework";
@@ -32,12 +32,12 @@ import { id_sc_serviceAdminSubentry } from "@wildboar/x500/InformationFramework"
 import { id_sc_pwdAdminSubentry } from "@wildboar/x500/InformationFramework";
 import { id_oc_parent } from "@wildboar/x500/InformationFramework";
 import { id_oc_child } from "@wildboar/x500/InformationFramework";
-import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry";
-import readValues from "../database/entry/readValues";
-import deleteEntry from "../database/deleteEntry";
+import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry.js";
+import readValues from "../database/entry/readValues.js";
+import deleteEntry from "../database/deleteEntry.js";
 import escape from "escape-html";
 import type { DistinguishedName } from "@wildboar/pki-stub";
-import dnToVertex from "../dit/dnToVertex";
+import dnToVertex from "../dit/dnToVertex.js";
 import {
     EntryInformationSelection,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -47,9 +47,9 @@ import {
 import {
     _decode_DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import readSubordinates from "../dit/readSubordinates";
+import readSubordinates from "../dit/readSubordinates.js";
 import { subschema } from "@wildboar/x500/SchemaAdministration";
-import { getLDAPSyntax } from "../x500/getLDAPSyntax";
+import { getLDAPSyntax } from "../x500/getLDAPSyntax.js";
 import { entryDN } from "@wildboar/parity-schema/src/lib/modules/RFC5020EntryDN/entryDN.oa.js";
 import { dseType } from "@wildboar/x500/DSAOperationalAttributeTypes";
 import {
@@ -76,14 +76,14 @@ import { getRDN } from "@wildboar/x500";
 import { Context, Vertex, RemoteCRLCheckiness } from "@wildboar/meerkat-types";
 import type { Entry } from "@prisma/client";
 import { DER } from "@wildboar/asn1/functional";
-import { stringifyGN } from "../x500/stringifyGN";
+import { stringifyGN } from "../x500/stringifyGN.js";
 import { getDateFromTime } from "@wildboar/x500";
 import {
     Certificate,
     _decode_Certificate,
     _encode_Certificate,
 } from "@wildboar/x500/AuthenticationFramework";
-import { groupByOID } from "../utils/groupByOID";
+import { groupByOID } from "../utils/groupByOID.js";
 import {
     subjectDirectoryAttributes,
 } from "@wildboar/x500/CertificateExtensions";
@@ -221,7 +221,7 @@ import {
     EncapsulatedContentInfo,
 } from "@wildboar/cms";
 import { PEMObject } from "pem-ts";
-import { createCMSSignedData } from "../pki/createCMSSignedData";
+import { createCMSSignedData } from "../pki/createCMSSignedData.js";
 import { PkiPath } from "@wildboar/pki-stub";
 import { id_data } from "@wildboar/cms";
 import {
@@ -231,11 +231,11 @@ import {
     _encode_CertificationRequestInfo,
     CertificationRequestInfo_version_v1,
 } from "@wildboar/pkcs/PKCS-10";
-import { generateSIGNED } from "../pki/generateSIGNED";
+import { generateSIGNED } from "../pki/generateSIGNED.js";
 import {
     _encode_PkiPath,
 } from "@wildboar/x500/AuthenticationFramework";
-import { verifyAnyCertPath } from "../pki/verifyAnyCertPath";
+import { verifyAnyCertPath } from "../pki/verifyAnyCertPath.js";
 import {
     VerifyCertPathResult,
     VCPReturnCode,
@@ -261,15 +261,18 @@ import {
     VCP_RETURN_NAME_NOT_PERMITTED,
     VCP_RETURN_NAME_EXCLUDED,
     VCP_RETURN_PROHIBITED_SIG_ALG,
-} from "../pki/verifyCertPath";
+} from "../pki/verifyCertPath.js";
 import {
     CertificatePair,
     CertificationPath,
 } from "@wildboar/x500/AuthenticationFramework";
-import { crlCache } from "../pki/crlCurl";
+import { crlCache } from "../pki/crlCurl.js";
 import { AttributeCertificate } from "@wildboar/pki-stub";
-import * as os from "os";
+import * as os from "node:os";
+import { fileURLToPath } from "node:url";
 import { timingSafeEqual, randomInt } from "crypto";
+
+const flatten = flat.flatten;
 
 async function unauthorized (
     ctx: Context,
@@ -364,6 +367,9 @@ function errorHandlingMiddleware (req: MeerkatReq, _: Response, next: NextFuncti
         req.ctx.log.error(`${e}`);
     }
 }
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const conformancePath = path.join(__dirname, "assets", "static", "conformance.md");
 const ROBOTS: string = `User-agent: *\r\nDisallow: /\r\n`;

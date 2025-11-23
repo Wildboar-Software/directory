@@ -8,7 +8,7 @@ import type {
 import {
     Attribute,
 } from "@wildboar/x500/InformationFramework";
-import getPartialAttributeFromAttribute from "./getPartialAttributeFromAttribute";
+import getPartialAttributeFromAttribute from "./getPartialAttributeFromAttribute.js";
 
 /**
  * @summary Convert an X.500 entry information item into an LDAP `PartialAttribute`

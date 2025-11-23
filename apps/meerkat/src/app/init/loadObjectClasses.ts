@@ -1,5 +1,5 @@
 import { Context } from "@wildboar/meerkat-types";
-import objectClassFromInformationObject from "./objectClassFromInformationObject";
+import objectClassFromInformationObject from "./objectClassFromInformationObject.js";
 import { objectClasses as x500oc } from "@wildboar/x500";
 import { ObjectClassKind as PrismaObjectClassKind } from "@prisma/client";
 import {
@@ -197,148 +197,148 @@ import {
 // IANA LDAP Parity Schema
 import {
     ads_authenticationInterceptor,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-authenticationInterceptor.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-authenticationInterceptor.oa.js"
 import {
     ads_authenticator,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-authenticator.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-authenticator.oa.js"
 import {
     ads_authenticatorImpl,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-authenticatorImpl.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-authenticatorImpl.oa.js"
 import {
     ads_base,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-base.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-base.oa.js"
 import {
     ads_changeLog,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-changeLog.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-changeLog.oa.js"
 import {
     ads_changePasswordServer,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-changePasswordServer.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-changePasswordServer.oa.js"
 import {
     ads_delegatingAuthenticator,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-delegatingAuthenticator.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-delegatingAuthenticator.oa.js"
 import {
     ads_dhcpServer,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-dhcpServer.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-dhcpServer.oa.js"
 import {
     ads_directoryService,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-directoryService.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-directoryService.oa.js"
 import {
     ads_dnsServer,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-dnsServer.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-dnsServer.oa.js"
 import {
     ads_dsBasedServer,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-dsBasedServer.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-dsBasedServer.oa.js"
 import {
     ads_extendedOpHandler,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-extendedOpHandler.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-extendedOpHandler.oa.js"
 import {
     ads_hashInterceptor,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-hashInterceptor.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-hashInterceptor.oa.js"
 import {
     ads_httpServer,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-httpServer.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-httpServer.oa.js"
 import {
     ads_httpWebApp,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-httpWebApp.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-httpWebApp.oa.js"
 import {
     ads_index,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-index.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-index.oa.js"
 import {
     ads_interceptor,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-interceptor.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-interceptor.oa.js"
 import {
     ads_jdbmIndex,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-jdbmIndex.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-jdbmIndex.oa.js"
 import {
     ads_jdbmPartition,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-jdbmPartition.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-jdbmPartition.oa.js"
 import {
     ads_journal,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-journal.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-journal.oa.js"
 import {
     ads_kdcServer,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-kdcServer.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-kdcServer.oa.js"
 import {
     ads_ldapServer,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-ldapServer.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-ldapServer.oa.js"
 import {
     ads_mavibotIndex,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-mavibotIndex.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-mavibotIndex.oa.js"
 import {
     ads_mavibotPartition,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-mavibotPartition.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-mavibotPartition.oa.js"
 import {
     ads_ntpServer,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-ntpServer.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-ntpServer.oa.js"
 import {
     ads_partition,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-partition.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-partition.oa.js"
 import {
     ads_passwordPolicy,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-passwordPolicy.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-passwordPolicy.oa.js"
 import {
     ads_replConsumer,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-replConsumer.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-replConsumer.oa.js"
 import {
     ads_replEventLog,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-replEventLog.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-replEventLog.oa.js"
 import {
     ads_saslMechHandler,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-saslMechHandler.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-saslMechHandler.oa.js"
 import {
     ads_server,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-server.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-server.oa.js"
 import {
     ads_tcpTransport,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-tcpTransport.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-tcpTransport.oa.js"
 import {
     ads_transport,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-transport.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-transport.oa.js"
 import {
     ads_udpTransport,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-udpTransport.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDirectoryConfig/ads-udpTransport.oa.js"
 import {
     apacheDnsAbstractRecord,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDNS-Schema/apacheDnsAbstractRecord.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDNS-Schema/apacheDnsAbstractRecord.oa.js"
 import {
     apacheDnsAddressRecord,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDNS-Schema/apacheDnsAddressRecord.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDNS-Schema/apacheDnsAddressRecord.oa.js"
 import {
     apacheDnsCanonicalNameRecord,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDNS-Schema/apacheDnsCanonicalNameRecord.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDNS-Schema/apacheDnsCanonicalNameRecord.oa.js"
 import {
     apacheDnsMailExchangeRecord,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDNS-Schema/apacheDnsMailExchangeRecord.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDNS-Schema/apacheDnsMailExchangeRecord.oa.js"
 import {
     apacheDnsNameServerRecord,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDNS-Schema/apacheDnsNameServerRecord.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDNS-Schema/apacheDnsNameServerRecord.oa.js"
 import {
     apacheDnsPointerRecord,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDNS-Schema/apacheDnsPointerRecord.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDNS-Schema/apacheDnsPointerRecord.oa.js"
 import {
     apacheDnsReferralAddress,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDNS-Schema/apacheDnsReferralAddress.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDNS-Schema/apacheDnsReferralAddress.oa.js"
 import {
     apacheDnsReferralNameServer,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDNS-Schema/apacheDnsReferralNameServer.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDNS-Schema/apacheDnsReferralNameServer.oa.js"
 import {
     apacheDnsServiceRecord,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDNS-Schema/apacheDnsServiceRecord.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDNS-Schema/apacheDnsServiceRecord.oa.js"
 import {
     apacheDnsStartOfAuthorityRecord,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDNS-Schema/apacheDnsStartOfAuthorityRecord.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDNS-Schema/apacheDnsStartOfAuthorityRecord.oa.js"
 import {
     apacheDnsTextRecord,
-} from "@wildboar/parity-schema/src/lib/modules/ApacheDNS-Schema/apacheDnsTextRecord.oa";
+} from "@wildboar/parity-schema/src/lib/modules/ApacheDNS-Schema/apacheDnsTextRecord.oa.js"
 import {
     authPasswordObject,
 } from "@wildboar/parity-schema/src/lib/modules/AuthPasswordSchema/authPasswordObject.oa.js";
 import {
     automount,
-} from "@wildboar/parity-schema/src/lib/modules/AutoFS-Schema/automount.oa";
+} from "@wildboar/parity-schema/src/lib/modules/AutoFS-Schema/automount.oa.js"
 import {
     automountMap,
-} from "@wildboar/parity-schema/src/lib/modules/AutoFS-Schema/automountMap.oa";
+} from "@wildboar/parity-schema/src/lib/modules/AutoFS-Schema/automountMap.oa.js"
 import {
     corbaContainer,
 } from "@wildboar/parity-schema/src/lib/modules/CORBA/corbaContainer.oa.js";
@@ -383,40 +383,40 @@ import {
 } from "@wildboar/parity-schema/src/lib/modules/Cosine/room.oa.js";
 import {
     dhcpClass,
-} from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpClass.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpClass.oa.js"
 import {
     dhcpGroup,
-} from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpGroup.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpGroup.oa.js"
 import {
     dhcpHost,
-} from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpHost.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpHost.oa.js"
 import {
     dhcpLeases,
-} from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpLeases.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpLeases.oa.js"
 import {
     dhcpLog,
-} from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpLog.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpLog.oa.js"
 import {
     dhcpOptions,
-} from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpOptions.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpOptions.oa.js"
 import {
     dhcpPool,
-} from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpPool.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpPool.oa.js"
 import {
     dhcpServer,
-} from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpServer.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpServer.oa.js"
 import {
     dhcpService,
-} from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpService.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpService.oa.js"
 import {
     dhcpSharedNetwork,
-} from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpSharedNetwork.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpSharedNetwork.oa.js"
 import {
     dhcpSubClass,
-} from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpSubClass.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpSubClass.oa.js"
 import {
     dhcpSubnet,
-} from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpSubnet.oa";
+} from "@wildboar/parity-schema/src/lib/modules/DHCP-Schema/dhcpSubnet.oa.js"
 // import {
 //     glue as ds389Glue,
 // } from "@wildboar/parity-schema/src/lib/modules/DS389CommonSchema/glue.oa.js";
@@ -731,34 +731,34 @@ import {
 } from "@wildboar/parity-schema/src/lib/modules/TableFramework/textTableEntry.oa.js";
 import {
     uddiAddress,
-} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiAddress.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiAddress.oa.js"
 import {
     uddiBindingTemplate,
-} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiBindingTemplate.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiBindingTemplate.oa.js"
 import {
     uddiBusinessEntity,
-} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiBusinessEntity.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiBusinessEntity.oa.js"
 import {
     uddiBusinessService,
-} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiBusinessService.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiBusinessService.oa.js"
 import {
     uddiContact,
-} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiContact.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiContact.oa.js"
 import {
     uddiPublisherAssertion,
-} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiPublisherAssertion.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiPublisherAssertion.oa.js"
 import {
     uddiTModel,
-} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiTModel.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiTModel.oa.js"
 import {
     uddiTModelInstanceInfo,
-} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiTModelInstanceInfo.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiTModelInstanceInfo.oa.js"
 import {
     uddiv3EntityObituary,
-} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiv3EntityObituary.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiv3EntityObituary.oa.js"
 import {
     uddiv3Subscription,
-} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiv3Subscription.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UDDI-Schema/uddiv3Subscription.oa.js"
 import {
     vPIMUser,
 } from "@wildboar/parity-schema/src/lib/modules/VPIMSchema/vPIMUser.oa.js";
@@ -782,64 +782,64 @@ import {
 } from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/interfaceEntry.oa.js";
 import {
     securityUserInfo,
-} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/securityUserInfo.oa";
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/securityUserInfo.oa.js"
 import {
     tokensStock,
-} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/tokensStock.oa";
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/tokensStock.oa.js"
 import {
     uptProvider,
-} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/uptProvider.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/uptProvider.oa.js"
 import {
     partner,
-} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/partner.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/partner.oa.js"
 import {
     agreedService,
-} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/agreedService.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/agreedService.oa.js"
 import {
     administrativeUnit,
-} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/administrativeUnit.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/administrativeUnit.oa.js"
 import {
     userProfile,
-} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/userProfile.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/userProfile.oa.js"
 import {
     userProfileAlias,
-} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/userProfileAlias.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/userProfileAlias.oa.js"
 import {
     calledUptUser,
-} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/calledUptUser.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/calledUptUser.oa.js"
 import {
     callingUptUser,
-} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/callingUptUser.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/callingUptUser.oa.js"
 import {
     supplementaryService,
-} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/supplementaryService.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/supplementaryService.oa.js"
 import {
     callForwarding,
-} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/callForwarding.oa";
+} from "@wildboar/parity-schema/src/lib/modules/UPT-DataModel/callForwarding.oa.js"
 import {
     commObject,
-} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/commObject.oa";
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/commObject.oa.js"
 import {
     commURIObject,
-} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/commURIObject.oa";
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/commURIObject.oa.js"
 import {
     h323Identity,
-} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h323Identity.oa";
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h323Identity.oa.js"
 import {
     h235Identity,
-} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h235Identity.oa";
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h235Identity.oa.js"
 import {
     h320Identity,
-} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h320Identity.oa";
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/h320Identity.oa.js"
 import {
     sIPIdentity,
-} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/sIPIdentity.oa";
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/sIPIdentity.oa.js"
 import {
     genericIdentity,
-} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/genericIdentity.oa";
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/genericIdentity.oa.js"
 import {
     callPreferenceURIObject,
-} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/callPreferenceURIObject.oa";
+} from "@wildboar/parity-schema/src/lib/modules/H323-X500-Schema/callPreferenceURIObject.oa.js"
 import { objectClasses as schemaLevelIIObjectClasses } from "@wildboar/schema-level-ii";
 import { strict as assert } from "node:assert";
 

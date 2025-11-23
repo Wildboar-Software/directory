@@ -4,7 +4,7 @@ import { ObjectIdentifier, TRUE_BIT, FALSE, unpackBits } from "@wildboar/asn1";
 import * as errors from "@wildboar/meerkat-types";
 import * as crypto from "crypto";
 import { DER, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
-import readSubordinates from "../dit/readSubordinates";
+import readSubordinates from "../dit/readSubordinates.js";
 import {
     ListArgument,
     _decode_ListArgument,
@@ -35,14 +35,14 @@ import {
 import {
     ListResultData_listInfo_subordinates_Item as ListItem,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getDistinguishedName from "../x500/getDistinguishedName";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
 import {
     Chained_ResultType_OPTIONALLY_PROTECTED_Parameter1 as ChainedResult,
 } from "@wildboar/x500/DistributedOperations";
 import {
     ChainingResults,
 } from "@wildboar/x500/DistributedOperations";
-import getRelevantSubentries from "../dit/getRelevantSubentries";
+import getRelevantSubentries from "../dit/getRelevantSubentries.js";
 import { type ACDFTuple } from "@wildboar/x500";
 import { type ACDFTupleExtended } from "@wildboar/x500";
 import {
@@ -51,8 +51,8 @@ import {
     PERMISSION_CATEGORY_READ,
 } from "@wildboar/x500";
 import { getACDFTuplesFromACIItem } from "@wildboar/x500";
-import getIsGroupMember from "../authz/getIsGroupMember";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import getIsGroupMember from "../authz/getIsGroupMember.js";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import {
     id_opcode_list,
 } from "@wildboar/x500/CommonProtocolSpecification";
@@ -85,15 +85,15 @@ import {
     LimitProblem_timeLimitExceeded,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { getDateFromTime } from "@wildboar/x500";
-import type { OperationDispatcherState } from "./OperationDispatcher";
+import type { OperationDispatcherState } from "./OperationDispatcher.js";
 import { codeToString } from "@wildboar/x500";
-import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
-import getStatisticsFromPagedResultsRequest from "../telemetry/getStatisticsFromPagedResultsRequest";
-import getListResultStatistics from "../telemetry/getListResultStatistics";
-import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics";
-import failover from "../utils/failover";
-import getACIItems from "../authz/getACIItems";
-import { MAX_RESULTS, UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
+import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments.js";
+import getStatisticsFromPagedResultsRequest from "../telemetry/getStatisticsFromPagedResultsRequest.js";
+import getListResultStatistics from "../telemetry/getListResultStatistics.js";
+import getPartialOutcomeQualifierStatistics from "../telemetry/getPartialOutcomeQualifierStatistics.js";
+import failover from "../utils/failover.js";
+import getACIItems from "../authz/getACIItems.js";
+import { MAX_RESULTS, UNTRUSTED_REQ_AUTH_LEVEL } from "../constants.js";
 import type { Prisma } from "@prisma/client";
 import {
     child,
@@ -107,12 +107,12 @@ import {
 import {
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
-import bacSettings from "../authz/bacSettings";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
+import bacSettings from "../authz/bacSettings.js";
 import {
     NameAndOptionalUID,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import preprocessTuples from "../authz/preprocessTuples";
+import preprocessTuples from "../authz/preprocessTuples.js";
 import {
     id_ar_autonomousArea,
 } from "@wildboar/x500/InformationFramework";
@@ -134,11 +134,11 @@ import {
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/InformationFramework";
-import { stringifyDN } from "../x500/stringifyDN";
+import { stringifyDN } from "../x500/stringifyDN.js";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import { printInvokeId } from "../utils/printInvokeId";
+import { printInvokeId } from "../utils/printInvokeId.js";
 import {
     SecurityProblem_invalidSignature,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -148,12 +148,12 @@ import {
 import {
     securityError,
 } from "@wildboar/x500/DirectoryAbstractService";
-import DSPAssociation from "../dsp/DSPConnection";
-import { generateSignature } from "../pki/generateSignature";
+import DSPAssociation from "../dsp/DSPConnection.js";
+import { generateSignature } from "../pki/generateSignature.js";
 import { SIGNED } from "@wildboar/x500/AuthenticationFramework";
-import { acdf } from "../authz/acdf";
-import accessControlSchemesThatUseRBAC from "../authz/accessControlSchemesThatUseRBAC";
-import { get_security_labels_for_rdn } from "../authz/get_security_labels_for_rdn";
+import { acdf } from "../authz/acdf.js";
+import accessControlSchemesThatUseRBAC from "../authz/accessControlSchemesThatUseRBAC.js";
+import { get_security_labels_for_rdn } from "../authz/get_security_labels_for_rdn.js";
 
 const BYTES_IN_A_UUID: number = 16;
 const PARENT: string = parent["&id"].toString();

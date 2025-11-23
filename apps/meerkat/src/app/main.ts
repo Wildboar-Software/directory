@@ -5,8 +5,8 @@ import * as tls from "tls";
 import * as path from "path";
 import * as os from "os";
 import { IdmBind } from "@wildboar/x500/IDMProtocolSpecification";
-import { rose_transport_from_idm_socket } from "./rose/idm";
-import { rose_transport_from_itot_stack } from "./rose/itot";
+import { rose_transport_from_idm_socket } from "./rose/idm.js";
+import { rose_transport_from_itot_stack } from "./rose/itot.js";
 import {
     create_itot_stack,
     ISOTransportOverTCPStack,
@@ -24,38 +24,38 @@ import {
 import { dap_ip } from "@wildboar/x500/DirectoryIDMProtocols";
 import { dsp_ip } from "@wildboar/x500/DirectoryIDMProtocols";
 import { dop_ip } from "@wildboar/x500/DirectoryIDMProtocols";
-import DAPAssociation from "./dap/DAPConnection";
-import DSPAssociation from "./dsp/DSPConnection";
-import DOPAssociation from "./dop/DOPConnection";
-import LDAPAssociation from "./ldap/LDAPConnection";
-import loadDIT from "./init/loadDIT";
-import loadAttributeTypes from "./init/loadAttributeTypes";
-import loadObjectClasses from "./init/loadObjectClasses";
-import loadLDAPSyntaxes from "./init/loadLDAPSyntaxes";
-import loadMatchingRules from "./init/loadMatchingRules";
-import loadContextTypes from "./init/loadContextTypes";
-import loadObjectIdentifierNames from "./init/loadObjectIdentifierNames";
-import loadNameForms from "./init/loadNameForms";
-import { loadDSARelationships } from "./init/loadDSARelationships";
+import DAPAssociation from "./dap/DAPConnection.js";
+import DSPAssociation from "./dsp/DSPConnection.js";
+import DOPAssociation from "./dop/DOPConnection.js";
+import LDAPAssociation from "./ldap/LDAPConnection.js";
+import loadDIT from "./init/loadDIT.js";
+import loadAttributeTypes from "./init/loadAttributeTypes.js";
+import loadObjectClasses from "./init/loadObjectClasses.js";
+import loadLDAPSyntaxes from "./init/loadLDAPSyntaxes.js";
+import loadMatchingRules from "./init/loadMatchingRules.js";
+import loadContextTypes from "./init/loadContextTypes.js";
+import loadObjectIdentifierNames from "./init/loadObjectIdentifierNames.js";
+import loadNameForms from "./init/loadNameForms.js";
+import { loadDSARelationships } from "./init/loadDSARelationships.js";
 import ctx, { MeerkatContext } from "./ctx.js";
-import terminate from "./dop/terminateByID";
+import terminate from "./dop/terminateByID.js";
 import { differenceInMilliseconds, differenceInMinutes } from "date-fns";
 import * as dns from "dns/promises";
 import {
     updatesDomain,
-} from "./constants";
-import createDatabaseReport from "./telemetry/createDatabaseReport";
+} from "./constants.js";
+import createDatabaseReport from "./telemetry/createDatabaseReport.js";
 import semver from "semver";
 import isDebugging from "is-debugging";
 import { setTimeout as safeSetTimeout } from "safe-timers";
 import { randomUUID } from "crypto";
-import { flatten } from "flat";
-import { getServerStatistics } from "./telemetry/getServerStatistics";
+import flat from "flat";
+import { getServerStatistics } from "./telemetry/getServerStatistics.js";
 import { naddrToURI } from "@wildboar/x500";
-import { getOnOCSPRequestCallback } from "./pki/getOnOCSPRequestCallback";
+import { getOnOCSPRequestCallback } from "./pki/getOnOCSPRequestCallback.js";
 import cookieParser from "cookie-parser";
-import { parseFormData } from "./admin/parseFormData";
-import printCode from "./utils/printCode";
+import { parseFormData } from "./admin/parseFormData.js";
+import printCode from "./utils/printCode.js";
 import {
     id_ac_directoryAccessAC,
 } from "@wildboar/x500/DirectoryOSIProtocols";
@@ -80,16 +80,21 @@ import {
 import { AbortReason } from "@wildboar/rose-transport";
 import { createWriteStream } from "node:fs";
 import { disp_ip } from "@wildboar/x500/DirectoryIDMProtocols";
-import DISPAssociation from "./disp/DISPConnection";
+import DISPAssociation from "./disp/DISPConnection.js";
 import { id_op_binding_shadow } from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import { OperationalBindingInitiator } from "@prisma/client";
 import {
     _decode_ShadowingAgreementInfo,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
-import scheduleShadowUpdates from "./disp/scheduleShadowUpdates";
+import scheduleShadowUpdates from "./disp/scheduleShadowUpdates.js";
 import { BERElement } from "@wildboar/asn1";
-import { cacheNamingContexts } from "./dit/cacheNamingContexts";
-import * as routes from "./admin/web";
+import { cacheNamingContexts } from "./dit/cacheNamingContexts.js";
+import * as routes from "./admin/web.js";
+import { fileURLToPath } from "node:url";
+
+const flatten = flat.flatten;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * hbs (Handlebars templating engine) is an implicit dependency for

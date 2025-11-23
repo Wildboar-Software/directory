@@ -3,7 +3,7 @@ import { BERElement } from "@wildboar/asn1";
 import {
     _decode_OCSPResponse,
 } from "@wildboar/ocsp";
-import { verifyOCSPResponse, VOR_RETURN_OK } from "./verifyOCSPResponse";
+import { verifyOCSPResponse, VOR_RETURN_OK } from "./verifyOCSPResponse.js";
 
 export type NodeOCSPResponseCallback = (response: Buffer) => unknown;
 

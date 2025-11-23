@@ -16,8 +16,8 @@ import { DER } from "@wildboar/asn1/functional";
 import {
     secondaryShadows,
 } from "@wildboar/x500/DSAOperationalAttributeTypes";
-import rdnToJson from "../../x500/rdnToJson";
-import saveAccessPoint from "../saveAccessPoint";
+import rdnToJson from "../../x500/rdnToJson.js";
+import saveAccessPoint from "../saveAccessPoint.js";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (

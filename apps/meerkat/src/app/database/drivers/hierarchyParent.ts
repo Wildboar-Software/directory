@@ -13,10 +13,10 @@ import {
     UpdateError,
 } from "@wildboar/meerkat-types";
 import { DER } from "@wildboar/asn1/functional";
-import rdnToJson from "../../x500/rdnToJson";
+import rdnToJson from "../../x500/rdnToJson.js";
 import { Prisma } from "@prisma/client";
 import { compareDistinguishedName } from "@wildboar/x500";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
 import {
     UpdateErrorData,
     UpdateProblem_hierarchyRuleViolation,
@@ -29,9 +29,9 @@ import {
     id_ar_autonomousArea,
     id_ar_serviceSpecificArea,
 } from "@wildboar/x500/InformationFramework";
-import dnToVertex from "../../dit/dnToVertex";
-import { stringifyDN } from "../../x500/stringifyDN";
-import { distinguishedNameMatch as normalizeDN } from "../../matching/normalizers";
+import dnToVertex from "../../dit/dnToVertex.js";
+import { stringifyDN } from "../../x500/stringifyDN.js";
+import { distinguishedNameMatch as normalizeDN } from "../../matching/normalizers.js";
 
 const CHILD: string = id_oc_child.toString();
 const ID_AR_SVC: string = id_ar_serviceSpecificArea.toString();

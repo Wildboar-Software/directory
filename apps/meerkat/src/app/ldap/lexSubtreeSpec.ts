@@ -5,11 +5,11 @@ import {
 import type {
     ChopSpecification_specificExclusions_Item,
 } from "@wildboar/x500/InformationFramework";
-import decodeLDAPDN from "./decodeLDAPDN";
+import decodeLDAPDN from "./decodeLDAPDN.js";
 import type {
     Refinement,
 } from "@wildboar/x500/InformationFramework";
-import isDigit from "../utils/isDigit";
+import isDigit from "../utils/isDigit.js";
 import { ObjectIdentifier } from "@wildboar/asn1";
 
 const BASE_STRING: string = "base";

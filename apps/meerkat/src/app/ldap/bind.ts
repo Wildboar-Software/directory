@@ -7,18 +7,18 @@ import { TLSSocket } from "tls";
 import {
     BindResponse,
 } from "@wildboar/ldap";
-import dnToVertex from "../dit/dnToVertex";
-import decodeLDAPDN from "./decodeLDAPDN";
-import encodeLDAPDN from "./encodeLDAPDN";
-import getDistinguishedName from "../x500/getDistinguishedName";
+import dnToVertex from "../dit/dnToVertex.js";
+import decodeLDAPDN from "./decodeLDAPDN.js";
+import encodeLDAPDN from "./encodeLDAPDN.js";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
 import {
     LDAPResult_resultCode_success,
     LDAPResult_resultCode_protocolError,
     LDAPResult_resultCode_invalidCredentials,
     LDAPResult_resultCode_authMethodNotSupported,
 } from "@wildboar/ldap";
-import attemptPassword from "../authn/attemptPassword";
-import readEntryPassword from "../database/readEntryPassword";
+import attemptPassword from "../authn/attemptPassword.js";
+import readEntryPassword from "../database/readEntryPassword.js";
 import type { AuthenticationLevel } from "@wildboar/x500/BasicAccessControl";
 import { AuthenticationLevel_basicLevels } from "@wildboar/x500/BasicAccessControl";
 import {
@@ -32,7 +32,7 @@ import {
     PwdResponseValue_error_passwordExpired,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { SimpleCredentials } from "@wildboar/x500/DirectoryAbstractService";
-import { read_unique_id, read_clearance } from "../database/utils";
+import { read_unique_id, read_clearance } from "../database/utils.js";
 
 export
 interface LDAPBindReturn extends BindReturn {

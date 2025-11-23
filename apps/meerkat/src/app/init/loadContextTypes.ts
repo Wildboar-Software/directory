@@ -1,6 +1,6 @@
 import type { Context } from "@wildboar/meerkat-types";
 import { BERElement, ObjectIdentifier } from "@wildboar/asn1";
-import contextTypeFromInformationObject from "./contextTypeFromInformationObject";
+import contextTypeFromInformationObject from "./contextTypeFromInformationObject.js";
 import { contexts as x500c } from "@wildboar/x500";
 import type {
     CONTEXT,
@@ -20,26 +20,26 @@ import {
 import {
     dl_reset_originator,
 } from "@wildboar/x400/MHSDirectoryObjectsAndAttributes";
-import { evaluateDLAdministratorAnnotationContext } from "../matching/context/dl-administrator-annotation";
+import { evaluateDLAdministratorAnnotationContext } from "../matching/context/dl-administrator-annotation.js";
 
 import {
     basicServiceContext,
-} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/basicServiceContext.oa";
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/basicServiceContext.oa.js"
 import {
     lineIdentityContext,
-} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/lineIdentityContext.oa";
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/lineIdentityContext.oa.js"
 import {
     assignmentContext,
-} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/assignmentContext.oa";
+} from "@wildboar/parity-schema/src/lib/modules/IN-CS3-SCF-SDF-datatypes/assignmentContext.oa.js"
 import {
     basicServiceContext as basicServiceContextMatcher,
-} from "../matching/context/basicServiceContext";
+} from "../matching/context/basicServiceContext.js";
 import {
     lineIdentityContext as lineIdentityContextMatcher,
-} from "../matching/context/lineIdentityContext";
+} from "../matching/context/lineIdentityContext.js";
 import {
     getAssignmentContext as getAssignmentContextMatcher,
-} from "../matching/context/assignmentContext";
+} from "../matching/context/assignmentContext.js";
 
 const basicServiceContextSyntax = `BasicService ::= INTEGER {
     telephony(1), faxGroup2-3(2), faxGroup4(3), teletexBasicAndMixed(4),

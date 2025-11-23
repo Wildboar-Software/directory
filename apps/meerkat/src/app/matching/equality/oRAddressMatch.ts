@@ -3,7 +3,7 @@ import { EqualityMatcher } from "@wildboar/x500";
 import {
     _decode_ORAddress,
 } from "@wildboar/x400/MTSAbstractService";
-import { orAddressesMatch } from "./orAddressUtilities";
+import { orAddressesMatch } from "./orAddressUtilities.js";
 
 export
 const oRAddressMatch: EqualityMatcher = (

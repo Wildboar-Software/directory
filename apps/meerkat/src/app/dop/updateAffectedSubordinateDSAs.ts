@@ -1,7 +1,7 @@
 import type { MeerkatContext } from "../ctx.js";
 import { BERElement } from "@wildboar/asn1";
-import dnToVertex from "../dit/dnToVertex";
-import getRelevantOperationalBindings from "./getRelevantOperationalBindings";
+import dnToVertex from "../dit/dnToVertex.js";
+import getRelevantOperationalBindings from "./getRelevantOperationalBindings.js";
 import {
     HierarchicalAgreement,
     _decode_HierarchicalAgreement,
@@ -10,8 +10,8 @@ import {
     AccessPoint,
     _decode_AccessPoint,
 } from "@wildboar/x500/DistributedOperations";
-import isPrefix from "../x500/isPrefix";
-import updateNHOBSubordinateDSA from "./updateNHOBSubordinateDSA";
+import isPrefix from "../x500/isPrefix.js";
+import updateNHOBSubordinateDSA from "./updateNHOBSubordinateDSA.js";
 import { OperationalBindingID } from "@wildboar/x500/OperationalBindingManagement";
 import type {
     DistinguishedName,
@@ -21,7 +21,7 @@ import {
 } from "@wildboar/x500/DirectoryOperationalBindingTypes";
 import { OperationalBindingInitiator } from "@prisma/client";
 import { _decode_NonSpecificHierarchicalAgreement } from "@wildboar/x500/HierarchicalOperationalBindings";
-import updateHOBSubordinateDSA from "./updateHOBSubordinateDSA";
+import updateHOBSubordinateDSA from "./updateHOBSubordinateDSA.js";
 
 /**
  * @summary Update subordinate DSAs when entries that relate to an operational binding are created, modified, or deleted.

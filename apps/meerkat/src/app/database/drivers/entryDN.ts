@@ -10,17 +10,17 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
-import NOOP from "./NOOP";
+import NOOP from "./NOOP.js";
 import { DER } from "@wildboar/asn1/functional";
 import {
     entryDN,
 } from "@wildboar/parity-schema/src/lib/modules/RFC5020EntryDN/entryDN.oa.js";
-import { getDistinguishedName } from "../../x500/getDistinguishedName";
+import { getDistinguishedName } from "../../x500/getDistinguishedName.js";
 import {
     _decode_DistinguishedName,
     _encode_DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
 import { compareDistinguishedName } from "@wildboar/x500";
 
 export

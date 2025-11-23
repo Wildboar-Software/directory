@@ -20,7 +20,7 @@ import {
     pwdAdminSubentry,
 } from "@wildboar/x500/InformationFramework";
 import type { Prisma } from "@prisma/client";
-import { attributeValueFromDB } from "../attributeValueFromDB";
+import { attributeValueFromDB } from "../attributeValueFromDB.js";
 
 const ID_PWD_SUBENTRY: string = pwdAdminSubentry["&id"].toString();
 const TYPE_OID = pwdFailureDuration["&id"].toBytes();

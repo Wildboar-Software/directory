@@ -2,8 +2,8 @@ import type { CommonArgumentsStatistics, TypeAndContextAssertionStatistics } fro
 import type {
     CommonArguments,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getStatisticsFromServiceControls from "./getStatisticsFromServiceControls";
-import getStatisticsFromSecurityParameters from "./getStatisticsFromSecurityParameters";
+import getStatisticsFromServiceControls from "./getStatisticsFromServiceControls.js";
+import getStatisticsFromSecurityParameters from "./getStatisticsFromSecurityParameters.js";
 
 export
 function getStatisticsFromCommonArguments (cargs: CommonArguments): CommonArgumentsStatistics {

@@ -74,7 +74,7 @@ import {
 } from "@wildboar/x500/matching/equality";
 import {
     wordMatch,
-} from "../matching/equality/wordMatch";
+} from "../matching/equality/wordMatch.js";
 import {
     caseExactOrderingMatch,
     caseIgnoreOrderingMatch,
@@ -94,28 +94,28 @@ import {
     caseIgnoreListSubstringsMatch,
     storedPrefixMatch,
 } from "@wildboar/x500/matching/substring";
-import approx_acceptableCertPoliciesMatch from "../matching/approx/acceptableCertPoliciesMatch";
-import approx_algorithmIdentifierMatch from "../matching/approx/algorithmIdentifierMatch";
-import approx_attDescriptor from "../matching/approx/attDescriptor";
-import approx_bitStringMatch from "../matching/approx/bitStringMatch";
-import approx_caseIgnoreIA5Match from "../matching/approx/caseIgnoreIA5Match";
-import approx_caseIgnoreListMatch from "../matching/approx/caseIgnoreListMatch";
-import approx_caseIgnoreMatch from "../matching/approx/caseIgnoreMatch";
-import approx_directoryStringFirstComponentMatch from "../matching/approx/directoryStringFirstComponentMatch";
-import approx_distinguishedNameMatch from "../matching/approx/distinguishedNameMatch";
-import approx_dualStringMatch from "../matching/approx/dualStringMatch";
-import approx_generalizedTimeMatch from "../matching/approx/generalizedTimeMatch";
-import approx_integerFirstComponentMatch from "../matching/approx/integerFirstComponentMatch";
-import approx_integerMatch from "../matching/approx/integerMatch";
-import approx_intEmailMatch from "../matching/approx/intEmailMatch";
-import approx_jidMatch from "../matching/approx/jidMatch";
-import approx_objectIdentifierMatch from "../matching/approx/objectIdentifierMatch";
-import approx_pwdEncAlgMatch from "../matching/approx/pwdEncAlgMatch";
-import approx_uniqueMemberMatch from "../matching/approx/uniqueMemberMatch";
-import approx_uriMatch from "../matching/approx/uriMatch";
-import approx_uTCTimeMatch from "../matching/approx/uTCTimeMatch";
-import { uuidMatch as uuidMatcher } from "../matching/equality/uuidMatch";
-import { uuidOrderingMatch as uuidOrderingMatcher } from "../matching/ordering/uuidOrderingMatch";
+import approx_acceptableCertPoliciesMatch from "../matching/approx/acceptableCertPoliciesMatch.js";
+import approx_algorithmIdentifierMatch from "../matching/approx/algorithmIdentifierMatch.js";
+import approx_attDescriptor from "../matching/approx/attDescriptor.js";
+import approx_bitStringMatch from "../matching/approx/bitStringMatch.js";
+import approx_caseIgnoreIA5Match from "../matching/approx/caseIgnoreIA5Match.js";
+import approx_caseIgnoreListMatch from "../matching/approx/caseIgnoreListMatch.js";
+import approx_caseIgnoreMatch from "../matching/approx/caseIgnoreMatch.js";
+import approx_directoryStringFirstComponentMatch from "../matching/approx/directoryStringFirstComponentMatch.js";
+import approx_distinguishedNameMatch from "../matching/approx/distinguishedNameMatch.js";
+import approx_dualStringMatch from "../matching/approx/dualStringMatch.js";
+import approx_generalizedTimeMatch from "../matching/approx/generalizedTimeMatch.js";
+import approx_integerFirstComponentMatch from "../matching/approx/integerFirstComponentMatch.js";
+import approx_integerMatch from "../matching/approx/integerMatch.js";
+import approx_intEmailMatch from "../matching/approx/intEmailMatch.js";
+import approx_jidMatch from "../matching/approx/jidMatch.js";
+import approx_objectIdentifierMatch from "../matching/approx/objectIdentifierMatch.js";
+import approx_pwdEncAlgMatch from "../matching/approx/pwdEncAlgMatch.js";
+import approx_uniqueMemberMatch from "../matching/approx/uniqueMemberMatch.js";
+import approx_uriMatch from "../matching/approx/uriMatch.js";
+import approx_uTCTimeMatch from "../matching/approx/uTCTimeMatch.js";
+import { uuidMatch as uuidMatcher } from "../matching/equality/uuidMatch.js";
+import { uuidOrderingMatch as uuidOrderingMatcher } from "../matching/ordering/uuidOrderingMatch.js";
 import type { ASN1Element, OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import { directoryStringToString } from "@wildboar/x500";
 import {
@@ -263,134 +263,134 @@ import {
 } from "@wildboar/parity-schema/src/lib/modules/TraderDefinitions/policySpecificationMatch.oa.js";
 import {
     addressCapabilitiesMatch as addressCapabilitiesMatchMatcher,
-} from "../matching/equality/addressCapabilitiesMatch";
+} from "../matching/equality/addressCapabilitiesMatch.js";
 import {
     capabilityMatch as capabilityMatchMatcher,
-} from "../matching/equality/capabilityMatch";
+} from "../matching/equality/capabilityMatch.js";
 import {
     circulationMemberCheckmarkMatch as circulationMemberCheckmarkMatchMatcher,
-} from "../matching/equality/circulationMemberCheckmarkMatch";
+} from "../matching/equality/circulationMemberCheckmarkMatch.js";
 import {
     getCirculationMemberElementsMatcher,
-} from "../matching/equality/circulationMemberElementsMatch";
+} from "../matching/equality/circulationMemberElementsMatch.js";
 import {
     getCirculationMemberMatcher,
-} from "../matching/equality/circulationMemberMatch";
+} from "../matching/equality/circulationMemberMatch.js";
 import {
     circulationMemberSingleElementMatch as circulationMemberSingleElementMatchMatcher,
-} from "../matching/equality/circulationMemberSingleElementMatch";
+} from "../matching/equality/circulationMemberSingleElementMatch.js";
 import {
     getCirculationMemberSubstringElementsMatcher,
-} from "../matching/equality/circulationMemberSubstringElementsMatch";
+} from "../matching/equality/circulationMemberSubstringElementsMatch.js";
 import {
     contentCorrelatorMatch as contentCorrelatorMatchMatcher,
-} from "../matching/equality/contentCorrelatorMatch";
+} from "../matching/equality/contentCorrelatorMatch.js";
 import {
     contentIdentifierMatch as contentIdentifierMatchMatcher,
-} from "../matching/equality/contentIdentifierMatch";
+} from "../matching/equality/contentIdentifierMatch.js";
 import {
     distributionCodeMatch as distributionCodeMatchMatcher,
-} from "../matching/equality/distributionCodeMatch";
+} from "../matching/equality/distributionCodeMatch.js";
 import {
     informationCategoryMatch as informationCategoryMatchMatcher,
-} from "../matching/equality/informationCategoryMatch";
+} from "../matching/equality/informationCategoryMatch.js";
 import {
     getIPMIdentifierMatcher,
-} from "../matching/equality/iPMIdentifierMatch";
+} from "../matching/equality/iPMIdentifierMatch.js";
 import {
     iPMLocationMatch as iPMLocationMatchMatcher,
-} from "../matching/equality/iPMLocationMatch";
+} from "../matching/equality/iPMLocationMatch.js";
 import {
     mSSingleSubstringListElementsMatch as mSSingleSubstringListElementsMatchMatcher,
-} from "../matching/equality/mSSingleSubstringListElementsMatch";
+} from "../matching/equality/mSSingleSubstringListElementsMatch.js";
 import {
     mSSingleSubstringListMatch as mSSingleSubstringListMatchMatcher,
-} from "../matching/equality/mSSingleSubstringListMatch";
+} from "../matching/equality/mSSingleSubstringListMatch.js";
 import {
     mSStringCaseSensitiveMatch as mSStringCaseSensitiveMatchMatcher,
-} from "../matching/equality/msStringCaseSensitiveMatch";
+} from "../matching/equality/msStringCaseSensitiveMatch.js";
 import {
     mSStringListElementsMatch as mSStringListElementsMatchMatcher,
-} from "../matching/equality/msStringListElementsMatch";
+} from "../matching/equality/msStringListElementsMatch.js";
 import {
     mSStringListMatch as mSStringListMatchMatcher,
-} from "../matching/equality/mSStringListMatch";
+} from "../matching/equality/mSStringListMatch.js";
 import {
     mSStringMatch as mSStringMatchMatcher,
-} from "../matching/equality/mSStringMatch";
+} from "../matching/equality/mSStringMatch.js";
 import {
     mSSubstringsMatch as mSSubstringsMatchMatcher,
-} from "../matching/equality/mSSubstringsMatch";
+} from "../matching/equality/mSSubstringsMatch.js";
 import {
     mTSIdentifierMatch as mTSIdentifierMatchMatcher,
-} from "../matching/equality/mTSIdentifierMatch";
-import { oRAddressElementsMatch as oRAddressElementsMatchMatcher } from "../matching/equality/oRAddressElementsMatch";
+} from "../matching/equality/mTSIdentifierMatch.js";
+import { oRAddressElementsMatch as oRAddressElementsMatchMatcher } from "../matching/equality/oRAddressElementsMatch.js";
 import {
     oRAddressMatch as oRAddressMatchMatcher,
-} from "../matching/equality/oRAddressMatch";
+} from "../matching/equality/oRAddressMatch.js";
 import {
     oRAddressSubstringElementsMatch as oRAddressSubstringElementsMatchMatcher,
-} from "../matching/equality/oRAddressSubstringElementsMatch";
+} from "../matching/equality/oRAddressSubstringElementsMatch.js";
 import {
     getORDescriptorElementsMatcher,
-} from "../matching/equality/oRDescriptorElementsMatch";
+} from "../matching/equality/oRDescriptorElementsMatch.js";
 import {
     getORDescriptorMatcher,
-} from "../matching/equality/oRDescriptorMatch";
+} from "../matching/equality/oRDescriptorMatch.js";
 import {
     oRDescriptorSingleElementMatch as oRDescriptorSingleElementMatchMatcher,
-} from "../matching/equality/oRDescriptorSingleElementMatch";
+} from "../matching/equality/oRDescriptorSingleElementMatch.js";
 import {
     getORDescriptorSubstringElementsMatcher,
-} from "../matching/equality/oRDescriptorSubstringElementsMatch";
+} from "../matching/equality/oRDescriptorSubstringElementsMatch.js";
 import {
     getORNameElementsMatcher,
-} from "../matching/equality/oRNameElementsMatch";
+} from "../matching/equality/oRNameElementsMatch.js";
 import {
     getORNameExactMatcher,
-} from "../matching/equality/oRNameExactMatch";
+} from "../matching/equality/oRNameExactMatch.js";
 import {
     getORNameMatcher
-} from "../matching/equality/oRNameMatch";
+} from "../matching/equality/oRNameMatch.js";
 import {
     oRNameSingleElementMatch as oRNameSingleElementMatchMatcher,
-} from "../matching/equality/oRNameSingleElementMatch";
+} from "../matching/equality/oRNameSingleElementMatch.js";
 import {
     getORNameSubstringElementsMatcher,
-} from "../matching/equality/oRNameSubstringElementsMatch";
+} from "../matching/equality/oRNameSubstringElementsMatch.js";
 import {
     getRecipientSpecifierElementsMatcher,
-} from "../matching/equality/recipientSpecifierElementsMatch";
+} from "../matching/equality/recipientSpecifierElementsMatch.js";
 import {
     getRecipientSpecifierMatcher,
-} from "../matching/equality/recipientSpecifierMatch";
+} from "../matching/equality/recipientSpecifierMatch.js";
 import {
     recipientSpecifierSingleElementMatch as recipientSpecifierSingleElementMatchMatcher,
-} from "../matching/equality/recipientSpecifierSingleElementMatch";
+} from "../matching/equality/recipientSpecifierSingleElementMatch.js";
 import {
     getRecipientSpecifierSubstringElementsMatcher,
-} from "../matching/equality/recipientSpecifierSubstringElementsMatch";
+} from "../matching/equality/recipientSpecifierSubstringElementsMatch.js";
 import {
     getRedirectionOrDLExpansionElementsMatch
-} from "../matching/equality/redirectionOrDLExpansionElementsMatch";
+} from "../matching/equality/redirectionOrDLExpansionElementsMatch.js";
 import {
     getRedirectionOrDLExpansionMatch,
-} from "../matching/equality/redirectionOrDLExpansionMatch";
+} from "../matching/equality/redirectionOrDLExpansionMatch.js";
 import {
     redirectionOrDLExpansionSingleElementMatch as redirectionOrDLExpansionSingleElementMatchMatcher,
-} from "../matching/equality/redirectionOrDLExpansionSingleElementMatch";
+} from "../matching/equality/redirectionOrDLExpansionSingleElementMatch.js";
 import {
     getRedirectionOrDLExpansionSubstringElementsMatch,
-} from "../matching/equality/redirectionOrDLExpansionSubstringElementsMatch";
+} from "../matching/equality/redirectionOrDLExpansionSubstringElementsMatch.js";
 import {
     redirectionReasonMatch as redirectionReasonMatchMatcher,
-} from "../matching/equality/redirectionReasonMatch";
+} from "../matching/equality/redirectionReasonMatch.js";
 import {
     mSStringOrderingMatch as mSStringOrderingMatchMatcher,
-} from "../matching/ordering/mSStringOrderingMatch";
+} from "../matching/ordering/mSStringOrderingMatch.js";
 import {
     mSSingleSubstringMatch as mSSingleSubstringMatchMatcher,
-} from "../matching/substring/mSSingleSubstringMatch";
+} from "../matching/substring/mSSingleSubstringMatch.js";
 
 // PKCS #9 Matching Rules
 import {
@@ -399,10 +399,10 @@ import {
 } from "@wildboar/pkcs/PKCS-9";
 import {
     pkcs9CaseIgnoreMatch as pkcs9CaseIgnoreMatchMatcher,
-} from "../matching/equality/pkcs9CaseIgnoreMatch";
+} from "../matching/equality/pkcs9CaseIgnoreMatch.js";
 import {
     signingTimeMatch as signingTimeMatchMatcher,
-} from "../matching/equality/signingTimeMatch";
+} from "../matching/equality/signingTimeMatch.js";
 
 // IANA LDAP Parity Matching Rules
 // import {
@@ -449,24 +449,24 @@ import {
 } from "@wildboar/parity-schema/src/lib/modules/UUID/uuidOrderingMatch.oa.js";
 import {
     caseExactIA5SubstringsMatch as caseExactIA5SubstringsMatcher,
-} from "../matching/substring/caseExactIA5SubstringsMatch";
+} from "../matching/substring/caseExactIA5SubstringsMatch.js";
 import {
     matcher as directoryStringApproxMatcher,
-} from "../matching/equality/directoryStringApproxMatch";
+} from "../matching/equality/directoryStringApproxMatch.js";
 import {
     matcher as ia5StringApproxMatcher,
-} from "../matching/equality/ia5StringApproxMatch";
+} from "../matching/equality/ia5StringApproxMatch.js";
 import {
     matcher as integerBitAndMatcher,
-} from "../matching/equality/integerBitAndMatch";
+} from "../matching/equality/integerBitAndMatch.js";
 import {
     matcher as integerBitOrMatcher,
-} from "../matching/equality/integerBitOrMatch";
-import { getRDNMatcher } from "../matching/equality/rdnMatch";
+} from "../matching/equality/integerBitOrMatch.js";
+import { getRDNMatcher } from "../matching/equality/rdnMatch.js";
 import {
     getPolicySpecificationMatcher,
-} from "../matching/equality/policySpecificationMatch";
-import * as norms from "../matching/normalizers";
+} from "../matching/equality/policySpecificationMatch.js";
+import * as norms from "../matching/normalizers.js";
 
 const caseIgnoreSortKeyGetter: SortKeyGetter = (element: ASN1Element): SortKey | null => {
     const ds = _decode_UnboundedDirectoryString(element);

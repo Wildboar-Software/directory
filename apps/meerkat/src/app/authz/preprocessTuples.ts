@@ -6,7 +6,7 @@ import type {
 import type {
     AuthenticationLevel,
 } from "@wildboar/x500/BasicAccessControl";
-import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems";
+import accessControlSchemesThatUseACIItems from "../authz/accessControlSchemesThatUseACIItems.js";
 import {
     type ACDFTuple,
     type ACDFTupleExtended,

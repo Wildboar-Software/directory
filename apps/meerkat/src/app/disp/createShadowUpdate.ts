@@ -7,9 +7,9 @@ import {
 import {
     _decode_AccessPoint,
 } from "@wildboar/x500/DistributedOperations";
-import dnToVertex from "../dit/dnToVertex";
+import dnToVertex from "../dit/dnToVertex.js";
 import { ShadowUpdateStrategy } from "@prisma/client";
-import { bindForDISP } from "../net/bindToOtherDSA";
+import { bindForDISP } from "../net/bindToOtherDSA.js";
 import {
     id_ac_shadowSupplierInitiatedAsynchronousAC,
 } from "@wildboar/x500/DirectoryOSIProtocols";
@@ -18,14 +18,14 @@ import {
     CoordinateShadowUpdateArgumentData_updateStrategy_standard_incremental,
     CoordinateShadowUpdateArgumentData_updateStrategy_standard_total,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import {
     id_opcode_coordinateShadowUpdate,
 } from "@wildboar/x500/CommonProtocolSpecification";
 import {
     RefreshInformation,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
-import { createTotalRefresh } from "./createTotalRefresh";
+import { createTotalRefresh } from "./createTotalRefresh.js";
 import {
     _decode_IncrementalStepRefresh,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
@@ -34,8 +34,8 @@ import {
     id_errcode_shadowError,
 } from "@wildboar/x500/CommonProtocolSpecification";
 import { shadowError } from "@wildboar/x500/DirectoryShadowAbstractService";
-import stringifyDN from "../x500/stringifyDN";
-import printCode from "../utils/printCode";
+import stringifyDN from "../x500/stringifyDN.js";
+import printCode from "../utils/printCode.js";
 import isDebugging from "is-debugging";
 import { differenceInMilliseconds } from "date-fns";
 

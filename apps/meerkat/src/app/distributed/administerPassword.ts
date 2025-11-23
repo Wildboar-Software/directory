@@ -21,14 +21,14 @@ import {
     ChainingResults,
 } from "@wildboar/x500/DistributedOperations";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
-import setEntryPassword from "../database/setEntryPassword";
+import setEntryPassword from "../database/setEntryPassword.js";
 import { SecurityErrorData } from "@wildboar/x500/DirectoryAbstractService";
 import {
     SecurityProblem_insufficientAccessRights,
     SecurityProblem_inappropriateAlgorithms,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getRelevantSubentries from "../dit/getRelevantSubentries";
-import getDistinguishedName from "../x500/getDistinguishedName";
+import getRelevantSubentries from "../dit/getRelevantSubentries.js";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
 import { type ACDFTuple } from "@wildboar/x500";
 import { type ACDFTupleExtended } from "@wildboar/x500";
 import {
@@ -37,38 +37,38 @@ import {
     PERMISSION_CATEGORY_MODIFY,
 } from "@wildboar/x500";
 import { getACDFTuplesFromACIItem } from "@wildboar/x500";
-import getIsGroupMember from "../authz/getIsGroupMember";
+import getIsGroupMember from "../authz/getIsGroupMember.js";
 import {
     userPassword,
 } from "@wildboar/x500/AuthenticationFramework";
 import {
     userPwd,
 } from "@wildboar/x500/PasswordPolicy";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import {
     id_opcode_administerPassword,
 } from "@wildboar/x500/CommonProtocolSpecification";
 import {
     securityError,
 } from "@wildboar/x500/DirectoryAbstractService";
-import type { OperationDispatcherState } from "./OperationDispatcher";
-import getACIItems from "../authz/getACIItems";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
-import bacSettings from "../authz/bacSettings";
+import type { OperationDispatcherState } from "./OperationDispatcher.js";
+import getACIItems from "../authz/getACIItems.js";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
+import bacSettings from "../authz/bacSettings.js";
 import {
     NameAndOptionalUID,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import preprocessTuples from "../authz/preprocessTuples";
-import { generateSignature } from "../pki/generateSignature";
+import preprocessTuples from "../authz/preprocessTuples.js";
+import { generateSignature } from "../pki/generateSignature.js";
 import { SIGNED } from "@wildboar/x500/AuthenticationFramework";
-import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
+import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants.js";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
 import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getScryptAlgorithmIdentifier from "../x500/getScryptAlgorithmIdentifier";
+import getScryptAlgorithmIdentifier from "../x500/getScryptAlgorithmIdentifier.js";
 import {
     UpdateErrorData,
     UpdateProblem_insufficientPasswordQuality,
@@ -80,7 +80,7 @@ import {
     CHECK_PWD_QUALITY_TOO_SOON,
     CHECK_PWD_QUALITY_OK,
     CHECK_PWD_QUALITY_REUSE,
-} from "../password/checkPasswordQuality";
+} from "../password/checkPasswordQuality.js";
 import { EncPwdInfo } from "@wildboar/x500/DirectoryAbstractService";
 import { pwdAdminSubentry } from "@wildboar/x500/InformationFramework";
 import { id_ar_pwdAdminSpecificArea } from "@wildboar/x500/InformationFramework";
@@ -88,8 +88,8 @@ import { userPwdHistory } from "@wildboar/x500/PasswordPolicy";
 import { pwdReset } from "@wildboar/parity-schema/src/lib/modules/LDAPPasswordPolicy/pwdReset.oa.js";
 import { pwdHistorySlots } from "@wildboar/x500/PasswordPolicy";
 import { id_scrypt } from "@wildboar/scrypt-0";
-import { validateAlgorithmParameters } from "../authn/validateAlgorithmParameters";
-import { acdf } from "../authz/acdf";
+import { validateAlgorithmParameters } from "../authn/validateAlgorithmParameters.js";
+import { acdf } from "../authz/acdf.js";
 
 const USER_PASSWORD_OID: string = userPassword["&id"].toString();
 const USER_PWD_OID: string = userPwd["&id"].toString();

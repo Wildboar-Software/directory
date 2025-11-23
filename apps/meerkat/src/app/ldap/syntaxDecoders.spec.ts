@@ -4,7 +4,7 @@ import {
     utmCoords,
     getUIIFormDecoder,
     epcForm,
-} from "./syntaxDecoders";
+} from "./syntaxDecoders.js";
 import { ObjectIdentifier } from "@wildboar/asn1";
 import {
     ObjectClassDescription,

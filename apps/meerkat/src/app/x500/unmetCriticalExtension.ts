@@ -1,5 +1,5 @@
 import { BIT_STRING, FALSE_BIT, TRUE_BIT } from "@wildboar/asn1";
-import unsupportedAndCriticalExtensions from "./unsupportedAndCriticalExtensions";
+import unsupportedAndCriticalExtensions from "./unsupportedAndCriticalExtensions.js";
 
 const naughtyList: Set<number> = new Set(
     Array.from(unsupportedAndCriticalExtensions)

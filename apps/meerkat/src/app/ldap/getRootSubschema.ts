@@ -2,8 +2,8 @@ import type { Context } from "@wildboar/meerkat-types";
 import {
     PartialAttribute,
 } from "@wildboar/ldap";
-import readAttributeTypes from "./readAttributeTypes";
-import readObjectClasses from "./readObjectClasses";
+import readAttributeTypes from "./readAttributeTypes.js";
+import readObjectClasses from "./readObjectClasses.js";
 
 const rootAttributeTypesValues: Buffer[] = [
     Buffer.from("( 1.3.6.1.4.1.1466.101.120.6 NAME 'altServer' SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 USAGE dSAOperation )", "utf-8"),

@@ -4,8 +4,8 @@ import { DER } from "@wildboar/asn1/functional";
 import type {
     CertificationPath,
 } from "@wildboar/x500/AuthenticationFramework";
-import { verifyAnyCertPath } from "./verifyAnyCertPath";
-import { verifySignature, VCP_RETURN_OK } from "./verifyCertPath";
+import { verifyAnyCertPath } from "./verifyAnyCertPath.js";
+import { verifySignature, VCP_RETURN_OK } from "./verifyCertPath.js";
 import {
     Token,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -15,7 +15,7 @@ import {
 import {
     KeyUsage_digitalSignature,
 } from "@wildboar/x500/CertificateExtensions";
-import { id_anyExtendedKeyUsage, id_kp_clientAuth } from "../constants";
+import { id_anyExtendedKeyUsage, id_kp_clientAuth } from "../constants.js";
 
 export const VT_RETURN_CODE_OK: number = 0;
 export const VT_RETURN_CODE_UNTRUSTED: number = 1;

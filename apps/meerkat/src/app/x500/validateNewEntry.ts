@@ -50,7 +50,7 @@ import {
 import {
     SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/DirectoryAbstractService";
-import createSecurityParameters from "./createSecurityParameters";
+import createSecurityParameters from "./createSecurityParameters.js";
 import {
     updateError,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -61,13 +61,13 @@ import {
     attributeError,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { DER, _encodeObjectIdentifier } from "@wildboar/asn1/functional";
-import validateObjectClasses from "./validateObjectClasses";
-import valuesFromAttribute from "./valuesFromAttribute";
-import getNamingMatcherGetter from "./getNamingMatcherGetter";
+import validateObjectClasses from "./validateObjectClasses.js";
+import valuesFromAttribute from "./valuesFromAttribute.js";
+import getNamingMatcherGetter from "./getNamingMatcherGetter.js";
 import {
     subschema,
 } from "@wildboar/x500/SchemaAdministration";
-import getStructuralObjectClass from "./getStructuralObjectClass";
+import getStructuralObjectClass from "./getStructuralObjectClass.js";
 import { checkNameForm } from "@wildboar/x500";
 import {
     ObjectClassKind_auxiliary,
@@ -78,12 +78,12 @@ import {
 import {
     id_oa_allAttributeTypes,
 } from "@wildboar/x500/InformationFramework";
-import getSubschemaSubentry from "../dit/getSubschemaSubentry";
+import getSubschemaSubentry from "../dit/getSubschemaSubentry.js";
 import {
     administrativeRole,
 } from "@wildboar/x500/InformationFramework";
-import extensibleObject from "../ldap/extensibleObject";
-import attributeTypesPermittedForEveryEntry from "./attributeTypesPermittedForEveryEntry";
+import extensibleObject from "../ldap/extensibleObject.js";
+import attributeTypesPermittedForEveryEntry from "./attributeTypesPermittedForEveryEntry.js";
 import {
     id_oa_collectiveExclusions,
 } from "@wildboar/x500/InformationFramework";
@@ -100,7 +100,7 @@ import {
 } from "@wildboar/x500/DirectoryAbstractService";
 import type { DistinguishedName } from "@wildboar/x500/InformationFramework";
 import { id_ar_autonomousArea } from "@wildboar/x500/InformationFramework";
-import mayAddTopLeveDSE from "../authz/mayAddTopLevelDSE";
+import mayAddTopLeveDSE from "../authz/mayAddTopLevelDSE.js";
 import {
     id_aca_accessControlScheme,
 } from "@wildboar/x500/BasicAccessControl";
@@ -118,7 +118,7 @@ import { strict as assert } from "assert";
 import {
     subentryNameForm,
 } from "@wildboar/x500/InformationFramework";
-import { printInvokeId } from "../utils/printInvokeId";
+import { printInvokeId } from "../utils/printInvokeId.js";
 import type {
     RelativeDistinguishedName,
 } from "@wildboar/x500/InformationFramework";
@@ -128,10 +128,10 @@ import type {
 import type {
     OBJECT_CLASS,
 } from "@wildboar/x500/InformationFramework";
-import stringifyDN from "./stringifyDN";
-import groupByOID from "../utils/groupByOID";
-import { getEntryExistsFilter } from "../database/entryExistsFilter";
-import DOPAssociation from "../dop/DOPConnection";
+import stringifyDN from "./stringifyDN.js";
+import groupByOID from "../utils/groupByOID.js";
+import { getEntryExistsFilter } from "../database/entryExistsFilter.js";
+import DOPAssociation from "../dop/DOPConnection.js";
 import { governingStructureRule as gsrAttrType } from "@wildboar/x500/SchemaAdministration";
 
 const ALL_ATTRIBUTE_TYPES: string = id_oa_allAttributeTypes.toString();

@@ -10,7 +10,7 @@ import type { FilterItem } from "@wildboar/x500/DirectoryAbstractService";
 import type { FilterItem_substrings } from "@wildboar/x500/DirectoryAbstractService";
 import type { MatchingRuleAssertion } from "@wildboar/x500/DirectoryAbstractService";
 import type { AttributeTypeAssertion } from "@wildboar/x500/InformationFramework";
-import getStatisticsFromAttributeValueAssertion from "./getStatisticsFromAttributeValueAssertion";
+import getStatisticsFromAttributeValueAssertion from "./getStatisticsFromAttributeValueAssertion.js";
 
 function getMatchingRuleAssertionStatistics (mra: MatchingRuleAssertion): MatchingRuleAssertionStatistics {
     return {

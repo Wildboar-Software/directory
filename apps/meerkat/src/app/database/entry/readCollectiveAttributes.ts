@@ -20,7 +20,7 @@ import {
 } from "@wildboar/x500/InformationFramework";
 import { collectiveExclusions } from "@wildboar/x500/InformationFramework";
 import { _decodeObjectIdentifier } from "@wildboar/asn1/functional";
-import { attributeValueFromDB } from "../attributeValueFromDB";
+import { attributeValueFromDB } from "../attributeValueFromDB.js";
 
 const CA_SUBENTRY: string = collectiveAttributeSubentry["&id"].toString();
 const ID_CASA: string = id_ar_collectiveAttributeSpecificArea.toString();

@@ -18,7 +18,7 @@ import {
     ASN1UniversalType,
     ObjectIdentifier,
 } from "@wildboar/asn1";
-import bytesToUUID from "../../utils/bytesToUUID";
+import bytesToUUID from "../../utils/bytesToUUID.js";
 
 export
 const readValues: SpecialAttributeDatabaseReader = async (

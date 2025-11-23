@@ -5,7 +5,7 @@ import {
 import {
     _decode_MSString,
 } from "@wildboar/x400/MSMatchingRules";
-import { msStringToString } from "./orAddressUtilities";
+import { msStringToString } from "./orAddressUtilities.js";
 import type { ASN1Element } from "@wildboar/asn1";
 
 export

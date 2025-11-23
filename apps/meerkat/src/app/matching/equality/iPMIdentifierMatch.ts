@@ -7,7 +7,7 @@ import {
 import { _encode_ORName } from "@wildboar/x400/MTSAbstractService";
 import { strict as assert } from "node:assert";
 import { Context } from "@wildboar/meerkat-types";
-import getORNameMatcher from "./oRNameMatch";
+import getORNameMatcher from "./oRNameMatch.js";
 
 // IPMIdentifier ::= [APPLICATION 11]  SET {
 //     user                      ORName OPTIONAL,

@@ -1,13 +1,13 @@
 import { MeerkatContext } from "../ctx.js";
 import { Context, BindReturn, MistypedArgumentError, Vertex, DirectoryBindError, DSABindError } from "@wildboar/meerkat-types";
 import { CertificationData, REQ_TOKEN } from "@wildboar/x500/SpkmGssTokens";
-import { verifyAnyCertPath } from "../pki/verifyAnyCertPath";
-import { VCP_RETURN_OK, VerifyCertPathResult } from "../pki/verifyCertPath";
+import { verifyAnyCertPath } from "../pki/verifyAnyCertPath.js";
+import { VCP_RETURN_OK, VerifyCertPathResult } from "../pki/verifyCertPath.js";
 import { SpkmCredentials } from "@wildboar/x500/DirectoryAbstractService";
 import { SPKM_REP_TI } from "@wildboar/x500/SpkmGssTokens";
 import { differenceInSeconds } from "date-fns";
 import { compareName, getDateFromTime } from "@wildboar/x500";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { BIT_STRING, DERElement, TRUE_BIT, packBits, unpackBits } from "@wildboar/asn1";
 import {
     Options_delegation_state,
@@ -19,26 +19,26 @@ import {
     pkiPath,
     Validity,
 } from "@wildboar/x500/AuthenticationFramework";
-import { verifySignature } from "../pki/verifyCertPath";
+import { verifySignature } from "../pki/verifyCertPath.js";
 import {
     Context_Data,
     _encode_Req_contents,
 } from "@wildboar/x500/SpkmGssTokens";
 import { DER } from "@wildboar/asn1/functional";
 import { Name } from "@wildboar/x500/InformationFramework";
-import dnToVertex from "../dit/dnToVertex";
-import { read_clearance, read_unique_id } from "../database/utils";
+import dnToVertex from "../dit/dnToVertex.js";
+import { read_clearance, read_unique_id } from "../database/utils.js";
 import {
     AuthenticationLevel_basicLevels,
     AuthenticationLevel_basicLevels_level_strong,
 } from "@wildboar/x500/BasicAccessControl";
-import readValuesOfType from "../utils/readValuesOfType";
+import readValuesOfType from "../utils/readValuesOfType.js";
 import { NameAndOptionalUID } from "@wildboar/x500/SelectedAttributeTypes";
 import { clearance,  } from "@wildboar/x500/EnhancedSecurity";
 import { subjectDirectoryAttributes } from "@wildboar/x500/CertificateExtensions";
-import getDistinguishedName from "../x500/getDistinguishedName";
-import { general_name_matches_cert } from "../pki/general_name_matches_cert";
-import versions from "../versions";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
+import { general_name_matches_cert } from "../pki/general_name_matches_cert.js";
+import versions from "../versions.js";
 import {
     DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as DirectoryBindErrorData,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -49,7 +49,7 @@ import {
 import { ServiceProblem_unwillingToPerform } from "@wildboar/x500/DirectoryAbstractService";
 import { REP_TI_TOKEN, Rep_ti_contents, _encode_Rep_ti_contents } from "@wildboar/x500/SpkmGssTokens";
 import { randomBytes } from "node:crypto";
-import { generateSignature } from "../pki/generateSignature";
+import { generateSignature } from "../pki/generateSignature.js";
 
 function generateSpkmReply (
     ctx: Context,

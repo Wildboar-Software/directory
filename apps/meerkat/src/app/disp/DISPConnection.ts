@@ -26,8 +26,8 @@ import {
     SecurityErrorData,
     _encode_SecurityErrorData,
 } from "@wildboar/x500/DirectoryAbstractService";
-import versions from "../versions";
-import { bind as doBind } from "../authn/dsaBind";
+import versions from "../versions.js";
+import { bind as doBind } from "../authn/dsaBind.js";
 import {
     directoryBindError,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -39,43 +39,43 @@ import {
 } from "@wildboar/x500/BasicAccessControl";
 import { differenceInMilliseconds } from "date-fns";
 import * as crypto from "crypto";
-import sleep from "../utils/sleep";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import sleep from "../utils/sleep.js";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import {
     securityError,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getServerStatistics from "../telemetry/getServerStatistics";
-import getConnectionStatistics from "../telemetry/getConnectionStatistics";
+import getServerStatistics from "../telemetry/getServerStatistics.js";
+import getConnectionStatistics from "../telemetry/getConnectionStatistics.js";
 import { codeToString } from "@wildboar/x500";
 import isDebugging from "is-debugging";
 import { strict as assert } from "assert";
-import { flatten } from "flat";
+import flat from "flat";
 import { naddrToURI } from "@wildboar/x500";
-import { printInvokeId } from "../utils/printInvokeId";
+import { printInvokeId } from "../utils/printInvokeId.js";
 import {
     getStatisticsFromSecurityParameters,
-} from "../telemetry/getStatisticsFromSecurityParameters";
-import { signDirectoryError } from "../pki/signDirectoryError";
+} from "../telemetry/getStatisticsFromSecurityParameters.js";
+import { signDirectoryError } from "../pki/signDirectoryError.js";
 import { compareAuthenticationLevel } from "@wildboar/x500";
 import {
     _encode_DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as _encode_DBE_Param,
 } from "@wildboar/x500/DirectoryAbstractService";
-import stringifyDN from "../x500/stringifyDN";
+import stringifyDN from "../x500/stringifyDN.js";
 import { AuthenticationLevel_basicLevels } from "@wildboar/x500/BasicAccessControl";
-import { isArgumentSigned } from "../x500/isArgumentSigned";
+import { isArgumentSigned } from "../x500/isArgumentSigned.js";
 import {
     Versions_v2,
 } from "@wildboar/x500/DirectoryAbstractService";
-import printCode from "../utils/printCode";
+import printCode from "../utils/printCode.js";
 import {
     ROSETransport,
     RejectReason,
     AbortReason,
     RequestParameters,
 } from "@wildboar/rose-transport";
-import updateShadow from "./operations/updateShadow";
-import requestShadowUpdate from "./operations/requestShadowUpdate";
-import coordinateShadowUpdate from "./operations/coordinateShadowUpdate";
+import updateShadow from "./operations/updateShadow.js";
+import requestShadowUpdate from "./operations/requestShadowUpdate.js";
+import coordinateShadowUpdate from "./operations/coordinateShadowUpdate.js";
 import {
     _decode_UpdateShadowArgument,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
@@ -96,6 +96,8 @@ import {
 } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { _encode_ShadowErrorData } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { shadowError } from "@wildboar/x500/DirectoryShadowAbstractService";
+
+const flatten = flat.flatten;
 
 // id-opcode-requestShadowUpdate     Code ::= local:1
 // id-opcode-updateShadow            Code ::= local:2

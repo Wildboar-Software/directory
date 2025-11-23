@@ -2,7 +2,7 @@ import type { Context } from "@wildboar/meerkat-types";
 import { OBJECT_IDENTIFIER, ASN1Element } from "@wildboar/asn1";
 import { stringifyRDNSequence } from "@wildboar/ldap";
 import type { RDNSequence } from "@wildboar/x500/InformationFramework";
-import { getLDAPSyntax } from "../x500/getLDAPSyntax";
+import { getLDAPSyntax } from "../x500/getLDAPSyntax.js";
 
 /**
  * @summary Encode an X.500 directory name as an LDAP string

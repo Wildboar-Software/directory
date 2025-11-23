@@ -4,7 +4,7 @@ import {
     ORAddress,
     _decode_ORAddress,
 } from "@wildboar/x400/MTSAbstractService";
-import { ORAddressInfo, orAddressToInfo } from "./orAddressUtilities";
+import { ORAddressInfo, orAddressToInfo } from "./orAddressUtilities.js";
 import { strict as assert } from "node:assert";
 
 export

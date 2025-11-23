@@ -1,5 +1,5 @@
 import { Context, ClientAssociation, Vertex, ServiceError } from "@wildboar/meerkat-types";
-import type { OperationDispatcherState } from "./OperationDispatcher";
+import type { OperationDispatcherState } from "./OperationDispatcher.js";
 import {
     SearchArgumentData,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -21,8 +21,8 @@ import {
 import {
     serviceError,
 } from "@wildboar/x500/DirectoryAbstractService";
-import createSecurityParameters from "../x500/createSecurityParameters";
-import printInvokeId from "../utils/printInvokeId";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
+import printInvokeId from "../utils/printInvokeId.js";
 
 const ID_AUTONOMOUS: Buffer = id_ar_autonomousArea.toBytes();
 const ID_SERVICE: Buffer = id_ar_serviceSpecificArea.toBytes();

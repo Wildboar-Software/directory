@@ -4,7 +4,7 @@ import { type LDAPSyntaxEncoder } from "@wildboar/ldap";
 import type {
     AttributeType,
 } from "@wildboar/x500/InformationFramework";
-import getAttributeParentTypes from "../x500/getAttributeParentTypes";
+import getAttributeParentTypes from "../x500/getAttributeParentTypes.js";
 
 /**
  * @summary Returns a function that can encode an X.500 directory value into an LDAP value

@@ -1,6 +1,6 @@
 import { Context } from "@wildboar/meerkat-types";
-import getEntryExistsFilter from "../database/entryExistsFilter";
-import getDNFromEntryId from "../database/getDNFromEntryId";
+import getEntryExistsFilter from "../database/entryExistsFilter.js";
+import getDNFromEntryId from "../database/getDNFromEntryId.js";
 
 /**
  * @summary Cache the naming contexts in the context object

@@ -4,8 +4,8 @@ import {
     DistinguishedName,
     _encode_DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import { stringifyDN } from "../x500/stringifyDN";
-import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers";
+import { stringifyDN } from "../x500/stringifyDN.js";
+import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers.js";
 
 export
 function isTrustedForIBRA (ctx: Context, aeTitle: DistinguishedName): boolean {

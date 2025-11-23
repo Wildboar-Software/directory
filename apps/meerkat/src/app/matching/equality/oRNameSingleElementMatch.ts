@@ -7,7 +7,7 @@ import {
 import {
     _decode_MSString,
 } from "@wildboar/x400/MSMatchingRules";
-import { msStringToString, orAddressToInfo } from "./orAddressUtilities";
+import { msStringToString, orAddressToInfo } from "./orAddressUtilities.js";
 
 // TODO: Tail recursion.
 export

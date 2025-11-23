@@ -10,9 +10,9 @@ import {
     Context as X500Context,
 } from "@wildboar/x500/InformationFramework";
 import { ASN1Element, DERElement, ObjectIdentifier, TRUE_BIT, packBits } from "@wildboar/asn1";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { KeyObject } from "node:crypto";
-import { digestOIDToNodeHash } from "../pki/digestOIDToNodeHash";
+import { digestOIDToNodeHash } from "../pki/digestOIDToNodeHash.js";
 import * as crypto from "node:crypto";
 import { AttributeType } from "@wildboar/x500/InformationFramework";
 import {
@@ -20,7 +20,7 @@ import {
     _encode_AttributeTypeAndValue,
 } from "@wildboar/pki-stub";
 import { DER } from "@wildboar/asn1/functional";
-import { verifySignature } from "../pki/verifyCertPath";
+import { verifySignature } from "../pki/verifyCertPath.js";
 import {
     ClassList_confidential,
     ClassList_restricted,

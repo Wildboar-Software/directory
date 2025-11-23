@@ -8,7 +8,7 @@ import { EXTERNAL } from "@wildboar/asn1";
 import {
     DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as DirectoryBindErrorData,
 } from "@wildboar/x500/DirectoryAbstractService";
-import versions from "../versions";
+import versions from "../versions.js";
 import {
     SecurityProblem_unsupportedAuthenticationMethod,
 } from "@wildboar/x500/DirectoryAbstractService";

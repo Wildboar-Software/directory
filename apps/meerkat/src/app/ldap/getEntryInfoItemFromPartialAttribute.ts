@@ -5,7 +5,7 @@ import type {
 import type {
     PartialAttribute,
 } from "@wildboar/ldap";
-import getAttributeFromPartialAttribute from "./getAttributeFromPartialAttribute";
+import getAttributeFromPartialAttribute from "./getAttributeFromPartialAttribute.js";
 import { normalizeAttributeDescription } from "@wildboar/ldap";
 
 /**

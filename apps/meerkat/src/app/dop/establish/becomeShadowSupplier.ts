@@ -3,7 +3,7 @@ import type { Vertex } from "@wildboar/meerkat-types";
 import {
     AccessPoint,
 } from "@wildboar/x500/DistributedOperations";
-import saveAccessPoint from "../../database/saveAccessPoint";
+import saveAccessPoint from "../../database/saveAccessPoint.js";
 import { Knowledge } from "@prisma/client";
 import {
     SupplierOrConsumer,
@@ -14,7 +14,7 @@ import {
 import {
     OperationalBindingID,
 } from "@wildboar/x500/OperationalBindingManagement";
-import scheduleShadowUpdates from "../../disp/scheduleShadowUpdates";
+import scheduleShadowUpdates from "../../disp/scheduleShadowUpdates.js";
 import { ShadowingAgreementInfo } from "@wildboar/x500/DirectoryShadowAbstractService";
 
 /**

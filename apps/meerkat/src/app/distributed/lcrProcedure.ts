@@ -14,23 +14,25 @@ import {
 } from "@wildboar/x500/DirectoryAbstractService";
 import { chainedList } from "@wildboar/x500/DistributedOperations";
 import { compareAuthenticationLevel, ChainedRequest, getOptionallyProtectedValue, compareCode } from "@wildboar/x500";
-import { apinfoProcedure } from "./apinfoProcedure";
-import type { OperationDispatcherState } from "./OperationDispatcher";
+import { apinfoProcedure } from "./apinfoProcedure.js";
+import type { OperationDispatcherState } from "./OperationDispatcher.js";
 import { id_opcode_list } from "@wildboar/x500/CommonProtocolSpecification";
 import { OperationProgress } from "@wildboar/x500/DistributedOperations";
 import type { DistinguishedName } from "@wildboar/x500/InformationFramework";
 import {
     OperationProgress_nameResolutionPhase_completed,
 } from "@wildboar/x500/DistributedOperations";
-import cloneChainingArgs from "../x500/cloneChainingArguments";
-import createSecurityParameters from "../x500/createSecurityParameters";
-import type { ListState } from "./list_i";
+import cloneChainingArgs from "../x500/cloneChainingArguments.js";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
+import type { ListState } from "./list_i.js";
 import {
     ContinuationReference,
 } from "@wildboar/x500/DistributedOperations";
-import { Promise as bPromise } from "bluebird";
-import printCode from "../utils/printCode";
-import stringifyDN from "../x500/stringifyDN";
+import bb from "bluebird";
+import printCode from "../utils/printCode.js";
+import stringifyDN from "../x500/stringifyDN.js";
+
+const bPromise = bb.Promise;
 
 /**
  * @summary List Continuation Reference Procedure, as defined in ITU Recommendation X.518.

@@ -1,4 +1,4 @@
-import { extractStrings } from "./oRNameSingleElementMatch";
+import { extractStrings } from "./oRNameSingleElementMatch.js";
 
 describe("extractStrings()", () => {
     test("#1", () => {

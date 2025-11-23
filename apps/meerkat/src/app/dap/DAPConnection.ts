@@ -14,7 +14,7 @@ import {
 } from "@wildboar/rose-transport";
 import type { MeerkatContext } from "../ctx.js";
 import * as errors from "@wildboar/meerkat-types";
-import versions from "../versions";
+import versions from "../versions.js";
 import {
     DirectoryBindResult,
     _encode_DirectoryBindResult,
@@ -35,23 +35,23 @@ import { _encode_ReferralData } from "@wildboar/x500/DirectoryAbstractService";
 import { _encode_SecurityErrorData } from "@wildboar/x500/DirectoryAbstractService";
 import { ServiceErrorData, ServiceProblem_unavailable, _encode_ServiceErrorData } from "@wildboar/x500/DirectoryAbstractService";
 import { _encode_UpdateErrorData } from "@wildboar/x500/DirectoryAbstractService";
-import OperationDispatcher from "../distributed/OperationDispatcher";
-import { bind as doBind } from "./bind";
+import OperationDispatcher from "../distributed/OperationDispatcher.js";
+import { bind as doBind } from "./bind.js";
 import {
     directoryBindError,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     AuthenticationLevel_basicLevels_level_none,
 } from "@wildboar/x500/BasicAccessControl";
-import getServerStatistics from "../telemetry/getServerStatistics";
-import getConnectionStatistics from "../telemetry/getConnectionStatistics";
+import getServerStatistics from "../telemetry/getServerStatistics.js";
+import getConnectionStatistics from "../telemetry/getConnectionStatistics.js";
 import { codeToString } from "@wildboar/x500";
-import getContinuationReferenceStatistics from "../telemetry/getContinuationReferenceStatistics";
+import getContinuationReferenceStatistics from "../telemetry/getContinuationReferenceStatistics.js";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import { EventEmitter } from "node:events";
 import { differenceInMilliseconds } from "date-fns";
 import * as crypto from "crypto";
-import sleep from "../utils/sleep";
+import sleep from "../utils/sleep.js";
 import { compareCode } from "@wildboar/x500";
 import {
     administerPassword,
@@ -60,18 +60,18 @@ import {
     changePassword,
 } from "@wildboar/x500/DirectoryAbstractService";
 import isDebugging from "is-debugging";
-import printCode from "../utils/printCode";
+import printCode from "../utils/printCode.js";
 import { ASN1Element, FALSE } from "@wildboar/asn1";
 import {
     _decode_DirectoryBindArgument,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { AssertionError, strict as assert } from "assert";
-import { flatten } from "flat";
+import flat from "flat";
 import { naddrToURI } from "@wildboar/x500";
-import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics";
-import { printInvokeId } from "../utils/printInvokeId";
-import { getStatisticsFromSecurityParameters } from "../telemetry/getStatisticsFromSecurityParameters";
-import { signDirectoryError } from "../pki/signDirectoryError";
+import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics.js";
+import { printInvokeId } from "../utils/printInvokeId.js";
+import { getStatisticsFromSecurityParameters } from "../telemetry/getStatisticsFromSecurityParameters.js";
+import { signDirectoryError } from "../pki/signDirectoryError.js";
 import {
     abandoned,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -101,17 +101,19 @@ import {
     Versions_v2,
     _encode_DirectoryBindError_OPTIONALLY_PROTECTED_Parameter1 as _encode_DBE_Param,
 } from "@wildboar/x500/DirectoryAbstractService";
-import stringifyDN from "../x500/stringifyDN";
+import stringifyDN from "../x500/stringifyDN.js";
 import {
     SecurityErrorData,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { createSecurityParameters } from "../x500/createSecurityParameters";
+import { createSecurityParameters } from "../x500/createSecurityParameters.js";
 import {
     PwdResponseValue_error_changeAfterReset,
 } from "@wildboar/x500/DirectoryAbstractService";
+
+const flatten = flat.flatten;
 
 /**
  * @summary The handles a request, but not errors

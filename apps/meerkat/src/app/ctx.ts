@@ -25,7 +25,7 @@ import {
     DEFAULT_IDM_BUFFER_SIZE,
     DEFAULT_LDAP_BUFFER_SIZE,
     DEFAULT_REMOTE_CRL_CACHE_TTL,
-} from "./constants";
+} from "./constants.js";
 import type { SecureVersion } from "tls";
 import * as fs from "fs";
 import { PEMObject } from "pem-ts";
@@ -78,19 +78,19 @@ import {
 import {
     AuthenticationLevel_basicLevels_level_none,
 } from "@wildboar/x500/BasicAccessControl";
-import { decodePkiPathFromPEM } from "./utils/decodePkiPathFromPEM";
+import { decodePkiPathFromPEM } from "./utils/decodePkiPathFromPEM.js";
 import type {
     PkiPath,
 } from "@wildboar/pki-stub";
 import { rootCertificates } from "node:tls";
 import { strict as assert } from "node:assert";
 import { createPublicKey } from "node:crypto";
-import { id_simpleSecurityPolicy, simple_rbac_acdf } from "./authz/rbacACDF";
+import { id_simpleSecurityPolicy, simple_rbac_acdf } from "./authz/rbacACDF.js";
 import { subjectKeyIdentifier } from "@wildboar/x500/CertificateExtensions";
 import { subjectAltName } from "@wildboar/x500/CertificateExtensions";
 import { Name } from "@wildboar/x500/InformationFramework";
 import { _encode_SubjectPublicKeyInfo } from "@wildboar/pki-stub";
-import { id_tls_client_auth, tls_client_auth } from "./authn/external/tls_client_auth";
+import { id_tls_client_auth, tls_client_auth } from "./authn/external/tls_client_auth.js";
 
 /**
  * Meerkat DSA once used Microsoft Azure's ApplicationInsights.
@@ -1029,7 +1029,11 @@ const config: Configuration = {
 };
 
 const ctx: MeerkatContext = {
-    i18n,
+    /* It seems like I have to do this. For some reason, the types do not
+    align with the Javascript of this package: if I get a type error, the
+    running program works, but if I fix the type error, the program will crash
+    with a type error. I HATE Javascript. */
+    i18n: i18n as unknown as i18n.i18n,
     config,
     dsa: {
         // This may get overwritten, since `npm_package_version` is not always defined.

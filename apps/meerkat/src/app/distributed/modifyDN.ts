@@ -32,18 +32,18 @@ import {
     UpdateProblem_familyRuleViolation,
     UpdateProblem_noSuchSuperior,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getDistinguishedName from "../x500/getDistinguishedName";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
 import { getRDN } from "@wildboar/x500";
-import dnToVertex from "../dit/dnToVertex";
+import dnToVertex from "../dit/dnToVertex.js";
 import { strict as assert } from "assert";
 import { compareDistinguishedName } from "@wildboar/x500";
-import removeValues from "../database/entry/removeValues";
+import removeValues from "../database/entry/removeValues.js";
 import { SecurityErrorData } from "@wildboar/x500/DirectoryAbstractService";
 import {
     SecurityProblem_insufficientAccessRights,
     SecurityProblem_invalidSignature,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getRelevantSubentries from "../dit/getRelevantSubentries";
+import getRelevantSubentries from "../dit/getRelevantSubentries.js";
 import { type ACDFTuple } from "@wildboar/x500";
 import { type ACDFTupleExtended } from "@wildboar/x500";
 import {
@@ -55,9 +55,9 @@ import {
     PERMISSION_CATEGORY_REMOVE,
 } from "@wildboar/x500";
 import { getACDFTuplesFromACIItem } from "@wildboar/x500";
-import getIsGroupMember from "../authz/getIsGroupMember";
-import getAdministrativePoints from "../dit/getAdministrativePoints";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import getIsGroupMember from "../authz/getIsGroupMember.js";
+import getAdministrativePoints from "../dit/getAdministrativePoints.js";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import {
     id_opcode_modifyDN,
 } from "@wildboar/x500/CommonProtocolSpecification";
@@ -77,12 +77,12 @@ import {
     ServiceErrorData,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { getDateFromTime } from "@wildboar/x500";
-import type { OperationDispatcherState } from "./OperationDispatcher";
+import type { OperationDispatcherState } from "./OperationDispatcher.js";
 import { codeToString } from "@wildboar/x500";
-import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments";
-import checkIfNameIsAlreadyTakenInNSSR from "./checkIfNameIsAlreadyTakenInNSSR";
-import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import getStatisticsFromCommonArguments from "../telemetry/getStatisticsFromCommonArguments.js";
+import checkIfNameIsAlreadyTakenInNSSR from "./checkIfNameIsAlreadyTakenInNSSR.js";
+import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter.js";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { checkNameForm } from "@wildboar/x500";
 import {
     ObjectClassKind_auxiliary,
@@ -96,17 +96,17 @@ import {
 import {
     id_at_objectClass,
 } from "@wildboar/x500/InformationFramework";
-import getSubschemaSubentry from "../dit/getSubschemaSubentry";
-import readValues from "../database/entry/readValues";
+import getSubschemaSubentry from "../dit/getSubschemaSubentry.js";
+import readValues from "../database/entry/readValues.js";
 import { EntryInformationSelection } from "@wildboar/x500/DirectoryAbstractService";
-import failover from "../utils/failover";
+import failover from "../utils/failover.js";
 import {
     AbandonedData,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     abandoned,
 } from "@wildboar/x500/DirectoryAbstractService";
-import extensibleObject from "../ldap/extensibleObject";
+import extensibleObject from "../ldap/extensibleObject.js";
 import {
     hierarchyParent,
 } from "@wildboar/x500/InformationFramework";
@@ -128,20 +128,20 @@ import {
 import {
     NameProblem_invalidAttributeSyntax,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getACIItems from "../authz/getACIItems";
+import getACIItems from "../authz/getACIItems.js";
 import { differenceInMilliseconds } from "date-fns";
-import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs";
-import updateSuperiorDSA from "../dop/updateSuperiorDSA";
-import bacSettings from "../authz/bacSettings";
+import updateAffectedSubordinateDSAs from "../dop/updateAffectedSubordinateDSAs.js";
+import updateSuperiorDSA from "../dop/updateSuperiorDSA.js";
+import bacSettings from "../authz/bacSettings.js";
 import {
     NameAndOptionalUID,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import preprocessTuples from "../authz/preprocessTuples";
-import permittedToFindDSE from "../authz/permittedToFindDSE";
+import preprocessTuples from "../authz/preprocessTuples.js";
+import permittedToFindDSE from "../authz/permittedToFindDSE.js";
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/InformationFramework";
-import readValuesOfType from "../utils/readValuesOfType";
+import readValuesOfType from "../utils/readValuesOfType.js";
 import { attributeError } from "@wildboar/x500/DirectoryAbstractService";
 import { nameError } from "@wildboar/x500/DirectoryAbstractService";
 import {
@@ -163,30 +163,30 @@ import {
 import {
     id_sc_subentry,
 } from "@wildboar/x500/InformationFramework";
-import isPrefix from "../x500/isPrefix";
-import isOperationalAttributeType from "../x500/isOperationalAttributeType";
-import dseFromDatabaseEntry from "../database/dseFromDatabaseEntry";
+import isPrefix from "../x500/isPrefix.js";
+import isOperationalAttributeType from "../x500/isOperationalAttributeType.js";
+import dseFromDatabaseEntry from "../database/dseFromDatabaseEntry.js";
 import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { generateSignature } from "../pki/generateSignature";
+import { generateSignature } from "../pki/generateSignature.js";
 import { SIGNED } from "@wildboar/x500/AuthenticationFramework";
-import { stringifyDN } from "../x500/stringifyDN";
+import { stringifyDN } from "../x500/stringifyDN.js";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import { printInvokeId } from "../utils/printInvokeId";
-import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
-import { getEntryExistsFilter } from "../database/entryExistsFilter";
+import { printInvokeId } from "../utils/printInvokeId.js";
+import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants.js";
+import { getEntryExistsFilter } from "../database/entryExistsFilter.js";
 import { Prisma } from "@prisma/client";
-import getEqualityNormalizer from "../x500/getEqualityNormalizer";
-import { getShadowIncrementalSteps } from "../dop/getRelevantSOBs";
+import getEqualityNormalizer from "../x500/getEqualityNormalizer.js";
+import { getShadowIncrementalSteps } from "../dop/getRelevantSOBs.js";
 import { SubordinateChanges } from "@wildboar/x500/DirectoryShadowAbstractService";
-import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh";
-import { acdf } from "../authz/acdf";
+import { saveIncrementalRefresh } from "../disp/saveIncrementalRefresh.js";
+import { acdf } from "../authz/acdf.js";
 
 /**
  * @summary Determine whether a DSE is local to this DSA

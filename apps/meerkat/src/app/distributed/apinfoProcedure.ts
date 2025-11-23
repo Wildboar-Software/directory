@@ -56,7 +56,7 @@ import {
     ReferenceType_superior,
     ReferenceType_nonSpecificSubordinate as nssr,
 } from "@wildboar/x500/DistributedOperations";
-import cloneChainingArguments from "../x500/cloneChainingArguments";
+import cloneChainingArguments from "../x500/cloneChainingArguments.js";
 import {
     TraceItem,
 } from "@wildboar/x500/DistributedOperations";
@@ -64,33 +64,35 @@ import {
     ServiceErrorData,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { loopDetected } from "@wildboar/x500";
-import createSecurityParameters from "../x500/createSecurityParameters";
-import type { OperationDispatcherState } from "./OperationDispatcher";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
+import type { OperationDispatcherState } from "./OperationDispatcher.js";
 import {
     AbandonedData,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     abandoned,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { printInvokeId } from "../utils/printInvokeId";
-import { signChainedArgument } from "../pki/signChainedArgument";
+import { printInvokeId } from "../utils/printInvokeId.js";
+import { signChainedArgument } from "../pki/signChainedArgument.js";
 import { strict as assert } from "assert";
-import { verifySIGNED } from "../pki/verifySIGNED";
-import stringifyDN from "../x500/stringifyDN";
-import { bindForChaining } from "../net/bindToOtherDSA";
+import { verifySIGNED } from "../pki/verifySIGNED.js";
+import stringifyDN from "../x500/stringifyDN.js";
+import { bindForChaining } from "../net/bindToOtherDSA.js";
 import { OperationOutcome } from "@wildboar/rose-transport";
-import generateUnusedInvokeID from "../net/generateUnusedInvokeID";
+import generateUnusedInvokeID from "../net/generateUnusedInvokeID.js";
 import { ContinuationReference } from "@wildboar/x500/DistributedOperations";
 import { addMilliseconds, differenceInMilliseconds, differenceInSeconds } from "date-fns";
-import { upsertCrossReferences } from "../dit/upsertCrossReferences";
-import { Promise as bPromise } from "bluebird";
-import isPrefix from "../x500/isPrefix";
+import { upsertCrossReferences } from "../dit/upsertCrossReferences.js";
+import bb from "bluebird";
+import isPrefix from "../x500/isPrefix.js";
 import { compareDistinguishedName, getDateFromTime } from "@wildboar/x500";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { CrossReference } from "@wildboar/x500/DistributedOperations";
-import { signChainedResult } from "../pki/signChainedResult";
-import deleteEntry from "../database/deleteEntry";
-import DAPAssociation from "../dap/DAPConnection";
+import { signChainedResult } from "../pki/signChainedResult.js";
+import deleteEntry from "../database/deleteEntry.js";
+import DAPAssociation from "../dap/DAPConnection.js";
+
+const bPromise = bb.Promise;
 
 /**
  * @summary The Access Point Information Procedure, as defined in ITU Recommendation X.518.

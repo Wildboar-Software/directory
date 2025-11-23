@@ -34,7 +34,7 @@ import {
     INTEGER,
     OPTIONAL,
 } from "@wildboar/asn1";
-import readSubordinates from "../dit/readSubordinates";
+import readSubordinates from "../dit/readSubordinates.js";
 import {
     ChainingArguments,
 } from "@wildboar/x500/DistributedOperations";
@@ -53,7 +53,7 @@ import {
     _encode_DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
 import { type ContextMatcher } from "@wildboar/x500";
-import getDistinguishedName from "../x500/getDistinguishedName";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
 import { evaluateFilter, EvaluateFilterSettings } from "@wildboar/x500";
 import { CannotPerformExactly } from "@wildboar/x500";
 import { EntryInformation } from "@wildboar/x500/DirectoryAbstractService";
@@ -78,10 +78,10 @@ import {
     AccessPointInformation,
 } from "@wildboar/x500/DistributedOperations";
 import { splitIntoMastersAndShadows } from "@wildboar/x500";
-import isPrefix from "../x500/isPrefix";
-import searchAliasesProcedure from "./searchAliases";
-import hierarchySelectionProcedure from "./hierarchySelection";
-import checkSuitabilityProcedure from "./checkSuitability";
+import isPrefix from "../x500/isPrefix.js";
+import searchAliasesProcedure from "./searchAliases.js";
+import hierarchySelectionProcedure from "./hierarchySelection.js";
+import checkSuitabilityProcedure from "./checkSuitability.js";
 import {
     search,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -97,8 +97,8 @@ import {
     MasterOrShadowAccessPoint_category_master,
     MasterOrShadowAccessPoint_category_shadow,
 } from "@wildboar/x500/DistributedOperations";
-import getAttributeTypesFromFilter from "../x500/getAttributeTypesFromFilter";
-import readAttributes from "../database/entry/readAttributes";
+import getAttributeTypesFromFilter from "../x500/getAttributeTypesFromFilter.js";
+import readAttributes from "../database/entry/readAttributes.js";
 import {
     EntryInformationSelection,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -114,7 +114,7 @@ import {
     SecurityProblem_insufficientAccessRights,
     SecurityProblem_invalidSignature,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getRelevantSubentries from "../dit/getRelevantSubentries";
+import getRelevantSubentries from "../dit/getRelevantSubentries.js";
 import { type ACDFTuple } from "@wildboar/x500";
 import { type ACDFTupleExtended } from "@wildboar/x500";
 import {
@@ -126,8 +126,8 @@ import {
     PERMISSION_CATEGORY_FILTER_MATCH,
 } from "@wildboar/x500";
 import { getACDFTuplesFromACIItem } from "@wildboar/x500";
-import getIsGroupMember from "../authz/getIsGroupMember";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import getIsGroupMember from "../authz/getIsGroupMember.js";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import {
     nameError,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -135,7 +135,7 @@ import {
     securityError,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { AttributeTypeAndValue } from "@wildboar/pki-stub";
-import attributesFromValues from "../x500/attributesFromValues";
+import attributesFromValues from "../x500/attributesFromValues.js";
 import {
     id_at_aliasedEntryName,
 } from "@wildboar/x500/InformationFramework";
@@ -166,21 +166,21 @@ import {
     LimitProblem_timeLimitExceeded,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { getDateFromTime } from "@wildboar/x500";
-import type { OperationDispatcherState } from "./OperationDispatcher";
+import type { OperationDispatcherState } from "./OperationDispatcher.js";
 import {
     id_errcode_serviceError,
 } from "@wildboar/x500/CommonProtocolSpecification";
-import cloneChainingArguments from "../x500/cloneChainingArguments";
-import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
-import getOrderingMatcherGetter from "../x500/getOrderingMatcherGetter";
-import getSubstringsMatcherGetter from "../x500/getSubstringsMatcherGetter";
-import getApproxMatcherGetter from "../x500/getApproxMatcherGetter";
+import cloneChainingArguments from "../x500/cloneChainingArguments.js";
+import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter.js";
+import getOrderingMatcherGetter from "../x500/getOrderingMatcherGetter.js";
+import getSubstringsMatcherGetter from "../x500/getSubstringsMatcherGetter.js";
+import getApproxMatcherGetter from "../x500/getApproxMatcherGetter.js";
 import { objectClass } from "@wildboar/x500/InformationFramework";
-import LDAPAssociation from "../ldap/LDAPConnection";
-import readFamily from "../database/family/readFamily";
-import readEntryOnly from "../database/family/readEntryOnly";
-import readCompoundEntry from "../database/family/readCompoundEntry";
-import readStrands from "../database/family/readStrands";
+import LDAPAssociation from "../ldap/LDAPConnection.js";
+import readFamily from "../database/family/readFamily.js";
+import readEntryOnly from "../database/family/readEntryOnly.js";
+import readCompoundEntry from "../database/family/readCompoundEntry.js";
+import readStrands from "../database/family/readStrands.js";
 import {
     FamilyGrouping_entryOnly,
     FamilyGrouping_compoundEntry,
@@ -215,7 +215,7 @@ import {
 import {
     family_information,
 } from "@wildboar/x500/DirectoryAbstractService";
-import convertSubtreeToFamilyInformation from "../x500/convertSubtreeToFamilyInformation";
+import convertSubtreeToFamilyInformation from "../x500/convertSubtreeToFamilyInformation.js";
 import type {
     Filter,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -234,13 +234,13 @@ import {
 import {
     id_oc_child,
 } from "@wildboar/x500/InformationFramework";
-import getACIItems from "../authz/getACIItems";
+import getACIItems from "../authz/getACIItems.js";
 import type {
     SearchResult,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { MINIMUM_MAX_ATTR_SIZE, MAX_RESULTS, UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
-import getAttributeSizeFilter from "../x500/getAttributeSizeFilter";
-import getAttributeSubtypes from "../x500/getAttributeSubtypes";
+import { MINIMUM_MAX_ATTR_SIZE, MAX_RESULTS, UNTRUSTED_REQ_AUTH_LEVEL } from "../constants.js";
+import getAttributeSizeFilter from "../x500/getAttributeSizeFilter.js";
+import getAttributeSubtypes from "../x500/getAttributeSubtypes.js";
 import {
     id_soc_subschema,
 } from "@wildboar/x500/SchemaAdministration";
@@ -258,24 +258,24 @@ import {
 import {
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { id_ar_autonomousArea } from "@wildboar/x500/InformationFramework";
 import { strict as assert } from "assert";
 import _ from "lodash";
-import keepSubsetOfDITById from "../dit/keepSubsetOfDITById";
-import walkMemory from "../dit/walkMemory";
-import bacSettings from "../authz/bacSettings";
+import keepSubsetOfDITById from "../dit/keepSubsetOfDITById.js";
+import walkMemory from "../dit/walkMemory.js";
+import bacSettings from "../authz/bacSettings.js";
 import {
     NameAndOptionalUID,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import preprocessTuples from "../authz/preprocessTuples";
-import readPermittedEntryInformation from "../database/entry/readPermittedEntryInformation";
-import isOperationalAttributeType from "../x500/isOperationalAttributeType";
-import { stringifyDN } from "../x500/stringifyDN";
+import preprocessTuples from "../authz/preprocessTuples.js";
+import readPermittedEntryInformation from "../database/entry/readPermittedEntryInformation.js";
+import isOperationalAttributeType from "../x500/isOperationalAttributeType.js";
+import { stringifyDN } from "../x500/stringifyDN.js";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import { printInvokeId } from "../utils/printInvokeId";
+import { printInvokeId } from "../utils/printInvokeId.js";
 import {
     entryACI,
     prescriptiveACI,
@@ -288,7 +288,7 @@ import {
 } from "@wildboar/x500/InformationFramework";
 import { FilterItem } from "@wildboar/x500/DirectoryAbstractService";
 import { Prisma } from "@prisma/client";
-import getAttributeParentTypes from "../x500/getAttributeParentTypes";
+import getAttributeParentTypes from "../x500/getAttributeParentTypes.js";
 import {
     MRMapping,
 } from "@wildboar/x500/ServiceAdministration";
@@ -324,12 +324,12 @@ import {
 import {
     booleanMatch,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import getEqualityNormalizer from "../x500/getEqualityNormalizer";
+import getEqualityNormalizer from "../x500/getEqualityNormalizer.js";
 import { id_mr_nullMatch } from "@wildboar/x500/SelectedAttributeTypes";
 import { groupByOID } from "@wildboar/x500";
 import { systemProposedMatch } from "@wildboar/x500/SelectedAttributeTypes";
 import { id_mr_zonalMatch } from "@wildboar/x500/SelectedAttributeTypes";
-import { mapFilterForPostalZonalMatch } from "../matching/zonal";
+import { mapFilterForPostalZonalMatch } from "../matching/zonal.js";
 import {
     ZonalResult_multiple_mappings,
     ZonalResult_zero_mappings,
@@ -355,16 +355,16 @@ import {
     SearchRule,
 } from "@wildboar/x500/ServiceAdministration";
 import { HierarchySelections } from "@wildboar/x500/DirectoryAbstractService";
-import { getServiceAdminPoint } from "../dit/getServiceAdminPoint";
-import getEntryExistsFilter from "../database/entryExistsFilter";
-import { attributeValueFromDB } from "../database/attributeValueFromDB";
-import { getEffectiveControlsFromSearchRule } from "../service/getEffectiveControlsFromSearchRule";
+import { getServiceAdminPoint } from "../dit/getServiceAdminPoint.js";
+import getEntryExistsFilter from "../database/entryExistsFilter.js";
+import { attributeValueFromDB } from "../database/attributeValueFromDB.js";
+import { getEffectiveControlsFromSearchRule } from "../service/getEffectiveControlsFromSearchRule.js";
 import { id_ar_serviceSpecificArea } from "@wildboar/x500/InformationFramework";
-import { ID_AR_SERVICE, ID_AUTONOMOUS } from "../../oidstr";
-import { isMatchAllFilter } from "../x500/isMatchAllFilter";
-import { acdf } from "../authz/acdf";
-import accessControlSchemesThatUseRBAC from "../authz/accessControlSchemesThatUseRBAC";
-import { get_security_labels_for_rdn } from "../authz/get_security_labels_for_rdn";
+import { ID_AR_SERVICE, ID_AUTONOMOUS } from "../../oidstr.js";
+import { isMatchAllFilter } from "../x500/isMatchAllFilter.js";
+import { acdf } from "../authz/acdf.js";
+import accessControlSchemesThatUseRBAC from "../authz/accessControlSchemesThatUseRBAC.js";
+import { get_security_labels_for_rdn } from "../authz/get_security_labels_for_rdn.js";
 
 // NOTE: This will require serious changes when service specific areas are implemented.
 

@@ -2,11 +2,11 @@ import type { EvaluateFilterSettings } from "@wildboar/x500";
 import ctx from "../ctx.js";
 import type { OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import { type ContextMatcher } from "@wildboar/x500";
-import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter";
-import getOrderingMatcherGetter from "../x500/getOrderingMatcherGetter";
-import getSubstringsMatcherGetter from "../x500/getSubstringsMatcherGetter";
-import getApproxMatcherGetter from "../x500/getApproxMatcherGetter";
-import getAttributeSubtypes from "../x500/getAttributeSubtypes";
+import getEqualityMatcherGetter from "../x500/getEqualityMatcherGetter.js";
+import getOrderingMatcherGetter from "../x500/getOrderingMatcherGetter.js";
+import getSubstringsMatcherGetter from "../x500/getSubstringsMatcherGetter.js";
+import getApproxMatcherGetter from "../x500/getApproxMatcherGetter.js";
+import getAttributeSubtypes from "../x500/getAttributeSubtypes.js";
 
 /**
  * @summary A pre-assembled argument to bacACDF()

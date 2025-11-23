@@ -8,7 +8,7 @@ import {
     ASN1Construction,
     OBJECT_IDENTIFIER,
 } from "@wildboar/asn1";
-import { getSubtreeSpecLexer } from "./lexSubtreeSpec";
+import { getSubtreeSpecLexer } from "./lexSubtreeSpec.js";
 import * as decoders from "@wildboar/ldap/src/lib/syntaxDecoders";
 import * as encoders from "@wildboar/ldap/src/lib/syntaxEncoders";
 import type {

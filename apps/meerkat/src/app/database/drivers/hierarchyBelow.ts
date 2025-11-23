@@ -13,7 +13,7 @@ import type {
 import {
     hierarchyBelow,
 } from "@wildboar/x500/InformationFramework";
-import NOOP from "./NOOP";
+import NOOP from "./NOOP.js";
 import { DER } from "@wildboar/asn1/functional";
 
 export

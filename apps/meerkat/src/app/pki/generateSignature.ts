@@ -14,9 +14,9 @@ import {
 import {
     rSASSA_PSS_Type,
 } from "@wildboar/x500/AlgorithmObjectIdentifiers";
-import { nodeHashAlgStringToOID } from "./nodeHashAlgStringToOID";
+import { nodeHashAlgStringToOID } from "./nodeHashAlgStringToOID.js";
 import { id_sha1 } from "@wildboar/x500/AlgorithmObjectIdentifiers";
-import { keyTypeToAlgOID } from "./keyTypeToAlgOID";
+import { keyTypeToAlgOID } from "./keyTypeToAlgOID.js";
 
 /**
  * @summary Generate a digital signature

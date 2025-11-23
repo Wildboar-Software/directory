@@ -1,4 +1,4 @@
-import lex from "./lexSchema";
+import lex from "./lexSchema.js";
 
 // Yes, I know this is technically incorrect syntax.
 const input1 = [

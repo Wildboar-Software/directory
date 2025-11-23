@@ -38,7 +38,7 @@ import {
     ReferenceType_nonSpecificSubordinate,
     ReferenceType_ditBridge,
 } from "@wildboar/x500/DistributedOperations";
-import getDistinguishedName from "../x500/getDistinguishedName";
+import getDistinguishedName from "../x500/getDistinguishedName.js";
 import { compareRelativeDistinguishedName as compareRDN } from "@wildboar/x500";
 import { TRUE_BIT, TRUE, FALSE, ObjectIdentifier, OBJECT_IDENTIFIER, BERElement, ASN1Construction } from "@wildboar/asn1";
 import * as errors from "@wildboar/meerkat-types";
@@ -60,14 +60,14 @@ import { search } from "@wildboar/x500/DirectoryAbstractService";
 import { strict as assert } from "assert";
 import { compareCode } from "@wildboar/x500";
 import { splitIntoMastersAndShadows } from "@wildboar/x500";
-import checkSuitabilityProcedure from "./checkSuitability";
+import checkSuitabilityProcedure from "./checkSuitability.js";
 import {
     id_opcode_list,
 } from "@wildboar/x500/CommonProtocolSpecification";
 import {
     id_opcode_search,
 } from "@wildboar/x500/CommonProtocolSpecification";
-import getRelevantSubentries from "../dit/getRelevantSubentries";
+import getRelevantSubentries from "../dit/getRelevantSubentries.js";
 import { type ACDFTuple } from "@wildboar/x500";
 import { type ACDFTupleExtended } from "@wildboar/x500";
 import {
@@ -76,8 +76,8 @@ import {
     PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
 } from "@wildboar/x500";
 import { getACDFTuplesFromACIItem } from "@wildboar/x500";
-import getIsGroupMember from "../authz/getIsGroupMember";
-import createSecurityParameters from "../x500/createSecurityParameters";
+import getIsGroupMember from "../authz/getIsGroupMember.js";
+import createSecurityParameters from "../x500/createSecurityParameters.js";
 import {
     serviceError,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -85,23 +85,23 @@ import {
     nameError,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { getDateFromTime } from "@wildboar/x500";
-import type { OperationDispatcherState } from "./OperationDispatcher";
+import type { OperationDispatcherState } from "./OperationDispatcher.js";
 import { id_ar_autonomousArea } from "@wildboar/x500/InformationFramework";
-import getNamingMatcherGetter from "../x500/getNamingMatcherGetter";
+import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import {
     AbandonedData,
 } from "@wildboar/x500/DirectoryAbstractService";
 import {
     abandoned,
 } from "@wildboar/x500/DirectoryAbstractService";
-import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry";
-import getACIItems from "../authz/getACIItems";
-import cloneChainingArgs from "../x500/cloneChainingArguments";
-import bacSettings from "../authz/bacSettings";
+import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry.js";
+import getACIItems from "../authz/getACIItems.js";
+import cloneChainingArgs from "../x500/cloneChainingArguments.js";
+import bacSettings from "../authz/bacSettings.js";
 import {
     NameAndOptionalUID,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import preprocessTuples from "../authz/preprocessTuples";
+import preprocessTuples from "../authz/preprocessTuples.js";
 import {
     securityError,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -111,38 +111,38 @@ import {
 import {
     SecurityErrorData,
 } from "@wildboar/x500/DirectoryAbstractService";
-import listSubordinates from "../dit/listSubordinates";
+import listSubordinates from "../dit/listSubordinates.js";
 import {
     AttributeTypeAndValue,
 } from "@wildboar/x500/InformationFramework";
-import getVertexById from "../database/getVertexById";
-import { printInvokeId } from "../utils/printInvokeId";
+import getVertexById from "../database/getVertexById.js";
+import { printInvokeId } from "../utils/printInvokeId.js";
 import {
     ErrorProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants";
+import { UNTRUSTED_REQ_AUTH_LEVEL } from "../constants.js";
 import {
     CommonArguments,
 } from "@wildboar/x500/DirectoryAbstractService";
-import { getEntryExistsFilter } from "../database/entryExistsFilter";
+import { getEntryExistsFilter } from "../database/entryExistsFilter.js";
 import {
     ChainingResults, CrossReference,
 } from "@wildboar/x500/DistributedOperations";
 import {
     ProtectionRequest_signed,
 } from "@wildboar/x500/DirectoryAbstractService";
-import DSPAssociation from "../dsp/DSPConnection";
+import DSPAssociation from "../dsp/DSPConnection.js";
 import { differenceInSeconds } from "date-fns";
 import { removeEntry } from "@wildboar/x500/DirectoryAbstractService";
 import { modifyDN } from "@wildboar/x500/DirectoryAbstractService";
 import { Prisma } from "@prisma/client";
-import getEqualityNormalizer from "../x500/getEqualityNormalizer";
+import getEqualityNormalizer from "../x500/getEqualityNormalizer.js";
 import { isModificationOperation } from "@wildboar/x500";
 import { EXT_BIT_USE_ALIAS_ON_UPDATE } from "@wildboar/x500";
-import stringifyDN from "../x500/stringifyDN";
-import { acdf } from "../authz/acdf";
-import accessControlSchemesThatUseRBAC from "../authz/accessControlSchemesThatUseRBAC";
-import { get_security_labels_for_rdn } from "../authz/get_security_labels_for_rdn";
+import stringifyDN from "../x500/stringifyDN.js";
+import { acdf } from "../authz/acdf.js";
+import accessControlSchemesThatUseRBAC from "../authz/accessControlSchemesThatUseRBAC.js";
+import { get_security_labels_for_rdn } from "../authz/get_security_labels_for_rdn.js";
 
 const autonomousArea: string = id_ar_autonomousArea.toString();
 

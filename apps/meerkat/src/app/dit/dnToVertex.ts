@@ -2,8 +2,8 @@ import type { Context, Vertex } from "@wildboar/meerkat-types";
 import type {
     DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
-import rdnToID from "./rdnToID";
-import getVertexById from "../database/getVertexById";
+import rdnToID from "./rdnToID.js";
+import getVertexById from "../database/getVertexById.js";
 
 /**
  * @summary Return an in-memory vertex from its distinguished name

@@ -1,5 +1,5 @@
 import type { Context, Vertex } from "@wildboar/meerkat-types";
-import readSubordinates from "../../dit/readSubordinates";
+import readSubordinates from "../../dit/readSubordinates.js";
 import {
     id_oc_parent,
 } from "@wildboar/x500/InformationFramework";

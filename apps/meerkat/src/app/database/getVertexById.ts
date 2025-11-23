@@ -1,5 +1,5 @@
 import type { Context, Vertex } from "@wildboar/meerkat-types";
-import dseFromDatabaseEntry from "./dseFromDatabaseEntry";
+import dseFromDatabaseEntry from "./dseFromDatabaseEntry.js";
 
 /**
  * @summary Create an in-memory vertex from a database ID of an entry

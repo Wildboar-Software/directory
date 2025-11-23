@@ -15,8 +15,8 @@ import { DER } from "@wildboar/asn1/functional";
 import {
     userPassword,
 } from "@wildboar/x500/AuthenticationFramework";
-import readEntryPassword from "../readEntryPassword";
-import setEntryPassword from "../setEntryPassword";
+import readEntryPassword from "../readEntryPassword.js";
+import setEntryPassword from "../setEntryPassword.js";
 
 // Returns an empty password, so the user can at least see if one exists or not.
 export

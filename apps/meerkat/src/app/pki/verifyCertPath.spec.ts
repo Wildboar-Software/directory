@@ -1,5 +1,5 @@
 import type { MeerkatContext } from "../ctx.js";
-import { verifyCertPath, VerifyCertPathArgs } from "./verifyCertPath";
+import { verifyCertPath, VerifyCertPathArgs } from "./verifyCertPath.js";
 import {
     Certificate,
     _decode_Certificate,

@@ -43,44 +43,44 @@ import {
 import {
     AuthenticationLevel_basicLevels_level_none,
 } from "@wildboar/x500/BasicAccessControl";
-import bind from "./bind";
+import bind from "./bind.js";
 import { decodeLDAPOID } from "@wildboar/ldap";
 import { encodeLDAPOID } from "@wildboar/ldap";
-import ldapRequestToDAPRequest from "../distributed/ldapRequestToDAPRequest";
-import dapReplyToLDAPResult from "../distributed/dapReplyToLDAPResult";
-import OperationDispatcher from "../distributed/OperationDispatcher";
-import dapErrorToLDAPResult from "../distributed/dapErrorToLDAPResult";
+import ldapRequestToDAPRequest from "../distributed/ldapRequestToDAPRequest.js";
+import dapReplyToLDAPResult from "../distributed/dapReplyToLDAPResult.js";
+import OperationDispatcher from "../distributed/OperationDispatcher.js";
+import dapErrorToLDAPResult from "../distributed/dapErrorToLDAPResult.js";
 import { getOptionallyProtectedValue } from "@wildboar/x500";
 import { codeToString } from "@wildboar/x500";
-import getServerStatistics from "../telemetry/getServerStatistics";
-import getConnectionStatistics from "../telemetry/getConnectionStatistics";
+import getServerStatistics from "../telemetry/getServerStatistics.js";
+import getConnectionStatistics from "../telemetry/getConnectionStatistics.js";
 import { extensions } from "@wildboar/ldap";
-import encodeLDAPDN from "./encodeLDAPDN";
-import createNoticeOfDisconnection from "./createNoticeOfDisconnection";
+import encodeLDAPDN from "./encodeLDAPDN.js";
+import createNoticeOfDisconnection from "./createNoticeOfDisconnection.js";
 import { differenceInMilliseconds } from "date-fns";
 import * as crypto from "crypto";
-import sleep from "../utils/sleep";
-import getRootSubschema from "./getRootSubschema";
-import anyPasswordsExist from "../authz/anyPasswordsExist";
+import sleep from "../utils/sleep.js";
+import getRootSubschema from "./getRootSubschema.js";
+import anyPasswordsExist from "../authz/anyPasswordsExist.js";
 import {
     AuthenticationLevel_basicLevels_level_none as none,
 } from "@wildboar/x500/BasicAccessControl";
 import { EventEmitter } from "node:events";
-import { flatten } from "flat";
+import flat from "flat";
 import { naddrToURI } from "@wildboar/x500";
-import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics";
+import getCommonResultsStatistics from "../telemetry/getCommonResultsStatistics.js";
 import isDebugging from "is-debugging";
 import { strict as assert } from "assert";
-import { stringifyDN } from "../x500/stringifyDN";
+import { stringifyDN } from "../x500/stringifyDN.js";
 import {
     SearchRequest_scope,
     SearchRequest_scope_baseObject,
     SearchRequest_scope_singleLevel,
     SearchRequest_scope_wholeSubtree,
 } from "@wildboar/ldap";
-import decodeLDAPDN from "./decodeLDAPDN";
+import decodeLDAPDN from "./decodeLDAPDN.js";
 import { stringifyFilter } from "@wildboar/ldap";
-import { createSecurityParameters } from "../x500/createSecurityParameters";
+import { createSecurityParameters } from "../x500/createSecurityParameters.js";
 import { compareCode } from "@wildboar/x500";
 import {
     SecurityErrorData,
@@ -94,6 +94,8 @@ import {
     SecurityProblem_insufficientAccessRights,
 } from "@wildboar/x500/DirectoryAbstractService";
 import { createWriteStream } from "node:fs";
+
+const flatten = flat.flatten;
 
 const {
     modifyPassword,

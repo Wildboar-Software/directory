@@ -10,7 +10,7 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
-import NOOP from "./NOOP";
+import NOOP from "./NOOP.js";
 import { DER } from "@wildboar/asn1/functional";
 import { matchingRules } from "@wildboar/x500/SchemaAdministration";
 import { subschema } from "@wildboar/x500/SchemaAdministration";

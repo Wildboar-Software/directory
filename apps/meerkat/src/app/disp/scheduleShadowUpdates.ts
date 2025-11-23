@@ -2,10 +2,10 @@ import type { MeerkatContext } from "../ctx.js";
 import {
     ShadowingAgreementInfo,
 } from "@wildboar/x500/DirectoryShadowAbstractService";
-import { updateShadowConsumer } from "./createShadowUpdate";
+import { updateShadowConsumer } from "./createShadowUpdate.js";
 import { addSeconds, differenceInMilliseconds } from "date-fns";
 import { setTimeout as safeSetTimeout } from "safe-timers";
-import request_a_shadow_update from "./requestAShadowUpdate";
+import request_a_shadow_update from "./requestAShadowUpdate.js";
 import isDebugging from "is-debugging";
 
 /**

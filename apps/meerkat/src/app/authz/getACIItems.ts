@@ -1,9 +1,9 @@
 import type { Vertex, Context } from "@wildboar/meerkat-types";
 import { OBJECT_IDENTIFIER } from "@wildboar/asn1";
-import accessControlSchemesThatUseEntryACI from "./accessControlSchemesThatUseEntryACI";
-import accessControlSchemesThatUsePrescriptiveACI from "./accessControlSchemesThatUsePrescriptiveACI";
-import accessControlSchemesThatUseSubentryACI from "./accessControlSchemesThatUseSubentryACI";
-import accessControlSchemesThatUseInnerAreas from "./accessControlSchemesThatUseInnerAreas";
+import accessControlSchemesThatUseEntryACI from "./accessControlSchemesThatUseEntryACI.js";
+import accessControlSchemesThatUsePrescriptiveACI from "./accessControlSchemesThatUsePrescriptiveACI.js";
+import accessControlSchemesThatUseSubentryACI from "./accessControlSchemesThatUseSubentryACI.js";
+import accessControlSchemesThatUseInnerAreas from "./accessControlSchemesThatUseInnerAreas.js";
 import {
     ACIItem, _decode_ACIItem,
 } from "@wildboar/x500/BasicAccessControl";
@@ -17,9 +17,9 @@ import {
     id_ar_accessControlInnerArea,
 } from "@wildboar/x500/InformationFramework";
 import { entryACI, prescriptiveACI, subentryACI } from "@wildboar/x500/BasicAccessControl";
-import { attributeValueFromDB, DBAttributeValue } from "../database/attributeValueFromDB";
+import { attributeValueFromDB, DBAttributeValue } from "../database/attributeValueFromDB.js";
 import { Prisma } from "@prisma/client";
-import accessControlSchemesThatUseASingleAdminPoint from "./accessControlSchemesThatUseASingleAdminPoint";
+import accessControlSchemesThatUseASingleAdminPoint from "./accessControlSchemesThatUseASingleAdminPoint.js";
 
 const AC_SUBENTRY: string = accessControlSubentry["&id"].toString();
 const AC_SPECIFIC: string = id_ar_accessControlSpecificArea.toString();

@@ -1,7 +1,7 @@
 import type { Context, Vertex, IndexableOID } from "@wildboar/meerkat-types";
 import { DER } from "@wildboar/asn1/functional";
 import { Prisma } from "@prisma/client";
-import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry";
+import vertexFromDatabaseEntry from "../database/vertexFromDatabaseEntry.js";
 import {
     DistinguishedName, _decode_DistinguishedName,
 } from "@wildboar/x500/InformationFramework";
@@ -9,10 +9,10 @@ import type {
     RelativeDistinguishedName as RDN,
 } from "@wildboar/x500/InformationFramework";
 import { top } from "@wildboar/x500/InformationFramework";
-import addAttributes from "./entry/addAttributes";
+import addAttributes from "./entry/addAttributes.js";
 import { strict as assert } from "assert";
 import { randomUUID } from "crypto";
-import getStructuralObjectClass from "../x500/getStructuralObjectClass";
+import getStructuralObjectClass from "../x500/getStructuralObjectClass.js";
 import {
     entryTtl,
 } from "@wildboar/parity-schema/src/lib/modules/RFC2589DynamicDirectory/entryTtl.oa.js";
@@ -32,8 +32,8 @@ import {
     ID_DYNOBJ,
     ID_TTL,
     ID_ACS,
-} from "../../oidstr";
-import getEqualityNormalizer from "../x500/getEqualityNormalizer";
+} from "../../oidstr.js";
+import getEqualityNormalizer from "../x500/getEqualityNormalizer.js";
 
 /**
  * @summary Create a DSE more efficiently than with `createVertex`, but with a catch

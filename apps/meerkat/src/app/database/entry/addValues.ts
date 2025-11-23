@@ -9,7 +9,7 @@ import {
 import { ASN1Construction } from "@wildboar/asn1";
 import type { Prisma } from "@prisma/client";
 import type { DistinguishedName } from "@wildboar/x500/InformationFramework";
-import rdnToJson from "../../x500/rdnToJson";
+import rdnToJson from "../../x500/rdnToJson.js";
 import {
     AttributeProblem_attributeOrValueAlreadyExists,
     AttributeProblem_contextViolation,
@@ -24,14 +24,14 @@ import {
 import {
     attributeError,
 } from "@wildboar/x500/DirectoryAbstractService";
-import getDistinguishedName from "../../x500/getDistinguishedName";
-import createSecurityParameters from "../../x500/createSecurityParameters";
+import getDistinguishedName from "../../x500/getDistinguishedName.js";
+import createSecurityParameters from "../../x500/createSecurityParameters.js";
 import {
     AttributeUsage_userApplications as userApplications,
 } from "@wildboar/x500/InformationFramework";
-import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter";
-import hasValueWithoutDriver from "./hasValueWithoutDriver";
-import getEqualityNormalizer from "../../x500/getEqualityNormalizer";
+import getNamingMatcherGetter from "../../x500/getNamingMatcherGetter.js";
+import hasValueWithoutDriver from "./hasValueWithoutDriver.js";
+import getEqualityNormalizer from "../../x500/getEqualityNormalizer.js";
 
 /**
  * @summary Validate the values to be added to the entry

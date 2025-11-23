@@ -13,7 +13,7 @@ import {
     HierarchySelections_top
 } from "@wildboar/x500/DirectoryAbstractService";
 import { ControlOptions } from "@wildboar/x500/ServiceAdministration";
-import { get_bit_string_from_int32, get_int32_from_bit_string } from "../utils/bits2int";
+import { get_bit_string_from_int32, get_int32_from_bit_string } from "../utils/bits2int.js";
 import type {
     HierarchySelections,
 } from "@wildboar/x500/DirectoryAbstractService";

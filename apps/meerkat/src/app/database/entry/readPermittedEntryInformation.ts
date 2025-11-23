@@ -2,7 +2,7 @@ import type { ClientAssociation, Context, Vertex } from "@wildboar/meerkat-types
 import {
     type EntryInformation_information_Item,
 } from "@wildboar/x500/DirectoryAbstractService";
-import readEntryInformation from "./readEntryInformation";
+import readEntryInformation from "./readEntryInformation.js";
 import { TRUE, type OBJECT_IDENTIFIER } from "@wildboar/asn1";
 import { type ACDFTupleExtended } from "@wildboar/x500";
 import {
@@ -10,23 +10,23 @@ import {
     PERMISSION_CATEGORY_READ,
     PERMISSION_CATEGORY_DISCLOSE_ON_ERROR,
 } from "@wildboar/x500";
-import valuesFromAttribute from "../../x500/valuesFromAttribute";
-import attributesFromValues from "../../x500/attributesFromValues";
+import valuesFromAttribute from "../../x500/valuesFromAttribute.js";
+import attributesFromValues from "../../x500/attributesFromValues.js";
 import {
     Attribute,
     AttributeTypeAndValue,
 } from "@wildboar/x500/InformationFramework";
-import accessControlSchemesThatUseACIItems from "../../authz/accessControlSchemesThatUseACIItems";
-import type { ReadAttributesOptions } from "./readAttributes";
+import accessControlSchemesThatUseACIItems from "../../authz/accessControlSchemesThatUseACIItems.js";
+import type { ReadAttributesOptions } from "./readAttributes.js";
 import type {
     NameAndOptionalUID,
 } from "@wildboar/x500/SelectedAttributeTypes";
-import bacSettings from "../../authz/bacSettings";
-import isOperationalAttributeType from "../../x500/isOperationalAttributeType";
-import accessControlSchemesThatUseRBAC from "../../authz/accessControlSchemesThatUseRBAC";
+import bacSettings from "../../authz/bacSettings.js";
+import isOperationalAttributeType from "../../x500/isOperationalAttributeType.js";
+import accessControlSchemesThatUseRBAC from "../../authz/accessControlSchemesThatUseRBAC.js";
 import { EntryInformationSelection } from "@wildboar/x500/DirectoryAbstractService";
 import { attributeValueSecurityLabelContext } from "@wildboar/x500/EnhancedSecurity";
-import { rbacACDF } from "../../authz/rbacACDF";
+import { rbacACDF } from "../../authz/rbacACDF.js";
 import { Attribute_valuesWithContext_Item } from "@wildboar/pki-stub";
 import { attributeTypesOnly } from "@wildboar/x500/DirectoryAbstractService";
 

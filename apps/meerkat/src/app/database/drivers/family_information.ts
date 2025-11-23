@@ -10,7 +10,7 @@ import type {
     SpecialAttributeDetector,
     SpecialAttributeValueDetector,
 } from "@wildboar/meerkat-types";
-import NOOP from "./NOOP";
+import NOOP from "./NOOP.js";
 import {
     parent,
 } from "@wildboar/x500/InformationFramework";

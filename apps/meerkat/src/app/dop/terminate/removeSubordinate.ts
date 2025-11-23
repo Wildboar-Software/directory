@@ -2,8 +2,8 @@ import type { Context } from "@wildboar/meerkat-types";
 import {
     HierarchicalAgreement,
 } from "@wildboar/x500/HierarchicalOperationalBindings";
-import dnToVertex from "../../dit/dnToVertex";
-import deleteEntry from "../../database/deleteEntry";
+import dnToVertex from "../../dit/dnToVertex.js";
+import deleteEntry from "../../database/deleteEntry.js";
 
 /**
  * @summary Terminates a hierarchical operational binding from the superior's perspective

@@ -13,7 +13,7 @@ import {
 import {
     SIGNED,
 } from "@wildboar/x500/AuthenticationFramework";
-import { generateSignature } from "./generateSignature";
+import { generateSignature } from "./generateSignature.js";
 
 /**
  * @summary Digitally sign a chained error with this DSA's signing key
