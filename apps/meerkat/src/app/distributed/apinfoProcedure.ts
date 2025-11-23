@@ -83,7 +83,7 @@ import generateUnusedInvokeID from "../net/generateUnusedInvokeID.js";
 import { ContinuationReference } from "@wildboar/x500/DistributedOperations";
 import { addMilliseconds, differenceInMilliseconds, differenceInSeconds } from "date-fns";
 import { upsertCrossReferences } from "../dit/upsertCrossReferences.js";
-import bb from "bluebird";
+import { map } from "@tyler/duckhawk";
 import isPrefix from "../x500/isPrefix.js";
 import { compareDistinguishedName, getDateFromTime } from "@wildboar/x500";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
@@ -91,8 +91,6 @@ import { CrossReference } from "@wildboar/x500/DistributedOperations";
 import { signChainedResult } from "../pki/signChainedResult.js";
 import deleteEntry from "../database/deleteEntry.js";
 import DAPAssociation from "../dap/DAPConnection.js";
-
-const bPromise = bb.Promise;
 
 /**
  * @summary The Access Point Information Procedure, as defined in ITU Recommendation X.518.
@@ -437,10 +435,10 @@ async function apinfoProcedure (
                         )
                     ) {
                         // TODO: Index recently added cross references so we're not doing this for every result.
-                        bPromise.map(
+                        map(
                             acceptableCrossReferences,
                             (xr) => upsertCrossReferences(ctx, xr),
-                            { concurrency: 5 },
+                            { concurrency: 5 }, // TODO: Make configurable
                         ) // INTENTIONAL_NO_AWAIT
                         .catch((e) => {
                             ctx.log.warn(ctx.i18n.t("log:failed_to_apply_xr", {

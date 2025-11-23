@@ -27,7 +27,7 @@ import {
 } from "@wildboar/x500/DistributedOperations";
 import cloneChainingArgs from "../x500/cloneChainingArguments.js";
 import createSecurityParameters from "../x500/createSecurityParameters.js";
-import bb from "bluebird";
+import { map } from "@tyler/duckhawk";
 import {
     ServiceControls_priority_high,
 } from "@wildboar/x500/DirectoryAbstractService";
@@ -37,8 +37,6 @@ import { distinguishedNameMatch as normalizeDN } from "../matching/normalizers.j
 import { id_opcode_search } from "@wildboar/x500/CommonProtocolSpecification";
 import { _decode_SearchResult } from "@wildboar/x500/DirectoryAbstractService";
 import { chainedSearch } from "@wildboar/x500/DistributedOperations";
-
-const bPromise = bb.Promise;
 
 /**
  * @summary Search Continuation Reference Procedure, as defined in ITU Recommendation X.518.
@@ -253,7 +251,7 @@ async function scrProcedure (
             && Number.isSafeInteger(ctx.config.chaining.scrParallelism)
             && (ctx.config.chaining.scrParallelism > 1)
         ) {
-            await bPromise.map(crlist, processContinuationReference, {
+            await map(crlist, processContinuationReference, {
                 concurrency: ctx.config.chaining.scrParallelism,
             });
         } else {

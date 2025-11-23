@@ -134,7 +134,7 @@ import {
     BootParameterSyntax,
     _encode_BootParameterSyntax,
 } from "@wildboar/parity-schema/src/lib/modules/NIS/BootParameterSyntax.ta.js";
-import { Promise as bPromise } from "bluebird";
+import { map } from "@tyler/duckhawk";
 
 const allNonSecurityContextTypes: OBJECT_IDENTIFIER[] = [
     ct.languageContext["&id"],
@@ -1222,7 +1222,7 @@ async function seedGB (
         newEntryArgs.push([ cn, arg ]);
     }
 
-    await bPromise.map(
+    await map(
         newEntryArgs,
         ([cn, arg]) => idempotentAddEntry(ctx, conn, `C=GB,L=London,CN=${cn}`, arg),
         {

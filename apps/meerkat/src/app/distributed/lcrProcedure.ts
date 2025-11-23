@@ -28,11 +28,9 @@ import type { ListState } from "./list_i.js";
 import {
     ContinuationReference,
 } from "@wildboar/x500/DistributedOperations";
-import bb from "bluebird";
+import { map } from "@tyler/duckhawk";
 import printCode from "../utils/printCode.js";
 import stringifyDN from "../x500/stringifyDN.js";
-
-const bPromise = bb.Promise;
 
 /**
  * @summary List Continuation Reference Procedure, as defined in ITU Recommendation X.518.
@@ -231,7 +229,7 @@ async function lcrProcedure (
         && Number.isSafeInteger(ctx.config.chaining.lcrParallelism)
         && (ctx.config.chaining.lcrParallelism > 1)
     ) {
-        await bPromise.map(state.SRcontinuationList, processContinuationReference, {
+        await map(state.SRcontinuationList, processContinuationReference, {
             concurrency: ctx.config.chaining.lcrParallelism,
         });
     } else {

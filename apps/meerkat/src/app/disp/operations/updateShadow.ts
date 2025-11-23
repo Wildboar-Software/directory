@@ -84,7 +84,7 @@ import { Attribute } from "@wildboar/pki-stub";
 import { dseType } from "@wildboar/x500/DSAOperationalAttributeTypes";
 import { DER, _decodeObjectIdentifier } from "@wildboar/asn1/functional";
 import addAttributes from "../../database/entry/addAttributes.js";
-import bPromise from "bluebird";
+import { map } from "@tyler/duckhawk";
 import {
     LocalName,
     createTimestamp,
@@ -774,7 +774,7 @@ async function applyTotalRefresh (
     }
 
     const processed_subordinate_ids: Set<number> = new Set();
-    const possible_created_ids = await bPromise.map(refresh.subtree, async (subtree: Subtree) => {
+    const possible_created_ids = await map(refresh.subtree, async (subtree: Subtree) => {
         const sub = await dnToVertex(ctx, vertex, [ subtree.rdn ]);
         if (sub) {
             processed_subordinate_ids.add(sub.dse.id);
@@ -833,7 +833,7 @@ async function applyTotalRefresh (
         exclusions of the subtree. Theoretically, this could still be done using
         their RDNs alone, but simple recursion was by far the most elegant
         solution. */
-        await bPromise.map(subordinates, (subordinate: Vertex) => applyTotalRefresh(
+        await map(subordinates, (subordinate: Vertex) => applyTotalRefresh(
             ctx,
             assn,
             obid,
@@ -1506,7 +1506,7 @@ async function applyIncrementalRefreshStep (
         }
     }
 
-    await bPromise.map(refresh.subordinateUpdates ?? [], async (sub_update) => {
+    await map(refresh.subordinateUpdates ?? [], async (sub_update) => {
         // If the change is add, `vertex` will be the immediate superior.
         if (sub_update.changes.sDSEChanges && "add" in sub_update.changes.sDSEChanges) {
             return applyIncrementalRefreshStep(

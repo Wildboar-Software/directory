@@ -9,7 +9,7 @@ import { TotalRefresh } from "@wildboar/x500/DirectoryShadowAbstractService";
 import { BERElement, BOOLEAN, FALSE, ObjectIdentifier, TRUE_BIT } from "@wildboar/asn1";
 import dnToVertex from "../dit/dnToVertex.js";
 import readSubordinates from "../dit/readSubordinates.js";
-import bPromise from "bluebird";
+import { map } from "@tyler/duckhawk";
 import { LocalName } from "@wildboar/x500/InformationFramework";
 import getNamingMatcherGetter from "../x500/getNamingMatcherGetter.js";
 import { compareDistinguishedName, getRDN } from "@wildboar/x500";
@@ -178,8 +178,8 @@ async function createTotalRefreshFromVertex (
         exclusions of the subtree. Theoretically, this could still be done using
         their RDNs alone, but simple recursion was by far the most elegant
         solution. */
-        const sub_refreshes = await bPromise
-            .map(relevantSubordinates, (subordinate: Vertex) => createTotalRefreshFromVertex(
+        const sub_refreshes = await map(relevantSubordinates,
+            (subordinate: Vertex) => createTotalRefreshFromVertex(
                 ctx,
                 subordinate,
                 agreement,
@@ -188,7 +188,7 @@ async function createTotalRefreshFromVertex (
                 extended && getExtendedKnowledge,
                 extended && getSubordinateInfo,
             ), {
-                concurrency: 4, // FIXME:
+                concurrency: 4, // TODO: Make configurable
             });
         const last_subordinate = subordinates[subordinates.length - 1];
         cursorId = last_subordinate?.dse.id;

@@ -134,7 +134,7 @@ import {
     BuiltInDomainDefinedAttribute,
     ExtensionAttribute,
 } from "@wildboar/x400/MTSAbstractService";
-import { Promise as bPromise } from "bluebird";
+import { map } from "@tyler/duckhawk";
 import { id_ar_serviceSpecificArea } from "@wildboar/x500/InformationFramework";
 import {
     SubtreeSpecification,
@@ -1301,7 +1301,7 @@ async function seedUS (
         newEntryArgs.push([cn, arg]);
     }
 
-    await bPromise.map(
+    await map(
         newEntryArgs,
         ([cn, arg]) => idempotentAddEntry(ctx, conn, `C=US,ST=FL,L=HIL,L=Tampa,L=Westchase,CN=${cn}`, arg),
         {
@@ -1803,7 +1803,7 @@ async function seedUS (
         newEntryArgs.push([cn, arg]);
     }
 
-    await bPromise.map(
+    await map(
         newEntryArgs,
         ([cn, arg]) => idempotentAddEntry(ctx, conn, `C=US,ST=FL,L=MAR,L=Ocala,CN=${cn}`, arg),
         {
@@ -1824,7 +1824,7 @@ async function seedUS (
         newEntryArgs.push([orgName, arg]);
     }
 
-    await bPromise.map(
+    await map(
         newEntryArgs,
         ([orgName, arg]) => idempotentAddEntry(ctx, conn, `C=US,ST=FL,L=MAR,L=Ocala,O=${orgName}`, arg),
         {
